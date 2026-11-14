@@ -1,0 +1,152 @@
+{
+  "schema": "cloe-supplement-corpus-v1",
+  "corpus_id": "sup1-corpus-v1",
+  "phase": "CLOE-W5-SUPPLEMENT1",
+  "purpose": "calibration",
+  "files": [
+    {
+      "binding_alias": "code",
+      "source_relative_path": "catalog/seed_label.py",
+      "role": "code",
+      "content_utf8": "# Printed on the front of every lending envelope so volunteers can shelve the lot.\ndef format_seed_label(lot):\n    variety = lot['variety'].strip().title()\n    return variety + ' (' + str(lot['harvest_year']) + ') - lot ' + str(lot['lot_number'])\n"
+    },
+    {
+      "binding_alias": "code",
+      "source_relative_path": "catalog/germination_rate.py",
+      "role": "code",
+      "content_utf8": "# A germination trial plants a counted sample and records how many sprouted.\ndef seed_germination_rate(trial):\n    planted = trial['planted']\n    if planted <= 0:\n        return 0.0\n    return round(trial['sprouted'] / planted, 3)\n"
+    },
+    {
+      "binding_alias": "code",
+      "source_relative_path": "lending/checkout_limit.py",
+      "role": "code",
+      "content_utf8": "# Each member may hold only a fixed number of borrowed lots; the balance is what is left.\ndef remaining_checkout_balance(member):\n    remaining = member['borrowing_limit'] - len(member['open_loans'])\n    return max(remaining, 0)\n"
+    },
+    {
+      "binding_alias": "code",
+      "source_relative_path": "lending/overdue_reminder.py",
+      "role": "code",
+      "content_utf8": "# Loans are due back after the growing season; the reminder goes out seven days early.\ndef days_until_overdue_reminder(loan):\n    return max(loan['days_until_due'] - 7, 0)\n"
+    },
+    {
+      "binding_alias": "code",
+      "source_relative_path": "storage/humidity_alert.py",
+      "role": "code",
+      "content_utf8": "# Stock stored above sixty percent relative humidity loses vigor within a season.\ndef humidity_exceeds_threshold(reading):\n    return reading['relative_humidity'] > 60\n"
+    },
+    {
+      "binding_alias": "code",
+      "source_relative_path": "storage/packet_expiry.py",
+      "role": "code",
+      "content_utf8": "# Viability years differ by crop; a packet older than its window is retired.\ndef packet_is_expired(packet):\n    age = packet['current_year'] - packet['harvest_year']\n    return age > packet['viability_years']\n"
+    },
+    {
+      "binding_alias": "code",
+      "source_relative_path": "exchange/swap_balance.py",
+      "role": "code",
+      "content_utf8": "# Members earn one credit per donated lot and spend one per lot taken at the swap table.\ndef swap_credit_balance(ledger):\n    earned = sum(1 for entry in ledger if entry['kind'] == 'donated')\n    spent = sum(1 for entry in ledger if entry['kind'] == 'swapped')\n    return earned - spent\n"
+    },
+    {
+      "binding_alias": "code",
+      "source_relative_path": "exchange/donation_intake.py",
+      "role": "code",
+      "content_utf8": "# Donors spell variety names many ways; intake keeps one normalized spelling.\ndef normalize_donor_variety_name(name):\n    words = name.replace('_', ' ').replace('-', ' ').split()\n    return ' '.join(word.capitalize() for word in words)\n"
+    },
+    {
+      "binding_alias": "code",
+      "source_relative_path": "reports/inventory_summary.py",
+      "role": "code",
+      "content_utf8": "# Monthly volunteer report: how many lots sit on the shelf for each plant family.\ndef summarize_inventory_by_family(stock):\n    counts = {}\n    for lot in stock:\n        counts[lot['family']] = counts.get(lot['family'], 0) + 1\n    return dict(sorted(counts.items()))\n"
+    },
+    {
+      "binding_alias": "code",
+      "source_relative_path": "reports/viability_forecast.py",
+      "role": "code",
+      "content_utf8": "# Planning aid: which packets stay inside their viability window through next year.\ndef forecast_viable_packets(packets):\n    return [p for p in packets if p['harvest_year'] + p['viability_years'] > p['current_year']]\n"
+    },
+    {
+      "binding_alias": "denied",
+      "source_relative_path": "members/contact_roster.py",
+      "role": "denied",
+      "content_utf8": "# SYNTHETIC-DENIED-FIXTURE: inert marker text only; this binding is declared non-public.\ndef member_contact_roster(members):\n    return sorted(member['display_name'] for member in members)\n"
+    },
+    {
+      "binding_alias": "denied",
+      "source_relative_path": "members/volunteer_shift_notes.py",
+      "role": "denied",
+      "content_utf8": "# SYNTHETIC-DENIED-FIXTURE: inert marker text only; shift notes are declared non-public.\ndef volunteer_shift_notes(shift):\n    return [note.strip() for note in shift['notes'] if note.strip()]\n"
+    },
+    {
+      "binding_alias": "checks",
+      "source_relative_path": "tests/test_seed_label_format.py",
+      "role": "test_source",
+      "content_utf8": "from catalog.seed_label import format_seed_label\n\n\ndef test_seed_label_format():\n    lot = {'variety': ' scarlet runner ', 'harvest_year': 2025, 'lot_number': 14}\n    assert format_seed_label(lot) == 'Scarlet Runner (2025) - lot 14'\n"
+    },
+    {
+      "binding_alias": "checks",
+      "source_relative_path": "tests/test_germination_rate_ratio.py",
+      "role": "test_source",
+      "content_utf8": "from catalog.germination_rate import seed_germination_rate\n\n\ndef test_germination_rate_ratio():\n    assert seed_germination_rate({'planted': 20, 'sprouted': 15}) == 0.75\n    assert seed_germination_rate({'planted': 0, 'sprouted': 0}) == 0.0\n"
+    },
+    {
+      "binding_alias": "checks",
+      "source_relative_path": "tests/test_checkout_balance_limit.py",
+      "role": "test_source",
+      "content_utf8": "from lending.checkout_limit import remaining_checkout_balance\n\n\ndef test_checkout_balance_limit():\n    assert remaining_checkout_balance({'borrowing_limit': 5, 'open_loans': ['a', 'b']}) == 3\n    assert remaining_checkout_balance({'borrowing_limit': 2, 'open_loans': ['a', 'b', 'c']}) == 0\n"
+    },
+    {
+      "binding_alias": "checks",
+      "source_relative_path": "tests/test_overdue_reminder_days.py",
+      "role": "test_source",
+      "content_utf8": "from lending.overdue_reminder import days_until_overdue_reminder\n\n\ndef test_overdue_reminder_days():\n    assert days_until_overdue_reminder({'days_until_due': 30}) == 23\n    assert days_until_overdue_reminder({'days_until_due': 3}) == 0\n"
+    },
+    {
+      "binding_alias": "checks",
+      "source_relative_path": "tests/test_humidity_alert_threshold.py",
+      "role": "test_source",
+      "content_utf8": "from storage.humidity_alert import humidity_exceeds_threshold\n\n\ndef test_humidity_alert_threshold():\n    assert humidity_exceeds_threshold({'relative_humidity': 72}) is True\n    assert humidity_exceeds_threshold({'relative_humidity': 60}) is False\n"
+    },
+    {
+      "binding_alias": "checks",
+      "source_relative_path": "tests/test_packet_expiry_viability_years.py",
+      "role": "test_source",
+      "content_utf8": "from storage.packet_expiry import packet_is_expired\n\n\ndef test_packet_expiry_viability_years():\n    assert packet_is_expired({'current_year': 2026, 'harvest_year': 2020, 'viability_years': 3}) is True\n    assert packet_is_expired({'current_year': 2026, 'harvest_year': 2024, 'viability_years': 3}) is False\n"
+    },
+    {
+      "binding_alias": "checks",
+      "source_relative_path": "tests/test_swap_credit_balance.py",
+      "role": "test_source",
+      "content_utf8": "from exchange.swap_balance import swap_credit_balance\n\n\ndef test_swap_credit_balance():\n    ledger = [{'kind': 'donated'}, {'kind': 'donated'}, {'kind': 'swapped'}]\n    assert swap_credit_balance(ledger) == 1\n    assert swap_credit_balance([]) == 0\n"
+    },
+    {
+      "binding_alias": "checks",
+      "source_relative_path": "tests/test_donor_variety_name_normalization.py",
+      "role": "test_source",
+      "content_utf8": "from exchange.donation_intake import normalize_donor_variety_name\n\n\ndef test_donor_variety_name_normalization():\n    assert normalize_donor_variety_name('cherokee_purple') == 'Cherokee Purple'\n    assert normalize_donor_variety_name('  amish-paste ') == 'Amish Paste'\n"
+    },
+    {
+      "binding_alias": "docs",
+      "source_relative_path": "design/storage-humidity.md",
+      "role": "design",
+      "content_utf8": "# Storage humidity thresholds\n\nThe storage room has one humidity ceiling. A reading over that ceiling raises an alert so volunteers move drawers into the dry cabinet.\n"
+    },
+    {
+      "binding_alias": "docs",
+      "source_relative_path": "design/overdue-reminders.md",
+      "role": "design",
+      "content_utf8": "# Overdue reminder schedule\n\nBorrowed lots are due back after the growing season. Each borrower gets one reminder a week before the due date.\n"
+    },
+    {
+      "binding_alias": "docs",
+      "source_relative_path": "design/swap-credits.md",
+      "role": "design",
+      "content_utf8": "# Swap credit rules\n\nDonating a lot earns one credit and taking a lot from the swap table spends one. A balance is credits earned minus credits spent.\n"
+    },
+    {
+      "binding_alias": "docs",
+      "source_relative_path": "design/germination-reporting.md",
+      "role": "design",
+      "content_utf8": "# Germination rate reporting\n\nEach trial plants a counted sample. The report shows the sprouted share rounded to three decimals, and an empty trial reports zero.\n"
+    }
+  ]
+}

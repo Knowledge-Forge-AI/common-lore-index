@@ -1,0 +1,13 @@
+{
+  "checked_prefix": "sup1-",
+  "checked_range": [
+    1,
+    32
+  ],
+  "collision_count": 0,
+  "method": "task_id_string_tokens_only_in_both_hash_pinned_predecessor_catalogs",
+  "original_manifest_sha256": "sha256:a9879e1e27858ffb5efb58238084fd04b43c863e76e7fd3e4ff928e8164c72d7",
+  "private_receipt_sha256": "sha256:986bfaa072e12a9bbde71ce598b032ba606c93ef7ec3f7622c66811a7357df67",
+  "schema": "cloe-supplement-namespace-check-v1",
+  "task_question_or_gold_decoder_used": false
+}

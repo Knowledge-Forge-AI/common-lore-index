@@ -1760,3 +1760,43 @@ and serial dynamic_default independent review precede a fresh normal campaign.
 Main promotion and the first Common Lore Index release v0.0.4 require passing
 current same-attempt qualification. Remaining W5/W6/W7/W8 and v0.1.0 work continue
 after that release; no source-preview operation implies package-manager delivery.
+
+
+### Post-v0.0.4 W5 public-calibration supplement selection
+
+The operator selected Route A on 2026-11-14: a separate public synthetic
+calibration supplement and scoped source work, with at most32 total cases and
+a prospective common floor of eight positives, two per four approved families.
+`CLOE-W5-SUPPLEMENT1` reserves the specific W5-SUPPLEMENT family under accepted
+[ADR0198](../adr/2026/11/0198-prospective-public-calibration-supplement.md) and
+[the technical contract](cloe-w5-calibration-supplement-v1.md). Two independent
+technical reviews and parent corrections settled the data-pin/source-freeze
+sequence, distinct representation journals, genuine Markdown heading spans,
+record/token forecast and per-arm capability disclosure before task authoring.
+
+The first source implementation plans24 cases and three repetitions across
+six declared arms; it does not loosen old24-task owners or execute any query.
+Original mixed-v1/context-v1 tasks, golds, held-outs and historical native
+results stay unchanged. Source implementation and proof are pending here.
+No new model worker, study, acquisition, build or public campaign is granted.
+Native allocation, scientific criteria, held-out class and full W5 remain open.
+
+
+### W5 separate calibration source milestone
+
+CLOE-W5-SUPPLEMENT1 completes the approved source phase: a separately pinned
+24-task public class, preparation/custody/evidence support, 232 scoped unit
+cases and nine real core integration cases passing, plus canonical retention
+enforcement with zero new debt. Independent full and corrective source reviews
+passed after recorded corrections; native Read audits conform in every stage.
+The registered inert checkpoint reproduces the pin and 54 original files and
+prepares 146 records across the two representations, with no retrieval/model.
+See [the source exit](../../tools/ci/cloe-w5-supplement1-exit.md) for exact
+source/freeze/declaration identities, selectors and unselected populations.
+
+The local source checkpoint does not close W5 or qualify a public candidate.
+The next native study needs fresh resources and a Trixie-only pgvector runtime
+disposition: the old optional materializer still uses an Alpine build path.
+Native execution, new runtime/dependency classes and all publication remain
+held pending their exact operator decision. Previous studies/workers/hosted
+allocations stay spent. Desired coverage margins remain pending hosted evidence.
