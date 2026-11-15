@@ -1,7 +1,6 @@
 """Doubles-only native owner plus real report-rewrite/export ownership cases."""
 from __future__ import annotations
 
-import importlib.util
 import json
 from pathlib import Path
 import subprocess
@@ -38,15 +37,8 @@ def report_seam_case(tmp_path: Path) -> None:
     assert (destination / relative).read_bytes() == receipt
 
 
-def native_owner_case(tmp_path: Path, monkeypatch: Any) -> None:
-    # Run the actual owner's body with a fake qualifier, never a PG service.
-    import runner_pgvector_context
-    root = Path(runner_pgvector_context.__file__).resolve().parents[1]
-    source = root / NATIVE_SELECTOR
-    spec = importlib.util.spec_from_file_location("unit_prebuilt_native_owner", source)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+def native_owner_case(tmp_path: Path, monkeypatch: Any, module: Any) -> None:
+    # Exercise the actual owner's body with the unit owner's isolated module.
     image = "sha256:" + "3" * 64
     plan = {"role": "native", "derived": {"runtime_config": image}}
     calls: list[str] = []

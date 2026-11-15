@@ -100,6 +100,26 @@
     },
     {
       "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.ci149repair1.pgvector_discovery",
+      "members": [
+        "tools/ci/python_retention_owner_pgvector_discovery.py"
+      ],
+      "rationale": "ADR0202 immediate closed-owner governance without waiver.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.ci149repair1.pgvector_transport",
+      "members": [
+        "tools/ci/python_retention_owner_pgvector_transport.py"
+      ],
+      "rationale": "ADR0202 immediate closed-owner governance without waiver.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
       "governing_profile": "clean_test_owners",
       "id": "cloe.config1.test_owners",
       "members": [
@@ -29183,6 +29203,651 @@
       ],
       "test": "src/test/unit/python/repomap_test_support/test_cov5k_r2_fix2_dynamic_targets.unit.test.py",
       "test_sha256": "ad5804fbd6e741ab9f753aafc0bdc74792d629eed2435b529bea1764f3b45a2e"
+    },
+    {
+      "fingerprint": "387ca9acec4d3980ead0680b722a37c8692878ba51bed775fbc00259e744350d",
+      "id": "cloe.ci149repair1.revise41.conftest_inspection.0",
+      "kind": "spec_from_file_location",
+      "owner": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "owner_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640",
+      "parameters": {
+        "case": "conftest_inspection",
+        "chain": [
+          {
+            "fingerprint": "387ca9acec4d3980ead0680b722a37c8692878ba51bed775fbc00259e744350d",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "repomap_int_conftest_inspection"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": "revise41.conftest_inspection.0",
+      "symbol": "test_unit_inspection_import_of_integration_conftest_does_not_activate_guard",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "test_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640"
+    },
+    {
+      "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+      "id": "cloe.ci149repair1.revise41.conftest_inspection.1",
+      "kind": "module_from_spec",
+      "owner": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "owner_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640",
+      "parameters": {
+        "case": "conftest_inspection",
+        "chain": [
+          {
+            "fingerprint": "387ca9acec4d3980ead0680b722a37c8692878ba51bed775fbc00259e744350d",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "repomap_int_conftest_inspection"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": "revise41.conftest_inspection.1",
+      "symbol": "test_unit_inspection_import_of_integration_conftest_does_not_activate_guard",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "test_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640"
+    },
+    {
+      "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+      "id": "cloe.ci149repair1.revise41.conftest_inspection.2",
+      "kind": "exec_module",
+      "owner": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "owner_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640",
+      "parameters": {
+        "case": "conftest_inspection",
+        "chain": [
+          {
+            "fingerprint": "387ca9acec4d3980ead0680b722a37c8692878ba51bed775fbc00259e744350d",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "repomap_int_conftest_inspection"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": "revise41.conftest_inspection.2",
+      "symbol": "test_unit_inspection_import_of_integration_conftest_does_not_activate_guard",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "test_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640"
+    },
+    {
+      "fingerprint": "e4f194466126cb12741ae8adc3ca96eb4d621d6bd93481ec8dceb5ff00e47e36",
+      "id": "cloe.ci149repair1.revise41.conftest_refusal.0",
+      "kind": "spec_from_file_location",
+      "owner": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "owner_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640",
+      "parameters": {
+        "case": "conftest_refusal",
+        "chain": [
+          {
+            "fingerprint": "e4f194466126cb12741ae8adc3ca96eb4d621d6bd93481ec8dceb5ff00e47e36",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "conftest"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": "revise41.conftest_refusal.0",
+      "symbol": "test_direct_integration_conftest_import_refuses_before_fixture_setup",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "test_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640"
+    },
+    {
+      "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+      "id": "cloe.ci149repair1.revise41.conftest_refusal.1",
+      "kind": "module_from_spec",
+      "owner": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "owner_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640",
+      "parameters": {
+        "case": "conftest_refusal",
+        "chain": [
+          {
+            "fingerprint": "e4f194466126cb12741ae8adc3ca96eb4d621d6bd93481ec8dceb5ff00e47e36",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "conftest"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": "revise41.conftest_refusal.1",
+      "symbol": "test_direct_integration_conftest_import_refuses_before_fixture_setup",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "test_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640"
+    },
+    {
+      "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+      "id": "cloe.ci149repair1.revise41.conftest_refusal.2",
+      "kind": "exec_module",
+      "owner": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "owner_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640",
+      "parameters": {
+        "case": "conftest_refusal",
+        "chain": [
+          {
+            "fingerprint": "e4f194466126cb12741ae8adc3ca96eb4d621d6bd93481ec8dceb5ff00e47e36",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "conftest"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": "revise41.conftest_refusal.2",
+      "symbol": "test_direct_integration_conftest_import_refuses_before_fixture_setup",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/test_iso1_runner.unit.test.py",
+      "test_sha256": "8078528d94675c34afe95d29aaa198484147746289055791ef1c423b4bef6640"
+    },
+    {
+      "fingerprint": "859035131268d63e2c15ce66846550e12902638896637d49bb458ce324e525cf",
+      "id": "cloe.ci149repair1.pgvector_transport.0",
+      "kind": "spec_from_file_location",
+      "owner": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "owner_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227",
+      "parameters": {
+        "case": "pgvector_transport",
+        "chain": [
+          {
+            "fingerprint": "859035131268d63e2c15ce66846550e12902638896637d49bb458ce324e525cf",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "unit_offline_session_owner"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": null,
+      "symbol": "test_session_hook_starts_normal_context_and_avoids_extra_offline_cluster",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "test_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227"
+    },
+    {
+      "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+      "id": "cloe.ci149repair1.pgvector_transport.1",
+      "kind": "module_from_spec",
+      "owner": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "owner_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227",
+      "parameters": {
+        "case": "pgvector_transport",
+        "chain": [
+          {
+            "fingerprint": "859035131268d63e2c15ce66846550e12902638896637d49bb458ce324e525cf",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "unit_offline_session_owner"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": null,
+      "symbol": "test_session_hook_starts_normal_context_and_avoids_extra_offline_cluster",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "test_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227"
+    },
+    {
+      "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+      "id": "cloe.ci149repair1.pgvector_transport.2",
+      "kind": "exec_module",
+      "owner": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "owner_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227",
+      "parameters": {
+        "case": "pgvector_transport",
+        "chain": [
+          {
+            "fingerprint": "859035131268d63e2c15ce66846550e12902638896637d49bb458ce324e525cf",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "unit_offline_session_owner"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": null,
+      "symbol": "test_session_hook_starts_normal_context_and_avoids_extra_offline_cluster",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "test_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227"
+    },
+    {
+      "fingerprint": "2c01de287c69128ebd4d34da8bed386ac5d9ad501b952be7ec65c773807fe6f7",
+      "id": "cloe.ci149repair1.pgvector_discovery.0",
+      "kind": "spec_from_file_location",
+      "owner": "src/test/support/python/repomap_test_support/pgvector_prebuilt_discovery_cases.py",
+      "owner_sha256": "d7b1516c6ca16ee530a22188e869cd842995fe93bcf128833054b9c0a5b6249d",
+      "parameters": {
+        "case": "pgvector_discovery",
+        "chain": [
+          {
+            "fingerprint": "2c01de287c69128ebd4d34da8bed386ac5d9ad501b952be7ec65c773807fe6f7",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "public_session_boundary"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": null,
+      "symbol": "lost_authority_case",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/pgvector_discovery_boundary.unit.test.py",
+      "test_sha256": "c93ddf01094499501c5d396d3e1a3ccdb134af4ddc4d12a501caf68ff389611b"
+    },
+    {
+      "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+      "id": "cloe.ci149repair1.pgvector_discovery.1",
+      "kind": "module_from_spec",
+      "owner": "src/test/support/python/repomap_test_support/pgvector_prebuilt_discovery_cases.py",
+      "owner_sha256": "d7b1516c6ca16ee530a22188e869cd842995fe93bcf128833054b9c0a5b6249d",
+      "parameters": {
+        "case": "pgvector_discovery",
+        "chain": [
+          {
+            "fingerprint": "2c01de287c69128ebd4d34da8bed386ac5d9ad501b952be7ec65c773807fe6f7",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "public_session_boundary"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": null,
+      "symbol": "lost_authority_case",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/pgvector_discovery_boundary.unit.test.py",
+      "test_sha256": "c93ddf01094499501c5d396d3e1a3ccdb134af4ddc4d12a501caf68ff389611b"
+    },
+    {
+      "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+      "id": "cloe.ci149repair1.pgvector_discovery.2",
+      "kind": "exec_module",
+      "owner": "src/test/support/python/repomap_test_support/pgvector_prebuilt_discovery_cases.py",
+      "owner_sha256": "d7b1516c6ca16ee530a22188e869cd842995fe93bcf128833054b9c0a5b6249d",
+      "parameters": {
+        "case": "pgvector_discovery",
+        "chain": [
+          {
+            "fingerprint": "2c01de287c69128ebd4d34da8bed386ac5d9ad501b952be7ec65c773807fe6f7",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "public_session_boundary"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/conftest.py",
+        "target_sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": null,
+      "symbol": "lost_authority_case",
+      "targets": [
+        {
+          "module": "conftest",
+          "path": "src/test/int/python/conftest.py",
+          "sha256": "d7f36284203252227129eeb85e3b2f10ac64b3942046b3c7735222712ec273b3",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/pgvector_discovery_boundary.unit.test.py",
+      "test_sha256": "c93ddf01094499501c5d396d3e1a3ccdb134af4ddc4d12a501caf68ff389611b"
+    },
+    {
+      "fingerprint": "cf6b1cfd80ebc4e1988046b3d0d9579384dc64238bb8cef90157e60bd7a98e95",
+      "id": "cloe.ci149repair1.pgvector_native.0",
+      "kind": "spec_from_file_location",
+      "owner": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "owner_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227",
+      "parameters": {
+        "case": "pgvector_native",
+        "chain": [
+          {
+            "fingerprint": "cf6b1cfd80ebc4e1988046b3d0d9579384dc64238bb8cef90157e60bd7a98e95",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "unit_prebuilt_native_owner"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py",
+        "target_sha256": "4058e58dcaa47e9e68ca859acebd4573b4cffa62f8628bfcfba8abf1022f1edc"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": null,
+      "symbol": "test_actual_native_owner_reloads_sealed_plan_without_a_fake_argv",
+      "targets": [
+        {
+          "module": "repomap_test_support.pgvector_prebuilt_runtime.int.test",
+          "path": "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py",
+          "sha256": "4058e58dcaa47e9e68ca859acebd4573b4cffa62f8628bfcfba8abf1022f1edc",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "test_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227"
+    },
+    {
+      "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+      "id": "cloe.ci149repair1.pgvector_native.1",
+      "kind": "module_from_spec",
+      "owner": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "owner_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227",
+      "parameters": {
+        "case": "pgvector_native",
+        "chain": [
+          {
+            "fingerprint": "cf6b1cfd80ebc4e1988046b3d0d9579384dc64238bb8cef90157e60bd7a98e95",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "unit_prebuilt_native_owner"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py",
+        "target_sha256": "4058e58dcaa47e9e68ca859acebd4573b4cffa62f8628bfcfba8abf1022f1edc"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": null,
+      "symbol": "test_actual_native_owner_reloads_sealed_plan_without_a_fake_argv",
+      "targets": [
+        {
+          "module": "repomap_test_support.pgvector_prebuilt_runtime.int.test",
+          "path": "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py",
+          "sha256": "4058e58dcaa47e9e68ca859acebd4573b4cffa62f8628bfcfba8abf1022f1edc",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "test_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227"
+    },
+    {
+      "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+      "id": "cloe.ci149repair1.pgvector_native.2",
+      "kind": "exec_module",
+      "owner": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "owner_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227",
+      "parameters": {
+        "case": "pgvector_native",
+        "chain": [
+          {
+            "fingerprint": "cf6b1cfd80ebc4e1988046b3d0d9579384dc64238bb8cef90157e60bd7a98e95",
+            "kind": "spec_from_file_location"
+          },
+          {
+            "fingerprint": "24aadafd12fcd03432fa651bf5d53c66cd4843b97474d53d6906a6b6092a5b0f",
+            "kind": "module_from_spec"
+          },
+          {
+            "fingerprint": "17738dab3d6dc14d88776054512de0307b04a94d1b91fc896c1e645cde8bf97b",
+            "kind": "exec_module"
+          }
+        ],
+        "runtime_names": [
+          "unit_prebuilt_native_owner"
+        ],
+        "schema": "file-loader-spec-v1",
+        "target_path": "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py",
+        "target_sha256": "4058e58dcaa47e9e68ca859acebd4573b4cffa62f8628bfcfba8abf1022f1edc"
+      },
+      "recipe": "file_loader_spec",
+      "supersedes": null,
+      "symbol": "test_actual_native_owner_reloads_sealed_plan_without_a_fake_argv",
+      "targets": [
+        {
+          "module": "repomap_test_support.pgvector_prebuilt_runtime.int.test",
+          "path": "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py",
+          "sha256": "4058e58dcaa47e9e68ca859acebd4573b4cffa62f8628bfcfba8abf1022f1edc",
+          "symbol": ""
+        }
+      ],
+      "test": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "test_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227"
     }
   ],
   "dynamic_schema": "repomap-python-retention-dynamic-v1",
@@ -58751,6 +59416,24 @@
       "maintained_executable": true,
       "path": "tools/ci/python_retention_owner_iso.py",
       "rationale": "REVISE41 closed retention or runner measurement contract; immediate governance.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 1.0,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/ci/python_retention_owner_pgvector_discovery.py",
+      "rationale": "ADR0202 exact inert owner contract under ordinary static and dependency enforcement.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 1.0,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/ci/python_retention_owner_pgvector_transport.py",
+      "rationale": "ADR0202 exact inert owner contract under ordinary static and dependency enforcement.",
       "root": "tools",
       "status": "active_tool"
     },

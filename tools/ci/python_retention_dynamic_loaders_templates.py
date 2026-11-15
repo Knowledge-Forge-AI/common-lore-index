@@ -1,5 +1,10 @@
 """Maintained complete file-loader function contracts."""
 
+import ast
+
+from ci.python_retention_owner_pgvector_transport import SOURCE as PGVECTOR_TRANSPORT
+from ci.python_retention_owner_pgvector_discovery import SOURCE as PGVECTOR_DISCOVERY
+
 LOADER_TEMPLATES = {
 'helper_contract_probe': r'''def _load_contract_module(name: str, path: Path) -> ModuleType:
     """Exercise real file loading only at the loader-control test boundary."""
@@ -24,6 +29,7 @@ LOADER_TEMPLATES = {
     module = importlib.util.module_from_spec(spec)
     with patch('test_sandbox.active_sandbox', return_value=False) as active, patch('repomap_test_support.postgres_harness.postgres_container_session') as postgres:
         spec.loader.exec_module(module)
+    assert module.__name__ == "repomap_int_conftest_inspection"
     active.assert_not_called()
     postgres.assert_not_called()''',
 }
@@ -37,3 +43,15 @@ HELPER_DISPATCH = r'''def load_unit_contract_class(module_filename: str, class_n
         module_path = matches[0]
     module = load_module(f'repomap_helper_contract_{class_name}', module_path)
     return getattr(module, class_name)'''
+
+
+# Contracts are maintained inert literals, independent of the live test owners.
+for _case, _source, _symbol in (
+    ('pgvector_transport', PGVECTOR_TRANSPORT, 'test_session_hook_starts_normal_context_and_avoids_extra_offline_cluster'),
+    ('pgvector_discovery', PGVECTOR_DISCOVERY, 'lost_authority_case'),
+    ('pgvector_native', PGVECTOR_TRANSPORT, 'test_actual_native_owner_reloads_sealed_plan_without_a_fake_argv'),
+):
+    LOADER_TEMPLATES[_case] = ast.unparse(next(
+        node for node in ast.parse(_source).body
+        if isinstance(node, ast.FunctionDef) and node.name == _symbol
+    ))

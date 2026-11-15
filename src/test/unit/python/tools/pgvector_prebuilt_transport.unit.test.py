@@ -363,7 +363,12 @@ def test_native_report_rewrite_stays_in_closed_cohort_and_exporter(tmp_path):
 
 
 def test_actual_native_owner_reloads_sealed_plan_without_a_fake_argv(tmp_path, monkeypatch):
-    native_owner_case(tmp_path, monkeypatch)
+    source = Path(contexts.__file__).resolve().parents[1] / NATIVE_SELECTOR
+    spec = importlib.util.spec_from_file_location("unit_prebuilt_native_owner", source)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    native_owner_case(tmp_path, monkeypatch, module)
 
 
 def test_offline_report_stream_is_reserved_and_bounded(tmp_path, monkeypatch):

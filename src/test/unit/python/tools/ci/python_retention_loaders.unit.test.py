@@ -194,3 +194,55 @@ def test_loader_rejects_chain_mismatch() -> None:
     params["chain"] = []
     with pytest.raises(ValueError, match="loader chain declaration differs"):
         file_loader_spec(call, tree, params, _REPO_ROOT, modules)
+
+
+_PGVECTOR_OWNERS = {
+    "pgvector_transport": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+    "pgvector_discovery": "src/test/support/python/repomap_test_support/pgvector_prebuilt_discovery_cases.py",
+    "pgvector_native": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+}
+
+
+@pytest.mark.parametrize("case", sorted(_PGVECTOR_OWNERS))
+def test_pgvector_closed_loader_resolves_every_operation(case: str) -> None:
+    from ci.python_retention_owner_contract import validate_owner_context
+    owner = _PGVECTOR_OWNERS[case]
+    tree = ast.parse((_REPO_ROOT / owner).read_bytes())
+    validate_owner_context(owner, tree)
+    _, params, modules = _runner_params(tree, case)
+    fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef)
+              and n.name == CASES[case]["symbol"])
+    calls = [n for n in ast.walk(fn) if isinstance(n, ast.Call)
+             and isinstance(n.func, ast.Attribute)
+             and n.func.attr in {"spec_from_file_location", "module_from_spec", "exec_module"}]
+    assert len(calls) == 3
+    for call in calls:
+        assert file_loader_spec(call, tree, params, _REPO_ROOT, modules) == {
+            (CASES[case]["module_name"], "")}
+
+
+@pytest.mark.parametrize("case", sorted(_PGVECTOR_OWNERS))
+@pytest.mark.parametrize("fault", ["alias", "target", "chain", "context", "function"])
+def test_pgvector_loader_drift_remains_blocking(case: str, fault: str) -> None:
+    from ci.python_retention_owner_contract import validate_owner_context
+    owner = _PGVECTOR_OWNERS[case]
+    source = (_REPO_ROOT / owner).read_text()
+    tree = ast.parse(source)
+    call, params, modules = _runner_params(tree, case)
+    if fault == "context":
+        changed = ast.parse(source + "\nunexpected_binding = True\n")
+        with pytest.raises(ValueError, match="owner context differs"):
+            validate_owner_context(owner, changed)
+        return
+    if fault == "alias":
+        params["runtime_names"] = ["conftest"]
+    elif fault == "target":
+        params["target_sha256"] = "0" * 64
+    elif fault == "chain":
+        params["chain"] = []
+    else:
+        tree = ast.parse(source.replace("spec.loader.exec_module(module)",
+                                        "spec.loader.exec_module(other_module)"))
+        call, params, modules = _runner_params(tree, case)
+    with pytest.raises(ValueError):
+        file_loader_spec(call, tree, params, _REPO_ROOT, modules)

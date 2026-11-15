@@ -15,7 +15,12 @@ from ci.python_retention_owner_caller import SOURCE as CALLER
 from ci.python_retention_owner_arcs import SOURCE as ARCS
 from ci.python_retention_owner_capability import SOURCE as CAPABILITY
 
+from ci.python_retention_owner_pgvector_transport import SOURCE as PGVECTOR_TRANSPORT
+from ci.python_retention_owner_pgvector_discovery import SOURCE as PGVECTOR_DISCOVERY
+
 CONTRACTS = {
+    'src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py': PGVECTOR_TRANSPORT,
+    'src/test/support/python/repomap_test_support/pgvector_prebuilt_discovery_cases.py': PGVECTOR_DISCOVERY,
     "src/test/unit/python/repomap_kg/ingestion_api_bulk/helper_branches.unit.test.py": HELPER,
     "src/test/unit/python/tools/test_iso1_runner.unit.test.py": ISO,
     "src/test/unit/python/tools/scale28_r1_dependency_boundary.unit.test.py": BASE,
