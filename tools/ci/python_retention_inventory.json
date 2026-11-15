@@ -932,6 +932,61 @@
     {
       "admission": "admitted",
       "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-pgdg1.test_owners",
+      "members": [
+        "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py",
+        "src/test/unit/python/tools/pgvector_discovery_boundary.unit.test.py",
+        "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py"
+      ],
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-pgdg1.test_support",
+      "members": [
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_budget_cases.py",
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_discovery_cases.py",
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_export_cases.py",
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_facade_cases.py",
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_launch_cases.py",
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_native_seam_cases.py",
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_recovery_cases.py",
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_runner_cases.py",
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_sandbox_cases.py",
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_stream_cases.py",
+        "src/test/support/python/repomap_test_support/pgvector_prebuilt_test_fixtures.py"
+      ],
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-pgdg1.tools",
+      "members": [
+        "tools/qualify_pgvector_prebuilt.py",
+        "tools/runner_pgvector_archive.py",
+        "tools/runner_pgvector_budget.py",
+        "tools/runner_pgvector_context.py",
+        "tools/runner_pgvector_declaration.py",
+        "tools/runner_pgvector_discovery.py",
+        "tools/runner_pgvector_discovery_capture.py",
+        "tools/runner_pgvector_export.py",
+        "tools/runner_pgvector_lineage.py",
+        "tools/runner_pgvector_prebuilt.py",
+        "tools/runner_pgvector_qualification.py",
+        "tools/runner_pgvector_recovery.py",
+        "tools/runner_pgvector_sandbox.py",
+        "tools/runner_pgvector_transport.py"
+      ],
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
       "id": "cloe.w5-supplement1.test_owners",
       "members": [
         "src/test/int/python/tools/retrieval_supplement_evidence.int.test.py",
@@ -41213,6 +41268,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/int/python/repomap_test_support/resource_deletion_gc.int.test.py",
       "rationale": "First-party integration test owner (gated in CI Staging Gate).",
       "root": "test_owners",
@@ -42511,6 +42575,105 @@
       "maintained_executable": true,
       "path": "src/test/support/python/repomap_test_support/performance_baseline_values.py",
       "rationale": "REVISE30 responsibility helper; original owner and enforcement lineage retained.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_budget_cases.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_discovery_cases.py",
+      "rationale": "ADR0199 exact authenticated discovery, private bounded capture and third-attempt recovery proof; clean profiles and every incumbent debt ceiling retained.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_export_cases.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_facade_cases.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_launch_cases.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_native_seam_cases.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_recovery_cases.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_runner_cases.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_sandbox_cases.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_stream_cases.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/pgvector_prebuilt_test_fixtures.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
       "root": "test_support",
       "status": "active_test_support"
     },
@@ -55181,6 +55344,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/pgvector_discovery_boundary.unit.test.py",
+      "rationale": "ADR0199 exact authenticated discovery, private bounded capture and third-attempt recovery proof; clean profiles and every incumbent debt ceiling retained.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/unit/python/tools/pgvector_host_admission.unit.test.py",
       "rationale": "REPOMAP-PRODUCT6-NAVIGATION32-PGVECTOR-PREFLIGHT-TEARDOWN1 host-side pgvector selector admission before sandbox dispatch unit owner; zero new quality debt.",
       "root": "test_owners",
@@ -55192,6 +55364,15 @@
       "maintained_executable": true,
       "path": "src/test/unit/python/tools/pgvector_materializer.unit.test.py",
       "rationale": "Materialization repair regression owner for verified binary transfer, stage diagnostics and original-error preservation.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
       "root": "test_owners",
       "status": "active_unit_test"
     },
@@ -59267,6 +59448,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_tooling",
       "maintained_executable": true,
+      "path": "tools/qualify_pgvector_prebuilt.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
       "path": "tools/related_source_context.py",
       "rationale": "RELATED-CONTEXT1 optional one-hop caller composition and focused static-extraction fixture evidence; no runtime or quality-policy change.",
       "root": "tools",
@@ -61130,8 +61320,125 @@
       "confidence": 0.95,
       "governing_profile": "clean_tooling",
       "maintained_executable": true,
+      "path": "tools/runner_pgvector_archive.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_budget.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_context.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_declaration.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_discovery.py",
+      "rationale": "ADR0199 exact authenticated discovery, private bounded capture and third-attempt recovery proof; clean profiles and every incumbent debt ceiling retained.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_discovery_capture.py",
+      "rationale": "ADR0199 exact authenticated discovery, private bounded capture and third-attempt recovery proof; clean profiles and every incumbent debt ceiling retained.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_export.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_lineage.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_prebuilt.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
       "path": "tools/runner_pgvector_profile.py",
       "rationale": "Runner profile contract and pinned pgvector 0.8.7 test-source manifest loader for optional integration runs; zero new quality debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_qualification.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_recovery.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_sandbox.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_transport.py",
+      "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
       "root": "tools",
       "status": "active_tool"
     },

@@ -9,6 +9,11 @@ import re
 import subprocess
 from typing import Callable, Mapping
 
+from runner_pgvector_prebuilt import ENV_OFFLINE_PLAN, SDK_IMAGE
+
+PGVECTOR_QUALIFICATION_SDK_IMAGE = SDK_IMAGE
+PGVECTOR_OFFLINE_PLAN_ENV = ENV_OFFLINE_PLAN
+
 
 ENV_ACTIVE = "_REPOMAP_TEST_SANDBOX_ACTIVE"
 ENV_TOKEN = "_REPOMAP_TEST_SANDBOX_TOKEN"

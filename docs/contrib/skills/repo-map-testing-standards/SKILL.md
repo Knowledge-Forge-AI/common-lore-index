@@ -203,17 +203,21 @@ remains `core` with its existing image pin. The `requires_pgvector` marker is
 registered by the runner; core collection reports marked owners as deselected,
 while the selected population fails readiness unless exact pgvector 0.8.7 is
 available. A deselected or uncollected presence owner is not executed evidence.
-The canonical inner sandbox verifies source SHA-256, pinned base identity,
-server/pg_config ABI and platform before materializing one disposable image;
-after removing build dependencies and committing, it validates that exact image
-in a temporary PostgreSQL cluster as the postgres OS user, with network disabled
-and tmpfs data. Bounded readiness and `psql -X -v ON_ERROR_STOP=1` must prove
-`LOAD '$libdir/vector'`, extension creation, actual version 0.8.7, PostgreSQL
-major 16 and self/orthogonal cosine distances 0/1. Standalone `ldd` is not an
-acceptance gate for a backend module. Server diagnostics and exact cleanup are
-retained on failure; publication to tests follows successful smoke and cleanup.
-It reports setup separately from pytest and consumes the exact Engine image ID.
-This test authorization does not admit the extension to production.
+The experimental profile requires the separately authorized offline plan in
+ADR 0199. Its exact PGDG ARM provider is diagnostic only. The former networked
+compiler materializer is retired; absent or invalid plans refuse before SDK
+acquisition. The ordinary core profile and its image pin remain unchanged.
+The sealed cohort verifies the exact cached SDK, physical/native ARM platform,
+whole source inventory, provider/config/ordered-layer identities and write-once
+allocation before import. Only its two exact integration owners may omit the
+otherwise automatic session cluster. Core admission uses sentinel doubles; the
+separate native owner owns the one real extension lifecycle. It verifies native
+dpkg constraints, frozen status, server library/share paths, extension/version,
+synthetic distances/index/rollback and JIT off in an unprivileged, network-disabled
+tmpfs cluster. This is not scientific or production admission. Runtime delivery
+uses bounded hash-verified streams across the two fresh SDK daemons. Failed
+transport, diagnostics, source custody, cleanup or native proof blocks use; no
+implicit pulls, builds, mounts, cache reuse or retries are permitted.
 
 Multiple exact selectors remain ordered after `--`. A pathless `-k` may be
 used for exploration but is not preferred final evidence; pair any retained

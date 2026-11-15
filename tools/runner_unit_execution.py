@@ -69,7 +69,11 @@ def run_selected_suites(
         suites = ("int",)
     else:
         suites = (args.suite,)
-    if "int" in suites and "REPOMAP_TEST_RUNTIME_IMAGE" not in os.environ:
+    offline_owns_runtime = False
+    if "int" in suites:
+        from runner_pgvector_context import offline_pytest_owns_runtime
+        offline_owns_runtime = offline_pytest_owns_runtime(args, forwarded_pytest_args)
+    if "int" in suites and not offline_owns_runtime and "REPOMAP_TEST_RUNTIME_IMAGE" not in os.environ:
         if getattr(args, "smoke_image_reference", None):
             os.environ["REPOMAP_TEST_RUNTIME_IMAGE"] = args.smoke_image_reference
         elif docker_boundary is not None and resource_run is not None:

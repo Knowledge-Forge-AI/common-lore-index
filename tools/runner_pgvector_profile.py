@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from runner_pgvector_prebuilt import provider_facts as verify_pgvector_prebuilt_facts
+
 CORE_PROFILE = "core"
 PGVECTOR_PROFILE = "pgvector"
 SUPPORTED_PROFILES = (CORE_PROFILE, PGVECTOR_PROFILE)
@@ -109,4 +111,5 @@ __all__ = (
     "load_pgvector_source_facts",
     "validate_profile_choice",
     "verify_pgvector_source_facts",
+    "verify_pgvector_prebuilt_facts",
 )
