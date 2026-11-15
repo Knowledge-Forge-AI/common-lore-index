@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "operator_selection": "allocation: infinite",
+    "phase": "CLOE-W5-STAGING1",
+    "schema": "cloe-standing-execution-allocation-v1",
+    "scope": "Accepted roadmap implementation, scoped proof, independent review and milestone staging CI; no new dependency class or scientific/production acceptance."
+  },
+  "ledger_before": {
+    "application_starts": 54,
+    "ci147_application_qualifier_wheel_spend": [
+      0,
+      0,
+      0
+    ],
+    "ci147_result": "source-policy-refused-before-native-jobs",
+    "component_runtime_starts": 25,
+    "previous_attempt": 1,
+    "previous_qualified_campaign": 146,
+    "rust_qualifier_entries": 26,
+    "schema": "cloe-ci148-ledger-before-v1",
+    "wheel_transfers": 54
+  },
+  "reservation": {
+    "application_start": 55,
+    "approval_sha256": "ec64cd6aeb12483ddb5b69ffccbd9d30b884240bb194abe65e36788021de1351",
+    "event_action": "opened",
+    "ledger_before_sha256": "f7001a003a60ee46eda15f8498c9b057810d2c4a20bbff30788aea437ea26d4a",
+    "nonce": "e78e5eaec3b57d4d8f9d5d8f2952c3ec",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 27,
+    "schema": "cloe-ci148-reservation-v1",
+    "wheel_transfers_cumulative": 56,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 148
+  }
+}

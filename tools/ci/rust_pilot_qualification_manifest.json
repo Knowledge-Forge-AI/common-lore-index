@@ -1018,8 +1018,12 @@
         "sha256": "ce39b766909d0cfe525d6c6eb1d339be9fc7bd99532a1f0bf1e81e08f15a2590"
       },
       {
+        "path": "tools/ci/d12_publication_identity.py",
+        "sha256": "7945d9eddb35136e30b280fe0aac54c5e98333065d933a571f155352c44cb43d"
+      },
+      {
         "path": "tools/ci/d12_system_grant.py",
-        "sha256": "701eea3c25e86093bcfb2643b4ab25d6d169bfd7e6f374d3bdcc91400aa3cf1d"
+        "sha256": "c2e56bd62eb79206b76cf48c84ceeced04a762a9298bdd9755a41de660918c24"
       },
       {
         "path": "tools/ci/d12_system_grant_io.py",
@@ -1027,7 +1031,7 @@
       },
       {
         "path": "tools/ci/d12_system_proof_host.py",
-        "sha256": "c68552f9978589181b13825d85e26088c5e6910b5a8101346a5d1f1e9f9ddc49"
+        "sha256": "69f4da5ad68cc62ed2f5a3bdaa8a48d8c680ab70f265a0bf3955cf16356e428c"
       },
       {
         "path": "tools/ci/qualification_rust_accounting.py",
@@ -1082,8 +1086,16 @@
         "sha256": "df616a151d062b4ade001bbd029007b2f414aa22422de63c520895663b850c5f"
       },
       {
+        "path": "tools/runner_pgvector_budget.py",
+        "sha256": "d870ef6f746ae446d8c5d89bc034ebc607c8695f1031d25d5a2d7f6c61b6bb65"
+      },
+      {
+        "path": "tools/runner_pgvector_prebuilt.py",
+        "sha256": "616f1d7348ac21f73eb407e4e64d37a162056c22b663246ebb5dea1dccaffca2"
+      },
+      {
         "path": "tools/test_sandbox_contract.py",
-        "sha256": "c3fa0fb20b11bd49545b2f49bb81fd33868f7819d7d54e13e66a2b6385d4e313"
+        "sha256": "2499ba56d2bef398c73ef32ad42bf36c2e2a9dc53c944ef3767ee511fabb2714"
       },
       {
         "path": "tools/test_sandbox_images.py",
@@ -1343,6 +1355,7 @@
       "tools/ci/d12_hosted_evidence.py",
       "tools/ci/d12_hosted_reports.py",
       "tools/ci/d12_hosted_state.py",
+      "tools/ci/d12_publication_identity.py",
       "tools/ci/d12_system_grant.py",
       "tools/ci/d12_system_grant_io.py",
       "tools/ci/d12_system_proof_host.py",
@@ -1359,6 +1372,8 @@
       "tools/d12_libpq_runtime_probe.py",
       "tools/d12_python_closure.py",
       "tools/native_apt_prerequisites.py",
+      "tools/runner_pgvector_budget.py",
+      "tools/runner_pgvector_prebuilt.py",
       "tools/test_sandbox_contract.py",
       "tools/test_sandbox_images.py",
       "tools/test_sandbox_report.py"

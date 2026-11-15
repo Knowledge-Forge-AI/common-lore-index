@@ -1044,6 +1044,27 @@
     {
       "admission": "admitted",
       "governing_profile": "clean_test_owners",
+      "id": "cloe.w5staging1.test_owners",
+      "members": [
+        "src/test/int/python/repomap_kg/storage/supplement_portable_custody.int.test.py",
+        "src/test/unit/python/tools/ci/d12_publication_identity.unit.test.py"
+      ],
+      "rationale": "ADR0200 closed initial publication admission and connected portable custody proof; inherited debt and cohorts unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5staging1.tools",
+      "members": [
+        "tools/ci/d12_publication_identity.py"
+      ],
+      "rationale": "ADR0200 closed initial publication admission and connected portable custody proof; inherited debt and cohorts unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
       "id": "fix21.int.run25_acquisition_wave",
       "members": [
         "src/test/int/python/repomap_kg/source_ingestion/run25_acquisition_wave.int.test.py"
@@ -41160,6 +41181,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/int/python/repomap_kg/storage/supplement_portable_custody.int.test.py",
+      "rationale": "CLOE-W5-STAGING1 ADR0200 strict initial-publication identity and portable custody regression evidence; zero new debt.",
+      "root": "test_owners",
+      "status": "active_integration_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/int/python/repomap_kg/storage/terraform_summary_readback.int.test.py",
       "rationale": "First-party integration test owner (gated in CI Staging Gate).",
       "root": "test_owners",
@@ -54309,6 +54339,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/ci/d12_publication_identity.unit.test.py",
+      "rationale": "CLOE-W5-STAGING1 ADR0200 strict initial-publication identity and portable custody regression evidence; zero new debt.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/unit/python/tools/ci/d12_system_grant.unit.test.py",
       "rationale": "REPOMAP-PRODUCT6-NAVIGATION47-D12SYSTEM1 ADR 0095 Route B one-use AMD system candidate and diagnostic evidence; strict zero-debt admission.",
       "root": "test_owners",
@@ -58118,6 +58157,15 @@
       "maintained_executable": true,
       "path": "tools/ci/d12_hosted_state.py",
       "rationale": "REPOMAP-PRODUCT6-NAVIGATION46-D12HOSTED4 ADR 0092 bounded JSON report and prepare-refusal state helper; strict zero-debt admission.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/ci/d12_publication_identity.py",
+      "rationale": "CLOE-W5-STAGING1 ADR0200 strict initial-publication identity and portable custody regression evidence; zero new debt.",
       "root": "tools",
       "status": "active_tool"
     },

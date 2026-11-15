@@ -9,6 +9,7 @@ import re
 import subprocess
 from typing import Any, TypeGuard
 
+from ci.d12_publication_identity import publication_transition
 from ci.d12_system_grant import (
     DEFAULT_CANDIDATE_RELPATH,
     DEFAULT_GRANT_RELPATH,
@@ -214,23 +215,7 @@ def validate_host_system_event_and_git(
     ):
         raise D12SystemGrantError("fork or foreign repository pull request refused")
     base_sha, head_sha = base_blk.get("sha"), head_blk.get("sha")
-    before_sha, after_sha = event.get("before"), event.get("after")
-    for sha_label, sha_val in (
-        ("pull_request.base.sha", base_sha),
-        ("pull_request.head.sha", head_sha),
-        ("event.before", before_sha),
-        ("event.after", after_sha),
-    ):
-        if not _is_hex(sha_val, 40):
-            raise D12SystemGrantError(f"{sha_label} must be a 40-hex lowercase string")
-    if base_sha != grant["base"]:
-        raise D12SystemGrantError(f"pull_request.base.sha {base_sha!r} != grant base {grant['base']!r}")
-    if before_sha != grant["before"]:
-        raise D12SystemGrantError(f"event before {before_sha!r} != grant before {grant['before']!r}")
-    if after_sha != head_sha or after_sha == before_sha:
-        raise D12SystemGrantError(
-            "synchronize event after SHA must equal head.sha and advance past before"
-        )
+    _baseline, after_sha = publication_transition(event, grant, base_sha=base_sha, head_sha=head_sha)
     head_commit = _git_rev(repo_root, "HEAD", runner=eff_runner)
     tree_sha = _git_rev(repo_root, "HEAD^{tree}", runner=eff_runner)
     base_parent = _git_rev(repo_root, "HEAD^1", runner=eff_runner)
