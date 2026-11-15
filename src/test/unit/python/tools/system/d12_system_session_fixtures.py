@@ -10,7 +10,7 @@ from typing import Any
 
 from ci.d12_hosted_evidence import validate_expected_candidate_record
 from ci.d12_system_grant import (
-    DEFAULT_CANDIDATE_RELPATH, DEFAULT_GRANT_RELPATH, build_system_admission_proof,
+    DEFAULT_CANDIDATE_RELPATH, DEFAULT_GRANT_RELPATH, EXPECTED_BASE_SHA, build_system_admission_proof,
     load_and_validate_system_build_grant, write_system_admission_proof,
 )
 from repomap_test_support.d12_recipe import frozen_identity
@@ -21,7 +21,7 @@ from tools.system.config import SystemTestConfig
 from tools.system.d12_system_session import D12SystemSession
 
 REPO_ROOT = Path(__file__).resolve().parents[6]
-BASE_SHA = "5ad00d162ad8a04430874275246a53227578c533"
+BASE_SHA = EXPECTED_BASE_SHA
 
 
 def _active_run_id() -> str:
@@ -45,7 +45,7 @@ def _make_valid_proof(tmp_path: Path) -> tuple[Path, dict[str, Any]]:
     grant, grant_sha = load_and_validate_system_build_grant(
         grant_path, expected_candidate=expected_cand, frozen_identity=dict(expected_cand["d12_context"])
     )
-    (ev := tmp_path / "event.json").write_text(json.dumps({"number": 23, "draft": True}), encoding="utf-8")
+    (ev := tmp_path / "event.json").write_text(json.dumps({"number": grant["pull_request"], "draft": True}), encoding="utf-8")
     proof = build_system_admission_proof(
         grant=grant, grant_sha256=grant_sha, expected_candidate_sha256=cand_sha,
         raw_event_sha256=hashlib.sha256(ev.read_bytes()).hexdigest(),
@@ -106,9 +106,10 @@ def _matching_preflight_report(d12_ctx: dict[str, Any]) -> dict[str, Any]:
 
 
 def _make_config(report_dir: Path, run_id: str | None = None) -> SystemTestConfig:
+    grant, _ = load_and_validate_system_build_grant(REPO_ROOT / DEFAULT_GRANT_RELPATH)
     return SystemTestConfig.create(
         timeout_seconds=1500, report_dir=report_dir, candidate_tree_sha="b" * 40,
-        run_id=run_id or _active_run_id(), gate_kind="main-system", approval_id="pr-23", pr_number="23",
+        run_id=run_id or _active_run_id(), gate_kind="main-system", approval_id=f"pr-{grant['pull_request']}", pr_number=str(grant["pull_request"]),
         repository="Knowledge-Forge-AI/common-lore-index", approved_base_branch="main", approved_base_sha=BASE_SHA,
         approved_head_branch="staging", approved_head_sha="d" * 40, candidate_commit_sha="a" * 40,
         candidate_base_parent=BASE_SHA, candidate_head_parent="d" * 40, execution_mode="hosted_qualification",
@@ -121,8 +122,9 @@ def _establish(
     proof_file, d12_ctx = _make_valid_proof(tmp_path)
     overrides.setdefault("expected_candidate_path", tmp_path / "ci72-candidate.json")
     overrides.setdefault("grant_path", tmp_path / "unit-grant.json")
+    overrides.setdefault("run_git_fn", _fake_git)
     return D12SystemSession.establish(
         repo_root=REPO_ROOT, config=_make_config(report_dir or (tmp_path / "report")),
         proof_json_arg=str(proof_file), target_arch_fn=lambda: "amd64", tree_sha_fn=lambda _r: "b" * 40,
-        frozen_identity_fn=lambda _r, _p: dict(d12_ctx), run_git_fn=_fake_git, **overrides,
+        frozen_identity_fn=lambda _r, _p: dict(d12_ctx), **overrides,
     ), d12_ctx

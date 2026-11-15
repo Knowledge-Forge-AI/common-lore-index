@@ -158,7 +158,7 @@ jobs:
       - name: Checkout merge candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Bind candidate merge identity

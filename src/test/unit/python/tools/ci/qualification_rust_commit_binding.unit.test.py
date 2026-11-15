@@ -70,3 +70,19 @@ def test_sealed_candidate_tree_mismatch_refuses(candidate: tuple[Path, dict[str,
     root, manifest, head, _tree = candidate
     with pytest.raises(PrerequisiteRefused, match="candidate_binding_mismatch"):
         _bind_candidate(root, manifest, head, "0" * 40, root / "manifest.json")
+
+
+def test_older_checkpoint_refuses_shallow_history_and_binds_after_restoration(
+        candidate: tuple[Path, dict[str, Any], str, str], tmp_path: Path) -> None:
+    root, manifest, _head, _tree = candidate
+    for index in range(3):
+        _git(root, "commit", "--allow-empty", "-m", f"Advance fixture {index}")
+    head, tree = _git(root, "rev-parse", "HEAD"), _git(root, "rev-parse", "HEAD^{tree}")
+    clone = tmp_path / "shallow"
+    _git(root, "clone", "--depth=2", root.as_uri(), str(clone))
+    assert _git(clone, "rev-parse", "--is-shallow-repository") == "true"
+    with pytest.raises(PrerequisiteRefused, match="git_evidence_unavailable"):
+        _bind_candidate(clone, manifest, head, tree, clone / "manifest.json")
+    _git(clone, "fetch", "--unshallow", "origin")
+    assert _git(clone, "rev-parse", "--is-shallow-repository") == "false"
+    _bind_candidate(clone, manifest, head, tree, clone / "manifest.json")

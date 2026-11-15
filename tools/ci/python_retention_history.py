@@ -276,6 +276,11 @@ def validate_path_history(
     }
     for source in set(by_old) - referenced:
         if source not in current and source not in old_paths:
+            # After publication the comparison inventory may contain only the
+            # renamed owner. Its exact sealed successor is still required;
+            # ordinary absent sources retain the predecessor-evidence refusal.
+            if namespace_successors.get(source) in current:
+                continue
             raise HistoryValidationError(
                 f"lineage source lacks predecessor evidence: {source}"
             )

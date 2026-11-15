@@ -9,7 +9,8 @@ import pytest
 from ci.d12_publication_identity import publication_transition
 from ci.d12_system_grant import (
     DEFAULT_GRANT_RELPATH, D12SystemGrantError, SPENT_CI146_NONCE,
-    SPENT_CI146_RESERVATION_SHA256, validate_system_build_grant,
+    SPENT_CI146_RESERVATION_SHA256, SPENT_CI148_NONCE, SPENT_CI148_RESERVATION_SHA256,
+    build_system_admission_proof, validate_system_admission_proof, validate_system_build_grant,
 )
 
 BASE, HEAD, BEFORE = "1" * 40, "2" * 40, "3" * 40
@@ -57,9 +58,33 @@ def test_current_grant_refuses_previous_schema_and_ci146_reuse() -> None:
     grant = json.loads((root / DEFAULT_GRANT_RELPATH).read_bytes())
     assert validate_system_build_grant(grant) == grant
     for changes in (
-        {"schema": "repomap-d12-system-build-grant-v1"}, {"event_action": "synchronize"},
+        {"schema": "repomap-d12-system-build-grant-v1"}, {"event_action": "opened"},
         {"nonce": SPENT_CI146_NONCE}, {"reservation_sha256": SPENT_CI146_RESERVATION_SHA256},
-        {"maximum_total": 54}, {"maximum_total": 56}, {"pull_request": True},
+        {"maximum_total": 55}, {"maximum_total": 57}, {"pull_request": True},
     ):
         with pytest.raises(D12SystemGrantError):
             validate_system_build_grant(grant | changes)
+
+
+def test_synchronize_refuses_the_initial_publication_baseline() -> None:
+    with pytest.raises(D12SystemGrantError, match="before/base must be distinct"):
+        publication_transition({"action": "synchronize", "before": BASE, "after": HEAD},
+                               {**_grant(), "event_action": "synchronize"}, base_sha=BASE, head_sha=HEAD)
+
+
+def test_spent_current_and_prior_identities_are_refused_in_both_records() -> None:
+    root = Path(__file__).resolve().parents[6]
+    grant = json.loads((root / DEFAULT_GRANT_RELPATH).read_bytes())
+    proof = build_system_admission_proof(
+        grant=grant, grant_sha256="1" * 64, expected_candidate_sha256="2" * 64,
+        raw_event_sha256="3" * 64, after=HEAD, candidate_sha="4" * 40, candidate_tree="5" * 40,
+        candidate_base_parent=grant["base"], candidate_head_parent=HEAD, run_id="123",
+        native_host={"runner_os": "Linux", "runner_arch": "X64", "host_kernel": "Linux", "host_arch": "x86_64"})
+    assert validate_system_admission_proof(proof) == proof
+    for key, value in (("nonce", SPENT_CI146_NONCE), ("nonce", SPENT_CI148_NONCE),
+                       ("reservation_sha256", SPENT_CI146_RESERVATION_SHA256),
+                       ("reservation_sha256", SPENT_CI148_RESERVATION_SHA256)):
+        with pytest.raises(D12SystemGrantError, match="reuses spent"):
+            validate_system_build_grant(grant | {key: value})
+        with pytest.raises(D12SystemGrantError, match="reuses spent"):
+            validate_system_admission_proof(proof | {key: value})

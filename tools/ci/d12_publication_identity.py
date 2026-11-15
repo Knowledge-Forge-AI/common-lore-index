@@ -44,6 +44,8 @@ def publication_transition(
             raise D12SystemGrantError("initial publication baseline must equal base")
         after = head_sha
     elif action == "synchronize":
+        if before == base_sha:
+            raise D12SystemGrantError("synchronize before/base must be distinct")
         for key in ("before", "after"):
             if not is_hex40(event.get(key)):
                 raise D12SystemGrantError(f"event.{key} must be a 40-hex lowercase string")

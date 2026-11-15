@@ -65,6 +65,11 @@ def validate_rust_qualification_job(workflow: Workflow) -> list[str]:
     if job.get("needs") != list(D12_NATIVE_AMD64_NEEDS):
         errors.append(prefix + "needs changed")
     steps = workflow.job_steps(D12_NATIVE_AMD64_JOB_ID)
+    checkouts = [step for step in steps if step.get("uses") == PINNED_PUBLIC_ACTIONS["checkout"]]
+    config = checkouts[0].get("with") if len(checkouts) == 1 else None
+    depth = config.get("fetch-depth") if isinstance(config, Mapping) else None
+    if type(depth) is not int or depth != 0:
+        errors.append(prefix + "requires full checkpoint history from one pinned checkout")
     runs = [i for i, step in enumerate(steps) if step.get("name") == RUST_RUN_NAME]
     uploads = [i for i, step in enumerate(steps) if step.get("name") == RUST_UPLOAD_NAME]
     d12 = [i for i, step in enumerate(steps) if step.get("name") == D12_UPLOAD_NAME]

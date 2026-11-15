@@ -1019,11 +1019,11 @@
       },
       {
         "path": "tools/ci/d12_publication_identity.py",
-        "sha256": "7945d9eddb35136e30b280fe0aac54c5e98333065d933a571f155352c44cb43d"
+        "sha256": "71f91ca016f0043c1f88e970ae8c2e13eb0e212667c41639daa6ed170d72c033"
       },
       {
         "path": "tools/ci/d12_system_grant.py",
-        "sha256": "c2e56bd62eb79206b76cf48c84ceeced04a762a9298bdd9755a41de660918c24"
+        "sha256": "5010f3a561352d4ce5898aefe181fadb74eba5329fde6b012468edfe82601ddd"
       },
       {
         "path": "tools/ci/d12_system_grant_io.py",

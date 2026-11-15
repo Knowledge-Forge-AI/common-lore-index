@@ -45,7 +45,9 @@ def _build_fixture_proof(
     event_file.write_text(
         json.dumps(
             {
-                "action": "opened",
+                "action": "synchronize",
+                "before": grant["before"],
+                "after": "d" * 40,
                                 "number": 27,
                 "pull_request": {
                     "number": 27,
@@ -279,9 +281,9 @@ def test_host_event_and_git_requires_exact_draft_true_and_strict_env_event_facts
         ({k: v for k, v in valid_event.items() if k != "number"}, "number"),
         ({**valid_event, "number": True}, "number"),
         ({**valid_event, "number": 14}, "number"),
-        ({**valid_event, "before": None}, "before/after"),
-        ({**valid_event, "after": None}, "before/after"),
-        ({**valid_event, "action": "synchronize"}, "action"),
+        ({**valid_event, "before": None}, "event\\.before"),
+        ({**valid_event, "after": None}, "event\\.after"),
+        ({**valid_event, "action": "opened"}, "action"),
         ({**valid_event, "number": 13}, "number"),
         (
             {
