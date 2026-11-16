@@ -237,3 +237,47 @@ def test_type_error_rendering_preserves_original_validation_failure(monkeypatch,
     assert "StagingReportValidationError" in capsys.readouterr().err
     assert report["legs"]["M"]["records"] and report["legs"]["A"]["records"]
     assert all(session.cleaned for session in sessions)
+
+
+@pytest.mark.parametrize("selected", [False, True])
+def test_source_read_receipt_export_follows_final_source_check(monkeypatch, tmp_path, selected):
+    import runner_pgvector_context as offline
+    events = []
+    receipt = {"schema": "synthetic-plan-bound-receipt", "consumed_reads": 7,
+               "bookkeeping_only": True, "execution_authorized": False}
+
+    def identities():
+        while True:
+            events.append("source")
+            yield IDENTITY.copy()
+
+    def final_receipt(*, collect_only=False):
+        assert collect_only is False
+        events.append("receipt")
+        return receipt if selected else None
+
+    monkeypatch.setattr(offline, "source_read_receipt_for_report", final_receipt)
+    result, path, _, _, sessions = _execute(monkeypatch, tmp_path, source_values=identities())
+    assert result == 0 and all(session.cleaned for session in sessions)
+    assert events[-1] == "receipt" and events.count("receipt") == 1
+    exported = path.parents[2] / "offline-source-read-budget.json"
+    if selected:
+        assert json.loads(exported.read_bytes()) == receipt
+        assert exported.stat().st_mode & 0o777 == 0o600
+    else:
+        assert not exported.exists()
+
+
+def test_source_read_receipt_failure_blocks_an_otherwise_passing_run(monkeypatch, tmp_path):
+    import runner_pgvector_context as offline
+
+    def refusal(*, collect_only=False):
+        raise RuntimeError("synthetic-counter-refusal")
+
+    monkeypatch.setattr(offline, "source_read_receipt_for_report", refusal)
+    result, path, order, _, sessions = _execute(monkeypatch, tmp_path)
+    report = load_report(path)
+    assert result == 1 and order == ["collect", "M", "A"]
+    assert all(session.cleaned for session in sessions)
+    assert any("report persistence" in error for error in report["errors"])
+    assert not (path.parents[2] / "offline-source-read-budget.json").exists()

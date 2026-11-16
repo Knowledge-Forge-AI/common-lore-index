@@ -7,7 +7,7 @@ import subprocess
 from collections.abc import Callable, Sequence
 
 from runner_pgvector_profile import CORE_PROFILE, PGVECTOR_PROFILE, validate_profile_choice
-from runner_pgvector_sandbox import admit_inner
+from runner_pgvector_sandbox import admit_inner, admit_study_inner
 
 
 
@@ -122,7 +122,18 @@ def _materialize_inner_pgvector_if_requested(
         raise RuntimeError("upstream-source materialization is retired for this profile")
     setup = _SetupCommands(inner_env, runner_fn)
     try:
-        report = admit_inner(test_argv, inner_env, setup.execute)
+        from runner_pgvector_context import load_inner_plan
+        role = load_inner_plan(inner_env)["role"]
+        if role == "study":
+            admit = admit_study_inner
+        elif role == "proof":
+            from runner_pgvector_sandbox import admit_proof_inner
+            admit = admit_proof_inner
+        else:
+            if role != "native":
+                raise RuntimeError("pgvector profile requires native, proof or study role")
+            admit = admit_inner
+        report = admit(test_argv, inner_env, setup.execute)
         print(json.dumps(report, sort_keys=True), flush=True)
         return report
     except BaseException as error:

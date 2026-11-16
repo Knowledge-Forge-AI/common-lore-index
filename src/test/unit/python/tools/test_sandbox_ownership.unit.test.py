@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import threading
 from typing import cast
 from unittest.mock import Mock
 
@@ -14,12 +15,28 @@ import pytest
 
 import test_sandbox as sandbox
 import test_sandbox_ownership as ownership
+from retrieval_supplement_ownership_wire import decode_control, decode_receipt, encode_control, scope_sha256
+from retrieval_supplement_study_contracts import SDK_IMAGE_SHA256, STUDY_SELECTOR
+from repomap_test_support.test_scratch import short_test_directory
 
 
 def control(root: Path) -> dict:
     return {"schema": ownership.CONTROL_SCHEMA, "challenge": "a" * 64,
             "pid": os.getpid(), "birth": 123.5, "source_identity": "sha256:" + "b" * 64,
             "source_root": str(root), "argv": ["--suite", "int"], "sdk_image_id": "sha256:" + "d" * 64}
+
+
+def study_argv() -> list[str]:
+    return ["--suite", "int", "--jobs", "1", "--no-coverage", "--pg-container-port", "55433",
+        "--pg-test-profile", "pgvector", "--report-dir", "/reports/study", "--", "-s", STUDY_SELECTOR]
+
+
+def compact_control(root: Path) -> tuple[dict[str, str], bytes]:
+    source_identity = "sha256:" + "b" * 64
+    sdk_image_id = SDK_IMAGE_SHA256
+    scope = scope_sha256(study_argv(), str(root), source_identity, sdk_image_id)
+    return {ownership.SOURCE_IDENTITY_ENV: source_identity, ownership.SDK_IMAGE_ID_ENV: sdk_image_id}, encode_control(
+        "a" * 64, os.getpid(), 123.5, scope)
 
 
 def close(fd: int) -> None:
@@ -30,37 +47,82 @@ def close(fd: int) -> None:
 
 
 @pytest.fixture
-def channel(tmp_path: Path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    control_read, control_write = os.pipe()
-    receipt_read, receipt_write = os.pipe()
-    monkeypatch.setenv(ownership.CONTROL_FD_ENV, str(control_read))
-    monkeypatch.setenv(ownership.RECEIPT_FD_ENV, str(receipt_write))
-    try:
-        yield tmp_path, control_read, control_write, receipt_read, receipt_write
-    finally:
-        for fd in (control_read, control_write, receipt_read, receipt_write):
-            close(fd)
+def channel(monkeypatch):
+    with short_test_directory("ownership", ".", maximum_path_bytes=104) as root, monkeypatch.context() as patch:
+        patch.chdir(root)
+        control_read, control_write = os.pipe()
+        receipt_read, receipt_write = os.pipe()
+        patch.setenv(ownership.CONTROL_FD_ENV, str(control_read))
+        patch.setenv(ownership.RECEIPT_FD_ENV, str(receipt_write))
+        try:
+            yield root, control_read, control_write, receipt_read, receipt_write
+        finally:
+            for fd in (control_read, control_write, receipt_read, receipt_write):
+                close(fd)
+
+
+def write_control(fd: int, raw: bytes, *, close_sender: bool = True) -> None:
+    assert len(raw) <= 512, "legacy fixture control must fit the minimum atomic pipe bound"
+    os.set_blocking(fd, False)
+    assert os.write(fd, raw) == len(raw)
+    if close_sender:
+        os.close(fd)
 
 
 def test_real_pipe_reports_actual_identity_once_and_closes_host_channel(channel):
     root, reader, writer, output, endpoint = channel
     value = control(root)
-    os.write(writer, ownership.encode_frame(value))
-    os.close(writer)
+    write_control(writer, ownership.encode_frame(value))
     reporter = ownership.prepare_ownership_reporter(value["argv"], root)
     assert reporter is not None and not os.get_inheritable(endpoint)
     assert all(name not in os.environ for name in ownership.CHANNEL_ENV)
     with pytest.raises(OSError):
         os.fstat(reader)
+    result: list[bytes] = []
+
+    def drain() -> None:
+        os.set_blocking(output, True)
+        raw = bytearray()
+        while chunk := os.read(output, 4096):
+            raw.extend(chunk)
+        result.append(bytes(raw))
+
+    thread = threading.Thread(target=drain)
+    thread.start()
     reporter("c" * 64, "sha256:" + "d" * 64, "e" * 64)
-    receipt = ownership.decode_frame(ownership.read_frame_fd(output), receipt=True)
+    thread.join(timeout=2)
+    assert not thread.is_alive() and len(result) == 1
+    receipt = ownership.decode_frame(result[0], receipt=True)
     assert receipt == dict(value, schema=ownership.RECEIPT_SCHEMA, cid="c" * 64,
                            sdk_image_id="sha256:" + "d" * 64,
                            marker_sha256="sha256:" + hashlib.sha256(("e" * 64).encode()).hexdigest())
     assert reporter.spent and reporter.fd == -1
     with pytest.raises(RuntimeError, match="already spent"):
         reporter("c" * 64, "sha256:" + "d" * 64, "e" * 64)
+
+
+def test_compact_study_receipt_binds_scope_and_stays_below_atomic_pipe_limit(channel, monkeypatch):
+    root, _, writer, output, _ = channel
+    environment, raw = compact_control(root)
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+    write_control(writer, raw)
+    reporter = ownership.prepare_ownership_reporter(study_argv(), root)
+    assert reporter is not None and reporter.compact_scope_sha256 is not None
+    reporter("c" * 64, SDK_IMAGE_SHA256, "e" * 64)
+    raw_receipt = ownership.read_frame_fd(output)
+    receipt = decode_receipt(raw_receipt)
+    assert len(raw_receipt) <= ownership.MAX_WIRE_BYTES
+    assert receipt["scope_sha256"] == reporter.compact_scope_sha256
+    assert receipt["challenge"] == "a" * 64
+    assert receipt["sdk_image_id"] == SDK_IMAGE_SHA256
+
+
+@pytest.mark.parametrize("raw", [b"", b"x" * 481,
+    b'{"schema":"cloe-study-host-control-v2","schema":"other"}'])
+def test_compact_control_rejects_partial_oversized_or_duplicate_wire(raw):
+    with pytest.raises(ValueError):
+        decode_control(raw)
 
 
 @pytest.mark.parametrize("field,value", [("pid", True), ("pid", 0), ("birth", float("inf")),
@@ -90,8 +152,7 @@ def test_host_mismatch_closes_receipt_without_emitting(channel, change):
         value["source_root"] = str(root / "other")
     else:
         value["argv"] += ["--sandbox"]
-    os.write(writer, json.dumps(value).encode())
-    os.close(writer)
+    write_control(writer, json.dumps(value).encode())
     with pytest.raises(RuntimeError):
         ownership.prepare_ownership_reporter(["--suite", "int"], root)
     assert os.read(output, 1) == b""
@@ -131,7 +192,7 @@ def test_invalid_receipt_descriptor_is_neutralized_before_refusal(tmp_path, monk
 
 def test_control_sender_must_close_even_after_complete_frame(channel):
     root, _, writer, output, _ = channel
-    os.write(writer, ownership.encode_frame(control(root)))
+    write_control(writer, ownership.encode_frame(control(root)), close_sender=False)
     with pytest.raises(RuntimeError, match="not closed"):
         ownership.prepare_ownership_reporter(["--suite", "int"], root)
     assert os.read(output, 1) == b""
@@ -139,8 +200,7 @@ def test_control_sender_must_close_even_after_complete_frame(channel):
 
 def test_receipt_endpoint_and_configuration_do_not_cross_exec(channel):
     root, _, writer, _, endpoint = channel
-    os.write(writer, ownership.encode_frame(control(root)))
-    os.close(writer)
+    write_control(writer, ownership.encode_frame(control(root)))
     reporter = ownership.prepare_ownership_reporter(["--suite", "int"], root)
     assert reporter is not None
     try:

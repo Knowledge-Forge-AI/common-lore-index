@@ -16,6 +16,7 @@ from ci.python_retention_dynamic_recipes import (
     fingerprint, guarded_symbol_import, literal_module_entry,
 )
 from ci.python_retention_dynamic_native_guest import external_native_guest_import
+from ci.python_retention_dynamic_supplement_guest import supplement_native_guest_import
 from ci.python_retention_dynamic_substitution import optional_import_substitution
 from ci.python_retention_owner_contract import validate_owner_context
 
@@ -105,6 +106,13 @@ def validate_boundary(root: Path, candidates: set[str], graph: Mapping[str, Any]
         if not isinstance(nodes[0], ast.Call):
             raise ValueError("native guest recipe requires a call")
         required = external_native_guest_import(
+            nodes[0], tree, record["parameters"], root, modules,
+            record=record, active_records=active_records,
+        )
+    elif record["recipe"] == "supplement_native_guest_import":
+        if not isinstance(nodes[0], ast.Call):
+            raise ValueError("supplement guest recipe requires a call")
+        required = supplement_native_guest_import(
             nodes[0], tree, record["parameters"], root, modules,
             record=record, active_records=active_records,
         )

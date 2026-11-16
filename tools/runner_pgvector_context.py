@@ -10,18 +10,41 @@ import subprocess
 import sys
 from typing import Any, cast, Callable, Mapping
 
-from runner_pgvector_budget import INITIAL_CAPS, RECOVERY2_CAPS, Allocation, CAPS, MAX_ARCHIVE, private_file, refuse
+from runner_pgvector_budget import (
+    CAPS, INITIAL_CAPS, MAX_ARCHIVE, PROOF_CAPS, RECOVERY2_CAPS, STUDY_CAPS,
+    Allocation, private_file, refuse,
+)
+from retrieval_supplement_study_contracts import (
+    STUDY_INNER_PLAN_SCHEMA, STUDY_PHASE, STUDY_PLAN_SCHEMA, STUDY_SELECTOR,
+)
 from runner_pgvector_archive import runtime_config_for_diff_id
 from runner_pgvector_prebuilt import (
     BASE_CONFIG, ENV_OFFLINE_PLAN, INNER_PLAN, OWNER_VALUE, PROVIDER_SHA256, SDK_IMAGE,
     digest, json_bytes, provider_facts, read_regular, recipe_digest, safe_path, strict_object,
 )
+from runner_pgvector_supplement_proof import (
+    PROOF_INNER_SCHEMA, PROOF_ROLE, PROOF_SCHEMA, PROOF_SELECTOR,
+    forwarded_selector_matches, validate_proof_cohort, validate_proof_plan,
+)
+from offline_qualification_checkout import MAX_PLAN, verify_checkout
 
 CORE_SELECTOR = "src/test/int/python/repomap_test_support/pgvector_admission.int.test.py"
 NATIVE_SELECTOR = "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py"
 PLAN_SCHEMA = "cloe-pgvector-offline-plan-v1"
-MAX_PLAN = 2 * 1024**2
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
+
+
+def _selector_for_role(role: str) -> str:
+    if role == "core":
+        return CORE_SELECTOR
+    if role == "native":
+        return NATIVE_SELECTOR
+    if role == "study":
+        return STUDY_SELECTOR
+    if role == PROOF_ROLE:
+        return PROOF_SELECTOR
+    refuse(False, "unknown offline cohort role")
+    raise AssertionError("unreachable")
 
 
 def require_native_host(runner: Callable[..., subprocess.CompletedProcess[str]] | None = None) -> None:
@@ -34,6 +57,13 @@ def require_native_host(runner: Callable[..., subprocess.CompletedProcess[str]] 
 
 
 def validate_cohort(argv: list[str], role: str) -> None:
+    if role == PROOF_ROLE:
+        validate_proof_cohort(argv)
+        return
+    if role == "study":
+        from runner_pgvector_study import validate_study_cohort
+        validate_study_cohort(argv)
+        return
     refuse(role in {"core", "native"} and argv.count("--") == 1, "cohort role/separator")
     separator = argv.index("--")
     expected = CORE_SELECTOR if role == "core" else NATIVE_SELECTOR
@@ -64,28 +94,33 @@ def validate_cohort(argv: list[str], role: str) -> None:
                "native receipt report directory required")
 
 
-def verify_checkout(root: Path, expected: dict[str, Any], head: str) -> None:
-    def git(*args: str) -> bytes:
-        result = subprocess.run(["git", "-c", "safe.directory=" + str(root.resolve()), *args], cwd=root, capture_output=True, check=False,
-                                timeout=30, env=os.environ | {"GIT_OPTIONAL_LOCKS": "0"})
-        refuse(result.returncode == 0 and len(result.stdout) <= MAX_PLAN, "source inventory command")
-        return result.stdout
-    refuse(git("rev-parse", "HEAD").decode().strip() == head, "source HEAD drift")
-    names = {name.decode() for name in git("ls-files", "--cached", "--others", "--exclude-standard", "-z")
-             .split(b"\0") if name}
-    refuse(names == set(expected), "source inventory drift")
-    for name, row in expected.items():
-        path = root / safe_path(name)
-        if "symlink" in row:
-            refuse(set(row) == {"symlink"} and path.is_symlink()
-                   and os.readlink(path) == row["symlink"], "source link drift")
-        else:
-            refuse(set(row) == {"sha256", "mode"} and not path.is_symlink()
-                   and path.stat().st_mode & 0o777 == row["mode"]
-                   and digest(read_regular(path, 8 * 1024**2)) == row["sha256"], "source content drift")
+def _validate_study_plan(plan: dict[str, Any]) -> None:
+    from runner_pgvector_study import validate_study_runner_plan
+    validate_study_runner_plan(plan)
+    refuse(plan.get("provider_sha256") == PROVIDER_SHA256 and plan.get("sdk_image") == SDK_IMAGE,
+           "study plan provider/SDK identity")
+    for receipt_key in ("review1_receipt_sha256", "operator_decision_sha256"):
+        raw_val = str(plan.get(receipt_key, ""))
+        hex_val = raw_val[7:] if raw_val.startswith("sha256:") else raw_val
+        refuse(_SHA.fullmatch(hex_val) is not None, "study authority receipt bindings")
+    derived = plan.get("derived")
+    refuse(isinstance(derived, dict) and derived.get("base_config") == BASE_CONFIG,
+           "study derived base identity")
+    derived = cast(dict[str, Any], derived)
+    runtime = derived.get("runtime_config_document")
+    refuse(isinstance(runtime, dict)
+           and derived.get("runtime_config") == "sha256:" + digest(json_bytes(runtime)),
+           "study derived config identity")
 
 
 def validate_plan(plan: dict[str, Any], *, expected_caps: Mapping[str, int] = CAPS) -> None:
+    if plan.get("schema") in {PROOF_SCHEMA, PROOF_INNER_SCHEMA}:
+        validate_proof_plan(plan)
+        return
+    if plan.get("schema") in {STUDY_PLAN_SCHEMA, STUDY_INNER_PLAN_SCHEMA}:
+        _validate_study_plan(plan)
+        return
+    refuse(plan.get("role") != "study", "study role requires study schema")
     refuse(expected_caps in (CAPS, RECOVERY2_CAPS, INITIAL_CAPS), "unknown plan caps version")
     attempt = plan.get("core_attempt", 1)
     allowed = (1, 3) if expected_caps == CAPS else ((1, 2) if expected_caps == RECOVERY2_CAPS else (1,))
@@ -165,7 +200,13 @@ class OfflineContext:
         refuse(digest(read_regular(self.plan_path, MAX_PLAN)) == self.raw_sha256, "plan changed")
 
     def allocation(self) -> Allocation:
-        return Allocation(Path(self.plan["allocation_path"]))
+        if self.plan.get("schema") == STUDY_PLAN_SCHEMA:
+            caps = STUDY_CAPS
+        elif self.plan.get("schema") in {PROOF_SCHEMA, PROOF_INNER_SCHEMA}:
+            caps = PROOF_CAPS
+        else:
+            caps = CAPS
+        return Allocation(Path(self.plan["allocation_path"]), caps)
 
 
 def _host_context(argv: list[str], root: Path,
@@ -179,8 +220,17 @@ def _host_context(argv: list[str], root: Path,
     private_file(path)
     raw = read_regular(path, MAX_PLAN)
     plan = strict_object(raw)
+    refuse(plan.get("schema") not in {STUDY_INNER_PLAN_SCHEMA, PROOF_INNER_SCHEMA},
+           "inner plan cannot authorize host dispatch")
     validate_plan(plan)
     validate_cohort(argv, plan["role"])
+    if plan["role"] in {"study", PROOF_ROLE}:
+        count = sum((root / safe_path(name)).lstat().st_size for name, row in plan["candidate_snapshot"].items()
+                    if "symlink" not in row)
+        refuse(0 < count <= 128 * 1024**2, "new cohort source byte bound")
+        caps = STUDY_CAPS if plan["role"] == "study" else PROOF_CAPS
+        with Allocation(Path(plan["allocation_path"]), caps).session() as meter:
+            meter.charge("read_bytes", count + MAX_PLAN)
     verify_checkout(root, plan["candidate_snapshot"], plan["candidate_head"])
     archive = plan.get("archive")
     refuse(isinstance(archive, dict) and type(archive.get("bytes")) is int
@@ -193,6 +243,10 @@ def _host_context(argv: list[str], root: Path,
            and Path(plan["allocation_path"]).parent == path.parent, "nonlocal offline resources")
     if plan["role"] == "core":
         refuse(Path(plan["export_path"]).parent == path.parent, "nonlocal runtime export")
+    if plan["role"] == "study":
+        from retrieval_supplement_study_plan import require_reservation_admitted_for_runner
+        private_file(Path(plan["reservation_path"]))
+        require_reservation_admitted_for_runner(plan, plan_path=path)
     return OfflineContext(path, plan, digest(raw), root)
 
 
@@ -212,6 +266,9 @@ def load_inner_plan(environment: Mapping[str, str]) -> dict[str, Any]:
     validate_plan(plan)
     from test_sandbox import active_sandbox
     refuse(active_sandbox(environment), "unauthenticated offline inner sandbox")
+    if plan["role"] in {"study", PROOF_ROLE}:
+        from retrieval_supplement_inner_reads import reserve_inner_source_verification
+        reserve_inner_source_verification(plan, Path("/workspace"))
     verify_checkout(Path("/workspace"), plan["candidate_snapshot"], plan["candidate_head"])
     return plan
 
@@ -235,18 +292,59 @@ def offline_plan_requested(environment: Mapping[str, str]) -> bool:
     raise RuntimeError("pgvector prebuilt refused: offline authority lost")
 
 
+def sandbox_scratch_bytes(environment: Mapping[str, str]) -> int:
+    """Recognize the fixed bounded mount only from a sealed inner plan.
+
+    Capacity checkpoints do not rehash the whole source or reserve another
+    source-verification slot. Entry/discovery retain that separate ownership.
+    This recognizer revalidates private plan bytes and sandbox authentication
+    on every call; ambient flags cannot supply a size or measurement path.
+    """
+    if not offline_plan_requested(environment):
+        return 8 * 1024**3
+    from test_sandbox import active_sandbox
+    refuse(environment.get(ENV_OFFLINE_PLAN) == INNER_PLAN
+           and active_sandbox(environment), "scratch profile requires inner sandbox")
+    path = Path(INNER_PLAN)
+    private_file(path)
+    plan = strict_object(read_regular(path, MAX_PLAN))
+    validate_plan(plan)
+    if plan.get("role") in {"study", PROOF_ROLE}:
+        refuse(plan.get("schema") in {STUDY_INNER_PLAN_SCHEMA, PROOF_INNER_SCHEMA},
+               "scratch profile requires sealed inner plan")
+        return 2 * 1024**3
+    return 8 * 1024**3
+
+
+def source_read_receipt_for_report(*, collect_only: bool = False) -> dict[str, Any] | None:
+    if collect_only or not os.environ.get("REPOMAP_TEST_PHASE", "").startswith(STUDY_PHASE):
+        return None
+    if not offline_plan_requested(os.environ):
+        return None
+    plan = load_inner_plan(os.environ)
+    if plan["role"] not in {"study", "proof"}:
+        return None
+    from retrieval_supplement_inner_reads import read_receipt
+    return read_receipt(plan)
+
+
 def offline_session_owned_by_test(session: Any) -> bool:
     """No automatic extra cluster for either sealed, exact offline cohort."""
     if not offline_plan_requested(os.environ):
         return False
     plan = load_inner_plan(os.environ)
-    expected = CORE_SELECTOR if plan["role"] == "core" else NATIVE_SELECTOR
+    expected = _selector_for_role(plan["role"])
     expected_profile = "core" if plan["role"] == "core" else "pgvector"
     refuse(os.environ.get("REPOMAP_TEST_PG_PROFILE", "core") == expected_profile,
            "pytest offline profile mismatch")
     args = session.config.args
     refuse(isinstance(args, list) and 0 < len(args) <= 128, "pytest offline cohort missing")
+    if plan["role"] in {"study", PROOF_ROLE}:
+        refuse(sum(str(argument) == "-s" for argument in args) <= 1,
+               "duplicate pytest stream flag")
     for argument in args:
+        if plan["role"] in {"study", PROOF_ROLE} and str(argument) == "-s":
+            continue
         path = Path(str(argument).split("::", 1)[0])
         if path.is_absolute():
             refuse(path.is_relative_to(Path("/workspace")), "pytest offline scope escape")
@@ -260,7 +358,7 @@ def verify_offline_collected_items(session: Any) -> None:
     if not offline_session_owned_by_test(session):
         return
     plan = load_inner_plan(os.environ)
-    expected = CORE_SELECTOR if plan["role"] == "core" else NATIVE_SELECTOR
+    expected = _selector_for_role(plan["role"])
     refuse(bool(session.items), "offline collected cohort empty")
     for item in session.items:
         owner = str(item.nodeid).split("::", 1)[0]
@@ -273,11 +371,13 @@ def offline_pytest_owns_runtime(args: Any, forwarded: list[str]) -> bool:
         return False
     # Validate the real entrypoint argv rather than manufacture substitute args.
     plan = inner_plan(sys.argv[1:], os.environ)
-    selector = CORE_SELECTOR if plan["role"] == "core" else NATIVE_SELECTOR
+    selector = _selector_for_role(plan["role"])
     profile = "core" if plan["role"] == "core" else "pgvector"
+    allow_stream = plan["role"] in {"study", PROOF_ROLE}
     refuse(args.suite == "int" and args.no_coverage is True
            and (getattr(args, "pg_test_profile", None) or "core") == profile
-           and forwarded == [selector], "offline runtime ownership drift")
+           and forwarded_selector_matches(forwarded, selector, allow_stream=allow_stream),
+           "offline runtime ownership drift")
     refuse("REPOMAP_TEST_RUNTIME_IMAGE" not in os.environ
            and not getattr(args, "smoke_image_reference", None),
            "offline runtime image override forbidden")

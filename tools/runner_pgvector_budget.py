@@ -5,8 +5,10 @@ from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
-import stat
 from typing import Any, Callable, Iterator, cast
+
+from offline_qualification_files import private_file as private_file
+from offline_qualification_values import PROOF_CAPS as PROOF_CAPS, STUDY_CAPS as STUDY_CAPS, refuse as refuse
 
 INITIAL_CAPS = {
     "read_bytes": 4 * 1024**3, "transfer_bytes": 4 * 1024**3,
@@ -18,22 +20,11 @@ RECOVERY2_CAPS = INITIAL_CAPS | {"read_bytes": 8 * 1024**3, "sdk_core": 2,
                                 "base_loads": 2, "runtime_exports": 2}
 CAPS = RECOVERY2_CAPS | {"read_bytes": 12 * 1024**3, "transfer_bytes": 6 * 1024**3,
                          "sdk_core": 3, "base_loads": 3, "runtime_exports": 3}
+_RECORD_NAMES = {"derived_archive", "core_export", "core_result", "native_result",
+                 "recovery_parent", "study_result"}
+_PROOF_RECORD_NAMES = {"proof_result"}
 MAX_ARCHIVE = 768 * 1024**2
 MAX_SELECTED = 4 * 1024**2
-
-
-def refuse(condition: bool, code: str) -> None:
-    if not condition:
-        raise RuntimeError("pgvector prebuilt refused: " + code)
-
-
-def private_file(path: Path) -> None:
-    refuse(path.is_absolute(), "relative private input")
-    refuse(not any(p.is_symlink() for p in (path, *path.parents)), "private input link")
-    info = path.stat()
-    refuse(stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid()
-           and stat.S_IMODE(info.st_mode) == 0o600 and info.st_nlink == 1,
-           "private input custody")
 
 
 class Allocation:
@@ -46,8 +37,10 @@ class Allocation:
     so the next owner must stop instead of guessing or resetting the ledger.
     """
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, caps: dict[str, int] | None = None) -> None:
         self.path = path
+        self.caps = CAPS if caps is None else caps
+        refuse(self.caps in (CAPS, STUDY_CAPS, PROOF_CAPS), "unknown allocation caps")
         self.used: dict[str, int] = {}
         self.records: dict[str, Any] = {}
         self._lock: Any | None = None
@@ -67,7 +60,7 @@ class Allocation:
         raise RuntimeError("pgvector prebuilt refused: ambiguous pending allocation state")
 
     def _state(self) -> dict[str, Any]:
-        return {"schema": "cloe-pgvector-allocation-v1", "caps": CAPS,
+        return {"schema": "cloe-pgvector-allocation-v1", "caps": self.caps,
                 "used": self.used, "records": self.records}
 
     def _persist(self) -> None:
@@ -137,17 +130,17 @@ class Allocation:
             self._refuse_pending_state()
             state = self._strict_state(self.path.read_bytes())
             refuse(state.get("schema") == "cloe-pgvector-allocation-v1"
-                   and state.get("caps") == CAPS
-                   and all(type(state["caps"][key]) is int for key in CAPS), "allocation shape")
+                   and state.get("caps") == self.caps
+                   and all(type(state["caps"][key]) is int for key in self.caps), "allocation shape")
             used = state.get("used")
-            refuse(isinstance(used, dict) and set(used) == set(CAPS), "allocation keys")
+            refuse(isinstance(used, dict) and set(used) == set(self.caps), "allocation keys")
             used = cast(dict[str, int], used)
-            refuse(all(type(used[k]) is int and 0 <= used[k] <= v for k, v in CAPS.items()),
+            refuse(all(type(used[k]) is int and 0 <= used[k] <= v for k, v in self.caps.items()),
                    "allocation values")
             self.used = used
             records = state.get("records", {})
-            refuse(isinstance(records, dict) and set(records) <= {
-                "derived_archive", "core_export", "core_result", "native_result", "recovery_parent"}, "allocation records")
+            allowed_records = _PROOF_RECORD_NAMES if self.caps == PROOF_CAPS else _RECORD_NAMES
+            refuse(isinstance(records, dict) and set(records) <= allowed_records, "allocation records")
             self.records = records
             self._lock = lock
             self._active = True
@@ -161,8 +154,8 @@ class Allocation:
                     self._lock = None
 
     def charge(self, key: str, amount: int) -> None:
-        refuse(key in CAPS and type(amount) is int and amount >= 0, "invalid charge")
-        refuse(self.used[key] + amount <= CAPS[key], "exhausted " + key)
+        refuse(key in self.caps and type(amount) is int and amount >= 0, "invalid charge")
+        refuse(self.used[key] + amount <= self.caps[key], "exhausted " + key)
         self.used[key] += amount
         try:
             self._persist()
@@ -172,11 +165,11 @@ class Allocation:
             raise
 
     def remaining(self, key: str) -> int:
-        return CAPS[key] - self.used[key]
+        return self.caps[key] - self.used[key]
 
     def bind(self, name: str, value: dict[str, Any]) -> None:
-        refuse(name in {"derived_archive", "core_export", "core_result", "native_result", "recovery_parent"}
-               and name not in self.records, "already bound allocation record")
+        allowed_records = _PROOF_RECORD_NAMES if self.caps == PROOF_CAPS else _RECORD_NAMES
+        refuse(name in allowed_records and name not in self.records, "already bound allocation record")
         refuse(isinstance(value, dict), "allocation record object")
         refuse(len(json.dumps(value, allow_nan=False).encode()) <= 256 * 1024,
                "allocation record cap")
@@ -192,8 +185,8 @@ class Allocation:
         keys = ("read_bytes", "transfer_bytes") if transfer else ("read_bytes",)
         refuse(self._active, "allocation session required")
         for key in keys:
-            refuse(key in CAPS and type(count) is int and count >= 0
-                   and self.used[key] + count <= CAPS[key], "exhausted " + key)
+            refuse(key in self.caps and type(count) is int and count >= 0
+                   and self.used[key] + count <= self.caps[key], "exhausted " + key)
         for key in keys:
             self.used[key] += count
         self._persist()

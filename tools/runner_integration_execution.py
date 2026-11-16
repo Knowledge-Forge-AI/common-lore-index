@@ -80,6 +80,20 @@ def record_smoke_refusal(args) -> None:
         failure.persist_contract()
 
 
+def _persist_source_read_receipt(args: Any) -> None:
+    """Export sealed-cohort bookkeeping after the last runner source check."""
+    from runner_pgvector_context import source_read_receipt_for_report
+    receipt = source_read_receipt_for_report(collect_only=getattr(args, "collect_only", False))
+    if receipt is None:
+        return
+    from retrieval_supplement_files import publish_member
+    raw = (json.dumps(receipt, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=True, allow_nan=False) + "\n").encode("ascii")
+    if len(raw) > 65536:
+        raise RuntimeError("source read receipt exceeds export bound")
+    publish_member(Path(args.report_dir), "offline-source-read-budget.json", raw)
+
+
 def execute_staging_decision_b(
     args, suites, forwarded_pytest_args, *, source_root, test_support_root,
     repo_root, pytest_module, pytest_args, pytest_environment_for_fn,
@@ -277,6 +291,12 @@ def execute_staging_decision_b(
                     for entry in report["legs"].values():
                         if entry["measurement"]["session_id"] == session.session_dir.name:
                             entry.update(cleanup="unknown", status="failed")
+            try:
+                _persist_source_read_receipt(args)
+            except BaseException as error:
+                failure.capture(error, "report_persistence")
+                if control_signal is None and not isinstance(error, Exception):
+                    control_signal = error
             try:
                 failure.persist_contract()
             finally:

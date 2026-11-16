@@ -70,8 +70,10 @@ def isolate_cloe_home():
 
 def pytest_configure(config):
     from repomap_test_support import d12_core_image as d12
+    from repomap_test_support import retrieval_supplement_study as study
 
     config.addinivalue_line("markers", f"{d12.MARKER}: {d12.DESELECTION_REASON}")
+    config.addinivalue_line("markers", f"{study.MARKER}: {study.DESELECTION_REASON}")
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -112,6 +114,16 @@ def pytest_collection_modifyitems(session, config, items):
         items[:] = [item for item in items if item.nodeid not in marked_ids]
         config.hook.pytest_deselected(items=marked)
     _record_optional_population(config, raw, marked_ids)
+    _reconcile_supplement_study(config, items)
+
+
+def _reconcile_supplement_study(config, items):
+    """Visibly deselect the actual-study owner unless authenticated alone inside the study SDK."""
+    from repomap_test_support import retrieval_supplement_study as study
+
+    study.reconcile_supplement_study(
+        config, items, deferred_build_node_ids=DEFERRED_BUILD_PROFILE_NODE_IDS,
+    )
 
 
 def _record_optional_population(config, raw, excluded_ids):
@@ -138,6 +150,7 @@ def _covers_d12_owner(config):
 
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
     from repomap_test_support import d12_core_image as d12
+    from repomap_test_support import retrieval_supplement_study as study
 
     record = getattr(config, d12.POPULATION_ATTR, {})
     ids = [entry["nodeid"] for entry in record.get("excluded", ())]
@@ -145,6 +158,13 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         terminalreporter.write_line(
             f"D12 optional core-image owners deselected: {len(ids)} "
             f"{', '.join(ids)} ({d12.DESELECTION_REASON})"
+        )
+    study_record = getattr(config, study.POPULATION_ATTR, {})
+    study_ids = [entry["nodeid"] for entry in study_record.get("excluded", ())]
+    if study_ids:
+        terminalreporter.write_line(
+            f"Supplement study actual owner deselected: {len(study_ids)} "
+            f"{', '.join(study_ids)} ({study.DESELECTION_REASON})"
         )
 
 
@@ -192,6 +212,12 @@ def pytest_runtest_setup(item):
 
     if item.get_closest_marker(d12.MARKER) is not None:
         _require_d12_admission(d12, item.nodeid)
+    from repomap_test_support import retrieval_supplement_study as study
+
+    if item.get_closest_marker(study.MARKER) is not None:
+        if item.nodeid != study.NODE_ID:
+            raise study.SupplementStudyProfileError("study marker on foreign node")
+        study.require_study_admission()
 
 
 def _require_d12_admission(d12, nodeid):

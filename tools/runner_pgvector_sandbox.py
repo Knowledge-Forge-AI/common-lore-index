@@ -14,10 +14,14 @@ from runner_pgvector_context import OfflineContext, inner_plan
 from runner_pgvector_export import export_runtime
 from runner_pgvector_lineage import require_attempt
 from runner_pgvector_prebuilt import BASE_CONFIG, ENV_OFFLINE_PLAN, INNER_PLAN, SDK_IMAGE, digest, json_bytes
+from runner_pgvector_supplement_proof import PROOF_PHASE, PROOF_ROLE, project_inner_plan
 from runner_pgvector_transport import send_file, send_plan
 from test_sandbox_arguments import SandboxArgumentsResult
 
 Captured = Callable[..., subprocess.CompletedProcess[str]]
+
+_CANONICAL_SDK_SCRATCH = "/sandbox-scratch:rw,exec,nosuid,nodev,size=8g"
+_BOUNDED_SDK_SCRATCH = "/sandbox-scratch:rw,exec,nosuid,nodev,size=2g"
 
 
 class _ReportProcess:
@@ -76,7 +80,11 @@ class OfflineSandbox:
 
     def __init__(self, context: OfflineContext, runner: Callable, captured: Captured) -> None:
         self.context, self.runner, self.captured = context, runner, captured
-        self.deadline = time.monotonic() + 1200
+        # Only the separately closed study cohort gains 4,800s; core/native stay 1,200s.
+        plan = getattr(context, "plan", None)
+        is_study = isinstance(plan, dict) and plan.get("role") == "study"
+        lifetime = 4800 if is_study else 1200
+        self.deadline = time.monotonic() + lifetime
         self.probe_image: str | None = None
 
     def outer(self, **kwargs: Any) -> list[str]:
@@ -166,11 +174,53 @@ class OfflineSandbox:
         refuse(result.returncode == 0, "offline SDK command failed")
         return result
 
+    @staticmethod
+    def _bounded_sdk_scratch(command: list[str]) -> list[str]:
+        """Bound only the SDK scratch tmpfs for the extended offline cohorts."""
+        refuse(command.count(_CANONICAL_SDK_SCRATCH) == 1,
+               "offline exact SDK scratch mount")
+        return [_BOUNDED_SDK_SCRATCH if token == _CANONICAL_SDK_SCRATCH else token
+                for token in command]
+
     def outer_command(self, command: list[str]) -> list[str]:
         self.context.fixed()
+        if self.context.plan.get("role") in {"study", "proof"}:
+            from retrieval_supplement_inner_read_reservation import prepay_inner_reads
+            prepay_inner_reads(self.context.plan, self.context.allocation(), self.context.repo_root)
         refuse(command.count(SDK_IMAGE) == 1, "offline exact SDK required")
         with self.context.allocation().session() as meter:
             plan = self.context.plan
+            if plan.get("role") == "study":
+                refuse(meter.used.get("sdk_study") == 0 and "study_result" not in meter.records
+                       and meter.used.get("runtime_exports") == 0
+                       and meter.used.get("materializations") == 0,
+                       "study SDK already spent or export/materialization attempted")
+                meter.charge("sdk_study", 1)
+                command = self._bounded_sdk_scratch(command)
+                index = command.index(SDK_IMAGE)
+                return [*command[:index], "--pull=never", "--network", "none",
+                        "--env", "GOTOOLCHAIN=local", "--env", "GOPROXY=off",
+                        "--env", "PIP_NO_INDEX=1",
+                        "--env", ENV_OFFLINE_PLAN + "=" + INNER_PLAN,
+                        *command[index:]]
+            if plan.get("role") == PROOF_ROLE:
+                refuse(meter.used.get("sdk_proof") == 0
+                       and meter.used.get("proof_runtime_imports") == 0
+                       and meter.used.get("proof_lifecycles") == 0
+                       and meter.used.get("runtime_exports") == 0
+                       and meter.used.get("materializations") == 0
+                       and meter.used.get("builds") == 0
+                       and meter.used.get("pulls") == 0
+                       and "proof_result" not in meter.records,
+                       "proof SDK already spent or forbidden work attempted")
+                meter.charge("sdk_proof", 1)
+                command = self._bounded_sdk_scratch(command)
+                index = command.index(SDK_IMAGE)
+                return [*command[:index], "--pull=never", "--network", "none",
+                        "--env", "GOTOOLCHAIN=local", "--env", "GOPROXY=off",
+                        "--env", "PIP_NO_INDEX=1",
+                        "--env", ENV_OFFLINE_PLAN + "=" + INNER_PLAN,
+                        *command[index:]]
             attempt = require_attempt(meter, plan)
             refuse(meter.records.get("derived_archive") == plan["derived"]
                    and meter.used["materializations"] == 1, "unbound materialization")
@@ -214,6 +264,9 @@ class OfflineSandbox:
             descriptor = plan["archive"]
             if plan["role"] == "core":
                 meter.charge("base_loads", 1)
+            elif plan["role"] == PROOF_ROLE:
+                meter.charge("proof_runtime_imports", 1)
+                meter.charge("proof_lifecycles", 1)
             else:
                 meter.charge("native_runtime_loads", 1)
                 meter.charge("native_lifecycles", 1)
@@ -232,13 +285,23 @@ class OfflineSandbox:
                 observed, = json.loads(raw)
                 checked_image(observed, plan, base=identity == BASE_CONFIG)
             self.probe_image = BASE_CONFIG if plan["role"] == "core" else plan["derived"]["runtime_config"]
-            inner = {key: plan[key] for key in (
-                "schema", "phase", "role", "provider_sha256", "sdk_image", "candidate_head",
-                "candidate_snapshot", "review1_receipt_sha256", "operator_decision_sha256", "derived",
-                "diagnostic_declaration", "diagnostic_declaration_sha256")}
-            for key in ("core_attempt", "recovery_parent_sha256"):
-                if key in plan:
-                    inner[key] = plan[key]
+            if plan["role"] == "study":
+                from retrieval_supplement_study_plan import (
+                    project_inner_study_plan,
+                    require_reservation_admitted_for_runner,
+                )
+                admitted = require_reservation_admitted_for_runner(plan, plan_path=context.plan_path)
+                inner = project_inner_study_plan(plan, admission=admitted)
+            elif plan["role"] == PROOF_ROLE:
+                inner = project_inner_plan(plan)
+            else:
+                inner = {key: plan[key] for key in (
+                    "schema", "phase", "role", "provider_sha256", "sdk_image", "candidate_head",
+                    "candidate_snapshot", "review1_receipt_sha256", "operator_decision_sha256", "derived",
+                    "diagnostic_declaration", "diagnostic_declaration_sha256")}
+                for key in ("core_attempt", "recovery_parent_sha256"):
+                    if key in plan:
+                        inner[key] = plan[key]
             send_plan(outer, inner, context.plan_path.with_suffix(".inner.json"), meter)
             if plan["role"] == "core":
                 output = Path(plan["export_path"])
@@ -276,6 +339,50 @@ class OfflineSandbox:
             refuse(running == "true", "offline SDK state")
             time.sleep(0.25)
         raise RuntimeError("pgvector prebuilt refused: offline SDK lifetime expired")
+
+
+def admit_study_inner(argv: list[str], environment: dict[str, str],
+                      execute: Callable[..., subprocess.CompletedProcess[str]]) -> dict[str, Any]:
+    from retrieval_supplement_study_plan import admission_from_inner_plan
+
+    plan = inner_plan(argv, environment)
+    refuse(plan["role"] == "study", "study cohort required")
+    admission = admission_from_inner_plan(plan)
+    identity = plan["derived"]["runtime_config"]
+    observed, = json.loads(execute("offline_runtime_identity",
+                                  ["docker", "image", "inspect", identity]).stdout)
+    checked_image(observed, plan)
+    environment.update(REPOMAP_TEST_PG_IMAGE=identity, REPOMAP_TEST_PG_PROFILE="pgvector",
+                       REPOMAP_TEST_PHASE=plan["phase"])
+    return {"pgvector_setup": "imported_verified_offline_study", "resulting_engine_id": identity,
+            "observed_platform": "linux/arm64", "image_built": False,
+            "automatic_native_lifecycles": 0, "runtime_qualification": "owned by exact study test",
+            "sdk_loaded_into_inner_daemon": False, "runtime_exports": 0,
+            "study_attempt_id": admission.attempt_id}
+
+
+def admit_proof_inner(argv: list[str], environment: dict[str, str],
+                      execute: Callable[..., subprocess.CompletedProcess[str]]) -> dict[str, Any]:
+    """Admit the retained runtime for proof setup without study authority."""
+    plan = inner_plan(argv, environment)
+    refuse(plan["role"] == PROOF_ROLE, "proof cohort required")
+    identity = plan["derived"]["runtime_config"]
+    observed, = json.loads(execute("offline_runtime_identity",
+                                  ["docker", "image", "inspect", identity]).stdout)
+    checked_image(observed, plan)
+    environment.update(REPOMAP_TEST_PG_IMAGE=identity, REPOMAP_TEST_PG_PROFILE="pgvector",
+                       REPOMAP_TEST_PHASE=PROOF_PHASE)
+    return {
+        "pgvector_setup": "imported_verified_offline_proof",
+        "resulting_engine_id": identity,
+        "observed_platform": "linux/arm64",
+        "image_built": False,
+        "automatic_native_lifecycles": 0,
+        "runtime_qualification": "owned by exact proof test",
+        "sdk_loaded_into_inner_daemon": False,
+        "runtime_exports": 0,
+        "proof_only": True,
+    }
 
 
 def admit_inner(argv: list[str], environment: dict[str, str],

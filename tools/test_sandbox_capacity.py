@@ -377,8 +377,9 @@ def backing_space() -> tuple[int, int]:
 
 def validate_scratch_capacity() -> None:
     """Check current whole-filesystem pressure, independently of logical quotas."""
+    from runner_pgvector_context import sandbox_scratch_bytes
     free, total = space("/sandbox-scratch")
-    if total != SCRATCH_BYTES:
+    if total != sandbox_scratch_bytes(os.environ):
         raise _refuse("scratch_limit_mismatch")
     if free < SCRATCH_HEADROOM_BYTES:
         raise _refuse("scratch_headroom_insufficient")

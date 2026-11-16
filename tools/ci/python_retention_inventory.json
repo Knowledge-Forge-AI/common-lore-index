@@ -1007,6 +1007,499 @@
     {
       "admission": "admitted",
       "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-supplement-study1.test_owners",
+      "members": [
+        "src/test/int/python/tools/retrieval_supplement_native.int.test.py",
+        "src/test/int/python/tools/retrieval_supplement_study_seam.int.test.py",
+        "src/test/unit/python/tools/ci/python_retention_supplement_guest.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_epoch.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_host_admission.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_host_controller.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_host_exchange.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_host_report.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_host_source.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_inner_reads.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_model_host.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_poll_budget.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_proof_delivery.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_runner_channel.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_runner_input.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_runner_output.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_runner_process.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_scratch_capacity.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_study_adapter.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_study_driver.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_study_pg.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_study_plan.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_study_preflight.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_study_runner.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_study_schedule.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_study_slots.unit.test.py",
+        "src/test/unit/python/tools/retrieval_supplement_worker_entry.unit.test.py"
+      ],
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-supplement-study1.test_support",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_supplement_runtime_fixture.py",
+        "src/test/support/python/repomap_test_support/retrieval_supplement_study.py",
+        "src/test/support/python/repomap_test_support/retrieval_supplement_study_driver.py",
+        "src/test/support/python/repomap_test_support/retrieval_supplement_study_fixtures.py",
+        "src/test/support/python/repomap_test_support/retrieval_supplement_study_pg.py",
+        "src/test/support/python/repomap_test_support/retrieval_supplement_study_pg_lifecycle.py",
+        "src/test/support/python/repomap_test_support/retrieval_supplement_study_setup.py",
+        "src/test/support/python/repomap_test_support/retrieval_supplement_study_slots.py"
+      ],
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.ci.python_retention_dynamic_supplement_guest",
+      "members": [
+        "tools/ci/python_retention_dynamic_supplement_guest.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.offline_qualification_checkout",
+      "members": [
+        "tools/offline_qualification_checkout.py"
+      ],
+      "rationale": "ADR0203 explicit dependency direction; no historical cohort or debt change.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.offline_qualification_files",
+      "members": [
+        "tools/offline_qualification_files.py"
+      ],
+      "rationale": "ADR0203 explicit dependency direction; no historical cohort or debt change.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.offline_qualification_values",
+      "members": [
+        "tools/offline_qualification_values.py"
+      ],
+      "rationale": "ADR0203 explicit dependency direction; no historical cohort or debt change.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_epoch",
+      "members": [
+        "tools/retrieval_supplement_epoch.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_host_admission",
+      "members": [
+        "tools/retrieval_supplement_host_admission.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_host_controller",
+      "members": [
+        "tools/retrieval_supplement_host_controller.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_host_exchange",
+      "members": [
+        "tools/retrieval_supplement_host_exchange.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_host_inventory",
+      "members": [
+        "tools/retrieval_supplement_host_inventory.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_host_meter",
+      "members": [
+        "tools/retrieval_supplement_host_meter.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_host_report",
+      "members": [
+        "tools/retrieval_supplement_host_report.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_host_source",
+      "members": [
+        "tools/retrieval_supplement_host_source.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_host_transport",
+      "members": [
+        "tools/retrieval_supplement_host_transport.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_inner_read_plan",
+      "members": [
+        "tools/retrieval_supplement_inner_read_plan.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_inner_read_report",
+      "members": [
+        "tools/retrieval_supplement_inner_read_report.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_inner_read_reservation",
+      "members": [
+        "tools/retrieval_supplement_inner_read_reservation.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_inner_reads",
+      "members": [
+        "tools/retrieval_supplement_inner_reads.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_model_budget",
+      "members": [
+        "tools/retrieval_supplement_model_budget.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_model_contract",
+      "members": [
+        "tools/retrieval_supplement_model_contract.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_model_host",
+      "members": [
+        "tools/retrieval_supplement_model_host.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_model_output",
+      "members": [
+        "tools/retrieval_supplement_model_output.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_ownership_wire",
+      "members": [
+        "tools/retrieval_supplement_ownership_wire.py"
+      ],
+      "rationale": "ADR0203 exact bounded study pipe codec; existing identity guards preserved.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_poll_budget",
+      "members": [
+        "tools/retrieval_supplement_poll_budget.py"
+      ],
+      "rationale": "CLOE-W5-SUPPLEMENT-STUDY1 corrective source/cleanup budget proof; no new dependency or debt.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_primitives",
+      "members": [
+        "tools/retrieval_supplement_primitives.py"
+      ],
+      "rationale": "ADR0203 explicit dependency direction; no historical cohort or debt change.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_runner_channel",
+      "members": [
+        "tools/retrieval_supplement_runner_channel.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_runner_input",
+      "members": [
+        "tools/retrieval_supplement_runner_input.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_runner_lease",
+      "members": [
+        "tools/retrieval_supplement_runner_lease.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_runner_output",
+      "members": [
+        "tools/retrieval_supplement_runner_output.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_runner_process",
+      "members": [
+        "tools/retrieval_supplement_runner_process.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_runner_settlement",
+      "members": [
+        "tools/retrieval_supplement_runner_settlement.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_adapter",
+      "members": [
+        "tools/retrieval_supplement_study_adapter.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_closure",
+      "members": [
+        "tools/retrieval_supplement_study_closure.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_contracts",
+      "members": [
+        "tools/retrieval_supplement_study_contracts.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_inner_evidence",
+      "members": [
+        "tools/retrieval_supplement_study_inner_evidence.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_inputs",
+      "members": [
+        "tools/retrieval_supplement_study_inputs.py"
+      ],
+      "rationale": "ADR0203 explicit dependency direction; no historical cohort or debt change.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_live_requests",
+      "members": [
+        "tools/retrieval_supplement_study_live_requests.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_plan",
+      "members": [
+        "tools/retrieval_supplement_study_plan.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_preflight",
+      "members": [
+        "tools/retrieval_supplement_study_preflight.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_provenance",
+      "members": [
+        "tools/retrieval_supplement_study_provenance.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_reservation",
+      "members": [
+        "tools/retrieval_supplement_study_reservation.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_study_schedule",
+      "members": [
+        "tools/retrieval_supplement_study_schedule.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.retrieval_supplement_worker_entry",
+      "members": [
+        "tools/retrieval_supplement_worker_entry.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.runner_pgvector_study",
+      "members": [
+        "tools/runner_pgvector_study.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-supplement-study1.tools.runner_pgvector_supplement_proof",
+      "members": [
+        "tools/runner_pgvector_supplement_proof.py"
+      ],
+      "rationale": "ADR0203 new maintained owner; individual clean cohort preserves actual dependency direction and every predecessor debt ceiling.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
       "id": "cloe.w5-supplement1.test_owners",
       "members": [
         "src/test/int/python/tools/retrieval_supplement_evidence.int.test.py",
@@ -29848,6 +30341,111 @@
       ],
       "test": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
       "test_sha256": "f949075c2b5e08882937bd3a43363c08dbae058899d2e6d5eff621b86cccb227"
+    },
+    {
+      "fingerprint": "2ad2b65c2ef1e6e6c97997a7918211b7a8909bb40c4328bfcde83570c55a9fdc",
+      "id": "cloe.w5-supplement-study1.guest.numpy",
+      "kind": "import_module",
+      "owner": "tools/retrieval_supplement_worker_entry.py",
+      "owner_sha256": "43a4b3e603d130e1e16ffd26ba7a93f4a5860dcadc0f89991a6b6d541ba3cbc9",
+      "parameters": {
+        "artifact_pin_document_sha256": "f0237e38018f3524b87f85f7fff2bef41eda125b8f954d575aaee233541896b6",
+        "artifact_source_identity_sha256": "033cf41ffc5ca108b6e26638573554bac64b84be744903809904ef3364722180",
+        "artifacts_source_path": "tools/retrieval_semantic_generator_artifacts.py",
+        "artifacts_source_sha256": "50d8bfb7113d102c4aa44c030a590040e39c5484c6a5b185ba6dbefcf180a27f",
+        "import_module": "importlib.import_module",
+        "kernel_source_path": "tools/retrieval_semantic_generator_kernel_contracts.py",
+        "kernel_source_sha256": "5e48544da3c729f22a701c4b522f65c1acbc1859a7ac646eb29239ccacad05d8",
+        "loop": "literal-tuple-once-v1",
+        "modules": [
+          "numpy",
+          "onnxruntime",
+          "tokenizers"
+        ],
+        "owner": "tools/retrieval_supplement_worker_entry.py",
+        "schema": "supplement-native-guest-import-v1",
+        "versions": {
+          "numpy": "2.5.4",
+          "onnxruntime": "1.31.1",
+          "tokenizers": "0.23.3"
+        }
+      },
+      "recipe": "supplement_native_guest_import",
+      "supersedes": null,
+      "symbol": "_run_worker",
+      "targets": [],
+      "test": "src/test/unit/python/tools/retrieval_supplement_worker_entry.unit.test.py",
+      "test_sha256": "7551993b4ae0e4c796d4feb74b2b5c0ceb1dadf05ae8f3b07eb4f73d47ece667"
+    },
+    {
+      "fingerprint": "c0066f64dfdb0b0ccb95061fde9eda5fb6a8686b6e9b6648a936972a804d717c",
+      "id": "cloe.w5-supplement-study1.guest.onnxruntime",
+      "kind": "import_module",
+      "owner": "tools/retrieval_supplement_worker_entry.py",
+      "owner_sha256": "43a4b3e603d130e1e16ffd26ba7a93f4a5860dcadc0f89991a6b6d541ba3cbc9",
+      "parameters": {
+        "artifact_pin_document_sha256": "f0237e38018f3524b87f85f7fff2bef41eda125b8f954d575aaee233541896b6",
+        "artifact_source_identity_sha256": "033cf41ffc5ca108b6e26638573554bac64b84be744903809904ef3364722180",
+        "artifacts_source_path": "tools/retrieval_semantic_generator_artifacts.py",
+        "artifacts_source_sha256": "50d8bfb7113d102c4aa44c030a590040e39c5484c6a5b185ba6dbefcf180a27f",
+        "import_module": "importlib.import_module",
+        "kernel_source_path": "tools/retrieval_semantic_generator_kernel_contracts.py",
+        "kernel_source_sha256": "5e48544da3c729f22a701c4b522f65c1acbc1859a7ac646eb29239ccacad05d8",
+        "loop": "literal-tuple-once-v1",
+        "modules": [
+          "numpy",
+          "onnxruntime",
+          "tokenizers"
+        ],
+        "owner": "tools/retrieval_supplement_worker_entry.py",
+        "schema": "supplement-native-guest-import-v1",
+        "versions": {
+          "numpy": "2.5.4",
+          "onnxruntime": "1.31.1",
+          "tokenizers": "0.23.3"
+        }
+      },
+      "recipe": "supplement_native_guest_import",
+      "supersedes": null,
+      "symbol": "_run_worker",
+      "targets": [],
+      "test": "src/test/unit/python/tools/retrieval_supplement_worker_entry.unit.test.py",
+      "test_sha256": "7551993b4ae0e4c796d4feb74b2b5c0ceb1dadf05ae8f3b07eb4f73d47ece667"
+    },
+    {
+      "fingerprint": "0c9d628f39f33712ed3209d214df992f8a3d4f5b5ac4ab18803ae52584ea2f33",
+      "id": "cloe.w5-supplement-study1.guest.tokenizers",
+      "kind": "import_module",
+      "owner": "tools/retrieval_supplement_worker_entry.py",
+      "owner_sha256": "43a4b3e603d130e1e16ffd26ba7a93f4a5860dcadc0f89991a6b6d541ba3cbc9",
+      "parameters": {
+        "artifact_pin_document_sha256": "f0237e38018f3524b87f85f7fff2bef41eda125b8f954d575aaee233541896b6",
+        "artifact_source_identity_sha256": "033cf41ffc5ca108b6e26638573554bac64b84be744903809904ef3364722180",
+        "artifacts_source_path": "tools/retrieval_semantic_generator_artifacts.py",
+        "artifacts_source_sha256": "50d8bfb7113d102c4aa44c030a590040e39c5484c6a5b185ba6dbefcf180a27f",
+        "import_module": "importlib.import_module",
+        "kernel_source_path": "tools/retrieval_semantic_generator_kernel_contracts.py",
+        "kernel_source_sha256": "5e48544da3c729f22a701c4b522f65c1acbc1859a7ac646eb29239ccacad05d8",
+        "loop": "literal-tuple-once-v1",
+        "modules": [
+          "numpy",
+          "onnxruntime",
+          "tokenizers"
+        ],
+        "owner": "tools/retrieval_supplement_worker_entry.py",
+        "schema": "supplement-native-guest-import-v1",
+        "versions": {
+          "numpy": "2.5.4",
+          "onnxruntime": "1.31.1",
+          "tokenizers": "0.23.3"
+        }
+      },
+      "recipe": "supplement_native_guest_import",
+      "supersedes": null,
+      "symbol": "_run_worker",
+      "targets": [],
+      "test": "src/test/unit/python/tools/retrieval_supplement_worker_entry.unit.test.py",
+      "test_sha256": "7551993b4ae0e4c796d4feb74b2b5c0ceb1dadf05ae8f3b07eb4f73d47ece667"
     }
   ],
   "dynamic_schema": "repomap-python-retention-dynamic-v1",
@@ -42260,8 +42858,26 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_supplement_native.int.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/int/python/tools/retrieval_supplement_publication.int.test.py",
       "rationale": "ADR0198 separate prospective calibration source and synthetic proof; original tasks, scopes and all debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_supplement_study_seam.int.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
       "root": "test_owners",
       "status": "active_int_test"
     },
@@ -44591,8 +45207,80 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_support",
       "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_supplement_runtime_fixture.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
       "path": "src/test/support/python/repomap_test_support/retrieval_supplement_source.py",
       "rationale": "ADR0198 separate prospective calibration source and synthetic proof; original tasks, scopes and all debt ceilings preserved.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_supplement_study.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_supplement_study_driver.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_supplement_study_fixtures.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_supplement_study_pg.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_supplement_study_pg_lifecycle.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_supplement_study_setup.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_supplement_study_slots.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
       "root": "test_support",
       "status": "active_test_support"
     },
@@ -55454,6 +56142,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/ci/python_retention_supplement_guest.unit.test.py",
+      "rationale": "ADR0203 negative witness for the closed offline model guest-import retention recipe.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/unit/python/tools/ci/qualification_command_contracts.unit.test.py",
       "rationale": "REPAIR5 bounded launch, packaging, abrupt ownership or qualification contract owner; immediate zero-debt enforcement.",
       "root": "test_owners",
@@ -57101,8 +57798,80 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_epoch.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/unit/python/tools/retrieval_supplement_freeze.unit.test.py",
       "rationale": "ADR0198 separate prospective calibration source and synthetic proof; original tasks, scopes and all debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_host_admission.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_host_controller.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_host_exchange.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_host_report.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_host_source.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_inner_reads.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_model_host.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
       "root": "test_owners",
       "status": "active_unit_test"
     },
@@ -57119,6 +57888,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_poll_budget.unit.test.py",
+      "rationale": "CLOE-W5-SUPPLEMENT-STUDY1 corrective source/cleanup budget proof; no new dependency or debt.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/unit/python/tools/retrieval_supplement_preparation.unit.test.py",
       "rationale": "ADR0198 separate prospective calibration source and synthetic proof; original tasks, scopes and all debt ceilings preserved.",
       "root": "test_owners",
@@ -57128,8 +57906,143 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_proof_delivery.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/unit/python/tools/retrieval_supplement_report.unit.test.py",
       "rationale": "ADR0198 separate prospective calibration source and synthetic proof; original tasks, scopes and all debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_runner_channel.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_runner_input.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_runner_output.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_runner_process.unit.test.py",
+      "rationale": "CLOE-W5-SUPPLEMENT-STUDY1 corrective source/cleanup budget proof; no new dependency or debt.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_scratch_capacity.unit.test.py",
+      "rationale": "CLOE-W5-SUPPLEMENT-STUDY1 authenticated fixed scratch-profile proof; zero new debt.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_study_adapter.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_study_driver.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_study_pg.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_study_plan.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_study_preflight.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_study_runner.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_study_schedule.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_study_slots.unit.test.py",
+      "rationale": "CLOE-W5-SUPPLEMENT-STUDY1 corrective source/cleanup budget proof; no new dependency or debt.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_supplement_worker_entry.unit.test.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
       "root": "test_owners",
       "status": "active_unit_test"
     },
@@ -59261,6 +60174,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_tooling",
       "maintained_executable": true,
+      "path": "tools/ci/python_retention_dynamic_supplement_guest.py",
+      "rationale": "ADR0203 closed offline model guest-import retention recipe; exact artifact and kernel identities, no project edges.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
       "path": "tools/ci/python_retention_environment.py",
       "rationale": "Retention cohort contract implementation and verification owner.",
       "root": "tools",
@@ -60118,6 +61040,33 @@
       "maintained_executable": true,
       "path": "tools/native_apt_prerequisites.py",
       "rationale": "REPOMAP-PRODUCT6-NAVIGATION45-D12DYNAMIC1 ADR 0089 canonical native prerequisite custody module; strict zero-debt admission.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/offline_qualification_checkout.py",
+      "rationale": "ADR0203 maintained contract/custody leaf or pinned study input guard; clean admission preserves predecessor debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/offline_qualification_files.py",
+      "rationale": "ADR0203 maintained contract/custody leaf or pinned study input guard; clean admission preserves predecessor debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/offline_qualification_values.py",
+      "rationale": "ADR0203 maintained contract/custody leaf or pinned study input guard; clean admission preserves predecessor debt.",
       "root": "tools",
       "status": "active_tool"
     },
@@ -61736,6 +62685,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_tooling",
       "maintained_executable": true,
+      "path": "tools/retrieval_supplement_epoch.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
       "path": "tools/retrieval_supplement_files.py",
       "rationale": "ADR0198 separate prospective calibration source and synthetic proof; original tasks, scopes and all debt ceilings preserved.",
       "root": "tools",
@@ -61747,6 +62705,150 @@
       "maintained_executable": true,
       "path": "tools/retrieval_supplement_freeze.py",
       "rationale": "ADR0198 separate prospective calibration source and synthetic proof; original tasks, scopes and all debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_host_admission.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_host_controller.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_host_exchange.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_host_inventory.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_host_meter.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_host_report.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_host_source.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_host_transport.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_inner_read_plan.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_inner_read_report.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_inner_read_reservation.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_inner_reads.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_model_budget.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_model_contract.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_model_host.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_model_output.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
       "root": "tools",
       "status": "active_tool"
     },
@@ -61772,8 +62874,26 @@
       "confidence": 0.95,
       "governing_profile": "clean_tooling",
       "maintained_executable": true,
+      "path": "tools/retrieval_supplement_ownership_wire.py",
+      "rationale": "ADR0203 closed atomic study ownership wire; pure codec, no new runtime dependency or debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
       "path": "tools/retrieval_supplement_pin.py",
       "rationale": "ADR0198 separate prospective calibration source and synthetic proof; original tasks, scopes and all debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_poll_budget.py",
+      "rationale": "CLOE-W5-SUPPLEMENT-STUDY1 corrective source/cleanup budget proof; no new dependency or debt.",
       "root": "tools",
       "status": "active_tool"
     },
@@ -61790,8 +62910,170 @@
       "confidence": 0.95,
       "governing_profile": "clean_tooling",
       "maintained_executable": true,
+      "path": "tools/retrieval_supplement_primitives.py",
+      "rationale": "ADR0203 maintained contract/custody leaf or pinned study input guard; clean admission preserves predecessor debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
       "path": "tools/retrieval_supplement_report.py",
       "rationale": "ADR0198 separate prospective calibration source and synthetic proof; original tasks, scopes and all debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_runner_channel.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_runner_input.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_runner_lease.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_runner_output.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_runner_process.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_runner_settlement.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_adapter.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_closure.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_contracts.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_inner_evidence.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_inputs.py",
+      "rationale": "ADR0203 maintained contract/custody leaf or pinned study input guard; clean admission preserves predecessor debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_live_requests.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_plan.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_preflight.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_provenance.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_reservation.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_study_schedule.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
       "root": "tools",
       "status": "active_tool"
     },
@@ -61810,6 +63092,15 @@
       "maintained_executable": true,
       "path": "tools/retrieval_supplement_values.py",
       "rationale": "ADR0198 separate prospective calibration source and synthetic proof; original tasks, scopes and all debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_supplement_worker_entry.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
       "root": "tools",
       "status": "active_tool"
     },
@@ -62161,6 +63452,24 @@
       "maintained_executable": true,
       "path": "tools/runner_pgvector_sandbox.py",
       "rationale": "ADR0199 bounded offline PGDG qualification and guarded core recovery; clean admission with existing product debt and thresholds unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_study.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_pgvector_supplement_proof.py",
+      "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
       "root": "tools",
       "status": "active_tool"
     },

@@ -49,7 +49,12 @@ def integration_sandbox_dispatch(
             raise RuntimeError("pgvector profile requires a sealed offline plan before Docker dispatch")
         if offline is not None:
             require_native_host()
-            if ownership_reporter is not None:
+            if offline.plan.get("role") == "study":
+                if ownership_reporter is None:
+                    raise RuntimeError("study offline cohort requires live ownership attestation")
+                if ownership_reporter.expected_sdk_image_id != offline.plan["sdk_image"]:
+                    raise RuntimeError("study ownership SDK image mismatch")
+            elif ownership_reporter is not None:
                 raise RuntimeError("offline qualifier cannot combine ownership grants")
             image_id = cached_sandbox_image(dockerfile=dockerfile,
                                            expected_image_id=offline.plan["sdk_image"])

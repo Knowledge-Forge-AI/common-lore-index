@@ -1023,7 +1023,7 @@
       },
       {
         "path": "tools/ci/d12_system_grant.py",
-        "sha256": "274b2b07d2440bb569691cecb5fd0c11b9536f97f106970414f72efad9ef8af6"
+        "sha256": "6ce7041abaffc34d569d63475357327748f702a586872e55d43101241bd7d241"
       },
       {
         "path": "tools/ci/d12_system_grant_io.py",
@@ -1086,12 +1086,20 @@
         "sha256": "df616a151d062b4ade001bbd029007b2f414aa22422de63c520895663b850c5f"
       },
       {
+        "path": "tools/offline_qualification_files.py",
+        "sha256": "7f3effbd7b6e103012f7180cff2ea35cbb7b8d0a2d8a651c3b5d7790d429bd15"
+      },
+      {
+        "path": "tools/offline_qualification_values.py",
+        "sha256": "5e78eb5fbd2e941d0697ee99309eff7b39b64b0dcf5bd9cbf7ad3da5cd70fe66"
+      },
+      {
         "path": "tools/runner_pgvector_budget.py",
-        "sha256": "d870ef6f746ae446d8c5d89bc034ebc607c8695f1031d25d5a2d7f6c61b6bb65"
+        "sha256": "daa459e9aa7753db701076a915d8235ad922d685cd746c228d6a155b3c67cdbc"
       },
       {
         "path": "tools/runner_pgvector_prebuilt.py",
-        "sha256": "616f1d7348ac21f73eb407e4e64d37a162056c22b663246ebb5dea1dccaffca2"
+        "sha256": "66849d89678fe00b07b909fc5514bea6548f7d3a55cd7c01e97a6c20b2b8280a"
       },
       {
         "path": "tools/test_sandbox_contract.py",
@@ -1372,6 +1380,8 @@
       "tools/d12_libpq_runtime_probe.py",
       "tools/d12_python_closure.py",
       "tools/native_apt_prerequisites.py",
+      "tools/offline_qualification_files.py",
+      "tools/offline_qualification_values.py",
       "tools/runner_pgvector_budget.py",
       "tools/runner_pgvector_prebuilt.py",
       "tools/test_sandbox_contract.py",

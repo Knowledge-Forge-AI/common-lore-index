@@ -1,7 +1,8 @@
 # Proposed W5 supplement native execution contract
 
-Status: proposal under ADR0203, awaiting operator selection. This document is
-not an admission record. Current frontend declarations remain inert.
+Status: Route A selected under ADR0203; implementation and proof in progress.
+This document is not an admission record. Frontend declarations remain inert
+until the separate execution and ownership gates pass.
 
 ## 1. Milestone and decisions
 
@@ -275,3 +276,154 @@ only new owned resources. Held-outs, production vectors, new dependencies, parse
 classes,live deployment,main/tags/releases and full v0.1.0 acceptance remain
 separate. If accepted scope cannot close an essential seam, retain the concrete
 finding and return it; never bypass ownership or admission to obtain a result.
+
+## 8. Source implementation details within Route A
+
+Preparation epochs use a separate closed study-controller handshake. The SDK
+publishes the exact attempt, representation, request-attempt ID, input pin,
+evaluator closure and fresh nonce before its pre-request work. The host starts
+the worker's monotonic 600-second initialization and 1,700-second aggregate
+clocks before acknowledging that epoch. Only after the matching acknowledgment
+may the SDK prepare and publish the request. The second representation has its
+own epoch. This supplies actual scheduling evidence in place of a presumed
+constant overlap. The existing worker request/result schemas remain unchanged.
+
+The admitted request retains its own 120-second controller-admission wait. The
+SDK admission acknowledgment begins the existing 600-second response envelope;
+host model operations must fit its remaining time as well as their own phase
+and aggregate deadlines. No inner phase is reset or enlarged by a later call.
+Canonical study collection explicitly disables pytest output capture for these
+owned control frames and permits only its declared selector and fixed options.
+
+The host uses maintained source for runner launch, host-pipe ownership, bounded
+Docker transport, offline model composition, response delivery and cleanup.
+Private wrappers supply exact paths and already-reviewed custody inputs only.
+All such maintained owners belong to the final evaluator/controller closure;
+the isolated flat 17-file worker remains byte-identical.
+
+Strict JSON keeps the existing 512 KiB default for ordinary records. The closed
+whole-candidate plan and study-report readers explicitly select their existing
+two/four MiB limits, retaining duplicate-key, nonfinite-number and depth refusal.
+Study ownership uses the ADR0203 compact pipe wire while preserving full scope
+and live-identity validation; legacy callers retain their existing wire format.
+
+Required synthetic integration proof uses a separately closed proof-only
+delivery within this runner-policy class. Its exact maintained selectors,
+synthetic namespace and finite offline runtime reservation are sealed before
+execution. It grants zero model starts, registered supplement queries, studies,
+builds, pulls or publication. Proof and actual-study plans cannot authorize one
+another, and neither widens the old core/native cohorts. Routine proof counts
+remain unlimited; every physical proof invocation still has finite limits and
+retains its actual spend and cleanup. A proof result is not study acceptance.
+
+The synthetic proof's finite allowance is six GiB of controlled reads and two
+GiB of transfers, including the prepaid 32 bounded source verifications and
+retained-runtime delivery. It admits one SDK, import and PostgreSQL lifecycle,
+with zero model/study/build/pull/materialization/export allowance. The actual
+study retains its separate twelve/six GiB limits.
+
+## 9. Local structural disposition
+
+The implementation keeps one exception-preserving settlement boundary in
+`run_actual_study`, `run_exchange`, and `run_model_sibling`. These orchestration
+callables exceed the Python profile's default statement/local/argument warning
+levels. Keeping each acquisition and its exact-resource cleanup together makes
+partial acquisition, authority loss, and primary-versus-secondary exceptions
+visible to review. Plan validation, transport, source custody, output parsing,
+resource accounting, and report analysis remain separate maintained owners.
+The profile warnings are recorded rather than described as green.
+
+The named evidence constructors `report_payload` and `failure_receipt`, the
+accepted-store join `require_store_joins`, and paired analysis `analyze_slots`
+also retain explicit inputs for identity comparison. This bounded disposition
+does not weaken static checks, module-length limits, debt ceilings, or runtime
+containment. Independent source review must accept the actual connected
+lifecycle and adverse-case proof before adoption; a blocker requires correction.
+Rollback deselects this opt-in cohort and leaves the existing core/native paths
+unchanged. No general structural exception is created for later milestones.
+
+## 10. Corrective host-budget and failure-evidence closure
+
+Independent source review identified duplicate evaluator-byte checks in every
+lease probe. Each lease now keeps a full byte proof before inspecting the live
+SDK, then repeats source custody and authority-pin checks after inspection.
+Legacy callers without the explicit custody callback keep both byte checks.
+The readiness probe rejects malformed Engine state immediately; it is not an
+unbounded polling phase. Model polling uses one shared cadence. The schedule
+now carries the derived source/operation/stream bound for both maximum model
+windows, retaining the 1,024/2,048/2 GiB limits. Scoped regression and fresh
+independent acceptance are required before a physical study.
+
+Slot-local missing exact vectors and unavailable v2 dependencies remain explicit
+unavailable cells. Incomplete generations and missing ordered lexical inputs
+still refuse. Bootstrap failures retain observed start/gate/settlement facts;
+failed worker primary and cleanup codes remain separate from controller errors.
+PostgreSQL absence is read from the lifecycle's actual cleanup observation on
+both success and exception paths.
+
+The 4,800-second outer SDK owner includes import and teardown. The driver's
+cooperative clock starts at test-body entry and supplies subordinate phase
+checks; it does not re-establish that outer lifetime. Its combined
+`sdk_import_and_closures` label groups the 180-second import and 60-second
+boundary allowance. Epoch/ACK file I/O inside the SDK uses the parent's existing
+prepaid inner admission allowance; zero local charges are bookkeeping, not a
+claim that these reads are physically free or individually measured.
+
+Capacity checkpoints recognize the supplement SDK's fixed 2 GiB scratch mount
+only from a freshly validated private inner proof/study plan in an authenticated
+sandbox. Ordinary and predecessor cohorts retain 8 GiB. The 1 GiB free-scratch
+floor and exact 4 GiB inner-Docker mount remain enforced. This profile read does
+not replace entry/discovery source verification or reserve an extra source-hash
+slot. Missing, host-side, malformed or substituted authority refuses rather than
+selecting the smaller mount from an ambient size flag.
+
+PostgreSQL bind inspection accepts Docker's omitted false `ReadOnly` field,
+while rejecting explicit malformed values and requiring effective `RW=true`
+with exact socket paths. Legacy `--tmpfs` mounts need not appear in Engine's
+general mount list. Their exact configured sizes remain required, and each
+running-container inspection additionally reads that owned container's
+`/proc/self/mountinfo` to prove one writable tmpfs at each declared target.
+Only boolean target results enter diagnostic stdout; paths and raw records do
+not. Missing, duplicate, read-only or non-tmpfs targets refuse.
+
+The retained PostgreSQL entrypoint's temporary bootstrap server and setup SQL
+use `PGPORT=55433` and a read-only `/var/run/postgresql` alias of the same
+owned mode-0700 socket directory. The custom socket binding remains writable;
+both configured and effective binding pairs are checked exactly. The alias
+protects directory metadata while permitting Unix-socket protocol access.
+The image, entrypoint, single physical socket directory, socket-only server,
+tmpfs sizes, network isolation and cleanup ownership stay unchanged.
+The readiness query reads at most 64 bytes of the owned container's PID-1
+command name and requires PostgreSQL, JIT off and an empty listen address.
+This excludes the entrypoint's temporary initialization server. Failure
+diagnostics retain only the last probe exit code and expected-state boolean.
+The existing experimental schema installer owns the single `vector` 0.8.7
+installation in `repomap_vector`; the cluster fixture must not first install
+the extension into the default schema.
+
+The disposable registry is a public-only durable view of the unchanged frozen
+corpus. Synthetic private control bindings remain in the original full policy
+for pre-adapter refusal and denied-binding provenance, and are omitted from
+both accepted publication vectors. This preserves the maintained mixed-graph
+privacy refusal. No private binding is relabeled, and task/gold/input pins and
+146-record preparation remain fixed. The study requires a published FTS build;
+an ignored refusal is not an eligible positive baseline. The integration proof
+requires public FTS positive slots to complete and all private-control baseline
+slots to refuse. Final plan-bound source-read bookkeeping is exported by the
+canonical integration runner before SDK teardown; a missing receipt blocks the
+proof even when pytest passes.
+
+Sealed proof admission sets its declared phase marker inside the SDK after
+plan and retained-runtime checks. Host-only environment injection is insufficient
+for the inner receipt guard. Conftest owns pytest lifecycle settlement only;
+the canonical integration runner is the sole source-read receipt writer after
+its final source verification. Ordinary/core/native and collect-only paths
+retain their existing receipt lookup exclusions.
+
+Actual-study admission sets its validated declared phase inside the SDK after
+study admission and retained-runtime checks as well. Both sealed roles therefore
+supply their own bookkeeping marker; host environment injection is not relied
+on. The marker grants no execution authority. A refused runtime identity leaves
+all existing environment fields unchanged. The actual host controller validates
+the exported study receipt before accepting results, independently of the
+synthetic proof gate.
