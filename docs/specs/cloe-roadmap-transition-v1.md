@@ -11,9 +11,21 @@ rename has shipped. ADR0118 selects `common_lore_index` and installed ownership;
 ADR0123 defines their coordinated source cutover and finite compatibility. Preserve the current license and
 Samuel Leighton Lair <sam.lair@knowledge-forge.ai> as public commit identity.
 
-## Starting point and working custody
+## Latest qualified milestone
 
-Public main is v0.0.3 at `5ad00d162ad8a04430874275246a53227578c533`, qualified
+Public main is released Common Lore Index v0.0.4 at `39cb2b3`. The latest
+qualified staging milestone is `3d0a182`, accepted from all nine jobs and the
+same-attempt contracts of [CI150 attempt1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/43775164034).
+See [the qualification record](../../tools/ci/cloe-ci150-qualification.md) for
+exact identities, coverage and observed counters. It qualifies the public
+calibration supplement/provider source contracts; supplement model execution,
+scientific criteria, production vectors and full W5 acceptance remain separate.
+The 82% integration branch target remains 477 branches short at CI150's
+denominator. Main promotion and releases are not selected by roadmap continuation.
+
+## Original starting point and working custody
+
+At the transition start, public main was v0.0.3 at `5ad00d162ad8a04430874275246a53227578c533`, qualified
 by [CI87 attempt 1](https://github.com/Knowledge-Forge-AI/repo-map/actions/runs/40779161422).
 All nine jobs and the retained same-attempt system/staging contracts pass;
 Python unit and integration coverage meet the two-point margin. Core
