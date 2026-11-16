@@ -23,6 +23,32 @@ scientific criteria, production vectors and full W5 acceptance remain separate.
 The 82% integration branch target remains 477 branches short at CI150's
 denominator. Main promotion and releases are not selected by roadmap continuation.
 
+CI151 subsequently failed five unit cases and a scanner-suppression check;
+CI152 repaired those defects and passed eight jobs, but its integration job
+exhausted the repository-owned 180-minute envelope. CI152 has no completed
+staging coverage artifact and remains incomplete qualification. Its unit branch
+coverage was 22,030/25,308 (87.0476%); the desired integration 82% margin remains
+unverified. [ADR0204](../adr/2026/11/0204-retained-supplement-analysis-and-staging-envelope.md)
+raises only the public integration outer envelope to 240 minutes.
+
+The next W5 engineering milestone analyzes the already completed supplement
+without repeating inference. [The retained analysis report](../../tools/ci/cloe-w5-supplement-analysis1-report.md)
+binds all 24 tasks, six arms, three repetitions and 146 counted token records.
+It separates positive quality, controls, repeated-query stability and observed
+query-phase costs, with a reproducible full numeric artifact. Sixteen comparable
+positives meet the proposal floor, but vectors/fusion tie native and graph
+baselines on these positives. This small saturated calibration set cannot
+establish learned-vector usefulness. Absent-control correctness is mixed;
+privacy refusals and capability matches are reported separately from relevance.
+
+Only query-phase costs exist in this selected report; setup and inference cost
+coverage are not established. Query averages include controls and refused or
+unavailable calls, so they are not positive-only SQL latency or a total cost
+comparison. Shared/overlapping layers are never summed and missing RSS or
+physical PostgreSQL work remains unknown. Prospective usefulness criteria,
+held-out protocol, full W5 and production acceptance remain operator decisions;
+no threshold, preferred arm or new study is selected by this milestone.
+
 ## Original starting point and working custody
 
 At the transition start, public main was v0.0.3 at `5ad00d162ad8a04430874275246a53227578c533`, qualified

@@ -110,11 +110,25 @@ def test_staging_command_preserves_its_accepted_arguments() -> None:
     is_staging = STAGING_GATE.exists()
     workflow = load_workflow(STAGING_GATE if is_staging else PUBLIC_QUALIFICATION_GATE)
     job_name = "repomap-staging-gate" if is_staging else "staging-integration-gate"
-    assert workflow.jobs[job_name]["timeout-minutes"] == 180
+    assert workflow.jobs[job_name]["timeout-minutes"] == (180 if is_staging else 240)
     assert _validate_staging_runner_tokens(workflow, job_name) == []
     commands = "\n".join(workflow.job_run_commands(job_name))
     assert commands.count("--suite staging") == 1
     assert commands.count("df -B1 /") == 1
+
+
+@pytest.mark.parametrize("timeout", [180, 239, 241, 360, True, None, "240"])
+def test_public_staging_envelope_is_exact_and_not_inherited(timeout: object) -> None:
+    from ci.ci_topology_gates import _check_staging_gate
+
+    workflow = load_workflow(PUBLIC_QUALIFICATION_GATE)
+    job = workflow.jobs["staging-integration-gate"]
+    mutated_jobs = {
+        **workflow.jobs,
+        "staging-integration-gate": {**job, "timeout-minutes": timeout},
+    }
+    mutated = Workflow(workflow.path, {**workflow.document, "jobs": mutated_jobs})
+    assert any("staging lane timeout" in item for item in _check_staging_gate(mutated))
 
 
 def test_main_system_command_preserves_its_accepted_arguments() -> None:

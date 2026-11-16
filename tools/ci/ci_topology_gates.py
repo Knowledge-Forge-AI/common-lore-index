@@ -58,9 +58,10 @@ def _check_staging_gate(
     if not isinstance(job, dict):
         violations.append(f"{workflow.path.name}: staging gate job is missing")
         return violations
-    if job.get("timeout-minutes") != 180:
+    expected_timeout = 240 if "staging-integration-gate" in workflow.jobs else 180
+    if job.get("timeout-minutes") != expected_timeout:
         violations.append(
-            f"{workflow.path.name}: staging lane timeout must be 180 minutes"
+            f"{workflow.path.name}: staging lane timeout must be {expected_timeout} minutes"
         )
 
     steps = [s for s in job.get("steps", []) if isinstance(s, dict)]

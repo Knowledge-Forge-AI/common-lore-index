@@ -157,7 +157,7 @@ jobs:
     name: staging-integration-gate
     needs: [source-and-export-policy]
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 240
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
