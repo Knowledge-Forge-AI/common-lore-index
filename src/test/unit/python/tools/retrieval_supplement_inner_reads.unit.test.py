@@ -5,7 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -186,7 +186,7 @@ def test_proof_snapshot_commitment_accepts_current_newline_digest(tmp_path: Path
 def test_non_path_object_is_not_accepted_as_a_repo_root(tmp_path: Path) -> None:
     repo, ledger, plan = _fixture(tmp_path)
     with pytest.raises(InnerReadRefusal, match="repo_root_path"):
-        reserve_inner_source_verification(plan, str(repo), ledger)  # type: ignore[arg-type]
+        reserve_inner_source_verification(plan, cast(Path, str(repo)), ledger)
 
 
 def test_exported_counter_requires_exact_projected_plan_and_final_counts(tmp_path: Path) -> None:
