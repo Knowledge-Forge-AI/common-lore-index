@@ -14,20 +14,29 @@ Samuel Leighton Lair <sam.lair@knowledge-forge.ai> as public commit identity.
 ## Latest qualified milestone
 
 Public main is released Common Lore Index v0.0.4 at `39cb2b3`. The latest
-qualified staging milestone is `9bb22fd`, accepted from all nine jobs and the
-same-attempt contracts of [CI153 attempt1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/43977445688).
-See [the qualification record](../../tools/ci/cloe-ci153-qualification.md) for
-exact identities, coverage and observed counters. It qualifies the public
-calibration supplement/provider and retained-analysis source contracts. The
-completed native observation retains its original explicit source boundary;
-scientific criteria, production vectors and full W5 acceptance remain separate.
-The 82% integration branch target remains 477 branches short at CI153's
-denominator. Main promotion and releases are not selected by roadmap continuation.
+qualified staging milestone is `a81d9b2`, accepted from all nine jobs and the
+same-attempt contracts of [CI155 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44099128288).
+See [the exact qualification record](../../tools/ci/cloe-ci155-qualification.md)
+for source/merge/tree identities, coverage and observed counters. This qualifies
+the separate 24-case captured-text source/data foundation and repaired Rust
+checkpoint/manifest sequence. It is engineering acceptance; no actual new
+captured-text model study or scientific usefulness result is implied.
 
-[Proposed ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md)
-and the [next W5 decision](cloe-w5-representative-workload-decision-v1.md) describe
-the pending operator choice. W6–W8 remain advanceable within their own authority
-under any route; W5 is not declared accepted by a change in priority.
+The operator selected Route A in [ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md)
+and [the representative-workload contract](cloe-w5-representative-workload-decision-v1.md).
+The frozen body-v2 inputs and source preparation remain unchanged. The authorized
+source exit also requires a reviewed prospective criteria/execution proposal.
+Actual model/tokenizer study authority, scientific criteria selection, matching
+held-outs and production acceptance remain separate operator decisions.
+W6-W8 remain advanceable within their own authority; none is declared complete.
+
+Unit branch coverage is 22,029/25,308 (87.0436%), meeting its desired margin.
+Integration is 20,272/25,308 (80.1012%), passing the hard floor while remaining
+481 branches short of the requested 82% target at this denominator. Observed
+application/qualifier/wheel/component counters are 62/34/66/32; those operations
+are spent. No next public campaign, main promotion or release is selected by
+this qualification update. Subsequent local source still needs its own hosted
+qualification; CI155 cannot qualify later changes.
 
 CI151 subsequently failed five unit cases and a scanner-suppression check;
 CI152 repaired those defects and passed eight jobs, but its integration job
@@ -1852,3 +1861,35 @@ checkpoints. CI153's current status at the top supersedes pending core-hosted
 qualification language. The completed native observation and retained analysis
 remain bounded by their original source identities; future data classes,
 scientific criteria, matching held-outs and production acceptance stay open.
+
+
+### CI155 qualification and prospective W5 continuation
+
+CI155 qualifies the captured-text engineering foundation and corrected Rust
+manifest binding at a81d9b2. Source data retain all 24 cases, the original failed
+body-v1 pin and unchanged body-v2 task/question/gold maps. No new inference or
+body-query study ran in this milestone. Its report matrices are per backend;
+the common body floor requires an explicit cross-publication join before a
+future experiment can claim native/FTS/v2/fusion comparability.
+
+The next source/design phase, CLOE-W5-PROTOCOL1, prepares that prospective
+protocol and the concrete criteria/runtime decision under ADR0205's authorized
+source exit. Existing captures, refusals, privacy, limits, model/provider pins
+and prior held-outs stay unchanged. Technical design and model-independent
+source preparation do not select scientific criteria or authorize execution.
+No design-only staging push is selected. A concrete reserved choice returns
+to the operator after source-backed design and independent review.
+
+
+### W5 prospective calibration protocol
+
+CLOE-W5-PROTOCOL1 prepares [Proposed ADR0206](../adr/2026/11/0206-proposed-w5-captured-text-calibration-protocol.md)
+and its [body calibration protocol](cloe-w5-body-calibration-protocol-v1.md),
+completing ADR0205's authorized prospective design exit. The proposal fixes
+cross-publication correspondence, a 134-record source forecast, all 432 selected
+slots and a prospective fusion-versus-both-baselines calibration screen.
+Model/runner activation and criteria remain unselected; no body study,
+held-out execution, final usefulness acceptance or design-only CI is claimed.
+The implementation must prove its actual command/read/time schedule fits the
+unchanged envelope before any conditional activation. Routine allocation stays
+infinite; no numeric-budget decision is requested.
