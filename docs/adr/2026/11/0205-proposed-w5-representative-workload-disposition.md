@@ -1,10 +1,18 @@
-# ADR 0205: Proposed W5 representative workload disposition
+# ADR 0205: W5 representative workload disposition
 
 ## Status
 
-Proposed for operator selection. Phase `CLOE-W5-DISPOSITION2`, 2026-11-16. No
-new data, admission policy, criterion, experiment or requirement amendment is
-accepted by this proposal. CI153 qualification is a separate completed fact.
+Route A accepted by the operator on 2026-11-16 after the reviewed
+`CLOE-W5-DISPOSITION2` decision. Implementation phase: `CLOE-W5-BODY1`.
+The bounded public captured-text design/source class is authorized; the
+v0.1.0 usefulness requirement is retained. Alternatives B and C were not
+selected. CI153 qualification is a separate completed fact. Actual studies,
+scientific criteria, held-outs and production remain separately gated.
+
+The [technical foundation contract](../../../specs/cloe-w5-captured-text-foundation-v1.md)
+must pass independent preauthoring review before new questions, golds or corpus
+are authored. Adoption of Route A does not assert that this technical gate,
+source implementation or a usefulness observation has passed.
 
 ## Context
 
@@ -105,6 +113,6 @@ limits.
 
 The operator owns this choice. Independent review assesses technical readiness
 of the packet; it cannot accept the data class, alter release requirements or
-select scientific criteria. Until written selection, keep this ADR Proposed.
+select scientific criteria. The written selection accepts Route A only; retain B and C as rejected alternatives.
 Rollback removes only unused new-class preparation and retains all results. No
 docs-only public CI, main promotion, tag or release is selected here.

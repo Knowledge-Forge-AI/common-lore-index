@@ -1,7 +1,10 @@
 # W5 representative public workload decision
 
-Status: proposed, awaiting operator selection under ADR0205. Phase
-`CLOE-W5-DISPOSITION2`; this document is a reviewable choice, not authority.
+Status: Route A selected by the operator on 2026-11-16 under ADR0205.
+Implementation phase CLOE-W5-BODY1 follows the accepted public captured-text
+design/source scope. This document retains the reviewed choice and alternatives
+as history; B and C were not selected. Actual studies, scientific criteria,
+held-outs and production remain separately gated.
 
 ## Evidence and the actual gap
 

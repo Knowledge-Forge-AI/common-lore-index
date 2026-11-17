@@ -1023,7 +1023,7 @@
       },
       {
         "path": "tools/ci/d12_system_grant.py",
-        "sha256": "665ae013abeee3cb7cff6c30df5e373efe8bd5580a430e8b5f8248621e1ccd1d"
+        "sha256": "349cfc505d8bf9b6b0f65a4c70aea070f406a008b6fac87711fdd5bdd6237979"
       },
       {
         "path": "tools/ci/d12_system_grant_io.py",
@@ -1632,8 +1632,8 @@
     "recipe_sha256": "24ddf31d8890922c012559d5cab4b1dffe4b41e5b19e9b3438555aabe22d2862"
   },
   "source_checkpoint": {
-    "sha": "5ad00d162ad8a04430874275246a53227578c533",
-    "tree": "5a6f7a1402d0aa77c86c214bc9419eb6f8c1e8c6"
+    "sha": "1d132539596d0d48a8955757d0051284a41a92c5",
+    "tree": "92d9f9dc7a63d92232743a80cd8883c27effd4eb"
   },
   "stopping": "one-command-over-whole-manifest",
   "wheels": [

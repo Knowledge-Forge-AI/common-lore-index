@@ -1,0 +1,39 @@
+{
+  "approval": {
+    "adr_sha256": "593edacea1f0a0283b74af03aca69fff82c07c2cbc0f13dffeb6615303d8e777",
+    "operator_request": "Proceed with the roadmap to the next public staging milestone; captured-text Route A remains selected.",
+    "phase": "CLOE-W5-BODY1",
+    "schema": "cloe-ci154-approval-v1",
+    "scope": "Captured-text source/data foundation, scoped proof and independent review, then one normal staging synchronize. No model/tokenizer study, scientific criteria, held-out, production, dependency/provider/runner-wide policy, main/tag/release or history rewrite.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 60,
+    "attempt": 1,
+    "component_runtime_executions": 31,
+    "native_report_sha256": "263126e8f12e00ef06a61b0563ceac49d034f89ba766f75e6c4669c797eeb668",
+    "preceding_campaign": 153,
+    "previous_rust_downloads": 2,
+    "rust_qualifier_entries": 32,
+    "rust_report_sha256": "5c7eaf07d227b8669a50538fc688adb70f13f7d4859ec388059e28335f0a2c65",
+    "schema": "cloe-ci154-ledger-before-v1",
+    "system_report_sha256": "4c03a9220ca9009534c7d6d6144c1340d8ef9637a3405c8308e631f02543f633",
+    "wheel_transfers": 64
+  },
+  "reservation": {
+    "application_start": 61,
+    "approval_sha256": "a23b251cd9477cd4d4f31077074b83127367b7d45165ba5cb11dfd12e9ad9315",
+    "component_runtime_cumulative": 32,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "4e7b514f93d0f28f653e6015c0cc97e6f097d94ef5c0f95b071c3a5c3349b688",
+    "nonce": "3229f8ad759c7d5957fd75f185ab3027",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 33,
+    "schema": "cloe-ci154-reservation-v1",
+    "wheel_transfers_cumulative": 66,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 154
+  }
+}
