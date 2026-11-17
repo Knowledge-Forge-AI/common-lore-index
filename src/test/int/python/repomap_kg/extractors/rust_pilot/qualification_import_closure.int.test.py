@@ -46,6 +46,7 @@ def test_d12_validator_path_and_runtime_guard_are_real_and_isolated() -> None:
         " else:\n"
         "  raise AssertionError('invalid D12 evidence was accepted')\n"
         "assert 'ci.d12_hosted_evidence' in sys.modules\n"
+        "assert 'ci.d12_system_grant_history' in sys.modules\n"
         "assert not any(name.startswith(('psycopg', 'sqlite3', 'tree_sitter', 'common_lore_index.storage')) for name in sys.modules)\n"
         "for name in ('psycopg', 'sqlite3', 'tree_sitter', 'common_lore_index.storage', 'common_lore_index.ops.rust_pilot_publication'):\n"
         " try:\n"

@@ -120,6 +120,16 @@
     },
     {
       "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.ci154repair1.grant_history",
+      "members": [
+        "tools/ci/d12_system_grant_history.py"
+      ],
+      "rationale": "CLOE-CI154REPAIR1 immutable spent identity owner extracted to preserve existing clean grant length; no dependency, debt, checker or threshold change.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
       "governing_profile": "clean_test_owners",
       "id": "cloe.config1.test_owners",
       "members": [
@@ -60512,6 +60522,15 @@
       "maintained_executable": true,
       "path": "tools/ci/d12_system_grant.py",
       "rationale": "REPOMAP-PRODUCT6-NAVIGATION47-D12SYSTEM1 ADR 0095 Route B one-use AMD system candidate and diagnostic evidence; strict zero-debt admission.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 1.0,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/ci/d12_system_grant_history.py",
+      "rationale": "CLOE-CI154REPAIR1 immutable spent identity owner extracted to preserve existing clean grant length; no dependency, debt, checker or threshold change.",
       "root": "tools",
       "status": "active_tool"
     },

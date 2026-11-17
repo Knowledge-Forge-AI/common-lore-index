@@ -86,3 +86,35 @@ def test_older_checkpoint_refuses_shallow_history_and_binds_after_restoration(
     _git(clone, "fetch", "--unshallow", "origin")
     assert _git(clone, "rev-parse", "--is-shallow-repository") == "false"
     _bind_candidate(clone, manifest, head, tree, clone / "manifest.json")
+
+
+def test_successor_refuses_checkpoint_with_an_older_manifest(candidate) -> None:
+    root, manifest, old_head, old_tree = candidate
+    manifest["source_checkpoint"] = {"sha": old_head, "tree": old_tree}
+    (root / "manifest.json").write_text(json.dumps(manifest) + "\n")
+    _git(root, "add", "manifest.json")
+    _git(root, "commit", "-m", "Successor still points at a manifest-bearing checkpoint")
+    head, tree = _git(root, "rev-parse", "HEAD"), _git(root, "rev-parse", "HEAD^{tree}")
+    with pytest.raises(PrerequisiteRefused, match="checkpoint_contains_manifest"):
+        _bind_candidate(root, manifest, head, tree, root / "manifest.json")
+
+
+def test_successor_binds_after_manifest_free_source_checkpoint(candidate) -> None:
+    root, manifest, old_head, _old_tree = candidate
+    (root / "source.py").write_text("VALUE = 2\n")
+    (root / "manifest.json").unlink()
+    _git(root, "add", "-u")
+    _git(root, "commit", "-m", "Commit successor source without its manifest")
+    checkpoint = {"sha": _git(root, "rev-parse", "HEAD"),
+                  "tree": _git(root, "rev-parse", "HEAD^{tree}")}
+    assert _git(root, "show", checkpoint["sha"] + ":source.py") == "VALUE = 2"
+    absent = subprocess.run(["git", "cat-file", "-e", checkpoint["sha"] + ":manifest.json"],
+                            cwd=root, capture_output=True, check=False)
+    assert absent.returncode != 0
+    manifest["source_checkpoint"] = checkpoint
+    (root / "manifest.json").write_text(json.dumps(manifest) + "\n")
+    _git(root, "add", "manifest.json")
+    _git(root, "commit", "-m", "Restore successor manifest with exact source checkpoint")
+    head, tree = _git(root, "rev-parse", "HEAD"), _git(root, "rev-parse", "HEAD^{tree}")
+    assert _git(root, "merge-base", old_head, head) == old_head
+    _bind_candidate(root, manifest, head, tree, root / "manifest.json")

@@ -1,0 +1,40 @@
+{
+  "approval": {
+    "operator_request": "CI failed try again: correct the CI154 manifest checkpoint and publish one reviewed successor.",
+    "phase": "CLOE-CI154REPAIR1",
+    "schema": "cloe-ci155-approval-v1",
+    "scope": "Preserve strict Rust checkpoint guard; add historical-manifest and delete/restore regressions, finite grant/history admission and exact manifest repair. Scoped proof, independent review and one normal staging synchronize. No runtime dependency/provider/runner-wide policy/model study/scientific/main/tag/release change.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 61,
+    "attempt": 1,
+    "component_runtime_executions": 31,
+    "native_report_sha256": "4f34b63b9d39256d3988a8432ba9128e09d6ea446b63d10f309ac1736fd05c76",
+    "preceding_campaign": 154,
+    "previous_rust_downloads": 0,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 33,
+    "rust_refusal": "checkpoint_contains_manifest",
+    "rust_report_sha256": "ce043223ac417f8f92645ddeb3804dcd8123999578c7eb374183ed281eef9a43",
+    "schema": "cloe-ci155-ledger-before-v1",
+    "system_report_sha256": "d96daae085b357e9c7d87cad67cbf6596e229de2ce177bd98f8b8546830429ff",
+    "wheel_transfers": 64
+  },
+  "reservation": {
+    "application_start": 62,
+    "approval_sha256": "b78e496582a9a563eca0a6010ee4a476a3da51f6b30763d8027997a63366dc02",
+    "component_runtime_cumulative": 32,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "61ba77245a2a7d537e5210be7aa0c24941164db2ff0294d00c1a41cde37c317e",
+    "nonce": "9b8a2a94c4806d734cd3111e396bd086",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 34,
+    "schema": "cloe-ci155-reservation-v1",
+    "wheel_transfers_cumulative": 66,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 155
+  }
+}
