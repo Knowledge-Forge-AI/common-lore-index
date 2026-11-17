@@ -14,14 +14,20 @@ Samuel Leighton Lair <sam.lair@knowledge-forge.ai> as public commit identity.
 ## Latest qualified milestone
 
 Public main is released Common Lore Index v0.0.4 at `39cb2b3`. The latest
-qualified staging milestone is `3d0a182`, accepted from all nine jobs and the
-same-attempt contracts of [CI150 attempt1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/43775164034).
-See [the qualification record](../../tools/ci/cloe-ci150-qualification.md) for
+qualified staging milestone is `9bb22fd`, accepted from all nine jobs and the
+same-attempt contracts of [CI153 attempt1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/43977445688).
+See [the qualification record](../../tools/ci/cloe-ci153-qualification.md) for
 exact identities, coverage and observed counters. It qualifies the public
-calibration supplement/provider source contracts; supplement model execution,
+calibration supplement/provider and retained-analysis source contracts. The
+completed native observation retains its original explicit source boundary;
 scientific criteria, production vectors and full W5 acceptance remain separate.
-The 82% integration branch target remains 477 branches short at CI150's
+The 82% integration branch target remains 477 branches short at CI153's
 denominator. Main promotion and releases are not selected by roadmap continuation.
+
+[Proposed ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md)
+and the [next W5 decision](cloe-w5-representative-workload-decision-v1.md) describe
+the pending operator choice. W6–W8 remain advanceable within their own authority
+under any route; W5 is not declared accepted by a change in priority.
 
 CI151 subsequently failed five unit cases and a scanner-suppression check;
 CI152 repaired those defects and passed eight jobs, but its integration job
@@ -31,7 +37,7 @@ coverage was 22,030/25,308 (87.0476%); the desired integration 82% margin remain
 unverified. [ADR0204](../adr/2026/11/0204-retained-supplement-analysis-and-staging-envelope.md)
 raises only the public integration outer envelope to 240 minutes.
 
-The next W5 engineering milestone analyzes the already completed supplement
+The qualified W5 engineering milestone analyzes the already completed supplement
 without repeating inference. [The retained analysis report](../../tools/ci/cloe-w5-supplement-analysis1-report.md)
 binds all 24 tasks, six arms, three repetitions and 146 counted token records.
 It separates positive quality, controls, repeated-query stability and observed
@@ -1838,3 +1844,11 @@ disposition: the old optional materializer still uses an Alpine build path.
 Native execution, new runtime/dependency classes and all publication remain
 held pending their exact operator decision. Previous studies/workers/hosted
 allocations stay spent. Desired coverage margins remain pending hosted evidence.
+
+### Chronology after CI153
+
+Earlier source-preparation and pre-study holds above describe their original
+checkpoints. CI153's current status at the top supersedes pending core-hosted
+qualification language. The completed native observation and retained analysis
+remain bounded by their original source identities; future data classes,
+scientific criteria, matching held-outs and production acceptance stay open.

@@ -3,23 +3,33 @@
 ## Current release and CLOE transition
 
 Public main is released Common Lore Index v0.0.4 at `39cb2b3`. The latest
-qualified staging milestone is `3d0a182`, accepted from all nine jobs and the
-same-attempt contracts of [CI150 attempt1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/43775164034).
-See [the qualification record](../../tools/ci/cloe-ci150-qualification.md) for
+qualified staging milestone is `9bb22fd`, accepted from all nine jobs and the
+same-attempt contracts of [CI153 attempt1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/43977445688).
+See [the qualification record](../../tools/ci/cloe-ci153-qualification.md) for
 exact identities, coverage and observed counters. It qualifies the public
-calibration supplement/provider source contracts; supplement model execution,
+calibration supplement/provider and retained-analysis source contracts. The
+completed native observation retains its original explicit source boundary;
 scientific criteria, production vectors and full W5 acceptance remain separate.
-The 82% integration branch target remains 477 branches short at CI150's
+The 82% integration branch target remains 477 branches short at CI153's
 denominator. Main promotion and releases are not selected by roadmap continuation.
 
-The next W5 source milestone has a completed local native supplement
+[Proposed ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md)
+and the [next W5 decision](cloe-w5-representative-workload-decision-v1.md) describe
+the pending operator choice. W6–W8 remain advanceable within their own authority
+under any route; W5 is not declared accepted by a change in priority.
+
+The W5 source milestone has a completed local native supplement
 observation: two workers, 146 model records and 432 validated slots, with
 16 comparable positives and diversity floor
 true. See the [milestone exit](../../tools/ci/cloe-w5-supplement-study1-exit.md)
 and [aggregate observation](../../tools/ci/cloe-w5-supplement-study1-observation.json).
-Its earlier technical failure remains retained. Public qualification of the new
-candidate, scientific criteria, learned usefulness, held-outs and production
-admission remain open; the CI150 qualification above is not extended to it.
+Its earlier technical failure remains retained. The
+[retained analysis](../../tools/ci/cloe-w5-supplement-analysis1-report.md) reports
+all slots, task-weighted quality, controls and observed cost limits. CI153
+qualifies this engineering candidate; scientific criteria, learned usefulness,
+held-outs and production admission remain open. The metadata-only calibration
+does not establish an incremental learned benefit. A separate public captured-text
+evaluation class or a v0.1.0 requirement amendment needs operator selection.
 
 Historical preview v0.0.3 was public main at `5ad00d1`, qualified by [CI87 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/40779161422), with all nine jobs and same-attempt system/staging evidence accepted. The operator has authorized the [CLOE v0.1.0 transition](cloe-roadmap-transition-v1.md). [ADR 0109](../adr/2026/10/0109-cloe-configuration-compatibility.md) begins W1 with configuration compatibility and a read-only filename planner, and [ADR 0123](../adr/2026/10/0123-coordinated-cloe-package-and-namespace-cutover.md) completes the coordinated W1 package/namespace cutover on staging. [ADR 0127](../adr/2026/10/0127-cloe-retrieval-contracts-and-evaluation.md) (`REPOMAP-CLOE-RETRIEVAL1`, [specification](cloe-retrieval-evaluation-v1.md), [exit](../../tools/ci/cloe-retrieval1-exit.md)) implements the W2 internal retrieval query contracts, publication-bound captured-text projection reference, `mixed-v1` corpus and 36-task catalog, and declared 24-task calibration baseline (held-out unexecuted; exact candidate qualified by [CI101 attempt1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/41204249885), with the82% integration branch target carried into W3). Full live home migration and private-line reintegration remain explicit subsequent work. The historical D12 checkpoint below describes earlier evidence; it is superseded for current core qualification by CI87 and ADR 0105. Optional pgvector and live-deployment claims remain separate.
 
