@@ -3,14 +3,12 @@
 ## Current release and CLOE transition
 
 Public main is released Common Lore Index v0.0.4 at `39cb2b3`. The latest
-qualified staging milestone is `a81d9b2`, accepted from all nine jobs and the
-same-attempt contracts of [CI155 attempt1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44099128288).
-See [the qualification record](../../tools/ci/cloe-ci155-qualification.md) for
-exact identities, coverage and observed counters. It qualifies the captured-text
-source/data foundation and Rust manifest-binding repair. Scientific usefulness,
-held-outs, production vectors and full W5 acceptance remain separate.
-The 82% integration branch aim remains 481 branches short at CI155's
-denominator. Main promotion and releases are not selected by this continuation.
+qualified staging milestone is `2572d48`, accepted from all nine jobs and the
+same-attempt contracts of [CI156 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44375716879).
+The [qualification and lexical diagnostic](../../tools/ci/cloe-ci156-qualification.md)
+records the exact identities, coverage and counters. The measured integration
+branch rate was 80.14%, with 472 branches still needed for the 82% target.
+Main promotion, release and production admission remain separate.
 
 The operator selected Route A in [ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md).
 Its source foundation is qualified. The operator selected the prospective
@@ -21,6 +19,10 @@ The [captured-text calibration exit](../../tools/ci/cloe-w5-bodystudy1-exit.md)
 records the first complete local observation. Fusion met the prospective descriptive screen.
 PostgreSQL FTS returned no files in the common set, and fusion improved recall@10
 by 0.083 over native tools.
+The disposable lexical diagnostic reproduced zero matches before ranking.
+All 22 expected files were indexed, and both predicate branches matched zero
+chunks for all 12 frozen questions. The next evaluated comparator requires
+a prospective operator disposition under ADR 0206.
 [ADR0207](../adr/2026/11/0207-body-study-retained-runtime-input-custody.md)
 defines read-only reuse of its retained runtime input within unchanged bounds.
 W6-W8 remain advanceable within their own authority; W5 is not accepted or

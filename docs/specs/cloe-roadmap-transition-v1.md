@@ -14,29 +14,25 @@ Samuel Leighton Lair <sam.lair@knowledge-forge.ai> as public commit identity.
 ## Latest qualified milestone
 
 Public main is released Common Lore Index v0.0.4 at `39cb2b3`. The latest
-qualified staging milestone is `a81d9b2`, accepted from all nine jobs and the
-same-attempt contracts of [CI155 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44099128288).
-See [the exact qualification record](../../tools/ci/cloe-ci155-qualification.md)
-for source/merge/tree identities, coverage and observed counters. This qualifies
-the separate 24-case captured-text source/data foundation and repaired Rust
-checkpoint/manifest sequence. It is engineering acceptance; no actual new
-captured-text model study or scientific usefulness result is implied.
+qualified staging milestone is `2572d48`, accepted from all nine jobs and the
+same-attempt contracts of [CI156 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44375716879).
+The [qualification and lexical diagnostic](../../tools/ci/cloe-ci156-qualification.md)
+records the exact identities, coverage and counters. The measured integration
+branch rate was 80.14%, with 472 branches still needed for the 82% target.
+Main promotion, release and production admission remain separate.
 
-The operator selected Route A in [ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md)
-and [the representative-workload contract](cloe-w5-representative-workload-decision-v1.md).
-The frozen body-v2 inputs and source preparation remain unchanged. The authorized
-source exit also requires a reviewed prospective criteria/execution proposal.
-Actual model/tokenizer study authority, scientific criteria selection, matching
-held-outs and production acceptance remain separate operator decisions.
-W6-W8 remain advanceable within their own authority; none is declared complete.
+CI156 qualified the engineering milestone that carried the first admissible
+captured-text study under ADR 0206. The disposable lexical diagnostic indexed
+all 22 selected files. The frozen ranked-terms predicates admitted zero
+chunks for all 12 common questions. The original calibration remains primary.
+The comparator design, new evaluated treatments, matching held-outs, scientific
+acceptance and production admission require operator selection. W6 through
+W8 remain open.
 
-Unit branch coverage is 22,029/25,308 (87.0436%), meeting its desired margin.
-Integration is 20,272/25,308 (80.1012%), passing the hard floor while remaining
-481 branches short of the requested 82% target at this denominator. Observed
-application/qualifier/wheel/component counters are 62/34/66/32; those operations
-are spent. No next public campaign, main promotion or release is selected by
-this qualification update. Subsequent local source still needs its own hosted
-qualification; CI155 cannot qualify later changes.
+Unit branch coverage was 22,028/25,308 (87.04%). Measured integration was
+20,281/25,308 (80.14%). Observed application, Rust qualifier, wheel transfer
+and native component execution counts were 63/35/68/33. A future changed
+candidate needs its own hosted qualification.
 
 CI151 subsequently failed five unit cases and a scanner-suppression check;
 CI152 repaired those defects and passed eight jobs, but its integration job
