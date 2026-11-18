@@ -18,7 +18,9 @@ criterion and conditional native body-study class in
 [ADR0206](../adr/2026/11/0206-proposed-w5-captured-text-calibration-protocol.md)
 and the [body calibration protocol](cloe-w5-body-calibration-protocol-v1.md).
 The [captured-text calibration exit](../../tools/ci/cloe-w5-bodystudy1-exit.md)
-records the first complete local observation. The observation met the prospective descriptive screen for fusion.
+records the first complete local observation. Fusion met the prospective descriptive screen.
+PostgreSQL FTS returned no files in the common set, and fusion improved recall@10
+by 0.083 over native tools.
 [ADR0207](../adr/2026/11/0207-body-study-retained-runtime-input-custody.md)
 defines read-only reuse of its retained runtime input within unchanged bounds.
 W6-W8 remain advanceable within their own authority; W5 is not accepted or

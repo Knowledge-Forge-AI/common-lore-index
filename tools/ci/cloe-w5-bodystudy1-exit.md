@@ -15,6 +15,19 @@ The approved minimums are eight distinct intents and two per family.
 | `native_tools_baseline` | 0.167632 | 0.192130 | 0.083333 |
 | `postgres_native_fts:postgresql` | 0.910890 | 0.881944 | 1.000000 |
 
+PostgreSQL FTS completed all 36 common-set slots with scope reported complete
+and returned zero files, giving mean nDCG@10, MRR@10, and recall@10 of 0.
+The FTS gains in the table use this empty comparator. Over the same 12
+intents, fusion improved nDCG@10 by 0.168, MRR@10 by
+0.192, and recall@10 by 0.083 over native tools.
+The study verified the two publication pins and their decision rows separately.
+The retained matrix carries no combined publication correspondence digest.
+Attribution to query wording, indexing, or cross-publication correspondence
+remains open.
+
+Across the absent-control slots, 12 answers were correct, 12 were incorrect,
+and 12 were unavailable.
+
 The [observation](cloe-w5-bodystudy1-observation.json) records all case and slot
 states, the separate controls, analytic base rates, family and paired findings
 where available, and the original outcome `calibration_signal_present`. The repetitions reuse
@@ -58,7 +71,9 @@ admission decisions and both preparation handshakes.
 - `src/test/int/python/tools/retrieval_body_study_registered_inner.int.test.py`
 - `src/test/int/python/tools/retrieval_body_study_slot_boundaries.int.test.py`
 
-The complete static enforcement profile passed across its six Linux roots.
+The budget, grading, transport, host-limit and quality boundary test owners
+fall outside the final scoped runtime selections above. The complete static
+enforcement profile passed across its six Linux roots.
 Compile, Git diff, and independent read-only source review passed. Publication
 removed trailing blank lines from 13 Python files. The reviewed byte bridge
 verified that the Python ASTs remained identical to the native candidate. Complete
