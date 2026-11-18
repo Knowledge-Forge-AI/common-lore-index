@@ -115,6 +115,25 @@ def test_core_never_acquires_or_admits_a_provider():
     command.assert_not_called()
 
 
+def test_body_role_uses_body_admission_without_automatic_qualification(monkeypatch):
+    from retrieval_body_study_contracts import BODY_SELECTOR
+    import runner_body_study_sandbox as body_sandbox
+    calls = []
+    monkeypatch.setattr("runner_pgvector_context.load_inner_plan", lambda _env: {"role": "body-study"})
+    def body_admission(argv, environment, execute):
+        calls.append((tuple(argv), environment, execute))
+        return {"pgvector_setup": "synthetic-body-admission", "automatic_native_lifecycles": 0}
+    monkeypatch.setattr(body_sandbox, "admit_body_study_inner", body_admission)
+    forbidden = MagicMock(side_effect=AssertionError("no legacy automatic qualification"))
+    monkeypatch.setattr(materializer, "admit_inner", forbidden)
+    monkeypatch.setattr(materializer, "admit_study_inner", forbidden)
+    argv = [*ARGV[:-1], "-s", BODY_SELECTOR]
+    report = materializer._materialize_inner_pgvector_if_requested(argv, {}, runner_fn=forbidden)
+    assert len(calls) == 1 and calls[0][0] == tuple(argv)
+    assert report == {"pgvector_setup": "synthetic-body-admission", "automatic_native_lifecycles": 0}
+    forbidden.assert_not_called()
+
+
 def test_legacy_source_hook_does_not_reactivate_the_retired_compiler():
     commands = MagicMock()
     with pytest.raises(RuntimeError, match="retired"):

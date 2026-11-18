@@ -36,6 +36,18 @@ STUDY_ARGV = [
 ]
 
 
+def test_body_and_supplement_exact_cohorts_cannot_substitute_selectors() -> None:
+    from retrieval_body_study_contracts import BODY_SELECTOR
+    from runner_body_study import validate_body_cohort
+    body_argv = [*STUDY_ARGV[:-1], BODY_SELECTOR]
+    validate_body_cohort(body_argv)
+    validate_study_cohort(STUDY_ARGV)
+    with pytest.raises((RuntimeError, ValueError), match="exact"):
+        validate_study_cohort(body_argv)
+    with pytest.raises((RuntimeError, ValueError), match="exact"):
+        validate_body_cohort(STUDY_ARGV)
+
+
 def _offline_context(tmp_path: Path, plan: dict[str, Any]) -> OfflineContext:
     return OfflineContext(tmp_path / "unused-plan.json", plan,
                           "sha256:" + "0" * 64, tmp_path)

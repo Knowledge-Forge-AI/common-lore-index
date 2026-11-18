@@ -1893,3 +1893,10 @@ held-out execution, final usefulness acceptance or design-only CI is claimed.
 The implementation must prove its actual command/read/time schedule fits the
 unchanged envelope before any conditional activation. Routine allocation stays
 infinite; no numeric-budget decision is requested.
+
+### W5 captured-text calibration result
+
+The observation met the prospective descriptive screen for fusion. See the [milestone exit](../../tools/ci/cloe-w5-bodystudy1-exit.md) and
+the [aggregate observation](../../tools/ci/cloe-w5-bodystudy1-observation.json).
+The milestone carries forward the first admissible result under ADR0206.
+Full W5, held-out and production admission remain separate decisions.

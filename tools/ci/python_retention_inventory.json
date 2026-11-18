@@ -962,6 +962,1336 @@
     {
       "admission": "admitted",
       "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_admission_guards.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_admission_guards.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_budget_boundaries.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_budget_boundaries.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_closure.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_closure.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_controller_boundaries.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_controller_boundaries.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_driver.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_driver.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_execution.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_execution.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_extension_absent.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_extension_absent.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_failure_evidence.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_failure_evidence.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_files.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_files.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_grading_boundaries.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_grading_boundaries.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_host_admission.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_host_admission.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_host_controller.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_host_controller.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_host_epoch.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_host_epoch.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_host_evidence.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_host_evidence.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_host_lifecycle.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_host_lifecycle.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_host_limits.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_host_limits.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_host_meter.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_host_meter.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_host_report.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_host_report.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_host_source.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_host_source.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_inner.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_inner.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_inner_guard_reads.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_inner_guard_reads.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_inner_read_report.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_inner_read_report.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_inner_read_report_finalizer.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_inner_read_report_finalizer.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_join.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_join.unit.test.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_journal.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_journal.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_model_process.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_model_process.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_model_transport.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_model_transport.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_native.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_native.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_pg_lifecycle.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_pg_lifecycle.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_plan.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_plan.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_policy_edges.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_policy_edges.unit.test.py"
+      ],
+      "rationale": "ADR0206 body-study capability/floor/invalidation counterexamples; additive zero-debt unit owner, inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_product_boundaries.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_product_boundaries.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_publication.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_publication.int.test.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_quality.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_quality.unit.test.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_queries_common.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_queries_common.unit.test.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_registered_inner.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_registered_inner.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_report.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_report.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_report_custody.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_report_custody.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_report_transport.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_report_transport.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_requests.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_requests.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_reservation.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_reservation.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_response_identity.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_response_identity.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_runner.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_runner.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_runner_protocol.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_runner_protocol.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_schedule.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_schedule.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_seam.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_seam.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_selection_boundaries.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_selection_boundaries.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_slot_boundaries.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_slot_boundaries.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_slots.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_slots.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_snapshot_counter.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_snapshot_counter.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_snapshot_driver.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_snapshot_driver.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_source_read_report.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_source_read_report.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_source_reads.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_source_reads.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_transport_boundaries.int.test",
+      "members": [
+        "src/test/int/python/tools/retrieval_body_study_transport_boundaries.int.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-body-study1.test_owners.retrieval_body_study_worker_closure.unit.test",
+      "members": [
+        "src/test/unit/python/tools/retrieval_body_study_worker_closure.unit.test.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_driver",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_driver.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_fixtures",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_fixtures.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_host_cases",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_host_cases.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_pg",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_pg.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_pg_lifecycle",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_pg_lifecycle.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_requests",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_requests.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_runner_cases",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_runner_cases.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_runtime_fixtures",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_runtime_fixtures.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_setup",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_setup.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_slots",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_slots.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-body-study1.test_support.retrieval_body_study_snapshot_driver",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_snapshot_driver.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_attempt_journal",
+      "members": [
+        "tools/retrieval_body_study_attempt_journal.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_budget",
+      "members": [
+        "tools/retrieval_body_study_budget.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_capture",
+      "members": [
+        "tools/retrieval_body_study_capture.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_closure",
+      "members": [
+        "tools/retrieval_body_study_closure.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_closure_paths",
+      "members": [
+        "tools/retrieval_body_study_closure_paths.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_common",
+      "members": [
+        "tools/retrieval_body_study_common.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_contracts",
+      "members": [
+        "tools/retrieval_body_study_contracts.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_driver",
+      "members": [
+        "tools/retrieval_body_study_driver.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_epoch",
+      "members": [
+        "tools/retrieval_body_study_epoch.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_evidence_budget",
+      "members": [
+        "tools/retrieval_body_study_evidence_budget.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_exchange",
+      "members": [
+        "tools/retrieval_body_study_exchange.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_files",
+      "members": [
+        "tools/retrieval_body_study_files.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_grading",
+      "members": [
+        "tools/retrieval_body_study_grading.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_admission",
+      "members": [
+        "tools/retrieval_body_study_host_admission.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_controller",
+      "members": [
+        "tools/retrieval_body_study_host_controller.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_epoch",
+      "members": [
+        "tools/retrieval_body_study_host_epoch.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_evidence",
+      "members": [
+        "tools/retrieval_body_study_host_evidence.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_exchange",
+      "members": [
+        "tools/retrieval_body_study_host_exchange.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_limits",
+      "members": [
+        "tools/retrieval_body_study_host_limits.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_meter",
+      "members": [
+        "tools/retrieval_body_study_host_meter.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_report",
+      "members": [
+        "tools/retrieval_body_study_host_report.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_runner_lease",
+      "members": [
+        "tools/retrieval_body_study_host_runner_lease.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_runner_output",
+      "members": [
+        "tools/retrieval_body_study_host_runner_output.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_runner_process",
+      "members": [
+        "tools/retrieval_body_study_host_runner_process.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_runner_settlement",
+      "members": [
+        "tools/retrieval_body_study_host_runner_settlement.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_source",
+      "members": [
+        "tools/retrieval_body_study_host_source.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_host_transport",
+      "members": [
+        "tools/retrieval_body_study_host_transport.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_inner",
+      "members": [
+        "tools/retrieval_body_study_inner.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_inner_guard_reads",
+      "members": [
+        "tools/retrieval_body_study_inner_guard_reads.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_inner_read_plan",
+      "members": [
+        "tools/retrieval_body_study_inner_read_plan.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_inner_read_report",
+      "members": [
+        "tools/retrieval_body_study_inner_read_report.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_inner_read_report_finalizer",
+      "members": [
+        "tools/retrieval_body_study_inner_read_report_finalizer.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_inner_read_reservation",
+      "members": [
+        "tools/retrieval_body_study_inner_read_reservation.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_inner_reads",
+      "members": [
+        "tools/retrieval_body_study_inner_reads.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_inputs",
+      "members": [
+        "tools/retrieval_body_study_inputs.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_join",
+      "members": [
+        "tools/retrieval_body_study_join.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_journal_io",
+      "members": [
+        "tools/retrieval_body_study_journal_io.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_metrics",
+      "members": [
+        "tools/retrieval_body_study_metrics.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_model_contract",
+      "members": [
+        "tools/retrieval_body_study_model_contract.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_model_host",
+      "members": [
+        "tools/retrieval_body_study_model_host.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_model_response",
+      "members": [
+        "tools/retrieval_body_study_model_response.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_observation",
+      "members": [
+        "tools/retrieval_body_study_observation.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_observation_record",
+      "members": [
+        "tools/retrieval_body_study_observation_record.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_operation",
+      "members": [
+        "tools/retrieval_body_study_operation.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_outcomes",
+      "members": [
+        "tools/retrieval_body_study_outcomes.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_plan",
+      "members": [
+        "tools/retrieval_body_study_plan.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_preflight",
+      "members": [
+        "tools/retrieval_body_study_preflight.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_prepare",
+      "members": [
+        "tools/retrieval_body_study_prepare.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_quality",
+      "members": [
+        "tools/retrieval_body_study_quality.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_quality_boundaries",
+      "members": [
+        "tools/retrieval_body_study_quality_boundaries.py"
+      ],
+      "rationale": "ADR0206 body-study review corrections; additive zero-debt helper, inherited profiles and debt ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_queries",
+      "members": [
+        "tools/retrieval_body_study_queries.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_recovery",
+      "members": [
+        "tools/retrieval_body_study_recovery.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_registered_guard",
+      "members": [
+        "tools/retrieval_body_study_registered_guard.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_report",
+      "members": [
+        "tools/retrieval_body_study_report.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_report_custody",
+      "members": [
+        "tools/retrieval_body_study_report_custody.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_report_helpers",
+      "members": [
+        "tools/retrieval_body_study_report_helpers.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_requests",
+      "members": [
+        "tools/retrieval_body_study_requests.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_reservation",
+      "members": [
+        "tools/retrieval_body_study_reservation.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_schedule",
+      "members": [
+        "tools/retrieval_body_study_schedule.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_slots",
+      "members": [
+        "tools/retrieval_body_study_slots.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_snapshot_counter",
+      "members": [
+        "tools/retrieval_body_study_snapshot_counter.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_values",
+      "members": [
+        "tools/retrieval_body_study_values.py"
+      ],
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.retrieval_body_study_worker_closure",
+      "members": [
+        "tools/retrieval_body_study_worker_closure.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.runner_body_study",
+      "members": [
+        "tools/runner_body_study.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.runner_body_study_context",
+      "members": [
+        "tools/runner_body_study_context.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-body-study1.tools.runner_body_study_sandbox",
+      "members": [
+        "tools/runner_body_study_sandbox.py"
+      ],
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
       "id": "cloe.w5-body1.test_owners.retrieval_body_admission.unit.test",
       "members": [
         "src/test/unit/python/tools/retrieval_body_admission.unit.test.py"
@@ -43312,6 +44642,123 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_budget_boundaries.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_controller_boundaries.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_extension_absent.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_grading_boundaries.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_native.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_product_boundaries.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_publication.int.test.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_registered_inner.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_seam.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_selection_boundaries.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_slot_boundaries.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_source_read_report.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_body_study_transport_boundaries.int.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/int/python/tools/retrieval_inventory_metadata.int.test.py",
       "rationale": "REPOMAP-PRODUCT6-NAVIGATION35-BOUNDED-INVENTORY1 loopback HTTP integration owner for bounded A/B metadata transport, streaming byte/entry cap refusals, chunked framing, redirect refusal and CLI dry-plan/execute paths.",
       "root": "test_owners",
@@ -45726,6 +47173,114 @@
       "maintained_executable": true,
       "path": "src/test/support/python/repomap_test_support/retrieval_body_source.py",
       "rationale": "ADR0205 separate public captured-text source foundation; additive clean owners, unchanged tasks and immutable predecessor history; inherited profiles and debt ceilings preserved.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_driver.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_fixtures.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_host_cases.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_pg.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_pg_lifecycle.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_requests.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_runner_cases.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_runtime_fixtures.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_setup.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_slots.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_snapshot_driver.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
       "root": "test_support",
       "status": "active_test_support"
     },
@@ -57577,6 +59132,384 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_admission_guards.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_closure.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_driver.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_execution.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_failure_evidence.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_files.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_host_admission.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_host_controller.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_host_epoch.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_host_evidence.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_host_lifecycle.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_host_limits.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_host_meter.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_host_report.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_host_source.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_inner.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_inner_guard_reads.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_inner_read_report.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_inner_read_report_finalizer.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_join.unit.test.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_journal.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_model_process.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_model_transport.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_pg_lifecycle.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_plan.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_policy_edges.unit.test.py",
+      "rationale": "ADR0206 body-study capability/floor/invalidation counterexamples; additive zero-debt unit owner, inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_quality.unit.test.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_queries_common.unit.test.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_report.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_report_custody.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_report_transport.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_requests.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_reservation.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_response_identity.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_runner.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_runner_protocol.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_schedule.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_slots.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_snapshot_counter.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_snapshot_driver.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_source_reads.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_body_study_worker_closure.unit.test.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/unit/python/tools/retrieval_body_witnesses.unit.test.py",
       "rationale": "ADR0205 separate public captured-text source foundation; additive clean owners, unchanged tasks and immutable predecessor history; inherited profiles and debt ceilings preserved.",
       "root": "test_owners",
@@ -62068,6 +64001,573 @@
       "confidence": 0.95,
       "governing_profile": "clean_tooling",
       "maintained_executable": true,
+      "path": "tools/retrieval_body_study_attempt_journal.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_budget.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_capture.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_closure.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_closure_paths.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_common.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_contracts.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_driver.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_epoch.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_evidence_budget.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_exchange.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_files.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_grading.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_admission.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_controller.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_epoch.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_evidence.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_exchange.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_limits.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_meter.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_report.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_runner_lease.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_runner_output.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_runner_process.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_runner_settlement.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_source.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_host_transport.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_inner.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_inner_guard_reads.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_inner_read_plan.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_inner_read_report.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_inner_read_report_finalizer.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_inner_read_reservation.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_inner_reads.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_inputs.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_join.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_journal_io.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_metrics.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_model_contract.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_model_host.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_model_response.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_observation.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_observation_record.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_operation.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_outcomes.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_plan.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_preflight.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_prepare.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_quality.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_quality_boundaries.py",
+      "rationale": "ADR0206 body-study review corrections; additive zero-debt helper, inherited profiles and debt ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_queries.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_recovery.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_registered_guard.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_report.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_report_custody.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_report_helpers.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_requests.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_reservation.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_schedule.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_slots.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_snapshot_counter.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_values.py",
+      "rationale": "ADR0206 body-study source and proof owners; additive zero-debt admission, original body foundation and inherited profiles/debt ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_body_study_worker_closure.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
       "path": "tools/retrieval_body_tasks.py",
       "rationale": "ADR0205 separate public captured-text source foundation; additive clean owners, unchanged tasks and immutable predecessor history; inherited profiles and debt ceilings preserved.",
       "root": "tools",
@@ -64203,6 +66703,33 @@
       "maintained_executable": true,
       "path": "tools/runner_arguments.py",
       "rationale": "Maintained REVISE14 implementation or executable test owner; inherits its source family's Python retention forecast and applicable existing checks. Assignment is not effective enforcement without successful checks.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_body_study.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_body_study_context.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_body_study_sandbox.py",
+      "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
       "root": "tools",
       "status": "active_tool"
     },

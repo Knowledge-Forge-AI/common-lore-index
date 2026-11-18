@@ -11,7 +11,7 @@ import sys
 from typing import Any, cast, Callable, Mapping
 
 from runner_pgvector_budget import (
-    CAPS, INITIAL_CAPS, MAX_ARCHIVE, PROOF_CAPS, RECOVERY2_CAPS, STUDY_CAPS,
+    BODY_CAPS, CAPS, INITIAL_CAPS, MAX_ARCHIVE, PROOF_CAPS, RECOVERY2_CAPS, STUDY_CAPS,
     Allocation, private_file, refuse,
 )
 from retrieval_supplement_study_contracts import (
@@ -27,6 +27,11 @@ from runner_pgvector_supplement_proof import (
     forwarded_selector_matches, validate_proof_cohort, validate_proof_plan,
 )
 from offline_qualification_checkout import MAX_PLAN, verify_checkout
+from runner_body_study_context import (
+    BODY_INNER_PLAN_SCHEMA, BODY_PLAN_SCHEMA, BODY_ROLE, body_host_context,
+    body_inner_source_read, body_scratch_bytes, body_source_read_receipt,
+    is_body_receipt_phase, select_offline_role,
+)
 
 CORE_SELECTOR = "src/test/int/python/repomap_test_support/pgvector_admission.int.test.py"
 NATIVE_SELECTOR = "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py"
@@ -35,16 +40,8 @@ _SHA = re.compile(r"[0-9a-f]{64}\Z")
 
 
 def _selector_for_role(role: str) -> str:
-    if role == "core":
-        return CORE_SELECTOR
-    if role == "native":
-        return NATIVE_SELECTOR
-    if role == "study":
-        return STUDY_SELECTOR
-    if role == PROOF_ROLE:
-        return PROOF_SELECTOR
-    refuse(False, "unknown offline cohort role")
-    raise AssertionError("unreachable")
+    return select_offline_role(role, core=CORE_SELECTOR, native=NATIVE_SELECTOR,
+                               study=STUDY_SELECTOR, proof_role=PROOF_ROLE, proof=PROOF_SELECTOR)
 
 
 def require_native_host(runner: Callable[..., subprocess.CompletedProcess[str]] | None = None) -> None:
@@ -63,6 +60,10 @@ def validate_cohort(argv: list[str], role: str) -> None:
     if role == "study":
         from runner_pgvector_study import validate_study_cohort
         validate_study_cohort(argv)
+        return
+    if role == "body-study":
+        from runner_body_study import validate_body_cohort
+        validate_body_cohort(argv)
         return
     refuse(role in {"core", "native"} and argv.count("--") == 1, "cohort role/separator")
     separator = argv.index("--")
@@ -120,7 +121,12 @@ def validate_plan(plan: dict[str, Any], *, expected_caps: Mapping[str, int] = CA
     if plan.get("schema") in {STUDY_PLAN_SCHEMA, STUDY_INNER_PLAN_SCHEMA}:
         _validate_study_plan(plan)
         return
+    if plan.get("schema") in {BODY_PLAN_SCHEMA, BODY_INNER_PLAN_SCHEMA}:
+        from runner_body_study import validate_body_runner_plan
+        validate_body_runner_plan(plan)
+        return
     refuse(plan.get("role") != "study", "study role requires study schema")
+    refuse(plan.get("role") != "body-study", "body-study role requires body-study schema")
     refuse(expected_caps in (CAPS, RECOVERY2_CAPS, INITIAL_CAPS), "unknown plan caps version")
     attempt = plan.get("core_attempt", 1)
     allowed = (1, 3) if expected_caps == CAPS else ((1, 2) if expected_caps == RECOVERY2_CAPS else (1,))
@@ -204,6 +210,8 @@ class OfflineContext:
             caps = STUDY_CAPS
         elif self.plan.get("schema") in {PROOF_SCHEMA, PROOF_INNER_SCHEMA}:
             caps = PROOF_CAPS
+        elif self.plan.get("schema") == BODY_PLAN_SCHEMA:
+            caps = BODY_CAPS
         else:
             caps = CAPS
         return Allocation(Path(self.plan["allocation_path"]), caps)
@@ -220,6 +228,8 @@ def _host_context(argv: list[str], root: Path,
     private_file(path)
     raw = read_regular(path, MAX_PLAN)
     plan = strict_object(raw)
+    if plan.get("schema") in {BODY_PLAN_SCHEMA, BODY_INNER_PLAN_SCHEMA} or plan.get("role") == BODY_ROLE:
+        return body_host_context(argv, root, path, digest(raw), plan)
     refuse(plan.get("schema") not in {STUDY_INNER_PLAN_SCHEMA, PROOF_INNER_SCHEMA},
            "inner plan cannot authorize host dispatch")
     validate_plan(plan)
@@ -269,6 +279,8 @@ def load_inner_plan(environment: Mapping[str, str]) -> dict[str, Any]:
     if plan["role"] in {"study", PROOF_ROLE}:
         from retrieval_supplement_inner_reads import reserve_inner_source_verification
         reserve_inner_source_verification(plan, Path("/workspace"))
+    elif plan["role"] == BODY_ROLE:
+        body_inner_source_read(plan)
     verify_checkout(Path("/workspace"), plan["candidate_snapshot"], plan["candidate_head"])
     return plan
 
@@ -313,10 +325,14 @@ def sandbox_scratch_bytes(environment: Mapping[str, str]) -> int:
         refuse(plan.get("schema") in {STUDY_INNER_PLAN_SCHEMA, PROOF_INNER_SCHEMA},
                "scratch profile requires sealed inner plan")
         return 2 * 1024**3
+    if plan.get("role") == BODY_ROLE:
+        return body_scratch_bytes(plan)
     return 8 * 1024**3
 
 
 def source_read_receipt_for_report(*, collect_only: bool = False) -> dict[str, Any] | None:
+    if not collect_only and is_body_receipt_phase(os.environ):
+        return body_source_read_receipt(os.environ)
     if collect_only or not os.environ.get("REPOMAP_TEST_PHASE", "").startswith(STUDY_PHASE):
         return None
     if not offline_plan_requested(os.environ):
@@ -339,11 +355,11 @@ def offline_session_owned_by_test(session: Any) -> bool:
            "pytest offline profile mismatch")
     args = session.config.args
     refuse(isinstance(args, list) and 0 < len(args) <= 128, "pytest offline cohort missing")
-    if plan["role"] in {"study", PROOF_ROLE}:
+    if plan["role"] in {"study", PROOF_ROLE, "body-study"}:
         refuse(sum(str(argument) == "-s" for argument in args) <= 1,
                "duplicate pytest stream flag")
     for argument in args:
-        if plan["role"] in {"study", PROOF_ROLE} and str(argument) == "-s":
+        if plan["role"] in {"study", PROOF_ROLE, "body-study"} and str(argument) == "-s":
             continue
         path = Path(str(argument).split("::", 1)[0])
         if path.is_absolute():
@@ -373,7 +389,7 @@ def offline_pytest_owns_runtime(args: Any, forwarded: list[str]) -> bool:
     plan = inner_plan(sys.argv[1:], os.environ)
     selector = _selector_for_role(plan["role"])
     profile = "core" if plan["role"] == "core" else "pgvector"
-    allow_stream = plan["role"] in {"study", PROOF_ROLE}
+    allow_stream = plan["role"] in {"study", PROOF_ROLE, "body-study"}
     refuse(args.suite == "int" and args.no_coverage is True
            and (getattr(args, "pg_test_profile", None) or "core") == profile
            and forwarded_selector_matches(forwarded, selector, allow_stream=allow_stream),

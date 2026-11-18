@@ -1,8 +1,12 @@
-# Proposed W5 captured-text calibration protocol
+# W5 captured-text calibration protocol
 
-Status: prospective decision under [ADR0206](../adr/2026/11/0206-proposed-w5-captured-text-calibration-protocol.md).
-No criteria or body-study execution is selected by this document. It completes
-the protocol proposal required by accepted [ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md).
+Status: Route A selected by the operator on 2026-11-17 under
+[ADR0206](../adr/2026/11/0206-proposed-w5-captured-text-calibration-protocol.md).
+Implementation phase: `CLOE-W5-BODY-STUDY1`. Criteria and the closed new
+body-study cohort are selected; actual model/query execution remains conditional
+on every source, runtime, budget and ownership gate. No study has executed.
+The protocol completes the prospective design required by accepted
+[ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md).
 
 ## Problem and preserved evidence
 
@@ -97,7 +101,7 @@ fresh review, without altering the fixed task/gold class or these bounds.
 
 ## Proposed criterion A: calibrated fusion signal
 
-The operator must select this criterion before any body-model/query study.
+The operator selected this criterion before any body-model/query study.
 The primary candidate is the current public-text-v2 fusion policy, fixed by
 exact source before execution. No rank-driven weight, query-plan or prompt
 tuning occurs. The two primary contrasts are fusion versus native tools and

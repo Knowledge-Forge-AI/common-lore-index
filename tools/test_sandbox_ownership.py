@@ -44,6 +44,15 @@ def _study_cohort(argv: list[str]) -> bool:
     return True
 
 
+def _body_study_cohort(argv: list[str]) -> bool:
+    try:
+        from runner_body_study import validate_body_cohort
+        validate_body_cohort(argv)
+    except (RuntimeError, ValueError):
+        return False
+    return True
+
+
 def require(condition: bool, code: str) -> None:
     if not condition:
         raise RuntimeError("sandbox ownership " + code)
@@ -190,7 +199,8 @@ def prepare_ownership_reporter(argv: list[str], repo_root: Path) -> OwnershipRep
         raw_control = read_frame_fd(read_fd)
         compact_scope: str | None = None
         if scope_configured == [True, True]:
-            require(_study_cohort(argv), "study cohort required for compact ownership")
+            require(_study_cohort(argv) or _body_study_cohort(argv),
+                    "study cohort required for compact ownership")
             source_identity = cast(str, values[SOURCE_IDENTITY_ENV])
             sdk_image_id = cast(str, values[SDK_IMAGE_ID_ENV])
             require(len(raw_control) <= MAX_WIRE_BYTES, "compact control bounds")

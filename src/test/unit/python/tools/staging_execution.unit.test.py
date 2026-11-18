@@ -281,3 +281,25 @@ def test_source_read_receipt_failure_blocks_an_otherwise_passing_run(monkeypatch
     assert all(session.cleaned for session in sessions)
     assert any("report persistence" in error for error in report["errors"])
     assert not (path.parents[2] / "offline-source-read-budget.json").exists()
+
+
+def test_body_finalizer_report_is_preserved_by_role_not_ambient_phase(monkeypatch, tmp_path):
+    import runner_pgvector_context as offline
+    receipt = {"schema": "synthetic-body-receipt", "role": "body-study", "consumed_reads": 9,
+               "bookkeeping_only": True, "execution_authorized": False}
+    monkeypatch.setenv("REPOMAP_TEST_PHASE", "unit-unrelated-phase")
+    combined = b'{"schema":"synthetic-combined-body-budget","bookkeeping_only":true}\n'
+    def finalized(**_kwargs):
+        root = tmp_path / "reports"
+        root.mkdir(parents=True, exist_ok=True)
+        target = root / "body-study-source-read-budget.json"
+        target.write_bytes(combined)
+        target.chmod(0o600)
+        return receipt
+    monkeypatch.setattr(offline, "source_read_receipt_for_report", finalized)
+    result, path, _, _, sessions = _execute(monkeypatch, tmp_path)
+    assert result == 0 and all(session.cleaned for session in sessions)
+    exported = path.parents[2] / "body-study-source-read-budget.json"
+    assert exported.read_bytes() == combined
+    assert exported.stat().st_mode & 0o777 == 0o600
+    assert not (path.parents[2] / "offline-source-read-budget.json").exists()

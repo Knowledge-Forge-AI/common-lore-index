@@ -34,6 +34,14 @@ STUDY_CAPS = {
 # a study reservation, model worker, task, materialization, build, pull, or
 # export.  Keep this dictionary separate so old ledgers remain byte-for-byte
 # governed by CAPS/RECOVERY2_CAPS/INITIAL_CAPS.
+# Body-study cohort (ADR0206): distinct ledger; STUDY_CAPS unchanged.
+BODY_CAPS = {
+    "read_bytes": 12 * 1024**3, "transfer_bytes": 6 * 1024**3,
+    "materializations": 0, "sdk_body_study": 1, "native_lifecycles": 1,
+    "base_loads": 0, "runtime_exports": 0, "native_runtime_loads": 1,
+    "body_study_workers": 2,
+    "builds": 0, "pulls": 0,
+}
 PROOF_CAPS = {
     "read_bytes": 6 * 1024**3,
     "transfer_bytes": 2 * 1024**3,

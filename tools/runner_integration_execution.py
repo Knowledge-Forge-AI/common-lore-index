@@ -86,12 +86,19 @@ def _persist_source_read_receipt(args: Any) -> None:
     receipt = source_read_receipt_for_report(collect_only=getattr(args, "collect_only", False))
     if receipt is None:
         return
+    if receipt.get("role") == "body-study":
+        # The BODY finalizer already refreshed the combined budget and
+        # exported both final ledgers; do not publish a flat replacement.
+        return
     from retrieval_supplement_files import publish_member
     raw = (json.dumps(receipt, sort_keys=True, separators=(",", ":"),
                       ensure_ascii=True, allow_nan=False) + "\n").encode("ascii")
     if len(raw) > 65536:
         raise RuntimeError("source read receipt exceeds export bound")
-    publish_member(Path(args.report_dir), "offline-source-read-budget.json", raw)
+    _name = ("body-study-source-read-budget.json"
+             if receipt.get("role") == "body-study"
+             else "offline-source-read-budget.json")
+    publish_member(Path(args.report_dir), _name, raw)
 
 
 def execute_staging_decision_b(

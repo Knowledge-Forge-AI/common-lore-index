@@ -1,10 +1,14 @@
-# ADR 0206: Proposed W5 captured-text calibration protocol
+# ADR 0206: W5 captured-text calibration protocol
 
 ## Status
 
-Proposed for operator selection. Design phase: `CLOE-W5-PROTOCOL1`.
-No body-study criteria, new runner-policy class or model execution is accepted
-by this ADR. Independent technical review does not select them.
+Route A accepted by the operator on 2026-11-17 after three independent
+technical reviews of `CLOE-W5-PROTOCOL1`. Implementation phase:
+`CLOE-W5-BODY-STUDY1`. The quantitative calibration criterion and new closed
+body-study runner-policy class are selected. Native model/query execution is
+conditional on every source, proof, runtime, budget and ownership gate below.
+This records scope authority, not an executed study or scientific acceptance.
+Alternatives B and C were not selected; routine allocation remains infinite.
 
 ## Date
 
@@ -26,7 +30,7 @@ a class-specific v1-anchor exchange and execution admission. Neither raw report
 mappings nor old supplement grants provide this authority. A source-only census
 forecasts 134 model records and 432 selected slots, not an observed execution.
 
-## Recommended decision A
+## Accepted decision A
 
 Select the [prospective protocol](../../../specs/cloe-w5-body-calibration-protocol-v1.md),
 including its proposed quantitative calibration criterion and closed opt-in
@@ -65,8 +69,8 @@ failure evidence and no quality-driven retries.
 
 Native SQLite and the five PostgreSQL arms are ordinary technical assignments.
 They do not require a separate operator choice. New source preparation can be
-reviewed under ADR0205; activating the new runner-policy class and selecting
-scientific/calibration criteria require this disposition.
+reviewed under ADR0205. The operator has now selected the new runner-policy
+class and prospective calibration criterion; actual activation remains gated.
 
 Preserve all predecessor/body inputs and source freezes, public behavior,
 privacy, legacy refusals, dependency/provider/model identities and held-outs.

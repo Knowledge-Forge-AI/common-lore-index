@@ -166,6 +166,28 @@ def test_absent_configuration_preserves_default(monkeypatch, tmp_path):
     assert ownership.prepare_ownership_reporter([], tmp_path) is None
 
 
+def test_body_compact_pipe_attestation_binds_its_exact_argv_and_sdk(channel, monkeypatch):
+    from retrieval_body_study_contracts import BODY_SELECTOR
+    root, _, writer, output, _ = channel
+    argv = [*study_argv()[:-1], BODY_SELECTOR]
+    source_identity = "sha256:" + "b" * 64
+    scope = scope_sha256(argv, str(root), source_identity, SDK_IMAGE_SHA256)
+    monkeypatch.setenv(ownership.SOURCE_IDENTITY_ENV, source_identity)
+    monkeypatch.setenv(ownership.SDK_IMAGE_ID_ENV, SDK_IMAGE_SHA256)
+    write_control(writer, encode_control("a" * 64, os.getpid(), 123.5, scope))
+    reporter = ownership.prepare_ownership_reporter(argv, root)
+    assert reporter is not None and reporter.compact_scope_sha256 == scope
+    try:
+        reporter("c" * 64, SDK_IMAGE_SHA256, "e" * 64)
+        receipt = decode_receipt(ownership.read_frame_fd(output))
+        assert receipt["scope_sha256"] == scope
+        assert receipt["scope_sha256"] != scope_sha256(
+            study_argv(), str(root), source_identity, SDK_IMAGE_SHA256)
+        assert receipt["sdk_image_id"] == SDK_IMAGE_SHA256
+    finally:
+        reporter.close()
+
+
 def test_partial_configuration_is_fatal(monkeypatch, tmp_path):
     monkeypatch.setenv(ownership.CONTROL_FD_ENV, "3")
     monkeypatch.delenv(ownership.RECEIPT_FD_ENV, raising=False)

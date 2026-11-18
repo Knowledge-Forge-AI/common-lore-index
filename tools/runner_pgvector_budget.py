@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterator, cast
 
 from offline_qualification_files import private_file as private_file
-from offline_qualification_values import PROOF_CAPS as PROOF_CAPS, STUDY_CAPS as STUDY_CAPS, refuse as refuse
+from offline_qualification_values import BODY_CAPS as BODY_CAPS, PROOF_CAPS as PROOF_CAPS, STUDY_CAPS as STUDY_CAPS, refuse as refuse
 
 INITIAL_CAPS = {
     "read_bytes": 4 * 1024**3, "transfer_bytes": 4 * 1024**3,
@@ -21,8 +21,9 @@ RECOVERY2_CAPS = INITIAL_CAPS | {"read_bytes": 8 * 1024**3, "sdk_core": 2,
 CAPS = RECOVERY2_CAPS | {"read_bytes": 12 * 1024**3, "transfer_bytes": 6 * 1024**3,
                          "sdk_core": 3, "base_loads": 3, "runtime_exports": 3}
 _RECORD_NAMES = {"derived_archive", "core_export", "core_result", "native_result",
-                 "recovery_parent", "study_result"}
+    "recovery_parent", "study_result"}
 _PROOF_RECORD_NAMES = {"proof_result"}
+_BODY_RECORD_NAMES = {"derived_archive", "body_study_sdk_result", "body_study_result"}
 MAX_ARCHIVE = 768 * 1024**2
 MAX_SELECTED = 4 * 1024**2
 
@@ -40,7 +41,7 @@ class Allocation:
     def __init__(self, path: Path, caps: dict[str, int] | None = None) -> None:
         self.path = path
         self.caps = CAPS if caps is None else caps
-        refuse(self.caps in (CAPS, STUDY_CAPS, PROOF_CAPS), "unknown allocation caps")
+        refuse(self.caps in (CAPS, STUDY_CAPS, PROOF_CAPS, BODY_CAPS), "unknown allocation caps")
         self.used: dict[str, int] = {}
         self.records: dict[str, Any] = {}
         self._lock: Any | None = None
@@ -139,7 +140,7 @@ class Allocation:
                    "allocation values")
             self.used = used
             records = state.get("records", {})
-            allowed_records = _PROOF_RECORD_NAMES if self.caps == PROOF_CAPS else _RECORD_NAMES
+            allowed_records = self._record_names()
             refuse(isinstance(records, dict) and set(records) <= allowed_records, "allocation records")
             self.records = records
             self._lock = lock
@@ -168,13 +169,18 @@ class Allocation:
         return self.caps[key] - self.used[key]
 
     def bind(self, name: str, value: dict[str, Any]) -> None:
-        allowed_records = _PROOF_RECORD_NAMES if self.caps == PROOF_CAPS else _RECORD_NAMES
+        allowed_records = self._record_names()
         refuse(name in allowed_records and name not in self.records, "already bound allocation record")
         refuse(isinstance(value, dict), "allocation record object")
         refuse(len(json.dumps(value, allow_nan=False).encode()) <= 256 * 1024,
                "allocation record cap")
         self.records[name] = value
         self._persist()
+
+    def _record_names(self) -> set[str]:
+        if self.caps == BODY_CAPS:
+            return _BODY_RECORD_NAMES
+        return _PROOF_RECORD_NAMES if self.caps == PROOF_CAPS else _RECORD_NAMES
 
     def read(self, operation: Callable[[int], bytes], count: int, *, transfer: bool = False) -> bytes:
         """Reserve before bounded I/O; reconcile only bytes proved not consumed.

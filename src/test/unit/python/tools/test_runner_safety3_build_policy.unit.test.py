@@ -178,6 +178,7 @@ def _conftest(request):
 
 
 def test_safety3_d12_optional_owner_is_visibly_deselected_and_required(request, monkeypatch):
+    from repomap_test_support import retrieval_body_study as body
     conftest, lines = _conftest(request), list[str]()
     reporter = SimpleNamespace(write_line=lines.append)
     config, optional, other = _config(), _Item(d12.NODE_ID, d12.MARKER), _Item("src/test/int/python/x.int.test.py::t")
@@ -191,11 +192,14 @@ def test_safety3_d12_optional_owner_is_visibly_deselected_and_required(request, 
     assert lines == [f"D12 optional core-image owners deselected: 1 {d12.NODE_ID} ({d12.DESELECTION_REASON})"]
     for root in ("src/test/int/python", "src/test/int/python/repomap_kg/runtime", d12.NODE_FILE):
         study_items = [_Item(study.NODE_ID, study.MARKER)] if root == "src/test/int/python" else []
+        body_items = [_Item(body.NODE_ID, body.MARKER)] if study_items else []
         population = _config(root)
-        conftest.pytest_collection_modifyitems(None, population, [_Item(d12.NODE_ID, d12.MARKER), *study_items])
+        conftest.pytest_collection_modifyitems(None, population,
+            [_Item(d12.NODE_ID, d12.MARKER), *study_items, *body_items])
         if study_items:
             assert getattr(population, study.POPULATION_ATTR)["count"] == 1
-            assert [item.nodeid for item in population.deselected] == [d12.NODE_ID, study.NODE_ID]
+            assert getattr(population, body.POPULATION_ATTR)["count"] == 1
+            assert [item.nodeid for item in population.deselected] == [d12.NODE_ID, study.NODE_ID, body.NODE_ID]
         with pytest.raises(d12.D12ProfileError, match="must collect exactly its one named node"):
             conftest.pytest_collection_modifyitems(None, _config(root), [other, *study_items])
     quiet = _config("src/test/unit/python", f"{d12.NODE_FILE}::test_other")

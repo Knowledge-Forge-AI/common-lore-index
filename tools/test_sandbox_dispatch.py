@@ -54,6 +54,11 @@ def integration_sandbox_dispatch(
                     raise RuntimeError("study offline cohort requires live ownership attestation")
                 if ownership_reporter.expected_sdk_image_id != offline.plan["sdk_image"]:
                     raise RuntimeError("study ownership SDK image mismatch")
+            elif offline.plan.get("role") == "body-study":
+                if ownership_reporter is None:
+                    raise RuntimeError("body-study offline cohort requires live ownership attestation")
+                if ownership_reporter.expected_sdk_image_id != offline.plan["sdk_image"]:
+                    raise RuntimeError("body-study ownership SDK image mismatch")
             elif ownership_reporter is not None:
                 raise RuntimeError("offline qualifier cannot combine ownership grants")
             image_id = cached_sandbox_image(dockerfile=dockerfile,

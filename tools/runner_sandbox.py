@@ -126,6 +126,9 @@ def _materialize_inner_pgvector_if_requested(
         role = load_inner_plan(inner_env)["role"]
         if role == "study":
             admit = admit_study_inner
+        elif role == "body-study":
+            from runner_body_study_sandbox import admit_body_study_inner
+            admit = admit_body_study_inner
         elif role == "proof":
             from runner_pgvector_sandbox import admit_proof_inner
             admit = admit_proof_inner

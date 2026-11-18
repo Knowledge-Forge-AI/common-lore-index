@@ -27,6 +27,9 @@ def _selector(plan: dict[str, Any]) -> str:
         return NATIVE_SELECTOR
     if plan["role"] == "study":
         return STUDY_SELECTOR
+    if plan["role"] == "body-study":
+        from retrieval_body_study_contracts import BODY_SELECTOR
+        return BODY_SELECTOR
     if plan["role"] == PROOF_ROLE:
         return PROOF_SELECTOR
     refuse(False, "discovery offline role")
@@ -63,7 +66,7 @@ def plan_for_request(request: dict[str, Any]) -> dict[str, Any] | None:
         arguments = arguments[4:]
     expected = _selector(plan)
     absolute = "/workspace/" + expected
-    allow_stream = plan["role"] in {"study", PROOF_ROLE}
+    allow_stream = plan["role"] in {"study", "body-study", PROOF_ROLE}
     refuse((forwarded_selector_matches(arguments, expected, allow_stream=allow_stream)
             or forwarded_selector_matches(arguments, absolute, allow_stream=allow_stream)),
            "discovery exact offline selector")
