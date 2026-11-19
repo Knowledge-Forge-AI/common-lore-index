@@ -23,6 +23,12 @@ The disposable lexical diagnostic reproduced zero matches before ranking.
 All 22 expected files were indexed, and both predicate branches matched zero
 chunks for all 12 frozen questions. The next evaluated comparator requires
 a prospective operator disposition under ADR 0206.
+The operator selected
+[ADR 0212](../adr/2026/11/0212-w5-prospective-lexical-comparator.md)
+for a separate prospective comparator. Its scoped source and synthetic
+PostgreSQL competence proof are complete in the
+[comparator exit](../../tools/ci/cloe-w5-lexical1-exit.md).
+A future evaluated protocol requires its own operator selection.
 [ADR0207](../adr/2026/11/0207-body-study-retained-runtime-input-custody.md)
 defines read-only reuse of its retained runtime input within unchanged bounds.
 W6-W8 remain advanceable within their own authority; W5 is not accepted or
