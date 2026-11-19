@@ -42,6 +42,13 @@ BODY_CAPS = {
     "body_study_workers": 2,
     "builds": 0, "pulls": 0,
 }
+LEXICAL_REPLAY_CAPS = {
+    "read_bytes": 12 * 1024**3,
+    "transfer_bytes": 6 * 1024**3,
+    "sdk_lexical_replay": 1,
+    "core_imports": 1,
+    "postgres_lifecycles": 1,
+}
 PROOF_CAPS = {
     "read_bytes": 6 * 1024**3,
     "transfer_bytes": 2 * 1024**3,

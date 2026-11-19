@@ -9,6 +9,7 @@ from typing import Any, Callable, Iterator, cast
 
 from offline_qualification_files import private_file as private_file
 from offline_qualification_values import BODY_CAPS as BODY_CAPS, PROOF_CAPS as PROOF_CAPS, STUDY_CAPS as STUDY_CAPS, refuse as refuse
+from offline_qualification_values import LEXICAL_REPLAY_CAPS
 
 INITIAL_CAPS = {
     "read_bytes": 4 * 1024**3, "transfer_bytes": 4 * 1024**3,
@@ -41,7 +42,8 @@ class Allocation:
     def __init__(self, path: Path, caps: dict[str, int] | None = None) -> None:
         self.path = path
         self.caps = CAPS if caps is None else caps
-        refuse(self.caps in (CAPS, STUDY_CAPS, PROOF_CAPS, BODY_CAPS), "unknown allocation caps")
+        refuse(self.caps in (CAPS, STUDY_CAPS, PROOF_CAPS, BODY_CAPS, LEXICAL_REPLAY_CAPS),
+               "unknown allocation caps")
         self.used: dict[str, int] = {}
         self.records: dict[str, Any] = {}
         self._lock: Any | None = None
@@ -178,6 +180,8 @@ class Allocation:
         self._persist()
 
     def _record_names(self) -> set[str]:
+        if self.caps == LEXICAL_REPLAY_CAPS:
+            return {"lexical_replay_sdk_result"}
         if self.caps == BODY_CAPS:
             return _BODY_RECORD_NAMES
         return _PROOF_RECORD_NAMES if self.caps == PROOF_CAPS else _RECORD_NAMES

@@ -1,10 +1,10 @@
-# ADR 0213 — Proposed W5 secondary lexical replay
+# ADR 0213 — W5 secondary lexical replay
 
 ## Status
 
-Proposed for operator selection. Design phase `CLOE-W5-LEXICAL-REPLAY1`
-prepares the execution contract. It grants no evaluated query or runner
-admission.
+The operator selected Route A on 2026-11-18 after the reviewed design in
+`CLOE-W5-LEXICAL-REPLAY1`. `CLOE-W5-LEXICAL-REPLAY2` owns the implementation,
+scoped proof, and one conditional paired replay.
 
 ## Context
 

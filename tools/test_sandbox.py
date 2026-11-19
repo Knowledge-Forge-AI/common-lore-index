@@ -349,6 +349,7 @@ def run_in_sandbox(
     boundary_prover: BoundaryProver = prove_inner_boundary,
     archive_reader: ReportArchiveReader = _read_container_report_archive,
     ownership_reporter=None,
+    offline_override=None,
 ) -> int:
     from runner_pgvector_context import host_context
     from runner_pgvector_sandbox import OfflineSandbox
@@ -358,7 +359,13 @@ def run_in_sandbox(
     if context is not None and context.plan.get("role") == "body-study":
         from runner_body_study_sandbox import BodyOfflineSandbox
         adapter = BodyOfflineSandbox
-    offline = adapter(context, runner, _captured) if context is not None else None
+    offline: OfflineSandbox | None
+    if offline_override is not None:
+        if context is not None or not isinstance(offline_override, OfflineSandbox) or ownership_reporter is None:
+            raise RuntimeError("explicit offline sandbox requires exclusive ownership")
+        offline = offline_override
+    else:
+        offline = adapter(context, runner, _captured) if context is not None else None
     result = _execution.run_in_sandbox(
         argv, repo_root=repo_root, image_id=image_id, runner=runner,
         follower_factory=follower_factory, snapshotter=snapshotter,

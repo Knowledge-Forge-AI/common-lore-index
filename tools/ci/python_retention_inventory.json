@@ -2757,6 +2757,59 @@
     },
     {
       "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-replay2.comparison",
+      "members": [
+        "tools/retrieval_lexical_replay.py",
+        "tools/retrieval_lexical_replay_execution.py"
+      ],
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-replay2.entrypoint",
+      "members": [
+        "tools/run_lexical_replay.py"
+      ],
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-replay2.sandbox",
+      "members": [
+        "tools/runner_lexical_replay.py"
+      ],
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-replay2.test_owners",
+      "members": [
+        "src/test/int/python/tools/retrieval_lexical_replay.int.test.py",
+        "src/test/unit/python/tools/retrieval_lexical_replay.unit.test.py",
+        "src/test/unit/python/tools/runner_lexical_replay.unit.test.py"
+      ],
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-replay2.test_support",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_body_study_pg_publication.py"
+      ],
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
       "governing_profile": "clean_test_owners",
       "id": "cloe.w5-supplement-analysis1.test_owners",
       "members": [
@@ -44798,6 +44851,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_lexical_replay.int.test.py",
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/int/python/tools/retrieval_public_text_capture.int.test.py",
       "rationale": "ADR0182/0183 bounded public-text calibration and host-only runner ownership; clean additive owner, existing profiles and all debt ceilings preserved.",
       "root": "test_owners",
@@ -47257,6 +47319,15 @@
       "maintained_executable": true,
       "path": "src/test/support/python/repomap_test_support/retrieval_body_study_pg_lifecycle.py",
       "rationale": "ADR0206 closed body-study execution and real product-boundary proof; additive zero-debt owners, all inherited profiles and ceilings unchanged.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_body_study_pg_publication.py",
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
       "root": "test_support",
       "status": "active_test_support"
     },
@@ -59810,6 +59881,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_lexical_replay.unit.test.py",
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/unit/python/tools/retrieval_public_text_admission.unit.test.py",
       "rationale": "ADR0182/0183 bounded public-text calibration and host-only runner ownership; clean additive owner, existing profiles and all debt ceilings preserved.",
       "root": "test_owners",
@@ -60811,6 +60891,15 @@
       "maintained_executable": true,
       "path": "src/test/unit/python/tools/runner_failure_recovery.unit.test.py",
       "rationale": "ADR0115 bounded failure observations and recovery; immediate zero-debt enforcement.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/runner_lexical_replay.unit.test.py",
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
       "root": "test_owners",
       "status": "active_unit_test"
     },
@@ -65102,6 +65191,24 @@
       "confidence": 0.95,
       "governing_profile": "clean_tooling",
       "maintained_executable": true,
+      "path": "tools/retrieval_lexical_replay.py",
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_lexical_replay_execution.py",
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
       "path": "tools/retrieval_public_text_admission.py",
       "rationale": "ADR0182/0183 bounded public-text calibration and host-only runner ownership; clean additive owner, existing profiles and all debt ceilings preserved.",
       "root": "tools",
@@ -66704,6 +66811,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_tooling",
       "maintained_executable": true,
+      "path": "tools/run_lexical_replay.py",
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
       "path": "tools/run_tests.py",
       "rationale": "Repository CI and developer tooling infrastructure.",
       "root": "tools",
@@ -66958,6 +67074,15 @@
       "maintained_executable": true,
       "path": "tools/runner_integration_population.py",
       "rationale": "PR26-STAGING-CONTRACT1 exact staging population, observed abrupt lifecycle and report validation; immediate full retention enforcement.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/runner_lexical_replay.py",
+      "rationale": "ADR0213 bounded lexical replay and synthetic proof, admitted with zero new debt.",
       "root": "tools",
       "status": "active_tool"
     },
