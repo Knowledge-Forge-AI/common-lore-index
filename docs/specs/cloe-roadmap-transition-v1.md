@@ -21,6 +21,13 @@ the source, host evidence and consumed counters. Unit branches reached
 87.06%. Integration branches reached 80.15%, leaving 468 branches to the 82%
 target. Main promotion, release and production admission remain separate.
 
+The next local W7 checkpoints preserve committed outcomes on optional RSS
+sampling failure and measure the actual staged INSERT and completeness
+queries. The disposable spill fixture recorded 603 temporary blocks written
+while its immediate database temporary-byte delta stayed at zero.
+[Custody exit](../../tools/ci/cloe-resource-governance13-exit.md)
+· [Staged SQL exit](../../tools/ci/cloe-w7-staged-sql1-exit.md)
+
 CI156 qualified the engineering milestone that carried the first admissible
 captured-text study under ADR 0206. The disposable lexical diagnostic indexed
 all 22 selected files. The frozen ranked-terms predicates admitted zero

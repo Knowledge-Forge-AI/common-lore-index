@@ -1,5 +1,6 @@
 """COPY refusals roll back unpublished rows while preserving committed evidence."""
 
+import json
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,14 @@ from common_lore_index.storage.readback_driver import _psycopg_connection_params
 from common_lore_index.storage.row_spool import RowSpool
 from common_lore_index.storage.staged_ingestion import IngestionAuthority, new_direct_authority, run_staged_full_refresh
 from common_lore_index.storage.staged_rows import PreparedStageRows
+from common_lore_index.storage.staged_validation import validate_stage
 from common_lore_index.storage.staging_copy import CopyContractError, STAGING_COPY_TABLES, copy_stage_rows
+from common_lore_index.storage.staging_family_contracts import STAGING_FAMILY_DESCRIPTORS
+from repomap_test_support.canonical_merge_reference import (
+    copy_diagnostic_fixture,
+    create_repository_run_stage,
+    observe_staged_statement,
+)
 from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
@@ -135,3 +143,46 @@ def test_prepared_copy_refusal_rolls_back_before_statistics_and_preserves_public
         recovered = run_staged_full_refresh(postgres.psql_args, current[1:], authority=authority(),
                                            stage_id="recovered-stage", repository_name=repo, root_path=root)
         assert recovered.run_id != accepted.run_id and recovered.files == 1
+
+
+def test_completeness_explain_matches_ordinary_validation(tmp_path: Path) -> None:
+    require_postgres_binaries()
+    count, stage = 50, "stage-validation-explain"
+    expected_counts: dict[str, int] = {family: 0 for family in STAGING_FAMILY_DESCRIPTORS}
+    expected_counts.update({
+        "canonical_nodes": count + 1, "canonical_edges": count, "canonical_evidence": count,
+        "canonical_edge_evidence": 2 * count, "canonical_node_evidence": count,
+    })
+    with temporary_postgres() as postgres:
+        apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
+        create_repository_run_stage(postgres, stage)
+        conninfo = make_conninfo(**_psycopg_connection_params_from_psql_args(postgres.psql_args))
+        with psycopg.connect(conninfo) as connection, psycopg.connect(conninfo, autocommit=True) as observer:
+            copy_diagnostic_fixture(connection, stage, count=count)
+            connection.commit()
+            observed: list[tuple[str, tuple[str, ...], dict[str, Any]]] = []
+
+            class ExplainedValidation:
+                def execute(self, statement: str, arguments: tuple[str, ...]) -> psycopg.Cursor[tuple[Any, ...]]:
+                    _, measurement = observe_staged_statement(connection, observer, statement, arguments)
+                    observed.append((statement, arguments, measurement))
+                    return connection.execute(statement, arguments)
+
+            with connection.transaction():
+                connection.execute("SET TRANSACTION READ ONLY")
+                validate_stage(ExplainedValidation(), stage, expected_counts)
+                validate_stage(connection, stage, expected_counts)
+
+            families = {}
+            for (family, descriptor), (statement, arguments, measurement) in zip(
+                STAGING_FAMILY_DESCRIPTORS.items(), observed, strict=True,
+            ):
+                assert statement == f"SELECT count(*) FROM {descriptor.stage_table} WHERE stage_id = %s"
+                assert arguments == (stage,)
+                assert measurement["statement_root"]["WAL Bytes"] == 0
+                assert measurement["statement_root"]["Temp Written Blocks"] == 0
+                families[family] = {"expected_rows": expected_counts[family], **measurement}
+            payload = {"server_version": connection.info.server_version, "read_only": True, "stage_id": stage,
+                       "ordinary_validation_passed": True, "families": families}
+            print(f"W7_STAGED_SQL_VALIDATION {json.dumps(payload, sort_keys=True)}")
+            (tmp_path / "w7_validation_diagnostics.json").write_text(json.dumps(payload, indent=2))
