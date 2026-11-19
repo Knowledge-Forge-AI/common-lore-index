@@ -2,13 +2,13 @@
 
 ## Current release and CLOE transition
 
-Public main is released Common Lore Index v0.0.4 at `39cb2b3`. The latest
-qualified staging milestone is `2572d48`, accepted from all nine jobs and the
-same-attempt contracts of [CI156 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44375716879).
-The [qualification and lexical diagnostic](../../tools/ci/cloe-ci156-qualification.md)
-records the exact identities, coverage and counters. The measured integration
-branch rate was 80.14%, with 472 branches still needed for the 82% target.
-Main promotion, release and production admission remain separate.
+Public main is released Common Lore Index v0.0.4 at `39cb2b3`. Public
+staging `c323998e` is the latest qualified milestone. All nine jobs and the
+same-attempt proof passed in [CI158 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44471257873).
+The [qualification record](../../tools/ci/cloe-ci158-qualification.md) binds
+the source, host evidence and consumed counters. Unit branches reached
+87.06%. Integration branches reached 80.15%, leaving 468 branches to the 82%
+target. Main promotion, release and production admission remain separate.
 
 The operator selected Route A in [ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md).
 Its source foundation is qualified. The operator selected the prospective

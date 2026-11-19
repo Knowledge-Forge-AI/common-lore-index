@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from contextlib import nullcontext
 from datetime import datetime, timezone
+from types import SimpleNamespace
 from typing import cast
 import json
 
@@ -193,6 +194,24 @@ def test_arch2c_measurement_contract_rejects_unbounded_or_mislabeled_events() ->
     non_authoritative.record_bytes(StagingMeasurementCategory.CLIENT_MEMORY, 2)
     assert non_authoritative.failed is True
     assert non_authoritative.event_count == 0
+
+
+def test_client_rss_os_failure_leaves_other_staging_samples_available(monkeypatch: pytest.MonkeyPatch) -> None:
+    def unavailable(_who: int) -> None:
+        raise OSError("private-rss-detail")
+
+    monkeypatch.setattr(resources, "resource", SimpleNamespace(RUSAGE_SELF=0, getrusage=unavailable))
+    before = resources.StagingResourceSnapshot(100, None, 10)
+    after = resources.StagingResourceSnapshot(108, None, 11)
+    events: list[StagingMeasurementEvent] = []
+    resources.emit_staging_resource_measurements(StagingMeasurements(events.append), before, after)
+    samples = {event.category: event for event in events}
+    assert samples[StagingMeasurementCategory.WAL_UPPER_BOUND].value == 8
+    assert samples[StagingMeasurementCategory.POSTGRESQL_MEMORY].value == 11
+    client = samples[StagingMeasurementCategory.CLIENT_MEMORY]
+    assert client.availability is StagingMeasurementAvailability.UNAVAILABLE
+    assert client.value is None
+    assert "private-rss-detail" not in json.dumps(client.to_payload())
 
 
 @pytest.mark.parametrize(

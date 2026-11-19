@@ -101,10 +101,11 @@ def emit_staging_resource_measurements(
         measurements.record_unavailable(
             StagingMeasurementCategory.POSTGRESQL_MEMORY
         )
-    measurements.record_bytes(
-        StagingMeasurementCategory.CLIENT_MEMORY,
-        _client_peak_rss_bytes(),
-    )
+    client_memory = _client_peak_rss_bytes()
+    if client_memory is None:
+        measurements.record_unavailable(StagingMeasurementCategory.CLIENT_MEMORY)
+    else:
+        measurements.record_bytes(StagingMeasurementCategory.CLIENT_MEMORY, client_memory)
 
 
 def _safe_row(connection: Any, query: str) -> tuple[object, ...] | None:
@@ -150,8 +151,12 @@ def _record_delta(
     measurements.record_bytes(category, after - before)
 
 
-def _client_peak_rss_bytes() -> int:
-    peak = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+def _client_peak_rss_bytes() -> int | None:
+    try:
+        usage = resource.getrusage(resource.RUSAGE_SELF)
+    except OSError:
+        return None
+    peak = int(usage.ru_maxrss)
     if sys.platform != "darwin":
         peak *= 1024
     return max(0, peak)

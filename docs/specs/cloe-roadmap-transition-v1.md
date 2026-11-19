@@ -13,13 +13,13 @@ Samuel Leighton Lair <sam.lair@knowledge-forge.ai> as public commit identity.
 
 ## Latest qualified milestone
 
-Public main is released Common Lore Index v0.0.4 at `39cb2b3`. The latest
-qualified staging milestone is `2572d48`, accepted from all nine jobs and the
-same-attempt contracts of [CI156 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44375716879).
-The [qualification and lexical diagnostic](../../tools/ci/cloe-ci156-qualification.md)
-records the exact identities, coverage and counters. The measured integration
-branch rate was 80.14%, with 472 branches still needed for the 82% target.
-Main promotion, release and production admission remain separate.
+Public main is released Common Lore Index v0.0.4 at `39cb2b3`. Public
+staging `c323998e` is the latest qualified milestone. All nine jobs and the
+same-attempt proof passed in [CI158 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44471257873).
+The [qualification record](../../tools/ci/cloe-ci158-qualification.md) binds
+the source, host evidence and consumed counters. Unit branches reached
+87.06%. Integration branches reached 80.15%, leaving 468 branches to the 82%
+target. Main promotion, release and production admission remain separate.
 
 CI156 qualified the engineering milestone that carried the first admissible
 captured-text study under ADR 0206. The disposable lexical diagnostic indexed
@@ -29,7 +29,7 @@ The comparator design, new evaluated treatments, matching held-outs, scientific
 acceptance and production admission require operator selection. W6 through
 W8 remain open.
 
-Unit branch coverage was 22,028/25,308 (87.04%). Measured integration was
+CI156 unit branch coverage was 22,028/25,308 (87.04%). Measured integration was
 20,281/25,308 (80.14%). Observed application, Rust qualifier, wheel transfer
 and native component execution counts were 63/35/68/33. A future changed
 candidate needs its own hosted qualification.

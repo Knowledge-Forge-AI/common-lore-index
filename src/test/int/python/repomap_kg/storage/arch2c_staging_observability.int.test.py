@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import json
 
 import psycopg
 from psycopg.conninfo import make_conninfo
+import pytest
 
 from common_lore_index.observations import RawObservation
-from common_lore_index.storage import apply_migrations, default_rdbms_root
+from common_lore_index.ops.resource_view._projections import project_staging_resources
+from common_lore_index.storage import apply_migrations, default_rdbms_root, staged_ingestion
 from common_lore_index.storage.authority import AttemptNumber, OperationId
 from common_lore_index.storage.readback_driver import (
     _psycopg_connection_params_from_psql_args,
@@ -246,27 +249,59 @@ def test_arch2c_measurements_are_public_safe_bounded_and_result_neutral() -> Non
         assert forbidden not in serialized
 
 
-def test_staging_temporary_bytes_are_unavailable_across_owned_database_reset() -> None:
+def test_staging_temporary_bytes_are_unavailable_across_owned_database_reset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     require_postgres_binaries()
+    root_path = "staged-counter-reset-fixture"
+    authority = _authority()
+    samples: list[StagingResourceSnapshot] = []
+    events: list[StagingMeasurementEvent] = []
+
+    def observe(connection: psycopg.Connection) -> StagingResourceSnapshot:
+        sample = capture_staging_resources(connection)
+        samples.append(sample)
+        return sample
+
+    monkeypatch.setattr(staged_ingestion, "capture_staging_resources", observe)
     with temporary_postgres() as postgres:
+        _migrate(postgres)
         params = _psycopg_connection_params_from_psql_args(postgres.psql_args)
-        with psycopg.connect(make_conninfo(**params)) as connection:
-            before = capture_staging_resources(connection)
-            with connection.transaction():
-                connection.execute("SELECT pg_stat_reset()")
-            after = capture_staging_resources(connection)
+
+        def reset() -> None:
+            with psycopg.connect(make_conninfo(**params)) as resetter:
+                resetter.execute("SELECT pg_stat_reset()")
+
+        measurements = StagingMeasurements(events.append)
+        summary = run_staged_full_refresh(
+            postgres.psql_args,
+            _observations(),
+            repository_name=root_path,
+            root_path=root_path,
+            authority=replace(authority, before_publication=reset),
+            staging_measurements=measurements,
+        )
+        assert summary.publication_receipt == authority.receipt()
+        stored = _published_state(postgres, root_path)
+        assert stored[3:7] == ("complete", authority.receipt().attempt.job_id, 1, "published")
+
+    before, after = samples
     assert before.temporary_counter_identity is not None
     assert after.temporary_counter_identity is not None
     assert before.temporary_counter_identity[0] == after.temporary_counter_identity[0]
     assert after.temporary_counter_identity[1] is not None
     assert before.temporary_counter_identity[1] != after.temporary_counter_identity[1]
     assert before.temporary_bytes is not None and after.temporary_bytes is not None
-    events: list[StagingMeasurementEvent] = []
-    emit_staging_resource_measurements(StagingMeasurements(events.append), before, after)
     temporary, = (event for event in events
                   if event.category is StagingMeasurementCategory.TEMPORARY_BYTE_UPPER_BOUND)
     assert temporary.value is None
     assert temporary.availability is StagingMeasurementAvailability.UNAVAILABLE
+    projected = {metric.name: metric for metric in project_staging_resources(
+        events, measurements_failed=measurements.failed,
+    )}
+    metric = projected["temporary_byte_upper_bound"]
+    assert (metric.availability, metric.reason, metric.value) == ("unavailable", "not_observed", None)
+    assert projected["wal_upper_bound"].availability == "measured"
 
 
 def test_staging_samples_and_statement_counters_on_disposable_workload() -> None:
