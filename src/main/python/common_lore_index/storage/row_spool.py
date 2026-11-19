@@ -6,7 +6,7 @@ import json
 import os
 import tempfile
 import time
-from collections.abc import Callable, Iterable, Iterator, Mapping
+from collections.abc import Callable, Generator, Iterable, Mapping
 from pathlib import Path
 
 
@@ -97,7 +97,7 @@ class RowSpool:
     def __len__(self) -> int:
         return self.count
 
-    def __iter__(self) -> Iterator[dict[str, object]]:
+    def __iter__(self) -> Generator[dict[str, object], None, None]:
         if self._closed:
             raise RuntimeError("row spool is closed")
         with self.path.open(encoding="utf-8") as handle:

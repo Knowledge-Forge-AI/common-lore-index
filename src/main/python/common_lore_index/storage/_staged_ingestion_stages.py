@@ -25,7 +25,6 @@ from common_lore_index.storage.main import LoadSummary
 from common_lore_index.storage.publication import RunPublicationReceipt
 from common_lore_index.storage.publication_fencing import PublicationHandoff
 from common_lore_index.storage.repository_identity import validate_repository_identity
-from common_lore_index.storage.row_spool import RowSpool
 from common_lore_index.storage.staged_connection_telemetry import close_owned_connection
 from common_lore_index.storage.staged_publication import (
     mark_failed_before_publication,
@@ -38,7 +37,7 @@ from common_lore_index.storage.staged_validation import (
     mark_validating,
     validate_stage,
 )
-from common_lore_index.storage.staging_copy import STAGING_COPY_TABLES, copy_stage_rows
+from common_lore_index.storage.staging_copy import STAGING_COPY_TABLES, _prepared_copy_rows, copy_stage_rows
 from common_lore_index.storage.staging_family_contracts import STAGING_FAMILY_DESCRIPTORS
 from common_lore_index.storage.staging_merge import MergeContext
 from common_lore_index.storage.staging_observability import (
@@ -195,15 +194,13 @@ def _copy_families(
     staging_measurements: StagingMeasurements | None = None,
 ) -> None:
     for family in STAGING_FAMILY_DESCRIPTORS:
-        rows = prepared.family_rows[family]
-        if staging_measurements is None:
-            copy_stage_rows(connection, STAGING_COPY_TABLES[family], rows, expected_stage_id=stage_id)
-        else:
-            with staging_measurements.timed(StagingMeasurementCategory.COPY, family=family):
-                with staging_measurements.phase(f"staging.family_copy.{family}"):
-                    copy_stage_rows(connection, STAGING_COPY_TABLES[family], rows, expected_stage_id=stage_id)
-        if isinstance(rows, RowSpool):
-            rows.close()
+        with _prepared_copy_rows(prepared.family_rows[family], prepared.row_counts.get(family)) as rows:
+            if staging_measurements is None:
+                copy_stage_rows(connection, STAGING_COPY_TABLES[family], rows, expected_stage_id=stage_id)
+            else:
+                with staging_measurements.timed(StagingMeasurementCategory.COPY, family=family):
+                    with staging_measurements.phase(f"staging.family_copy.{family}"):
+                        copy_stage_rows(connection, STAGING_COPY_TABLES[family], rows, expected_stage_id=stage_id)
 
 
 def _refresh_canonical_node_evidence_statistics(connection: Any) -> None:
