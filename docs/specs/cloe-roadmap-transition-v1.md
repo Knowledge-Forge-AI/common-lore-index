@@ -28,6 +28,12 @@ while its immediate database temporary-byte delta stayed at zero.
 [Custody exit](../../tools/ci/cloe-resource-governance13-exit.md)
 · [Staged SQL exit](../../tools/ci/cloe-w7-staged-sql1-exit.md)
 
+CI159 advanced those checkpoints to public staging. Eight jobs passed and
+the integration job reached its 240-minute envelope. The next candidate
+combines the concurrent integration jobs from ADR0216 with the opt-in
+Server resource report from ADR0217. The two new samples describe the
+staged writer interval. See the [candidate exit](../../tools/ci/cloe-staging-split-w7-report1-exit.md).
+
 CI156 qualified the engineering milestone that carried the first admissible
 captured-text study under ADR 0206. The disposable lexical diagnostic indexed
 all 22 selected files. The frozen ranked-terms predicates admitted zero

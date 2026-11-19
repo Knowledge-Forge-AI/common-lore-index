@@ -46,8 +46,8 @@ def restore_go_environment() -> None:
         _GOCOVERDIR_SET = False
 
 
-def parse_textfmt_profile(text: str) -> tuple[int, int]:
-    """Parse a go tool covdata textfmt output and return (covered_statements, total_statements).
+def parse_textfmt_blocks(text: str) -> dict[str, tuple[int, int]]:
+    """Read the original block identities and per-block statement counts.
 
     The textfmt format consists of:
       mode: <set|count|atomic>
@@ -94,6 +94,12 @@ def parse_textfmt_profile(text: str) -> tuple[int, int]:
         else:
             blocks[block_id] = (num_stmts, count)
 
+    return blocks
+
+
+def parse_textfmt_profile(text: str) -> tuple[int, int]:
+    """Return covered and total statement counts from a Go textfmt profile."""
+    blocks = parse_textfmt_blocks(text)
     total_statements = sum(s for s, _ in blocks.values())
     covered_statements = sum(s for s, c in blocks.values() if c > 0)
     return covered_statements, total_statements

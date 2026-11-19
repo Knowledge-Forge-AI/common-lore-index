@@ -10,10 +10,16 @@ import json
 from pathlib import Path
 from typing import Any
 
+import psycopg
+import pytest
+
+from common_lore_index.cli.main import main
 from common_lore_index.coordinator.local_lifecycle import initialize_coordinator_control
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.storage import apply_migrations, default_rdbms_root
+from common_lore_index.storage import staged_ingestion
+from common_lore_index.storage.staging_resource_observability import StagingResourceSnapshot
 from repomap_test_support.postgres_harness import temporary_postgres
 from repomap_test_support.resource_report_cli_files import (
     limit, metric, private_directory, report_leftovers, report_payload, run_cloe,
@@ -116,4 +122,79 @@ def test_server_v2_committed_refused_and_v1_default_reports(tmp_path: Path) -> N
 
         plain = _refresh(home, postgres, tmp_path)
         assert set(plain) == set(following)
+    assert report_leftovers(reports) == []
+
+
+@pytest.mark.parametrize("sample", ("normal", "reset", "query_failure"))
+def test_server_v3_reports_shared_samples_and_preserves_actual_commit(
+    sample: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    reports = private_directory(tmp_path / "reports")
+    target = reports / "v3.json"
+    with temporary_postgres() as postgres:
+        home, working_copy = _home(tmp_path, postgres)
+        params = dict(host=postgres.host, port=postgres.port, dbname=postgres.database,
+                      user=postgres.user, password=postgres.password)
+        capture = staged_ingestion.capture_staging_resources
+        observations: list[StagingResourceSnapshot] = []
+
+        class FailedSamplingQuery:
+            def __init__(self, connection: Any) -> None:
+                self._connection = connection
+
+            def transaction(self) -> Any:
+                return self._connection.transaction()
+
+            def execute(self, statement: str) -> Any:
+                if "FROM pg_stat_database" in statement:
+                    raise psycopg.OperationalError("private sampling error")
+                return self._connection.execute(statement)
+
+        def observe(connection: Any) -> StagingResourceSnapshot:
+            if observations and sample == "query_failure":
+                connection = FailedSamplingQuery(connection)
+            result = capture(connection)
+            observations.append(result)
+            return result
+
+        def reset(*_args: Any) -> None:
+            with psycopg.connect(**params, autocommit=True) as connection:
+                connection.execute("SELECT pg_stat_reset()")
+
+        monkeypatch.setattr(staged_ingestion, "capture_staging_resources", observe)
+        if sample == "reset":
+            monkeypatch.setattr(staged_ingestion, "_run_system_test_publication_pause", reset)
+        assert main([
+            "ops", "refresh-graph", "--repo-map-home", str(home), "--graph", MIXED_V1_GRAPH_ID,
+            "--psql-command", postgres.psql_command, "--resource-report", str(target),
+            "--resource-report-schema", "3", "--json",
+        ]) == 0
+        cli = json.loads(capsys.readouterr().out)
+        assert cli["result"] == "success" and len(observations) == 2
+        result = cli["graphs"][0] if "graphs" in cli else cli
+        assert result["publication_state"] == "committed"
+        config = load_graph_registry_config_home(home)
+        assert isinstance(config, OpsConfig)
+        accepted = read_postgres_accepted_publication(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command)
+        assert accepted
+        payload = report_payload(target, operation="server_refresh", backend="postgresql",
+                                 outcome="committed", forbidden=(home, working_copy, postgres.password,
+                                                                  MIXED_V1_GRAPH_ID, "private sampling error"))
+        assert payload["schema"] == "cloe-resource-view-v3" and len(payload["metrics"]) == 13
+        wal = metric(payload, "staging_wal_position_delta")
+        temporary = metric(payload, "staging_database_temporary_bytes_delta")
+        assert wal["basis"] == temporary["basis"] == "shared_sample_delta"
+        if sample == "query_failure":
+            assert (wal["value"], wal["reason"]) == (None, "not_observed")
+        else:
+            assert wal["availability"] == "measured" and wal["value"] > 0
+        if sample == "normal":
+            assert temporary["availability"] == "measured" and temporary["value"] >= 0
+        else:
+            assert (temporary["value"], temporary["reason"]) == (None, "not_observed")
+        if sample == "reset":
+            first, second = (item.temporary_counter_identity for item in observations)
+            assert first is not None and second is not None and first[0] == second[0] and first[1] != second[1]
+        checked = run_cloe("ops", "resource-report", "show", "--input", str(target), "--json", cwd=tmp_path)
+        assert checked.returncode == 0 and json.loads(checked.stdout) == payload
     assert report_leftovers(reports) == []

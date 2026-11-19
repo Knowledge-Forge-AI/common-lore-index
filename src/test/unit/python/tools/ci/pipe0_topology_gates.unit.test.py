@@ -17,6 +17,7 @@ from ci.ci_topology import (
     _validate_staging_runner_tokens,
 )
 from ci.ci_topology_contracts import check_trusted_gate_copy_set
+from ci.hosted_staging_topology import PARTS_JOB, PART_COMMAND, validate_hosted_staging
 from ci.workflow_model import Workflow, load_workflow
 from src.test.unit.python.tools.ci.pipe0_topology_support import (
     GATE_VIOLATION_CASES,
@@ -109,6 +110,10 @@ def test_staging_gate_records_the_exact_candidate_sha_and_tree() -> None:
 def test_staging_command_preserves_its_accepted_arguments() -> None:
     is_staging = STAGING_GATE.exists()
     workflow = load_workflow(STAGING_GATE if is_staging else PUBLIC_QUALIFICATION_GATE)
+    if PARTS_JOB in workflow.jobs:
+        assert validate_hosted_staging(workflow) == []
+        assert workflow.jobs[PARTS_JOB]["timeout-minutes"] == 240
+        return
     job_name = "repomap-staging-gate" if is_staging else "staging-integration-gate"
     assert workflow.jobs[job_name]["timeout-minutes"] == (180 if is_staging else 240)
     assert _validate_staging_runner_tokens(workflow, job_name) == []
@@ -122,10 +127,11 @@ def test_public_staging_envelope_is_exact_and_not_inherited(timeout: object) -> 
     from ci.ci_topology_gates import _check_staging_gate
 
     workflow = load_workflow(PUBLIC_QUALIFICATION_GATE)
-    job = workflow.jobs["staging-integration-gate"]
+    name = PARTS_JOB if PARTS_JOB in workflow.jobs else "staging-integration-gate"
+    job = workflow.jobs[name]
     mutated_jobs = {
         **workflow.jobs,
-        "staging-integration-gate": {**job, "timeout-minutes": timeout},
+        name: {**job, "timeout-minutes": timeout},
     }
     mutated = Workflow(workflow.path, {**workflow.document, "jobs": mutated_jobs})
     assert any("staging lane timeout" in item for item in _check_staging_gate(mutated))
@@ -248,6 +254,14 @@ def test_main_system_gate_needs_source_and_export_policy_and_not_staging() -> No
 def test_staging_runner_missing_report_flag_is_detected() -> None:
     path = STAGING_GATE if STAGING_GATE.exists() else PUBLIC_QUALIFICATION_GATE
     wf = load_workflow(path)
+    if PARTS_JOB in wf.jobs:
+        job = wf.jobs[PARTS_JOB]
+        split_steps = [{**step, "run": PART_COMMAND.rsplit(" ", 1)[0]} if step.get("run") == PART_COMMAND else step
+                       for step in wf.job_steps(PARTS_JOB)]
+        jobs = {**wf.jobs, PARTS_JOB: {**job, "steps": split_steps}}
+        mutated = Workflow(wf.path, {**wf.document, "jobs": jobs})
+        assert any("exact hosted staging invocation" in item for item in validate_hosted_staging(mutated))
+        return
     job_name = "repomap-staging-gate" if STAGING_GATE.exists() else "staging-integration-gate"
     steps = wf.job_steps(job_name)
     mutated_steps = []
@@ -267,7 +281,8 @@ def test_staging_runner_cross_job_leakage_is_detected() -> None:
     path = STAGING_GATE if STAGING_GATE.exists() else PUBLIC_QUALIFICATION_GATE
     wf = load_workflow(path)
     job_name = "repomap-staging-gate" if STAGING_GATE.exists() else "staging-integration-gate"
-    staging_step = next(s for s in wf.job_steps(job_name) if s.get("run") and "--suite staging" in str(s["run"]))
+    staging_job, command = (PARTS_JOB, PART_COMMAND) if PARTS_JOB in wf.jobs else (job_name, "--suite staging")
+    staging_step = next(s for s in wf.job_steps(staging_job) if command in str(s.get("run", "")))
     mutated_jobs = {**wf.jobs, "other-job": {"steps": [staging_step]}}
     mutated_wf = Workflow(wf.path, {**wf.document, "jobs": mutated_jobs})
     violations = _validate_staging_runner_tokens(mutated_wf, job_name)
@@ -277,6 +292,14 @@ def test_staging_runner_cross_job_leakage_is_detected() -> None:
 def test_staging_runner_duplicate_runner_is_detected() -> None:
     path = STAGING_GATE if STAGING_GATE.exists() else PUBLIC_QUALIFICATION_GATE
     wf = load_workflow(path)
+    if PARTS_JOB in wf.jobs:
+        job = wf.jobs[PARTS_JOB]
+        steps = list(wf.job_steps(PARTS_JOB))
+        steps.append(next(s for s in steps if s.get("run") == PART_COMMAND))
+        jobs = {**wf.jobs, PARTS_JOB: {**job, "steps": steps}}
+        mutated = Workflow(wf.path, {**wf.document, "jobs": jobs})
+        assert any("exact hosted staging invocation" in item for item in validate_hosted_staging(mutated))
+        return
     job_name = "repomap-staging-gate" if STAGING_GATE.exists() else "staging-integration-gate"
     steps = list(wf.job_steps(job_name))
     staging_step = next(s for s in steps if s.get("run") and "--suite staging" in str(s["run"]))

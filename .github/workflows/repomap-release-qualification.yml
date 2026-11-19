@@ -242,11 +242,11 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  staging-integration-gate:
-    name: staging-integration-gate
+  staging-smoke:
+    name: staging-smoke
     needs: [source-and-export-policy]
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 30
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -262,26 +262,97 @@ jobs:
       - name: Record free disk before the staging suite
         run: df -B1 /
 
-      - name: Run the staging smoke and integration gate
-        id: staging
+      - name: Run staging smoke
+        run: python3 tools/ci/hosted_staging.py run smoke "${RUNNER_TEMP}/staging-part"
+
+      - name: Upload staging smoke evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cloe-staging-${{ github.run_id }}-a${{ github.run_attempt }}-smoke
+          path: ${{ runner.temp }}/staging-part
+          if-no-files-found: error
+          retention-days: 14
+
+  staging-integration-parts:
+    name: staging-integration (${{ matrix.part }})
+    needs: [source-and-export-policy, staging-smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [m0, m1, m2, a]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Record free disk before integration
+        run: df -B1 /
+
+      - name: Run integration part
+        env:
+          PART: ${{ matrix.part }}
+        run: python3 tools/ci/hosted_staging.py run "${PART}" "${RUNNER_TEMP}/staging-part"
+
+      - name: Upload staging integration evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cloe-staging-${{ github.run_id }}-a${{ github.run_attempt }}-${{ matrix.part }}
+          path: ${{ runner.temp }}/staging-part
+          if-no-files-found: error
+          retention-days: 14
+
+  staging-integration-gate:
+    name: staging-integration-gate
+    needs: [source-and-export-policy, staging-smoke, staging-integration-parts]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Require successful staging producers
+        env:
+          SOURCE_RESULT: ${{ needs.source-and-export-policy.result }}
+          SMOKE_RESULT: ${{ needs.staging-smoke.result }}
+          INTEGRATION_RESULT: ${{ needs.staging-integration-parts.result }}
         run: |
-          python3 tools/run_tests.py \
-            --suite staging \
-            --hygiene-profile exhaustive \
-            --declared-complete-gates 1 \
-            --operator-attest-exclusive \
-            --operator-attest-pressure-degradation \
-            --pg-container-port 55433 \
-            --sandbox \
-            --report \
-            --report-dir "${GITHUB_WORKSPACE}/ci-staging-report"
+          test "${SOURCE_RESULT}" = success
+          test "${SMOKE_RESULT}" = success
+          test "${INTEGRATION_RESULT}" = success
+
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Download all same-attempt staging parts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: cloe-staging-${{ github.run_id }}-a${{ github.run_attempt }}-*
+          path: ${{ runner.temp }}/staging-parts
+
+      - name: Validate staging population and coverage
+        run: python3 tools/ci/hosted_staging.py aggregate "${RUNNER_TEMP}/staging-parts" "${RUNNER_TEMP}/ci-staging-report"
 
       - name: Upload the staging test report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: repomap-staging-gate-report
-          path: ci-staging-report
+          path: ${{ runner.temp }}/ci-staging-report
           if-no-files-found: warn
           retention-days: 14
 

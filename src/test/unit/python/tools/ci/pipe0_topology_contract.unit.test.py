@@ -36,48 +36,39 @@ def test_topology_holds_for_current_workflows() -> None:
     assert check_topology(ROOT) == ()
 
 
-def test_staging_project_owned_command_appears_exactly_once() -> None:
-    occurrences = 0
-    for path in WORKFLOW_DIR.iterdir():
-        commands = "\n".join(load_workflow(path).run_commands())
-        occurrences += commands.count("--suite staging")
+def _workflow_command_count(fragment: str) -> int:
+    return sum("\n".join(load_workflow(path).run_commands()).count(fragment) for path in WORKFLOW_DIR.iterdir())
 
-    assert occurrences == 1
+
+def test_staging_project_owned_command_matches_its_topology() -> None:
+    occurrences = _workflow_command_count("--suite staging")
+    if PUBLIC_QUALIFICATION_GATE.exists() and "staging-integration-parts" in load_workflow(PUBLIC_QUALIFICATION_GATE).jobs:
+        assert occurrences == 0
+    else:
+        assert occurrences == 1
 
 
 def test_system_project_owned_command_appears_exactly_once() -> None:
-    occurrences = 0
-    for path in WORKFLOW_DIR.iterdir():
-        commands = "\n".join(load_workflow(path).run_commands())
-        occurrences += commands.count("--suite system")
-
-    assert occurrences == 1
+    assert _workflow_command_count("--suite system") == 1
 
 
 def test_canonical_pr_unit_command_appears_exactly_once() -> None:
-    occurrences = 0
-    for path in WORKFLOW_DIR.iterdir():
-        commands = "\n".join(load_workflow(path).run_commands())
-        occurrences += commands.count(
-            "python3 tools/run_tests.py --suite unit"
-        )
-
-    assert occurrences == 1
+    assert _workflow_command_count("python3 tools/run_tests.py --suite unit") == 1
 
 
 def test_canonical_test_runner_appears_exactly_three_times() -> None:
-    occurrences = 0
-    for path in WORKFLOW_DIR.iterdir():
-        commands = "\n".join(load_workflow(path).run_commands())
-        occurrences += commands.count("python3 tools/run_tests.py")
+    occurrences = _workflow_command_count("python3 tools/run_tests.py")
     if not PUBLIC_QUALIFICATION_GATE.exists():
         assert occurrences == 3
         return
-    assert occurrences == 4
     workflow = load_workflow(PUBLIC_QUALIFICATION_GATE)
+    split = "staging-integration-parts" in workflow.jobs
+    assert occurrences == (3 if split else 4)
     by_job = {name: "\n".join(workflow.job_run_commands(name)) for name in workflow.jobs}
     counts = {name: text.count("python3 tools/run_tests.py") for name, text in by_job.items()}
-    approved = {"unit-tests", "d12-native-amd64", "staging-integration-gate", "main-system-gate"}
+    approved = {"unit-tests", "d12-native-amd64", "main-system-gate"}
+    if not split:
+        approved.add("staging-integration-gate")
     assert {name for name, count in counts.items() if count > 0} == approved
     assert all(counts[name] == 1 for name in approved)
     assert "python3 tools/run_tests.py --suite unit" in by_job["unit-tests"]
@@ -92,7 +83,8 @@ def test_canonical_test_runner_appears_exactly_three_times() -> None:
     ):
         assert token in d12_cmd
     assert "--d12-core-image-budget-ledger" not in d12_cmd and d12_cmd.count("--smoke-image-reference") == 1
-    assert "--suite staging" in by_job["staging-integration-gate"] and "--suite system" in by_job["main-system-gate"]
+    expected_staging = "tools/ci/hosted_staging.py aggregate" if split else "--suite staging"
+    assert expected_staging in by_job["staging-integration-gate"] and "--suite system" in by_job["main-system-gate"]
 
 
 def test_pr_fast_targets_staging_pull_requests_only() -> None:

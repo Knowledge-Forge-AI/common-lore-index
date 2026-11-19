@@ -104,12 +104,15 @@ they do not recover time already spent or authorize repeated pushes.
 Under [ADR 0092](../adr/2026/10/0092-public-native-d12-qualification.md), the current public candidate adds the separate native `linux/amd64` job `d12-native-amd64` for the first D12 hosted checkpoint; ARM64 hosted qualification is deferred. The `d12-system-hold` step in `main-system-gate` invokes `system-hold` after candidate binding and Python setup, before SDK or application work, and refuses unresolved prerequisites. This factual workflow description grants no additional trigger or promotion authority.
 
 The workflow job timeouts are conservative hosted qualification envelopes:
-static analysis retains 25 minutes, PR Fast unit has 60 minutes, the public
-staging integration gate has 240 minutes, and Main System Gate has 90 minutes.
-The historical standalone staging lane retains 180 minutes. CI152 exhausted
-the public lane's former 180-minute envelope while tests were still progressing;
-ADR0204 selects this finite outer-envelope increase. They are not expected
-runtimes. GitHub-hosted runners are materially slower and more variable than
+static analysis retains 25 minutes, PR Fast unit has 60 minutes, and Main
+System Gate has 90 minutes. Public staging under ADR0216 runs a 30-minute
+smoke job, three measured integration parts and one abrupt part with a
+240-minute envelope per runner, and a 20-minute aggregate gate. The measured
+and abrupt jobs overlap after smoke succeeds. The aggregate preserves the
+existing `staging-integration-gate` check and fails if any required job fails.
+CI152 exhausted the former 180-minute envelope and CI159 exhausted the
+240-minute monolithic envelope. The historical standalone staging lane
+retains 180 minutes. GitHub-hosted runners are materially slower and more variable than
 the operator laptop. Main System Gate's inner `--system-timeout 3600` semantic
 deadline leaves 30 minutes for checkout, tool installation, image/build setup,
 cleanup, evidence generation, and hosted variance. Product-operation, worker,

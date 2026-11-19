@@ -57,15 +57,23 @@ def run_selected_suites(
         return run_smoke_suite_fn(args, resource_run, docker_boundary)
 
     if args.suite == "staging":
-        smoke_exit_code = run_smoke_suite_fn(args, resource_run, docker_boundary)
-        if smoke_exit_code != 0:
-            if getattr(args, "report", False):
-                from runner_integration_execution import record_smoke_refusal
-                record_smoke_refusal(args)
-            return smoke_exit_code
-        if docker_boundary is not None:
-            projection = docker_boundary.verify_terminal()
-            report_docker_projection_fn(projection, boundary="post-smoke")
+        part = getattr(args, "hosted_staging_part", None)
+        if part is not None and forwarded_pytest_args:
+            raise RuntimeError("hosted staging parts refuse forwarded selection")
+        if part in (None, "smoke"):
+            smoke_exit_code = run_smoke_suite_fn(args, resource_run, docker_boundary)
+            if smoke_exit_code != 0:
+                if getattr(args, "report", False):
+                    from runner_integration_execution import record_smoke_refusal
+                    record_smoke_refusal(args)
+                return smoke_exit_code
+            if docker_boundary is not None:
+                projection = docker_boundary.verify_terminal()
+                report_docker_projection_fn(projection, boundary="post-smoke")
+            if part == "smoke":
+                from hosted_staging_parts import record_smoke
+                record_smoke(args)
+                return 0
         suites = ("int",)
     else:
         suites = (args.suite,)
@@ -384,7 +392,6 @@ def run_pytest_with_coverage(
                 coverage_runner, session=session, save=True,
             )
     return pytest_exit_code, coverage_runner
-
 
 __all__ = (
     "RecordingPytestPlugin", "prepare_go_test_environment", "pytest_environment_for",

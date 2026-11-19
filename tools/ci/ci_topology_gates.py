@@ -27,6 +27,9 @@ def _check_staging_gate(
         [Sequence[Mapping[str, object]], TopologyContractValues], int | None
     ] = _first_expensive_step_index,
 ) -> list[str]:
+    if "staging-integration-parts" in workflow.jobs:
+        from ci.hosted_staging_topology import validate_hosted_staging
+        return validate_hosted_staging(workflow)
     violations: list[str] = []
     if workflow.name == "repomap-staging-gate":
         triggers = workflow.triggers

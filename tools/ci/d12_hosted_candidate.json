@@ -3,7 +3,7 @@
     "context_file_count": 889,
     "dockerfile_sha256": "94787a9f46a8c8ca407954bfad1a19ced79fe104c4caa4d47113d3af5fc105a8",
     "recipe_sha256": "8de1f96f2539f76b897fd7db4ac4646573a36e5ee98d8f0c8ee6c0e82c25f228",
-    "source_sha256": "972264656648b0063b635d703bb61aa691e38551236dcdc721430dd2e5c093f1"
+    "source_sha256": "06a4862bf4e1b00ab383274f73952143fd13d9330be746df0982cd70c1f2ed7b"
   },
   "platform": "linux/amd64",
   "schema": "repomap-d12-hosted-candidate-v1",

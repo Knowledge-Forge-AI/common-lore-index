@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+
 import json
 from pathlib import Path
 from typing import Any, cast
@@ -19,6 +20,10 @@ from common_lore_index.ops.resource_view._contracts_v2 import (
 )
 from common_lore_index.ops.resource_view._slots_v2 import LIMIT_SLOTS_V2, METRIC_SLOTS_V2
 
+from common_lore_index.ops.resource_view._contracts import STAGING_NAMES, ResourceReportV3
+from common_lore_index.cli._resource_report_session import ResourceReportSession
+from common_lore_index.ops.resource_view import begin
+from common_lore_index.storage.staging_observability import StagingMeasurementCategory
 
 def _report(operation: str = "local_refresh", value: int = 3) -> ResourceReportV2:
     metrics = tuple(
@@ -121,3 +126,29 @@ def test_file_reader_admits_v2_sized_private_files_and_refuses_beyond(tmp_path: 
     path.write_bytes(b"x" * (MAX_FILE_BYTES_V2 + 1))
     with pytest.raises(ResourceReportError, match="too_large"):
         read_report_file(path)
+
+
+def test_v3_preserves_zero_distinguishes_repeat_and_validates_canonical_file() -> None:
+    session = ResourceReportSession("unused", 3)
+    begin(session.observer, "server_refresh", "postgresql")
+    measurements = session.server_staging_measurements()
+    assert measurements is not None
+    assert session.server_staging_measurements() is measurements
+    measurements.record_bytes(StagingMeasurementCategory.WAL_UPPER_BOUND, 0)
+    measurements.record_bytes(StagingMeasurementCategory.TEMPORARY_BYTE_UPPER_BOUND, 42)
+    measurements.record_bytes(StagingMeasurementCategory.TEMPORARY_BYTE_UPPER_BOUND, 43)
+    base = session.observer.report()
+    assert type(base) is ResourceReport
+    report = session._server_staging_report(base)
+    assert type(decode_report(encode_report(report))) is ResourceReportV3
+    assert report.staging[0].value == 0 and report.staging[0].availability == "measured"
+    assert report.staging[1].value is None and report.staging[1].reason == "ambiguous_repeat"
+    assert tuple(row.name for row in report.staging) == STAGING_NAMES
+    raw = encode_report(report)
+    for old, changed in (
+        (b'cloe-resource-view-v3', b'cloe-resource-view-v1'),
+        (b'shared_sample_delta', b'shared_upper_bound'),
+        (b'staging_wal_position_delta', b'staging_sql_text'),
+    ):
+        with pytest.raises(ResourceReportError, match="invalid_domain"):
+            decode_report(raw.replace(old, changed, 1))

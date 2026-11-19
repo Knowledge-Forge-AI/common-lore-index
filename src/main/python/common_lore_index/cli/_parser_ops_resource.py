@@ -17,7 +17,7 @@ RESOURCE_REPORT_SCHEMA_HELP = (
 )
 
 
-def add_resource_report_option(command: argparse.ArgumentParser) -> None:
+def add_resource_report_option(command: argparse.ArgumentParser, *, server_staging: bool = False) -> None:
     """Attach ``--resource-report`` to one eligible single-operation command.
 
     ``--resource-report-schema`` keeps an internal ``None`` sentinel so an
@@ -28,8 +28,11 @@ def add_resource_report_option(command: argparse.ArgumentParser) -> None:
         help=RESOURCE_REPORT_HELP,
     )
     command.add_argument(
-        "--resource-report-schema", dest="resource_report_schema", type=int, choices=(1, 2),
-        default=None, help=RESOURCE_REPORT_SCHEMA_HELP,
+        "--resource-report-schema", dest="resource_report_schema", type=int,
+        choices=(1, 2, 3) if server_staging else (1, 2), default=None,
+        help=RESOURCE_REPORT_SCHEMA_HELP + (
+            "; schema 3 adds shared staging counters for direct PostgreSQL refresh" if server_staging else ""
+        ),
     )
 
 
@@ -39,7 +42,7 @@ def add_ops_resource_commands(
     """Register offline ``ops resource-report check|show``; no home or config options."""
     report = ops_subcommands.add_parser(
         "resource-report",
-        help="validate or display an offline cloe-resource-view-v1 or -v2 report file",
+        help="validate or display an offline cloe-resource-view report file",
         description=(
             "Offline inspection opens no configuration, database, source or worker. "
             "Validation proves format and domain validity only, not authenticity, "

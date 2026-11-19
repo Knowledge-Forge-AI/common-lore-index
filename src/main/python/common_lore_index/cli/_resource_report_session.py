@@ -17,19 +17,23 @@ from __future__ import annotations
 import argparse
 from collections.abc import Callable, Iterable
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from common_lore_index.ops.resource_reports._admission import (
     ResourceReportRefusal, admit_report_destination, configured_roots,
 )
-from common_lore_index.ops.resource_reports._codec import ResourceReportError, encode_report
+from common_lore_index.ops.resource_reports._codec import ReportFile, ResourceReportError, encode_report
 from common_lore_index.ops.resource_reports._delivery import AdmittedDestination, DeliveryError, deliver
 from common_lore_index.ops.resource_view import ResourceObserver
 from common_lore_index.ops.resource_view._contracts import ResourceReport
-from common_lore_index.ops.resource_view._contracts_v2 import SCHEMA_V2, ResourceReportV2, upgrade_report
+from common_lore_index.ops.resource_view._contracts_v2 import SCHEMA_V2, upgrade_report
+from common_lore_index.ops.resource_view._contracts import STAGING_NAMES, ResourceReportV3, StagingDelta
+
+if TYPE_CHECKING:
+    from common_lore_index.storage.staging_observability import StagingMeasurements
 
 _SESSION_ATTRIBUTE = "_cloe_resource_report_session"
-ReportFactory = Callable[[], ResourceReport | ResourceReportV2]
+ReportFactory = Callable[[], ReportFile]
 
 
 def _warning(message: str) -> None:
@@ -43,12 +47,15 @@ def _warning(message: str) -> None:
 class ResourceReportSession:
     """One explicit destination plus the observer for one subject call."""
 
-    __slots__ = ("_text", "_destination", "_attempted", "observer")
+    __slots__ = ("_text", "_destination", "_attempted", "_schema", "_staging", "_staging_events", "observer")
 
     def __init__(self, text: str, schema: int | None = None) -> None:
         self._text = text
         self._destination: AdmittedDestination | None = None
         self._attempted = False
+        self._schema = schema
+        self._staging: StagingMeasurements | None = None
+        self._staging_events: list[object] = []
         # Schema 2 is explicit (``--resource-report-schema 2``); v1 stays the default.
         self.observer = (
             ResourceObserver(report_schema=SCHEMA_V2) if schema == 2 else ResourceObserver()
@@ -66,6 +73,33 @@ class ResourceReportSession:
             self._text, configured_roots(config, overrides=overrides),
         )
 
+    def server_staging_measurements(self) -> StagingMeasurements | None:
+        if self._schema != 3:
+            return None
+        from common_lore_index.storage.staging_observability import StagingMeasurements
+
+        if self._staging is None:
+            self._staging = StagingMeasurements(self._staging_events.append)
+        return self._staging
+
+    def _server_staging_report(self, base: ResourceReport) -> ResourceReportV3:
+        if base.operation is None:
+            return ResourceReportV3(base, ())
+        from common_lore_index.ops.resource_view._projections import project_staging_resources
+
+        projected = project_staging_resources(
+            self._staging_events, measurements_failed=(
+                base.instrumentation == "degraded" or (self._staging is not None and self._staging.failed)
+            ),
+        )
+        counters = {row.name: row for row in projected}
+        wal = counters["wal_upper_bound"]
+        temporary = counters["temporary_byte_upper_bound"]
+        return ResourceReportV3(base, (
+            StagingDelta(STAGING_NAMES[0], wal.value, wal.reason),
+            StagingDelta(STAGING_NAMES[1], temporary.value, temporary.reason),
+        ))
+
     def deliver(self, factory: ReportFactory | None) -> None:
         destination = self._destination
         if destination is None or destination.descriptor is None:
@@ -78,6 +112,8 @@ class ResourceReportSession:
             report = factory() if factory is not None else self.observer.report()
             if self.observer.report_schema == SCHEMA_V2 and type(report) is ResourceReport:
                 report = upgrade_report(report)  # equal lexical/context tables, explicit v2
+            if self._schema == 3 and type(report) is ResourceReport:
+                report = self._server_staging_report(report)
             deliver(destination, encode_report(report))
         except DeliveryError as error:
             state = "incomplete" if error.installed else "not-delivered"

@@ -124,7 +124,7 @@ def add_ops_graph_commands(
     )
     refresh_graph_command.add_argument("--psql-command", help="psql executable to use for loading storage")
     refresh_graph_command.add_argument("--json", action="store_true", help="emit graph refresh result as JSON")
-    add_resource_report_option(refresh_graph_command)
+    add_resource_report_option(refresh_graph_command, server_staging=True)
     add_sealing_budget_options(refresh_graph_command)
     sqlite_init = ops_subcommands.add_parser(
         "sqlite-init",

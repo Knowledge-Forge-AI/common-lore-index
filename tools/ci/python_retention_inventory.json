@@ -252,6 +252,29 @@
     {
       "admission": "admitted",
       "governing_profile": "clean_test_owners",
+      "id": "cloe.hosted_staging.tests",
+      "members": [
+        "src/test/unit/python/tools/ci/hosted_staging.unit.test.py"
+      ],
+      "rationale": "ADR0216 concurrent staging parts, exact same-attempt settlement and union coverage with zero added debt.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.hosted_staging.tools",
+      "members": [
+        "tools/ci/hosted_staging.py",
+        "tools/ci/hosted_staging_topology.py",
+        "tools/hosted_staging_coverage.py",
+        "tools/hosted_staging_parts.py"
+      ],
+      "rationale": "ADR0216 concurrent staging parts, exact same-attempt settlement and union coverage with zero added debt.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
       "id": "cloe.install1.test_owners",
       "members": [
         "src/test/int/python/repomap_kg/runtime/installation_ownership.int.test.py",
@@ -58045,6 +58068,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/ci/hosted_staging.unit.test.py",
+      "rationale": "ADR0216 concurrent staging parts, exact same-attempt settlement and union coverage with zero added debt.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/unit/python/tools/ci/pipe0_topology_contract.unit.test.py",
       "rationale": "First-party unit test owner.",
       "root": "test_owners",
@@ -62689,6 +62721,24 @@
       "confidence": 0.95,
       "governing_profile": "clean_tooling",
       "maintained_executable": true,
+      "path": "tools/ci/hosted_staging.py",
+      "rationale": "ADR0216 concurrent staging parts, exact same-attempt settlement and union coverage with zero added debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/ci/hosted_staging_topology.py",
+      "rationale": "ADR0216 concurrent staging parts, exact same-attempt settlement and union coverage with zero added debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
       "path": "tools/ci/liquibase_check.py",
       "rationale": "Repository CI and developer tooling infrastructure.",
       "root": "tools",
@@ -63762,6 +63812,24 @@
       "maintained_executable": true,
       "path": "tools/host_mcp_native_qualify.py",
       "rationale": "Host MCP native qualification runner (PREPARE1): operator entrypoint, direct console launch, evidence and kit; repository tooling.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/hosted_staging_coverage.py",
+      "rationale": "ADR0216 concurrent staging parts, exact same-attempt settlement and union coverage with zero added debt.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/hosted_staging_parts.py",
+      "rationale": "ADR0216 concurrent staging parts, exact same-attempt settlement and union coverage with zero added debt.",
       "root": "tools",
       "status": "active_tool"
     },

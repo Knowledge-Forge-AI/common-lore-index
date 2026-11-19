@@ -164,6 +164,9 @@ def dispatch_ops_sqlite_command(
     backend = declared_storage_backend(repo_map_home=repo_map_home, config_path=config_path)
     if backend != SQLITE_BACKEND:
         return None
+    if args.ops_command == "refresh-graph" and getattr(args, "resource_report_schema", None) == 3:
+        print_cli_error(LocalRefreshError("resource-report-schema-3-requires-postgresql"), file=sys.stderr)
+        return 1
     refusal = _refusal(args)
     if refusal is not None:
         print_cli_error(LocalRefreshError(refusal), file=sys.stderr)
