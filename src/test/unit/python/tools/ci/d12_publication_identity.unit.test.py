@@ -13,6 +13,8 @@ from ci.d12_system_grant import (
     build_system_admission_proof, validate_system_admission_proof, validate_system_build_grant,
 )
 
+from ci.d12_system_grant_history import SPENT_CI157_NONCE, SPENT_CI157_RESERVATION_SHA256
+
 BASE, HEAD, BEFORE = "1" * 40, "2" * 40, "3" * 40
 
 
@@ -57,10 +59,11 @@ def test_current_grant_refuses_previous_schema_and_ci146_reuse() -> None:
     root = Path(__file__).resolve().parents[6]
     grant = json.loads((root / DEFAULT_GRANT_RELPATH).read_bytes())
     assert validate_system_build_grant(grant) == grant
+    maximum_total = grant["maximum_total"]
     for changes in (
         {"schema": "repomap-d12-system-build-grant-v1"}, {"event_action": "opened"},
         {"nonce": SPENT_CI146_NONCE}, {"reservation_sha256": SPENT_CI146_RESERVATION_SHA256},
-        {"maximum_total": 62}, {"maximum_total": 64}, {"pull_request": True},
+        {"maximum_total": maximum_total - 1}, {"maximum_total": maximum_total + 1}, {"pull_request": True},
     ):
         with pytest.raises(D12SystemGrantError):
             validate_system_build_grant(grant | changes)
@@ -81,7 +84,8 @@ def test_spent_current_and_prior_identities_are_refused_in_both_records() -> Non
         candidate_base_parent=grant["base"], candidate_head_parent=HEAD, run_id="123",
         native_host={"runner_os": "Linux", "runner_arch": "X64", "host_kernel": "Linux", "host_arch": "x86_64"})
     assert validate_system_admission_proof(proof) == proof
-    for key, value in (("nonce", SPENT_CI155_NONCE), ("reservation_sha256", SPENT_CI155_RESERVATION_SHA256),
+    for key, value in (("nonce", SPENT_CI157_NONCE), ("reservation_sha256", SPENT_CI157_RESERVATION_SHA256),
+                       ("nonce", SPENT_CI155_NONCE), ("reservation_sha256", SPENT_CI155_RESERVATION_SHA256),
                        ("nonce", SPENT_CI154_NONCE), ("reservation_sha256", SPENT_CI154_RESERVATION_SHA256),
                        ("nonce", SPENT_CI153_NONCE), ("reservation_sha256", SPENT_CI153_RESERVATION_SHA256),
                        ("nonce", SPENT_CI152_NONCE), ("reservation_sha256", SPENT_CI152_RESERVATION_SHA256),
