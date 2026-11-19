@@ -128,8 +128,9 @@ def test_stream_metadata_change_is_detected_at_eof_without_path_replacement(
         stream.close()
 
 
+@pytest.mark.parametrize("initial_read", (False, True), ids=("before-progress", "after-progress"))
 def test_source_read_error_cleans_store_temporary_and_keeps_incumbent(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, initial_read: bool,
 ) -> None:
     source = tmp_path / "source.py"
     content = b"source body"
@@ -137,14 +138,20 @@ def test_source_read_error_cleans_store_temporary_and_keeps_incumbent(
     store = FileSystemArtifactStore(tmp_path / "store")
     accepted = store.put(b"incumbent")
     descriptor: int | None = None
+    consumed: list[bytes] = []
     original_read = os.read
+    failure = OSError(errno.EIO, "source read failed")
 
     def failing_read(fd: int, length: int) -> bytes:
         if fd == descriptor:
-            raise OSError(errno.EIO, "source read failed")
+            if initial_read and not consumed:
+                data = original_read(fd, min(length, 3))
+                consumed.append(data)
+                return data
+            raise failure
         return original_read(fd, length)
 
-    with pytest.raises(ValueError, match="source changed while sealing"):
+    with pytest.raises(ValueError, match="source changed while sealing") as raised:
         with open_source_body(
             source.parent,
             source.name,
@@ -153,10 +160,16 @@ def test_source_read_error_cleans_store_temporary_and_keeps_incumbent(
             expected_executable=False,
         ) as body:
             descriptor = body._descriptor
-            monkeypatch.setattr(os, "read", failing_read)
-            store.put(body, content_digest="sha256:" + hashlib.sha256(content).hexdigest())
+            with monkeypatch.context() as patch:
+                patch.setattr(os, "read", failing_read)
+                store.put(body, content_digest="sha256:" + hashlib.sha256(content).hexdigest())
 
-    monkeypatch.undo()  # End the FD fault before the number can be reused.
+    assert raised.value.__cause__ is failure
+    assert consumed == ([content[:3]] if initial_read else [])
+    assert descriptor is not None
+    with pytest.raises(OSError) as closed:
+        os.fstat(descriptor)
+    assert closed.value.errno == errno.EBADF
     assert store.read(accepted) == b"incumbent"
     assert tuple((store.root / "temporary").iterdir()) == ()
 

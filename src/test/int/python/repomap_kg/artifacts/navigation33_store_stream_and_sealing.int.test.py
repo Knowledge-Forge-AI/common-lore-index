@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import errno
 import os
 from pathlib import Path
 from typing import Any, cast
@@ -178,6 +179,36 @@ def test_verifying_artifact_stream_and_filesystem_store_contracts(tmp_path: Path
     unsafe_root.chmod(0o755)
     with pytest.raises(ArtifactIntegrityError, match="store root is unsafe"):
         FileSystemArtifactStore(unsafe_root)
+
+
+def test_stat_failure_after_verified_stream_reads_releases_its_descriptor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = FileSystemArtifactStore(tmp_path / "store")
+    payload = b"accepted payload"
+    reference = store.put(payload)
+    provider_stat = os.fstat
+    failure = OSError(errno.EIO, "owned stream stat witness")
+    stream = store.open_stream(reference)
+    descriptor = stream.fileno()
+
+    def fail_at_eof(fd: int) -> os.stat_result:
+        if fd == descriptor:
+            raise failure
+        return provider_stat(fd)
+
+    with pytest.raises(ArtifactIntegrityError, match="artifact stat failed") as raised:
+        with stream:
+            assert stream.read(len(payload)) == payload
+            with monkeypatch.context() as patch:
+                patch.setattr(os, "fstat", fail_at_eof)
+                stream.read(1)
+    assert raised.value.__cause__ is failure
+    assert stream.closed
+    with pytest.raises(OSError) as closed:
+        provider_stat(descriptor)
+    assert closed.value.errno == errno.EBADF
+    assert store.read(reference) == payload
 
 
 def test_memory_store_common_references_canonical_manifest_and_conformance() -> None:

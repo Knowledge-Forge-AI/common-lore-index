@@ -125,8 +125,8 @@ def test_local_survives_caller_poisoned_unsupported_begin(tmp_path: Path) -> Non
     _private(payload)
 
 
-@pytest.mark.parametrize("error_type", [KeyboardInterrupt, SystemExit])
-def test_server_finish_interrupt_propagates_after_accepted_commit_without_relabeling(
+@pytest.mark.parametrize("error_type", [KeyboardInterrupt, SystemExit, ValueError])
+def test_server_finish_fault_preserves_accepted_commit(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error_type: type[BaseException],
 ) -> None:
     working = materialize_mixed_v1_working_copy(tmp_path / "working")
@@ -155,18 +155,30 @@ def test_server_finish_interrupt_propagates_after_accepted_commit_without_relabe
 
         monkeypatch.setattr(portable_refresh, "run_staged_portable_refresh", record_commit)
         observer = ResourceObserver(_monotonic_ns=clock)
-        with pytest.raises(error_type) as caught:
-            refresh_graph(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command,
-                          resource_observer=observer)
-        assert caught.value is error
+        if isinstance(error, Exception):
+            result = refresh_graph(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command,
+                                   resource_observer=observer)
+            assert result.result == "success" and result.publication_state == "committed"
+            assert committed == [result.run_id]
+        else:
+            with pytest.raises(error_type) as caught:
+                refresh_graph(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command,
+                              resource_observer=observer)
+            assert caught.value is error
         assert len(committed) == 1
         accepted = query_graph_summary(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command)
         assert accepted.result == "success" and accepted.latest_run_status == "complete"
         assert accepted.latest_run_id == committed[0]
         payload: dict[str, Any] = observer.report().to_payload()
-        assert payload["outcome"] == "not_recorded" and payload["instrumentation"] == "incomplete"
-        publication = next(row for row in payload["metrics"] if row["name"] == "publication_elapsed")
-        assert publication["value"] is None and publication["reason"] == "not_reached"
+        assert payload["outcome"] == "not_recorded"
+        if isinstance(error, Exception):
+            assert payload["instrumentation"] == "degraded"
+            assert all(row["value"] is None for row in payload["metrics"])
+            assert all(row["applies_this_call"] is None for row in payload["limits"])
+        else:
+            assert payload["instrumentation"] == "incomplete"
+            publication = next(row for row in payload["metrics"] if row["name"] == "publication_elapsed")
+            assert publication["value"] is None and publication["reason"] == "not_reached"
         _private(payload)
 
 

@@ -23,6 +23,7 @@ from common_lore_index.storage.staging_observability import (
     StagingMeasurements,
 )
 from common_lore_index.storage.staging_resource_observability import (
+    StagingResourceSnapshot,
     capture_staging_resources,
     emit_staging_resource_measurements,
 )
@@ -266,3 +267,85 @@ def test_staging_temporary_bytes_are_unavailable_across_owned_database_reset() -
                   if event.category is StagingMeasurementCategory.TEMPORARY_BYTE_UPPER_BOUND)
     assert temporary.value is None
     assert temporary.availability is StagingMeasurementAvailability.UNAVAILABLE
+
+
+def test_staging_samples_and_statement_counters_on_disposable_workload() -> None:
+    require_postgres_binaries()
+    with temporary_postgres() as postgres:
+        params = _psycopg_connection_params_from_psql_args(postgres.psql_args)
+        dsn = make_conninfo(**params)
+        with psycopg.connect(dsn, autocommit=True) as observer:
+            version = observer.info.server_version
+            with psycopg.connect(dsn, autocommit=True) as worker:
+                worker.execute("CREATE TABLE w7_observation (id integer, body text)")
+                worker.execute(
+                    "INSERT INTO w7_observation SELECT id, md5(id::text) "
+                    "FROM generate_series(1, 16384) AS source(id)"
+                )
+                before_write = capture_staging_resources(observer)
+                with worker.transaction(force_rollback=True):
+                    insert = _statement_counters(
+                        worker,
+                        "INSERT INTO w7_observation SELECT id + 16384, body FROM w7_observation",
+                    )
+                after_write = capture_staging_resources(observer)
+                count = worker.execute("SELECT count(*) FROM w7_observation").fetchone()
+                assert count == (16384,)
+                with worker.transaction():
+                    worker.execute("SET LOCAL work_mem = '64kB'")
+                    worker.execute("SET LOCAL max_parallel_workers_per_gather = 0")
+                    sort = _statement_counters(worker, "SELECT body FROM w7_observation ORDER BY body")
+                after_sort = capture_staging_resources(observer)
+            after_worker_exit = capture_staging_resources(observer)
+
+    assert insert["WAL Records"] > 0 and insert["WAL Bytes"] > 0
+    assert sort["Actual Rows"] == 16384
+    assert sort["Temp Read Blocks"] > 0 and sort["Temp Written Blocks"] > 0
+    assert sort["WAL Bytes"] == 0
+    snapshots = (before_write, after_write, after_sort, after_worker_exit)
+    assert all(sample.wal_position is not None for sample in snapshots)
+    assert all(sample.temporary_bytes is not None for sample in snapshots)
+    assert before_write.temporary_counter_identity is not None
+    assert all(sample.temporary_counter_identity == before_write.temporary_counter_identity
+               for sample in snapshots)
+    write = _sampled_byte_deltas(before_write, after_write)
+    assert write["wal_upper_bound"] is not None and write["wal_upper_bound"] > 0
+    evidence = {
+        "server_version": version,
+        "statement_insert": insert,
+        "statement_sort": sort,
+        "sampled_insert": write,
+        "sampled_sort": _sampled_byte_deltas(after_write, after_sort),
+        "sampled_sort_through_worker_exit": _sampled_byte_deltas(after_write, after_worker_exit),
+    }
+    print("W7-STATEMENT-OBSERVATION " + json.dumps(evidence, sort_keys=True))
+
+
+def _statement_counters(connection: psycopg.Connection, statement: str) -> dict[str, int]:
+    result = connection.execute(
+        "EXPLAIN (ANALYZE, BUFFERS, WAL, TIMING OFF, SUMMARY OFF, FORMAT JSON) " + statement
+    ).fetchone()
+    assert result is not None
+    plan = result[0][0]["Plan"]
+    return {
+        name: int(plan[name])
+        for name in (
+            "Actual Rows", "Shared Hit Blocks", "Shared Read Blocks",
+            "Temp Read Blocks", "Temp Written Blocks", "WAL Records", "WAL Bytes",
+        )
+    }
+
+
+def _sampled_byte_deltas(
+    before: StagingResourceSnapshot, after: StagingResourceSnapshot,
+) -> dict[str, int | None]:
+    events: list[StagingMeasurementEvent] = []
+    emit_staging_resource_measurements(StagingMeasurements(events.append), before, after)
+    return {
+        event.category.value: event.value
+        for event in events
+        if event.category in (
+            StagingMeasurementCategory.WAL_UPPER_BOUND,
+            StagingMeasurementCategory.TEMPORARY_BYTE_UPPER_BOUND,
+        )
+    }
