@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from contextlib import nullcontext
+from datetime import datetime, timezone
 from typing import cast
 import json
 
@@ -313,3 +314,37 @@ def test_arch2c_nonnegative_resource_values_are_strict(
     value: object, expected: int | None
 ) -> None:
     assert resources._nonnegative_int(value) == expected
+
+
+_RESET = datetime(2026, 11, 18, tzinfo=timezone.utc)
+
+
+@pytest.mark.parametrize(("after", "expected_wal", "expected_temporary"), [
+    (("0/64", 20, 10, None), 0, 0),
+    (("0/65", 23, 10, None), 1, 3),
+    (("0/63", 19, 10, None), None, None),
+    (("0/65", 20, 10, _RESET), 1, None),
+    (("0/65", 40, 10, _RESET), 1, None),
+    (("0/65", 40, 11, None), 1, None),
+    (("0/65", 40, None, None), 1, None),
+    (("0/65", 40, True, None), 1, None),
+    (("0/65", 40, 10, "invalid"), 1, None),
+    (("0/65", None, 10, None), 1, None),
+])
+def test_staging_resource_delta_requires_counter_continuity(
+    after: tuple[object, ...], expected_wal: int | None, expected_temporary: int | None,
+) -> None:
+    before_snapshot = resources.capture_staging_resources(
+        _ResourceConnection((("0/64", 20, 10, None), None)),
+    )
+    after_snapshot = resources.capture_staging_resources(_ResourceConnection((after, None)))
+    events: list[StagingMeasurementEvent] = []
+    resources.emit_staging_resource_measurements(
+        StagingMeasurements(events.append), before_snapshot, after_snapshot,
+    )
+    for event, expected in zip(events[:2], (expected_wal, expected_temporary), strict=True):
+        assert event.value == expected
+        assert event.availability is (
+            StagingMeasurementAvailability.UNAVAILABLE if expected is None
+            else StagingMeasurementAvailability.MEASURED
+        )

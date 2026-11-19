@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 import resource
 import sys
 from typing import Any
@@ -22,6 +23,7 @@ class StagingResourceSnapshot:
     wal_position: int | None
     temporary_bytes: int | None
     postgresql_memory_bytes: int | None
+    temporary_counter_identity: tuple[int, datetime | None] | None = None
 
 
 def capture_staging_resources(connection: Any) -> StagingResourceSnapshot:
@@ -30,7 +32,7 @@ def capture_staging_resources(connection: Any) -> StagingResourceSnapshot:
     database_row = _safe_row(
         connection,
         """
-SELECT pg_current_wal_insert_lsn()::text, coalesce(temp_bytes, 0)
+SELECT pg_current_wal_insert_lsn()::text, temp_bytes, datid, stats_reset
 FROM pg_stat_database
 WHERE datname = current_database()
 """,
@@ -41,9 +43,13 @@ WHERE datname = current_database()
     )
     wal_position: int | None = None
     temporary_bytes: int | None = None
-    if database_row is not None and len(database_row) == 2:
+    temporary_counter_identity: tuple[int, datetime | None] | None = None
+    if database_row is not None and len(database_row) == 4:
         wal_position = _parse_wal_position(database_row[0])
         temporary_bytes = _nonnegative_int(database_row[1])
+        database_id, reset = database_row[2:]
+        if type(database_id) is int and database_id > 0 and (reset is None or isinstance(reset, datetime)):
+            temporary_counter_identity = (database_id, reset)
     postgresql_memory_bytes = None
     if memory_row is not None and len(memory_row) == 1:
         postgresql_memory_bytes = _nonnegative_int(memory_row[0])
@@ -51,6 +57,7 @@ WHERE datname = current_database()
         wal_position,
         temporary_bytes,
         postgresql_memory_bytes,
+        temporary_counter_identity,
     )
 
 
@@ -67,11 +74,15 @@ def emit_staging_resource_measurements(
         before.wal_position,
         after.wal_position,
     )
+    temporary_identity = before.temporary_counter_identity
+    same_temporary_counter = (
+        temporary_identity is not None and temporary_identity == after.temporary_counter_identity
+    )
     _record_delta(
         measurements,
         StagingMeasurementCategory.TEMPORARY_BYTE_UPPER_BOUND,
         before.temporary_bytes,
-        after.temporary_bytes,
+        after.temporary_bytes if same_temporary_counter else None,
     )
     memory_values = tuple(
         value
@@ -133,10 +144,10 @@ def _record_delta(
     before: int | None,
     after: int | None,
 ) -> None:
-    if before is None or after is None:
+    if before is None or after is None or after < before:
         measurements.record_unavailable(category)
         return
-    measurements.record_bytes(category, max(0, after - before))
+    measurements.record_bytes(category, after - before)
 
 
 def _client_peak_rss_bytes() -> int:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 import psycopg
+from psycopg.conninfo import make_conninfo
 
 from common_lore_index.observations import RawObservation
 from common_lore_index.storage import apply_migrations, default_rdbms_root
@@ -20,6 +21,10 @@ from common_lore_index.storage.staging_observability import (
     StagingMeasurementCategory,
     StagingMeasurementEvent,
     StagingMeasurements,
+)
+from common_lore_index.storage.staging_resource_observability import (
+    capture_staging_resources,
+    emit_staging_resource_measurements,
 )
 from repomap_test_support.postgres_harness import (
     require_postgres_binaries,
@@ -238,3 +243,26 @@ def test_arch2c_measurements_are_public_safe_bounded_and_result_neutral() -> Non
         "statement",
     ):
         assert forbidden not in serialized
+
+
+def test_staging_temporary_bytes_are_unavailable_across_owned_database_reset() -> None:
+    require_postgres_binaries()
+    with temporary_postgres() as postgres:
+        params = _psycopg_connection_params_from_psql_args(postgres.psql_args)
+        with psycopg.connect(make_conninfo(**params)) as connection:
+            before = capture_staging_resources(connection)
+            with connection.transaction():
+                connection.execute("SELECT pg_stat_reset()")
+            after = capture_staging_resources(connection)
+    assert before.temporary_counter_identity is not None
+    assert after.temporary_counter_identity is not None
+    assert before.temporary_counter_identity[0] == after.temporary_counter_identity[0]
+    assert after.temporary_counter_identity[1] is not None
+    assert before.temporary_counter_identity[1] != after.temporary_counter_identity[1]
+    assert before.temporary_bytes is not None and after.temporary_bytes is not None
+    events: list[StagingMeasurementEvent] = []
+    emit_staging_resource_measurements(StagingMeasurements(events.append), before, after)
+    temporary, = (event for event in events
+                  if event.category is StagingMeasurementCategory.TEMPORARY_BYTE_UPPER_BOUND)
+    assert temporary.value is None
+    assert temporary.availability is StagingMeasurementAvailability.UNAVAILABLE
