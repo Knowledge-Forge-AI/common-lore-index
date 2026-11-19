@@ -1,0 +1,39 @@
+{
+  "approval": {
+    "operator_request": "proceed. continue until the next milestone is on public staging/ci",
+    "phase": "CLOE-W7-ATTRIBUTION1",
+    "schema": "cloe-ci159-approval-v1",
+    "scope": "One public staging synchronize for the W7 publication custody and staged SQL measurement milestone. Use existing qualification lanes and preserve exact grant, context, event and manifest checks.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 65,
+    "attempt": 1,
+    "component_runtime_executions": 35,
+    "native_report_sha256": "ce0451f8fada3be2297e42da21b4482e58c90ebd837fc35b0d3f1f5f83526ce7",
+    "preceding_campaign": 158,
+    "previous_rust_downloads": 2,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 37,
+    "rust_report_sha256": "ccae4490e9c5bd4342fa6ecee51d60bcd4fd42658186454720d3681bfdb8a607",
+    "schema": "cloe-ci159-ledger-before-v1",
+    "system_report_sha256": "506663ead7c80ccf40be02a62ad8bd95341139b41054f70fd921af9f601a3a64",
+    "wheel_transfers": 72
+  },
+  "reservation": {
+    "application_start": 66,
+    "approval_sha256": "c9870d3f893fd8881395cd3e814568e16743bc405bbdd056cb9c8220dbbbac28",
+    "component_runtime_cumulative": 36,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "dc95d03e6c99a431fa14c09d093a462fe95e49d40b34308b6ea504218447f164",
+    "nonce": "9b12e7f2d2ca0b6151c9c491054ab76e",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 38,
+    "schema": "cloe-ci159-reservation-v1",
+    "wheel_transfers_cumulative": 74,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 159
+  }
+}

@@ -13,7 +13,7 @@ from ci.d12_system_grant import (
     build_system_admission_proof, validate_system_admission_proof, validate_system_build_grant,
 )
 
-from ci.d12_system_grant_history import SPENT_CI157_NONCE, SPENT_CI157_RESERVATION_SHA256
+from ci.d12_system_grant_history import SPENT_CI157_NONCE, SPENT_CI157_RESERVATION_SHA256, SPENT_CI158_NONCE, SPENT_CI158_RESERVATION_SHA256
 
 BASE, HEAD, BEFORE = "1" * 40, "2" * 40, "3" * 40
 
@@ -84,7 +84,8 @@ def test_spent_current_and_prior_identities_are_refused_in_both_records() -> Non
         candidate_base_parent=grant["base"], candidate_head_parent=HEAD, run_id="123",
         native_host={"runner_os": "Linux", "runner_arch": "X64", "host_kernel": "Linux", "host_arch": "x86_64"})
     assert validate_system_admission_proof(proof) == proof
-    for key, value in (("nonce", SPENT_CI157_NONCE), ("reservation_sha256", SPENT_CI157_RESERVATION_SHA256),
+    for key, value in (("nonce", SPENT_CI158_NONCE), ("reservation_sha256", SPENT_CI158_RESERVATION_SHA256),
+                       ("nonce", SPENT_CI157_NONCE), ("reservation_sha256", SPENT_CI157_RESERVATION_SHA256),
                        ("nonce", SPENT_CI155_NONCE), ("reservation_sha256", SPENT_CI155_RESERVATION_SHA256),
                        ("nonce", SPENT_CI154_NONCE), ("reservation_sha256", SPENT_CI154_RESERVATION_SHA256),
                        ("nonce", SPENT_CI153_NONCE), ("reservation_sha256", SPENT_CI153_RESERVATION_SHA256),
