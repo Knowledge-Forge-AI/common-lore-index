@@ -39,7 +39,8 @@ def _leg(nodes: list[str], part: str, roles: list[dict[str, Any]]) -> dict[str, 
             "abrupt_roles": roles if part == "a" else []}
 
 
-def _inputs(root: Path, *, change: Callable[[str, dict[str, Any]], None] | None = None
+def _inputs(root: Path, *, under_floor: str | None = None,
+            change: Callable[[str, dict[str, Any]], None] | None = None
             ) -> tuple[Path, dict[str, Any]]:
     input_root = root / "input"
     input_root.mkdir()
@@ -81,8 +82,10 @@ def _inputs(root: Path, *, change: Callable[[str, dict[str, Any]], None] | None 
             persist_report(path / "part-report.json", record)
             if part in MEASURED_PARTS:
                 index = MEASURED_PARTS.index(part) + 1
-                persist_report(path / "python-coverage.json", {python.relative_to(root).as_posix(): _python(index)})
-                (path / "go.txt").write_text(_go(index))
+                python_hit = 1 if under_floor == "python" else index
+                go_hit = 1 if under_floor == "go" else index
+                persist_report(path / "python-coverage.json", {python.relative_to(root).as_posix(): _python(python_hit)})
+                (path / "go.txt").write_text(_go(go_hit))
         members = {name: (path / name).read_bytes() for name in hosted_staging.part_members(part)}
         if part == "m0":
             leaf = "first-use-workload/fixture/index.json"
@@ -102,6 +105,21 @@ def test_aggregate_joins_all_parts_and_reuses_canonical_contract(tmp_path: Path,
     assert report["legs"]["M"]["measurement"]["summary"]["covered_branches"] == 3
     assert report["go_coverage"]["covered_statements"] == 3
     assert (output / "first-use-workload/fixture/index.json").read_bytes() == b"{}\n"
+
+
+@pytest.mark.parametrize("under_floor", ["python", "go"])
+def test_aggregate_refuses_subfloor_coverage_with_all_producers_passed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, under_floor: str,
+) -> None:
+    root, identity = _inputs(tmp_path, under_floor=under_floor)
+    monkeypatch.setattr(hosted_staging, "ROOT", tmp_path)
+    output = tmp_path / "output"
+    assert hosted_staging.aggregate(root, output, identity) == 1
+    report = load_report(output / "staging/latest/staging_contract_report.json")
+    assert not qualifies(report)
+    assert report["errors"] == []
+    assert all(leg["status"] == "passed" for leg in report["legs"].values())
+    assert load_report(output / "hosted-staging-closure.json")["qualified"] is False
 
 
 @pytest.mark.parametrize("fault", ["missing_job", "cross_attempt", "changed_member"])

@@ -1,7 +1,6 @@
-"""Strict v1/v2 decode matrix, per-schema bounds and v2 file custody."""
+"""Strict resource report decoding, per-schema bounds and Server v3 admission."""
 
 from __future__ import annotations
-
 
 import json
 from pathlib import Path
@@ -9,21 +8,22 @@ from typing import Any, cast
 
 import pytest
 
+from common_lore_index.cli import _ops_sqlite_dispatch
+from common_lore_index.cli._resource_report_session import ResourceReportSession
+from common_lore_index.cli.main import main
+from common_lore_index.ops.resource_view import begin
 from common_lore_index.ops.resource_reports._codec import (
     MAX_FILE_BYTES, MAX_FILE_BYTES_V2, ResourceReportError, decode_report, encode_report,
 )
 from common_lore_index.ops.resource_reports._files import read_report_file
 from common_lore_index.ops.resource_reports._render import render_check_text, render_report_text
-from common_lore_index.ops.resource_view._contracts import SCHEMA, ResourceReport
+from common_lore_index.ops.resource_view._contracts import SCHEMA, STAGING_NAMES, ResourceReport, ResourceReportV3
 from common_lore_index.ops.resource_view._contracts_v2 import (
     SCHEMA_V2, ResourceLimitV2, ResourceMetricV2, ResourceReportV2,
 )
 from common_lore_index.ops.resource_view._slots_v2 import LIMIT_SLOTS_V2, METRIC_SLOTS_V2
-
-from common_lore_index.ops.resource_view._contracts import STAGING_NAMES, ResourceReportV3
-from common_lore_index.cli._resource_report_session import ResourceReportSession
-from common_lore_index.ops.resource_view import begin
 from common_lore_index.storage.staging_observability import StagingMeasurementCategory
+
 
 def _report(operation: str = "local_refresh", value: int = 3) -> ResourceReportV2:
     metrics = tuple(
@@ -152,3 +152,37 @@ def test_v3_preserves_zero_distinguishes_repeat_and_validates_canonical_file() -
     ):
         with pytest.raises(ResourceReportError, match="invalid_domain"):
             decode_report(raw.replace(old, changed, 1))
+
+
+@pytest.mark.parametrize(
+    ("backend", "options", "expected_code", "reason"),
+    [
+        ("sqlite", (), 1, "resource-report-schema-3-requires-postgresql"),
+        ("postgresql", ("--mode", "coordinator", "--idempotency-key", "fixture"),
+         1, "coordinator_mode_unsupported"),
+        ("postgresql", ("--sealing-max-write-bytes", "1"), 2, "sealing-budget-requires-report-schema-2"),
+        ("postgresql", ("--staging-event-fd", "7"), 1, "schema_3_rejects_staging_event_transport"),
+    ],
+)
+def test_v3_cli_refuses_out_of_scope_modes_before_report_admission(
+    backend: str, options: tuple[str, ...], expected_code: int, reason: str,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    def unexpected_admission(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("an unsupported command reached report admission")
+
+    monkeypatch.setattr(_ops_sqlite_dispatch, "declared_storage_backend", lambda **_kwargs: backend)
+    monkeypatch.setattr(ResourceReportSession, "admit", unexpected_admission)
+    path = tmp_path / "report.json"
+    argv = [
+        "ops", "refresh-graph", "--repo-map-home", str(tmp_path / "uninitialized-home"), "--graph", "fixture",
+        "--resource-report", str(path), "--resource-report-schema", "3", *options,
+    ]
+    if expected_code == 2:
+        with pytest.raises(SystemExit) as outcome:
+            main(argv)
+        assert outcome.value.code == expected_code
+    else:
+        assert main(argv) == expected_code
+    assert reason in capsys.readouterr().err
+    assert not path.exists()

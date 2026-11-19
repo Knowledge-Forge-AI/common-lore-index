@@ -77,5 +77,10 @@ src/test/int/python/repomap_kg/runtime/d12_system_admission.int.test.py
 
 The complete local suites and local coverage were unselected. The
 first split campaign measures the combined hosted coverage and timing.
-The final frozen source passed the union of those exact selectors
-with 382 unit passes, 35 preexisting skips and 49 integration passes.
+The final scoped unit run passed 388 cases with the same 35 preexisting
+skips. It adds direct aggregate refusal tests for Python and Go results
+below the existing floors, and CLI refusal tests for report schema 3 with
+SQLite, coordinator mode, sealing limits and the explicit staging event
+transport. The 49 disposable integration passes carry forward across this
+test-and-record-only correction because the runtime and workflow sources
+are byte-identical.
