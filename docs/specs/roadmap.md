@@ -29,6 +29,10 @@ for a separate prospective comparator. Its scoped source and synthetic
 PostgreSQL competence proof are complete in the
 [comparator exit](../../tools/ci/cloe-w5-lexical1-exit.md).
 A future evaluated protocol requires its own operator selection.
+[Proposed ADR 0213](../adr/2026/11/0213-proposed-w5-lexical-replay.md)
+offers one paired lexical replay on the exposed workload and gives W7
+resource evidence as the alternative. The primary calibration remains
+the first admissible observation.
 [ADR0207](../adr/2026/11/0207-body-study-retained-runtime-input-custody.md)
 defines read-only reuse of its retained runtime input within unchanged bounds.
 W6-W8 remain advanceable within their own authority; W5 is not accepted or
