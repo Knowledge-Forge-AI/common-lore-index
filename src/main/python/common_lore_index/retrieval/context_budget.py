@@ -96,23 +96,37 @@ def validate_budget_bytes(raw_budget: Any) -> dict[str, Any] | None:
     return None
 
 
-def compute_actual_bytes_fixpoint(packet: dict[str, Any]) -> tuple[bytes, int]:
-    """Converge work_ledger['actual_bytes'] to exact UTF-8 byte length including newline."""
+def converge_actual_bytes_from_zero_length(zero_actual_bytes_length: int) -> int:
+    """Converge unaliased work_ledger['actual_bytes'] width from its 0-value byte length."""
+    base_bytes = zero_actual_bytes_length - 1
+    first_pass = base_bytes + len(str(zero_actual_bytes_length))
+    return base_bytes + len(str(first_pass))
+
+
+def _measure_and_set_actual_bytes(packet: dict[str, Any]) -> int:
+    """Measure exact UTF-8 byte length in one encode for an unaliased work_ledger dict."""
     ledger = packet["work_ledger"]
     ledger["actual_bytes"] = 0
+    size = converge_actual_bytes_from_zero_length(len(serialize_compact_json(packet)))
+    ledger["actual_bytes"] = size
+    return size
+
+
+def compute_actual_bytes_fixpoint(packet: dict[str, Any]) -> tuple[bytes, int]:
+    """Converge work_ledger['actual_bytes'] to exact UTF-8 byte length including newline."""
+    size = _measure_and_set_actual_bytes(packet)
     raw = serialize_compact_json(packet)
+    if len(raw) == size:
+        return raw, size
+    ledger = packet["work_ledger"]
     length = len(raw)
     for _ in range(3):
         ledger["actual_bytes"] = length
-        raw_next = serialize_compact_json(packet)
-        length_next = len(raw_next)
-        if length_next == length:
-            return raw_next, length_next
-        raw = raw_next
-        length = length_next
-    ledger["actual_bytes"] = length
-    raw = serialize_compact_json(packet)
-    return raw, len(raw)
+        raw = serialize_compact_json(packet)
+        if len(raw) == length:
+            return raw, length
+        length = len(raw)
+    return raw, length
 
 
 def _withhold_target_echo(packet: dict[str, Any]) -> None:
@@ -148,13 +162,13 @@ def apply_skeleton_compaction(packet: dict[str, Any], budget_bytes: int) -> int:
             if len(combined) > SCOPE_ECHO_PROACTIVE_CAP_BYTES:
                 _withhold_scope_echo(packet)
 
-    _, size = compute_actual_bytes_fixpoint(packet)
+    size = _measure_and_set_actual_bytes(packet)
     if size > budget_bytes and req.get("target_echo") is not None:
         _withhold_target_echo(packet)
-        _, size = compute_actual_bytes_fixpoint(packet)
+        size = _measure_and_set_actual_bytes(packet)
     if size > budget_bytes and scope.get("scope_echo_complete") is not False:
         _withhold_scope_echo(packet)
-        _, size = compute_actual_bytes_fixpoint(packet)
+        size = _measure_and_set_actual_bytes(packet)
     return size
 
 
@@ -185,8 +199,7 @@ def maximally_compacted_skeleton_bytes(packet: dict[str, Any]) -> int:
         packet["work_ledger"] = {**saved_work, "actual_bytes": 0}
         _withhold_target_echo(packet)
         _withhold_scope_echo(packet)
-        _, min_bytes = compute_actual_bytes_fixpoint(packet)
-        return min_bytes
+        return converge_actual_bytes_from_zero_length(len(serialize_compact_json(packet)))
     finally:
         packet["request"] = saved_req
         packet["scope"] = saved_scope
@@ -207,8 +220,7 @@ def finalize_packet_within_budget(
 ) -> dict[str, Any]:
     """Compact and converge a fully reserved packet without removing records."""
     _ = top_tied_keys  # retained for the established helper API
-    apply_skeleton_compaction(packet, budget_bytes)
-    _, size = compute_actual_bytes_fixpoint(packet)
+    size = apply_skeleton_compaction(packet, budget_bytes)
     if size <= budget_bytes:
         return packet
     min_b = (

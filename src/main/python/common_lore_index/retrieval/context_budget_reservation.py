@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-import copy
 from typing import Any
 
-from common_lore_index.retrieval.context_budget import compute_actual_bytes_fixpoint
+from common_lore_index.retrieval.context_budget import (
+    converge_actual_bytes_from_zero_length,
+    serialize_compact_json,
+)
 
 _FRESHNESS_REASON = "structural_span_only_no_lexical_anchor"
 _FRESHNESS_LIMITS = ["structural_span_only", "no_lexical_anchor", "no_body_text"]
@@ -42,28 +44,80 @@ _OMISSION_COUNT_LIMITS = {
     "unencodable_field_withheld": _MAX_FIELD_OMISSIONS,
 }
 
+_WORK_LEDGER_MAXIMA = {
+    "config_revalidations_executed": 1,
+    "logical_read_units": 16,
+    "sql_statements_executed": _MAX_SQL_STATEMENTS,
+    "scan_units_executed": _MAX_SCAN_UNITS,
+    "seed_expansions_executed": 5,
+    "candidate_rows_scanned": _MAX_CANDIDATE_ROWS,
+    "evidence_rows_scanned": _MAX_EVIDENCE_ROWS,
+    "sqlite_vm_steps_estimate": _MAX_VM_STEPS,
+    "elapsed_ms": 10_001,
+    "sqlite_progress_callbacks": _MAX_PROGRESS_CALLBACKS,
+}
 
-def _locations(packet: Mapping[str, Any]) -> list[dict[str, Any]]:
-    result: list[dict[str, Any]] = []
-    for group_key in ("items", "neighbors"):
-        for item in packet.get(group_key, ()) or ():
-            result.extend(
-                loc for loc in item.get("locations", ())
-                if isinstance(loc, dict)
-            )
-    return result
+
+def _project_location_for_reservation(loc: Any) -> tuple[Any, int]:
+    if not isinstance(loc, dict) or loc.get("freshness") is None:
+        return loc, 0
+    obs = loc["freshness"]
+    if not isinstance(obs, dict):
+        return loc, 1
+    return (
+        {
+            **loc,
+            "freshness": {
+                **obs,
+                "state": "no_change_observed_with_limits",
+                "reason": _FRESHNESS_REASON,
+                "limits": list(_FRESHNESS_LIMITS),
+            },
+        },
+        1,
+    )
 
 
-def _reserve_variable_fields(packet: dict[str, Any]) -> None:
-    if packet.get("status") in {"complete", "partial"}:
-        packet["status"] = "complete"
+def _project_item_for_reservation(item: Any) -> tuple[Any, int]:
+    locs = item.get("locations") if isinstance(item, Mapping) else None
+    if not locs:
+        return item, 0
+    projected_locs = [_project_location_for_reservation(loc) for loc in locs]
+    fresh_count = sum(flag for _, flag in projected_locs)
+    if fresh_count == 0:
+        return item, 0
+    return {**item, "locations": [loc for loc, _ in projected_locs]}, fresh_count
 
-    counts = packet.get("omission_counts")
+
+def _project_group_for_reservation(group: Any) -> tuple[Any, int]:
+    projected_items = [_project_item_for_reservation(item) for item in group]
+    fresh_count = sum(count for _, count in projected_items)
+    if fresh_count == 0:
+        return group, 0
+    return [item for item, _ in projected_items], fresh_count
+
+
+def _project_reserved_packet(
+    packet: Mapping[str, Any], *, empty_collections: bool = False
+) -> dict[str, Any]:
+    projected = dict(packet)
+    if empty_collections:
+        projected["items"] = []
+        projected["neighbors"] = []
+        projected["relations"] = []
+        projected["omissions"] = []
+
+    if projected.get("status") in {"complete", "partial"}:
+        projected["status"] = "complete"
+
+    counts = projected.get("omission_counts")
     if isinstance(counts, dict):
-        for key, value in tuple(counts.items()):
-            counts[key] = max(_OMISSION_COUNT_LIMITS.get(key, 0), int(value or 0))
+        projected["omission_counts"] = {
+            key: max(_OMISSION_COUNT_LIMITS.get(key, 0), int(value or 0))
+            for key, value in counts.items()
+        }
 
-    records = packet.get("omissions")
+    records = projected.get("omissions")
     if isinstance(records, list):
         reserved: list[dict[str, Any]] = []
         for record in records:
@@ -76,75 +130,69 @@ def _reserve_variable_fields(packet: dict[str, Any]) -> None:
             reserved.append(copy_record)
         if not any(record.get("reason") == "output_budget" for record in reserved):
             reserved.append({"reason": "output_budget", "count": _MAX_OUTPUT_OMISSIONS})
-        packet["omissions"] = reserved
+        projected["omissions"] = reserved
 
-    work = packet.get("work_ledger")
+    work = projected.get("work_ledger")
     if isinstance(work, dict):
-        maxima = {
-            "config_revalidations_executed": 1,
-            "logical_read_units": 16,
-            "sql_statements_executed": _MAX_SQL_STATEMENTS,
-            "scan_units_executed": _MAX_SCAN_UNITS,
-            "seed_expansions_executed": 5,
-            "candidate_rows_scanned": _MAX_CANDIDATE_ROWS,
-            "evidence_rows_scanned": _MAX_EVIDENCE_ROWS,
-            "sqlite_vm_steps_estimate": _MAX_VM_STEPS,
-            "elapsed_ms": 10_001,
-            "sqlite_progress_callbacks": _MAX_PROGRESS_CALLBACKS,
-        }
-        for key, maximum in maxima.items():
-            if type(work.get(key)) is int:
-                work[key] = max(work[key], maximum)
+        reserved_work = dict(work)
+        for key, maximum in _WORK_LEDGER_MAXIMA.items():
+            if type(reserved_work.get(key)) is int:
+                reserved_work[key] = max(reserved_work[key], maximum)
+        reserved_work["actual_bytes"] = 0
+        projected["work_ledger"] = reserved_work
 
-    locations = _locations(packet)
-    fresh_locations = [loc for loc in locations if loc.get("freshness") is not None]
-    if packet.get("absence_basis") is None and not packet.get("items"):
-        scope = packet.get("scope") or {}
+    fresh_count = 0
+    if not empty_collections:
+        for group_key in ("items", "neighbors"):
+            group = projected.get(group_key)
+            if group:
+                projected[group_key], group_fresh = _project_group_for_reservation(group)
+                fresh_count += group_fresh
+
+    if projected.get("absence_basis") is None and not projected.get("items"):
+        scope = projected.get("scope") or {}
         scoped = (
             int(scope.get("selected_binding_count") or 0) > 0
             or int(scope.get("path_prefix_count") or 0) > 0
         )
-        packet["absence_basis"] = (
+        projected["absence_basis"] = (
             "stored_direct_locatable_metadata_fields_in_selected_scope"
             if scoped else "stored_metadata_fields_in_selected_scope"
         )
-    if not fresh_locations:
-        return
-    for loc in fresh_locations:
-        observation = loc["freshness"]
-        if isinstance(observation, dict):
-            observation["state"] = "no_change_observed_with_limits"
-            observation["reason"] = _FRESHNESS_REASON
-            observation["limits"] = list(_FRESHNESS_LIMITS)
-    freshness = packet.get("freshness")
-    if isinstance(freshness, dict):
-        count = len(fresh_locations)
-        freshness.update(
-            state="checked",
-            files_checked=16,
-            bytes_read=262_144,
-            counts={
-                "changed_observed": count,
-                "no_change_observed_with_limits": count,
-                "not_checked": count,
-                "unavailable": count,
-            },
-        )
+
+    if fresh_count > 0:
+        freshness = projected.get("freshness")
+        if isinstance(freshness, dict):
+            projected["freshness"] = {
+                **freshness,
+                "state": "checked",
+                "files_checked": 16,
+                "bytes_read": 262_144,
+                "counts": {
+                    "changed_observed": fresh_count,
+                    "no_change_observed_with_limits": fresh_count,
+                    "not_checked": fresh_count,
+                    "unavailable": fresh_count,
+                },
+            }
+    return projected
+
+
+def _measure_projected_packet_bytes(projected: dict[str, Any]) -> int:
+    work = projected["work_ledger"]
+    if not isinstance(work, dict):
+        raise TypeError("packet work_ledger must be a dict")
+    work["actual_bytes"] = 0
+    return converge_actual_bytes_from_zero_length(len(serialize_compact_json(projected)))
 
 
 def packet_size_with_reservation(packet: dict[str, Any]) -> int:
     """Measure a packet after reserving all bounded post-admission fields."""
-    reserved = copy.deepcopy(packet)
-    _reserve_variable_fields(reserved)
-    _, size = compute_actual_bytes_fixpoint(reserved)
-    return size
+    return _measure_projected_packet_bytes(_project_reserved_packet(packet))
 
 
 def empty_packet_size_with_reservation(packet: dict[str, Any]) -> int:
     """Measure the final empty envelope with current immutable diagnostics."""
-    empty = copy.deepcopy(packet)
-    empty["items"] = []
-    empty["neighbors"] = []
-    empty["relations"] = []
-    empty["omissions"] = []
-    return packet_size_with_reservation(empty)
+    return _measure_projected_packet_bytes(
+        _project_reserved_packet(packet, empty_collections=True)
+    )
