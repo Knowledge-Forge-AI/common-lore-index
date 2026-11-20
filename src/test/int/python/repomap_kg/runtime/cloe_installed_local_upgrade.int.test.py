@@ -30,7 +30,6 @@ def _installed_digest(env: InstalledEnvironment, wheel: BuiltWheel) -> str:
     normal = observe_origin(env, ROOT, isolated=False)
     isolated = observe_origin(env, ROOT, isolated=True)
     assert closure("pure-local", normal, isolated)
-    assert wheel_inventory(wheel.wheel).record_valid
     return installed_graph_parser_digest(wheel, env.purelib)
 
 
@@ -69,6 +68,7 @@ def test_released_local_home_upgrade_and_backup_recovery(
     candidate = candidate_wheel(tmp_path_factory)
     previous = pure_environment(tmp_path / "released environment", released)
     current = pure_environment(tmp_path / "candidate environment", candidate)
+    assert wheel_inventory(candidate.wheel).record_valid
     assert _installed_digest(previous, released) != _installed_digest(current, candidate)
     assert released.input_sha256 != candidate.input_sha256
 

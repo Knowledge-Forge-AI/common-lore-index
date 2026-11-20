@@ -235,6 +235,9 @@ def test_released_provisioned_server_upgrade(
         refresh(new, "released_server_upgrade_probe")
         assert generation(new, tmp_path / "candidate-selection.json") == 2
         assert locations(new, expected.code_query) == original
+        kind, path, line, docs = locations(new, "released_server_upgrade_probe")
+        assert (kind, path, docs) == (CODE_KIND, expected.code_path, expected.docs_path)
+        assert isinstance(line, int) and line > expected.code_line
     print(json.dumps({"event": "released-server-upgrade-proof", "baseline_commit": RELEASED_CLOE_COMMIT,
                       "baseline_generation": 1, "candidate_generation": 2,
                       "environment_class": "provisioned-server", "source_blind_readback": True},

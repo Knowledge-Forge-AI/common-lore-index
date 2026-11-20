@@ -140,13 +140,13 @@ about installing from an index, and no wheel is fabricated or downloaded.
 ### Released-source upgrade diagnostic
 
 The disposable upgrade qualification rebuilds wheels offline from the exact
-v0.0.4 release commit and the candidate source. The two fresh installed
-environments are compared using a package member that changed between the
-inputs. This identifies the installation even while both metadata versions
-are 0.0.4.
+v0.0.4 release commit and the candidate source. Each environment's installed
+metadata matches its wheel. A package member that changed between the
+inputs distinguishes the two installs even while both versions are 0.0.4.
 
-For Local, keep the existing home and create a pre-upgrade backup with the
-released environment. The candidate opens the existing publication with the
+For Local, both environments read the same test-authored home configuration.
+The released environment populates the home and creates a pre-upgrade backup.
+The candidate opens the existing publication with the
 source material hidden, then publishes a new generation after a source
 edit. Both environments restore the pre-upgrade bundle into separate empty
 homes and read back the original publication. Recovery uses the retained
@@ -156,7 +156,11 @@ database with the released software.
 For provisioned Server, the two installed environments use the same
 disposable PostgreSQL database. The candidate reads the release's
 publication without source material, reapplies the existing migration
-catalog, and publishes a second generation over that database. This
-diagnostic uses the SDK's existing dynamic Psycopg and libpq. Native
-platforms, services, release images and package-manager delivery have
-separate qualification.
+catalog, and publishes a second generation over that database. A new
+navigation query locates the added symbol. This diagnostic uses the SDK's
+existing dynamic Psycopg and libpq.
+
+The two released-source upgrade cases are locally verified. Their hosted
+acceptance, attended macOS installed-wheel proof, native services, Windows
+Local mutation, the release image and package-manager publication remain
+separate.

@@ -36,7 +36,7 @@ from runner_coverage_execution import launch_observed_process, prepare_child_cov
 
 from installed_experience_pins import (
     CANDIDATE_INPUT_FILES, CANDIDATE_INPUT_TREES, CANDIDATE_VERSION, CANDIDATE_WHEEL_PREFIX,
-    INCUMBENT_COMMIT, INCUMBENT_WHEEL_PREFIX, LEGACY_FACADE, RELEASED_CLOE_COMMIT,
+    INCUMBENT_COMMIT, INCUMBENT_WHEEL_PREFIX, LEGACY_FACADE, RELEASED_CLOE_COMMIT, RELEASED_CLOE_INPUT_PATHS,
     RELEASED_CLOE_WHEEL_PREFIX, SETUPTOOLS_DEFAULT_LICENSE_PATTERNS,
 )
 
@@ -172,15 +172,22 @@ def incumbent_wheel(factory: Any, root: Path = ROOT) -> BuiltWheel:
 
 def released_cloe_wheel(factory: Any, root: Path = ROOT) -> BuiltWheel:
     """Rebuild the exact v0.0.4 release inputs without downloading a wheel."""
-    paths = (*CANDIDATE_INPUT_FILES, *(path.rstrip("/") for path in CANDIDATE_INPUT_TREES))
-    return _archived_wheel(factory, root, RELEASED_CLOE_COMMIT, RELEASED_CLOE_WHEEL_PREFIX, paths)
+    return _archived_wheel(factory, root, RELEASED_CLOE_COMMIT, RELEASED_CLOE_WHEEL_PREFIX,
+                           RELEASED_CLOE_INPUT_PATHS)
 
 
 def installed_graph_parser_digest(wheel: BuiltWheel, purelib: Path) -> str:
-    """Distinguish equal-version wheels using an installed source member."""
+    """Verify installed version metadata and distinguish wheels by an actual source member."""
     member = "common_lore_index/cli/_parser_ops_graph.py"
+    distribution, version = wheel.wheel.name.split("-")[:2]
+    metadata_member = f"{distribution}-{version}.dist-info/METADATA"
     with zipfile.ZipFile(wheel.wheel) as archive:
         packaged = archive.read(member)
+        metadata = archive.read(metadata_member)
+    if BytesParser().parsebytes(metadata).get("Version") != version:
+        raise AssertionError("installed-candidate metadata version differs from wheel filename")
+    if metadata != (purelib / metadata_member).read_bytes():
+        raise AssertionError("installed-candidate installed metadata differs from wheel")
     if packaged != (wheel.source / "src/main/python" / member).read_bytes():
         raise AssertionError("installed-candidate wheel member differs from prepared source")
     if packaged != (purelib / member).read_bytes():

@@ -191,7 +191,7 @@ def test_released_wheel_uses_exact_source_only(monkeypatch: pytest.MonkeyPatch, 
     assert installed.released_cloe_wheel(factory, tmp_path) is recorded
 
 
-@pytest.mark.parametrize("drift", ("none", "source", "installation"))
+@pytest.mark.parametrize("drift", ("none", "source", "installation", "version", "metadata"))
 def test_installed_graph_parser_digest_checks_both_witnesses(tmp_path: Path, drift: str) -> None:
     member = "common_lore_index/cli/_parser_ops_graph.py"
     body = b"public wheel fixture"
@@ -200,9 +200,15 @@ def test_installed_graph_parser_digest_checks_both_witnesses(tmp_path: Path, dri
     for name, path in (("source", source / "src/main/python" / member), ("installation", installed / member)):
         path.parent.mkdir(parents=True)
         path.write_bytes(b"changed" if name == drift else body)
-    archive = tmp_path / "fixture.whl"
+    archive = tmp_path / "common_lore_index-0.0.4-py3-none-any.whl"
+    metadata_path = "common_lore_index-0.0.4.dist-info/METADATA"
+    metadata = b"Version: 0.0.3\n" if drift == "version" else b"Version: 0.0.4\n"
+    installed_metadata = installed / metadata_path
+    installed_metadata.parent.mkdir()
+    installed_metadata.write_bytes(b"Version: 0.0.2\n" if drift == "metadata" else metadata)
     with zipfile.ZipFile(archive, "w") as wheel:
         wheel.writestr(member, body)
+        wheel.writestr(metadata_path, metadata)
     built = BuiltWheel(archive, source, "unused", 1)
     if drift == "none":
         assert installed_graph_parser_digest(built, installed) == hashlib.sha256(body).hexdigest()
