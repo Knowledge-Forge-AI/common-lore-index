@@ -6,6 +6,7 @@ remains the authority for publication state; no report value is copied from it.
 
 from __future__ import annotations
 
+from dataclasses import replace
 import json
 from pathlib import Path
 from typing import Any
@@ -125,7 +126,7 @@ def test_server_v2_committed_refused_and_v1_default_reports(tmp_path: Path) -> N
     assert report_leftovers(reports) == []
 
 
-@pytest.mark.parametrize("sample", ("normal", "reset", "query_failure"))
+@pytest.mark.parametrize("sample", ("normal", "reset", "query_failure", "wal_backwards", "temp_backwards"))
 def test_server_v3_reports_shared_samples_and_preserves_actual_commit(
     sample: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -154,6 +155,13 @@ def test_server_v3_reports_shared_samples_and_preserves_actual_commit(
             if observations and sample == "query_failure":
                 connection = FailedSamplingQuery(connection)
             result = capture(connection)
+            if observations and sample == "wal_backwards":
+                first_position = observations[0].wal_position
+                assert first_position is not None and first_position > 0
+                result = replace(result, wal_position=first_position - 1)
+            if sample == "temp_backwards":
+                assert result.temporary_counter_identity is not None
+                result = replace(result, temporary_bytes=0 if observations else 1)
             observations.append(result)
             return result
 
@@ -184,17 +192,18 @@ def test_server_v3_reports_shared_samples_and_preserves_actual_commit(
         wal = metric(payload, "staging_wal_position_delta")
         temporary = metric(payload, "staging_database_temporary_bytes_delta")
         assert wal["basis"] == temporary["basis"] == "shared_sample_delta"
-        if sample == "query_failure":
+        if sample in {"query_failure", "wal_backwards"}:
             assert (wal["value"], wal["reason"]) == (None, "not_observed")
         else:
             assert wal["availability"] == "measured" and wal["value"] > 0
-        if sample == "normal":
+        if sample in {"normal", "wal_backwards"}:
             assert temporary["availability"] == "measured" and temporary["value"] >= 0
         else:
             assert (temporary["value"], temporary["reason"]) == (None, "not_observed")
-        if sample == "reset":
+        if sample in {"reset", "temp_backwards"}:
             first, second = (item.temporary_counter_identity for item in observations)
-            assert first is not None and second is not None and first[0] == second[0] and first[1] != second[1]
+            assert first is not None and second is not None and first[0] == second[0]
+            assert (first[1] != second[1]) == (sample == "reset")
         checked = run_cloe("ops", "resource-report", "show", "--input", str(target), "--json", cwd=tmp_path)
         assert checked.returncode == 0 and json.loads(checked.stdout) == payload
     assert report_leftovers(reports) == []
