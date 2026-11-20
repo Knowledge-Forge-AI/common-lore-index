@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from common_lore_index.cli.main import main as cli_main
 from common_lore_index.artifacts.sealing_governance import SealingBudget
 from common_lore_index.ops.config import OpsConfig
@@ -20,7 +22,7 @@ from common_lore_index.ops.resource_view import ResourceObserver
 from common_lore_index.ops.resource_view._projections import project_compact_context
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
 from common_lore_index.retrieval.query_contracts import CapabilityState
-from common_lore_index.storage import apply_migrations, default_rdbms_root
+from common_lore_index.storage import apply_migrations, default_rdbms_root, staged_ingestion
 from repomap_test_support.context_assertions import assert_valid_context_packet
 from repomap_test_support.governance3_first_use_sealing import (
     assert_planned_refusal, assert_v2_sealing_counts, manifest_for_pin, mixed_inventory,
@@ -138,6 +140,7 @@ def _select(
 def test_first_use_server_context_and_native_fts_lifecycle(
     tmp_path: Path,
     capsys: Any,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     expectations = {item.alias: item for item in first_use_expectations(("core", "companion"))}
     assert {item.lexical_treatment for item in expectations.values()} == {"eligible"}
@@ -187,17 +190,50 @@ def test_first_use_server_context_and_native_fts_lifecycle(
         manifest, manifest_bytes = manifest_for_pin(home, pinned_record["expected_publication"])
         inventory = mixed_inventory(working_copy, ("core", "companion"))
         assert_v2_sealing_counts(first_report, inventory, manifest, manifest_bytes)
-        _pack(home, pinned, capsys)
+        packed_first = _pack(home, pinned, capsys)
+        assert packed_first["publication"]["generation"] == 1
+        core_id = binding_id_for_alias("core")
+        companion_id = binding_id_for_alias("companion")
+        first_index = build_graph_lexical_generation(
+            config, MIXED_V1_GRAPH_ID, selected_binding_ids=(core_id, companion_id),
+            authorize_body=True,
+        )
+        assert first_index.result == "published"
+        read_overlap: list[dict[str, Any]] = []
+
+        def read_before_publication(_handoff: object) -> None:
+            # The writer has committed its staging tables and validated the
+            # candidate, but a separate reader must still see generation 1.
+            retained = _pack(home, pinned, capsys)
+            assert retained["status"] in {"complete", "partial"}
+            assert retained["publication"] == packed_first["publication"]
+            assert [item["canonical_key"] for item in retained["items"]] == [
+                item["canonical_key"] for item in packed_first["items"]
+            ]
+            lexical = query_graph_lexical_generation(
+                config, MIXED_V1_GRAPH_ID,
+                LexicalQueryRequest(
+                    query="RetrievalExecutionPipeline", query_style="ranked_terms",
+                    selected_binding_ids=(core_id,),
+                ),
+                authorize_body=True,
+            )
+            assert lexical.capability_state in {CapabilityState.AVAILABLE, CapabilityState.PARTIAL}
+            assert any(hit.locator.source_relative_path == "pkg/pipeline.py" for hit in lexical.hits)
+            read_overlap.append(retained["publication"])
 
         guard_first_use_root(working_copy, work_root)
         materialize_mixed_v1_working_copy(working_copy, generation=2)
         second_refresh_observer = ResourceObserver()
-        second_refresh = refresh_graph(
-            config,
-            MIXED_V1_GRAPH_ID,
-            psql_command=postgres.psql_command,
-            resource_observer=second_refresh_observer,
-        )
+        with monkeypatch.context() as pause:
+            pause.setattr(staged_ingestion, "_run_system_test_publication_pause", read_before_publication)
+            second_refresh = refresh_graph(
+                config,
+                MIXED_V1_GRAPH_ID,
+                psql_command=postgres.psql_command,
+                resource_observer=second_refresh_observer,
+            )
+        assert read_overlap == [packed_first["publication"]]
         assert second_refresh.result == "success"
         assert second_refresh.publication_state == "committed"
         _resource_payload(
@@ -259,8 +295,6 @@ def test_first_use_server_context_and_native_fts_lifecycle(
         assert fallback["fallback"] is None
         assert fallback["expansion"]["reason"] != "backend_unsupported"
 
-        core_id = binding_id_for_alias("core")
-        companion_id = binding_id_for_alias("companion")
         lexical_observer = ResourceObserver()
         built = build_graph_lexical_generation(
             config,
