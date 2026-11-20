@@ -7,8 +7,8 @@ import pytest
 from common_lore_index.artifacts.source_sealer import seal_configured_sources
 from common_lore_index.coordinator import _portable_semantic_adapter as adapter
 from common_lore_index.graph import multi_source_pipeline as pipeline
-from common_lore_index.graph.multi_source_pipeline import capture_multi_source_candidate
-from repomap_test_support.capture_cancellation_fixtures import CAPTURE_CHUNK, observe_capture_io
+from common_lore_index.graph.multi_source_pipeline import MultiSourceCaptureError, capture_multi_source_candidate
+from repomap_test_support.capture_cancellation_fixtures import CAPTURE_CHUNK, capture_graph, observe_capture_io
 from repomap_test_support.portable_spool_case import spool_case
 from repomap_test_support.portable_worker_equivalence import reference_bytes
 
@@ -150,3 +150,33 @@ def test_controlled_large_capture_keeps_reference_bundle_and_default_checkpoints
     result = adapter.execute_portable_extraction(capability, emit_progress=lambda *phase: phases.append(phase), cancel_event=threading.Event())
     assert store.read(result.bundle_reference) == expected and phases
     assert tuple(capability.workspace_root.iterdir()) == (sentinel,)
+
+def test_continuously_growing_source_refuses_after_bounded_attempts(tmp_path, monkeypatch):
+    root = tmp_path / "source"
+    config = capture_graph(root)
+    source = root / "public.py"
+    initial_size = source.stat().st_size
+    suffix = b"#" * 8192 + b"\n"
+    opened = 0
+    stage = tmp_path / "capture-temporaries"
+    stage.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(stage))
+
+    def append_after_first_read():
+        nonlocal opened
+        if opened < len(probes):
+            opened = len(probes)
+            with source.open("ab") as writer:
+                writer.write(suffix)
+
+    consumed, written, probes = observe_capture_io(monkeypatch, append_after_first_read)
+    with pytest.raises(MultiSourceCaptureError) as caught:
+        capture_multi_source_candidate(config)
+    assert caught.value.category == "source_changed"
+    assert len(probes) == 3 and all(probe.closed for probe in probes)
+    opened_sizes = [initial_size + index * len(suffix) for index in range(3)]
+    assert [probe.requests for probe in probes] == [[size + 1, 1] for size in opened_sizes]
+    assert sum(consumed) == sum(opened_sizes) + 3
+    assert written == opened_sizes
+    assert source.stat().st_size == initial_size + 3 * len(suffix)
+    assert list(stage.iterdir()) == []

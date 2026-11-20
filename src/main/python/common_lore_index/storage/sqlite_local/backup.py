@@ -38,6 +38,7 @@ import os
 import secrets
 import sqlite3
 import stat
+from collections.abc import Iterator
 from contextlib import suppress
 from pathlib import Path
 
@@ -84,15 +85,40 @@ def owned_names(path: Path) -> tuple[Path, ...]:
     return (path, *sidecar_paths(path), path.with_name(path.name + "-journal"))
 
 
-def file_digest(path: Path) -> tuple[int, str]:
-    """Byte length and SHA-256 of one regular file, read through one descriptor."""
-    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+class _DatabaseLengthMismatch(ValueError):
+    """A backup database no longer has its declared byte length."""
+
+
+def _database_chunks(
+    descriptor: int, expected_bytes: int | None = None
+) -> Iterator[bytes]:
+    details = os.fstat(descriptor)
+    if not stat.S_ISREG(details.st_mode):
+        raise LocalStoreError(UNRECOGNIZED)
+    if expected_bytes is not None and details.st_size != expected_bytes:
+        raise _DatabaseLengthMismatch
+
+    remaining = expected_bytes
+    while True:
+        # The extra byte detects growth without reading or copying an
+        # unbounded suffix. Short reads are allowed until EOF.
+        chunk = os.read(descriptor, _CHUNK if remaining is None else min(_CHUNK, remaining + 1))
+        if remaining is not None:
+            if len(chunk) > remaining or (not chunk and remaining):
+                raise _DatabaseLengthMismatch
+            remaining -= len(chunk)
+        if not chunk:
+            return
+        yield chunk
+
+
+def file_digest(path: Path, *, expected_bytes: int | None = None) -> tuple[int, str]:
+    """Return a regular file's size and hash through one descriptor."""
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            raise LocalStoreError(UNRECOGNIZED)
         digest = hashlib.sha256()
         size = 0
-        while chunk := os.read(descriptor, _CHUNK):
+        for chunk in _database_chunks(descriptor, expected_bytes):
             digest.update(chunk)
             size += len(chunk)
     finally:
