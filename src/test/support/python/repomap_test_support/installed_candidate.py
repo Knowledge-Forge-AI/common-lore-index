@@ -47,6 +47,7 @@ DATA_PREFIX = f"common_lore_index-{CANDIDATE_VERSION}.data/data/"
 OPTIONAL_DIST_INFO = frozenset({f"{DIST_INFO}/top_level.txt"})
 FORBIDDEN_PREFIXES = ("src/", "tools/", "test/", "resources/")
 _MEMO: dict[tuple[str, str], BuiltWheel] = {}
+_ARCHIVE_MEMO: dict[tuple[str, str, str, tuple[str, ...]], BuiltWheel] = {}
 
 
 @dataclass(frozen=True)
@@ -162,8 +163,8 @@ def candidate_sdist_wheel(reference: BuiltWheel, scratch: Path, root: Path = ROO
 def _archived_wheel(
     factory: Any, root: Path, commit: str, prefix: str, paths: Sequence[str],
 ) -> BuiltWheel:
-    key = (str(root.resolve()), commit)
-    memo = _MEMO.get(key)
+    key = (str(root.resolve()), commit, prefix, tuple(paths))
+    memo = _ARCHIVE_MEMO.get(key)
     if memo is not None and memo.wheel.is_file():
         return memo
     scratch = _scratch(factory, "archive", hashlib.sha256(str(key).encode()).hexdigest())
@@ -179,7 +180,7 @@ def _archived_wheel(
     names = sorted(path.relative_to(source).as_posix() for path in source.rglob("*") if path.is_file())
     digest, count = input_digest(source, names)
     built = BuiltWheel(_build(source, scratch / "wheel", prefix), source, digest, count)
-    _MEMO[key] = built
+    _ARCHIVE_MEMO[key] = built
     return built
 
 

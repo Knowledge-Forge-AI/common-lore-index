@@ -14,13 +14,19 @@ Samuel Leighton Lair <sam.lair@knowledge-forge.ai> as public commit identity.
 ## Latest qualified milestone
 
 Public main is released Common Lore Index v0.0.4 at `39cb2b3`. Public staging
-`d056f6fb` qualifies the split staging gate and optional Server report v3.
-All 14 jobs passed in [CI161 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44650267036).
-The [qualification record](../../tools/ci/cloe-ci161-qualification.md) binds
-the exact candidate, five installed evidence bundles and consumed counters.
-Unit branch coverage reached 87.05%. Integration branch coverage reached
-80.15%, leaving 470 branches to the 82% target. Main promotion, release and
-production admission remain separate.
+`d5ab2373` qualifies the combined W8 installed-upgrade and source archive
+milestone. All 14 jobs passed in
+[CI162 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44674001015).
+Measured integration branch coverage reached 20,328 of 25,362 (80.15%),
+469 branches short of the 82% target. The preceding split staging and Server
+report v3 qualification is recorded in [CI161](../../tools/ci/cloe-ci161-qualification.md).
+
+The [local W8 platform checkpoint](../../tools/ci/cloe-w8-platform1-exit.md)
+prepares the exact offline kit for an attended Apple Silicon install.
+The same kit passed its Linux arm64 control, including SQLite backup and
+source-blind MCP results after restore. Native macOS evidence remains pending.
+Batch further local work before spending a new public CI campaign.
+Main promotion, release and production admission remain separate.
 
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness

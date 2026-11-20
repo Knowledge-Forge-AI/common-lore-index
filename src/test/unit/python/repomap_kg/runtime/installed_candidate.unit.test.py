@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import tarfile
 import zipfile
 from pathlib import Path
 
@@ -197,6 +198,42 @@ def test_released_wheel_uses_exact_source_only(monkeypatch: pytest.MonkeyPatch, 
 
     monkeypatch.setattr(installed, "_archived_wheel", archive)
     assert installed.released_cloe_wheel(factory, tmp_path) is recorded
+
+
+def test_archive_memo_distinguishes_wheel_prefix_and_input_paths(
+    monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory, tmp_path: Path,
+) -> None:
+    import repomap_test_support.installed_candidate as installed
+
+    root = tmp_path / "repository"
+    root.mkdir()
+    for name in ("NOTICE", "LICENSE"):
+        (root / name).write_text(name, encoding="utf-8")
+
+    def archive(args: tuple[str, ...], cwd: Path, family: str) -> str:
+        assert cwd == root and family == "arch7f_probe"
+        with tarfile.open(args[3].removeprefix("--output="), "w") as members:
+            for name in args[5:]:
+                members.add(root / name, arcname=name)
+        return ""
+
+    def build(source: Path, output: Path, prefix: str) -> Path:
+        output.mkdir()
+        wheel = output / f"{prefix}py3-none-any.whl"
+        wheel.write_text(sorted(path.name for path in source.iterdir())[0], encoding="utf-8")
+        return wheel
+
+    monkeypatch.setattr(installed, "_require", archive)
+    monkeypatch.setattr(installed, "_build", build)
+    first = installed._archived_wheel(tmp_path_factory, root, "commit", "first-", ("NOTICE",))
+    renamed = installed._archived_wheel(tmp_path_factory, root, "commit", "second-", ("NOTICE",))
+    different = installed._archived_wheel(tmp_path_factory, root, "commit", "first-", ("LICENSE",))
+
+    assert installed._archived_wheel(tmp_path_factory, root, "commit", "first-", ("NOTICE",)) is first
+    assert renamed.wheel.name == "second-py3-none-any.whl"
+    assert renamed.input_sha256 == first.input_sha256
+    assert different.input_sha256 != first.input_sha256
+    assert different.wheel.read_text(encoding="utf-8") == "LICENSE"
 
 
 @pytest.mark.parametrize("drift", ("none", "source", "installation", "version", "metadata"))
