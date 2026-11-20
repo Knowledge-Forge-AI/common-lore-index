@@ -222,7 +222,8 @@ def test_unprojected_three_runner_public_workflow_is_rejected_by_connected_topol
     write_public_qualification_workflow_tree(repo_dir, PUBLIC_RELEASE_QUALIFICATION_WORKFLOW_TEXT)
     violations = check_topology(repo_dir)
     assert any("d12-native-amd64" in item for item in violations)
-    assert any("four times" in item for item in violations)
+    assert "the canonical test runner count differs from the topology, found 3" in violations
+    assert "the native D12 preflight runner marker must appear exactly once, found 0" in violations
 
 
 def test_public_workflow_rejects_disabled_cancel_in_progress_or_missing_system_hold(
