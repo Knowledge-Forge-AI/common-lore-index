@@ -21,10 +21,11 @@ Measured integration branch coverage reached 20,328 of 25,362 (80.15%),
 469 branches short of the 82% target. The preceding split staging and Server
 report v3 qualification is recorded in [CI161](../../tools/ci/cloe-ci161-qualification.md).
 
-The [local W8 platform checkpoint](../../tools/ci/cloe-w8-platform1-exit.md)
-prepares the exact offline kit for an attended Apple Silicon install.
-The same kit passed its Linux arm64 control, including SQLite backup and
-source-blind MCP results after restore. Native macOS evidence remains pending.
+The [attended Apple Silicon run](../../tools/ci/cloe-w8-macos1-exit.md)
+passed the exact CI162 Local wheel kit on macOS arm64 with CPython 3.13.12.
+The fresh install published a SQLite graph, verified the restored database
+file and reproduced MCP results with the source hidden. The same kit
+previously passed its Linux arm64 control.
 Batch further local work before spending a new public CI campaign.
 Main promotion, release and production admission remain separate.
 

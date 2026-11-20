@@ -48,21 +48,23 @@ qualification:
 
 - Linux: the base wheel's Local flow is qualified in a clean container
   (LOCAL11), with Psycopg absent.
-- macOS: an attended native installed-wheel proof is prepared but **pending**
-  (see Installed-wheel qualification).
+- macOS: the CI162 base wheel passed the attended native fresh-install
+  proof on Apple Silicon with CPython 3.13.12. See
+  [the W8 evidence](../../tools/ci/cloe-w8-macos1-exit.md).
 - Windows: Local mutation is **not yet native-qualified** and currently
   refuses before locking (see Commands).
 
 The wheel carries no Go helper. Go extraction from a wheel install needs
 `REPOMAP_GO_HELPER`.
 
-### Installed-wheel qualification (pending)
+### Installed-wheel qualification
 
-The next attended proof installs the exact reviewed base wheel, identified by
+The attended proof installed the exact reviewed base wheel, identified by
 its SHA-256, into a fresh ordinary macOS venv. It does not use an editable
 checkout, the project `.venv` or `PYTHONPATH`. It runs from an unrelated
-directory and uses no network: the operator kit installs with
-`--no-index --require-hashes` from the kit's own wheels. It proves:
+directory. The proof processes ran with network access denied. The operator
+kit installed with `--no-index --require-hashes` from its own wheels. The
+checks covered
 
 - Psycopg is absent;
 - `common_lore_index` imports from the venv;
@@ -71,13 +73,13 @@ directory and uses no network: the operator kit installs with
   `ops refresh-preflight` and a direct `ops refresh-graph` on a two-file
   fixture;
 - stdio MCP reads;
-- `ops sqlite-backup` and `ops sqlite-restore`, with equal MCP results after
-  restore and the source hidden;
+- `ops sqlite-backup` and `ops sqlite-restore`, with matching database file
+  hashes and equal MCP results after restore with the source hidden;
 - a PostgreSQL home refuses with `postgresql-driver-unavailable`.
 
-The kit removes only its own marked work directory. The same kit passed in a
-Linux container (status 00987). The manager authorizes and reviews the native
-run; it is not self-accepted.
+The kit removed its marked work directory. This Apple Silicon result covers a
+fresh SQLite Local wheel install for the bound candidate. The same kit passed
+its Linux arm64 control. Earlier LOCAL11 evidence applies to its own package.
 
 The containerized exact-candidate installed proof is described in
 [Installed experience proof](cloe-installed-upgrade-compatibility.md#installed-experience-proof).
