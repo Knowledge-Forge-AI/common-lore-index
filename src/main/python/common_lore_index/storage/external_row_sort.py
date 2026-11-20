@@ -234,13 +234,15 @@ def _finalize_run_levels(
     remaining = [path for group in levels for path in group]
     if len(remaining) <= merge_fan_in:
         return remaining
-    final: list[Path] = []
-    for group in levels:
-        if not group:
-            continue
-        if len(group) == 1:
-            final.extend(group)
-            continue
+    heap = [
+        (artifacts.size_of(path), order, path)
+        for order, path in enumerate(remaining)
+    ]
+    heapq.heapify(heap)
+    next_order = len(heap)
+    arity = 2 + (len(heap) - 2) % (merge_fan_in - 1)
+    while len(heap) > merge_fan_in:
+        group = [heapq.heappop(heap)[2] for _ in range(arity)]
         output = _write_merged_run(
             directory,
             group,
@@ -251,8 +253,12 @@ def _finalize_run_levels(
             artifacts,
         )
         _remove_runs(group, artifacts)
-        final.append(output)
-    return final
+        heapq.heappush(heap, (artifacts.size_of(output), next_order, output))
+        next_order += 1
+        arity = merge_fan_in
+    return [
+        path for _size, _order, path in sorted(heap, key=lambda item: item[1])
+    ]
 
 
 def _remove_runs(runs: Sequence[Path], artifacts: _ArtifactTracker) -> None:

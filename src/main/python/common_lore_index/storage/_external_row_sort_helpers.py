@@ -48,6 +48,13 @@ class _ArtifactTracker:
         self._sizes[path] = byte_count
         self._publish()
 
+    def size_of(self, path: Path) -> int:
+        if path not in self._sizes:
+            raise ExternalRowSortError(
+                "external structural digest artifact state is invalid"
+            )
+        return self._sizes[path]
+
     def remove(self, path: Path) -> None:
         self._sizes.pop(path, None)
         self._publish()
