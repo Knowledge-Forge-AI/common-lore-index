@@ -26,6 +26,13 @@ passed the exact CI162 Local wheel kit on macOS arm64 with CPython 3.13.12.
 The fresh install published a SQLite graph, verified the restored database
 file and reproduced MCP results with the source hidden. The same kit
 previously passed its Linux arm64 control.
+
+The [connected native upgrade and index checkpoint](../../tools/ci/cloe-w8-macosup1-exit.md)
+proved same-venv wheel replacement on an existing Local home and recovery
+with both wheel versions. Pip resolved the candidate by package name from
+a local file index and refused modified wheel bytes and an incompatible
+Python declaration.
+
 Batch further local work before spending a new public CI campaign.
 Main promotion, release and production admission remain separate.
 

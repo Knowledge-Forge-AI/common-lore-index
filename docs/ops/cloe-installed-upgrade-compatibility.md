@@ -160,10 +160,14 @@ catalog, and publishes a second generation over that database. A new
 navigation query locates the added symbol. This diagnostic uses the SDK's
 existing dynamic Psycopg and libpq.
 
-The two released-source upgrade cases are locally verified. Their hosted
-acceptance, attended macOS installed-wheel proof, native services, Windows
-Local mutation, the release image and package-manager publication remain
-separate.
+The Linux harness cases passed on [CI162](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44674001015).
+The [native Apple Silicon successor](../../tools/ci/cloe-w8-macosup1-exit.md)
+also replaced the release wheel in the same venv and read the existing Local
+publication before advancing it to generation 2. Both wheel versions
+restored the pre-upgrade backup into separate homes with the source hidden.
+The same milestone verified installation by package name from a local
+file index. Native services, Windows Local mutation, the release image
+and package-manager publication have separate gates.
 
 ### Offline source distribution check
 
