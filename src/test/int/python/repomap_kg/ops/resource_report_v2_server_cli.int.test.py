@@ -20,6 +20,7 @@ from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage import staged_ingestion
+from common_lore_index.storage.staging_observability import StagingMeasurementCategory, StagingMeasurements
 from common_lore_index.storage.staging_resource_observability import StagingResourceSnapshot
 from repomap_test_support.postgres_harness import temporary_postgres
 from repomap_test_support.resource_report_cli_files import (
@@ -123,6 +124,64 @@ def test_server_v2_committed_refused_and_v1_default_reports(tmp_path: Path) -> N
 
         plain = _refresh(home, postgres, tmp_path)
         assert set(plain) == set(following)
+    assert report_leftovers(reports) == []
+
+
+@pytest.mark.parametrize("fault", ("first_sample", "last_sample", "emit_partial"))
+def test_server_v3_sampling_failure_preserves_publication(
+    fault: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    reports = private_directory(tmp_path / "reports")
+    target = reports / "v3.json"
+    sentinel = "private sample callback failure"
+    capture = staged_ingestion.capture_staging_resources
+    attempts = 0
+    faults: list[str] = []
+
+    def sample(connection: Any) -> StagingResourceSnapshot:
+        nonlocal attempts
+        attempts += 1
+        if (attempts == 1 and fault == "first_sample") or (attempts == 2 and fault == "last_sample"):
+            faults.append(fault)
+            raise RuntimeError(sentinel)
+        return capture(connection)
+
+    def emit_partial(
+        measurements: StagingMeasurements, _before: StagingResourceSnapshot, _after: StagingResourceSnapshot,
+    ) -> None:
+        measurements.record_bytes(StagingMeasurementCategory.WAL_UPPER_BOUND, 91)
+        faults.append(fault)
+        raise RuntimeError(sentinel)
+
+    monkeypatch.setattr(staged_ingestion, "capture_staging_resources", sample)
+    if fault == "emit_partial":
+        monkeypatch.setattr(staged_ingestion, "emit_staging_resource_measurements", emit_partial)
+    with temporary_postgres() as postgres:
+        home, working_copy = _home(tmp_path, postgres)
+        config = load_graph_registry_config_home(home)
+        assert isinstance(config, OpsConfig)
+        result_code = main([
+            "ops", "refresh-graph", "--repo-map-home", str(home), "--graph", MIXED_V1_GRAPH_ID,
+            "--psql-command", postgres.psql_command, "--resource-report", str(target),
+            "--resource-report-schema", "3", "--json",
+        ])
+        captured = capsys.readouterr()
+        assert faults == [fault]
+        assert result_code == 0, captured
+        assert attempts == (1 if fault == "first_sample" else 2)
+        cli = json.loads(captured.out)
+        result = cli["graphs"][0] if "graphs" in cli else cli
+        assert (result["result"], result["publication_state"]) == ("success", "committed")
+        accepted, _ = read_postgres_accepted_publication(config, MIXED_V1_GRAPH_ID,
+                                                         psql_command=postgres.psql_command)
+        assert str(accepted.run_id) == str(result["run_id"])
+        payload = report_payload(target, operation="server_refresh", backend="postgresql",
+                                 outcome="committed", forbidden=(home, working_copy, postgres.password,
+                                                                  MIXED_V1_GRAPH_ID, sentinel))
+        for name in ("staging_wal_position_delta", "staging_database_temporary_bytes_delta"):
+            row = metric(payload, name)
+            assert (row["value"], row["availability"], row["reason"]) == (None, "unavailable", "observer_failed")
+        assert sentinel not in captured.out + captured.err
     assert report_leftovers(reports) == []
 
 

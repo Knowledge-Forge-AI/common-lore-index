@@ -44,6 +44,33 @@ def test_invalid_operation_does_not_consume_a_sequence() -> None:
     assert [event.attempt_local_sequence for event in events] == [1, 1]
 
 
+def test_failed_resource_sample_stops_measurements_and_keeps_lifecycle_events() -> None:
+    events: list[StagingMeasurementEvent] = []
+    operations: list[StagingOperationEvent] = []
+    measurements = StagingMeasurements(events.append, operation_sink=operations.append, monotonic_ns=_clock())
+    def fail_sample() -> None:
+        measurements.record_bytes(StagingMeasurementCategory.WAL_UPPER_BOUND, 0)
+        raise RuntimeError("private sampler details")
+
+    with measurements.sample_resources():
+        fail_sample()
+    assert measurements.failed
+    measurements.record_bytes(StagingMeasurementCategory.TEMPORARY_BYTE_UPPER_BOUND, 1)
+    with measurements.operation("guard.source_index_stage"):
+        pass
+    assert [row.category for row in events] == [StagingMeasurementCategory.WAL_UPPER_BOUND]
+    assert len(operations) == 2
+
+
+@pytest.mark.parametrize("interrupt", (KeyboardInterrupt, SystemExit))
+def test_resource_sampling_preserves_process_control(interrupt: type[BaseException]) -> None:
+    measurements = StagingMeasurements(lambda _event: None)
+    with pytest.raises(interrupt):
+        with measurements.sample_resources():
+            raise interrupt()
+    assert not measurements.failed
+
+
 def test_reentrant_operation_sink_preserves_the_shared_event_limit() -> None:
     events: list[StagingOperationEvent] = []
     nested = False

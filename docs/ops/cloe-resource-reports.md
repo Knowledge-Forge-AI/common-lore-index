@@ -99,6 +99,10 @@ counter is unavailable with reason `not_observed`; repeated source events use
 `ambiguous_repeat`. Shared activity and statistics timing can affect a delta.
 Per-statement and physical work require independent evidence.
 
+If optional sampling fails, both staging rows report `observer_failed`.
+The refresh result still reflects what PostgreSQL did. A completed
+publication remains committed even when the final sample fails.
+
 Schema 3 is available on the direct Server command. SQLite, coordinator mode,
 the developer staging event transport, and v2 sealing-budget combinations
 refuse it. The default remains schema 1. Use schema 2 for sealing and worker
