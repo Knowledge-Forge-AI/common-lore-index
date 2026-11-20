@@ -10,8 +10,9 @@ from pathlib import Path
 import pytest
 
 from repomap_test_support.installed_candidate import (
-    DIST_INFO, expected_entry_points, expected_inventory, expected_requires, input_digest, input_names,
-    inventory_sha256, license_bytes_match, license_members, rows_sha256, wheel_inventory,
+    DIST_INFO, BuiltWheel, expected_entry_points, expected_inventory, expected_requires, input_digest,
+    input_names, installed_graph_parser_digest, inventory_sha256, license_bytes_match, license_members,
+    rows_sha256, wheel_inventory,
 )
 
 PYPROJECT = """[project]
@@ -168,3 +169,43 @@ def test_candidate_pins_follow_current_release_and_keep_incumbent_frozen() -> No
     assert INCUMBENT_COMMIT == "6d818ad6d43d38d47c64b8c474c2b64b853f631a"
     assert INCUMBENT_DISTRIBUTION == "repomap-kg"
     assert INCUMBENT_WHEEL_PREFIX == "repomap_kg-0.0.3-"
+
+
+def test_released_wheel_uses_exact_source_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    import repomap_test_support.installed_candidate as installed
+
+    factory = object()
+    recorded = object()
+
+    def archive(
+        request_factory: object, root: Path, commit: str, prefix: str, paths: tuple[str, ...],
+    ) -> object:
+        assert request_factory is factory and root == tmp_path
+        assert commit == "39cb2b3452bfd32b05d38f842c0f891614cbf58d"
+        assert prefix == "common_lore_index-0.0.4-"
+        assert paths == ("README.md", "LICENSE", "NOTICE", "pyproject.toml",
+                         "src/main/python", "src/main/resources")
+        return recorded
+
+    monkeypatch.setattr(installed, "_archived_wheel", archive)
+    assert installed.released_cloe_wheel(factory, tmp_path) is recorded
+
+
+@pytest.mark.parametrize("drift", ("none", "source", "installation"))
+def test_installed_graph_parser_digest_checks_both_witnesses(tmp_path: Path, drift: str) -> None:
+    member = "common_lore_index/cli/_parser_ops_graph.py"
+    body = b"public wheel fixture"
+    source = tmp_path / "prepared"
+    installed = tmp_path / "venv"
+    for name, path in (("source", source / "src/main/python" / member), ("installation", installed / member)):
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"changed" if name == drift else body)
+    archive = tmp_path / "fixture.whl"
+    with zipfile.ZipFile(archive, "w") as wheel:
+        wheel.writestr(member, body)
+    built = BuiltWheel(archive, source, "unused", 1)
+    if drift == "none":
+        assert installed_graph_parser_digest(built, installed) == hashlib.sha256(body).hexdigest()
+    else:
+        with pytest.raises(AssertionError, match="differs from"):
+            installed_graph_parser_digest(built, installed)

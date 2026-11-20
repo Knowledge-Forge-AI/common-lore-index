@@ -23,10 +23,14 @@ from common_lore_index.graph.multi_source import graph_source_binding_id
 from common_lore_index.server._mcp_dispatch import MCP_PROTOCOL_VERSION
 from common_lore_index.server.mcp_schemas import tool_definitions
 from common_lore_index.storage import discover_migrations
-from installed_experience_pins import CODE_KIND, GRAPH_ID, POSTGRES_BIN
+from installed_experience_pins import (
+    CODE_KIND, GRAPH_ID, POSTGRES_BIN, PSYCOPG_IMPL, PSYCOPG_VERSION, RELEASED_CLOE_COMMIT,
+)
 from installed_experience_rules import classify_environment
-from repomap_test_support.installed_candidate import ROOT, candidate_wheel
-from repomap_test_support.installed_environment import include_system_site_packages, run_child
+from repomap_test_support.installed_candidate import (
+    ROOT, candidate_wheel, installed_graph_parser_digest, released_cloe_wheel,
+)
+from repomap_test_support.installed_environment import InstalledEnvironment, include_system_site_packages, run_child
 from repomap_test_support.installed_experience_driver import (
     Observed, OwnerRun, intent_for, json_object, preparation, pure_environment,
 )
@@ -166,3 +170,72 @@ def test_installed_provisioned_server(tmp_path_factory, tmp_path: Path) -> None:
     assert verdict.outcome == "accepted", (verdict.categories, run.mismatches, [
         (row["scenario"], row["outcome"], row["failure_code"]) for row in verdict.rows])
     assert root.is_dir()
+
+def test_released_provisioned_server_upgrade(
+    tmp_path_factory: pytest.TempPathFactory, tmp_path: Path,
+) -> None:
+    old_wheel = released_cloe_wheel(tmp_path_factory)
+    new_wheel = candidate_wheel(tmp_path_factory)
+    old = pure_environment(tmp_path / "released server", old_wheel, env_class="provisioned-server")
+    new = pure_environment(tmp_path / "candidate server", new_wheel, env_class="provisioned-server")
+    old_digest = installed_graph_parser_digest(old_wheel, old.purelib)
+    new_digest = installed_graph_parser_digest(new_wheel, new.purelib)
+    assert old_digest != new_digest
+    for env in (old, new):
+        normal = observe_origin(env, ROOT, isolated=False)
+        isolated = observe_origin(env, ROOT, isolated=True)
+        assert closure("provisioned-server", normal, isolated)
+        driver = (isolated.payload or {}).get("driver") or {}
+        assert driver.get("impl") == PSYCOPG_IMPL and driver.get("version") == PSYCOPG_VERSION
+        assert classify(driver.get("file"), env, ROOT) == "system-site"
+
+    material = write_tiny_material(tmp_path / "public material")
+    expected = expectations()
+    client = Path(POSTGRES_BIN) / "psql"
+    assert client.is_file(), "installed-server-harness-unavailable"
+    with temporary_postgres() as postgres:
+        home = provisioned_postgres_home(tmp_path / "existing server home", material,
+                                        host=postgres.host, port=postgres.port, database=postgres.database,
+                                        user=postgres.user, password=postgres.password)
+
+        def refresh(env: InstalledEnvironment, query: str) -> None:
+            result = run_child(env, (str(env.python), "-c", SERVER_PROBE, str(home), str(client),
+                                     postgres.database, GRAPH_ID, query), extra=READBACK)
+            assert result.exit == 0, result.exit
+            payload = json_object(result.stdout.strip().splitlines()[-1])
+            assert payload == {"result": "success", "publication_state": "committed", "function_present": True}
+
+        def generation(env: InstalledEnvironment, output: Path) -> object:
+            selected = run_child(env, (str(env.wrapper("cloe")), "ops", "context-select",
+                                       "--repo-map-home", str(home), "--graph", GRAPH_ID,
+                                       "--binding", graph_source_binding_id(GRAPH_ID, "code"),
+                                       "--pin-publication", "--output", str(output)), extra=READBACK)
+            assert selected.exit == 0, selected.exit
+            return ((json_object(selected.stdout) or {}).get("expected_publication") or {}).get("generation")
+
+        def locations(env: InstalledEnvironment, query: str) -> tuple[object, ...]:
+            answer = useful_question(env, (str(env.wrapper("cloe")), "mcp", "serve", "--repo-map-home", str(home)),
+                                     graph_id=GRAPH_ID, code_query=query, code_kind=CODE_KIND,
+                                     docs_query=expected.docs_query, protocol=MCP_PROTOCOL_VERSION, extra=READBACK)
+            assert answer.complete and answer.protocol_version == MCP_PROTOCOL_VERSION
+            return tuple(answer.facts[key][0] for key in ("code_kind", "code_path", "code_line", "docs_path"))
+
+        refresh(old, expected.code_query)
+        assert generation(old, tmp_path / "release-selection.json") == 1
+        original = (CODE_KIND, expected.code_path, expected.code_line, expected.docs_path)
+        assert locations(old, expected.code_query) == original
+        hidden = material.with_name("material offline")
+        material.rename(hidden)
+        assert locations(new, expected.code_query) == original
+        assert generation(new, tmp_path / "existing-selection.json") == 1
+        hidden.rename(material)
+
+        with (material / "code" / expected.code_path).open("a", encoding="utf-8") as stream:
+            stream.write("\n\ndef released_server_upgrade_probe():\n    return 7\n")
+        refresh(new, "released_server_upgrade_probe")
+        assert generation(new, tmp_path / "candidate-selection.json") == 2
+        assert locations(new, expected.code_query) == original
+    print(json.dumps({"event": "released-server-upgrade-proof", "baseline_commit": RELEASED_CLOE_COMMIT,
+                      "baseline_generation": 1, "candidate_generation": 2,
+                      "environment_class": "provisioned-server", "source_blind_readback": True},
+                     sort_keys=True))

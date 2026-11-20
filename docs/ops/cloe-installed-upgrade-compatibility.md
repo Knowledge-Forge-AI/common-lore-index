@@ -104,9 +104,8 @@ automatic rollback after subsequent live writes is implied.
 [ADR 0181](../adr/2026/11/0181-exact-installed-experience-and-evidence.md) and the
 [installed-experience contract](../specs/cloe-installed-experience-v1.md) add a
 diagnostic proof that the exact candidate wheel, installed on its own, gives a
-working experience. An implementation candidate and scoped diagnostic evidence exist. Final
-corrective proof and review govern publication; hosted acceptance remains
-pending and is not claimed here.
+working experience. The five installed evidence bundles were checked at the
+qualified CI161 source census. [CI161 qualification](../../tools/ci/cloe-ci161-qualification.md)
 
 What it covers: the candidate wheel is built offline once per test process and
 checked against an inventory derived from source. Installed wrappers and modules
@@ -129,15 +128,35 @@ The environment classes and their labels:
 | `incumbent-local` | The same construction with the incumbent `repomap-kg` 0.0.3 wheel, in a separate root | Rollback target for migration checks only |
 | `provisioned-server` | Venv with system site packages; the wheel installed without dependencies | Installed Server code paths over the SDK's Psycopg and libpq and a temporary PostgreSQL; never reported as pure |
 
-The scoped proof runs in the canonical Linux sandbox on the host's architecture
-(currently ARM64) with CPython 3.13.12. Hosted AMD64 evidence comes only from
-the next ordinary staging CI and its host `check` of the exported bundles.
+The scoped proof runs in the canonical Linux sandbox on the host's architecture.
+Hosted AMD64 evidence comes from staging CI and its host `check` of the
+exported bundles.
 
 The `typing-extensions` projection copies only `RECORD`-verified files of the
 SDK's installed distribution and compares them with reviewed frozen digests.
 It is test preprovisioning, not public package resolution: it proves nothing
 about installing from an index, and no wheel is fabricated or downloaded.
 
-These holds are unchanged: attended macOS installed-wheel proof, native
-services, Windows Local mutation, the release image and package-manager
-publication.
+### Released-source upgrade diagnostic
+
+The disposable upgrade qualification rebuilds wheels offline from the exact
+v0.0.4 release commit and the candidate source. The two fresh installed
+environments are compared using a package member that changed between the
+inputs. This identifies the installation even while both metadata versions
+are 0.0.4.
+
+For Local, keep the existing home and create a pre-upgrade backup with the
+released environment. The candidate opens the existing publication with the
+source material hidden, then publishes a new generation after a source
+edit. Both environments restore the pre-upgrade bundle into separate empty
+homes and read back the original publication. Recovery uses the retained
+backup and the released environment. It does not open a candidate-written
+database with the released software.
+
+For provisioned Server, the two installed environments use the same
+disposable PostgreSQL database. The candidate reads the release's
+publication without source material, reapplies the existing migration
+catalog, and publishes a second generation over that database. This
+diagnostic uses the SDK's existing dynamic Psycopg and libpq. Native
+platforms, services, release images and package-manager delivery have
+separate qualification.

@@ -36,7 +36,8 @@ from runner_coverage_execution import launch_observed_process, prepare_child_cov
 
 from installed_experience_pins import (
     CANDIDATE_INPUT_FILES, CANDIDATE_INPUT_TREES, CANDIDATE_VERSION, CANDIDATE_WHEEL_PREFIX,
-    INCUMBENT_COMMIT, INCUMBENT_WHEEL_PREFIX, LEGACY_FACADE, SETUPTOOLS_DEFAULT_LICENSE_PATTERNS,
+    INCUMBENT_COMMIT, INCUMBENT_WHEEL_PREFIX, LEGACY_FACADE, RELEASED_CLOE_COMMIT,
+    RELEASED_CLOE_WHEEL_PREFIX, SETUPTOOLS_DEFAULT_LICENSE_PATTERNS,
 )
 
 ROOT = Path(__file__).resolve().parents[5]
@@ -138,25 +139,53 @@ def candidate_wheel(factory: Any, root: Path = ROOT) -> BuiltWheel:
     return built
 
 
-def incumbent_wheel(factory: Any, root: Path = ROOT) -> BuiltWheel:
-    """The immutable predecessor's wheel from ``git archive`` objects, once per process."""
-    memo = _MEMO.get(("incumbent", INCUMBENT_COMMIT))
+def _archived_wheel(
+    factory: Any, root: Path, commit: str, prefix: str, paths: Sequence[str],
+) -> BuiltWheel:
+    key = (str(root.resolve()), commit)
+    memo = _MEMO.get(key)
     if memo is not None and memo.wheel.is_file():
         return memo
-    scratch = _scratch(factory, "incumbent", hashlib.sha256(INCUMBENT_COMMIT.encode()).hexdigest())
-    archive = scratch / "incumbent.tar"
-    _require(("git", "archive", "--format=tar", "--output=" + str(archive), INCUMBENT_COMMIT,
-              "pyproject.toml", "README.md", "LICENSE", "src/main/python/repomap_kg",
-              "src/main/resources"), root, "arch7f_probe")
-    source = scratch / "incumbent"
+    scratch = _scratch(factory, "archive", hashlib.sha256(str(key).encode()).hexdigest())
+    archive = scratch / "source.tar"
+    _require(("git", "archive", "--format=tar", "--output=" + str(archive), commit, *paths),
+             root, "arch7f_probe")
+    source = scratch / "source"
     source.mkdir()
     with tarfile.open(archive) as members:
+        if any(not (member.isfile() or member.isdir()) for member in members.getmembers()):
+            raise AssertionError("installed-candidate archived input is not a regular file")
         members.extractall(source, filter="data")
     names = sorted(path.relative_to(source).as_posix() for path in source.rglob("*") if path.is_file())
     digest, count = input_digest(source, names)
-    built = BuiltWheel(_build(source, scratch / "wheel", INCUMBENT_WHEEL_PREFIX), source, digest, count)
-    _MEMO[("incumbent", INCUMBENT_COMMIT)] = built
+    built = BuiltWheel(_build(source, scratch / "wheel", prefix), source, digest, count)
+    _MEMO[key] = built
     return built
+
+
+def incumbent_wheel(factory: Any, root: Path = ROOT) -> BuiltWheel:
+    """The immutable predecessor's wheel from Git objects, once per process."""
+    return _archived_wheel(factory, root, INCUMBENT_COMMIT, INCUMBENT_WHEEL_PREFIX, (
+        "pyproject.toml", "README.md", "LICENSE", "src/main/python/repomap_kg", "src/main/resources",
+    ))
+
+
+def released_cloe_wheel(factory: Any, root: Path = ROOT) -> BuiltWheel:
+    """Rebuild the exact v0.0.4 release inputs without downloading a wheel."""
+    paths = (*CANDIDATE_INPUT_FILES, *(path.rstrip("/") for path in CANDIDATE_INPUT_TREES))
+    return _archived_wheel(factory, root, RELEASED_CLOE_COMMIT, RELEASED_CLOE_WHEEL_PREFIX, paths)
+
+
+def installed_graph_parser_digest(wheel: BuiltWheel, purelib: Path) -> str:
+    """Distinguish equal-version wheels using an installed source member."""
+    member = "common_lore_index/cli/_parser_ops_graph.py"
+    with zipfile.ZipFile(wheel.wheel) as archive:
+        packaged = archive.read(member)
+    if packaged != (wheel.source / "src/main/python" / member).read_bytes():
+        raise AssertionError("installed-candidate wheel member differs from prepared source")
+    if packaged != (purelib / member).read_bytes():
+        raise AssertionError("installed-candidate installed member differs from wheel")
+    return hashlib.sha256(packaged).hexdigest()
 
 
 def _pyproject(root: Path) -> dict[str, Any]:
@@ -274,6 +303,6 @@ def license_bytes_match(inventory: WheelInventory, root: Path = ROOT) -> bool:
 __all__ = [
     "BuiltWheel", "DIST_INFO", "ROOT", "WheelInventory", "candidate_wheel", "expected_entry_points",
     "expected_inventory", "expected_requires", "incumbent_wheel", "input_digest", "input_names",
-    "inventory_sha256", "license_bytes_match", "license_members", "listed_inputs", "rows_sha256",
-    "wheel_inventory",
+    "installed_graph_parser_digest", "inventory_sha256", "license_bytes_match", "license_members",
+    "listed_inputs", "released_cloe_wheel", "rows_sha256", "wheel_inventory",
 ]

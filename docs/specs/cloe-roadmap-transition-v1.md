@@ -13,13 +13,14 @@ Samuel Leighton Lair <sam.lair@knowledge-forge.ai> as public commit identity.
 
 ## Latest qualified milestone
 
-Public main is released Common Lore Index v0.0.4 at `39cb2b3`. Public
-staging `c323998e` is the latest qualified milestone. All nine jobs and the
-same-attempt proof passed in [CI158 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44471257873).
-The [qualification record](../../tools/ci/cloe-ci158-qualification.md) binds
-the source, host evidence and consumed counters. Unit branches reached
-87.06%. Integration branches reached 80.15%, leaving 468 branches to the 82%
-target. Main promotion, release and production admission remain separate.
+Public main is released Common Lore Index v0.0.4 at `39cb2b3`. Public staging
+`d056f6fb` qualifies the split staging gate and optional Server report v3.
+All 14 jobs passed in [CI161 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44650267036).
+The [qualification record](../../tools/ci/cloe-ci161-qualification.md) binds
+the exact candidate, five installed evidence bundles and consumed counters.
+Unit branch coverage reached 87.05%. Integration branch coverage reached
+80.15%, leaving 470 branches to the 82% target. Main promotion, release and
+production admission remain separate.
 
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness
@@ -29,7 +30,7 @@ while its immediate database temporary-byte delta stayed at zero.
 · [Staged SQL exit](../../tools/ci/cloe-w7-staged-sql1-exit.md)
 
 CI159 advanced those checkpoints to public staging. Eight jobs passed and
-the integration job reached its 240-minute envelope. The next candidate
+the integration job reached its 240-minute envelope. The qualified successor
 combines the concurrent integration jobs from ADR0216 with the opt-in
 Server resource report from ADR0217. The two new samples describe the
 staged writer interval. See the [candidate exit](../../tools/ci/cloe-staging-split-w7-report1-exit.md).
