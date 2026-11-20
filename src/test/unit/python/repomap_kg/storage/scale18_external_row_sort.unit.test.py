@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 from pathlib import Path
 import stat
+import tempfile
 
 import pytest
 
@@ -333,3 +335,31 @@ def test_external_sort_rejects_invalid_sort_key_types() -> None:
                 key_types=(int,),
             )
         )
+
+@pytest.mark.parametrize(("count", "run_writes"), [(3, 3), (6, 7), (11, 15)])
+def test_final_merge_writes_only_the_runs_needed_for_fan_in(count, run_writes):
+    rows = [(i % 3, str(i % 2), "雪" + chr(92) if i % 2 else 'quote"') for i in reversed(range(count))]
+    events: list[tuple[int, int]] = [(0, 0)]
+    ordinary = list(external_sort_encoded_rows(rows, key_indexes=(0, 1), key_types=(int, str), field_count=3))
+    spilled = list(external_sort_encoded_rows(
+        rows, key_indexes=(0, 1), key_types=(int, str), field_count=3, run_byte_limit=1, merge_fan_in=4,
+        artifact_observer=lambda size, n: events.append((size, n)),
+    ))
+    assert spilled == ordinary
+    assert sum(max(after[1] - before[1], 0) for before, after in zip(events, events[1:])) == run_writes
+    assert events[-1] == (0, 0)
+
+
+def test_direct_final_merge_closes_remaining_runs_early(tmp_path, monkeypatch):
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    events: list[tuple[int, int]] = []
+    ordered = external_sort_encoded_rows(
+        ((2, "second"), (1, "first"), (3, "third")),
+        key_indexes=(0,), field_count=2, run_byte_limit=1, merge_fan_in=4,
+        artifact_observer=lambda size, count: events.append((size, count)),
+    )
+    assert isinstance(ordered, Generator)
+    assert next(ordered) == '[1,"first"]'
+    ordered.close()
+    assert events[-1] == (0, 0)
+    assert list(tmp_path.iterdir()) == []

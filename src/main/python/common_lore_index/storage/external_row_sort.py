@@ -161,16 +161,16 @@ def external_sort_encoded_rows(
                 key_types,
                 field_count,
                 cancellation_check,
+                merge_fan_in,
                 artifacts,
             )
-            for encoded in _merge_encoded_runs(
+            yield from _merge_encoded_runs(
                 runs,
                 key_indexes,
                 key_types,
                 field_count,
                 cancellation_check,
-            ):
-                yield encoded
+            )
     finally:
         _close_iterator(source)
         artifacts.clear()
@@ -228,8 +228,12 @@ def _finalize_run_levels(
     key_types: tuple[type, ...] | None,
     field_count: int,
     cancellation_check: Callable[[], None] | None,
+    merge_fan_in: int,
     artifacts: _ArtifactTracker,
 ) -> list[Path]:
+    remaining = [path for group in levels for path in group]
+    if len(remaining) <= merge_fan_in:
+        return remaining
     final: list[Path] = []
     for group in levels:
         if not group:
