@@ -8,6 +8,7 @@ from typing import cast
 
 import pytest
 
+from common_lore_index.artifacts._store_stream import VerifyingArtifactStream
 from common_lore_index.artifacts import (
     ArtifactIntegrityError,
     ArtifactReference,
@@ -373,3 +374,23 @@ def test_artifact_reference_semantics_contracts() -> None:
     assert ref != object()
     with pytest.raises(TypeError):
         _ = ref < object()
+
+def test_filesystem_verify_reads_bounded_chunks_to_eof(tmp_path, monkeypatch):
+    store = FileSystemArtifactStore(tmp_path / "verify")
+    reference = store.put(b"consistent fixture" * 20_000)
+    sizes: list[int] = []
+    original_read = VerifyingArtifactStream.read
+
+    def measure(stream: VerifyingArtifactStream, size: int = -1) -> bytes:
+        sizes.append(size)
+        return original_read(stream, size)
+
+    def fail_if_materialized(*_args, **_kwargs) -> bytes:
+        pytest.fail("verify attempted to materialize the artifact")
+
+    monkeypatch.setattr(VerifyingArtifactStream, "read", measure)
+    monkeypatch.setattr(store, "read", fail_if_materialized)
+    assert not store.verify(reference, max_bytes=reference.size_bytes - 1)
+    assert sizes == []
+    assert store.verify(reference, max_bytes=reference.size_bytes)
+    assert len(sizes) >= 4 and all(0 < size <= 65536 for size in sizes)

@@ -113,8 +113,8 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
         store = InMemoryArtifactStore()
         fams = _empty_families()
         fams["files"] = (
-            {"path": "a.py", "stage_id": "stage-unassigned"},
-            {"path": "b.py", "stage_id": "stage-unassigned"},
+            {"path": "a.py", "metadata_json": {"display": '雪 a "quoted"'}, "stage_id": "stage-unassigned"},
+            {"path": "b.py", "metadata_json": {"display": '雪 b 🚲 "quoted"'}, "stage_id": "stage-unassigned"},
         )
         bundle = _make_bundle(row_stage_contract="stage-unassigned-v1", families=fams)
         receipt, _b_ref, _r_ref = _make_receipt(bundle, store)
@@ -123,7 +123,9 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
 
         # Valid parse without stage_id (family_spools is None -> families empty, to_prepared_stage_rows raises)
         parser = StreamingBundleParser()
-        desc_no_stage = parser.parse_and_validate(io.BytesIO(raw), expect, receipt, stage_id=None)
+        desc_no_stage = StreamingBundleParser(max_bundle_bytes=len(raw)).parse_and_validate(
+            io.BytesIO(raw), expect, receipt, stage_id=None,
+        )
         self.assertEqual(desc_no_stage.families["files"], ())
         with self.assertRaisesRegex(ValueError, "stage rows were not prepared"):
             desc_no_stage.to_prepared_stage_rows()
@@ -133,6 +135,7 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
         self.assertEqual(len(desc_staged.families["files"]), 2)
         prepared = desc_staged.to_prepared_stage_rows()
         self.assertEqual(prepared.files, 2)
+        self.assertEqual(desc_staged.canonical_bytes(), raw)
         desc_staged.close()
 
         # Valid parse with legacy-absent-v1 + stage_id -> exercises legacy families property
@@ -176,10 +179,13 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
             parser.parse_and_validate(io.BytesIO(raw), expect, replace(receipt, cancellation="requested"))
 
         # Record bounds, family ordering, intra-family ordering, stage ambiguity, trailer & EOF errors
-        with self.assertRaisesRegex(ValueError, "publication bundle byte bounds exceeded"):
-            StreamingBundleParser(max_bundle_bytes=len(lines[0]) + 5).parse_and_validate(
-                io.BytesIO(raw), expect, receipt, stage_id="stg-err",
-            )
+        for cap in (len(lines[0]) - 2, len(lines[0]) + 5):
+            limited = io.BytesIO(raw)
+            with self.assertRaisesRegex(ValueError, "publication bundle byte bounds exceeded"):
+                StreamingBundleParser(max_bundle_bytes=cap).parse_and_validate(
+                    limited, expect, receipt, stage_id="stg-err",
+                )
+            self.assertEqual(limited.tell(), cap + 1)
         bad_fam = canonical_json({"family": "unknown_fam", "frame": "record", "record": {}})
         with self.assertRaisesRegex(ValueError, "publication bundle family is invalid"):
             parser.parse_and_validate(io.BytesIO(lines[0] + bad_fam + lines[-1]), expect, receipt)

@@ -13,7 +13,7 @@ from common_lore_index.artifacts._bundle_stream_encode import (
 )
 from common_lore_index.artifacts._bundle_stream_links import DiskFamilyLinkValidator
 from common_lore_index.artifacts._bundle_parse_resources import BundleParseResources
-from common_lore_index.artifacts._canonical import canonical_json, decode_canonical_json
+from common_lore_index.artifacts._canonical import decode_canonical_json
 from common_lore_index.artifacts.bundle import (
     MAX_BUNDLE_LINE_BYTES, MAX_BUNDLE_RECORDS, PUBLICATION_FAMILIES,
     FamilySummary, PublicationBundle, _integer, _string, _validate_metadata, _vector,
@@ -157,7 +157,9 @@ class StreamingBundleParser:
         if expectation.mutating_owner_count != 1:
             raise ValueError("exactly one mutating owner is required")
 
-        header_line = stream.readline(MAX_BUNDLE_LINE_BYTES + 1)
+        header_line = stream.readline(min(MAX_BUNDLE_LINE_BYTES + 1, max(0, self.max_bundle_bytes) + 1))
+        if len(header_line) > self.max_bundle_bytes:
+            raise ValueError("publication bundle byte bounds exceeded")
         if not header_line or not header_line.endswith(b"\n") or len(header_line) > MAX_BUNDLE_LINE_BYTES:
             raise ValueError("publication bundle framing is invalid")
 
@@ -179,7 +181,7 @@ class StreamingBundleParser:
         artifact_hasher = hashlib.sha256(header_line)
         bundle_hasher = hashlib.sha256(b"repomap-publication-bundle-v1\x00" + header_line)
         total_bytes, total_records = len(header_line), 0
-        current_family_idx, last_canonical_record_bytes = 0, None
+        current_family_idx, last_record_line = 0, None
         family_record_counts = {f: 0 for f in PUBLICATION_FAMILIES}
         family_byte_lengths = {f: 0 for f in PUBLICATION_FAMILIES}
         family_hashers = {f: hashlib.sha256() for f in PUBLICATION_FAMILIES}
@@ -198,14 +200,17 @@ class StreamingBundleParser:
             link_validator = DiskFamilyLinkValidator(spool_dir=self.spool_dir)
             resources.links = link_validator
             while True:
-                line = stream.readline(MAX_BUNDLE_LINE_BYTES + 1)
+                remaining = self.max_bundle_bytes - total_bytes
+                line = stream.readline(min(MAX_BUNDLE_LINE_BYTES + 1, remaining + 1))
                 if not line:
                     break
-                if len(line) > MAX_BUNDLE_LINE_BYTES or not line.endswith(b"\n"):
+                if len(line) > MAX_BUNDLE_LINE_BYTES:
                     raise ValueError("publication bundle line bounds exceeded")
                 total_bytes += len(line)
                 if total_bytes > self.max_bundle_bytes:
                     raise ValueError("publication bundle byte bounds exceeded")
+                if not line.endswith(b"\n"):
+                    raise ValueError("publication bundle line bounds exceeded")
 
                 frame = decode_canonical_json(line)
                 if frame.get("frame") == "trailer":
@@ -228,13 +233,14 @@ class StreamingBundleParser:
                 while family_idx > current_family_idx:
                     link_validator.finish_family(PUBLICATION_FAMILIES[current_family_idx])
                     current_family_idx += 1
-                    last_canonical_record_bytes = None
+                    last_record_line = None
 
-                # Intra-family ordering check
-                canonical_record_bytes = canonical_json(record)
-                if last_canonical_record_bytes is not None and canonical_record_bytes < last_canonical_record_bytes:
+                # Each validated canonical frame in one family has the same
+                # prefix and suffix around its complete record object, so
+                # comparing the frames preserves canonical record ordering.
+                if last_record_line is not None and line < last_record_line:
                     raise ValueError("publication bundle intra-family ordering is invalid")
-                last_canonical_record_bytes = canonical_record_bytes
+                last_record_line = line
 
                 # Stage contract verification
                 stage_val = record.get("stage_id")
