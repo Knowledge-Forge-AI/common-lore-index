@@ -19218,7 +19218,8 @@
         "src/test/support/python/repomap_test_support/installed_experience_witnesses.py",
         "src/test/support/python/repomap_test_support/installed_mcp_session.py",
         "src/test/support/python/repomap_test_support/installed_origin.py",
-        "src/test/support/python/repomap_test_support/installed_projection.py"
+        "src/test/support/python/repomap_test_support/installed_projection.py",
+        "src/test/support/python/repomap_test_support/installed_sdist.py"
       ],
       "rationale": "ADR0181 exact installed experience implementation owners; existing clean profiles, every inherited quality root and debt ceiling preserved; clean profile execution is enforced by the existing static gate; current execution evidence is recorded separately.",
       "root": "test_support"
@@ -45705,6 +45706,15 @@
       "maintained_executable": true,
       "path": "src/test/support/python/repomap_test_support/installed_projection.py",
       "rationale": "ADR0181 exact installed experience implementation owners; existing clean profiles, every inherited quality root and debt ceiling preserved; clean profile execution is enforced by the existing static gate; current execution evidence is recorded separately.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/installed_sdist.py",
+      "rationale": "W8 source distribution inspection in the existing offline installed proof.",
       "root": "test_support",
       "status": "active_test_support"
     },

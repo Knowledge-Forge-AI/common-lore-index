@@ -39,6 +39,7 @@ from installed_experience_pins import (
     INCUMBENT_COMMIT, INCUMBENT_WHEEL_PREFIX, LEGACY_FACADE, RELEASED_CLOE_COMMIT, RELEASED_CLOE_INPUT_PATHS,
     RELEASED_CLOE_WHEEL_PREFIX, SETUPTOOLS_DEFAULT_LICENSE_PATTERNS,
 )
+from repomap_test_support.installed_sdist import SDIST_FILENAME, source_hashes, verify_sdist
 
 ROOT = Path(__file__).resolve().parents[5]
 DIST_INFO = f"common_lore_index-{CANDIDATE_VERSION}.dist-info"
@@ -109,7 +110,7 @@ def _copy_census(root: Path, names: Sequence[str], target: Path) -> None:
 
 def _build(source: Path, output: Path, prefix: str) -> Path:
     output.mkdir()
-    _require((sys.executable, "-m", "pip", "wheel", "--no-index", "--no-deps",
+    _require((sys.executable, "-m", "pip", "wheel", "--no-index", "--no-deps", "--no-cache-dir",
               "--no-build-isolation", "--wheel-dir", str(output), str(source)),
              output.parent, "arch7f_pip")
     wheels = sorted(output.glob("*.whl"))
@@ -137,6 +138,25 @@ def candidate_wheel(factory: Any, root: Path = ROOT) -> BuiltWheel:
     built = BuiltWheel(_build(source, scratch / "wheel", CANDIDATE_WHEEL_PREFIX), source, digest, count)
     _MEMO[("candidate", digest)] = built
     return built
+
+
+def candidate_sdist_wheel(reference: BuiltWheel, scratch: Path, root: Path = ROOT) -> tuple[Path, Path]:
+    """Build and inspect an sdist, then build the second wheel from the archive alone."""
+    names = listed_inputs(root)
+    if input_digest(reference.source, names) != (reference.input_sha256, reference.input_count):
+        raise AssertionError("prepared direct wheel inputs changed before source distribution build")
+    source = scratch / "source"
+    _copy_census(reference.source, names, source)
+    output = scratch / "sdist"
+    output.mkdir()
+    _require((sys.executable, "-c",
+              "import sys; from setuptools.build_meta import build_sdist; build_sdist(sys.argv[1])",
+              str(output)), source, "arch7f_pip")
+    archive = output / SDIST_FILENAME
+    if set(output.iterdir()) != {archive} or not archive.is_file() or archive.is_symlink():
+        raise AssertionError("installed-candidate build did not yield exactly one expected source archive")
+    verify_sdist(archive, source_hashes(reference.source, names))
+    return archive, _build(archive, scratch / "rebuilt", CANDIDATE_WHEEL_PREFIX)
 
 
 def _archived_wheel(
@@ -258,11 +278,12 @@ def _record_valid(archive: zipfile.ZipFile, names: set[str]) -> bool:
     if record not in names:
         return False
     rows = list(csv.reader(io.StringIO(archive.read(record).decode("utf-8"))))
-    recorded = {row[0] for row in rows if row}
-    if recorded != names:
+    if len(rows) != len(names) or any(len(row) != 3 for row in rows) or {row[0] for row in rows} != names:
         return False
     for row in rows:
-        if not row or row[0] == record:
+        if row[0] == record:
+            if row[1:] != ["", ""]:
+                return False
             continue
         algorithm, _sep, value = row[1].partition("=")
         body = archive.read(row[0])
@@ -308,7 +329,7 @@ def license_bytes_match(inventory: WheelInventory, root: Path = ROOT) -> bool:
 
 
 __all__ = [
-    "BuiltWheel", "DIST_INFO", "ROOT", "WheelInventory", "candidate_wheel", "expected_entry_points",
+    "BuiltWheel", "DIST_INFO", "ROOT", "WheelInventory", "candidate_sdist_wheel", "candidate_wheel", "expected_entry_points",
     "expected_inventory", "expected_requires", "incumbent_wheel", "input_digest", "input_names",
     "installed_graph_parser_digest", "inventory_sha256", "license_bytes_match", "license_members",
     "listed_inputs", "released_cloe_wheel", "rows_sha256", "wheel_inventory",

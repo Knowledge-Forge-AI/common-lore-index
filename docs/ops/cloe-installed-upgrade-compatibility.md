@@ -164,3 +164,19 @@ The two released-source upgrade cases are locally verified. Their hosted
 acceptance, attended macOS installed-wheel proof, native services, Windows
 Local mutation, the release image and package-manager publication remain
 separate.
+
+### Offline source distribution check
+
+The release-wheel integration owner builds the declared-version source
+distribution with the pinned setuptools backend. It checks that the archive
+contains the same package inputs, including both migration catalogs and the
+license and notice files. It checks the archive's metadata against the
+declared distribution name and version. [Source distribution format](https://packaging.python.org/en/latest/specifications/source-distribution-format/)
+
+The wheel rebuilt from that archive is compared with one built directly from
+the same inputs. Each wheel has its own verified `RECORD`. The check compares
+the member contents with ZIP timestamps and record ordering outside the
+comparison. The archived-source wheel then runs in a fresh Local environment
+with the SDK's verified dependency projection. This exercises the published
+format through an offline build and install. Index resolution and release
+delivery have separate evidence.

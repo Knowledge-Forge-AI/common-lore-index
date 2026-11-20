@@ -52,7 +52,7 @@ def _record_row(name: str, body: bytes) -> str:
     return f"{name},sha256={digest},{len(body)}"
 
 
-def _wheel(path: Path, members: dict[str, bytes], *, break_hash: bool = False) -> Path:
+def _wheel(path: Path, members: dict[str, bytes], *, break_hash: bool = False, extra_row: str = "") -> Path:
     rows = [_record_row(name, body) for name, body in members.items()]
     if break_hash:
         rows[0] = rows[0].replace("sha256=", "sha256=A")
@@ -60,7 +60,7 @@ def _wheel(path: Path, members: dict[str, bytes], *, break_hash: bool = False) -
     with zipfile.ZipFile(path, "w") as archive:
         for name, body in members.items():
             archive.writestr(name, body)
-        archive.writestr(f"{DIST_INFO}/RECORD", "\n".join(rows) + "\n")
+        archive.writestr(f"{DIST_INFO}/RECORD", "\n".join(rows) + "\n" + extra_row)
     return path
 
 
@@ -130,6 +130,14 @@ def test_record_hash_drift_and_forbidden_members_are_visible(tmp_path: Path) -> 
     members = dict(_members(root), **{"leak.pth": b"import x", "tools/run_tests.py": b"x"})
     leaky = wheel_inventory(_wheel(tmp_path / "leaky.whl", members))
     assert leaky.pth_members == 1 and leaky.forbidden_members == 1
+
+
+def test_record_refuses_duplicate_member_rows(tmp_path: Path) -> None:
+    root = _tree(tmp_path / "root")
+    members = _members(root)
+    name = "common_lore_index/__init__.py"
+    duplicate = _record_row(name, members[name]) + "\n"
+    assert not wheel_inventory(_wheel(tmp_path / "duplicate.whl", members, extra_row=duplicate)).record_valid
 
 
 def test_inventory_digest_ignores_only_optional_top_level() -> None:
@@ -215,3 +223,50 @@ def test_installed_graph_parser_digest_checks_both_witnesses(tmp_path: Path, dri
     else:
         with pytest.raises(AssertionError, match="differs from"):
             installed_graph_parser_digest(built, installed)
+
+@pytest.mark.parametrize("fault", (
+    "none", "omitted", "drift", "unexpected", "duplicate", "traversal", "link", "metadata",
+))
+def test_source_archive_rejects_changed_or_unowned_members(tmp_path: Path, fault: str) -> None:
+    import io
+    import tarfile
+
+    from installed_experience_pins import CANDIDATE_VERSION
+    from repomap_test_support.installed_sdist import SDIST_FILENAME, verify_sdist
+
+    archive = tmp_path / SDIST_FILENAME
+    stem = SDIST_FILENAME.removesuffix(".tar.gz")
+    bodies = {"pyproject.toml": b"[project]\n", "LICENSE": b"license", "NOTICE": b"notice"}
+    expected = {name: hashlib.sha256(data).hexdigest() for name, data in bodies.items()}
+    version = "0.0.0" if fault == "metadata" else CANDIDATE_VERSION
+    metadata = (f"Name: common-lore-index\nVersion: {version}\n"
+                "License-File: LICENSE\nLicense-File: NOTICE\n").encode()
+    with tarfile.open(archive, "w:gz") as stream:
+        def add(name: str, data: bytes) -> None:
+            item = tarfile.TarInfo(f"{stem}/{name}")
+            item.size = len(data)
+            stream.addfile(item, io.BytesIO(data))
+
+        root = tarfile.TarInfo(stem)
+        root.type = tarfile.DIRTYPE
+        stream.addfile(root)
+        for name, data in bodies.items():
+            if fault == "omitted" and name == "NOTICE":
+                continue
+            add(name, b"changed" if fault == "drift" and name == "LICENSE" else data)
+        add("PKG-INFO", metadata)
+        if fault == "unexpected":
+            add("private.py", b"x")
+        if fault == "duplicate":
+            add("LICENSE", bodies["LICENSE"])
+        if fault == "traversal":
+            add("../pyproject.toml", b"x")
+        if fault == "link":
+            item = tarfile.TarInfo(f"{stem}/link")
+            item.type, item.linkname = tarfile.SYMTYPE, "LICENSE"
+            stream.addfile(item)
+    if fault == "none":
+        verify_sdist(archive, expected)
+    else:
+        with pytest.raises(AssertionError, match="source archive"):
+            verify_sdist(archive, expected)
