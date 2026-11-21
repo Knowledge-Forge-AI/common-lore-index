@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 import os
 from pathlib import Path, PurePosixPath
@@ -22,7 +22,9 @@ from common_lore_index.retrieval.projection_policy import (
     ExclusionReason, ResolvedBindingPolicy, SUPPORTED_TEXT_FORMATS,
     _is_email_role_or_path, _is_feed_role_or_path, evaluate_artifact_pre_open,
 )
-from common_lore_index.retrieval.projection_text import normalize_and_bound_text
+from common_lore_index.retrieval.projection_text import (
+    _overlaps_any_private_root, _read_bounded_regular_file, normalize_and_bound_text,
+)
 from common_lore_index.retrieval.query_contracts import OmissionRecord
 
 _SKIPPED_VCS_DIRS = frozenset({".git", ".hg", ".svn", "__pycache__"})
@@ -111,56 +113,63 @@ class LexicalCapturePlan:
     def omitted_record_count(self) -> int: return len(self.omissions)
 
 
-def _overlaps_any_private_root(target: Path, private_roots: Sequence[Path]) -> bool:
-    if not private_roots: return False
-    try: resolved = target.resolve(strict=False)
-    except OSError: return True
-    for priv in private_roots:
-        try:
-            priv_res = priv.resolve(strict=False)
-            if resolved == priv_res or priv_res in resolved.parents: return True
-        except OSError: return True
-    return False
-
-
 def _matches_any_prefix(rel_path: str, prefixes: Sequence[str]) -> bool:
     return any((p := raw.strip("/")) and (rel_path == p or rel_path.startswith(p + "/")) for raw in prefixes)
 
 
+def _ordered_children(directory: Path) -> Iterator[tuple[os.DirEntry[str], bool, bool]]:
+    entries: list[tuple[os.DirEntry[str], bool, bool]] = []
+    try:
+        with os.scandir(directory) as children:
+            for entry in children:
+                try:
+                    directory_entry = entry.is_dir()
+                    is_link = directory_entry and entry.is_symlink()
+                except OSError:
+                    directory_entry = is_link = False
+                entries.append((entry, directory_entry, is_link))
+    except OSError:
+        return iter(())
+    # A real directory contributes descendant paths beginning with name + "/".
+    entries.sort(key=lambda child: child[0].name + ("/" if child[1] and not child[2] else ""))
+    return iter(entries)
+
+
 def _discover_binding_files(
     binding: OpsGraphSourceBindingConfig, root_dir: Path, private_roots: Sequence[Path],
-) -> list[LexicalFileCandidate]:
-    if not root_dir.exists() or root_dir.is_symlink() or not root_dir.is_dir(): return []
-    discovered: list[LexicalFileCandidate] = []
-    for cur_root, dirs, files in os.walk(root_dir, topdown=True, followlinks=False):
-        cur_path, kept_dirs = Path(cur_root), []
-        for d in sorted(dirs):
-            if d in _SKIPPED_VCS_DIRS: continue
-            d_path = cur_path / d
-            rel_d = d_path.relative_to(root_dir).as_posix()
-            if binding.exclude_paths and _matches_any_prefix(rel_d, binding.exclude_paths): continue
-            if d_path.is_symlink():
-                discovered.append(LexicalFileCandidate(binding.binding_id, rel_d, d_path, False, True, False, 0))
-            else:
-                kept_dirs.append(d)
-        dirs[:] = kept_dirs
-        for fname in sorted(files):
-            fpath = cur_path / fname
-            rel_f = fpath.relative_to(root_dir).as_posix()
-            if (binding.include_paths and not _matches_any_prefix(rel_f, binding.include_paths)) or (
-                binding.exclude_paths and _matches_any_prefix(rel_f, binding.exclude_paths)
-            ):
+) -> Iterator[LexicalFileCandidate]:
+    if root_dir.is_symlink() or not root_dir.is_dir():
+        return
+    pending = [_ordered_children(root_dir)]
+    while pending:
+        entry = next(pending[-1], None)
+        if entry is None:
+            pending.pop()
+            continue
+        leaf, is_directory, is_link = entry
+        path = Path(leaf.path)
+        relative = path.relative_to(root_dir).as_posix()
+        if _matches_any_prefix(relative, binding.exclude_paths):
+            continue
+        if is_directory:
+            if leaf.name in _SKIPPED_VCS_DIRS:
                 continue
-            try: lstat_res = os.lstat(fpath)
-            except OSError: continue
-            is_sym = stat.S_ISLNK(lstat_res.st_mode)
-            is_reg = stat.S_ISREG(lstat_res.st_mode) and not is_sym
-            discovered.append(LexicalFileCandidate(
-                binding.binding_id, rel_f, fpath, is_reg, is_sym,
-                _overlaps_any_private_root(fpath, private_roots), int(lstat_res.st_size) if is_reg else 0,
-            ))
-    discovered.sort(key=lambda item: item.source_relative_path)
-    return discovered
+            if is_link:
+                yield LexicalFileCandidate(binding.binding_id, relative, path, False, True, False, 0)
+            elif not path.is_symlink():
+                pending.append(_ordered_children(path))
+            continue
+        if binding.include_paths and not _matches_any_prefix(relative, binding.include_paths):
+            continue
+        try:
+            metadata = leaf.stat(follow_symlinks=False)
+        except OSError:
+            continue
+        is_regular = stat.S_ISREG(metadata.st_mode)
+        yield LexicalFileCandidate(
+            binding.binding_id, relative, path, is_regular, stat.S_ISLNK(metadata.st_mode),
+            _overlaps_any_private_root(path, private_roots), metadata.st_size if is_regular else 0,
+        )
 
 
 def _evaluate_candidate_pre_open(
@@ -180,26 +189,6 @@ def _evaluate_candidate_pre_open(
     if cur_files >= max_files or (cur_agg_bytes + cand.stat_size_bytes) > max_agg_bytes:
         return ExclusionReason.AGGREGATE_BUDGET_EXCEEDED
     return None
-
-
-def _read_bounded_regular_file(
-    path: Path, *, max_input_bytes: int, private_roots: Sequence[Path],
-) -> tuple[bytes | None, ExclusionReason | None]:
-    if _overlaps_any_private_root(path, private_roots): return None, ExclusionReason.ARTIFACT_PRIVACY_FORBIDDEN
-    try: fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
-    except OSError: return None, ExclusionReason.UNSUPPORTED_SOURCE_FORMAT
-    try:
-        st = os.fstat(fd)
-        if not stat.S_ISREG(st.st_mode): return None, ExclusionReason.UNSUPPORTED_SOURCE_FORMAT
-        if st.st_size > max_input_bytes: return None, ExclusionReason.ARTIFACT_OVERSIZED
-        chunks, total = [], 0
-        while buf := os.read(fd, 65536):
-            total += len(buf)
-            if total > max_input_bytes: return None, ExclusionReason.ARTIFACT_OVERSIZED
-            chunks.append(buf)
-        return b"".join(chunks), None
-    except OSError: return None, ExclusionReason.ARTIFACT_CORRUPT
-    finally: os.close(fd)
 
 
 def _build_captured_chunks(
@@ -331,7 +320,7 @@ def capture_lexical_generation_plan(
         raw_by_id = {b.binding_id: b for b in graph.effective_source_bindings}
         resolved_by_id = dict(body_policy.bindings)
         omissions, documents = [], []
-        all_candidates: list[tuple[OpsGraphSourceBindingConfig, LexicalFileCandidate]] = []
+        roots: list[tuple[OpsGraphSourceBindingConfig, Path]] = []
         for b_id in sorted(resolved_by_id):
             resolved_b, raw_b = resolved_by_id[b_id], raw_by_id[b_id]
             if b_id in lexical_policy.excluded_binding_reasons:
@@ -345,9 +334,12 @@ def capture_lexical_generation_plan(
             if not root_str:
                 omissions.append(OmissionRecord(b_id, None, ExclusionReason.ARTIFACT_MISSING.value, f"binding {b_id} has no local filesystem root_path_expanded").validate())
                 continue
-            all_candidates.extend((raw_b, cand) for cand in _discover_binding_files(raw_b, Path(root_str), private_roots))
+            roots.append((raw_b, Path(root_str)))
+        candidates = (
+            (binding, leaf) for binding, root in roots for leaf in _discover_binding_files(binding, root, private_roots)
+        )
         aggregate_input_bytes, aggregate_projected_bytes, projected_files_count = 0, 0, 0
-        for raw_b, cand in all_candidates:
+        for raw_b, cand in candidates:
             b_id, resolved_b, (rev, snap_id) = raw_b.binding_id, resolved_by_id[raw_b.binding_id], vector_by_binding[raw_b.binding_id]
             pre_reason = _evaluate_candidate_pre_open(
                 cand=cand, resolved_b=resolved_b, max_input_bytes=body_policy.max_input_artifact_bytes,

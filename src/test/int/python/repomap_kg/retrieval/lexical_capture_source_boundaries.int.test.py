@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+
+import pytest
 
 from common_lore_index.ops.config_local import (
     load_graph_registry_config_home,
@@ -288,7 +291,7 @@ def test_direct_filesystem_capture_omits_binding_absent_from_accepted_vector(
 
 
 def test_direct_filesystem_capture_refuses_aggregate_input_budget_before_open(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     with temporary_postgres() as postgres:
         working_copy = materialize_mixed_v1_working_copy(tmp_path / "fixture-working-copy")
@@ -312,6 +315,9 @@ def test_direct_filesystem_capture_refuses_aggregate_input_budget_before_open(
         source_root.mkdir()
         (source_root / "a.py").write_bytes(b"12345678")
         (source_root / "b.py").write_bytes(b"abcdefgh")
+        late = source_root / "z-unneeded"
+        late.mkdir()
+        (late / "z.py").write_text("public late row", encoding="utf-8")
         policy = build_lexical_generation_policy(
             graph,
             selected_binding_ids=(core_id,),
@@ -319,19 +325,30 @@ def test_direct_filesystem_capture_refuses_aggregate_input_budget_before_open(
             max_aggregate_input_bytes=10,
             max_projected_file_bytes=128,
         )
-        try:
-            capture_lexical_generation_plan(
-                graph=graph,
-                lexical_policy=policy,
-                fence=accepted.to_publication_fence(),
-                repository_id=accepted.repository_id,
-                extraction_receipt_id=accepted.extraction_receipt_id,
-                graph_candidate_id=accepted.graph_candidate_id,
-                binding_roots_override={core_id: source_root},
-                manifest=None,
-                store=None,
-            )
-        except ValueError as error:
-            assert ExclusionReason.AGGREGATE_BUDGET_EXCEEDED.value in str(error)
-        else:
-            raise AssertionError("direct capture unexpectedly passed aggregate budget")
+        real_scandir = os.scandir
+        scanned: list[Path] = []
+
+        def observe(path):
+            if isinstance(path, (str, Path)) and Path(path).is_relative_to(source_root):
+                scanned.append(Path(path))
+            return real_scandir(path)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(os, "scandir", observe)
+            try:
+                capture_lexical_generation_plan(
+                    graph=graph,
+                    lexical_policy=policy,
+                    fence=accepted.to_publication_fence(),
+                    repository_id=accepted.repository_id,
+                    extraction_receipt_id=accepted.extraction_receipt_id,
+                    graph_candidate_id=accepted.graph_candidate_id,
+                    binding_roots_override={core_id: source_root},
+                    manifest=None,
+                    store=None,
+                )
+            except ValueError as error:
+                assert ExclusionReason.AGGREGATE_BUDGET_EXCEEDED.value in str(error)
+            else:
+                raise AssertionError("direct capture unexpectedly passed aggregate budget")
+        assert scanned == [source_root]

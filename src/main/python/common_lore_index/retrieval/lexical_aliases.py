@@ -11,14 +11,14 @@ MAX_ALIAS_TOKEN_LEN = 64
 _RAW_CANDIDATE_RE = re.compile(r"[A-Za-z0-9_./:-]+")
 _DELIMITER_SPLIT_RE = re.compile(r"[/_.:-]+")
 _CAMEL_BOUNDARY_1_RE = re.compile(r"([a-z0-9])([A-Z])")
-_CAMEL_BOUNDARY_2_RE = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_ACRONYM_BOUNDARY_RE = re.compile(r"(?<=[A-Z])(?=[A-Z][a-z])")
 _CLEAN_ALNUM_RE = re.compile(r"^[a-z0-9]{2,64}$")
 
 
 def _split_camel_case(segment: str) -> list[str]:
     if not segment:
         return []
-    step1 = _CAMEL_BOUNDARY_2_RE.sub(r"\1 \2", segment)
+    step1 = _ACRONYM_BOUNDARY_RE.sub(" ", segment)
     step2 = _CAMEL_BOUNDARY_1_RE.sub(r"\1 \2", step1)
     base = [part.lower() for part in step2.split(" ") if part]
     expanded: list[str] = []
@@ -38,6 +38,7 @@ def extract_alias_tokens(
     """Extract deduplicated lowercase alphanumeric alias tokens under identifier-path-split-v1."""
     seen: set[str] = set()
     ordered: list[str] = []
+    seen_candidates: set[str] = set()
 
     def _add(token: str) -> None:
         lower = token.lower()
@@ -52,6 +53,9 @@ def extract_alias_tokens(
     for text_input in (source_relative_path, chunk_text):
         for match in _RAW_CANDIDATE_RE.finditer(text_input):
             raw = match.group(0)
+            if raw in seen_candidates:
+                continue
+            seen_candidates.add(raw)
             parts = [p for p in _DELIMITER_SPLIT_RE.split(raw) if p]
             for part in parts:
                 _add(part)

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
+import os
+from pathlib import Path
+import stat
 
 from common_lore_index.retrieval.projection_chunks import frame_digest
 from common_lore_index.retrieval.projection_policy import ExclusionReason
@@ -97,3 +101,43 @@ def normalize_and_bound_text(
         ),
         None,
     )
+
+
+def _overlaps_any_private_root(target: Path, private_roots: Sequence[Path]) -> bool:
+    if not private_roots:
+        return False
+    try:
+        resolved = target.resolve(strict=False)
+        return any(resolved.is_relative_to(root.resolve(strict=False)) for root in private_roots)
+    except OSError:
+        return True
+
+
+def _read_bounded_regular_file(
+    path: Path, *, max_input_bytes: int, private_roots: Sequence[Path],
+) -> tuple[bytes | None, ExclusionReason | None]:
+    if _overlaps_any_private_root(path, private_roots):
+        return None, ExclusionReason.ARTIFACT_PRIVACY_FORBIDDEN
+    try:
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    except OSError:
+        return None, ExclusionReason.UNSUPPORTED_SOURCE_FORMAT
+    try:
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None, ExclusionReason.UNSUPPORTED_SOURCE_FORMAT
+        if metadata.st_size > max_input_bytes:
+            return None, ExclusionReason.ARTIFACT_OVERSIZED
+        chunks: list[bytes] = []
+        remaining = max_input_bytes
+        # A file can grow after fstat. Consume at most one byte to detect it.
+        while chunk := os.read(fd, min(65536, remaining + 1)):
+            remaining -= len(chunk)
+            if remaining < 0:
+                return None, ExclusionReason.ARTIFACT_OVERSIZED
+            chunks.append(chunk)
+        return b"".join(chunks), None
+    except OSError:
+        return None, ExclusionReason.ARTIFACT_CORRUPT
+    finally:
+        os.close(fd)

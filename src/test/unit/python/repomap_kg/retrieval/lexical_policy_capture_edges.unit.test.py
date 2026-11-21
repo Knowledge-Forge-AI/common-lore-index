@@ -228,8 +228,8 @@ def test_lexical_capture_walk_and_candidate_preopen_guards(tmp_path: Path) -> No
     resolved = _resolved(core)
     assert _overlaps_any_private_root(root, ()) is False
     assert _overlaps_any_private_root(private_root / "a.py", (private_root,)) is True
-    assert _discover_binding_files(core, tmp_path / "missing", ()) == []
-    assert _discover_binding_files(core, root / "inc_link", ()) == []
+    assert list(_discover_binding_files(core, tmp_path / "missing", ())) == []
+    assert list(_discover_binding_files(core, root / "inc_link", ())) == []
 
     private_candidate = LexicalFileCandidate(core.binding_id, "a.py", private_root / "a.py", True, False, True, 10)
     oversized_candidate = LexicalFileCandidate(core.binding_id, "a.py", root / "a.py", True, False, False, 200)
@@ -296,3 +296,53 @@ def test_lexical_capture_fence_preserves_empty_document_and_refuses_private_grap
             extraction_receipt_id="receipt1:" + "4" * 64,
             graph_candidate_id="cand1:" + "5" * 64,
         )
+
+
+def test_lexical_walk_opens_later_directories_only_when_reached(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "ordered-walk"
+    root.mkdir()
+    paths = ("aa.py", "later-branch/child.py", "later.branch.py", "later/inside.py", "later~.py")
+    for relative in paths:
+        leaf = root / relative
+        leaf.parent.mkdir(parents=True, exist_ok=True)
+        leaf.write_text("public fixture", encoding="utf-8")
+    core = _make_binding("core", root)
+    scanned: list[Path] = []
+    original = os.scandir
+
+    def record(path):
+        scanned.append(Path(path))
+        return original(path)
+
+    monkeypatch.setattr(os, "scandir", record)
+    rows = iter(_discover_binding_files(core, root, ()))
+    assert next(rows).source_relative_path == "aa.py"
+    assert scanned == [root]
+    assert tuple(row.source_relative_path for row in rows) == paths[1:]
+
+
+def test_lexical_read_uses_a_single_detection_byte_if_the_file_grows_after_stat(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    source = tmp_path / "public.py"
+    source.write_bytes(b"public" * 256)
+    cap = 27
+    sizes: list[int] = []
+    read = os.read
+    metadata = source.stat()
+
+    def record(fd: int, size: int) -> bytes:
+        sizes.append(size)
+        return read(fd, size)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(os, "fstat", lambda _: SimpleNamespace(st_mode=metadata.st_mode, st_size=cap))
+        patch.setattr(os, "read", record)
+        assert _read_bounded_regular_file(source, max_input_bytes=cap, private_roots=()) == (
+            None, ExclusionReason.ARTIFACT_OVERSIZED,
+        )
+    assert sizes == [cap + 1]
