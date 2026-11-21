@@ -56,6 +56,10 @@ and reuses observation JSON rendering only where the query needs it.
 Scoped tests compare source, feed and observation results against the
 maintained PostgreSQL owners across paging and retained generations.
 
+Local backup and restore now check directory shape with bounded memory and
+refuse malformed manifest file types promptly. The containerized CLI proof
+also verifies exact restoration after refusals and historical v1 recovery.
+
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness
 queries. The disposable spill fixture recorded 603 temporary blocks written

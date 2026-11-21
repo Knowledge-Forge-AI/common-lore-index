@@ -23,7 +23,7 @@ from typing import Any
 
 import pytest
 
-from common_lore_index.storage.sqlite_local import backup, connection, migrations
+from common_lore_index.storage.sqlite_local import backup, connection, migrations, restore
 from common_lore_index.storage.sqlite_local.backup import (
     check_backup_output,
     inspect_sealed_database,
@@ -329,6 +329,34 @@ def test_output_must_be_absent_or_an_empty_real_directory(tmp_path: Path) -> Non
         assert str(caught.value) == message, name
     check_backup_output(tmp_path / "empty")
     check_backup_output(tmp_path / "absent")
+
+
+def test_backup_directory_checks_do_not_materialize_entries(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = _database(tmp_path, generations=1)
+    output = tmp_path / "output"
+    output.mkdir()
+    original = os.listdir
+
+    def listdir(path: Any = ".") -> list[str]:
+        assert path != output, "an owned backup check must stream directory entries"
+        return original(path)
+
+    monkeypatch.setattr(os, "listdir", listdir)
+    check_backup_output(output)
+    manifest = _backup(source, output)
+    assert restore.verify_backup(output, BINDING) == manifest
+    with pytest.raises(LocalStoreError, match="output directory is not empty"):
+        check_backup_output(output)
+    extra = output / "unrelated"
+    extra.write_bytes(b"preserve me")
+    with pytest.raises(LocalStoreError, match="unexpected-entry"):
+        restore.verify_backup(output, BINDING)
+    (output / "manifest.json").unlink()
+    with pytest.raises(LocalStoreError, match="no completed manifest"):
+        restore.verify_backup(output, BINDING)
+    assert extra.read_bytes() == b"preserve me"
 
 
 def test_a_race_winner_at_the_final_database_name_is_never_replaced(

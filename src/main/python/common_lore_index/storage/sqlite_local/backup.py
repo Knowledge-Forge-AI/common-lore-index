@@ -181,8 +181,9 @@ def check_backup_output(output: Path) -> None:
         return
     if not stat.S_ISDIR(details.st_mode):
         raise LocalStoreError(BACKUP_OUTPUT_INVALID, "output is not a directory")
-    if os.listdir(output):
-        raise LocalStoreError(BACKUP_TARGET_EXISTS, "output directory is not empty")
+    with os.scandir(output) as entries:
+        if next(entries, None) is not None:
+            raise LocalStoreError(BACKUP_TARGET_EXISTS, "output directory is not empty")
 
 
 def _snapshot(
@@ -269,8 +270,10 @@ def write_backup(
         _fault_point("backup:database-linked")
         temporary.unlink()
         fsync_directory(output)
-        if sorted(os.listdir(output)) != [DATABASE_FILE]:
-            raise LocalStoreError(BACKUP_OUTPUT_INVALID, "output directory changed during backup")
+        with os.scandir(output) as entries:
+            first = next(entries, None)
+            if first is None or first.name != DATABASE_FILE or next(entries, None) is not None:
+                raise LocalStoreError(BACKUP_OUTPUT_INVALID, "output directory changed during backup")
         manifest = BackupManifest(created_at, binding, publication, size, digest, version)
         _write_new(manifest_temporary, manifest.encode())
         _fault_point("backup:before-manifest-link")

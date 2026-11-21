@@ -89,7 +89,7 @@ def _invalid(reason: str) -> LocalStoreError:
 
 def _read_manifest(path: Path) -> bytes:
     try:
-        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except OSError:
         raise _invalid("manifest-unreadable") from None
     try:
@@ -103,15 +103,25 @@ def _read_manifest(path: Path) -> bytes:
 
 def verify_backup(backup: Path, binding: LocalGraphBinding) -> BackupManifest:
     """Fully validate one backup directory for ``binding``; touch nothing else."""
+    manifest_found = database_found = unexpected = False
     try:
         if not stat.S_ISDIR(os.lstat(backup).st_mode):
             raise _invalid("not-a-directory")
-        names = set(os.listdir(backup))
+        with os.scandir(backup) as entries:
+            for entry in entries:
+                if entry.name == MANIFEST_FILE:
+                    manifest_found = True
+                elif entry.name == DATABASE_FILE:
+                    database_found = True
+                else:
+                    unexpected = True
+                if manifest_found and unexpected:
+                    break
     except OSError:
         raise _invalid("unreadable") from None
-    if MANIFEST_FILE not in names:
+    if not manifest_found:
         raise LocalStoreError(BACKUP_INCOMPLETE, "no completed manifest")
-    if names != {DATABASE_FILE, MANIFEST_FILE}:
+    if not database_found or unexpected:
         raise _invalid("unexpected-entry")
     manifest = parse_manifest(_read_manifest(backup / MANIFEST_FILE))
     if manifest.binding != binding:
