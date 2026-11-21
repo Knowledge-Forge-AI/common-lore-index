@@ -277,19 +277,40 @@ def test_installed_server_builds_ranked_index_from_retained_sources(
         assert initialized is not None and initialized["publication_state"] == "committed"
         material.rename(tmp_path / "retained-source-only")
         selected = binding_id_for_alias("companion")
-        common = ("--repo-map-home", str(home), "--graph", MIXED_V1_GRAPH_ID, "--authorize-body", "--json")
+        scope = ("--repo-map-home", str(home), "--graph", MIXED_V1_GRAPH_ID, "--json")
+        common = (*scope, "--authorize-body")
         cli = (str(installed.wrapper("cloe")), "ops")
         build = run_child(installed, (*cli, "lexical-build", *common, "--binding", selected), extra=READBACK)
         assert build.returncode == 0
         publication = json_object(build.stdout)
         assert publication is not None and publication["result"] == "published"
-        readback = run_child(
-            installed,
-            (*cli, "lexical-query", *common, "--binding-id", selected,
-             "--query", "install marker vector", "--query-style", "ranked_terms", "--path-prefix", relative),
-            extra=READBACK,
-        )
-        answer = json_object(readback.stdout)
-        assert answer is not None and readback.returncode == 0, (answer or {}).get("reason")
-        assert any(hit["locator"]["source_relative_path"] == relative for hit in answer["envelope"]["hits"])
+        request = (*cli, "lexical-query", *common, "--binding-id", selected, "--path-prefix", relative)
+        fallback = ("--fallback-from-mode", "graph_investigation", "--fallback-reason", "installed_literal")
+        for style, query, options in (
+            ("ranked_terms", "install marker vector", ()),
+            ("normalized_phrase", "InstallMarkerVector", ()),
+            ("literal_captured_text", "InstallMarkerVector", fallback),
+        ):
+            readback = run_child(installed, (*request, "--query", query, "--query-style", style, *options),
+                                 extra=READBACK)
+            answer = json_object(readback.stdout)
+            assert answer is not None and readback.returncode == 0, (style, (answer or {}).get("reason"))
+            envelope = answer["envelope"]
+            assert answer["query_style"] == style
+            assert envelope["hits"]
+            assert {hit["locator"]["source_relative_path"] for hit in envelope["hits"]} == {relative}
+            if options:
+                assert envelope["fallback"] == {
+                    "caller_selected": True, "from_mode": "graph_investigation",
+                    "to_mode": "literal_captured_text", "reason_code": "installed_literal",
+                }
+
+        revoked = run_child(installed, (*cli, "lexical-revoke", *scope, "--yes"), extra=READBACK)
+        outcome = json_object(revoked.stdout)
+        assert revoked.returncode == 0 and outcome is not None and outcome["status"] == "revoked"
+        absent = run_child(installed, (*request, "--query", "InstallMarkerVector"), extra=READBACK)
+        answer = json_object(absent.stdout)
+        assert absent.returncode == 1 and answer is not None and answer["status"] == "unavailable"
+        envelope = answer["envelope"]
+        assert envelope["unavailable_reason"] == "projection_absent" and envelope["hits"] == []
         assert not material.exists()

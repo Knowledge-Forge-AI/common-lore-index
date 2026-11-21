@@ -19,9 +19,14 @@ LEXICAL_OPS_SCHEMA_VERSION = "cloe-ops-lexical-v1"
 MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES = 65536
 
 
+def _serialized_json_size(payload: dict[str, Any]) -> int:
+    """Size the ASCII-escaped JSON emitted by the CLI before its final newline."""
+    return len(json.dumps(payload, sort_keys=True, ensure_ascii=True))
+
+
 def _require_serialized_budget(payload: dict[str, Any]) -> dict[str, Any]:
     """Validate the final JSON plus the newline emitted by the CLI."""
-    if len(json.dumps(payload, sort_keys=True).encode("utf-8")) + 1 > MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES:
+    if _serialized_json_size(payload) + 1 > MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES:
         raise LexicalStorageError(
             "output_budget_exceeded",
             "output_budget_exceeded: a truthful response cannot fit the output limit; "
@@ -31,8 +36,8 @@ def _require_serialized_budget(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _enforce_serialized_budget(payload: dict[str, Any]) -> dict[str, Any]:
-    encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
-    if len(encoded) + 1 <= MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES:
+    encoded_size = _serialized_json_size(payload)
+    if encoded_size + 1 <= MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES:
         return payload
     cmd = str(payload.get("command") or "")
     if cmd == "lexical-build":
@@ -42,7 +47,7 @@ def _enforce_serialized_budget(payload: dict[str, Any]) -> dict[str, Any]:
                 "binding_id": (payload.get("admitted_binding_ids") or ["graph"])[0],
                 "source_relative_path": None,
                 "reason_code": "output_budget_exceeded",
-                "detail": f"serialized lexical-build output ({len(encoded)} bytes) exceeded {MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES}-byte ceiling",
+                "detail": f"serialized lexical-build output ({encoded_size} bytes) exceeded {MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES}-byte ceiling",
             }
         ]
         bounded["status"] = "partial"
@@ -128,15 +133,15 @@ def lexical_query_to_jsonable(
         "omission_count": len(envelope.omissions),
         "envelope": envelope.to_dict(),
     }
-    encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
-    if len(encoded) + 1 <= MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES:
+    encoded_size = _serialized_json_size(payload)
+    if encoded_size + 1 <= MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES:
         return payload
 
     budget_omission = OmissionRecord(
         binding_id=envelope.hits[0].locator.binding_id if envelope.hits else "graph",
         source_relative_path=None,
         reason_code="output_budget_exceeded",
-        detail=f"serialized lexical output ({len(encoded)} bytes) exceeded {MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES}-byte ceiling",
+        detail=f"serialized lexical output ({encoded_size} bytes) exceeded {MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES}-byte ceiling",
     ).validate()
     bounded_env = replace(
         envelope,
