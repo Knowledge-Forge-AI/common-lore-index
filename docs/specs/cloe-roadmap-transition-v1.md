@@ -60,6 +60,11 @@ Local backup and restore now check directory shape with bounded memory and
 refuse malformed manifest file types promptly. The containerized CLI proof
 also verifies exact restoration after refusals and historical v1 recovery.
 
+The next readback checkpoint scopes source evidence to selected inventory and
+feed rows. Local summary reads use the kind index and observation pages
+decode returned bodies on demand. Scoped SQLite and PostgreSQL proof covers
+context vector validation and ranked acronym lookup.
+
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness
 queries. The disposable spill fixture recorded 603 temporary blocks written

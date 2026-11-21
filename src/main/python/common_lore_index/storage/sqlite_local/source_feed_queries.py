@@ -84,6 +84,21 @@ def _item_references(
     return found
 
 
+def _feed_item_nodes(
+    connection: sqlite3.Connection, linked: dict[tuple[str, int], list[SourceObservation]]
+) -> Iterator[tuple[str, Any, list[SourceObservation]]]:
+    # Sort lightweight identity keys first. Each SQL batch can then emit in
+    # the same global tie order without retaining the other batches' bodies.
+    for page in batched(sorted(linked), _REFERENCE_KEY_BATCH):
+        placeholders = ", ".join("?" for _ in page)
+        for node_id, key, metadata in connection.execute(
+            "SELECT id, canonical_key, metadata_json FROM canonical_nodes "
+            f"WHERE kind = 'feed.item' AND id IN ({placeholders}) ORDER BY canonical_key, id",
+            tuple(node_id for _, node_id in page),
+        ):
+            yield key, raw_payload.load(metadata), linked[(key, node_id)]
+
+
 def source_feed_items(
     connection: sqlite3.Connection, *, source_id: str, source_run_id: str | None, limit: int
 ) -> tuple[SourceFeedItemRecord, ...]:
@@ -93,19 +108,17 @@ def source_feed_items(
         item for item in source_observations(connection)
         if item.source_id == source_id and (source_run_id is None or item.source_run_id == source_run_id)
     ]
-    evidence, nodes = evidence_ids(connection), node_links(connection)
+    if not group:
+        return ()
+    evidence = evidence_ids(connection, (item.key for item in group))
+    nodes = node_links(connection, (eid for ids in evidence.values() for eid in ids))
     linked = group_by(
-        (node.id, observation) for observation, node, _ in fanout(group, evidence, nodes)
-        if node is not None
+        ((node.key, node.id), observation) for observation, node, _ in fanout(group, evidence, nodes)
+        if node is not None and node.kind == "feed.item"
     )
-    items = (
-        (key, raw_payload.load(metadata), linked[node_id])
-        for node_id, key, metadata in connection.execute(
-            "SELECT id, canonical_key, metadata_json FROM canonical_nodes "
-            "WHERE kind = 'feed.item' ORDER BY canonical_key, id"
-        )
-        if node_id in linked
-    )
+    if not linked:
+        return ()
+    items = _feed_item_nodes(connection, linked)
 
     def published_order(item: tuple[str, Any, list[SourceObservation]]) -> tuple[bool, str]:
         published = raw_payload.text_at(item[1], "published_at")
@@ -149,7 +162,10 @@ def source_references(
         item for item in source_observations(connection)
         if item.source_id == source_id and (source_run_id is None or item.source_run_id == source_run_id)
     ]
-    evidence, edges = evidence_ids(connection), edge_links(connection)
+    if not group:
+        return ()
+    evidence = evidence_ids(connection, (item.key for item in group))
+    edges = edge_links(connection, (eid for ids in evidence.values() for eid in ids))
 
     def candidates() -> Iterator[tuple[tuple[str, str, str, RawKey, str], dict[str, Any]]]:
         for observation in group:

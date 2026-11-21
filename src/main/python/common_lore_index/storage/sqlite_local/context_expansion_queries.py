@@ -18,6 +18,7 @@ from common_lore_index.retrieval.context_identity import (
 )
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.navigation_search import EVIDENCE_SCAN_LIMIT
+from common_lore_index.storage.sqlite_local.node_location_queries import _context_vector_reader
 from common_lore_index.storage.sqlite_local.navigation_queries import (
     _direct_location,
     evidence_sql,
@@ -230,10 +231,11 @@ def batch_neighbor_direct_locations(
 
     by_node: dict[int, list[dict[str, Any]]] = {nid: [] for nid in unique_ids}
     vec_arg = list(normalized_vector) if normalized_vector is not None else None
+    read_context_vector = _context_vector_reader()
     for row in kept_rows:
         node_id = int(row[20])
         loc = _direct_location(
-            row[:20], accepted_run_id, snapshot_vector=vec_arg, context_identity=True
+            row[:20], accepted_run_id, snapshot_vector=vec_arg, read_context_vector=read_context_vector
         )
         if node_id in by_node:
             by_node[node_id].append(loc)

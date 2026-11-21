@@ -250,11 +250,14 @@ def _latest_ties(pair: _Pair) -> None:
 
 def _check_feed_page_reference_read(pair: _Pair, source_id: str) -> None:
     fetched: set[str] = set()
+    hydrated: set[int] = set()
     columns = ("source_canonical_key", "target_canonical_key", "metadata_json", "kind", "display_name")
 
     def observe(cursor: sqlite3.Cursor, row: tuple[Any, ...]) -> tuple[Any, ...]:
         if cursor.description and tuple(column[0] for column in cursor.description) == columns:
             fetched.add(row[0])
+        if cursor.description and cursor.description[0][0] == "canonical_evidence_id":
+            hydrated.add(int(row[0]))
         return row
 
     with read_transaction(pair.path, pair.binding) as connection:
@@ -262,11 +265,19 @@ def _check_feed_page_reference_read(pair: _Pair, source_id: str) -> None:
             "SELECT count(DISTINCT source_canonical_key) FROM canonical_edges WHERE edge_kind='references'"
         ).fetchone()
         assert total_sources > 1
+        selected = {row.key for row in source_observations(connection) if row.source_id == source_id}
+        evidence = {
+            evidence_id for run_id, ordinal, evidence_id in connection.execute(
+                "SELECT run_id, raw_observation_ordinal, id FROM canonical_evidence"
+            )
+            if (run_id, ordinal) in selected
+        }
         connection.row_factory = observe
         page = source_feed_queries.source_feed_items(connection, source_id=source_id, source_run_id=None, limit=1)
     expected = pair.pg(query_source_feed_item_records, source_id=source_id, source_run_id=None, limit=1)
     pair.same("bounded feed page references", page, expected, SERIALIZERS["items"])
     assert len(page) == 1 and fetched <= {page[0].item_key}
+    assert hydrated and hydrated <= evidence
 
 
 def _prove(tmp_path: Path, database: Any) -> None:

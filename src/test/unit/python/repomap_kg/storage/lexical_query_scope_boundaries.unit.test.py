@@ -18,6 +18,7 @@ from common_lore_index.retrieval.lexical_envelopes import (
 from common_lore_index.retrieval.lexical_policy import (
     LexicalGenerationPolicy, build_lexical_generation_policy,
 )
+from common_lore_index.storage import lexical_query_sql
 from common_lore_index.storage.lexical_fence_sql import LEXICAL_FENCE_CTE_SQL
 from common_lore_index.storage.lexical_literal_sql import LITERAL_CAPTURED_TEXT_QUERY_SQL
 from common_lore_index.storage.lexical_query_sql import (
@@ -320,3 +321,38 @@ def test_sql_fences_preserve_an_unscoped_empty_prefix_array() -> None:
         compact = _compact(sql)
         assert "cardinality(%(path_prefixes)s::text[]) = 0" in compact
         assert "OR EXISTS ( SELECT 1 FROM unnest(%(path_prefixes)s::text[])" in compact
+
+
+def test_ranked_aliases_preserve_acronyms_and_token_order() -> None:
+    query = f"pkg/HTTPServer.XMLParser2 getURLValue HTTPServer {'A' * 8191}ReadConfig"
+    assert lexical_query_sql._build_alias_query_text(query) == (
+        "pkg http server xml parser2 get url value read config"
+    )
+
+
+@pytest.mark.parametrize("style", ["ranked_terms", "normalized_phrase", "literal_captured_text"])
+def test_only_ranked_queries_prepare_alias_parameters(style: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = []
+    sent = []
+
+    def aliases(query: str) -> str:
+        calls.append(query)
+        return "http server"
+
+    def fetch(_connection: Any, _sql: str, params: dict[str, Any], *, operation: str) -> tuple[str]:
+        assert operation == f"lexical_query_{style}"
+        sent.append(params)
+        return ('{"fence_status":"no_generation"}',)
+
+    query = "HTTPServer"
+    monkeypatch.setattr(lexical_query_sql, "_build_alias_query_text", aliases)
+    monkeypatch.setattr(lexical_query_sql, "execute_fetchone", fetch)
+    result = lexical_query_sql.execute_single_statement_lexical_query(
+        object(), query_style=style, query_text=query, repository_identity=None,
+        repository_name=None, root_path=None, expected_policy_digest="example",
+        expected_binding_policy_digests_json="{}", admitted_binding_ids=(), omission_binding_ids=(),
+    )
+    assert result.fence_status == "no_generation"
+    assert calls == ([query] if style == "ranked_terms" else [])
+    assert sent[0]["query_text"] == query
+    assert sent[0]["alias_query_text"] == ("http server" if style == "ranked_terms" else "")

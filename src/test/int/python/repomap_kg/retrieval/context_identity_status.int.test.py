@@ -4,18 +4,25 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable, Mapping
+from contextlib import closing
 from pathlib import Path
 import sqlite3
 from typing import Any
 
 import psycopg
+import pytest
 
 from common_lore_index.retrieval.context_assembly import build_compact_context
 from common_lore_index.retrieval.context_budget import serialize_compact_json
 from common_lore_index.retrieval.context_contracts import ContextRequest
 from common_lore_index.retrieval.context_work import WorkLedger
 from common_lore_index.server.context_read_sqlite import SqliteContextReadAdapter
+from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
+from common_lore_index.storage.sqlite_local.context_expansion_queries import (
+    batch_neighbor_direct_locations,
+    read_sqlite_context_publication,
+)
 from repomap_test_support.context_assertions import (
     assert_valid_context_packet,
     build_postgres_context_fixture,
@@ -333,3 +340,23 @@ def test_sqlite_compact_context_tight_budget_preserves_utf8_bytes_and_rank_prefi
     )
     assert [item["rank"] for item in tight_packet["items"]] == [1]
     assert tight_packet["omission_counts"]["output_budget"] == len(wide_keys) - len(tight_keys)
+
+def test_neighbor_read_rechecks_persisted_vectors_with_a_valid_accepted_override(tmp_path: Path) -> None:
+    db_path, _, _, _, adapter = build_sqlite_context_fixture(tmp_path)
+    adapter.close()
+    with closing(sqlite3.connect(db_path)) as connection:
+        publication = read_sqlite_context_publication(connection)
+        assert publication is not None
+        ids = [int(row[0]) for row in connection.execute("SELECT id FROM canonical_nodes")]
+        healthy = batch_neighbor_direct_locations(
+            connection, neighbor_ids=ids, accepted_run_id=publication.run_id,
+            snapshot_vector=publication.snapshot_vector,
+        )
+        assert healthy["evidence_scanned"] > 1
+        with connection:
+            connection.execute("UPDATE runs SET snapshot_vector_json = '[]' WHERE id = ?", (publication.run_id,))
+        with pytest.raises(StorageSchemaError, match="malformed context snapshot vector"):
+            batch_neighbor_direct_locations(
+                connection, neighbor_ids=ids, accepted_run_id=publication.run_id,
+                snapshot_vector=publication.snapshot_vector,
+            )

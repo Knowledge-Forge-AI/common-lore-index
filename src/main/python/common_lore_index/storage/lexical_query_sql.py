@@ -33,7 +33,7 @@ ALLOWED_LEXICAL_QUERY_STYLES = frozenset(
 _QUERY_CANDIDATE_RE = re.compile(r"[A-Za-z0-9_./:-]+")
 _QUERY_DELIM_RE = re.compile(r"[/_.:-]+")
 _QUERY_CAMEL_1_RE = re.compile(r"([a-z0-9])([A-Z])")
-_QUERY_CAMEL_2_RE = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_QUERY_ACRONYM_BOUNDARY_RE = re.compile(r"(?<=[A-Z])(?=[A-Z][a-z])")
 _QUERY_TOKEN_RE = re.compile(r"^[a-z0-9]{2,64}$")
 
 
@@ -44,7 +44,7 @@ def _build_alias_query_text(query_text: str) -> str:
         for part in _QUERY_DELIM_RE.split(match.group(0)):
             if not part:
                 continue
-            step1 = _QUERY_CAMEL_2_RE.sub(r"\1 \2", part)
+            step1 = _QUERY_ACRONYM_BOUNDARY_RE.sub(" ", part)
             step2 = _QUERY_CAMEL_1_RE.sub(r"\1 \2", step1)
             for sub in step2.split(" "):
                 low = sub.lower()
@@ -304,7 +304,7 @@ def execute_single_statement_lexical_query(
         "omission_binding_ids": list(omission_binding_ids),
         "path_prefixes": list(dict.fromkeys(normalize_lexical_path_prefix(p) for p in path_prefixes)),
         "query_text": query_text,
-        "alias_query_text": _build_alias_query_text(query_text),
+        "alias_query_text": _build_alias_query_text(query_text) if query_style == "ranked_terms" else "",
         "limit": int(limit),
         "offset": int(offset),
         "max_occurrences_per_file": int(max_occurrences_per_file),

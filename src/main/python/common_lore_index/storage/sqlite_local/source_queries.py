@@ -21,9 +21,9 @@ values those casts reject; ``DESC NULLS LAST``; ``json_agg(DISTINCT ...)`` is
 sorted; ``duplicate_identity`` defaults to false and ``not_fetched`` to true.
 Where PostgreSQL leaves an order unspecified among tied rows, SQLite breaks
 the tie deterministically (raw ``(run_id, ordinal)``, then link identity; the
-explanation source by source id). Only a raw row whose stored text contains
-the ``source_id_configured`` key can be a source observation, so that literal
-pre-filters the scan before the exact decoded check.
+explanation source by source id). ``source_id_configured`` pre-filters the raw
+scan before exact decoding, and scoped reads hydrate evidence/links only for
+the selected ``(run_id, ordinal)`` keys in bounded batches.
 """
 
 from __future__ import annotations
@@ -32,6 +32,7 @@ import re
 import sqlite3
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
+from itertools import batched
 from typing import Any, NamedTuple, TypeVar
 
 from common_lore_index.storage.errors import StorageSchemaError
@@ -58,7 +59,7 @@ _RAW_JOIN = (
     "AND raw.ordinal = evidence.raw_observation_ordinal"
 )
 _INTEGER = re.compile(r"[+-]?[0-9]+")
-_BIGINT, _INT4 = 2**63, 2**31
+_BIGINT, _INT4, _ID_BATCH = 2**63, 2**31, 500
 
 
 @dataclass(frozen=True)
@@ -127,42 +128,62 @@ def group_by(rows: Iterable[tuple[Any, ...]]) -> dict[Any, list[Any]]:
     return grouped
 
 
-def evidence_ids(connection: sqlite3.Connection) -> dict[RawKey, list[int]]:
-    """Evidence ids per source raw row (``raw_observation_id`` join)."""
-    return group_by(
-        ((row[0], row[1]), row[2]) for row in connection.execute(
+def _batched_in(
+    connection: sqlite3.Connection, sql: str, values: Iterable[int], order: str
+) -> Iterator[tuple[Any, ...]]:
+    for page in batched(sorted(set(values)), _ID_BATCH):
+        yield from connection.execute(f"{sql} ({', '.join('?' for _ in page)}) {order}", page)
+
+
+def _link_rows(
+    connection: sqlite3.Connection, select: str, target: str, ids: Iterable[int] | None
+) -> Iterable[tuple[Any, ...]]:
+    order = f"ORDER BY link.canonical_evidence_id, {target}.id, link.link_kind"
+    if ids is not None:
+        return _batched_in(connection, f"{select} WHERE link.canonical_evidence_id IN", ids, order)
+    return connection.execute(
+        f"{select} JOIN canonical_evidence evidence ON evidence.id = link.canonical_evidence_id "
+        f"{_RAW_JOIN} WHERE {_SOURCE_RAW} {order}", _MARKER,
+    )
+
+
+def evidence_ids(
+    connection: sqlite3.Connection, keys: Iterable[RawKey] | None = None
+) -> dict[RawKey, list[int]]:
+    """Evidence ids per source raw row, optionally restricted to exact ``keys``."""
+    if keys is None:
+        sql = (
             "SELECT evidence.run_id, evidence.raw_observation_ordinal, evidence.id "
-            f"FROM canonical_evidence evidence {_RAW_JOIN} WHERE {_SOURCE_RAW} ORDER BY evidence.id",
-            _MARKER,
+            f"FROM canonical_evidence evidence {_RAW_JOIN} WHERE {_SOURCE_RAW} ORDER BY evidence.id"
         )
+        return group_by(((r[0], r[1]), r[2]) for r in connection.execute(sql, _MARKER))
+    selected = {(int(run_id), int(ordinal)) for run_id, ordinal in keys}
+    sql = "SELECT run_id, raw_observation_ordinal, id FROM canonical_evidence WHERE run_id IN"
+    rows = _batched_in(connection, sql, (run_id for run_id, _ in selected), "")
+    matches = group_by(((int(r), int(o)), int(eid)) for r, o, eid in rows if (int(r), int(o)) in selected)
+    # Sort the matches for each key after filtering out unrelated ordinals.
+    for ids in matches.values():
+        ids.sort()
+    return matches
+
+
+def node_links(connection: sqlite3.Connection, ids: Iterable[int] | None = None) -> dict[int, list[_Node]]:
+    sql = (
+        "SELECT link.canonical_evidence_id, node.id, node.canonical_key, node.kind "
+        "FROM canonical_node_evidence link JOIN canonical_nodes node ON node.id = link.canonical_node_id"
     )
+    return group_by((row[0], _Node(*row[1:])) for row in _link_rows(connection, sql, "node", ids))
 
 
-def node_links(connection: sqlite3.Connection) -> dict[int, list[_Node]]:
-    return group_by(
-        (row[0], _Node(*row[1:])) for row in connection.execute(
-            "SELECT link.canonical_evidence_id, node.id, node.canonical_key, node.kind "
-            "FROM canonical_node_evidence link "
-            "JOIN canonical_nodes node ON node.id = link.canonical_node_id "
-            f"JOIN canonical_evidence evidence ON evidence.id = link.canonical_evidence_id {_RAW_JOIN} "
-            f"WHERE {_SOURCE_RAW} ORDER BY link.canonical_evidence_id, node.id, link.link_kind",
-            _MARKER,
-        )
+def edge_links(connection: sqlite3.Connection, ids: Iterable[int] | None = None) -> dict[int, list[_Edge]]:
+    sql = (
+        "SELECT link.canonical_evidence_id, edge.id, edge.source_canonical_key, edge.edge_kind, "
+        "edge.target_canonical_key, edge.identity_metadata_hash, link.link_kind, edge.metadata_json "
+        "FROM canonical_edge_evidence link JOIN canonical_edges edge ON edge.id = link.canonical_edge_id"
     )
-
-
-def edge_links(connection: sqlite3.Connection) -> dict[int, list[_Edge]]:
     return group_by(
         (row[0], _Edge(row[1], row[2], row[3], row[4], row[5], row[6], raw_payload.load(row[7])))
-        for row in connection.execute(
-            "SELECT link.canonical_evidence_id, edge.id, edge.source_canonical_key, edge.edge_kind, "
-            "edge.target_canonical_key, edge.identity_metadata_hash, link.link_kind, edge.metadata_json "
-            "FROM canonical_edge_evidence link "
-            "JOIN canonical_edges edge ON edge.id = link.canonical_edge_id "
-            f"JOIN canonical_evidence evidence ON evidence.id = link.canonical_evidence_id {_RAW_JOIN} "
-            f"WHERE {_SOURCE_RAW} ORDER BY link.canonical_evidence_id, edge.id, link.link_kind",
-            _MARKER,
-        )
+        for row in _link_rows(connection, sql, "edge", ids)
     )
 
 
@@ -278,21 +299,23 @@ def ingested_sources(
         if (source_type is None or observation.source_type == source_type)
         and (policy_status is None or observation.policy_status == policy_status)
     )
-    if not groups:
+    selected_ids = sorted(groups)[:safe_limit]
+    if not selected_ids:
         return ()
-    evidence, nodes = evidence_ids(connection), node_links(connection)
+    evidence = evidence_ids(
+        connection, (item.key for source_id in selected_ids for item in groups[source_id])
+    )
+    nodes = node_links(connection, (eid for ids in evidence.values() for eid in ids))
     records = []
-    for source_id in sorted(groups)[:safe_limit]:
+    for source_id in selected_ids:
         group = groups[source_id]
         latest = _latest(group)
         node_counts = _node_counts(_matched_evidence(group, evidence), nodes)
         records.append(ingested_source_record_from_storage_payload({
-            "source_id": source_id,
-            "source_type": min_of(item.source_type for item in group),
+            "source_id": source_id, "source_type": min_of(item.source_type for item in group),
             "display_name": min_of(item.display_name for item in group),
             "policy_status": min_of(item.policy_status for item in group),
-            "latest_source_run_id": latest.source_run_id,
-            "latest_artifact_id": latest.artifact_id,
+            "latest_source_run_id": latest.source_run_id, "latest_artifact_id": latest.artifact_id,
             "latest_artifact_path": latest.artifact_path,
             "latest_acquired_at": max_of(item.acquired_at for item in group),
             "feed_observation_count": sum(_observation_fanout_count(item, evidence, nodes) for item in group),
@@ -314,28 +337,25 @@ def source_summary(connection: sqlite3.Connection, *, source_id: str) -> SourceS
             "enclosure_references": 0, "parse_errors": 0,
             "known_limitations": ["source metadata unavailable"],
         })
-    evidence, nodes, edges = evidence_ids(connection), node_links(connection), edge_links(connection)
+    evidence = evidence_ids(connection, (item.key for item in group))
     matched = _matched_evidence(group, evidence)
+    nodes, edges = node_links(connection, matched), edge_links(connection, matched)
     node_counts = _node_counts(matched, nodes)
     references = _reference_counts(matched, edges)
     latest = _latest(group)
     return source_summary_from_storage_payload({
-        "source_id": source_id,
-        "source_type": min_of(item.source_type for item in group),
+        "source_id": source_id, "source_type": min_of(item.source_type for item in group),
         "display_name": min_of(item.display_name for item in group),
         "policy_status": min_of(item.policy_status for item in group),
         "configured_url_summary": min_of(item.url_summary for item in group),
-        "latest_source_run_id": latest.source_run_id,
-        "latest_artifact_id": latest.artifact_id,
+        "latest_source_run_id": latest.source_run_id, "latest_artifact_id": latest.artifact_id,
         "latest_artifact_path": latest.artifact_path,
         "latest_acquired_at": max_of(item.acquired_at for item in group),
         "feed_documents": node_counts.get("feed.document", 0),
-        "feed_channels": node_counts.get("feed.channel", 0),
-        "feed_items": node_counts.get("feed.item", 0),
+        "feed_channels": node_counts.get("feed.channel", 0), "feed_items": node_counts.get("feed.item", 0),
         "feed_authors": node_counts.get("feed.author", 0),
         "feed_categories": node_counts.get("feed.category", 0),
-        "link_references": references[0],
-        "enclosure_references": references[1],
+        "link_references": references[0], "enclosure_references": references[1],
         "parse_errors": sum(
             _observation_fanout_count(item, evidence, nodes, edges)
             for item in group if item.kind == "feed.parse_error"
@@ -357,38 +377,21 @@ def source_runs(
     for run_id in sorted(runs, reverse=True):
         group = runs[run_id]
         payloads.append({
-            "source_run_id": run_id,
-            "acquired_at": max_of(item.acquired_at for item in group),
+            "source_run_id": run_id, "acquired_at": max_of(item.acquired_at for item in group),
             "artifact_id": max_of(item.artifact_id for item in group),
             "artifact_path": max_of(item.artifact_path for item in group),
             "artifact_byte_length": max_of(_integer(item.artifact_bytes, _BIGINT) for item in group),
             "artifact_sha256": max_of(item.artifact_sha256 for item in group),
             "http_status": max_of(_integer(item.http_status, _INT4) for item in group),
-            "content_type": max_of(item.content_type for item in group),
-            "observation_count": len(group),
-            "status_summary": (
-                "parse_errors" if any(item.kind == "feed.parse_error" for item in group) else "ok"
-            ),
+            "content_type": max_of(item.content_type for item in group), "observation_count": len(group),
+            "status_summary": "parse_errors" if any(i.kind == "feed.parse_error" for i in group) else "ok",
         })
     ordered = desc_nulls_last(payloads, lambda payload: payload["acquired_at"])[:safe_limit]
     return tuple(source_run_record_from_storage_payload(payload) for payload in ordered)
 
 
 __all__ = (
-    "RawKey",
-    "SourceObservation",
-    "by_source",
-    "desc_nulls_last",
-    "edge_links",
-    "evidence_ids",
-    "fanout",
-    "group_by",
-    "ingested_sources",
-    "max_of",
-    "min_of",
-    "node_links",
-    "not_fetched",
-    "source_observations",
-    "source_runs",
-    "source_summary",
+    "RawKey", "SourceObservation", "by_source", "desc_nulls_last", "edge_links",
+    "evidence_ids", "fanout", "group_by", "ingested_sources", "max_of", "min_of",
+    "node_links", "not_fetched", "source_observations", "source_runs", "source_summary",
 )

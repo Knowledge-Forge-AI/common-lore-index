@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from contextlib import closing
 from pathlib import Path
 import sqlite3
 
+import pytest
+
 from common_lore_index.retrieval.context_work import WorkLedger
 from common_lore_index.server.context_read_sqlite import SqliteContextReadAdapter
+from common_lore_index.storage.sqlite_local import node_location_queries
 from common_lore_index.storage.sqlite_local.context_expansion_queries import (
     batch_neighbor_direct_locations,
     expand_seed_incident_edges,
@@ -132,3 +136,28 @@ def test_ordinary_sqlite_errors_are_unavailable_not_exhausted() -> None:
         adapter.close()
         connection.close()
     assert result == {"status": "unavailable", "reason": "database_unavailable"}
+
+@pytest.mark.parametrize("accepted_override", (False, True))
+def test_neighbor_context_validates_the_shared_persisted_snapshot_vector_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, accepted_override: bool,
+) -> None:
+    db_path, _, _, _, adapter = build_sqlite_context_fixture(tmp_path)
+    adapter.close()
+    parse = node_location_queries._parse_context_snapshot_vector
+    inputs: list[object] = []
+
+    def counting_parse(raw: object) -> list[list[object]]:
+        inputs.append(raw)
+        return parse(raw)
+
+    monkeypatch.setattr(node_location_queries, "_parse_context_snapshot_vector", counting_parse)
+    with closing(sqlite3.connect(db_path)) as connection:
+        publication = read_sqlite_context_publication(connection)
+        assert publication is not None
+        ids = [int(row[0]) for row in connection.execute("SELECT id FROM canonical_nodes")]
+        result = batch_neighbor_direct_locations(
+            connection, neighbor_ids=ids, accepted_run_id=publication.run_id,
+            snapshot_vector=publication.snapshot_vector if accepted_override else None,
+        )
+    assert result["evidence_scanned"] > 1
+    assert len(inputs) == 1 and isinstance(inputs[0], str)

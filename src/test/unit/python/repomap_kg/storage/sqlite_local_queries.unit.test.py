@@ -322,3 +322,40 @@ def test_jsonb_string_rendering_preserves_unicode_and_escape_spelling() -> None:
     text = '雪"\\\b\f\n\r\t\x01\x1f\x7f'
     quoted = '"雪\\"\\\\\\b\\f\\n\\r\\t\\u0001\\u001f\x7f"'
     assert raw_payload.jsonb_text({"a": text}) == '{"a": ' + quoted + '}'
+
+
+def test_observation_header_page_decodes_only_returned_rows(corpus: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+    original = raw_payload.load
+
+    def record(text: str) -> Any:
+        calls.append(text)
+        return original(text)
+
+    monkeypatch.setattr(raw_payload, "load", record)
+    with read_transaction(corpus, BINDING) as connection:
+        result = investigation_queries.observation_search(
+            connection, query="#corpus:", kind=None, path=None, limit=2, offset=8, include_raw=True,
+        )
+    assert result["has_more"] is True and result["total"] == 10
+    assert [row["ordinal"] for row in result["results"]] == [8, 9]
+    assert len(calls) == 2
+
+
+def test_observation_filter_proving_membership_pushes_offset_into_sqlite(corpus: Path) -> None:
+    fetched: list[int] = []
+
+    def observe(cursor: sqlite3.Cursor, row: tuple[Any, ...]) -> tuple[Any, ...]:
+        if cursor.description and cursor.description[0][0] == "ordinal":
+            fetched.append(int(row[0]))
+        return row
+
+    with read_transaction(corpus, BINDING) as connection:
+        connection.row_factory = observe
+        page = investigation_queries.observation_search(
+            connection, query="API.YAML", kind="openapi.operation", path="api.yaml",
+            limit=1, offset=1, include_raw=True,
+        )
+    assert page["total"] == 2 and page["has_more"] is True
+    assert [row["path"] for row in page["results"]] == ["api.yaml"]
+    assert len(fetched) == 2 and fetched[0] == page["results"][0]["ordinal"]

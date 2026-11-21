@@ -14,9 +14,10 @@ from common_lore_index.storage.navigation_search import (
 )
 from common_lore_index.storage.graph_readback_sql import escape_readback_like_pattern
 from common_lore_index.storage.sqlite_local.node_location_queries import (
+    ContextVectorReader,
     _EVIDENCE_ROLE_SQL,
-    _location,
-    _parse_context_snapshot_vector,
+    _context_vector_reader,
+    _location_from_vector,
 )
 from common_lore_index.storage.sqlite_local.schema import SqliteFunctionReadConnection, accepted_identity
 
@@ -64,15 +65,19 @@ def evidence_sql(predicate: str, *, role_sql: str = _EVIDENCE_ROLE_SQL) -> str:
 
 def _direct_location(row: Any, accepted_run_id: int, *,
                      snapshot_vector: list[Any] | None = None,
-                     context_identity: bool = False) -> dict[str, Any]:
-    vector = (
-        _parse_context_snapshot_vector(row[18] if snapshot_vector is None else snapshot_vector)
-        if context_identity
-        else json.loads(row[18]) if snapshot_vector is None else snapshot_vector
-    )
-    location = _location(
-        row, accepted_run_id, snapshot_vector=vector, context_identity=context_identity
-    )
+                     read_context_vector: ContextVectorReader | None = None) -> dict[str, Any]:
+    if read_context_vector is not None:
+        # Validate the persisted row even when the caller supplies a separately
+        # validated vector for resolving this location's binding.
+        persisted = read_context_vector(row[18])
+        vector = persisted if snapshot_vector is None else snapshot_vector
+    else:
+        vector = json.loads(row[18]) if snapshot_vector is None else snapshot_vector
+    return _direct_location_from_vector(row, accepted_run_id, vector)
+
+
+def _direct_location_from_vector(row: Any, accepted_run_id: int, vector: list[Any]) -> dict[str, Any]:
+    location = _location_from_vector(row, accepted_run_id, vector)
     source = location["source"]
     vector = [item for item in vector if item[0] == source.get("binding_id")]
     location["source_identity_status"] = (
@@ -85,7 +90,7 @@ def _direct_location(row: Any, accepted_run_id: int, *,
 @dataclass
 class _Admission:
     admits_location: Callable[[dict[str, Any]], bool]
-    context_identity: bool = False
+    read_context_vector: ContextVectorReader | None = None
     checks: int = 0
     decoded_bytes: int = 0
     input_bytes: int = 0
@@ -105,15 +110,12 @@ class _Admission:
         self.decoded_bytes += size
         try:
             if run_id not in self.vectors:
-                self.vectors[run_id] = (_parse_context_snapshot_vector(vector)
-                                        if self.context_identity else json.loads(vector))
+                self.vectors[run_id] = (self.read_context_vector or json.loads)(vector)
                 self.vector_bytes += vector_size
             # Identity fields only; no payload/source or corpus-sized collection.
             row = (None, "observed", 0, None, None, None, None, path, None, None,
                    None, None, None, metadata, None, None, None, None, vector, "direct")
-            return self.admits_location(_direct_location(
-                row, 0, snapshot_vector=self.vectors[run_id], context_identity=self.context_identity
-            ))
+            return self.admits_location(_direct_location_from_vector(row, 0, self.vectors[run_id]))
         except Exception as error:
             # sqlite3 erases callback causes. Re-raise outside its SQL boundary.
             self.error = error
@@ -154,11 +156,12 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
     if accepted is None:
         return unavailable("publication_absent")
     predicate, params = candidate_predicate(query)
+    read_context_vector = _context_vector_reader() if context_identity else None
     admission = None
     if query.source_binding_id is not None:
         if admits_location is None:
             return unavailable("source_scope_predicate_unavailable")
-        admission = _Admission(admits_location, context_identity=context_identity)
+        admission = _Admission(admits_location, read_context_vector=read_context_vector)
         predicate = _scope_predicate(predicate, role_sql=role_sql)
     rows = []
     try:
@@ -208,7 +211,7 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
         vector = admission.vectors.get(row[2]) if admission is not None else None
         location = _direct_location(
             row[:20], accepted.run_id, snapshot_vector=vector,
-            context_identity=context_identity,
+            read_context_vector=read_context_vector,
         )
         nodes[row[20]]["locations"].append(location)
     result["nodes"] = list(nodes.values())

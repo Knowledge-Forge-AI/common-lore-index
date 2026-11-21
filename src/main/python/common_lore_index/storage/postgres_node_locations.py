@@ -19,6 +19,7 @@ from common_lore_index.storage.readback_driver import execute_json_readback
 from common_lore_index.storage.sql_core import sql_literal
 from common_lore_index.storage.sqlite_local.node_location_queries import (
     _EVIDENCE_ROLE_SQL,
+    _context_vector_reader,
     _location,
     _metadata_location,
     _parse_context_snapshot_vector,
@@ -303,15 +304,16 @@ def read_postgres_node_locations_with_executor(
         for r in (payload.get("historical_rows") or ())
         if isinstance(r, Mapping)
     ]
+    read_context_vector = _context_vector_reader() if context_identity else None
     result: dict[str, Any] = {
         "status": "ok",
         "reason": None,
         "locations": [
-            _location(row, accepted_run_id, context_identity=context_identity)
+            _location(row, accepted_run_id, read_context_vector=read_context_vector)
             for row in cur_tuples[: query.limit]
         ],
         "historical_locations": [
-            _location(row, accepted_run_id, context_identity=context_identity)
+            _location(row, accepted_run_id, read_context_vector=read_context_vector)
             for row in hist_tuples[: query.limit]
         ],
         "historical_has_more": len(hist_tuples) > query.limit,

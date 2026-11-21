@@ -26,6 +26,7 @@ from common_lore_index.storage.sqlite_local.navigation_queries import (
 )
 from common_lore_index.storage.sqlite_local.node_location_queries import (
     _EVIDENCE_ROLE_SQL,
+    _context_vector_reader,
     _parse_context_snapshot_vector,
 )
 
@@ -144,11 +145,12 @@ def read_postgres_navigation_search_with_executor(
 ) -> dict[str, Any]:
     """Execute single-statement PostgreSQL navigation_search using an injected SQL JSON executor."""
     query.validate()
+    read_context_vector = _context_vector_reader() if context_identity else None
     admission: _Admission | None = None
     if query.source_binding_id is not None:
         if admits_location is None:
             return unavailable("source_scope_predicate_unavailable")
-        admission = _Admission(admits_location, context_identity=context_identity)
+        admission = _Admission(admits_location, read_context_vector=read_context_vector)
 
     sql = build_postgres_navigation_sql(
         query,
@@ -227,7 +229,7 @@ def read_postgres_navigation_search_with_executor(
         vector = admission.vectors.get(ev_row[2]) if admission is not None else None
         location = _direct_location(
             ev_row[:20], accepted_run_id, snapshot_vector=vector,
-            context_identity=context_identity,
+            read_context_vector=read_context_vector,
         )
         if ev_row[20] in nodes_map:
             nodes_map[ev_row[20]]["locations"].append(location)

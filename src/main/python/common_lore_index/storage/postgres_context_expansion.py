@@ -20,6 +20,7 @@ from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.navigation_search import EVIDENCE_SCAN_LIMIT
 from common_lore_index.storage.postgres_navigation_search import _evidence_tuple_from_json
 from common_lore_index.storage.sqlite_local.navigation_queries import _direct_location
+from common_lore_index.storage.sqlite_local.node_location_queries import _context_vector_reader
 
 
 _ACTIONS = frozenset(("seed_to_seed", "existing", "new"))
@@ -307,12 +308,13 @@ def parse_postgres_context_expansion_payload(
         evidence_rows.append(row)
     accepted_run_id = int(accepted["run_id"])
     snapshot_vector = accepted.get("snapshot_vector") or []
+    read_context_vector = _context_vector_reader()
     for row in evidence_rows[:EVIDENCE_SCAN_LIMIT]:
         node_key = node_by_id[int(row[20])]
         neighbors[node_key]["locations"].append(
             _direct_location(
                 row[:20], accepted_run_id,
-                snapshot_vector=snapshot_vector, context_identity=True,
+                snapshot_vector=snapshot_vector, read_context_vector=read_context_vector,
             )
         )
     incomplete = len(evidence_rows) > EVIDENCE_SCAN_LIMIT

@@ -72,6 +72,7 @@ SUMMARIES: dict[str, tuple[Callable[..., Any], Callable[..., Any]]] = {
 SEARCHES: tuple[tuple[str, str | None, str | None, int, int, bool], ...] = (
     ("#corpus:", None, None, 100, 0, False),
     ("#corpus:", None, None, 7, 7, True),
+    ("API.YAML", "openapi.operation", "api.yaml", 1, 1, True),
     ("CORPUS", None, None, 3, 68, False),
     ("tfvars", "terraform.file", None, 10, 0, True),
     ("corpus", "openapi.operation", "api.yaml", 2, 1, False),
@@ -159,7 +160,12 @@ def _prove(tmp_path: Path, database: Any) -> None:
                                      "WHERE datname = current_database();")
     assert set(collation.split("|")) <= C_COLLATIONS, f"comparator is not byte-ordered C: {collation}"
     apply_migrations(default_rdbms_root(), database.psql_args, psql_command=database.psql_command)
-    bundle = read_corpus_bundle(GRAPH)
+    bundle = read_corpus_bundle(GRAPH, extra_rows=(
+        ("python.indexed_probe", "indexed_probe.txt", {}, {}),
+        ("Python.indexed_probe", "upper_case_probe.txt", {}, {}),
+        ("pythone.indexed_probe", "outside_prefix_probe.txt", {}, {}),
+    ))
+    python_count = sum(str(row["kind"]).startswith("python.") for row in bundle.families["raw_observations"])
     loaded = publish_portable_bundle(database.psql_args, bundle, repository_name=GRAPH, root_path=ROOT)
     pg_run = int(loaded.run_id)
     path = tmp_path / f"{GRAPH}.sqlite3"
@@ -174,6 +180,8 @@ def _prove(tmp_path: Path, database: Any) -> None:
             actual = asdict(sqlite_owner(connection, root_path=ROOT))
             assert actual[HEADLINES[family]] > 0, family  # never a zero-vs-zero comparison
             assert actual == expected, (family, actual, expected)
+            if family == "python":
+                assert actual["python_observations"] == python_count
 
         expected_summary = _runs(asdict(query_canonical_storage_summary(
             database.psql_args, root_path=ROOT, **pg)), pg_run)
