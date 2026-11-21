@@ -9,6 +9,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
 
+from common_lore_index.runtime.release_dockerfile import DEBIAN_HEADER_ARCHIVES
 from repomap_test_support.resource_test_image_base import TestImageError
 from repomap_test_support.resource_test_image_types import MaterializationClaim
 
@@ -32,10 +33,8 @@ NATIVE_BUILD_PACKAGES = ("gcc", "libc6-dev", "libpq-dev")
 # exact fingerprinted helper text runs in-process: it resolves the native
 # transaction, refuses any change to an installed package, binds and verifies
 # every archive against trusted indexes and freezes them before installing.
-# Only on the Python 3.12 Trixie base's exact libssl3t64 state does a
-# transaction-only preference keep libssl-dev at that version from the
-# configured live origins (ADR 0091); every other header state refuses before
-# any preference or install, and a superseding upload is an expected refusal.
+# The transaction-only sources and preferences keep the headers aligned with
+# the pinned Python base's glibc and OpenSSL runtime rows (ADR 0219).
 _INSTALL_AND_PROBE = """\
 import hashlib, importlib, importlib.metadata as md, importlib.util, json, os, re, subprocess, sys
 dependencies, locks, version, native, build_tools, helper_source, helper_sha256 = json.loads(sys.argv[1])
@@ -64,13 +63,31 @@ def header_pin(rows, architecture, path):  # ADR 0091: every row of both names, 
     with open(path, "x", encoding="utf-8") as stream:  # an existing file refuses before any install
         stream.write(f"Package: {LIBSSL_DEV}\\nPin: version {LIBSSL_VERSION}\\nPin-Priority: 999\\n")
     return path
+GLIBC = "2.41-12+deb13u4"
+GLIBC_HEADERS = ("libc6-dev", "libc-dev-bin")
+ARCHIVE_SOURCE = "/etc/apt/sources.list.d/cloe-smoke-headers.sources"
+ARCHIVE_PIN = "/etc/apt/preferences.d/cloe-smoke-headers.pref"
+def glibc_archive(rows, architecture, source_path, pin_path):
+    state = [(row["status"], row["architecture"], row["version"]) for row in rows.values()
+             if row["name"] == "libc6"]
+    if state != [("ii", architecture, GLIBC)] or any(row["name"] in GLIBC_HEADERS for row in rows.values()):
+        raise RuntimeError("glibc header state differs from the pinned Python base")
+    with open(source_path, "x", encoding="utf-8") as stream:
+        stream.write(__CLOE_DEBIAN_HEADER_ARCHIVES__)
+    with open(pin_path, "x", encoding="utf-8") as stream:
+        for name in GLIBC_HEADERS:
+            stream.write(f"Package: {name}\\nPin: version {GLIBC}\\nPin-Priority: 999\\n\\n")
+        stream.write('Package: *\\nPin: origin "snapshot.debian.org"\\nPin-Priority: 100\\n')
 rows = apt_helper["installed_packages"](subprocess.run)
 before = packages(rows)
 architecture = apt_helper["command_output"](subprocess.run, ["dpkg", "--print-architecture"]).strip()
 pinned = header_pin(rows, architecture, HEADER_PIN)
+glibc_archive(rows, architecture, ARCHIVE_SOURCE, ARCHIVE_PIN)
 python_before = {d.metadata["Name"].lower() for d in md.distributions()}
 custody = apt_helper["install_prerequisites"](subprocess.run, [*native, "libpq5"], "/tmp/repomap-apt-prerequisites")
 os.remove(pinned)  # only after the helper's verified install succeeds; a refusal keeps it for diagnosis
+os.remove(ARCHIVE_SOURCE)
+os.remove(ARCHIVE_PIN)
 # Records are flushed whole before any later child writes to the same stdout.
 print("REPOMAP_APT_PREREQUISITES=" + json.dumps(custody, sort_keys=True, separators=(",", ":")), flush=True)
 libpq = apt_helper["attest_libpq"](subprocess.run)
@@ -110,7 +127,7 @@ resolved.update(implementation=pq.__impl__, libpq=pq.version(), libpq_build=pq._
                 owners=libpq["owners"], apt_manifest_sha256=custody["manifest_sha256"],
                 has_cancel_safe=psycopg.capabilities.has_cancel_safe())
 print("REPOMAP_DEPENDENCY_VERSIONS=" + json.dumps(resolved, sort_keys=True, separators=(",", ":")), flush=True)
-"""
+""".replace("__CLOE_DEBIAN_HEADER_ARCHIVES__", repr(DEBIAN_HEADER_ARCHIVES))
 
 
 class MaterializationSources(NamedTuple):

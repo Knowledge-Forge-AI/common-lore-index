@@ -344,9 +344,12 @@ class FileSystemArtifactStore:
         )
 
     def verify(self, reference: ArtifactReference, max_bytes: int | None = None) -> bool:
+        """Verify the complete object through bounded reads without returning its data."""
         try:
-            self.read(reference, max_bytes)
-        except (ArtifactIntegrityError, ValueError, TypeError):
+            with self.open_stream(reference, max_bytes) as stream:
+                while stream.read(64 * 1024):
+                    pass
+        except (ArtifactIntegrityError, OSError, ValueError, TypeError):
             return False
         return True
 

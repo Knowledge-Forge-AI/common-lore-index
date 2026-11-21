@@ -1,0 +1,40 @@
+{
+  "approval": {
+    "adr_sha256": "5450454685cfb06eedb5b883549a2af74a83a90e43c954fb490604cee3e83a9e",
+    "operator_request": "Operator-selected ADR0206 Route A and roadmap continuation authorize this finite staging/CI successor only after source, native, independent-review and fresh-reference gates pass. This record implements existing scope and claims no gate has passed. The parent minted one fresh finite nonce under standing ADR0200; no separate operator token is required.",
+    "phase": "CLOE-W5-BODY-STUDY1",
+    "schema": "cloe-ci156-approval-v1",
+    "scope": "Route A body-study source preparation and one finite staging synchronize only after all source, native, independent-review, fresh-reference, and current-context gates. This CI grant adds no model-study, production, main/tag/release, scientific/held-out acceptance, dependency/provider/runner-wide policy, or retry authority; local body study remains separately governed by ADR0206/ADR0207. Preserve prior counters and closed grant/proof guards; D12 recipe/context identity must match the final frozen candidate before publication.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 62,
+    "attempt": 1,
+    "component_runtime_executions": 32,
+    "native_report_sha256": "1edcf584119b8e89555bf97633fe2d71d9988073209f7aa11908c7e8f917dcdb",
+    "preceding_campaign": 155,
+    "previous_rust_downloads": 2,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 34,
+    "rust_report_sha256": "05027102fbc00286d5c8a2aa7d5e31639a50e185f743e0168316cc9c2a7156c1",
+    "schema": "cloe-ci156-ledger-before-v1",
+    "system_report_sha256": "30761643163598133f548a0003d048368a7daff1df818158c5a4ce93f19dd4c6",
+    "wheel_transfers": 66
+  },
+  "reservation": {
+    "application_start": 63,
+    "approval_sha256": "2127c4e147ba5c8f9f0fa9713e03563ce7ca084c963f456032880e171527784b",
+    "component_runtime_cumulative": 33,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "88854c63c309e5ca4029b378576e0910cc650d20d5f3219421befae76c0d8173",
+    "nonce": "f6cc6427f2d851c6bf61b36797bd7d29",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 35,
+    "schema": "cloe-ci156-reservation-v1",
+    "wheel_transfers_cumulative": 68,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 156
+  }
+}

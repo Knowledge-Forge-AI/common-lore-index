@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -35,6 +36,7 @@ from repomap_test_support.installed_experience_fixture import (
 from repomap_test_support.installed_mcp_session import McpSession, stderr_class, structured, useful_question
 from repomap_test_support.installed_origin import observe_origin
 from repomap_test_support.installed_experience_witnesses import origin_source_values, pure_local_origin_witness
+from repomap_test_support.source_ingestion_integration import copy_warc_fixture_root, source_ingestion_fixture_root
 
 OUT, EXIT, FS, MCP, GUARD = "child-stdout", "child-exit", "filesystem", "mcp-reply", "guard-log"
 
@@ -65,6 +67,37 @@ def _graph_row(payload: dict[str, Any] | None) -> dict[str, Any]:
 def _status(row: dict[str, Any]) -> dict[str, Any]:
     status = row.get("storage_status")
     return status if isinstance(status, dict) else {}
+
+
+def test_installed_local_imports_a_report_and_warc_as_acquisition_only(
+    tmp_path_factory, tmp_path: Path,
+) -> None:
+    wheel = candidate_wheel(tmp_path_factory)
+    env = pure_environment(tmp_path / "archive env", wheel)
+    root = copy_warc_fixture_root(tmp_path)
+    for name in ("archive_sources", "archive_artifacts"):
+        shutil.copytree(source_ingestion_fixture_root() / name, root / name)
+    artifact = root / "warc_artifacts" / "example.warc"
+    archive_hash = _sha(artifact)
+    for command, config, count_field, count in (
+        ("import-archive", "archive_sources/allowed-test-report.toml", "included_files", 8),
+        ("import-warc", "warc_sources/allowed-warc.toml", "record_count", 8),
+    ):
+        result = run_child(env, (
+            str(env.wrapper("cloe")), "sources", command,
+            "--config", str(root / config), "--root-path", str(root), "--json",
+        ))
+        payload = json_object(result.stdout)
+        assert result.returncode == 0 and payload is not None, command
+        assert payload[count_field] == count and payload["observations"] > count
+        assert payload["publication"]["publication_state"] == "not_published"
+        assert payload["publication"]["graph_mutated"] is False
+        if command == "import-warc":
+            assert payload["routed_payloads"] == 4
+    assert _sha(artifact) == archive_hash
+    materialized = root / ".repomap" / "source-artifacts"
+    assert len(list(materialized.glob("*/**/payload*"))) == 4
+    assert not list(root.rglob("*.sqlite3"))
 
 
 def test_installed_local_workflow(tmp_path_factory, tmp_path: Path) -> None:

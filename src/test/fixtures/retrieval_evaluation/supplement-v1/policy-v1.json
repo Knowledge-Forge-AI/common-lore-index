@@ -1,0 +1,66 @@
+{
+  "bindings": {
+    "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c": {
+      "alias": "denied",
+      "binding_id": "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c",
+      "original_binding_privacy": "private-memory",
+      "original_evidence_retention": "metadata-only",
+      "original_graph_privacy": "public-dev",
+      "resolved_binding_privacy": "private-memory",
+      "resolved_evidence_retention": "metadata-only",
+      "resolved_graph_privacy": "public-dev",
+      "role": "source",
+      "source_kind": "folder"
+    },
+    "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14": {
+      "alias": "code",
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "original_binding_privacy": "public-dev",
+      "original_evidence_retention": "full-authorized",
+      "original_graph_privacy": "public-dev",
+      "resolved_binding_privacy": "public-dev",
+      "resolved_evidence_retention": "full-authorized",
+      "resolved_graph_privacy": "public-dev",
+      "role": "source",
+      "source_kind": "folder"
+    },
+    "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab": {
+      "alias": "checks",
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "original_binding_privacy": "public-dev",
+      "original_evidence_retention": "full-authorized",
+      "original_graph_privacy": "public-dev",
+      "resolved_binding_privacy": "public-dev",
+      "resolved_evidence_retention": "full-authorized",
+      "resolved_graph_privacy": "public-dev",
+      "role": "source",
+      "source_kind": "folder"
+    },
+    "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608": {
+      "alias": "docs",
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "original_binding_privacy": "public-dev",
+      "original_evidence_retention": "full-authorized",
+      "original_graph_privacy": "public-dev",
+      "resolved_binding_privacy": "public-dev",
+      "resolved_evidence_retention": "full-authorized",
+      "resolved_graph_privacy": "public-dev",
+      "role": "source",
+      "source_kind": "folder"
+    }
+  },
+  "graph_id": "sup1-calibration",
+  "max_aggregate_input_bytes": 8388608,
+  "max_chunk_bytes": 8192,
+  "max_chunk_lines": 80,
+  "max_input_artifact_bytes": 1048576,
+  "max_projected_file_bytes": 262144,
+  "policy_digest": "sha256:ff624a74aa126ccdf9b87e3cac1b3ba5ae7723dbf8d51c335f82ac7c653e277f",
+  "policy_version": "cloe-captured-text-reference-v1",
+  "selected_binding_ids": [
+    "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c",
+    "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+    "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+    "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608"
+  ]
+}

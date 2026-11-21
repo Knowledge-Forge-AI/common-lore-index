@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "adr_sha256": "f1147a59bc9470395ddf5d132bbdfdc9b9afb3599557f50d348e97632bbf652e",
+    "operator_request": "ci failed try again",
+    "phase": "CLOE-CI148REPAIR1",
+    "schema": "cloe-ci149-approval-v1",
+    "scope": "Repair CI148 deficiencies, scoped proof and independent review, one strict staging synchronize successor; no main/tag/release, new dependency class or scientific acceptance.",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 55,
+    "attempt": 1,
+    "component_runtime_executions": 26,
+    "preceding_campaign": 148,
+    "previous_rust_downloads": 0,
+    "previous_rust_refusal": "git_evidence_unavailable",
+    "rust_qualifier_entries": 27,
+    "rust_report_sha256": "31caf7e52ae8b40f4b1fc9c56b709064dd657f86255a9305edf4808eb76ea0b9",
+    "schema": "cloe-ci149-ledger-before-v1",
+    "system_report_sha256": "4549e85bff93a2eb73fa87e8a9276fcd8e13de147fb4966b96b4cb38b5a3ba05",
+    "unused_wheel_reservation_not_spent": 2,
+    "wheel_transfers": 54
+  },
+  "reservation": {
+    "application_start": 56,
+    "approval_sha256": "b7e1c64bddb33b9ed6e8e28d515d685514f2311e55909c930a13818360d49d84",
+    "event_action": "synchronize",
+    "ledger_before_sha256": "a007ae6dd315f13ad2cf49bab2d59f0877eaed50d0bf35290e1d1e87f447d78b",
+    "nonce": "0075d7b67a507d7e0dd54f3e7066401c",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 28,
+    "schema": "cloe-ci149-reservation-v1",
+    "wheel_transfers_cumulative": 56,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 149
+  }
+}

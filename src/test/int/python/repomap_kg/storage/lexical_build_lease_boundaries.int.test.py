@@ -22,7 +22,7 @@ from common_lore_index.ops.lexical_service import (
 )
 from common_lore_index.retrieval.lexical_capture import LexicalCapturePlan
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
-from common_lore_index.storage import lexical_lifecycle as lifecycle
+from common_lore_index.storage import lexical_lifecycle as lifecycle, lexical_population
 from common_lore_index.storage.lexical_build_lease import (
     cleanup_owned_lexical_generation,
 )
@@ -322,3 +322,68 @@ def test_newer_accepted_publication_rejects_old_lexical_activation(
                 lexical_generation_id=stale_plan.lexical_generation_id,
                 builder_owner_id="owner-stale",
             )
+
+
+def test_failed_chunk_group_rolls_back_its_transaction_and_keeps_the_ready_generation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with temporary_postgres() as pg_db:
+        _, config = _fixture_home(tmp_path, pg_db)
+        params = lexical_connection_parameters(config, resolve_ops_graph(config, MIXED_V1_GRAPH_ID))
+        ready = build_graph_lexical_generation(
+            config, MIXED_V1_GRAPH_ID, authorize_body=True,
+            selected_binding_ids=(binding_id_for_alias("core"), binding_id_for_alias("companion")),
+        )
+        assert ready.published is not None and ready.plan is not None
+        first, second = ready.plan.documents[:2]
+        repeated = replace(second, chunks=(second.chunks[0], second.chunks[0]), chunk_count=2)
+        attempt = replace(
+            _attempt_plan(ready.plan, "failed-chunk-group"), documents=(first, repeated), omissions=(),
+        )
+        generation = (attempt.lexical_generation_id,)
+        owner = "failed-chunk-group"
+
+        request = LexicalQueryRequest(
+            query="RetrievalExecutionPipeline", selected_binding_ids=(binding_id_for_alias("core"),),
+        )
+        expected = query_graph_lexical_generation(config, MIXED_V1_GRAPH_ID, request, authorize_body=True)
+        assert expected.hits
+        write = lexical_population._write_document_batch
+        read_happened: list[bool] = []
+
+        def read_while_writing(*args, **kwargs) -> None:
+            write(*args, **kwargs)
+            observed = query_graph_lexical_generation(config, MIXED_V1_GRAPH_ID, request, authorize_body=True)
+            assert observed.hits == expected.hits
+            read_happened.append(True)
+
+        monkeypatch.setattr(lexical_population, "_write_document_batch", read_while_writing)
+        with pytest.raises(LexicalStorageError) as failed, lexical_connection_scope(params) as connection:
+            populate_lexical_generation_rows(connection, attempt, builder_owner_id=owner, batch_size=1)
+        assert failed.value.sqlstate == "23505"
+        assert read_happened == [True]
+
+        with lexical_connection_scope(params) as connection:
+            assert execute_fetchall(
+                connection,
+                "SELECT document_ordinal FROM cloe_lexical.documents WHERE lexical_generation_id = %s",
+                generation,
+            ) == [(first.document_ordinal,)]
+            assert execute_fetchone(
+                connection, "SELECT count(*) FROM cloe_lexical.chunks WHERE lexical_generation_id = %s",
+                generation,
+            ) == (len(first.chunks),)
+            cleanup_owned_lexical_generation(
+                connection, repository_id=attempt.repository_id,
+                lexical_generation_id=attempt.lexical_generation_id, builder_owner_id=owner,
+            )
+            for table in ("documents", "chunks", "omissions"):
+                assert execute_fetchone(
+                    connection, f"SELECT count(*) FROM cloe_lexical.{table} WHERE lexical_generation_id = %s",
+                    generation,
+                ) == (0,)
+            assert execute_fetchone(
+                connection,
+                "SELECT lexical_generation_id FROM cloe_lexical.authority WHERE repository_id = %s",
+                (attempt.repository_id,),
+            ) == (ready.published.lexical_generation_id,)

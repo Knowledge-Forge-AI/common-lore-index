@@ -1,0 +1,2472 @@
+{
+  "arms": [
+    "native_tools_baseline",
+    "current_graph_baseline:postgresql",
+    "postgres_native_fts:postgresql",
+    "exact_vector:canonical-node-v1",
+    "exact_vector:canonical-node-public-text-v2",
+    "hybrid_rrf:canonical-node-public-text-v2"
+  ],
+  "cases": [
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-01",
+      "metadata_basis": [
+        "function_name:format_seed_label",
+        "source_relative_path:catalog/seed_label.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "exact_symbol_and_partial_name",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "catalog/seed_label.py",
+              "start_line": null
+            },
+            "rationale": "catalog/seed_label.py contains the only definition def format_seed_label(lot), the exact symbol asked for.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "format_seed_label",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "format_seed_label"
+          ],
+          "query": "format_seed_label"
+        },
+        "question": "Where is the function format_seed_label defined?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-01"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-02",
+      "metadata_basis": [
+        "function_name:normalize_donor_variety_name (contains fragment donor_variety)",
+        "source_relative_path:exchange/donation_intake.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "exact_symbol_and_partial_name",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "exchange/donation_intake.py",
+              "start_line": null
+            },
+            "rationale": "exchange/donation_intake.py defines normalize_donor_variety_name(name), the only code function whose name contains donor_variety.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "donor_variety",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "donor_variety"
+          ],
+          "query": "donor variety"
+        },
+        "question": "I only remember that a function name contains donor_variety. Which file defines it?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-02"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-03",
+      "metadata_basis": [
+        "function_name:packet_is_expired",
+        "source_relative_path:storage/packet_expiry.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "exact_symbol_and_partial_name",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "storage/packet_expiry.py",
+              "start_line": null
+            },
+            "rationale": "storage/packet_expiry.py contains the only definition def packet_is_expired(packet), the exact symbol asked for.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "packet_is_expired",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "packet_is_expired"
+          ],
+          "query": "packet_is_expired"
+        },
+        "question": "Where is the function packet_is_expired defined?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-03"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-04",
+      "metadata_basis": [
+        "function_name:remaining_checkout_balance (contains fragment checkout_balance)",
+        "source_relative_path:lending/checkout_limit.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "exact_symbol_and_partial_name",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "lending/checkout_limit.py",
+              "start_line": null
+            },
+            "rationale": "lending/checkout_limit.py defines remaining_checkout_balance(member), the only code function whose name ends in checkout_balance; the file name differs from the symbol, so the symbol fragment is the identifying metadata.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "checkout_balance",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "checkout_balance"
+          ],
+          "query": "checkout balance"
+        },
+        "question": "A function name ends in checkout_balance, but I forget its prefix. Which file defines it?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-04"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-05",
+      "metadata_basis": [
+        "function_name:humidity_exceeds_threshold",
+        "source_relative_path:storage/humidity_alert.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "behavior_without_exact_symbol",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "storage/humidity_alert.py",
+              "start_line": null
+            },
+            "rationale": "storage/humidity_alert.py defines humidity_exceeds_threshold(reading), which returns whether a reading's relative humidity is above the limit; the storage path and function name carry humidity and threshold.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "humidity",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "humidity",
+            "threshold"
+          ],
+          "query": "storage humidity threshold"
+        },
+        "question": "Which code decides whether a storage humidity reading is over the allowed threshold?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-05"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-06",
+      "metadata_basis": [
+        "function_name:swap_credit_balance",
+        "source_relative_path:exchange/swap_balance.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "behavior_without_exact_symbol",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "exchange/swap_balance.py",
+              "start_line": null
+            },
+            "rationale": "exchange/swap_balance.py defines swap_credit_balance(ledger), which returns credits earned from donated lots minus credits spent on swapped lots; the exchange path and swap/credit name identify it.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "swap_credit",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "swap",
+            "credit"
+          ],
+          "query": "swap credit total"
+        },
+        "question": "Which code totals the credits a member holds from the swap exchange?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-06"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-07",
+      "metadata_basis": [
+        "function_name:forecast_viable_packets",
+        "source_relative_path:reports/viability_forecast.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "behavior_without_exact_symbol",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "reports/viability_forecast.py",
+              "start_line": null
+            },
+            "rationale": "reports/viability_forecast.py defines forecast_viable_packets(packets), which keeps entries whose harvest year plus viability years exceeds the current year; the forecast path and viable name identify it.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "viable",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "viable",
+            "forecast"
+          ],
+          "query": "viable forecast"
+        },
+        "question": "Which code forecasts which stored stock will still be viable next year?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-07"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-08",
+      "metadata_basis": [
+        "function_name:summarize_inventory_by_family",
+        "source_relative_path:reports/inventory_summary.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "behavior_without_exact_symbol",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "reports/inventory_summary.py",
+              "start_line": null
+            },
+            "rationale": "reports/inventory_summary.py defines summarize_inventory_by_family(stock), which counts lots per family; the inventory path and inventory/family name identify it.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "inventory",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "inventory",
+            "family"
+          ],
+          "query": "inventory family"
+        },
+        "question": "Which code counts the shelf inventory for each plant family?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-08"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-09",
+      "metadata_basis": [
+        "doc.section_heading:Storage humidity thresholds",
+        "source_relative_path:design/storage-humidity.md",
+        "function_name:humidity_exceeds_threshold",
+        "source_relative_path:storage/humidity_alert.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "code_plus_design_or_message_context",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "design/storage-humidity.md",
+              "start_line": null
+            },
+            "rationale": "design/storage-humidity.md has the single heading Storage humidity thresholds, the design section the question names.",
+            "relevance_grade": 3
+          },
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "storage/humidity_alert.py",
+              "start_line": null
+            },
+            "rationale": "storage/humidity_alert.py defines humidity_exceeds_threshold(reading), the code that compares a reading with the threshold described by that heading.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "humidity",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "humidity",
+            "threshold"
+          ],
+          "query": "storage humidity threshold"
+        },
+        "question": "Find the design section on storage humidity thresholds and the code that checks a reading against that threshold.",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+          "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-09"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-10",
+      "metadata_basis": [
+        "doc.section_heading:Overdue reminder schedule",
+        "source_relative_path:design/overdue-reminders.md",
+        "function_name:days_until_overdue_reminder",
+        "source_relative_path:lending/overdue_reminder.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "code_plus_design_or_message_context",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "design/overdue-reminders.md",
+              "start_line": null
+            },
+            "rationale": "design/overdue-reminders.md has the single heading Overdue reminder schedule, the design section the question names.",
+            "relevance_grade": 3
+          },
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "lending/overdue_reminder.py",
+              "start_line": null
+            },
+            "rationale": "lending/overdue_reminder.py defines days_until_overdue_reminder(loan), which returns the days left before the reminder seven days ahead of the due date.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "reminder",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "overdue",
+            "reminder"
+          ],
+          "query": "overdue reminder"
+        },
+        "question": "Find the design section describing the overdue reminder schedule and the code that computes when a borrower's reminder is due.",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+          "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-10"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-11",
+      "metadata_basis": [
+        "doc.section_heading:Swap credit rules",
+        "source_relative_path:design/swap-credits.md",
+        "function_name:swap_credit_balance",
+        "source_relative_path:exchange/swap_balance.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "code_plus_design_or_message_context",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "design/swap-credits.md",
+              "start_line": null
+            },
+            "rationale": "design/swap-credits.md has the single heading Swap credit rules, the design section the question names.",
+            "relevance_grade": 3
+          },
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "exchange/swap_balance.py",
+              "start_line": null
+            },
+            "rationale": "exchange/swap_balance.py defines swap_credit_balance(ledger), which applies the earn-one/spend-one credit rule to a ledger.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "credit",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "swap",
+            "credit"
+          ],
+          "query": "swap credit rules"
+        },
+        "question": "Find the design rules for swap credits together with the code that applies them to a member's ledger.",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+          "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-11"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-12",
+      "metadata_basis": [
+        "doc.section_heading:Germination rate reporting",
+        "source_relative_path:design/germination-reporting.md",
+        "function_name:seed_germination_rate",
+        "source_relative_path:catalog/germination_rate.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "code_plus_design_or_message_context",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "design/germination-reporting.md",
+              "start_line": null
+            },
+            "rationale": "design/germination-reporting.md has the single heading Germination rate reporting, the design section the question names.",
+            "relevance_grade": 3
+          },
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "catalog/germination_rate.py",
+              "start_line": null
+            },
+            "rationale": "catalog/germination_rate.py defines seed_germination_rate(trial), which returns sprouted over planted rounded to three places and zero for an empty trial.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "germination",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "germination"
+          ],
+          "query": "germination rate"
+        },
+        "question": "Find the design section on germination rate reporting and the code that computes a trial's germination rate.",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+          "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-12"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-13",
+      "metadata_basis": [
+        "test_function_name:test_packet_expiry_viability_years",
+        "source_relative_path:tests/test_packet_expiry_viability_years.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "relevant_tests_for_behavior",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "tests/test_packet_expiry_viability_years.py",
+              "start_line": null
+            },
+            "rationale": "tests/test_packet_expiry_viability_years.py defines test_packet_expiry_viability_years, which asserts packet_is_expired is True past the viability window and False inside it.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "packet_expiry",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "packet_expiry",
+            "viability"
+          ],
+          "query": "packet expiry viability"
+        },
+        "question": "Which test covers packet expiry based on viability years?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-13"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-14",
+      "metadata_basis": [
+        "test_function_name:test_donor_variety_name_normalization",
+        "source_relative_path:tests/test_donor_variety_name_normalization.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "relevant_tests_for_behavior",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "tests/test_donor_variety_name_normalization.py",
+              "start_line": null
+            },
+            "rationale": "tests/test_donor_variety_name_normalization.py defines test_donor_variety_name_normalization, which asserts underscore and hyphen spellings normalize to capitalized words.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "donor_variety",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "donor_variety",
+            "normalization"
+          ],
+          "query": "donor variety name normalization"
+        },
+        "question": "Which test covers normalization of variety names written by donors?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-14"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-15",
+      "metadata_basis": [
+        "test_function_name:test_overdue_reminder_days",
+        "source_relative_path:tests/test_overdue_reminder_days.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "relevant_tests_for_behavior",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "tests/test_overdue_reminder_days.py",
+              "start_line": null
+            },
+            "rationale": "tests/test_overdue_reminder_days.py defines test_overdue_reminder_days, which asserts days_until_overdue_reminder gives 23 for 30 days to due and clamps to 0.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "overdue_reminder",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "overdue_reminder"
+          ],
+          "query": "overdue reminder days"
+        },
+        "question": "Which test covers how many days remain before an overdue reminder?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-15"
+      }
+    },
+    {
+      "case_kind": "positive",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-16",
+      "metadata_basis": [
+        "test_function_name:test_checkout_balance_limit",
+        "source_relative_path:tests/test_checkout_balance_limit.py"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "relevant_tests_for_behavior",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "tests/test_checkout_balance_limit.py",
+              "start_line": null
+            },
+            "rationale": "tests/test_checkout_balance_limit.py defines test_checkout_balance_limit, which asserts remaining_checkout_balance is 3 under the limit and 0 when open loans exceed it.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "checkout_balance",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "checkout_balance"
+          ],
+          "query": "checkout balance limit"
+        },
+        "question": "Which test covers the member checkout balance against the borrowing limit?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-16"
+      }
+    },
+    {
+      "case_kind": "absent",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-17",
+      "metadata_basis": [
+        "no function_name, source_relative_path or doc.section heading in the code, checks or docs bindings contains sms or text message"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "absent_ambiguous_changed_deleted_stale",
+        "generation": 1,
+        "gold_targets": [],
+        "grading_rule": "absent_answer",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "sms",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "sms",
+            "text message"
+          ],
+          "query": "sms text message"
+        },
+        "question": "Which code sends SMS text messages to borrowers?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+          "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+          "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-17"
+      }
+    },
+    {
+      "case_kind": "absent",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-18",
+      "metadata_basis": [
+        "no function_name, source_relative_path or doc.section heading in the code, checks or docs bindings contains barcode or scanner"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "absent_ambiguous_changed_deleted_stale",
+        "generation": 1,
+        "gold_targets": [],
+        "grading_rule": "absent_answer",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "barcode",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "barcode",
+            "scanner"
+          ],
+          "query": "barcode scanner"
+        },
+        "question": "Where is the barcode scanner integration for checking lots in?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+          "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+          "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-18"
+      }
+    },
+    {
+      "case_kind": "ambiguous",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-19",
+      "metadata_basis": [
+        "function_name:remaining_checkout_balance",
+        "function_name:swap_credit_balance"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "absent_ambiguous_changed_deleted_stale",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "lending/checkout_limit.py",
+              "start_line": null
+            },
+            "rationale": "lending/checkout_limit.py defines remaining_checkout_balance(member), a member's remaining borrowing balance; one legitimate reading of member balance.",
+            "relevance_grade": 2
+          },
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "exchange/swap_balance.py",
+              "start_line": null
+            },
+            "rationale": "exchange/swap_balance.py defines swap_credit_balance(ledger), a member's swap credit balance; the other equally legitimate reading of member balance.",
+            "relevance_grade": 2
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "balance",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "balance"
+          ],
+          "query": "member balance"
+        },
+        "question": "Where is a member's balance computed?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-19"
+      }
+    },
+    {
+      "case_kind": "ambiguous",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-20",
+      "metadata_basis": [
+        "function_name:packet_is_expired",
+        "function_name:forecast_viable_packets"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "absent_ambiguous_changed_deleted_stale",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "storage/packet_expiry.py",
+              "start_line": null
+            },
+            "rationale": "This file defines packet_is_expired(packet), which compares packet age with its declared viability window; both are equally relevant to this deliberately broad discovery question.",
+            "relevance_grade": 2
+          },
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "reports/viability_forecast.py",
+              "start_line": null
+            },
+            "rationale": "This file defines forecast_viable_packets(packets), which compares packet age with its declared viability window; both are equally relevant to this deliberately broad discovery question.",
+            "relevance_grade": 2
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "packet",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "packet"
+          ],
+          "query": "packet viable expired"
+        },
+        "question": "Which code judges packets against their viability window?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-20"
+      }
+    },
+    {
+      "case_kind": "privacy",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        },
+        "native_tools_baseline": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        }
+      },
+      "intent_id": "sup1-intent-21",
+      "metadata_basis": [
+        "selected_bindings:denied alias binding only",
+        "binding privacy declared non-public for metadata and body (binding_privacy_not_authorized)"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "refused",
+        "expected_refusal_code": "binding_privacy_not_authorized",
+        "family": "absent_ambiguous_changed_deleted_stale",
+        "generation": 1,
+        "gold_targets": [],
+        "grading_rule": "safety_refusal",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "contact_roster",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "contact",
+            "roster"
+          ],
+          "query": "contact roster"
+        },
+        "question": "Where is the member contact roster assembled?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-21"
+      }
+    },
+    {
+      "case_kind": "privacy",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        },
+        "native_tools_baseline": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "none",
+          "execution": "refused",
+          "fallback_policy": "none",
+          "reason": "binding_privacy_not_authorized"
+        }
+      },
+      "intent_id": "sup1-intent-22",
+      "metadata_basis": [
+        "selected_bindings:public code binding plus denied alias binding",
+        "binding privacy declared non-public for metadata and body on the denied binding (binding_privacy_not_authorized)"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "refused",
+        "expected_refusal_code": "binding_privacy_not_authorized",
+        "family": "absent_ambiguous_changed_deleted_stale",
+        "generation": 1,
+        "gold_targets": [],
+        "grading_rule": "safety_refusal",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "shift_notes",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "shift",
+            "notes"
+          ],
+          "query": "volunteer shift notes"
+        },
+        "question": "Which code builds the volunteer shift notes?",
+        "requested_mode": "ranked_discovery",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+          "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-22"
+      }
+    },
+    {
+      "case_kind": "unsupported",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "none",
+          "execution": "unavailable",
+          "fallback_policy": "none",
+          "reason": "captured_text_surface_unsupported_by_metadata_graph"
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "none",
+          "execution": "unavailable",
+          "fallback_policy": "none",
+          "reason": "metadata_representation_not_comparable"
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "none",
+          "execution": "unavailable",
+          "fallback_policy": "none",
+          "reason": "metadata_representation_not_comparable"
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "none",
+          "execution": "unavailable",
+          "fallback_policy": "none",
+          "reason": "metadata_representation_not_comparable"
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-23",
+      "metadata_basis": [
+        "requested_mode:literal_captured_text",
+        "comparability_stratum:body",
+        "intended_match_surface:captured_text",
+        "selected_bindings:public code binding",
+        "target source_relative_path:storage/humidity_alert.py"
+      ],
+      "task": {
+        "comparability_stratum": "body",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "absent_ambiguous_changed_deleted_stale",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "storage/humidity_alert.py",
+              "start_line": null
+            },
+            "rationale": "storage/humidity_alert.py line 1 is the comment Stock stored above sixty percent relative humidity loses vigor within a season; no other code file contains that text.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "captured_text",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "ignore_case": true,
+          "lexical_query_style": "literal_captured_text",
+          "limit": 10,
+          "patterns": [
+            "sixty percent relative humidity"
+          ],
+          "query": "sixty percent relative humidity"
+        },
+        "question": "Which code file contains the exact comment text sixty percent relative humidity?",
+        "requested_mode": "literal_captured_text",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-23"
+      }
+    },
+    {
+      "case_kind": "unsupported",
+      "expectations": {
+        "current_graph_baseline:postgresql": {
+          "actual_surface": "stored_metadata",
+          "execution": "completed",
+          "fallback_policy": "none",
+          "reason": null
+        },
+        "exact_vector:canonical-node-public-text-v2": {
+          "actual_surface": "none",
+          "execution": "unavailable",
+          "fallback_policy": "none",
+          "reason": "unsupported_semantic_query_mode"
+        },
+        "exact_vector:canonical-node-v1": {
+          "actual_surface": "none",
+          "execution": "unavailable",
+          "fallback_policy": "none",
+          "reason": "unsupported_semantic_query_mode"
+        },
+        "hybrid_rrf:canonical-node-public-text-v2": {
+          "actual_surface": "none",
+          "execution": "unavailable",
+          "fallback_policy": "none",
+          "reason": "unsupported_semantic_query_mode"
+        },
+        "native_tools_baseline": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        },
+        "postgres_native_fts:postgresql": {
+          "actual_surface": "captured_text",
+          "execution": "completed",
+          "fallback_policy": "required",
+          "reason": null
+        }
+      },
+      "intent_id": "sup1-intent-24",
+      "metadata_basis": [
+        "requested_mode:current_literal_enumeration",
+        "comparability_stratum:metadata",
+        "function_name:format_seed_label",
+        "function_name:seed_germination_rate",
+        "only these two code function names contain seed"
+      ],
+      "task": {
+        "comparability_stratum": "metadata",
+        "comparator_exposure": {
+          "current_graph_baseline:postgresql": "stored_metadata_navigation",
+          "exact_vector:canonical-node-public-text-v2": "admitted_captured_span_public-text-v2",
+          "exact_vector:canonical-node-v1": "canonical-node-v1",
+          "hybrid_rrf:canonical-node-public-text-v2": "postgresql_fts_plus_public-text-v2_exact_vector",
+          "native_tools_baseline": "authorized_body_view_fixed_string_scan_with_disclosed_literal_fallback",
+          "postgres_native_fts:postgresql": "captured_text_lexical_index"
+        },
+        "expected_capability_state": "available",
+        "expected_refusal_code": null,
+        "family": "absent_ambiguous_changed_deleted_stale",
+        "generation": 1,
+        "gold_targets": [
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "catalog/seed_label.py",
+              "start_line": null
+            },
+            "rationale": "catalog/seed_label.py defines format_seed_label(lot), whose name contains seed.",
+            "relevance_grade": 3
+          },
+          {
+            "canonical_key": null,
+            "locator": {
+              "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+              "canonical_key": null,
+              "end_line": null,
+              "evidence_key": null,
+              "link_kind": null,
+              "source_relative_path": "catalog/germination_rate.py",
+              "start_line": null
+            },
+            "rationale": "catalog/germination_rate.py defines seed_germination_rate(trial), whose name contains seed.",
+            "relevance_grade": 3
+          }
+        ],
+        "grading_rule": "ranked_positive",
+        "graph_id": "sup1-calibration",
+        "intended_match_surface": "stored_metadata",
+        "permitted_query_plan": {
+          "fixed_strings": true,
+          "graph_query": "seed",
+          "ignore_case": true,
+          "lexical_query_style": "ranked_terms",
+          "limit": 10,
+          "patterns": [
+            "seed"
+          ],
+          "query": "seed"
+        },
+        "question": "List every current code file defining a function whose name contains the literal text seed.",
+        "requested_mode": "current_literal_enumeration",
+        "selected_bindings": [
+          "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14"
+        ],
+        "source_path_prefix": null,
+        "split": "calibration",
+        "task_id": "sup1-24"
+      }
+    }
+  ],
+  "corpus_id": "sup1-corpus-v1",
+  "family_rationale": {
+    "absent_ambiguous_changed_deleted_stale": "Non-floor controls: two absent questions with no matching metadata, two ambiguous questions with two equal legitimate files, two declared binding-privacy refusals, and two deliberately unsupported modes with per-arm capability expectations.",
+    "behavior_without_exact_symbol": "A caller describes what code does in domain words that overlap the function name and path but never state the symbol; the defining file is found from that metadata, not from body-only facts.",
+    "code_plus_design_or_message_context": "A caller needs both the standalone design section (heading-derived doc.section) and the separate code file implementing it; the heading text and the function name share the distinguishing term. Design documents only, no messages.",
+    "exact_symbol_and_partial_name": "A caller remembers a whole function name or a contiguous fragment of one; the defining code file is identified by its function-name and path metadata.",
+    "relevant_tests_for_behavior": "A caller wants the test source covering a behavior; the test file path tests/test_NAME.py and function test_NAME carry the behavior words, and the target is the test file rather than the code under test."
+  },
+  "phase": "CLOE-W5-SUPPLEMENT1",
+  "purpose": "calibration",
+  "repetitions": 3,
+  "schema": "cloe-calibration-supplement-catalog-v1",
+  "supplement_id": "sup1-calibration-v1"
+}

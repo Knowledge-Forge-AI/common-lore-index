@@ -267,3 +267,67 @@ def test_managed_image_reuses_only_exact_recipe_identity(tmp_path):
 
     assert module.ensure_sandbox_image(dockerfile=dockerfile, runner=fake_runner) == image_id
     assert not any(command[:2] == ["docker", "build"] for command in calls)
+
+
+from repomap_test_support.pgvector_prebuilt_sandbox_cases import (
+    outer_command_case, prepare_case, finished_case, run_tests_case,
+)
+from repomap_test_support.pgvector_prebuilt_facade_cases import facade_case, dispatch_case
+
+
+@pytest.mark.parametrize("role,failure", [
+    ("core", None), ("native", None), ("core", "materialization"),
+    ("core", "archive_missing"), ("core", "archive_identity"), ("core", "sdk"),
+    ("native", "core_steps"), ("native", "core_result_missing"), ("native", "core_result"),
+    ("native", "source"), ("native", "core_export_missing"), ("native", "export_bytes"),
+    ("native", "export_digest"), ("native", "export_runtime"),
+])
+def test_offline_sdk_reserves_only_after_every_bound_prerequisite(tmp_path, role, failure):
+    result = outer_command_case(tmp_path, role, failure)
+    assert ("error" in result) is (failure is not None)
+    assert result["context"].meter.used["sdk_" + role] == (failure is None)
+
+
+@pytest.mark.parametrize("role,failure", [
+    ("core", None), ("native", None), ("core", "architecture"), ("core", "graphdriver"),
+    ("core", "inventory"), ("core", "imported_ids"), ("core", "load"),
+    ("core", "identity"), ("core", "command"), ("core", "send_file"),
+    ("core", "send_plan"), ("core", "export"), ("native", "load"),
+    ("native", "identity"), ("native", "send_file"), ("native", "send_plan"),
+])
+def test_offline_prepare_checks_identity_and_charges_before_foreign_operations(monkeypatch, tmp_path, role, failure):
+    result = prepare_case(monkeypatch, tmp_path, role, failure)
+    assert ("error" in result) is (failure is not None)
+
+
+@pytest.mark.parametrize("result,repeat", [(0, False), (7, False), (0, True)])
+def test_offline_result_is_write_once_after_canonical_cleanup(monkeypatch, tmp_path, result, repeat):
+    context = finished_case(monkeypatch, tmp_path, result, repeat=repeat)
+    assert context.meter.records["core_result"]["exit"] == result
+
+
+def test_offline_result_refuses_source_drift(monkeypatch, tmp_path):
+    with pytest.raises(RuntimeError, match="source drift"):
+        finished_case(monkeypatch, tmp_path, source_error=True)
+
+
+@pytest.mark.parametrize("statuses,expected", [([("false", "0")], 0),
+    ([("true", "0"), ("false", "7")], 7)])
+def test_offline_sdk_polling_preserves_the_exact_child_result(tmp_path, statuses, expected):
+    assert run_tests_case(tmp_path, statuses) == expected
+
+
+@pytest.mark.parametrize("expired", [False, True])
+def test_offline_sdk_polling_refuses_invalid_state_and_expiry(tmp_path, expired):
+    with pytest.raises(RuntimeError):
+        run_tests_case(tmp_path, [("invalid", "0")], expired=expired)
+
+
+@pytest.mark.parametrize("failed", [False, True])
+def test_offline_facade_finishes_only_after_canonical_cleanup(monkeypatch, failed):
+    facade_case(monkeypatch, canonical_error=failed)
+
+
+@pytest.mark.parametrize("failure", [None, "cache", "host", "plan"])
+def test_offline_dispatch_never_builds_or_pulls_a_replacement_sdk(monkeypatch, failure):
+    dispatch_case(monkeypatch, failure=failure)

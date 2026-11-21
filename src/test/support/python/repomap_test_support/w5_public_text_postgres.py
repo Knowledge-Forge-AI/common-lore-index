@@ -171,6 +171,7 @@ class StudyRead:
     plan_length: int | None = None
     index_selected: bool | None = None
     records: Any = field(default=None, repr=False, compare=False)
+    query_descriptor_sha256: str | None = None
 
 
 def _digest(raw: bytes) -> tuple[str, int]:
@@ -188,7 +189,8 @@ def exact_read(postgres: PostgresHandle, query: StudyQuery, pin: VerifiedPublica
     """Exact read in one REPEATABLE READ READ ONLY transaction as the owner; refusals precede SQL."""
     try:
         scoped_snapshot(query.publication, pin, query.source_binding_id)
-        stdout = run_study_sql(postgres, exact_sql(query))
+        statement = exact_sql(query)
+        stdout = run_study_sql(postgres, statement)
         status, rows = candidate_payload(_json_object(stdout), statuses=EXACT_STATUSES, limit=query.limit)
         pin.revalidate_current()
     except ExperimentRefusal as exc:
@@ -198,7 +200,8 @@ def exact_read(postgres: PostgresHandle, query: StudyQuery, pin: VerifiedPublica
     if status != "ok":
         return StudyRead("refused" if status == "study_relation_changed" else "unavailable", status)
     sha, length = _digest(json.dumps(rows, sort_keys=True, separators=(",", ":")).encode("utf-8"))
-    return StudyRead("completed", None, rows, sha, length)
+    return StudyRead("completed", None, rows, sha, length,
+                     query_descriptor_sha256=_digest(statement.encode("utf-8"))[0])
 
 
 def temp_privilege(postgres: PostgresHandle, names: StudyNames) -> bool:

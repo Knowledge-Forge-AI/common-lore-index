@@ -47,7 +47,6 @@ def decode_canonical_json(data: bytes) -> dict[str, object]:
         raise CanonicalEncodingError("canonical JSON is invalid") from error
     if not isinstance(value, dict):
         raise CanonicalEncodingError("canonical JSON root must be an object")
-    _validate_value(value)
     if canonical_json(value) != data:
         raise CanonicalEncodingError("JSON bytes are not canonical")
     return value

@@ -23,8 +23,7 @@ from repomap_test_support.retrieval_evaluation_fixture import binding_id_for_ali
 from portable_handoff import recheck as handoff_recheck
 from retrieval_evaluation_accounting import ByteLayerAccounting, EvaluatorByteBreakdownV1
 from retrieval_evaluation_grading import ExecutionState
-from retrieval_evaluation_schema import EvaluationTask
-from retrieval_evaluation_scope import source_path_matches_prefix
+from retrieval_evaluation_scope import NativeEvaluationRequest, source_path_matches_prefix
 from retrieval_evaluation_views import MaterializedNativeView
 from source_navigation_consumer import navigate as consumer_navigate
 
@@ -224,7 +223,7 @@ def run_git_grep_process(
 
 
 def _execute_direct_handoff_native(
-    task: EvaluationTask, view: MaterializedNativeView, scope: QueryScope, requested_mode: QueryMode,
+    task: NativeEvaluationRequest, view: MaterializedNativeView, scope: QueryScope, requested_mode: QueryMode,
 ) -> tuple[ExecutionState, QueryEnvelope, int, ByteLayerAccounting]:
     t0, plan = time.perf_counter_ns(), task.permitted_query_plan
     binding_id, alias, rel_path = str(plan["binding_id"]), str(plan["binding_alias"]), str(plan["source_relative_path"])
@@ -269,7 +268,7 @@ def _execute_direct_handoff_native(
 
 
 def execute_native_baseline_task_with_breakdown(
-    task: EvaluationTask,
+    task: NativeEvaluationRequest,
     view: MaterializedNativeView,
     *,
     git_executable: str | None = None,
@@ -389,7 +388,7 @@ def execute_native_baseline_task_with_breakdown(
 
 
 def execute_native_baseline_task(
-    task: EvaluationTask, view: MaterializedNativeView, *, git_executable: str | None = None,
+    task: NativeEvaluationRequest, view: MaterializedNativeView, *, git_executable: str | None = None,
 ) -> tuple[ExecutionState, QueryEnvelope, int, ByteLayerAccounting]:
     """Execute one evaluation task using real git grep --no-index over the authorized view."""
     return execute_native_baseline_task_with_breakdown(task, view, git_executable=git_executable)[:4]

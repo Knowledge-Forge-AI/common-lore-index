@@ -36,6 +36,30 @@ CASES: dict[str, dict[str, Any]] = {
         "target_symbol": "",
         "refusal": False,
     },
+    'pgvector_transport': {
+        'symbol': 'test_session_hook_starts_normal_context_and_avoids_extra_offline_cluster',
+        'runtime_names': ['unit_offline_session_owner'],
+        'module_name': 'conftest',
+        'target_path': 'src/test/int/python/conftest.py',
+        'target_symbol': '',
+        'refusal': False,
+    },
+    'pgvector_discovery': {
+        'symbol': 'lost_authority_case',
+        'runtime_names': ['public_session_boundary'],
+        'module_name': 'conftest',
+        'target_path': 'src/test/int/python/conftest.py',
+        'target_symbol': '',
+        'refusal': False,
+    },
+    'pgvector_native': {
+        'symbol': 'test_actual_native_owner_reloads_sealed_plan_without_a_fake_argv',
+        'runtime_names': ['unit_prebuilt_native_owner'],
+        'module_name': 'repomap_test_support.pgvector_prebuilt_runtime.int.test',
+        'target_path': 'src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py',
+        'target_symbol': '',
+        'refusal': False,
+    },
 }
 
 

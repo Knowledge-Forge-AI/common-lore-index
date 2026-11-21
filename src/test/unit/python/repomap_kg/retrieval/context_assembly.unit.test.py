@@ -6,7 +6,14 @@ from pathlib import Path
 import shutil
 import sqlite3
 
+import pytest
+
+from common_lore_index.retrieval.context_admission import OmissionCounter, admit_items_and_relations
 from common_lore_index.retrieval.context_assembly import build_compact_context
+from common_lore_index.retrieval.context_budget import (
+    _withhold_scope_echo, _withhold_target_echo, compute_actual_bytes_fixpoint,
+)
+from common_lore_index.retrieval.context_budget_reservation import packet_size_with_reservation
 from common_lore_index.retrieval.context_contracts import ContextRequest
 from common_lore_index.retrieval.context_work import WorkLedger
 from repomap_test_support.context_assertions import (
@@ -215,3 +222,42 @@ def test_budget_validation_before_io_and_sqlite_statement_ceiling(tmp_path: Path
     assert_valid_context_packet(pkt)
     assert pkt["status"] == "partial"
     assert pkt["work_ledger"]["sql_statements_executed"] <= 5
+
+
+@pytest.mark.parametrize("with_seed", [False, True])
+def test_context_admits_ranked_records_before_the_omission_detail_prefix(
+    tmp_path: Path, with_seed: bool,
+) -> None:
+    _, _, _, _, adapter = build_sqlite_context_fixture(tmp_path)
+    budget = 4096
+    packet = build_compact_context(
+        ContextRequest(graph_id=adapter.graph_id, mode="ranked_discovery",
+                       query="InvoiceService" if with_seed else "absent fixture", budget_bytes=budget),
+        adapter,
+    )
+    seeds = packet["items"][:]
+    assert len(seeds) == int(with_seed)
+    assert packet["neighbors"] == [] and packet["relations"] == []
+    _withhold_target_echo(packet)
+    _withhold_scope_echo(packet)
+    omissions = OmissionCounter()
+    for index in range(32):
+        omissions.increment("candidate_scan_incomplete", detail=f"fixture-detail-{index:02d}")
+    packet["omission_counts"] = omissions.to_counts_dict()
+
+    sizes = [
+        packet_size_with_reservation({**packet, "omissions": omissions.records[:count]})
+        for count in range(len(omissions.records) + 1)
+    ]
+    prefix_length = max(count for count, size in enumerate(sizes) if size <= budget)
+    assert 0 < prefix_length < len(omissions.records)
+    packet["items"] = []
+    admit_items_and_relations(
+        packet, candidate_seeds=seeds, total_post_offset_seeds=len(seeds), top_tied_keys=frozenset(),
+        neighbor_units=(), extra_relations=(), omissions=omissions, budget_bytes=budget,
+    )
+    assert packet["items"] == seeds
+    assert packet["omissions"] == omissions.records[:prefix_length]
+    assert packet["omission_counts"]["candidate_scan_incomplete"] == 32
+    raw, size = compute_actual_bytes_fixpoint(packet)
+    assert size == len(raw) <= budget

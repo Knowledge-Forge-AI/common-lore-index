@@ -46,6 +46,12 @@ if __name__.split(".")[-1] == "conftest":
 
 def pytest_sessionstart(session):
     global _postgres_context
+    from runner_pgvector_context import offline_session_owned_by_test
+    try:
+        if offline_session_owned_by_test(session):
+            return
+    except RuntimeError as error:
+        pytest.exit(f"ERROR: offline PostgreSQL session refused ({error})", returncode=2)
     runtime = os.environ.get(
         "REPOMAP_TEST_PG_CONTAINER_RUNTIME",
         DEFAULT_TEST_POSTGRES_RUNTIME,
@@ -70,3 +76,11 @@ def pytest_sessionfinish(session, exitstatus):
     _postgres_context = None
     if context is not None:
         context.__exit__(None, None, None)
+
+
+def pytest_collection_finish(session):
+    from runner_pgvector_context import verify_offline_collected_items
+    try:
+        verify_offline_collected_items(session)
+    except RuntimeError as error:
+        pytest.exit(f"ERROR: offline PostgreSQL collection refused ({error})", returncode=2)

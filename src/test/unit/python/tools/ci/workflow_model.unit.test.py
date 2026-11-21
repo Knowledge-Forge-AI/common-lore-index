@@ -176,7 +176,9 @@ def test_accessors_expose_commands_and_actions() -> None:
     job_steps = workflow.job_steps(job_name)
     assert len(job_steps) > 0
     job_commands = workflow.job_run_commands(job_name)
-    assert any("python3 tools/run_tests.py" in command for command in job_commands)
+    expected = ("tools/ci/hosted_staging.py aggregate" if "staging-integration-parts" in workflow.jobs
+                else "python3 tools/run_tests.py")
+    assert any(expected in command for command in job_commands)
     assert workflow.job_steps("nonexistent_job") == ()
     assert workflow.job_run_commands("nonexistent_job") == ()
     assert workflow.job_action_uses("nonexistent_job") == ()

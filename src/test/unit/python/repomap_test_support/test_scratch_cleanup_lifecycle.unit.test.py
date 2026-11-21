@@ -53,13 +53,17 @@ def test_evidence(tmp_path):
     env = dict(os.environ)
     env.pop("REPOMAP_TEST_RUN_ROOT", None)
     env["REPOMAP_TEST_SCRATCH_ROOT"] = str(tmp_path / "scratch")
-    env["PYTHONPATH"] = os.pathsep.join((str(ROOT / "src/test/support/python"), str(ROOT / "src/main/python")))
+    env["PYTHONPATH"] = os.pathsep.join((
+        str(ROOT / "src/test/support/python"), str(ROOT / "src/main/python"),
+        str(ROOT / "tools"),
+    ))
     result = subprocess.run(
         [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "test_owner.py"],
         cwd=owner, env=env, capture_output=True, text=True, timeout=30,
     )
-    evidence = Path(pointer.read_text()) / "evidence.txt"
     assert result.returncode == (0 if mode == "passed" else 1), result.stdout + result.stderr
+    assert pointer.is_file(), result.stdout + result.stderr
+    evidence = Path(pointer.read_text()) / "evidence.txt"
     assert evidence.exists() is (mode != "passed")
     if mode == "cleanup_failed":
         assert "Test scratch cleanup failed for test_owner.py::test_evidence" in result.stdout

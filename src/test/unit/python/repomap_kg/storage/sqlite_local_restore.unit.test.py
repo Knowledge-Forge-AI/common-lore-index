@@ -143,7 +143,7 @@ def test_unpublished_backup_restores_unpublished(tmp_path: Path) -> None:
     assert _install(backup, manifest, _target(tmp_path)) is None
 
 
-def test_tampered_database_bytes_are_refused(tmp_path: Path) -> None:
+def test_tampered_database_bytes_are_refused(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     backup, _ = _artifact(tmp_path)
     database = backup / "graph.sqlite3"
     data = bytearray(database.read_bytes())
@@ -152,6 +152,14 @@ def test_tampered_database_bytes_are_refused(tmp_path: Path) -> None:
     assert _refusal(backup) == "sqlite-backup-artifact-invalid: database-digest-mismatch"
     with database.open("ab") as handle:
         handle.write(b"\0")
+    database_identity = database.stat().st_ino
+    original_read = os.read
+
+    def observe_read(descriptor: int, size: int) -> bytes:
+        assert os.fstat(descriptor).st_ino != database_identity, "wrong-size database was read"
+        return original_read(descriptor, size)
+
+    monkeypatch.setattr(os, "read", observe_read)
     assert _refusal(backup) == "sqlite-backup-artifact-invalid: database-length-mismatch"
 
 
@@ -286,7 +294,12 @@ def test_bytes_changing_during_restore_are_refused_before_install(
 ) -> None:
     backup, manifest = _artifact(tmp_path)
     target = _target(tmp_path)
-    monkeypatch.setattr(restore, "_copy", lambda _source, temporary: (temporary.write_bytes(b"x"), (1, "0" * 64))[1])
+    def changed_copy(_source: Path, temporary: Path, expected_bytes: int) -> str:
+        assert expected_bytes == manifest.database_bytes
+        temporary.write_bytes(b"x")
+        return "0" * 64
+
+    monkeypatch.setattr(restore, "_copy", changed_copy)
     with pytest.raises(LocalStoreError) as caught:
         _install(backup, manifest, target)
     assert str(caught.value) == "sqlite-backup-artifact-invalid: database-changed-during-restore"

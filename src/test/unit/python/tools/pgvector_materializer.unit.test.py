@@ -1,297 +1,196 @@
-"""Binary handoff and failure evidence; Docker/image operations are doubles."""
-
+"""Offline admission and native lifecycle failures, with Docker fully replaced."""
 from __future__ import annotations
 
-import hashlib
-import io
 import json
-from pathlib import Path
-import subprocess
-import sys
-import tarfile
 from unittest.mock import MagicMock, patch
+import subprocess
+from typing import Any
 
 import pytest
 
 import runner_sandbox as materializer
 import test_sandbox_entrypoint as entrypoint
-from runner_pgvector_profile import EXPECTED_VERSION, verify_pgvector_source_facts
-from runner_sandbox_assets import IMAGE_OWNER_LABEL, IMAGE_RECIPE_LABEL, compute_recipe_hash, RUNTIME_SMOKE_SQL
-from test_sandbox_contract import TEST_POSTGRES_IMAGE
+from runner_pgvector_prebuilt import provider_facts
+from runner_pgvector_qualification import qualify
+from runner_pgvector_sandbox import admit_inner
 
 ARGV = ["--suite", "int", "--no-coverage", "--pg-test-profile", "pgvector",
-        "--", "src/test/int/python/example.int.test.py::test_example"]
+        "--", "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py"]
+IMAGE = "sha256:" + "b" * 64
+CONTAINER = "a" * 64
 
 
-@pytest.fixture
-def source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    archive = tmp_path / "source.tar.gz"
-    with tarfile.open(archive, "w:gz") as stream:
-        for name, payload in {
-            "vector.control": f"default_version = '{EXPECTED_VERSION}'".encode(),
-            "LICENSE": b"PostgreSQL",
-            "binary.dat": b"\x00\xff\xfe\x80\n\r\x00" * 40,
-        }.items():
-            info = tarfile.TarInfo(f"pgvector-{EXPECTED_VERSION}/{name}")
-            info.size = len(payload)
-            stream.addfile(info, io.BytesIO(payload))
-    payload = archive.read_bytes()
-    facts = dict(verify_pgvector_source_facts(), archive_bytes=len(payload),
-                 archive_sha256=hashlib.sha256(payload).hexdigest())
-    monkeypatch.setattr(materializer, "verify_pgvector_source_facts", lambda: facts)
-    return archive, payload, facts
+class NativeDouble:
+    """Exercise the real qualifier; replace only external commands."""
+
+    def __init__(self, failure: str = "") -> None:
+        self.failure = failure
+        self.calls: list[tuple[str, list[str]]] = []
+
+    def execute(self, stage: str, command: list[str], *, check: bool = True,
+                timeout: int = 300) -> subprocess.CompletedProcess[str]:
+        self.calls.append((stage, command))
+        assert 0 < timeout <= 300
+        code, out, error = 0, "", ""
+        if stage == "native_create":
+            out = CONTAINER
+            assert "--user" in command and command[command.index("--user") + 1] == "postgres"
+            assert "--network" in command and command[command.index("--network") + 1] == "none"
+            assert "--read-only" in command and "--cap-drop" in command and "--pull=never" in command
+            assert "--mount" not in command and "-p" not in command and "-v" not in command
+        elif stage in {"native_status_before", "native_status_after"}:
+            out = provider_facts()["target_dpkg_status_sha256"] + "  /var/lib/dpkg/status\n"
+            if self.failure == stage:
+                out = "0" * 64
+        elif stage == "native_postgres_version":
+            out = "16.16-1.pgdg13+1"
+        elif stage == "native_libc_version":
+            out = "2.41-12+deb13u4"
+        elif stage == "native_provides":
+            out = "postgresql-16-jit-llvm (= 19), postgresql-contrib-16"
+            if self.failure == stage:
+                out = "postgresql-contrib-16"
+        elif stage == "native_breaks_constraint":
+            code = 0 if self.failure == stage else 1
+        elif stage == "native_extension":
+            out = "16|0.8.7|0|1\n/usr/lib/postgresql/16/lib\n/usr/share/postgresql/16\noff\n"
+            substitutions = {"version": ("0.8.7", "0.8.6"), "major": ("16|", "17|"),
+                "self": ("|0|1", "|0.5|1"), "orthogonal": ("|0|1", "|0|0.9"),
+                "jit": ("off", "on"), "path": ("/usr/lib/postgresql/16/lib", "/wrong")}
+            if self.failure in substitutions:
+                out = out.replace(*substitutions[self.failure])
+            if self.failure in {"load", "symbol", "dependency", "abi", "sql"}:
+                code, error = 1, "synthetic " + self.failure + " failure"
+        elif stage == "native_index_rollback":
+            name = "wrong_index" if self.failure == "index" else "cloe_native_vectors_cosine"
+            out = json.dumps([{"Plan": {"Node Type": "Limit", "Plans": [
+                {"Node Type": "Index Scan", "Index Name": name}]}}])
+            out += "\n" + ("f" if self.failure == "rollback" else "t") + "\n"
+        elif stage == "native_cleanup_readback" and self.failure == stage:
+            out = CONTAINER
+        if self.failure == stage and stage not in {
+            "native_status_before", "native_status_after", "native_provides", "native_breaks_constraint",
+            "native_cleanup_readback",
+        }:
+            code, error = 2, "synthetic command failure"
+        result = subprocess.CompletedProcess(command, code, out, error)
+        if check and code:
+            raise RuntimeError(stage + ": " + error)
+        return result
 
 
-class BuilderDouble:
-    """Fail on unknown operations; perform real stdin transfer and tar extraction."""
-
-    def __init__(self, root: Path, failure: str = "") -> None:
-        self.root, self.failure = root, failure
-        self.commands: list[list[str]] = []
-        self.archive = root / "pgvector.tar.gz"
-        self.installed = False
-        self.dependencies_removed = False
-        self.environment: dict[str, str] = {}
-
-    def run(self, cmd: list[str], **kwargs):
-        self.commands.append(cmd)
-        assert kwargs["check"] is False and kwargs["capture_output"] is True
-        assert 0 < kwargs["timeout"] <= 300
-        self.environment = kwargs["env"]
-
-        def result(code=0, out="", err=""):
-            return subprocess.CompletedProcess(cmd, code, out, err)
-
-        if cmd[:3] == ["docker", "image", "inspect"]:
-            if cmd[3] == TEST_POSTGRES_IMAGE:
-                return result(out=json.dumps([{
-                    "Id": "sha256:" + "a" * 64, "Os": "linux", "Architecture": "amd64",
-                    "RepoDigests": [TEST_POSTGRES_IMAGE],
-                    "Config": {"Entrypoint": ["docker-entrypoint.sh"]},
-                }]))
-            assert self.installed
-            return result(out=json.dumps([{"Id": "sha256:" + "b" * 64,
-                "Os": "linux", "Architecture": "arm64" if self.failure == "architecture" else "amd64",
-                "Config": {"Cmd": ["postgres"], "Entrypoint": ["docker-entrypoint.sh"],
-                           "Labels": {IMAGE_OWNER_LABEL: "true", IMAGE_RECIPE_LABEL: compute_recipe_hash(),
-                                      "org.repomap.test.profile": "pgvector"}}}]))
-        if cmd[1] == "create" and "--user" in cmd:
-            assert self.dependencies_removed
-            assert cmd[cmd.index("--user") + 1] == "postgres"
-            assert cmd[cmd.index("--network") + 1] == "none"
-            assert "--pull=never" in cmd and "sha256:" + "b" * 64 in cmd
-            assert "-p" not in cmd and "-v" not in cmd and "--mount" not in cmd
-            assert "initdb" in cmd[-1] and "exec postgres" in cmd[-1]
-            return result()
-        if cmd[1] in {"create", "start", "stop"}:
-            return result()
-        if cmd[1] == "commit":
-            assert self.installed and self.dependencies_removed
-            return result(out="sha256:" + "b" * 64)
-        if cmd[1] == "logs":
-            return result(err="postgres backend diagnostic: " + self.failure)
-        if cmd[1] == "rm":
-            fail = (self.failure == "extraction_cleanup" or
-                    (self.failure in {"load_cleanup", "runtime_cleanup"} and "runtime-" in cmd[-1]))
-            return result(17, err="remove failed") if fail else result()
-        if cmd[1] == "ps":
-            fail = (self.failure == "extraction_cleanup" or
-                    (self.failure in {"load_cleanup", "runtime_cleanup"} and any("runtime-" in part for part in cmd)))
-            return result(out="remaining-container" if fail else "")
-        assert cmd[1] == "exec", f"unexpected Docker operation: {cmd[1]}"
-        if cmd[3] == "postgres":
-            assert cmd[4].startswith("repomap-pgvector-runtime-")
-            operation = cmd[5:]
-            if operation[0] == "/bin/sh":
-                assert kwargs["timeout"] == 45 and "pg_isready" in operation[-1]
-                if self.failure == "startup_timeout":
-                    raise subprocess.TimeoutExpired(cmd, 45, stderr="readiness deadline exceeded")
-                return result()
-            assert operation[:3] == ["psql", "-X", "-qAt"]
-            assert "ON_ERROR_STOP=1" in operation and operation[-1] == RUNTIME_SMOKE_SQL
-            errors = {"load": "could not load library", "load_cleanup": "undefined symbol: pfree",
-                      "missing_dependency": "libmissing.so: No such file or directory",
-                      "symbol": "undefined symbol: unknown_backend_symbol",
-                      "abi": "incompatible library: version mismatch", "sql": "syntax error"}
-            if self.failure in errors:
-                return result(1, err="ERROR: " + errors[self.failure])
-            outputs = {"version": "16|0.8.6|0|1", "major": "17|0.8.7|0|1", "missing": "",
-                       "self": "16|0.8.7|0.5|1", "orthogonal": "16|0.8.7|0|0.9"}
-            return result(out=outputs.get(self.failure, "16|0.8.7|0|1") + "\n")
-        assert cmd[2:6] == ["--user", "0", "--workdir", "/tmp"]
-        interactive = cmd[6] == "-i"
-        container_index = 7 if interactive else 6
-        assert cmd[container_index].startswith("repomap-pgvector-build-")
-        operation = cmd[container_index + 1:]
-        if operation[0] == "dd":
-            assert interactive and "-t" not in cmd
-            assert operation[1:] == ["of=/tmp/pgvector.tar.gz", "bs=65536"]
-            assert kwargs["text"] is False and isinstance(kwargs["input"], bytes)
-            if self.failure == "transfer":
-                return result(32, b"partial write", b"write failed")
-            # A real child consumes compressed bytes through stdin until EOF.
-            transferred = subprocess.run(
-                [sys.executable, "-c", "import sys; from pathlib import Path; "
-                 "Path(sys.argv[1]).write_bytes(sys.stdin.buffer.read())", str(self.archive)],
-                input=kwargs["input"], capture_output=True, check=False, timeout=5,
-            )
-            if self.failure == "corrupt_transfer":
-                self.archive.write_bytes(self.archive.read_bytes()[:-1])
-            return transferred
-        assert not interactive and kwargs["input"] is None
-        if operation == ["postgres", "--version"]:
-            return result(out="postgres (PostgreSQL) 16.14\n")
-        if operation == ["/usr/local/bin/pg_config", "--version"]:
-            return result(out="PostgreSQL 16.14\n")
-        if operation[0] == "sha256sum":
-            return result(out=hashlib.sha256(self.archive.read_bytes()).hexdigest() + "  /tmp/pgvector.tar.gz\n")
-        if operation[:2] == ["wc", "-c"]:
-            size = self.archive.stat().st_size + (1 if self.failure == "wrong_size" else 0)
-            return result(out=f"{size} /tmp/pgvector.tar.gz\n")
-        if operation[0] == "tar":
-            assert operation == ["tar", "-xzf", "/tmp/pgvector.tar.gz", "-C", "/tmp"]
-            if self.failure.startswith("extraction"):
-                self.archive.unlink()
-            return subprocess.run(["tar", "-xzf", str(self.archive), "-C", str(self.root)],
-                                  capture_output=True, text=True, check=False, timeout=5)
-        if operation[0] == "apk":
-            assert operation[1] in {"add", "info", "del"}
-            if operation[1] == "del":
-                self.dependencies_removed = True
-            return result(out="build-base-1.0" if operation[1] == "info" else "")
-        if operation[0] == "make":
-            assert (self.root / f"pgvector-{EXPECTED_VERSION}" / "binary.dat").is_file()
-            if self.failure == "build":
-                return result(39, err="compiler failed")
-            if operation[-1] == "install":
-                self.installed = True
-            return result()
-        if operation[0] == "ldd":
-            return result(127, out="/lib/ld-musl-aarch64.so.1", err="pfree: symbol not found")
-        if operation[0] in {"test", "rm"}:
-            assert self.installed
-            return result()
-        raise AssertionError(f"unexpected builder operation: {operation}")
+def test_native_success_owns_one_cluster_and_verifies_rollback_cleanup():
+    native = NativeDouble()
+    report = qualify(native.execute, lambda *args, **kwargs: None, IMAGE)
+    assert report["native_lifecycles"] == 1 and report["cleanup_proven"]
+    assert report["production_or_scientific_admission"] is False
+    stages = [stage for stage, _ in native.calls]
+    assert stages.count("native_create") == 1 and stages.count("native_index_rollback") == 1
+    assert stages.count("native_cleanup") == 1 and stages.count("native_cleanup_readback") == 1
+    assert not any("make" in command or "apk" in command or "pull" in command
+                   or "commit" in command for _, command in native.calls)
 
 
-def materialize(source, builder: BuilderDouble, **kwargs):
-    archive, _, _ = source
-    environment = {"REPOMAP_PGVECTOR_ARCHIVE_PATH": str(archive)}
-    return materializer._materialize_inner_pgvector_if_requested(
-        ARGV, environment, runner_fn=builder.run, **kwargs)
+@pytest.mark.parametrize("failure", [
+    "load", "symbol", "dependency", "abi", "sql", "version", "major", "self", "orthogonal",
+    "jit", "path", "index", "rollback", "native_status_before", "native_status_after",
+    "native_postgres_constraint", "native_libc_constraint", "native_breaks_constraint",
+    "native_provides", "native_readiness", "native_cleanup", "native_cleanup_readback", "native_diagnostics",
+])
+def test_native_failure_never_returns_qualified_and_always_attempts_exact_cleanup(failure):
+    native = NativeDouble(failure)
+    with pytest.raises(RuntimeError):
+        qualify(native.execute, lambda *args, **kwargs: None, IMAGE)
+    stages = [stage for stage, _ in native.calls]
+    assert stages.count("native_create") == 1
+    assert "native_cleanup" in stages and "native_cleanup_readback" in stages
 
 
-def events(output: str):
-    return [json.loads(line) for line in output.splitlines() if line.startswith("{")]
-
-
-def test_verified_binary_snapshot_reaches_extractor_even_if_source_path_changes(
-    source, tmp_path: Path, capsys: pytest.CaptureFixture[str],
-) -> None:
-    archive, payload, facts = source
-    builder = BuilderDouble(tmp_path)
-
-    def verify_then_change_path(data: bytes, expected: dict[str, object]) -> None:
-        materializer._verify_source_archive(data, expected)
-        archive.write_bytes(b"changed after verification")
-
-    report = materialize(source, builder, archive_verifier_fn=verify_then_change_path)
-    assert report is not None and report["setup_cleanup"]["verified"]
-    assert builder.archive.read_bytes() == payload
-    assert (tmp_path / f"pgvector-{EXPECTED_VERSION}" / "binary.dat").read_bytes() == b"\x00\xff\xfe\x80\n\r\x00" * 40
-    verified = [e for e in events(capsys.readouterr().out)
-                if e.get("stage") == "archive_destination_verification" and e.get("verified")]
-    assert verified[0]["archive_sha256"] == facts["archive_sha256"]
-    assert verified[0]["archive_bytes"] == len(payload)
-    assert all(cmd[1] != "cp" for cmd in builder.commands)
-    assert report["image_built"] and report["server_loaded"] and report["smoke_passed"]
-    assert report["resulting_engine_id"] == builder.environment["REPOMAP_TEST_PG_IMAGE"]
-    assert not any("ldd" in cmd for cmd in builder.commands)
-
-
-@pytest.mark.parametrize("failure", ["load", "missing_dependency", "symbol", "abi", "sql",
-                                   "version", "major", "missing", "self", "orthogonal", "startup_timeout",
-                                   "architecture", "load_cleanup", "runtime_cleanup"])
-def test_final_image_runtime_failure_blocks_publication_and_preserves_diagnostics(
-    source, tmp_path: Path, capsys: pytest.CaptureFixture[str], failure: str,
-) -> None:
-    builder = BuilderDouble(tmp_path, failure)
-    with pytest.raises(RuntimeError) as error:
-        materialize(source, builder)
-    assert "REPOMAP_TEST_PG_IMAGE" not in builder.environment
-    assert any(cmd[1] == "commit" for cmd in builder.commands)
-    evidence = events(capsys.readouterr().out)
-    assert any(e.get("image_built") for e in evidence)
-    assert not any(e.get("pgvector_setup") == "materialized" for e in evidence)
-    if failure == "architecture":
-        assert not any(cmd[1] == "logs" for cmd in builder.commands)
-        assert "platform" in str(error.value)
-    else:
-        assert any(e.get("stage") == "runtime_server_diagnostics"
-                   and failure in e.get("stderr", "") for e in evidence)
-        assert any(e.get("stage") == "runtime_cleanup" for e in evidence)
-    if failure == "load_cleanup":
-        assert "undefined symbol: pfree" in str(error.value)
-        assert "runtime diagnostics/cleanup also failed" in error.value.__notes__[0]
-
-
-@pytest.mark.parametrize("failure", ["transfer", "corrupt_transfer", "wrong_size", "extraction", "extraction_cleanup", "build"])
-def test_setup_failure_preserves_diagnostics_and_prevents_commit(
-    source, tmp_path: Path, capsys: pytest.CaptureFixture[str], failure: str,
-) -> None:
-    builder = BuilderDouble(tmp_path, failure)
-    with pytest.raises(RuntimeError) as error:
-        materialize(source, builder)
-    if failure.startswith("extraction"):
-        assert "archive_extraction" in str(error.value)
-        assert "status=" in str(error.value) and "stderr=" in str(error.value)
-    evidence = events(capsys.readouterr().out)
-    assert any(e.get("stage") == "source_verification" and e["status"] == "completed" for e in evidence)
-    assert any(e.get("postgres_abi") == "16" for e in evidence)
-    assert not any(cmd[1] == "commit" for cmd in builder.commands)
-    assert any(cmd[1] == "rm" for cmd in builder.commands)
-    assert any(cmd[1] == "ps" for cmd in builder.commands)
-    if failure != "build":
-        assert not any("make" in cmd or "apk" in cmd for cmd in builder.commands)
-    if failure in {"transfer", "corrupt_transfer", "wrong_size"}:
-        assert not (tmp_path / f"pgvector-{EXPECTED_VERSION}" / "binary.dat").exists()
-    if failure == "extraction_cleanup":
-        assert any(e.get("stage") == "cleanup" and e["status"] == "failed" for e in evidence)
-        assert evidence[-1]["stage"] == "archive_extraction"
-        assert "cleanup failed" in error.value.__notes__[0]
-    else:
-        assert any(e.get("stage") == "cleanup" and e.get("verified") for e in evidence)
-
-
-@pytest.mark.parametrize("failure", ["length", "digest", "metadata"])
-def test_invalid_source_never_creates_builder(source, tmp_path: Path, failure: str) -> None:
-    archive, payload, facts = source
-    if failure == "length":
-        archive.write_bytes(payload[:-1])
-    elif failure == "digest":
-        archive.write_bytes(b"x" + payload[1:])
-    else:
-        invalid = b"not a gzip archive"
-        archive.write_bytes(invalid)
-        facts.update(archive_bytes=len(invalid), archive_sha256=hashlib.sha256(invalid).hexdigest())
-    builder = BuilderDouble(tmp_path)
-    with pytest.raises((RuntimeError, tarfile.ReadError)):
-        materialize(source, builder)
-    assert [cmd[1] for cmd in builder.commands] == ["image"]
-
-
-def test_core_never_acquires_or_builds_pgvector() -> None:
-    with patch.object(materializer, "verify_pgvector_source_facts") as facts, \
-         patch.object(materializer, "_resolve_cached_source_archive") as acquire, \
+def test_core_never_acquires_or_admits_a_provider():
+    with patch.object(materializer, "admit_inner") as admit, \
          patch.object(materializer.subprocess, "run") as command:
         assert materializer._materialize_inner_pgvector_if_requested(
             ["--suite", "int", "--no-coverage", "--", "test.py"], {}) is None
-    facts.assert_not_called()
-    acquire.assert_not_called()
+    admit.assert_not_called()
     command.assert_not_called()
 
 
-def test_setup_diagnostics_bound_redact_and_preserve_timeout(capsys: pytest.CaptureFixture[str]) -> None:
+def test_body_role_uses_body_admission_without_automatic_qualification(monkeypatch):
+    from retrieval_body_study_contracts import BODY_SELECTOR
+    import runner_body_study_sandbox as body_sandbox
+    calls = []
+    monkeypatch.setattr("runner_pgvector_context.load_inner_plan", lambda _env: {"role": "body-study"})
+    def body_admission(argv, environment, execute):
+        calls.append((tuple(argv), environment, execute))
+        return {"pgvector_setup": "synthetic-body-admission", "automatic_native_lifecycles": 0}
+    monkeypatch.setattr(body_sandbox, "admit_body_study_inner", body_admission)
+    forbidden = MagicMock(side_effect=AssertionError("no legacy automatic qualification"))
+    monkeypatch.setattr(materializer, "admit_inner", forbidden)
+    monkeypatch.setattr(materializer, "admit_study_inner", forbidden)
+    argv = [*ARGV[:-1], "-s", BODY_SELECTOR]
+    report = materializer._materialize_inner_pgvector_if_requested(argv, {}, runner_fn=forbidden)
+    assert len(calls) == 1 and calls[0][0] == tuple(argv)
+    assert report == {"pgvector_setup": "synthetic-body-admission", "automatic_native_lifecycles": 0}
+    forbidden.assert_not_called()
+
+
+def test_legacy_source_hook_does_not_reactivate_the_retired_compiler():
+    commands = MagicMock()
+    with pytest.raises(RuntimeError, match="retired"):
+        materializer._materialize_inner_pgvector_if_requested(
+            ARGV, {}, runner_fn=commands, archive_verifier_fn=lambda *args: None)
+    commands.assert_not_called()
+
+
+def test_import_admission_does_not_start_an_automatic_smoke_cluster(monkeypatch):
+    config: dict[str, Any] = {"rootfs": {"diff_ids": ["sha256:" + "c" * 64]},
+        "config": {"Labels": {"owner": "synthetic"}, "Entrypoint": ["synthetic-entry"]}}
+    plan = {"role": "native", "derived": {"runtime_config": IMAGE, "runtime_config_document": config}}
+    observed = {"Id": IMAGE, "Os": "linux", "Architecture": "arm64",
+        "RootFS": {"Layers": config["rootfs"]["diff_ids"]},
+        "Config": {"Cmd": ["postgres"], **config["config"]}}
+    monkeypatch.setattr("runner_pgvector_sandbox.inner_plan", lambda *args: plan)
+    calls: list[list[str]] = []
+    def execute(stage, command):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, json.dumps([observed]), "")
+    environment: dict[str, str] = {}
+    report = admit_inner(ARGV, environment, execute)
+    assert report["automatic_native_lifecycles"] == 0 and report["image_built"] is False
+    assert environment["REPOMAP_TEST_PG_IMAGE"] == IMAGE
+    assert environment["REPOMAP_TEST_PG_PROFILE"] == "pgvector"
+    assert [command[1:3] for command in calls] == [["image", "inspect"]]
+
+
+@pytest.mark.parametrize("mutation", ["architecture", "diffids", "labels", "entrypoint"])
+def test_import_identity_failure_does_not_publish_environment(monkeypatch, mutation):
+    config: dict[str, Any] = {"rootfs": {"diff_ids": ["sha256:" + "c" * 64]},
+              "config": {"Labels": {"owner": "synthetic"}, "Entrypoint": ["synthetic-entry"]}}
+    plan = {"role": "native", "derived": {"runtime_config": IMAGE, "runtime_config_document": config}}
+    observed: dict[str, Any] = {"Id": IMAGE, "Os": "linux", "Architecture": "arm64",
+                "RootFS": {"Layers": config["rootfs"]["diff_ids"]},
+                "Config": {"Cmd": ["postgres"], **config["config"]}}
+    if mutation == "architecture":
+        observed["Architecture"] = "amd64"
+    elif mutation == "diffids":
+        observed["RootFS"] = {"Layers": []}
+    elif mutation == "labels":
+        observed["Config"] = dict(observed["Config"], Labels={})
+    else:
+        observed["Config"] = dict(observed["Config"], Entrypoint=[])
+    monkeypatch.setattr("runner_pgvector_sandbox.inner_plan", lambda *args: plan)
+    calls: list[list[str]] = []
+    def execute(stage, command):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, json.dumps([observed]), "")
+    env: dict[str, str] = {}
+    with pytest.raises(RuntimeError):
+        admit_inner(ARGV, env, execute)
+    assert "REPOMAP_TEST_PG_IMAGE" not in env and "REPOMAP_TEST_PG_PROFILE" not in env
+    assert len(calls) == 1 and calls[0][1:3] == ["image", "inspect"]
+
+
+def test_setup_diagnostics_bound_redact_and_preserve_timeout(capsys):
     token = "test-private-token"
     def timeout(*args, **kwargs):
         raise subprocess.TimeoutExpired(args[0], 300, output=b"out\xff", stderr=(
@@ -301,14 +200,13 @@ def test_setup_diagnostics_bound_redact_and_preserve_timeout(capsys: pytest.Capt
         setup.execute("archive_transfer", ["docker", "exec"], payload=b"\x00\xff")
     output = capsys.readouterr().out
     assert token not in output and "/Users/example" not in output
-    event = events(output)[-1]
+    event = [json.loads(line) for line in output.splitlines() if line.startswith("{")][-1]
     assert event["returncode"] == 124 and event["output_truncated"]
     assert len(event["stderr"]) == 4096 and event["stderr_bytes"] > 4096
 
 
 @pytest.mark.parametrize("cleanup_failed", [False, True])
-@pytest.mark.parametrize("setup_error", ["archive_extraction failed", "runtime_smoke LOAD failed"])
-def test_entrypoint_never_launches_tests_after_materializer_failure(cleanup_failed: bool, setup_error: str) -> None:
+def test_entrypoint_never_launches_tests_after_admission_failure(cleanup_failed):
     daemon = MagicMock()
     daemon.poll.return_value = None
     if cleanup_failed:
@@ -317,13 +215,10 @@ def test_entrypoint_never_launches_tests_after_materializer_failure(cleanup_fail
          patch("pathlib.Path.exists", return_value=True), \
          patch.object(entrypoint, "_test_environment", return_value={}), \
          patch.object(entrypoint, "_materialize_inner_pgvector_if_requested",
-                      side_effect=RuntimeError(setup_error)), \
-         pytest.raises(RuntimeError, match=setup_error) as error:
+                      side_effect=RuntimeError("offline identity failed")), \
+         pytest.raises(RuntimeError, match="offline identity failed") as error:
         entrypoint.main(["--docker-group", "0", "--", *ARGV])
     assert launch.call_count == 1
-    assert launch.call_args.args[0][0] == "dockerd"
     daemon.terminate.assert_called_once()
     if cleanup_failed:
         assert "cleanup also failed" in error.value.__notes__[0]
-    else:
-        daemon.wait.assert_called_once_with(timeout=5)

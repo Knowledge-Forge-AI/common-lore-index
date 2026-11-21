@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Iterator, Sequence
+import heapq
 import json
 import os
 from pathlib import Path
@@ -47,6 +48,13 @@ class _ArtifactTracker:
             )
         self._sizes[path] = byte_count
         self._publish()
+
+    def size_of(self, path: Path) -> int:
+        if path not in self._sizes:
+            raise ExternalRowSortError(
+                "external structural digest artifact state is invalid"
+            )
+        return self._sizes[path]
 
     def remove(self, path: Path) -> None:
         self._sizes.pop(path, None)
@@ -186,3 +194,27 @@ def _iter_encoded_run(
         raise ExternalRowSortError(
             "external structural digest run is unavailable"
         ) from error
+
+
+def consolidate_run_tail(
+    paths: list[Path],
+    fan_in: int,
+    size_of: Callable[[Path], int],
+    merge: Callable[[list[Path]], Path],
+) -> list[Path]:
+    """Merge lightest runs until the final read fits a validated fan-in."""
+    if len(paths) <= fan_in:
+        return paths
+    heap = [(size_of(path), order, path) for order, path in enumerate(paths)]
+    heapq.heapify(heap)
+    next_order = len(heap)
+    # Each merge of k runs removes k-1 entries. Adjust the first merge so
+    # final iteration opens exactly fan_in runs without another rewrite.
+    arity = 2 + (len(heap) - 2) % (fan_in - 1)
+    while len(heap) > fan_in:
+        inputs = [heapq.heappop(heap)[2] for _ in range(arity)]
+        output = merge(inputs)
+        heapq.heappush(heap, (size_of(output), next_order, output))
+        next_order += 1
+        arity = fan_in
+    return [path for _, _, path in sorted(heap, key=lambda entry: entry[1])]

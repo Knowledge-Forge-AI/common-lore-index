@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -359,3 +361,33 @@ def test_builder_accepts_empty_packet_when_reserved_optional_ceiling_is_conserva
     assert result["omission_counts"]["output_budget"] == 10
     raw = serialize_compact_json(result)
     assert result["work_ledger"]["actual_bytes"] == len(raw) <= budget
+
+
+def test_trial_admission_uses_single_encode_reservation_and_preserves_inputs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    packet = _skeleton(16384)
+    packet["freshness"]["state"] = "checked"
+    seeds = [_item(f"py:budget.Seed{i}_Δ🚀\t\"k\"") for i in range(4)]
+    nbr = _item("py:budget.Neighbor_λ", role="neighbor")
+    rels = [_relation(seeds[0]["canonical_key"], nbr["canonical_key"])]
+    seeds_before, nbr_before, rels_before = copy.deepcopy(seeds), copy.deepcopy(nbr), copy.deepcopy(rels)
+    real_dumps, calls = json.dumps, 0
+
+    def counting_dumps(*args: Any, **kwargs: Any) -> str:
+        nonlocal calls
+        calls += 1
+        return real_dumps(*args, **kwargs)
+
+    monkeypatch.setattr(json, "dumps", counting_dumps)
+    assert packet_size_with_reservation(packet) > 0 and calls == 1
+    calls = 0
+    assert empty_packet_size_with_reservation(packet) > 0 and calls == 1
+    calls = 0
+    admit_items_and_relations(
+        packet, candidate_seeds=seeds, total_post_offset_seeds=4, top_tied_keys=frozenset(),
+        neighbor_units=[(nbr, rels)], extra_relations=(), omissions=OmissionCounter(), budget_bytes=16384,
+    )
+    assert calls <= 12  # 5 fitting trials * 2 encodes + final skeleton compaction
+    assert (seeds, nbr, rels) == (seeds_before, nbr_before, rels_before)
+    assert len(packet["items"]) == 4 and len(packet["neighbors"]) == 1 and len(packet["relations"]) == 1

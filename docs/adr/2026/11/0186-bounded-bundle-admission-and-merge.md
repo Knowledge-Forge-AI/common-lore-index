@@ -36,8 +36,7 @@ Use a private fixed merge fan-in of 32. Refuse a non-integer or value below two
 before acquiring IO, so an internal invalid value cannot prevent progress.
 Initial runs are registered before
 writing. A full level compacts into one run on the next level; carry repeatedly
-as needed. At input end, promote/compact the lowest nonempty levels until at
-most 32 runs remain, then stream the final merge. Preserve canonical line bytes,
+as needed. At input end, use the final consolidation below and stream the final merge. Preserve canonical line bytes,
 duplicates and order, and therefore descriptor/family checksums and bundle IDs.
 Initial spill_run_count and spill_bytes keep their existing ingress meanings;
 rewrite IO is not silently included or claimed absent.
@@ -55,6 +54,28 @@ until a raw owner exists, then raw custody until verifier transfer. Preserve
 safe read-error mapping and current factory/identity seams. The existing
 verification context's close-error precedence is unchanged. No asynchronous,
 hostile replacement or fdopen-internal-close/reused-fd guarantee is added.
+
+## Final consolidation amendment
+
+Carry compaction still consumes a full level during admission. At input end,
+use the same byte-weighted final consolidation as the structural digest
+sorter. Each successful spill records its written byte count in the run's
+owned inventory. If the remaining forest exceeds the fan-in, merge its
+lightest runs and stop as soon as the final read fits. For n inputs and fan-in
+k, the first consolidation has arity 2 + (n - 2) % (k - 1), then at most k.
+Ties follow input-list order, with a new order for each output. The final
+read contributes no rewrite bytes. Run and directory ownership, initial
+spill metrics, canonical output and admitted-record limits stay authoritative.
+
+Prepared row admission precedes this sorter. Its in-memory per-family
+threshold now also counts UTF-8 compact JSONL bytes, with equality admitted.
+A crossing row triggers the existing spill path before fetching another
+row. The threshold selects storage for the private row sequence, while the
+existing prepared spool observer and bundle bounds continue to govern
+spilled data. The threshold measures encoded payload. Process memory also includes
+row objects and transient serialization. Both storage paths produce
+identical checksums and publication bytes for admitted rows. An earlier spool write, observer refusal or cancellation can precede
+a failure in a later input row.
 
 ## Refusal ordering and scope
 

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Generator, Iterable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 import json
 import math
@@ -13,6 +14,9 @@ from typing import Any, get_args, get_origin, get_type_hints
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
+from common_lore_index.storage._staged_refresh_custody import settle_owned_cleanup
+from common_lore_index.storage.errors import StorageSchemaError
+from common_lore_index.storage.row_spool import RowSpool
 from common_lore_index.storage.staging_family_contracts import (
     STAGING_FAMILY_DESCRIPTORS,
     StageFamilyDescriptor,
@@ -148,6 +152,47 @@ def copy_stage_rows(
                 )
                 row_count += 1
     return CopyTransferResult(table.family, row_count)
+
+
+@contextmanager
+def _prepared_copy_rows(
+    rows: Iterable[dict[str, object]], expected_count: int | None,
+) -> Iterator[Iterable[Mapping[str, object]]]:
+    """Limit one prepared replay and settle the owned spool reader after COPY."""
+    if type(expected_count) is not int or expected_count < 0:
+        raise StorageSchemaError("staged family completeness failed")
+    spool = rows if isinstance(rows, RowSpool) else None
+    reader = spool.__iter__() if spool is not None else None
+    bounded = _rows_with_prepared_count(rows if reader is None else reader, expected_count)
+    primary: BaseException | None = None
+    try:
+        yield bounded
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        settle_owned_cleanup(
+            primary,
+            (
+                ("prepared COPY view close", bounded.close),
+                ("prepared spool reader close", reader.close) if reader is not None else None,
+            ),
+        )
+    if spool is not None:
+        spool.close()
+
+
+def _rows_with_prepared_count(
+    rows: Iterable[dict[str, object]], expected_count: int,
+) -> Generator[Mapping[str, object], None, None]:
+    remaining = expected_count
+    for row in rows:
+        if remaining <= 0:
+            raise StorageSchemaError("staged family completeness failed")
+        yield row
+        remaining -= 1
+    if remaining != 0:
+        raise StorageSchemaError("staged family completeness failed")
 
 
 def _copy_column_type(annotation: object) -> str:

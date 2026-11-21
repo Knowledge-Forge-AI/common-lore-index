@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from common_lore_index.artifacts import _store_metered as metered
 from common_lore_index.artifacts._sealing_meter import SealingMeter
 from common_lore_index.artifacts.sealing_governance import SealingBudget, SealingBudgetExceeded
 from common_lore_index.artifacts.store import ArtifactIntegrityError, FileSystemArtifactStore
@@ -107,3 +108,59 @@ def test_metered_public_store_retains_exact_bytes_reference_and_operation_counts
     assert snapshot.read_bytes == (2 if collision else 1) * len(payload)
     assert snapshot.write_bytes == len(payload)
     assert tuple((store.root / "temporary").iterdir()) == ()
+
+
+@pytest.mark.parametrize("fail_read", (False, True), ids=("close", "read-and-close"))
+def test_metered_collision_fault_closes_both_readers_and_keeps_incumbent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fail_read: bool,
+) -> None:
+    store = FileSystemArtifactStore(tmp_path / "store")
+    payload = b"accepted payload"
+    accepted = store.put(payload)
+    target = store.object_path(accepted)
+    before = store_state(store.root)
+    witness = DescriptorWitness(monkeypatch)
+    read = metered.metered_read
+    primary = OSError("comparison read witness")
+    secondary = OSError("comparison close witness")
+    readers: dict[str, int] = {}
+    temporary_reads: list[bytes] = []
+
+    def opened(meter: SealingMeter, path: Path, flags: int) -> int:
+        descriptor = witness.open(meter, path, flags)
+        if path == target:
+            role = "incumbent"
+        else:
+            assert path.parent == store.root / "temporary"
+            role = "temporary"
+            witness.close_faults[descriptor] = (secondary, True)
+        assert role not in readers
+        readers[role] = descriptor
+        return descriptor
+
+    def observed_read(meter: SealingMeter, label: str, descriptor: int, length: int) -> bytes:
+        data = read(meter, label, descriptor, length)
+        if descriptor == readers.get("temporary") and data:
+            temporary_reads.append(data)
+            if fail_read:
+                raise primary
+        return data
+
+    monkeypatch.setattr(metered, "metered_open", opened)
+    monkeypatch.setattr(metered, "metered_read", observed_read)
+    category = "artifact read failed" if fail_read else "artifact publication failed"
+    try:
+        with pytest.raises(ArtifactIntegrityError, match=category) as raised:
+            store.put(payload, io_meter=SealingMeter(None, governed=False))
+        assert raised.value.__cause__ is (primary if fail_read else secondary)
+        assert readers.keys() == {"incumbent", "temporary"}
+        assert sorted(witness.close_attempts) == sorted(readers.values())
+        assert witness.live() == []
+        assert temporary_reads
+        assert store_state(store.root) == before
+        assert tuple((store.root / "temporary").iterdir()) == ()
+    finally:
+        witness.release_witnesses()
+    monkeypatch.undo()
+    assert store.read(accepted) == payload
+    assert store.put(payload, io_meter=SealingMeter(None, governed=False)) == accepted

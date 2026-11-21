@@ -86,11 +86,13 @@ def _archive_included_file(
     file_path: Path,
     byte_length: int,
 ) -> ArchiveIncludedFile:
+    with file_path.open("rb") as source:
+        digest = hashlib.file_digest(source, "sha256").hexdigest()
     return ArchiveIncludedFile(
         relative_path=file_path.relative_to(artifact_root).as_posix(),
         repository_path=file_path.relative_to(root).as_posix(),
         byte_length=byte_length,
-        sha256=hashlib.sha256(file_path.read_bytes()).hexdigest(),
+        sha256=digest,
         extractor_route=_archive_extractor_route(file_path),
         media_type=_archive_media_type(file_path),
     )

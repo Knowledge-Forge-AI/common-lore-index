@@ -1,0 +1,39 @@
+{
+  "approval": {
+    "adr_sha256": "8c8033862dd9a24728b85bc23c798f5fc5e16b4c49aa51399879b052cb14ebcf",
+    "operator_request": "Proceed with roadmap to next milestone and repair the repository-owned staging timeout.",
+    "phase": "CLOE-W5-SUPPLEMENT-ANALYSIS1",
+    "schema": "cloe-ci153-approval-v1",
+    "scope": "Retained W5 descriptive analysis and strict public240-minute outer envelope, scoped proof and independent review, then one normal staging synchronize campaign. No new dependency, runner cohort, model/study, scientific acceptance, main/tag/release or inner deadline change.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 59,
+    "attempt": 1,
+    "component_runtime_executions": 30,
+    "native_report_sha256": "4379bdb72d7fc7073c418caef00ea4ded43d9e5e675cbc726977e54dd0f2dfd5",
+    "preceding_campaign": 152,
+    "previous_rust_downloads": 2,
+    "rust_qualifier_entries": 31,
+    "rust_report_sha256": "67a38e69afbcca72629d03c6792943352a65f81988c5577484825d6f299a22c4",
+    "schema": "cloe-ci153-ledger-before-v1",
+    "system_report_sha256": "9d76dfbfc397cbbbc19a0160b10f36b4800ebb956697d51d5ba4541f0a0a879e",
+    "wheel_transfers": 62
+  },
+  "reservation": {
+    "application_start": 60,
+    "approval_sha256": "11ee4104ab836f96f93f8636f0f3cd0ce218490e38dee7e43b4f936c2389e474",
+    "component_runtime_cumulative": 31,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "b5c327f390f8f8a0bac5e13c9f83a2a181a661d735137afad3386c044de3b34e",
+    "nonce": "c3f283c54e08074beb44f7dc3a6a2034",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 32,
+    "schema": "cloe-ci153-reservation-v1",
+    "wheel_transfers_cumulative": 64,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 153
+  }
+}

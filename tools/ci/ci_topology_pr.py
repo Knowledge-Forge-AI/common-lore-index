@@ -379,12 +379,13 @@ def _check_global(
             violations.append(f"{workflow.path.name}: workflows must consume no secrets")
         if "continue-on-error" in workflow_text:
             violations.append(f"{workflow.path.name}: continue-on-error is forbidden")
-    if runner_uses != 4:
+    split = any("staging-integration-parts" in workflow.jobs for workflow in workflows)
+    if runner_uses != (3 if split else 4):
         violations.append(
-            f"the canonical test runner must appear exactly four times across all workflows, found {runner_uses}"
+            f"the canonical test runner count differs from the topology, found {runner_uses}"
         )
-    if staging_uses != 1:
-        violations.append(f"the staging project-owned command must appear exactly once, found {staging_uses}")
+    if staging_uses != (0 if split else 1):
+        violations.append(f"the staging project-owned command count differs from the topology, found {staging_uses}")
     if system_uses != 1:
         violations.append(f"the system project-owned command must appear exactly once, found {system_uses}")
     if retired_all_uses:

@@ -1,0 +1,40 @@
+{
+  "approval": {
+    "operator_request": "Proceed with synthetic dry run, do one one product feature sprint then publish to public staging/ci",
+    "phase": "CLOE-W5-DRY-W7-WINDOW1",
+    "schema": "cloe-ci163-approval-v1",
+    "scope": "One staging synchronize on the existing draft PR 27 for W5 synthetic controller proof and the W7 Local navigation evidence-window milestone.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 69,
+    "attempt": 1,
+    "component_runtime_executions": 39,
+    "native_report_sha256": "550b54699d38a8491ed48913d58ff681d3525b87ec0e4723eb1a1f8bfd24e866",
+    "preceding_campaign": 162,
+    "previous_rust_downloads": 2,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 41,
+    "rust_report_sha256": "0258984df36bad4ca029aca639067f6ee5011d9046599e47aa0697cf3dac7328",
+    "schema": "cloe-ci163-ledger-before-v1",
+    "staging_report_sha256": "d386f6f4b76b2a134afa4785d360d4f97bc8a34d03c187dcb5c0811dd9e627d5",
+    "system_report_sha256": "be4e7e790244e2328f3deb0fed53f16e359f07fc362888c24d3426c059bddc0e",
+    "wheel_transfers": 80
+  },
+  "reservation": {
+    "application_start": 70,
+    "approval_sha256": "2a813b302000a2de875a88dbe0f8bd0571cd7eca1af79eb7f52f5b9b1339eb94",
+    "component_runtime_cumulative": 40,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "d3a3a651df1a06b1ae57367dbd2c69df6c428d159edf343f5e3684a53fb8bc06",
+    "nonce": "527f0f1e4bd4357401783a780ab2288c",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 42,
+    "schema": "cloe-ci163-reservation-v1",
+    "wheel_transfers_cumulative": 82,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 163
+  }
+}

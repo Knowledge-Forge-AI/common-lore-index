@@ -1,0 +1,40 @@
+{
+  "approval": {
+    "operator_request": "CI failed. Try again.",
+    "phase": "CLOE-CI160-UNIT1",
+    "schema": "cloe-ci161-approval-v1",
+    "scope": "One staging synchronize on draft PR 27 for the three confirmed CI160 unit assertion repairs. Preserve the split gate, Server report v3, and existing candidate and coverage gates.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 67,
+    "attempt": 1,
+    "component_runtime_executions": 37,
+    "native_report_sha256": "5947e83927ab925396ed60ef243f581d02f7c222b9a179057b2f97320bb13e5f",
+    "preceding_campaign": 160,
+    "previous_rust_downloads": 2,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 39,
+    "rust_report_sha256": "c9fb19ac7fdaf298707690414545dcd44203386ca82f6f27289516d582fc2651",
+    "schema": "cloe-ci161-ledger-before-v1",
+    "staging_report_sha256": "0eb003312459c6215513546d22ce21f8ef74dd1b22e22e958a8c7cf58308a502",
+    "system_report_sha256": "c691523ac4979c5a1528fc064f1a3ecd1328553f88df1da644b5e6831e594e67",
+    "wheel_transfers": 76
+  },
+  "reservation": {
+    "application_start": 68,
+    "approval_sha256": "ca602d240db26c29495637f7711477d2bbda3085adbea242b48c2ed272c5ab61",
+    "component_runtime_cumulative": 38,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "d7ce09423420f3801ce3f4929c298f5c5b0c7804a993d34f2b8831f6dabead72",
+    "nonce": "65c36479549a52f7c7d02c309b883510",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 40,
+    "schema": "cloe-ci161-reservation-v1",
+    "wheel_transfers_cumulative": 78,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 161
+  }
+}

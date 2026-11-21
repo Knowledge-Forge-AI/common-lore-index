@@ -178,9 +178,9 @@ def test_owner_imports_the_support_lazily_through_the_canonical_tools_path_only(
     assert ast.unparse(_owner_test().body[0]) == "import d12_dependency_preflight as inner"
     imported = {a.name for n in ast.walk(support_tree) if isinstance(n, ast.Import) for a in n.names}
     imported |= {str(n.module) for n in ast.walk(support_tree) if isinstance(n, ast.ImportFrom)}
-    allowed = {
-        "d12_libpq_runtime_probe", "d12_native_python_observer", "d12_python_closure", "native_apt_prerequisites",
-        "common_lore_index.runtime.release", "repomap_test_support", "repomap_test_support.d12_core_image", "__future__"}
+    allowed = {"d12_libpq_runtime_probe", "d12_native_python_observer", "d12_python_closure", "native_apt_prerequisites",
+               "common_lore_index.runtime.release", "common_lore_index.runtime.release_dockerfile", "common_lore_index.runtime.release_manifest",
+               "repomap_test_support", "repomap_test_support.d12_core_image", "__future__"}
     assert {name for name in imported if name.split(".")[0] not in sys.stdlib_module_names} <= allowed, imported
     assert "sys.path" not in ast.unparse(support_tree) and "sys.path" not in OWNER.read_text(encoding="utf-8")
     assert dynamic_operations(owner_tree) == [] and dynamic_operations(support_tree) == []

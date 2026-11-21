@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import sqlite3
 import time
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -23,7 +24,12 @@ from common_lore_index.retrieval.context_assembly import build_compact_context
 from common_lore_index.retrieval.context_contracts import ContextRequest
 from common_lore_index.retrieval.context_work import WorkLedger
 from common_lore_index.storage import apply_migrations, default_rdbms_root
+from common_lore_index.storage import staging_resource_observability as staging_resources
 from common_lore_index.storage.sqlite_local import publisher
+from common_lore_index.storage.staging_observability import (
+    StagingMeasurementAvailability, StagingMeasurementCategory, StagingMeasurementEvent,
+    StagingMeasurements,
+)
 from repomap_test_support.context_fixture import (
     BINDING_CORE, BINDING_DOCS, CTX_GRAPH_ID, build_sqlite_context_fixture,
 )
@@ -125,8 +131,8 @@ def test_local_survives_caller_poisoned_unsupported_begin(tmp_path: Path) -> Non
     _private(payload)
 
 
-@pytest.mark.parametrize("error_type", [KeyboardInterrupt, SystemExit])
-def test_server_finish_interrupt_propagates_after_accepted_commit_without_relabeling(
+@pytest.mark.parametrize("error_type", [KeyboardInterrupt, SystemExit, ValueError])
+def test_server_finish_fault_preserves_accepted_commit(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error_type: type[BaseException],
 ) -> None:
     working = materialize_mixed_v1_working_copy(tmp_path / "working")
@@ -155,19 +161,69 @@ def test_server_finish_interrupt_propagates_after_accepted_commit_without_relabe
 
         monkeypatch.setattr(portable_refresh, "run_staged_portable_refresh", record_commit)
         observer = ResourceObserver(_monotonic_ns=clock)
-        with pytest.raises(error_type) as caught:
-            refresh_graph(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command,
-                          resource_observer=observer)
-        assert caught.value is error
+        if isinstance(error, Exception):
+            result = refresh_graph(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command,
+                                   resource_observer=observer)
+            assert result.result == "success" and result.publication_state == "committed"
+            assert committed == [result.run_id]
+        else:
+            with pytest.raises(error_type) as caught:
+                refresh_graph(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command,
+                              resource_observer=observer)
+            assert caught.value is error
         assert len(committed) == 1
         accepted = query_graph_summary(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command)
         assert accepted.result == "success" and accepted.latest_run_status == "complete"
         assert accepted.latest_run_id == committed[0]
         payload: dict[str, Any] = observer.report().to_payload()
-        assert payload["outcome"] == "not_recorded" and payload["instrumentation"] == "incomplete"
-        publication = next(row for row in payload["metrics"] if row["name"] == "publication_elapsed")
-        assert publication["value"] is None and publication["reason"] == "not_reached"
+        assert payload["outcome"] == "not_recorded"
+        if isinstance(error, Exception):
+            assert payload["instrumentation"] == "degraded"
+            assert all(row["value"] is None for row in payload["metrics"])
+            assert all(row["applies_this_call"] is None for row in payload["limits"])
+        else:
+            assert payload["instrumentation"] == "incomplete"
+            publication = next(row for row in payload["metrics"] if row["name"] == "publication_elapsed")
+            assert publication["value"] is None and publication["reason"] == "not_reached"
         _private(payload)
+
+
+def test_staging_client_rss_error_keeps_committed_publication(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    working = materialize_mixed_v1_working_copy(tmp_path / "working")
+    events: list[StagingMeasurementEvent] = []
+    attempts: list[int] = []
+
+    def unavailable(who: int) -> None:
+        attempts.append(who)
+        raise OSError("private-rss-detail")
+
+    subject = staging_resources.resource.RUSAGE_SELF
+    monkeypatch.setattr(staging_resources, "resource", SimpleNamespace(RUSAGE_SELF=subject, getrusage=unavailable))
+    with temporary_postgres() as postgres:
+        home = write_mixed_v1_postgres_home(
+            tmp_path / "home", working, host=postgres.host, port=postgres.port,
+            database=postgres.database, user=postgres.user, password=postgres.password,
+        )
+        config = load_graph_registry_config_home(home)
+        assert isinstance(config, OpsConfig)
+        apply_migrations(
+            default_rdbms_root(), config.postgres.psql_args_for_database(postgres.database),
+            psql_command=postgres.psql_command,
+        )
+        measurements = StagingMeasurements(events.append)
+        result = refresh_graph(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command,
+                               staging_measurements=measurements)
+        accepted = query_graph_summary(config, MIXED_V1_GRAPH_ID, psql_command=postgres.psql_command)
+        assert accepted.result == "success" and accepted.latest_run_status == "complete"
+        assert attempts == [subject]
+        assert (result.result, result.publication_state) == ("success", "committed")
+        assert accepted.latest_run_id == result.run_id
+    client, = (event for event in events if event.category is StagingMeasurementCategory.CLIENT_MEMORY)
+    assert client.availability is StagingMeasurementAvailability.UNAVAILABLE
+    assert client.value is None and measurements.failed is False
+    assert "private-rss-detail" not in json.dumps([event.to_payload() for event in events])
 
 
 def test_lexical_finish_clock_error_degrades_report_without_relabeling_publication(

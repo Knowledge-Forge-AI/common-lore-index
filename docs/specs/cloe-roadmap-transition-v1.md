@@ -11,9 +11,137 @@ rename has shipped. ADR0118 selects `common_lore_index` and installed ownership;
 ADR0123 defines their coordinated source cutover and finite compatibility. Preserve the current license and
 Samuel Leighton Lair <sam.lair@knowledge-forge.ai> as public commit identity.
 
-## Starting point and working custody
+## Latest qualified milestone
 
-Public main is v0.0.3 at `5ad00d162ad8a04430874275246a53227578c533`, qualified
+Public main is released Common Lore Index v0.0.4 at `39cb2b3`. Public staging
+`d5ab2373` qualifies the combined W8 installed-upgrade and source archive
+milestone. All 14 jobs passed in
+[CI162 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44674001015).
+Measured integration branch coverage reached 20,328 of 25,362 (80.15%),
+469 branches short of the 82% target. The preceding split staging and Server
+report v3 qualification is recorded in [CI161](../../tools/ci/cloe-ci161-qualification.md).
+
+The [attended Apple Silicon run](../../tools/ci/cloe-w8-macos1-exit.md)
+passed the exact CI162 Local wheel kit on macOS arm64 with CPython 3.13.12.
+The fresh install published a SQLite graph, verified the restored database
+file and reproduced MCP results with the source hidden. The same kit
+previously passed its Linux arm64 control.
+
+The [connected native upgrade and index checkpoint](../../tools/ci/cloe-w8-macosup1-exit.md)
+proved same-venv wheel replacement on an existing Local home and recovery
+with both wheel versions. Pip resolved the candidate by package name from
+a local file index and refused modified wheel bytes and an incompatible
+Python declaration.
+
+Batch further local work before spending a new public CI campaign.
+Main promotion, release and production admission remain separate.
+
+The local batch after CI162 includes [bounded staging and digest work](../../tools/ci/cloe-staging-bounds1-exit.md),
+[ordered lexical capture](../../tools/ci/cloe-lexical-capture2-exit.md),
+and [batched PostgreSQL population](../../tools/ci/cloe-lexical-batch1-exit.md).
+The [installed Server ranked search checkpoint](../../tools/ci/cloe-w8-installed-lexical1-exit.md)
+exercises lexical build and ranked query using a retained publication.
+
+The Local streaming checkpoint binds SQLite staging parameters as they are
+consumed. A late malformed row rolls back temporary staging, and retention
+validation flushes semantic link keys by encoded size as well as row count.
+Literal captured-text paging keeps exact overlapping counts and line and chunk
+positions without building an index of every line. Scoped proofs include
+real SQLite rollback and retry, retained publications, and installed Local
+upgrade and Server ranked first use. Hosted qualification remains pending.
+
+The Local source-read checkpoint bounds feed item and reference pages,
+aggregates summary link counts without expanding the underlying joins,
+and reuses observation JSON rendering only where the query needs it.
+Scoped tests compare source, feed and observation results against the
+maintained PostgreSQL owners across paging and retained generations.
+
+Local backup and restore now check directory shape with bounded memory and
+refuse malformed manifest file types promptly. The containerized CLI proof
+also verifies exact restoration after refusals and historical v1 recovery.
+
+The next readback checkpoint scopes source evidence to selected inventory and
+feed rows. Local summary reads use the kind index and observation pages
+decode returned bodies on demand. Scoped SQLite and PostgreSQL proof covers
+context vector validation and ranked acronym lookup.
+
+Canonical file pages now seek by the encoded key prefix instead of scanning
+unrelated nodes. Local graph lists and edge explanations stream their rows
+into the existing result records. PostgreSQL parity and the Local MCP
+loop cover pages and explanation evidence.
+
+The installed Server lexical workflow now covers ranked, phrase and explicitly
+selected literal queries from retained sources, plus revocation and the
+subsequent unavailable read. The CLI checks the exact escaped output size
+without allocating a second serialized byte buffer.
+
+Local archive import now hashes files and manifest JSON incrementally. WARC
+import reads one record at a time and seeks past oversized payloads, preserving
+plain-WARC format, accepted ordinals and diagnostics. The installed Local wheel
+proof covers both acquisition commands and their explicit non-publication results.
+Local context and feed explanation reads decode rows into their result windows
+without holding a second collection of selected SQLite rows.
+
+Local feed reads now seek the existing graph-version and node-key indexes.
+Feed explanations reach the requested item across retained graph versions
+without scanning unrelated links. The SQLite work check and containerized
+PostgreSQL parity proof cover ordering and scoped evidence output.
+
+The next local W7 checkpoints preserve committed outcomes on optional RSS
+sampling failure and measure the actual staged INSERT and completeness
+queries. The disposable spill fixture recorded 603 temporary blocks written
+while its immediate database temporary-byte delta stayed at zero.
+[Custody exit](../../tools/ci/cloe-resource-governance13-exit.md)
+· [Staged SQL exit](../../tools/ci/cloe-w7-staged-sql1-exit.md)
+
+CI159 advanced those checkpoints to public staging. Eight jobs passed and
+the integration job reached its 240-minute envelope. The qualified successor
+combines the concurrent integration jobs from ADR0216 with the opt-in
+Server resource report from ADR0217. The two new samples describe the
+staged writer interval. See the [candidate exit](../../tools/ci/cloe-staging-split-w7-report1-exit.md).
+
+CI156 qualified the engineering milestone that carried the first admissible
+captured-text study under ADR 0206. The disposable lexical diagnostic indexed
+all 22 selected files. The frozen ranked-terms predicates admitted zero
+chunks for all 12 common questions. The original calibration remains primary.
+The comparator design, new evaluated treatments, matching held-outs, scientific
+acceptance and production admission require operator selection. W6 through
+W8 remain open.
+
+CI156 unit branch coverage was 22,028/25,308 (87.04%). Measured integration was
+20,281/25,308 (80.14%). Observed application, Rust qualifier, wheel transfer
+and native component execution counts were 63/35/68/33. A future changed
+candidate needs its own hosted qualification.
+
+CI151 subsequently failed five unit cases and a scanner-suppression check;
+CI152 repaired those defects and passed eight jobs, but its integration job
+exhausted the repository-owned 180-minute envelope. CI152 has no completed
+staging coverage artifact and remains incomplete qualification. Its unit branch
+coverage was 22,030/25,308 (87.0476%); the desired integration 82% margin remains
+unverified. [ADR0204](../adr/2026/11/0204-retained-supplement-analysis-and-staging-envelope.md)
+raises only the public integration outer envelope to 240 minutes.
+
+The qualified W5 engineering milestone analyzes the already completed supplement
+without repeating inference. [The retained analysis report](../../tools/ci/cloe-w5-supplement-analysis1-report.md)
+binds all 24 tasks, six arms, three repetitions and 146 counted token records.
+It separates positive quality, controls, repeated-query stability and observed
+query-phase costs, with a reproducible full numeric artifact. Sixteen comparable
+positives meet the proposal floor, but vectors/fusion tie native and graph
+baselines on these positives. This small saturated calibration set cannot
+establish learned-vector usefulness. Absent-control correctness is mixed;
+privacy refusals and capability matches are reported separately from relevance.
+
+Only query-phase costs exist in this selected report; setup and inference cost
+coverage are not established. Query averages include controls and refused or
+unavailable calls, so they are not positive-only SQL latency or a total cost
+comparison. Shared/overlapping layers are never summed and missing RSS or
+physical PostgreSQL work remains unknown. Prospective usefulness criteria,
+held-out protocol, full W5 and production acceptance remain operator decisions;
+no threshold, preferred arm or new study is selected by this milestone.
+
+## Original starting point and working custody
+
+At the transition start, public main was v0.0.3 at `5ad00d162ad8a04430874275246a53227578c533`, qualified
 by [CI87 attempt 1](https://github.com/Knowledge-Forge-AI/repo-map/actions/runs/40779161422).
 All nine jobs and the retained same-attempt system/staging contracts pass;
 Python unit and integration coverage meet the two-point margin. Core
@@ -1760,3 +1888,92 @@ and serial dynamic_default independent review precede a fresh normal campaign.
 Main promotion and the first Common Lore Index release v0.0.4 require passing
 current same-attempt qualification. Remaining W5/W6/W7/W8 and v0.1.0 work continue
 after that release; no source-preview operation implies package-manager delivery.
+
+
+### Post-v0.0.4 W5 public-calibration supplement selection
+
+The operator selected Route A on 2026-11-14: a separate public synthetic
+calibration supplement and scoped source work, with at most32 total cases and
+a prospective common floor of eight positives, two per four approved families.
+`CLOE-W5-SUPPLEMENT1` reserves the specific W5-SUPPLEMENT family under accepted
+[ADR0198](../adr/2026/11/0198-prospective-public-calibration-supplement.md) and
+[the technical contract](cloe-w5-calibration-supplement-v1.md). Two independent
+technical reviews and parent corrections settled the data-pin/source-freeze
+sequence, distinct representation journals, genuine Markdown heading spans,
+record/token forecast and per-arm capability disclosure before task authoring.
+
+The first source implementation plans24 cases and three repetitions across
+six declared arms; it does not loosen old24-task owners or execute any query.
+Original mixed-v1/context-v1 tasks, golds, held-outs and historical native
+results stay unchanged. Source implementation and proof are pending here.
+No new model worker, study, acquisition, build or public campaign is granted.
+Native allocation, scientific criteria, held-out class and full W5 remain open.
+
+
+### W5 separate calibration source milestone
+
+CLOE-W5-SUPPLEMENT1 completes the approved source phase: a separately pinned
+24-task public class, preparation/custody/evidence support, 232 scoped unit
+cases and nine real core integration cases passing, plus canonical retention
+enforcement with zero new debt. Independent full and corrective source reviews
+passed after recorded corrections; native Read audits conform in every stage.
+The registered inert checkpoint reproduces the pin and 54 original files and
+prepares 146 records across the two representations, with no retrieval/model.
+See [the source exit](../../tools/ci/cloe-w5-supplement1-exit.md) for exact
+source/freeze/declaration identities, selectors and unselected populations.
+
+The local source checkpoint does not close W5 or qualify a public candidate.
+The next native study needs fresh resources and a Trixie-only pgvector runtime
+disposition: the old optional materializer still uses an Alpine build path.
+Native execution, new runtime/dependency classes and all publication remain
+held pending their exact operator decision. Previous studies/workers/hosted
+allocations stay spent. Desired coverage margins remain pending hosted evidence.
+
+### Chronology after CI153
+
+Earlier source-preparation and pre-study holds above describe their original
+checkpoints. CI153's current status at the top supersedes pending core-hosted
+qualification language. The completed native observation and retained analysis
+remain bounded by their original source identities; future data classes,
+scientific criteria, matching held-outs and production acceptance stay open.
+
+
+### CI155 qualification and prospective W5 continuation
+
+CI155 qualifies the captured-text engineering foundation and corrected Rust
+manifest binding at a81d9b2. Source data retain all 24 cases, the original failed
+body-v1 pin and unchanged body-v2 task/question/gold maps. No new inference or
+body-query study ran in this milestone. Its report matrices are per backend;
+the common body floor requires an explicit cross-publication join before a
+future experiment can claim native/FTS/v2/fusion comparability.
+
+The next source/design phase, CLOE-W5-PROTOCOL1, prepares that prospective
+protocol and the concrete criteria/runtime decision under ADR0205's authorized
+source exit. Existing captures, refusals, privacy, limits, model/provider pins
+and prior held-outs stay unchanged. Technical design and model-independent
+source preparation do not select scientific criteria or authorize execution.
+No design-only staging push is selected. A concrete reserved choice returns
+to the operator after source-backed design and independent review.
+
+
+### W5 prospective calibration protocol
+
+CLOE-W5-PROTOCOL1 prepares [Proposed ADR0206](../adr/2026/11/0206-proposed-w5-captured-text-calibration-protocol.md)
+and its [body calibration protocol](cloe-w5-body-calibration-protocol-v1.md),
+completing ADR0205's authorized prospective design exit. The proposal fixes
+cross-publication correspondence, a 134-record source forecast, all 432 selected
+slots and a prospective fusion-versus-both-baselines calibration screen.
+Model/runner activation and criteria remain unselected; no body study,
+held-out execution, final usefulness acceptance or design-only CI is claimed.
+The implementation must prove its actual command/read/time schedule fits the
+unchanged envelope before any conditional activation. Routine allocation stays
+infinite; no numeric-budget decision is requested.
+
+### W5 captured-text calibration result
+
+The observation met the prospective descriptive screen for fusion. PostgreSQL FTS
+returned no files in the common set, and fusion improved recall@10 by 0.083 over
+native tools. See the [milestone exit](../../tools/ci/cloe-w5-bodystudy1-exit.md) and
+the [aggregate observation](../../tools/ci/cloe-w5-bodystudy1-observation.json).
+The milestone carries forward the first admissible result under ADR0206.
+Full W5, held-out and production admission remain separate decisions.

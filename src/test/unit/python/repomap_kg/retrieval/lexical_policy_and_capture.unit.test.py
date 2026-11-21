@@ -13,6 +13,7 @@ from common_lore_index.ops.config_records import OpsGraphConfig
 from common_lore_index.retrieval.lexical_aliases import (
     ALIAS_SPLIT_RULE_VERSION,
     build_alias_tokens_text,
+    extract_alias_tokens,
     split_identifier_and_path_tokens,
 )
 from common_lore_index.retrieval.lexical_capture import capture_lexical_generation_plan
@@ -288,3 +289,15 @@ def test_lexical_capture_pre_open_exclusions_and_chunking(tmp_path: Path) -> Non
     assert "cloe-lexical-schema:1" in mig_sql
     assert "CREATE TABLE IF NOT EXISTS cloe_lexical.generations" in mig_sql
     assert "ALTER DEFAULT PRIVILEGES" in mig_sql
+
+
+def test_alias_long_acronyms_and_duplicate_terms_preserve_first_seen_order() -> None:
+    tokens = extract_alias_tokens(
+        source_relative_path="pkg/XMLHttpRequest2.py",
+        chunk_text="A" * 8192 + " " + "B" * 8192 + "ReadValue42 ReadValue42 co-op",
+    )
+    assert tokens == (
+        "pkg", "xmlhttprequest2", "xml", "http", "request2", "request", "py",
+        "pkgxmlhttprequest2py", "read", "value42", "value", "42", "readvalue42",
+        "co", "op", "coop",
+    )

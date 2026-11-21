@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import tarfile
 import zipfile
 from pathlib import Path
 
 import pytest
 
 from repomap_test_support.installed_candidate import (
-    DIST_INFO, expected_entry_points, expected_inventory, expected_requires, input_digest, input_names,
-    inventory_sha256, license_bytes_match, license_members, rows_sha256, wheel_inventory,
+    DIST_INFO, BuiltWheel, expected_entry_points, expected_inventory, expected_requires, input_digest,
+    input_names, installed_graph_parser_digest, inventory_sha256, license_bytes_match, license_members,
+    rows_sha256, wheel_inventory,
 )
 
 PYPROJECT = """[project]
@@ -51,7 +53,7 @@ def _record_row(name: str, body: bytes) -> str:
     return f"{name},sha256={digest},{len(body)}"
 
 
-def _wheel(path: Path, members: dict[str, bytes], *, break_hash: bool = False) -> Path:
+def _wheel(path: Path, members: dict[str, bytes], *, break_hash: bool = False, extra_row: str = "") -> Path:
     rows = [_record_row(name, body) for name, body in members.items()]
     if break_hash:
         rows[0] = rows[0].replace("sha256=", "sha256=A")
@@ -59,7 +61,7 @@ def _wheel(path: Path, members: dict[str, bytes], *, break_hash: bool = False) -
     with zipfile.ZipFile(path, "w") as archive:
         for name, body in members.items():
             archive.writestr(name, body)
-        archive.writestr(f"{DIST_INFO}/RECORD", "\n".join(rows) + "\n")
+        archive.writestr(f"{DIST_INFO}/RECORD", "\n".join(rows) + "\n" + extra_row)
     return path
 
 
@@ -131,6 +133,14 @@ def test_record_hash_drift_and_forbidden_members_are_visible(tmp_path: Path) -> 
     assert leaky.pth_members == 1 and leaky.forbidden_members == 1
 
 
+def test_record_refuses_duplicate_member_rows(tmp_path: Path) -> None:
+    root = _tree(tmp_path / "root")
+    members = _members(root)
+    name = "common_lore_index/__init__.py"
+    duplicate = _record_row(name, members[name]) + "\n"
+    assert not wheel_inventory(_wheel(tmp_path / "duplicate.whl", members, extra_row=duplicate)).record_valid
+
+
 def test_inventory_digest_ignores_only_optional_top_level() -> None:
     names = {"a.py", f"{DIST_INFO}/RECORD"}
     assert inventory_sha256(names) == inventory_sha256(names | {f"{DIST_INFO}/top_level.txt"})
@@ -168,3 +178,132 @@ def test_candidate_pins_follow_current_release_and_keep_incumbent_frozen() -> No
     assert INCUMBENT_COMMIT == "6d818ad6d43d38d47c64b8c474c2b64b853f631a"
     assert INCUMBENT_DISTRIBUTION == "repomap-kg"
     assert INCUMBENT_WHEEL_PREFIX == "repomap_kg-0.0.3-"
+
+
+def test_released_wheel_uses_exact_source_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    import repomap_test_support.installed_candidate as installed
+
+    factory = object()
+    recorded = object()
+
+    def archive(
+        request_factory: object, root: Path, commit: str, prefix: str, paths: tuple[str, ...],
+    ) -> object:
+        assert request_factory is factory and root == tmp_path
+        assert commit == "39cb2b3452bfd32b05d38f842c0f891614cbf58d"
+        assert prefix == "common_lore_index-0.0.4-"
+        assert paths == ("README.md", "LICENSE", "NOTICE", "pyproject.toml",
+                         "src/main/python", "src/main/resources")
+        return recorded
+
+    monkeypatch.setattr(installed, "_archived_wheel", archive)
+    assert installed.released_cloe_wheel(factory, tmp_path) is recorded
+
+
+def test_archive_memo_distinguishes_wheel_prefix_and_input_paths(
+    monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory, tmp_path: Path,
+) -> None:
+    import repomap_test_support.installed_candidate as installed
+
+    root = tmp_path / "repository"
+    root.mkdir()
+    for name in ("NOTICE", "LICENSE"):
+        (root / name).write_text(name, encoding="utf-8")
+
+    def archive(args: tuple[str, ...], cwd: Path, family: str) -> str:
+        assert cwd == root and family == "arch7f_probe"
+        with tarfile.open(args[3].removeprefix("--output="), "w") as members:
+            for name in args[5:]:
+                members.add(root / name, arcname=name)
+        return ""
+
+    def build(source: Path, output: Path, prefix: str) -> Path:
+        output.mkdir()
+        wheel = output / f"{prefix}py3-none-any.whl"
+        wheel.write_text(sorted(path.name for path in source.iterdir())[0], encoding="utf-8")
+        return wheel
+
+    monkeypatch.setattr(installed, "_require", archive)
+    monkeypatch.setattr(installed, "_build", build)
+    first = installed._archived_wheel(tmp_path_factory, root, "commit", "first-", ("NOTICE",))
+    renamed = installed._archived_wheel(tmp_path_factory, root, "commit", "second-", ("NOTICE",))
+    different = installed._archived_wheel(tmp_path_factory, root, "commit", "first-", ("LICENSE",))
+
+    assert installed._archived_wheel(tmp_path_factory, root, "commit", "first-", ("NOTICE",)) is first
+    assert renamed.wheel.name == "second-py3-none-any.whl"
+    assert renamed.input_sha256 == first.input_sha256
+    assert different.input_sha256 != first.input_sha256
+    assert different.wheel.read_text(encoding="utf-8") == "LICENSE"
+
+
+@pytest.mark.parametrize("drift", ("none", "source", "installation", "version", "metadata"))
+def test_installed_graph_parser_digest_checks_both_witnesses(tmp_path: Path, drift: str) -> None:
+    member = "common_lore_index/cli/_parser_ops_graph.py"
+    body = b"public wheel fixture"
+    source = tmp_path / "prepared"
+    installed = tmp_path / "venv"
+    for name, path in (("source", source / "src/main/python" / member), ("installation", installed / member)):
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"changed" if name == drift else body)
+    archive = tmp_path / "common_lore_index-0.0.4-py3-none-any.whl"
+    metadata_path = "common_lore_index-0.0.4.dist-info/METADATA"
+    metadata = b"Version: 0.0.3\n" if drift == "version" else b"Version: 0.0.4\n"
+    installed_metadata = installed / metadata_path
+    installed_metadata.parent.mkdir()
+    installed_metadata.write_bytes(b"Version: 0.0.2\n" if drift == "metadata" else metadata)
+    with zipfile.ZipFile(archive, "w") as wheel:
+        wheel.writestr(member, body)
+        wheel.writestr(metadata_path, metadata)
+    built = BuiltWheel(archive, source, "unused", 1)
+    if drift == "none":
+        assert installed_graph_parser_digest(built, installed) == hashlib.sha256(body).hexdigest()
+    else:
+        with pytest.raises(AssertionError, match="differs from"):
+            installed_graph_parser_digest(built, installed)
+
+@pytest.mark.parametrize("fault", (
+    "none", "omitted", "drift", "unexpected", "duplicate", "traversal", "link", "metadata",
+))
+def test_source_archive_rejects_changed_or_unowned_members(tmp_path: Path, fault: str) -> None:
+    import io
+    import tarfile
+
+    from installed_experience_pins import CANDIDATE_VERSION
+    from repomap_test_support.installed_sdist import SDIST_FILENAME, verify_sdist
+
+    archive = tmp_path / SDIST_FILENAME
+    stem = SDIST_FILENAME.removesuffix(".tar.gz")
+    bodies = {"pyproject.toml": b"[project]\n", "LICENSE": b"license", "NOTICE": b"notice"}
+    expected = {name: hashlib.sha256(data).hexdigest() for name, data in bodies.items()}
+    version = "0.0.0" if fault == "metadata" else CANDIDATE_VERSION
+    metadata = (f"Name: common-lore-index\nVersion: {version}\n"
+                "License-File: LICENSE\nLicense-File: NOTICE\n").encode()
+    with tarfile.open(archive, "w:gz") as stream:
+        def add(name: str, data: bytes) -> None:
+            item = tarfile.TarInfo(f"{stem}/{name}")
+            item.size = len(data)
+            stream.addfile(item, io.BytesIO(data))
+
+        root = tarfile.TarInfo(stem)
+        root.type = tarfile.DIRTYPE
+        stream.addfile(root)
+        for name, data in bodies.items():
+            if fault == "omitted" and name == "NOTICE":
+                continue
+            add(name, b"changed" if fault == "drift" and name == "LICENSE" else data)
+        add("PKG-INFO", metadata)
+        if fault == "unexpected":
+            add("private.py", b"x")
+        if fault == "duplicate":
+            add("LICENSE", bodies["LICENSE"])
+        if fault == "traversal":
+            add("../pyproject.toml", b"x")
+        if fault == "link":
+            item = tarfile.TarInfo(f"{stem}/link")
+            item.type, item.linkname = tarfile.SYMTYPE, "LICENSE"
+            stream.addfile(item)
+    if fault == "none":
+        verify_sdist(archive, expected)
+    else:
+        with pytest.raises(AssertionError, match="source archive"):
+            verify_sdist(archive, expected)

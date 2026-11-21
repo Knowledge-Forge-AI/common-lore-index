@@ -146,23 +146,38 @@ def observation_search(
     """
     require_accepted_publication(connection)
     needle = raw_payload.ascii_lower(query)
-    params = [value for value in (kind, path) if value is not None]
-    rows = connection.execute(
-        observation_search_sql(kind=kind is not None, path=path is not None), params
-    )
+    filters = [value for value in (kind, path) if value is not None]
+    sql = observation_search_sql(kind=kind is not None, path=path is not None)
+    params: list[str | int] = list(filters)
+    guaranteed_match = any(needle in raw_payload.ascii_lower(value) for value in filters)
+    pending_offset = offset
+    if guaranteed_match and 0 <= limit < 2**63 - 1 and 0 <= offset < 2**63:
+        # Exact kind/path equality already proves membership for every SQL row.
+        sql += " LIMIT ? OFFSET ?"
+        params.extend((limit + 1, offset))
+        pending_offset = 0
+    rows = connection.execute(sql, params)
     skipped = 0
     page: list[dict[str, Any]] = []
     try:
         for ordinal, row_kind, source_id, row_path, text in rows:
-            payload = raw_payload.load(text)
-            if not any(
-                needle in raw_payload.ascii_lower(field)
-                for field in (row_kind, source_id, row_path, raw_payload.jsonb_text(payload))
+            payload: Any = None
+            payload_text = None
+            if not guaranteed_match and not any(
+                needle in raw_payload.ascii_lower(field) for field in (row_kind, source_id, row_path)
             ):
-                continue
-            if skipped < offset:
+                payload = raw_payload.load(text)
+                payload_text = raw_payload.jsonb_text(payload)
+                if needle not in raw_payload.ascii_lower(payload_text):
+                    continue
+            if skipped < pending_offset:
                 skipped += 1
                 continue
+            if len(page) >= limit:
+                return {"results": page, "total": offset + len(page), "has_more": True}
+            # The header was sufficient to test membership. Decode only for emission.
+            if payload_text is None:
+                payload = raw_payload.load(text)
             metadata = payload.get("metadata") if isinstance(payload, dict) else None
             row: dict[str, Any] = {
                 "ordinal": ordinal,
@@ -172,14 +187,11 @@ def observation_search(
                 "metadata": None if metadata is None else raw_payload.jsonb_value(metadata),
             }
             if include_raw:
-                row["payload"] = raw_payload.jsonb_value(payload)
+                row["payload"] = raw_payload.jsonb_value(payload) if payload_text is None else json.loads(payload_text)
             page.append(row)
-            if len(page) > limit:
-                break
     finally:
         rows.close()
-    results = page[:limit]
-    return {"results": results, "total": offset + len(results), "has_more": len(page) > limit}
+    return {"results": page, "total": offset + len(page), "has_more": False}
 
 
 def status_fields(connection: sqlite3.Connection) -> dict[str, Any]:

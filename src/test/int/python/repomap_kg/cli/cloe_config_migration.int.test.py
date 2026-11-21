@@ -16,6 +16,7 @@ import pytest
 from common_lore_index.ops.config_migration import (
     apply_cloe_config_migration, finalize_cloe_config_migration, rollback_cloe_config_migration,
 )
+from common_lore_index.ops.config_migration_fs import MAX_CONFIG_FILES, MAX_FILE_BYTES, MAX_TOTAL_BYTES
 from repomap_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
 from repomap_test_support.cli_in_process import REPO_ROOT, module_process_environment
 from runner_coverage_observer import launch_observed_process
@@ -261,3 +262,49 @@ def test_cli_usage_and_unsafe_home_contracts(tmp_path: Path) -> None:
     refused = cli(home, "apply", "--yes", code=1)
     assert refused["refusals"] == [{"code": "repo-map-home-unsafe", "file": ""}] and refused["writes_performed"] == 0
     assert tree(home) == before
+
+
+@pytest.mark.parametrize(("case", "expected_file", "refusal_code"), [
+    ("operation_alias", ".CLOE-CONFIG-MIGRATION", "config-migration-alias-collision"),
+    ("mixed_families", "", "config-home-mixed-format"),
+    ("external_hardlink", "50-external.rpl.toml", "config-entry-unsafe"),
+    ("too_many_files", "", "config-migration-limit-exceeded"),
+    ("large_file", "50-large.rpl.toml", "config-migration-limit-exceeded"),
+    ("large_total", "57-budget.rpl.toml", "config-migration-limit-exceeded"),
+])
+def test_apply_refuses_invalid_layouts_without_writes(
+    tmp_path: Path, case: str, expected_file: str, refusal_code: str,
+) -> None:
+    home = make_home(tmp_path, "sqlite")
+    external = tmp_path / "owned external configuration"
+    external.write_text(SECRET, encoding="utf-8")
+    if case == "operation_alias":
+        (home / expected_file).write_text(SECRET, encoding="utf-8")
+    elif case == "mixed_families":
+        (home / "50-new.cloe.toml").write_text(OVERLAY, encoding="utf-8")
+    elif case == "external_hardlink":
+        os.link(external, home / expected_file)
+    elif case == "too_many_files":
+        for index in range(MAX_CONFIG_FILES - 1):
+            (home / f"50-extra-{index:02d}.rpl.toml").write_text(OVERLAY, encoding="utf-8")
+    elif case == "large_file":
+        with (home / expected_file).open("xb") as stream:
+            stream.truncate(MAX_FILE_BYTES + 1)
+    else:
+        for index in range(MAX_TOTAL_BYTES // MAX_FILE_BYTES):
+            with (home / f"{50 + index}-budget.rpl.toml").open("xb") as stream:
+                stream.truncate(MAX_FILE_BYTES)
+
+    before_home = tree(home)
+    before_external = external.stat()
+    for flags in (("--dry-run",), ("--yes",)):
+        outcome = cli(home, "apply", *flags, code=1)
+        assert outcome["result"] == "refused"
+        assert outcome["refusals"] == [{"code": refusal_code, "file": expected_file}]
+        assert outcome["writes_performed"] == 0
+        assert tree(home) == before_home and not (home / OPERATION).exists()
+        assert external.read_text(encoding="utf-8") == SECRET
+        after_external = external.stat()
+        assert (after_external.st_ino, after_external.st_nlink, after_external.st_mtime_ns) == (
+            before_external.st_ino, before_external.st_nlink, before_external.st_mtime_ns,
+        )

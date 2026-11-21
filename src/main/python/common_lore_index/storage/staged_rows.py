@@ -37,7 +37,7 @@ from common_lore_index.storage.file_rows import (
 from common_lore_index.storage.row_spool import RowSpool
 from common_lore_index.storage._preparation_iterators import check_preparation, close_preparation_iterators
 from common_lore_index.storage._staged_spool_preparation import (
-    _PreparedFamilyRows, _SpoolPreparation, prepare_family_rows,
+    _ROW_SPOOL_BYTE_THRESHOLD, _PreparedFamilyRows, _SpoolPreparation, prepare_family_rows,
 )
 from common_lore_index.storage._spool_cleanup import close_spooled_rows
 from common_lore_index.storage.staged_row_measurements import (
@@ -313,6 +313,7 @@ def _materialize_or_spool(
     options = _SpoolPreparation(
         descriptor, staging_measurements, spool_artifact_observer, spool_dir,
         _ROW_SPOOL_THRESHOLD, RowSpool, _FamilyChecksumAccumulator,
+        _ROW_SPOOL_BYTE_THRESHOLD,
     )
     return prepare_family_rows(rows, options, cancel_check)
 

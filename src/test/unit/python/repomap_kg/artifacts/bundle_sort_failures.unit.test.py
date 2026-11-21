@@ -13,6 +13,7 @@ from common_lore_index.artifacts import _bundle_sort_runs as runs_module
 from common_lore_index.artifacts import _bundle_stream_sort as sorter_module
 from common_lore_index.artifacts._bundle_cancellation import BundleEncodingCancelled, close_iterator
 from common_lore_index.artifacts._bundle_stream_sort import BoundedExternalRowSorter
+from repomap_test_support.bundle_sort_fixtures import SortIOWitness
 
 
 def _run_files(sorter: BoundedExternalRowSorter) -> set[Path]:
@@ -214,4 +215,36 @@ def test_partial_consumer_close_reclaims_all_multilevel_runs(
         close_iterator(stream)
         assert sorter._temp_dir is not None
         assert not tuple(Path(sorter._temp_dir.name).iterdir())
+    assert not tuple(tmp_path.iterdir())
+
+
+def test_final_bundle_merge_rewrites_only_the_lightest_runs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    witness = SortIOWitness()
+    runs = runs_module.BundleSortRuns(
+        directory=lambda: tmp_path, checkpoint=lambda: None,
+        opener=witness.open_run, fan_in=4,
+    )
+    lines = [bytes([97 + index]) * (size - 1) + b"\n"
+             for index, size in enumerate(range(10, 111, 10))]
+    for line in reversed(lines):
+        runs.spill((line,), "files")
+    compact = runs._compact
+    final_rewrites: list[int] = []
+
+    def record(paths):
+        output = compact(paths)
+        final_rewrites.append(output.stat().st_size)
+        return output
+
+    monkeypatch.setattr(runs, "_compact", record)
+    try:
+        assert list(runs.merged()) == lines
+        assert final_rewrites == [30]
+        assert runs.initial_run_count == 11
+        assert runs.initial_bytes == sum(map(len, lines))
+        assert witness.peak_inputs == 4 and witness.all_closed
+    finally:
+        runs.close()
     assert not tuple(tmp_path.iterdir())

@@ -238,6 +238,15 @@ def test_tampered_incompatible_and_existing_targets_are_refused(tmp_path: Path) 
     _rewrite(foreign / "manifest.json", lambda p: p["database"].update(sha256=_sha(database)))
     incomplete = _variant(good, "incomplete")
     (incomplete / "manifest.json").unlink()
+    polluted = _variant(good, "polluted")
+    (polluted / "unrelated").write_bytes(b"retain me")
+    non_file_manifest = _variant(good, "non-file-manifest")
+    manifest_path = non_file_manifest / "manifest.json"
+    manifest_path.unlink()
+    if hasattr(os, "mkfifo"):
+        os.mkfifo(manifest_path)
+    else:
+        manifest_path.mkdir()
     expected = {
         tampered_db: "sqlite-backup-artifact-invalid: database-digest-mismatch",
         tampered_generation: "sqlite-backup-artifact-invalid: publication-mismatch",
@@ -245,11 +254,14 @@ def test_tampered_incompatible_and_existing_targets_are_refused(tmp_path: Path) 
         future_schema: "sqlite-backup-artifact-invalid: schema-unsupported",
         foreign: "sqlite-backup-artifact-invalid: graph-database-unrecognized",
         incomplete: "sqlite-backup-incomplete: no completed manifest",
+        polluted: "sqlite-backup-artifact-invalid: unexpected-entry",
+        non_file_manifest: "sqlite-backup-artifact-invalid: manifest-invalid",
     }
     for backup, message in expected.items():
         stderr = _refused(harness, home, "ops", "sqlite-restore", "--graph", GRAPH, "--backup", str(backup))
         assert stderr == f"ERROR: {message}", (backup.name, stderr)
         assert not os.path.lexists(live), backup.name
+    assert (polluted / "unrelated").read_bytes() == b"retain me"
 
     # A restore killed before its link leaves the target absent; a rerun succeeds.
     barrier = tmp_path / "restore-barrier"

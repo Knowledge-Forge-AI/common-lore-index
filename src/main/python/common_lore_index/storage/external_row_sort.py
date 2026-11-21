@@ -17,6 +17,7 @@ from common_lore_index.storage._external_row_sort_helpers import (
     _encode_row,
     _iter_encoded_run,
     _write_encoded_rows,
+    consolidate_run_tail,
 )
 
 __all__ = (
@@ -161,16 +162,16 @@ def external_sort_encoded_rows(
                 key_types,
                 field_count,
                 cancellation_check,
+                merge_fan_in,
                 artifacts,
             )
-            for encoded in _merge_encoded_runs(
+            yield from _merge_encoded_runs(
                 runs,
                 key_indexes,
                 key_types,
                 field_count,
                 cancellation_check,
-            ):
-                yield encoded
+            )
     finally:
         _close_iterator(source)
         artifacts.clear()
@@ -228,27 +229,25 @@ def _finalize_run_levels(
     key_types: tuple[type, ...] | None,
     field_count: int,
     cancellation_check: Callable[[], None] | None,
+    merge_fan_in: int,
     artifacts: _ArtifactTracker,
 ) -> list[Path]:
-    final: list[Path] = []
-    for group in levels:
-        if not group:
-            continue
-        if len(group) == 1:
-            final.extend(group)
-            continue
+    remaining = [path for group in levels for path in group]
+
+    def compact(inputs: list[Path]) -> Path:
         output = _write_merged_run(
             directory,
-            group,
+            inputs,
             key_indexes,
             key_types,
             field_count,
             cancellation_check,
             artifacts,
         )
-        _remove_runs(group, artifacts)
-        final.append(output)
-    return final
+        _remove_runs(inputs, artifacts)
+        return output
+
+    return consolidate_run_tail(remaining, merge_fan_in, artifacts.size_of, compact)
 
 
 def _remove_runs(runs: Sequence[Path], artifacts: _ArtifactTracker) -> None:

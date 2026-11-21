@@ -79,8 +79,14 @@ def test_schema_option_is_available_on_every_report_seam() -> None:
     ):
         args = _parse(*argv, "--resource-report", "r", "--resource-report-schema", "2")
         assert args.resource_report_schema == 2
+        if argv != REFRESH:
+            with pytest.raises(SystemExit) as raised:
+                _parse(*argv, "--resource-report", "r", "--resource-report-schema", "3")
+            assert raised.value.code == 2
+    args = _parse(*REFRESH, "--resource-report", "r", "--resource-report-schema", "3")
+    assert args.resource_report_schema == 3
     with pytest.raises(SystemExit):
-        _parse(*REFRESH, "--resource-report", "r", "--resource-report-schema", "3")
+        _parse(*REFRESH, "--resource-report", "r", "--resource-report-schema", "4")
     with pytest.raises(SystemExit):
         _parse("ops", "refresh-enabled", "--sealing-max-opens", "1")
 

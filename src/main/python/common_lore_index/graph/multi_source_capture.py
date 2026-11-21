@@ -69,7 +69,8 @@ def _read_stable_file(
 
     The descriptor is opened without following the final symlink and is
     checked before and after the read.  A staged copy is written from the same
-    descriptor when full semantic capture requests one.
+    descriptor when full semantic capture requests one. Each attempt reads
+    at most the opened size plus one byte to detect growth.
     """
 
     control = CaptureControl(cancel_check)
@@ -95,14 +96,17 @@ def _read_stable_file(
                 stage_path.parent.mkdir(parents=True, exist_ok=True)
                 destination = stage_path.open("wb")
             try:
-                with os.fdopen(descriptor, "rb", closefd=True) as source:
+                with os.fdopen(descriptor, "rb", buffering=0, closefd=True) as source:
                     descriptor = None
+                    remaining = opened.st_size
                     while True:
                         control.check()
-                        chunk = source.read(1024 * 1024)
+                        chunk = source.read(min(1024 * 1024, remaining + 1))
                         control.check()
-                        if not chunk:
+                        if not chunk or len(chunk) > remaining:
+                            complete = not chunk and remaining == 0
                             break
+                        remaining -= len(chunk)
                         digest.update(chunk)
                         if destination is not None:
                             destination.write(chunk)
@@ -110,7 +114,7 @@ def _read_stable_file(
             finally:
                 if destination is not None:
                     destination.close()
-            if _file_signature(opened) != _file_signature(after):
+            if not complete or _file_signature(opened) != _file_signature(after):
                 if stage_path is not None:
                     stage_path.unlink(missing_ok=True)
                 continue

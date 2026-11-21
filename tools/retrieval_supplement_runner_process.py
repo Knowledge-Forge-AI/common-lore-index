@@ -1,0 +1,229 @@
+"""Launch the exact source-bound canonical runner behind a host pipe gate."""
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+import os
+from pathlib import Path
+import re
+import stat
+import subprocess
+
+import psutil
+
+from retrieval_supplement_runner_channel import RunnerChannel
+from retrieval_supplement_study_contracts import STUDY_SELECTOR, refuse
+
+_BOOTSTRAP = ("import os,sys;fd=int(sys.argv[1]);token=os.read(fd,1);os.close(fd);"
+              "os._exit(125) if token != b'\\x01' else os.execv(sys.argv[2],sys.argv[2:])")
+_CODE = re.compile(r"\A[a-z0-9_]+\Z")
+
+
+class RunnerLaunchFailure(RuntimeError):
+    """Public-safe launch failure with truthful bootstrap custody state."""
+
+    def __init__(self, primary_code: str, *, runner_started: bool,
+                 gate_released: bool, cleanup_proven: bool,
+                 cleanup_code: str | None = None) -> None:
+        self.primary_code = primary_code if _CODE.fullmatch(primary_code) else "runner_launch_failed"
+        self.code = self.primary_code
+        self.runner_started = bool(runner_started)
+        self.gate_released = bool(gate_released)
+        self.cleanup_proven = bool(cleanup_proven)
+        if self.cleanup_proven:
+            self.cleanup_code = None
+        else:
+            self.cleanup_code = (cleanup_code if cleanup_code is not None
+                                 and _CODE.fullmatch(cleanup_code) is not None
+                                 else "runner_cleanup_unknown")
+        super().__init__(self.primary_code)
+
+
+@dataclass(frozen=True)
+class RunnerProcessConfig:
+    argv: tuple[str, ...]
+    source_root: Path = field(repr=False)
+    stdout_path: Path = field(repr=False)
+    stderr_path: Path = field(repr=False)
+    environment: Mapping[str, str] = field(repr=False)
+    channel: RunnerChannel = field(repr=False)
+
+
+@dataclass(repr=False)
+class RunnerProcess:
+    process: subprocess.Popen[bytes]
+    birth: float
+    config: RunnerProcessConfig
+
+    def require_live(self) -> None:
+        try:
+            current = psutil.Process(self.process.pid)
+            refuse(current.create_time() == self.birth and current.is_running()
+                   and current.status() != psutil.STATUS_ZOMBIE
+                   and self.process.poll() is None, "runner_process:identity_lost")
+        except psutil.Error:
+            raise RuntimeError("runner_process:identity_unavailable") from None
+
+
+def private_output(path: Path) -> int:
+    refuse(path.is_absolute(), "runner_process:output_path")
+    try:
+        for parent in (path.parent, *path.parent.parents):
+            info = parent.lstat()
+            refuse(stat.S_ISDIR(info.st_mode) and not parent.is_symlink(), "runner_process:output_custody")
+        return os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+    except OSError:
+        raise RuntimeError("runner_process:output_unavailable") from None
+
+
+def validate_config(config: RunnerProcessConfig) -> None:
+    argv = config.argv
+    refuse(type(argv) is tuple and len(argv) > 8 and all(type(x) is str and x for x in argv),
+           "runner_process:argv")
+    refuse(Path(argv[0]).is_absolute() and Path(argv[0]).name.startswith("python")
+           and argv[1:4] == ("-I", "-B", "tools/run_tests.py"), "runner_process:entrypoint")
+    refuse(config.source_root.is_absolute() and not config.source_root.is_symlink()
+           and config.source_root.is_dir(), "runner_process:source_root")
+    refuse(argv.count("--") == 1 and argv[argv.index("--") + 1:] == ("-s", STUDY_SELECTOR),
+           "runner_process:selector")
+    options = argv[4:argv.index("--")]
+    for name, value in (("--suite", "int"), ("--jobs", "1"), ("--pg-test-profile", "pgvector")):
+        refuse(options.count(name) == 1 and options.index(name) + 1 < len(options)
+               and options[options.index(name) + 1] == value, "runner_process:scope")
+    refuse(options.count("--no-coverage") == 1, "runner_process:coverage")
+    refuse(config.channel.source_root == config.source_root and config.channel.runner_argv == argv,
+           "runner_process:channel_scope")
+
+
+_LAUNCH_CODES = {
+    "stdout_open": "runner_stdout_open_failed",
+    "stderr_open": "runner_stderr_open_failed",
+    "pipe_setup": "runner_pipe_setup_failed",
+    "child_settings": "runner_channel_setup_failed",
+    "spawn": "runner_spawn_failed",
+    "identity": "runner_identity_failed",
+    "channel_started": "runner_channel_started_failed",
+    "gate_release": "runner_gate_release_failed",
+    "released": "runner_post_release_failed",
+}
+
+
+def _close_fd(fd: int | None) -> BaseException | None:
+    if fd is None:
+        return None
+    try:
+        os.close(fd)
+    except BaseException as error:
+        return error
+    return None
+
+
+def _settle_failed_launch(
+    process: subprocess.Popen[bytes] | None,
+    channel: RunnerChannel,
+    gate_write: int | None,
+    *,
+    runner_started: bool,
+) -> tuple[bool, str | None]:
+    """Close the gate, close the private channel, and boundedly reap a child."""
+    failures: list[str] = []
+    if _close_fd(gate_write) is not None:
+        failures.append("runner_gate_close_failed")
+    try:
+        channel.close()
+    except BaseException:
+        failures.append("runner_channel_close_failed")
+    if runner_started and process is None:
+        failures.append("runner_process_unavailable")
+    elif process is not None:
+        try:
+            process.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            failures.append("runner_bootstrap_wait_timeout")
+        except BaseException:
+            failures.append("runner_bootstrap_wait_failed")
+    return not failures, (failures[0] if failures else None)
+
+
+def launch_runner(config: RunnerProcessConfig) -> RunnerProcess:
+    validate_config(config)
+    stdout_fd: int | None = None
+    stderr_fd: int | None = None
+    gate_read: int | None = None
+    gate_write: int | None = None
+    process: subprocess.Popen[bytes] | None = None
+    result: RunnerProcess | None = None
+    runner_started = False
+    gate_released = False
+    stage = "stdout_open"
+    primary: BaseException | None = None
+    primary_code = "runner_launch_failed"
+    cleanup_proven = True
+    cleanup_code: str | None = None
+    close_failures: list[BaseException] = []
+    try:
+        stdout_fd = private_output(config.stdout_path)
+        stage = "stderr_open"
+        stderr_fd = private_output(config.stderr_path)
+        stage = "pipe_setup"
+        gate_read, gate_write = os.pipe()
+        assert stdout_fd is not None and stderr_fd is not None and gate_read is not None
+        stage = "child_settings"
+        extra_environment, extra_fds = config.channel.child_settings()
+        environment = dict(config.environment)
+        environment.update(extra_environment)
+        command = (config.argv[0], "-I", "-B", "-c", _BOOTSTRAP, str(gate_read),
+                   config.argv[0], *config.argv[1:])
+        stage = "spawn"
+        process = subprocess.Popen(command, cwd=config.source_root, env=environment,
+            stdin=subprocess.DEVNULL, stdout=stdout_fd, stderr=stderr_fd,
+            close_fds=True, pass_fds=(gate_read, *extra_fds), start_new_session=True)
+        assert process is not None
+        runner_started = True
+        stage = "identity"
+        birth = psutil.Process(process.pid).create_time()
+        stage = "channel_started"
+        config.channel.started(process.pid, birth)
+        stage = "gate_release"
+        assert gate_write is not None
+        refuse(os.write(gate_write, b"\x01") == 1, "runner_process:gate_write")
+        gate_released = True
+        stage = "released"
+        result = RunnerProcess(process, birth, config)
+    except BaseException as error:
+        primary = error
+        primary_code = _LAUNCH_CODES[stage]
+        cleanup_proven, cleanup_code = _settle_failed_launch(
+            process, config.channel, gate_write, runner_started=runner_started,
+        )
+        gate_write = None
+    for fd in (stdout_fd, stderr_fd, gate_read):
+        close_error = _close_fd(fd)
+        if close_error is not None:
+            close_failures.append(close_error)
+    gate_error = _close_fd(gate_write)
+    if gate_error is not None:
+        close_failures.append(gate_error)
+    else:
+        gate_write = None
+    if primary is not None:
+        if close_failures:
+            cleanup_proven = False
+            cleanup_code = cleanup_code or "runner_fd_close_failed"
+        raise RunnerLaunchFailure(primary_code, runner_started=runner_started,
+                                  gate_released=gate_released,
+                                  cleanup_proven=cleanup_proven,
+                                  cleanup_code=cleanup_code) from primary
+    if close_failures:
+        primary = close_failures[0]
+        cleanup_proven, cleanup_code = _settle_failed_launch(
+            process, config.channel, gate_write, runner_started=runner_started,
+        )
+        cleanup_proven = False
+        cleanup_code = cleanup_code or "runner_fd_close_failed"
+        raise RunnerLaunchFailure("runner_fd_close_failed", runner_started=runner_started,
+                                  gate_released=gate_released,
+                                  cleanup_proven=cleanup_proven,
+                                  cleanup_code=cleanup_code) from primary
+    assert result is not None
+    return result

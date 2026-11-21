@@ -51,28 +51,7 @@ def _number(value: int | Decimal) -> str:
 
 
 def _string(value: str) -> str:
-    out = ['"']
-    for char in value:
-        if char == '"':
-            out.append('\\"')
-        elif char == "\\":
-            out.append("\\\\")
-        elif char == "\b":
-            out.append("\\b")
-        elif char == "\f":
-            out.append("\\f")
-        elif char == "\n":
-            out.append("\\n")
-        elif char == "\r":
-            out.append("\\r")
-        elif char == "\t":
-            out.append("\\t")
-        elif ord(char) < 0x20:
-            out.append(f"\\u{ord(char):04x}")
-        else:
-            out.append(char)
-    out.append('"')
-    return "".join(out)
+    return json.dumps(value, ensure_ascii=False)
 
 
 def _key_order(key: str) -> tuple[int, bytes]:

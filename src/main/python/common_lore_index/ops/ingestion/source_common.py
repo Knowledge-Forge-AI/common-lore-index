@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import urllib.parse
@@ -65,6 +66,7 @@ DISALLOWED_TRUE_FLAGS = (
     "stealth",
 )
 SOURCE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+_STABLE_SOURCE_JSON = json.JSONEncoder(sort_keys=True, separators=(",", ":"))
 
 
 class SourcePolicyError(ValueError):
@@ -72,7 +74,15 @@ class SourcePolicyError(ValueError):
 
 
 def json_dumps_stable(payload: Mapping[str, Any]) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return _STABLE_SOURCE_JSON.encode(payload)
+
+
+def _source_manifest_id(payload: Mapping[str, Any]) -> str:
+    """Hash the existing canonical bytes without joining the encoded document."""
+    digest = hashlib.sha256()
+    for fragment in _STABLE_SOURCE_JSON.iterencode(payload):
+        digest.update(fragment.encode("utf-8"))
+    return digest.hexdigest()[:16]
 
 
 def _mapping(payload: Mapping[str, Any], key: str) -> Mapping[str, Any]:

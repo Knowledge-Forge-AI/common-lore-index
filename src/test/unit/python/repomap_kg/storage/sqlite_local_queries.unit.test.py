@@ -9,6 +9,8 @@ integration claim.
 
 from __future__ import annotations
 
+import sqlite3
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +18,7 @@ import pytest
 
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.sql_core import canonical_file_path_prefix
-from common_lore_index.storage.sqlite_local import investigation_queries, queries
+from common_lore_index.storage.sqlite_local import investigation_queries, queries, raw_payload, source_feed_queries
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
@@ -112,6 +114,38 @@ def test_edges_order_and_filters(published: Path) -> None:
         assert edges(kind=EDGES[0][1]) == [edge for edge in EDGES if edge[1] == EDGES[0][1]]
         assert edges(source_key=EDGES[0][0]) == [edge for edge in EDGES if edge[0] == EDGES[0][0]]
         assert edges(target_key=EDGES[-1][2]) == [edge for edge in EDGES if edge[2] == EDGES[-1][2]]
+
+
+def test_canonical_file_windows_skip_unrelated_node_keys(published: Path) -> None:
+    prefix = canonical_file_path_prefix("pkg %雪")
+    with closing(sqlite3.connect(published)) as writer:
+        writer.executemany(
+            "INSERT INTO canonical_nodes(graph_key_version, canonical_key, kind, display_name, "
+            "metadata_json, confidence, conflict, first_seen_run_id, last_seen_run_id) "
+            "VALUES (1, ?, 'file', 'fixture', '{}', 'observed', 0, 1, 1)",
+            [(f"file:noise/{index:05}",) for index in range(15000)]
+            + [(prefix + f"file{index}.py",) for index in range(3)]
+            + [(prefix[:-1] + "0/other.py",)],
+        )
+        writer.commit()
+    with read_transaction(published, BINDING) as connection:
+        callbacks = 0
+
+        def tick() -> int:
+            nonlocal callbacks
+            callbacks += 1
+            return 0
+
+        connection.set_progress_handler(tick, 50)
+        try:
+            rows = queries.canonical_nodes(
+                connection, kind=None, canonical_key=None, path_prefix="pkg %雪",
+                graph_key_version=1, limit=1, offset=1,
+            )
+        finally:
+            connection.set_progress_handler(None, 0)
+    assert [row.canonical_key for row in rows] == [prefix + "file1.py"]
+    assert callbacks < 100
 
 
 def test_edge_explanation_windows_evidence_and_misses_cleanly(published: Path) -> None:
@@ -258,3 +292,102 @@ def test_observation_search_matches_the_jsonb_text_literally(corpus: Path) -> No
             connection, query="custom.note", kind=None, path=None, limit=1, offset=0,
             include_raw=False)["results"][0]["metadata"]
         assert list(metadata) == ["b", "c", "d", "e", "aa"] and metadata["e"] == 10**20
+
+
+def test_local_feed_reference_lookup_copies_only_page_keys_from_sqlite() -> None:
+    with closing(sqlite3.connect(":memory:")) as connection:
+        assert source_feed_queries._item_references(connection, set()) == {}
+        connection.execute("CREATE TABLE canonical_nodes(canonical_key, kind, display_name)")
+        connection.execute("CREATE TABLE canonical_edges(graph_key_version, source_canonical_key, target_canonical_key, edge_kind, metadata_json)")
+        connection.executemany("INSERT INTO canonical_nodes VALUES (?, ?, ?)",
+                               [("person", "feed.author", "Ada"), ("person", "feed.category", "News")])
+        connection.executemany("INSERT INTO canonical_edges VALUES (?, ?, ?, ?, ?)", (
+            (1, "item-000", "person", "references", "{}"),
+            (2, "item-520", "asset", "references", '{"scope":"enclosure"}'),
+            (2, "item-520", "ignored", "other-kind", '{"scope":"link"}'),
+            *((1, f"other-{i}", "unselected", "references", '{"scope":"link"}') for i in range(700)),
+        ))
+        fetched = []
+
+        def record(_cursor: sqlite3.Cursor, row: tuple[object, ...]) -> tuple[object, ...]:
+            if len(row) == 5:
+                fetched.append(row)
+            return row
+
+        connection.row_factory = record
+        result = source_feed_queries._item_references(
+            connection, {f"item-{i:03d}" for i in range(521)}
+        )
+        assert result == {
+            "item-000": (set(), {"Ada"}, {"News"}),
+            "item-520": ({"asset"}, set(), set()),
+        }
+        assert len(fetched) == 3
+
+def test_observation_search_renders_payload_only_when_needed(corpus: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    original = raw_payload.jsonb_text
+    payload_calls = []
+
+    def count(value: object) -> str:
+        if isinstance(value, dict) and "metadata" in value:
+            payload_calls.append(value)
+        return original(value)
+
+    monkeypatch.setattr(raw_payload, "jsonb_text", count)
+    with read_transaction(corpus, BINDING) as connection:
+        def search(query: str, *, include_raw: bool, path: str | None = None) -> dict[str, Any]:
+            return investigation_queries.observation_search(
+                connection, query=query, kind="custom.note", path=path, limit=2, offset=0, include_raw=include_raw,
+            )
+
+        header = search("custom.note", include_raw=False)
+        assert len(header["results"]) == 1 and not payload_calls
+
+        result = search('"b": 150, "c": "', include_raw=True, path=header["results"][0]["path"])
+        row, = result["results"]
+        assert row["payload"]["metadata"] == row["metadata"]
+        assert row["metadata"]["c"] == 'Ärger "quoted"\ttab'
+        assert payload_calls.count(row["payload"]) == 1
+
+
+def test_jsonb_string_rendering_preserves_unicode_and_escape_spelling() -> None:
+    text = '雪"\\\b\f\n\r\t\x01\x1f\x7f'
+    quoted = '"雪\\"\\\\\\b\\f\\n\\r\\t\\u0001\\u001f\x7f"'
+    assert raw_payload.jsonb_text({"a": text}) == '{"a": ' + quoted + '}'
+
+
+def test_observation_header_page_decodes_only_returned_rows(corpus: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+    original = raw_payload.load
+
+    def record(text: str) -> Any:
+        calls.append(text)
+        return original(text)
+
+    monkeypatch.setattr(raw_payload, "load", record)
+    with read_transaction(corpus, BINDING) as connection:
+        result = investigation_queries.observation_search(
+            connection, query="#corpus:", kind=None, path=None, limit=2, offset=8, include_raw=True,
+        )
+    assert result["has_more"] is True and result["total"] == 10
+    assert [row["ordinal"] for row in result["results"]] == [8, 9]
+    assert len(calls) == 2
+
+
+def test_observation_filter_proving_membership_pushes_offset_into_sqlite(corpus: Path) -> None:
+    fetched: list[int] = []
+
+    def observe(cursor: sqlite3.Cursor, row: tuple[Any, ...]) -> tuple[Any, ...]:
+        if cursor.description and cursor.description[0][0] == "ordinal":
+            fetched.append(int(row[0]))
+        return row
+
+    with read_transaction(corpus, BINDING) as connection:
+        connection.row_factory = observe
+        page = investigation_queries.observation_search(
+            connection, query="API.YAML", kind="openapi.operation", path="api.yaml",
+            limit=1, offset=1, include_raw=True,
+        )
+    assert page["total"] == 2 and page["has_more"] is True
+    assert [row["path"] for row in page["results"]] == ["api.yaml"]
+    assert len(fetched) == 2 and fetched[0] == page["results"][0]["ordinal"]

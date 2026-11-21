@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Callable
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -78,14 +80,15 @@ def node_locations(
     history = _evidence_window(
         connection, node[0], location_run_id, query, historical=True, role_sql=role_sql
     )
+    read_context_vector = _context_vector_reader() if context_identity else None
     result: dict[str, Any] = {
         "status": "ok", "reason": None,
         "locations": [
-            _location(row, accepted.run_id, context_identity=context_identity)
+            _location(row, accepted.run_id, read_context_vector=read_context_vector)
             for row in rows[:query.limit]
         ],
         "historical_locations": [
-            _location(row, accepted.run_id, context_identity=context_identity)
+            _location(row, accepted.run_id, read_context_vector=read_context_vector)
             for row in history[:query.limit]
         ],
         "historical_has_more": len(history) > query.limit,
@@ -171,19 +174,28 @@ def _parse_context_snapshot_vector(raw_vector: Any) -> list[list[Any]]:
     return [list(item) for item in parsed]
 
 
+ContextVectorReader = Callable[[Any], list[list[Any]]]
+
+
+def _context_vector_reader() -> ContextVectorReader:
+    """Reuse one validated persisted JSON vector within the current read."""
+    read_cached = lru_cache(maxsize=1)(_parse_context_snapshot_vector)
+
+    def read(raw: Any) -> list[list[Any]]:
+        return read_cached(raw) if isinstance(raw, str) else _parse_context_snapshot_vector(raw)
+
+    return read
+
+
 def _location(row: sqlite3.Row | tuple[Any, ...], accepted_run_id: int, *,
-              snapshot_vector: list[Any] | None = None,
-              context_identity: bool = False) -> dict[str, Any]:
-    raw_vector = (
-        _parse_context_snapshot_vector(row[18])
-        if context_identity
-        else json.loads(row[18]) if snapshot_vector is None else snapshot_vector
-    )
-    vector = (
-        _parse_context_snapshot_vector(snapshot_vector)
-        if context_identity and snapshot_vector is not None
-        else raw_vector if snapshot_vector is None else snapshot_vector
-    )
+              read_context_vector: ContextVectorReader | None) -> dict[str, Any]:
+    vector = json.loads(row[18]) if read_context_vector is None else read_context_vector(row[18])
+    return _location_from_vector(row, accepted_run_id, vector)
+
+
+def _location_from_vector(
+    row: sqlite3.Row | tuple[Any, ...], accepted_run_id: int, vector: list[Any],
+) -> dict[str, Any]:
     metadata = json.loads(row[13])
     source = {key: metadata[key] for key in (
         "binding_id", "binding_alias", "binding_revision", "snapshot_id", "source_relative_path"

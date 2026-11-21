@@ -87,3 +87,28 @@ def test_sandbox_c_psycopg_distribution_attestation_refuses_missing_module_or_di
             "3.3.6",
             owner_root,
         )
+
+
+
+def test_current_loader_declarations_close_real_graph_and_retain_history() -> None:
+    import json
+    from ci.python_retention_dependencies import build_dependency_graph
+    from ci.python_retention_dynamic import apply_dynamic_boundaries
+    from ci.python_retention_dynamic_history import active_boundaries
+    root = Path(__file__).resolve().parents[6]
+    document = json.loads((root / "tools/ci/python_retention_inventory.json").read_bytes())
+    candidates = sorted(row["path"] for row in document["files"])
+    graph = apply_dynamic_boundaries(root, candidates, build_dependency_graph(root, candidates))
+    records = [row for row in active_boundaries(document)
+               if row["id"].startswith("cloe.ci149repair1.")]
+    assert len(records) == 15
+    for row in records:
+        owner = row["owner"]
+        assert owner not in graph["errors"]
+        assert not graph["dynamic_uncertainty"].get(owner)
+        assert row["targets"][0]["path"] in graph["dependencies"][owner]
+        assert row["id"] in graph["resolved_dynamic_dependencies"]
+    retired = {row["supersedes"] for row in records if row["supersedes"] is not None}
+    assert len(retired) == 6
+    assert retired <= {row["id"] for row in document["dynamic_boundaries"]}
+    assert not retired & {row["id"] for row in active_boundaries(document)}

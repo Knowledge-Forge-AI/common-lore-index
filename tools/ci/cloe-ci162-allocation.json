@@ -1,0 +1,40 @@
+{
+  "approval": {
+    "operator_request": "Proceed to the next milestone.",
+    "phase": "CLOE-W8-RESOLUTION1",
+    "schema": "cloe-ci162-approval-v1",
+    "scope": "One staging synchronize on draft PR 27 for the connected W8 upgrade and package qualification milestone. Preserve the split gate, Server report v3, existing candidate and coverage gates.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 68,
+    "attempt": 1,
+    "component_runtime_executions": 38,
+    "native_report_sha256": "2d5c653e1e77e5fe7cbc9fa17a51cf203f1483e51b413a4d6af4e7c6244218bd",
+    "preceding_campaign": 161,
+    "previous_rust_downloads": 2,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 40,
+    "rust_report_sha256": "6b45e0d69fe396106f44b382326473882ea54a814f62889c020db279d075b938",
+    "schema": "cloe-ci162-ledger-before-v1",
+    "staging_report_sha256": "4c4b6a287110045c33868fe61c77b20958cb663e302726da82e8e61ecdecdd24",
+    "system_report_sha256": "aca70f59ebc88556881323144fb18f278007fcd9257b860120c34bf72d3e8e61",
+    "wheel_transfers": 78
+  },
+  "reservation": {
+    "application_start": 69,
+    "approval_sha256": "94724bbf1ddf29927378ee56a5f6b20e0fc9c3f1317dfdf088facf33b4456c39",
+    "component_runtime_cumulative": 39,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "0f57bc3b5e6b30070521fb00eddc4fd671c5625139bafbf5d1714c8400151ca3",
+    "nonce": "703ea092a7fccb5cdc7e6582919b20c9",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 41,
+    "schema": "cloe-ci162-reservation-v1",
+    "wheel_transfers_cumulative": 80,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 162
+  }
+}

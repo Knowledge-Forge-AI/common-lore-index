@@ -1,6 +1,8 @@
+import hashlib
 import json
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from repomap_test_support.source_ingestion import (
     SourceIngestionUnitTestCase,
@@ -16,6 +18,20 @@ from common_lore_index.ops.ingestion.source import (
 
 
 class ArchiveSourceIngestionUnitTests(SourceIngestionUnitTestCase):
+    def test_archive_hashes_a_multiblock_file_without_a_whole_file_read(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            report = root / "reports/latest"
+            report.mkdir(parents=True)
+            content = b"sample\0" * 110_000
+            (report / "report.bin").write_bytes(content)
+            path = self.write_archive_config(root / "source.toml", max_artifact_bytes=len(content))
+            config = load_archive_source_config(path)
+            with patch.object(Path, "read_bytes", side_effect=AssertionError("whole-file read")):
+                manifest = build_archive_manifest(config, root_path=root, clock=self.fixed_clock)
+        (included,) = manifest.included_files
+        self.assertEqual((included.byte_length, included.sha256), (len(content), hashlib.sha256(content).hexdigest()))
+
     def test_archive_config_policy_rejects_unknown_blocked_and_url_fields(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir) / "repo"

@@ -37,13 +37,14 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import NoReturn
 
+from common_lore_index.storage._preparation_iterators import own_preparation_iterator
 from common_lore_index.storage.publication import RunPublicationReceipt
 from common_lore_index.storage.sqlite_local.connection import classify_write_error, open_writer
 from common_lore_index.storage.sqlite_local.merge_sql import family_statements
@@ -234,6 +235,26 @@ def _encode(value: object) -> object:
     return value
 
 
+@dataclass(slots=True)
+class _StageRows:
+    family: StageFamily
+    columns: tuple[str, ...]
+    rows: Iterator[Mapping[str, object]]
+    count: int = field(init=False, default=0)
+
+    def __iter__(self) -> _StageRows:
+        return self
+
+    def __next__(self) -> tuple[object, ...]:
+        row = next(self.rows)
+        try:
+            encoded = tuple(_encode(row[column]) for column in self.columns)
+        except KeyError as err:
+            raise LocalStoreError(PUBLICATION_REJECTED, f"{self.family} row is malformed") from err
+        self.count += 1
+        return encoded
+
+
 def _stage(
     connection: sqlite3.Connection,
     families: Mapping[StageFamily, Iterable[Mapping[str, object]]],
@@ -247,23 +268,11 @@ def _stage(
             connection.execute(f"DROP TABLE IF EXISTS {table}")
             connection.execute(f"CREATE TEMP TABLE stage_{family} ({', '.join(columns)})")
             placeholders = ", ".join("?" for _ in columns)
-            count = 0
-            batch: list[tuple[object, ...]] = []
-            for row in families[family]:
-                try:
-                    batch.append(tuple(_encode(row[column]) for column in columns))
-                except KeyError as error:
-                    raise LocalStoreError(
-                        PUBLICATION_REJECTED, f"{family} row is malformed"
-                    ) from error
-                if len(batch) >= 1000:
-                    connection.executemany(f"INSERT INTO {table} VALUES ({placeholders})", batch)
-                    count += len(batch)
-                    batch.clear()
-            if batch:
-                connection.executemany(f"INSERT INTO {table} VALUES ({placeholders})", batch)
-                count += len(batch)
-            counts[family] = count
+            # Close source on exit: preserve primary errors; surface clean-exhaustion close errors.
+            with own_preparation_iterator(iter(families[family])) as rows:
+                staged = _StageRows(family, columns, rows)
+                connection.executemany(f"INSERT INTO {table} VALUES ({placeholders})", staged)
+            counts[family] = staged.count
         connection.execute("COMMIT")
     except BaseException:
         _discard_open_transaction(connection)

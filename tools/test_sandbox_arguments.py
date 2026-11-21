@@ -132,6 +132,7 @@ def sandbox_report_arguments(
     max_gate_request_bytes: int = MAX_GATE_REQUEST_BYTES,
     inner_d12_proof_path: Path = INNER_D12_SYSTEM_PROOF_PATH,
     max_d12_proof_bytes: int = MAX_D12_SYSTEM_PROOF_BYTES,
+    export_report: bool = False,
 ) -> SandboxArgumentsResult:
     forwarded_index = argv.index("--") if "--" in argv else len(argv)
     runner_argv = list(argv[:forwarded_index])
@@ -254,7 +255,7 @@ def sandbox_report_arguments(
 
         gate_index += 1
 
-    if "--report" not in runner_argv and "--d12-core-image-preflight" not in runner_argv:
+    if not export_report and "--report" not in runner_argv and "--d12-core-image-preflight" not in runner_argv:
         return SandboxArgumentsResult(
             [*runner_argv, *forwarded], None, gate_request_bytes, d12_proof_bytes, d12_host_proof_path
         )

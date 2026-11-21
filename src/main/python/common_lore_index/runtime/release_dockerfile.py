@@ -37,6 +37,37 @@ from common_lore_index.runtime.release import (
 
 # ADR 0089 D4: copied and run before builder packages inventory the base payload.
 PYTHON_PAYLOAD_SOURCE = "src/main/python/common_lore_index/runtime/python_payload.py"
+ARCHIVE_APT_PATH = "/etc/apt/sources.list.d/cloe-d12-archive.sources"
+_DEBIAN_KEYRING = "/usr/share/keyrings/debian-archive-keyring.pgp"
+DEBIAN_HEADER_ARCHIVES = "".join(
+    f"Types: deb\nURIs: https://snapshot.debian.org/archive/{archive}/{stamp}/\n"
+    f"Suites: {suite}\nComponents: main\nSigned-By: {_DEBIAN_KEYRING}\n"
+    "Check-Valid-Until: no\n\n"
+    for archive, stamp, suite in (
+        ("debian", "20261022T000000Z", "trixie"),
+        ("debian-security", "20261118T000000Z", "trixie-security"),
+    )
+)
+
+
+def archive_apt_sources(pgdg_keyring: str) -> str:
+    """Preserve the base trust roots while locating exact frozen archives."""
+    return (
+        "Types: deb\nURIs: https://apt-archive.postgresql.org/pub/repos/apt/\n"
+        "Suites: trixie-pgdg-archive\nComponents: main\n"
+        f"Signed-By: {pgdg_keyring}\n\n" + DEBIAN_HEADER_ARCHIVES
+    )
+
+
+def _render_builder(arch: str, item: PlatformPackages) -> str:
+    original_trust = " ".join(shlex.quote(f"{digest}  {path}") for path, digest in
+                              (item.pgdg_source, item.pgdg_keyring))
+    source = " ".join(map(shlex.quote, archive_apt_sources(item.pgdg_keyring[0]).splitlines()))
+    return (
+        f"printf '%s\\n' {original_trust} | sha256sum --check --strict - && "
+        f"(set -C && printf '%s\\n' {source} > {ARCHIVE_APT_PATH}) && "
+        f"{render_apt_steps(arch, item, item.builder, trust_files=False)} && rm {ARCHIVE_APT_PATH}"
+    )
 
 
 def render_server_dockerfile(
@@ -56,7 +87,7 @@ def render_server_dockerfile(
         f"COPY --from={POSTGRES_RELEASE_IMAGE} {path} {path}\n"
         for path, _digest in ((first.pgdg_source, first.pgdg_keyring) if first else ())
     )
-    builder = _platform_case(manifest, lambda arch, item: render_apt_steps(arch, item, item.builder, trust_files=True))
+    builder = _platform_case(manifest, _render_builder)
     closure = _platform_case(manifest, lambda arch, item: render_apt_steps(arch, item, item.closure, trust_files=False))
     expect = _platform_case(manifest, lambda _arch, item: _expected_identity(item, libpq_version))
     wheels = "".join(

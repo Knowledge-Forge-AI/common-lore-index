@@ -1,0 +1,32 @@
+{
+  "aliases_are_not_source_relative_path_prefixes": true,
+  "arms": [
+    "native_tools_baseline",
+    "current_graph_baseline:postgresql",
+    "postgres_native_fts:postgresql",
+    "exact_vector:canonical-node-v1",
+    "exact_vector:canonical-node-public-text-v2",
+    "hybrid_rrf:canonical-node-public-text-v2"
+  ],
+  "bindings": {
+    "checks": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+    "code": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+    "denied": "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c",
+    "docs": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608"
+  },
+  "candidate_pair_ceiling": 80,
+  "corpus_id": "sup1-corpus-v1",
+  "denied_reason": "binding_privacy_not_authorized",
+  "file_count_ceiling": 24,
+  "generation": 1,
+  "graph_id": "sup1-calibration",
+  "metadata_and_body_denied_alias": "denied",
+  "phase": "CLOE-W5-SUPPLEMENT1",
+  "public_body_authorized_aliases": [
+    "code",
+    "checks",
+    "docs"
+  ],
+  "purpose": "calibration",
+  "supplement_id": "sup1-calibration-v1"
+}

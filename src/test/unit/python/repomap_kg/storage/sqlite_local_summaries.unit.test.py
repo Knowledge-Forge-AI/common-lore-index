@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Callable, Iterator
+from contextlib import closing
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -216,3 +217,37 @@ def test_dogfood_marker_keeps_legacy_and_current_captured_names(connection, monk
     monkeypatch.setattr(summary_queries, "raw_rows", lambda *_args, **_kwargs: iter((("python.package_file", "", payload),)))
     summary = _summary(connection, "python")
     assert summary["dogfooding"]["repo_map_profile_observed"] is expected
+
+def test_summary_prefix_uses_kind_index_and_preserves_literal_boundaries() -> None:
+    with closing(sqlite3.connect(":memory:")) as db:
+        db.execute("CREATE TABLE raw_observations(kind TEXT, path TEXT, payload_json TEXT)")
+        db.execute("CREATE INDEX idx_raw_observations_kind ON raw_observations(kind)")
+        db.executemany("INSERT INTO raw_observations VALUES (?, 'fixture.py', '{}')",
+                       ((f"unrelated.{i}",) for i in range(18000)))
+        db.executemany("INSERT INTO raw_observations VALUES (?, 'fixture.py', '{}')", (
+            ("python.",), ("python.λ",), ("python.a",), ("Python.a",), ("pythone",),
+            ("config.parse_error",), ("config.ref",), ("python%_literal",),
+            ("python.%_λ",), ("openapi.\u0000suffix",),
+        ))
+        callbacks = 0
+
+        def progress() -> int:
+            nonlocal callbacks
+            callbacks += 1
+            return 0
+
+        db.set_progress_handler(progress, 100)
+        try:
+            kinds = [kind for kind, _, _ in summary_queries.raw_rows(
+                db, prefix="python.", kinds=("python.a", "config.parse_error")
+            )]
+        finally:
+            db.set_progress_handler(None, 0)
+        assert sorted(kinds) == ["config.parse_error", "python.", "python.%_λ", "python.a", "python.λ"]
+        assert callbacks < 100
+
+        for prefix in ("", "python.%_", "python.λ", "openapi.\u0000"):
+            old = sorted(row[0] for row in db.execute(
+                "SELECT kind FROM raw_observations WHERE substr(kind, 1, ?) = ?", (len(prefix), prefix)
+            ))
+            assert sorted(kind for kind, _, _ in summary_queries.raw_rows(db, prefix=prefix)) == old

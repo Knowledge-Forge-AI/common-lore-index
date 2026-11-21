@@ -1,0 +1,36 @@
+{
+  "approval": {
+    "adr_sha256": "39f372e383fc01ce0de6c6144cb179573359bdd1846bf35830ed2c6b62af9366",
+    "operator_request": "ci failed try again",
+    "phase": "CLOE-CI149REPAIR1",
+    "schema": "cloe-ci150-approval-v1",
+    "scope": "Exact closed-loader retention repair, scoped proof and independent review, one strict staging synchronize successor; no main/tag/release, new dependency class or scientific acceptance.",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 56,
+    "attempt": 1,
+    "component_runtime_executions": 27,
+    "preceding_campaign": 149,
+    "previous_rust_downloads": 2,
+    "rust_qualifier_entries": 28,
+    "rust_report_sha256": "4b9f3c5afbb5f04160dfa93a07eaadea856893d5fdc33f93ab05088f479f3bcd",
+    "schema": "cloe-ci150-ledger-before-v1",
+    "system_report_sha256": "6c82f07460baec56d520912ae98e4ee4a5dcb1d61df7eb3833c9157df0b3e29e",
+    "wheel_transfers": 56
+  },
+  "reservation": {
+    "application_start": 57,
+    "approval_sha256": "7f87a8f1cbec5923ca6eae642feff35e2a8a31e3174217c8d88a47dcda1bf4a5",
+    "event_action": "synchronize",
+    "ledger_before_sha256": "a43375417547f650335a62b50249b3ba4904beaa2d06ae41e3000259954e4d62",
+    "nonce": "405bbfa50bb63343726c4b69c5f04ba3",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 29,
+    "schema": "cloe-ci150-reservation-v1",
+    "wheel_transfers_cumulative": 58,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 150
+  }
+}

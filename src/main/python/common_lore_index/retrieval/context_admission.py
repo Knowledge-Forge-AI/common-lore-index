@@ -260,9 +260,10 @@ def admit_items_and_relations(
     budget_bytes: int,
 ) -> None:
     """Pack seeds, neighbor units, relations, and omissions under seeds_then_neighbors_v1."""
-    def fits_reserved_packet() -> bool:
+    def fits_reserved_packet(records: Sequence[dict[str, Any]] = ()) -> bool:
         packet["omission_counts"] = omissions.to_counts_dict()
-        packet["omissions"] = [dict(record) for record in omissions.records]
+        # Reserve detail bytes only after ranked items and relations.
+        packet["omissions"] = [dict(record) for record in records]
         apply_skeleton_compaction(packet, budget_bytes)
         size = packet_size_with_reservation(packet)
         if size > budget_bytes and packet["request"].get("target_echo") is not None:
@@ -391,8 +392,7 @@ def admit_items_and_relations(
 
     admitted_omissions: list[dict[str, Any]] = []
     for rec in omissions.records:
-        packet["omissions"] = admitted_omissions + [rec]
-        if fits_reserved_packet():
+        if fits_reserved_packet(admitted_omissions + [rec]):
             admitted_omissions.append(rec)
         else:
             break

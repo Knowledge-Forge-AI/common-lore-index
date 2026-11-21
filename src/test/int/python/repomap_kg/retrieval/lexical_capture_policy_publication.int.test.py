@@ -76,8 +76,14 @@ def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion
 ) -> None:
     """Accepted bytes, strict decoding, and truncation remain queryable after roots vanish."""
     with temporary_postgres() as pg_db:
-        _, config, core_id, companion_id = _public_fixture(tmp_path, pg_db)
-        working_copy = tmp_path / "working-copy"
+        home, working_copy, core_id, companion_id = _write_public_fixture(tmp_path, pg_db)
+        alias_path = "generated/wide_alias.md"
+        (working_copy / "companion" / alias_path).write_text(
+            "Z" * 6000 + " OBSERVERQueueQuota\n", encoding="utf-8",
+        )
+        publish_and_load_postgres_corpus(home, psql_command=pg_db.psql_command)
+        config = load_graph_registry_config_home(home)
+        assert isinstance(config, OpsConfig)
         shutil.rmtree(working_copy / "core")
         shutil.rmtree(working_copy / "companion")
         built = build_graph_lexical_generation(
@@ -98,6 +104,16 @@ def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion
         assert omissions[(companion_id, "generated/binary_nul.txt")] == ExclusionReason.NUL_BYTE_REJECTED.value
         assert omissions[(companion_id, "generated/oversized_dump.txt")] == ExclusionReason.ARTIFACT_OVERSIZED.value
         assert omissions[(companion_id, "generated/truncatable_prose.md")] == "oversize_projected_file_truncated"
+
+        aliases = query_graph_lexical_generation(
+            config, MIXED_V1_GRAPH_ID,
+            LexicalQueryRequest(
+                query="queue quota", selected_binding_ids=(companion_id,),
+                source_path_prefix=alias_path,
+            ),
+            authorize_body=True,
+        )
+        assert any(hit.locator.source_relative_path == alias_path for hit in aliases.hits)
 
         prefix_env = query_graph_lexical_generation(
             config,

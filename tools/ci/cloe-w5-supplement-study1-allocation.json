@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "adr_sha256": "a0ed0f49973ae644a922ff2a6f7eeae2885db99044b877bd832e7f96adc32726",
+    "operator_request": "CI passed. Proceed. Route A selected.",
+    "phase": "CLOE-W5-SUPPLEMENT-STUDY1",
+    "schema": "cloe-ci151-approval-v1",
+    "scope": "Frozen public supplement native study, complete paired evidence and scoped source proof; one staging synchronize campaign after independent acceptance. No main/tag/release, new dependency, held-out or scientific acceptance.",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 57,
+    "attempt": 1,
+    "component_runtime_executions": 28,
+    "native_report_sha256": "f108af97dd0ee1b3e127fb8a1bbba550eebec5f33ddbbe744c17461f8a1d9cc7",
+    "preceding_campaign": 150,
+    "previous_rust_downloads": 2,
+    "rust_qualifier_entries": 29,
+    "rust_report_sha256": "f846869e014005c54d17fa957bae1c368e7457fa51e978dfc6d9c5f7becf4d4c",
+    "schema": "cloe-ci151-ledger-before-v1",
+    "system_report_sha256": "4df0a8635a574b692d4a84232330d10380395a53a78b4eabe12aca5719d29143",
+    "wheel_transfers": 58
+  },
+  "reservation": {
+    "application_start": 58,
+    "approval_sha256": "f04eaaccf39d32568e33ebc4c291780cf9a1d15de05bc5d0007ee94df8edc93d",
+    "component_runtime_cumulative": 29,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "7958b1254d102af372badb15ada3479f19380a4d827f8ae54b066f0aa5a9bd45",
+    "nonce": "6738f32cdf60ca5c9008390057be0465",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 30,
+    "schema": "cloe-ci151-reservation-v1",
+    "wheel_transfers_cumulative": 60,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 151
+  }
+}

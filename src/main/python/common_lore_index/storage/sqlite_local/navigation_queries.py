@@ -14,9 +14,10 @@ from common_lore_index.storage.navigation_search import (
 )
 from common_lore_index.storage.graph_readback_sql import escape_readback_like_pattern
 from common_lore_index.storage.sqlite_local.node_location_queries import (
+    ContextVectorReader,
     _EVIDENCE_ROLE_SQL,
-    _location,
-    _parse_context_snapshot_vector,
+    _context_vector_reader,
+    _location_from_vector,
 )
 from common_lore_index.storage.sqlite_local.schema import SqliteFunctionReadConnection, accepted_identity
 
@@ -37,6 +38,9 @@ def candidate_predicate(query: NavigationSearchQuery) -> tuple[str, dict[str, An
 
 def evidence_sql(predicate: str, *, role_sql: str = _EVIDENCE_ROLE_SQL) -> str:
     # Run selection deliberately precedes role selection, just like the locator.
+    # Materialize the bounded relational identity/sort window before joining wide
+    # evidence metadata, run vectors, or raw observation payload hashes; post-limit
+    # runs parity relies on schema FK canonical_evidence.run_id -> runs(id).
     return f"""WITH selected AS (
         SELECT subject.id AS node_id,
                coalesce(max(CASE WHEN e.run_id = :accepted THEN e.run_id END), max(e.run_id)) AS run_id
@@ -44,35 +48,58 @@ def evidence_sql(predicate: str, *, role_sql: str = _EVIDENCE_ROLE_SQL) -> str:
         JOIN canonical_node_evidence link ON link.canonical_node_id = subject.id
         JOIN canonical_evidence e ON e.id = link.canonical_evidence_id AND e.graph_key_version = 1
         WHERE {predicate} GROUP BY subject.id
+    ),
+    bounded AS MATERIALIZED (
+        SELECT subject.id AS node_id,
+               subject.canonical_key AS canonical_key,
+               e.id AS evidence_id,
+               e.run_id AS run_id,
+               e.raw_observation_ordinal AS raw_observation_ordinal,
+               e.evidence_key AS evidence_key,
+               link.link_kind AS link_kind,
+               {role_sql} AS evidence_role
+        FROM selected
+        CROSS JOIN canonical_nodes subject ON subject.id = selected.node_id
+        CROSS JOIN canonical_node_evidence link ON link.canonical_node_id = subject.id
+        CROSS JOIN canonical_evidence e ON e.id = link.canonical_evidence_id
+                                       AND e.run_id = selected.run_id AND e.graph_key_version = 1
+        WHERE ({role_sql}) = 'direct'
+        ORDER BY subject.canonical_key, e.raw_observation_ordinal, e.evidence_key, link.link_kind
+        LIMIT :evidence_fetch
     )
-    SELECT e.evidence_key, link.link_kind, e.run_id, e.raw_observation_ordinal,
+    SELECT bounded.evidence_key AS evidence_key,
+           bounded.link_kind AS link_kind,
+           bounded.run_id AS run_id,
+           bounded.raw_observation_ordinal AS raw_observation_ordinal,
            raw.payload_hash, e.raw_kind, e.raw_source_id, e.path, e.start_line, e.end_line,
            e.extractor, e.extractor_version, e.confidence, e.metadata_json,
            r.publication_bundle_id, r.snapshot_manifest_id, r.extraction_receipt_id,
-           r.graph_candidate_id, r.snapshot_vector_json, {role_sql}, subject.id
-    FROM selected
-    JOIN canonical_nodes subject ON subject.id = selected.node_id
-    JOIN canonical_node_evidence link ON link.canonical_node_id = subject.id
-    JOIN canonical_evidence e ON e.id = link.canonical_evidence_id
-                            AND e.run_id = selected.run_id AND e.graph_key_version = 1
-    JOIN runs r ON r.id = e.run_id
-    LEFT JOIN raw_observations raw ON raw.run_id = e.run_id AND raw.ordinal = e.raw_observation_ordinal
-    WHERE ({role_sql}) = 'direct'
-    ORDER BY subject.canonical_key, e.raw_observation_ordinal, e.evidence_key, link.link_kind
-    LIMIT :evidence_fetch"""
+           r.graph_candidate_id, r.snapshot_vector_json,
+           bounded.evidence_role, bounded.node_id AS id
+    FROM bounded
+    CROSS JOIN canonical_evidence e ON e.id = bounded.evidence_id
+    CROSS JOIN runs r ON r.id = bounded.run_id
+    LEFT JOIN raw_observations raw
+      ON raw.run_id = bounded.run_id AND raw.ordinal = bounded.raw_observation_ordinal
+    ORDER BY bounded.canonical_key, bounded.raw_observation_ordinal,
+             bounded.evidence_key, bounded.link_kind"""
 
 
 def _direct_location(row: Any, accepted_run_id: int, *,
                      snapshot_vector: list[Any] | None = None,
-                     context_identity: bool = False) -> dict[str, Any]:
-    vector = (
-        _parse_context_snapshot_vector(row[18] if snapshot_vector is None else snapshot_vector)
-        if context_identity
-        else json.loads(row[18]) if snapshot_vector is None else snapshot_vector
-    )
-    location = _location(
-        row, accepted_run_id, snapshot_vector=vector, context_identity=context_identity
-    )
+                     read_context_vector: ContextVectorReader | None = None) -> dict[str, Any]:
+    if read_context_vector is not None:
+        # Validate the persisted row even when the caller supplies a separately
+        # validated vector for resolving this location's binding.
+        persisted = read_context_vector(row[18])
+        vector = persisted if snapshot_vector is None else snapshot_vector
+    else:
+        vector = json.loads(row[18]) if snapshot_vector is None else snapshot_vector
+    return _direct_location_from_vector(row, accepted_run_id, vector)
+
+
+def _direct_location_from_vector(row: Any, accepted_run_id: int, vector: list[Any]) -> dict[str, Any]:
+    location = _location_from_vector(row, accepted_run_id, vector)
     source = location["source"]
     vector = [item for item in vector if item[0] == source.get("binding_id")]
     location["source_identity_status"] = (
@@ -85,7 +112,7 @@ def _direct_location(row: Any, accepted_run_id: int, *,
 @dataclass
 class _Admission:
     admits_location: Callable[[dict[str, Any]], bool]
-    context_identity: bool = False
+    read_context_vector: ContextVectorReader | None = None
     checks: int = 0
     decoded_bytes: int = 0
     input_bytes: int = 0
@@ -105,15 +132,12 @@ class _Admission:
         self.decoded_bytes += size
         try:
             if run_id not in self.vectors:
-                self.vectors[run_id] = (_parse_context_snapshot_vector(vector)
-                                        if self.context_identity else json.loads(vector))
+                self.vectors[run_id] = (self.read_context_vector or json.loads)(vector)
                 self.vector_bytes += vector_size
             # Identity fields only; no payload/source or corpus-sized collection.
             row = (None, "observed", 0, None, None, None, None, path, None, None,
                    None, None, None, metadata, None, None, None, None, vector, "direct")
-            return self.admits_location(_direct_location(
-                row, 0, snapshot_vector=self.vectors[run_id], context_identity=self.context_identity
-            ))
+            return self.admits_location(_direct_location_from_vector(row, 0, self.vectors[run_id]))
         except Exception as error:
             # sqlite3 erases callback causes. Re-raise outside its SQL boundary.
             self.error = error
@@ -154,11 +178,12 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
     if accepted is None:
         return unavailable("publication_absent")
     predicate, params = candidate_predicate(query)
+    read_context_vector = _context_vector_reader() if context_identity else None
     admission = None
     if query.source_binding_id is not None:
         if admits_location is None:
             return unavailable("source_scope_predicate_unavailable")
-        admission = _Admission(admits_location, context_identity=context_identity)
+        admission = _Admission(admits_location, read_context_vector=read_context_vector)
         predicate = _scope_predicate(predicate, role_sql=role_sql)
     rows = []
     try:
@@ -204,11 +229,16 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
     nodes = {row[0]: {"canonical_key": row[1], "kind": row[2], "display_name": row[3],
                       "first_seen_run_id": row[4], "last_seen_run_id": row[5], "locations": []}
              for row in rows}
+    vectors = dict(admission.vectors) if admission is not None else {}
     for row in evidence:
-        vector = admission.vectors.get(row[2]) if admission is not None else None
+        vector = (
+            vectors[row[2]] if row[2] in vectors
+            else vectors.setdefault(row[2], json.loads(row[18])) if read_context_vector is None
+            else None
+        )
         location = _direct_location(
             row[:20], accepted.run_id, snapshot_vector=vector,
-            context_identity=context_identity,
+            read_context_vector=read_context_vector,
         )
         nodes[row[20]]["locations"].append(location)
     result["nodes"] = list(nodes.values())

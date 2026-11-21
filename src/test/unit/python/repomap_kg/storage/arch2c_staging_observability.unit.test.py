@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from contextlib import nullcontext
+from datetime import datetime, timezone
+from types import SimpleNamespace
 from typing import cast
 import json
 
@@ -40,6 +42,33 @@ def test_invalid_operation_does_not_consume_a_sequence() -> None:
     with measurements.operation("guard.source_index_stage"):
         pass
     assert [event.attempt_local_sequence for event in events] == [1, 1]
+
+
+def test_failed_resource_sample_stops_measurements_and_keeps_lifecycle_events() -> None:
+    events: list[StagingMeasurementEvent] = []
+    operations: list[StagingOperationEvent] = []
+    measurements = StagingMeasurements(events.append, operation_sink=operations.append, monotonic_ns=_clock())
+    def fail_sample() -> None:
+        measurements.record_bytes(StagingMeasurementCategory.WAL_UPPER_BOUND, 0)
+        raise RuntimeError("private sampler details")
+
+    with measurements.sample_resources():
+        fail_sample()
+    assert measurements.failed
+    measurements.record_bytes(StagingMeasurementCategory.TEMPORARY_BYTE_UPPER_BOUND, 1)
+    with measurements.operation("guard.source_index_stage"):
+        pass
+    assert [row.category for row in events] == [StagingMeasurementCategory.WAL_UPPER_BOUND]
+    assert len(operations) == 2
+
+
+@pytest.mark.parametrize("interrupt", (KeyboardInterrupt, SystemExit))
+def test_resource_sampling_preserves_process_control(interrupt: type[BaseException]) -> None:
+    measurements = StagingMeasurements(lambda _event: None)
+    with pytest.raises(interrupt):
+        with measurements.sample_resources():
+            raise interrupt()
+    assert not measurements.failed
 
 
 def test_reentrant_operation_sink_preserves_the_shared_event_limit() -> None:
@@ -194,6 +223,24 @@ def test_arch2c_measurement_contract_rejects_unbounded_or_mislabeled_events() ->
     assert non_authoritative.event_count == 0
 
 
+def test_client_rss_os_failure_leaves_other_staging_samples_available(monkeypatch: pytest.MonkeyPatch) -> None:
+    def unavailable(_who: int) -> None:
+        raise OSError("private-rss-detail")
+
+    monkeypatch.setattr(resources, "resource", SimpleNamespace(RUSAGE_SELF=0, getrusage=unavailable))
+    before = resources.StagingResourceSnapshot(100, None, 10)
+    after = resources.StagingResourceSnapshot(108, None, 11)
+    events: list[StagingMeasurementEvent] = []
+    resources.emit_staging_resource_measurements(StagingMeasurements(events.append), before, after)
+    samples = {event.category: event for event in events}
+    assert samples[StagingMeasurementCategory.WAL_UPPER_BOUND].value == 8
+    assert samples[StagingMeasurementCategory.POSTGRESQL_MEMORY].value == 11
+    client = samples[StagingMeasurementCategory.CLIENT_MEMORY]
+    assert client.availability is StagingMeasurementAvailability.UNAVAILABLE
+    assert client.value is None
+    assert "private-rss-detail" not in json.dumps(client.to_payload())
+
+
 @pytest.mark.parametrize(
     ("replacement", "message"),
     (
@@ -313,3 +360,37 @@ def test_arch2c_nonnegative_resource_values_are_strict(
     value: object, expected: int | None
 ) -> None:
     assert resources._nonnegative_int(value) == expected
+
+
+_RESET = datetime(2026, 11, 18, tzinfo=timezone.utc)
+
+
+@pytest.mark.parametrize(("after", "expected_wal", "expected_temporary"), [
+    (("0/64", 20, 10, None), 0, 0),
+    (("0/65", 23, 10, None), 1, 3),
+    (("0/63", 19, 10, None), None, None),
+    (("0/65", 20, 10, _RESET), 1, None),
+    (("0/65", 40, 10, _RESET), 1, None),
+    (("0/65", 40, 11, None), 1, None),
+    (("0/65", 40, None, None), 1, None),
+    (("0/65", 40, True, None), 1, None),
+    (("0/65", 40, 10, "invalid"), 1, None),
+    (("0/65", None, 10, None), 1, None),
+])
+def test_staging_resource_delta_requires_counter_continuity(
+    after: tuple[object, ...], expected_wal: int | None, expected_temporary: int | None,
+) -> None:
+    before_snapshot = resources.capture_staging_resources(
+        _ResourceConnection((("0/64", 20, 10, None), None)),
+    )
+    after_snapshot = resources.capture_staging_resources(_ResourceConnection((after, None)))
+    events: list[StagingMeasurementEvent] = []
+    resources.emit_staging_resource_measurements(
+        StagingMeasurements(events.append), before_snapshot, after_snapshot,
+    )
+    for event, expected in zip(events[:2], (expected_wal, expected_temporary), strict=True):
+        assert event.value == expected
+        assert event.availability is (
+            StagingMeasurementAvailability.UNAVAILABLE if expected is None
+            else StagingMeasurementAvailability.MEASURED
+        )

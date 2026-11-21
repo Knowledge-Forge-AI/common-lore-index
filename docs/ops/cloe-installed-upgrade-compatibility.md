@@ -104,9 +104,8 @@ automatic rollback after subsequent live writes is implied.
 [ADR 0181](../adr/2026/11/0181-exact-installed-experience-and-evidence.md) and the
 [installed-experience contract](../specs/cloe-installed-experience-v1.md) add a
 diagnostic proof that the exact candidate wheel, installed on its own, gives a
-working experience. An implementation candidate and scoped diagnostic evidence exist. Final
-corrective proof and review govern publication; hosted acceptance remains
-pending and is not claimed here.
+working experience. The five installed evidence bundles were checked at the
+qualified CI161 source census. [CI161 qualification](../../tools/ci/cloe-ci161-qualification.md)
 
 What it covers: the candidate wheel is built offline once per test process and
 checked against an inventory derived from source. Installed wrappers and modules
@@ -129,15 +128,59 @@ The environment classes and their labels:
 | `incumbent-local` | The same construction with the incumbent `repomap-kg` 0.0.3 wheel, in a separate root | Rollback target for migration checks only |
 | `provisioned-server` | Venv with system site packages; the wheel installed without dependencies | Installed Server code paths over the SDK's Psycopg and libpq and a temporary PostgreSQL; never reported as pure |
 
-The scoped proof runs in the canonical Linux sandbox on the host's architecture
-(currently ARM64) with CPython 3.13.12. Hosted AMD64 evidence comes only from
-the next ordinary staging CI and its host `check` of the exported bundles.
+The scoped proof runs in the canonical Linux sandbox on the host's architecture.
+Hosted AMD64 evidence comes from staging CI and its host `check` of the
+exported bundles.
 
 The `typing-extensions` projection copies only `RECORD`-verified files of the
 SDK's installed distribution and compares them with reviewed frozen digests.
 It is test preprovisioning, not public package resolution: it proves nothing
 about installing from an index, and no wheel is fabricated or downloaded.
 
-These holds are unchanged: attended macOS installed-wheel proof, native
-services, Windows Local mutation, the release image and package-manager
-publication.
+### Released-source upgrade diagnostic
+
+The disposable upgrade qualification rebuilds wheels offline from the exact
+v0.0.4 release commit and the candidate source. Each environment's installed
+metadata matches its wheel. A package member that changed between the
+inputs distinguishes the two installs even while both versions are 0.0.4.
+
+For Local, both environments read the same test-authored home configuration.
+The released environment populates the home and creates a pre-upgrade backup.
+The candidate opens the existing publication with the
+source material hidden, then publishes a new generation after a source
+edit. Both environments restore the pre-upgrade bundle into separate empty
+homes and read back the original publication. Recovery uses the retained
+backup and the released environment. It does not open a candidate-written
+database with the released software.
+
+For provisioned Server, the two installed environments use the same
+disposable PostgreSQL database. The candidate reads the release's
+publication without source material, reapplies the existing migration
+catalog, and publishes a second generation over that database. A new
+navigation query locates the added symbol. This diagnostic uses the SDK's
+existing dynamic Psycopg and libpq.
+
+The Linux harness cases passed on [CI162](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44674001015).
+The [native Apple Silicon successor](../../tools/ci/cloe-w8-macosup1-exit.md)
+also replaced the release wheel in the same venv and read the existing Local
+publication before advancing it to generation 2. Both wheel versions
+restored the pre-upgrade backup into separate homes with the source hidden.
+The same milestone verified installation by package name from a local
+file index. Native services, Windows Local mutation, the release image
+and package-manager publication have separate gates.
+
+### Offline source distribution check
+
+The release-wheel integration owner builds the declared-version source
+distribution with the pinned setuptools backend. It checks that the archive
+contains the same package inputs, including both migration catalogs and the
+license and notice files. It checks the archive's metadata against the
+declared distribution name and version. [Source distribution format](https://packaging.python.org/en/latest/specifications/source-distribution-format/)
+
+The wheel rebuilt from that archive is compared with one built directly from
+the same inputs. Each wheel has its own verified `RECORD`. The check compares
+the member contents with ZIP timestamps and record ordering outside the
+comparison. The archived-source wheel then runs in a fresh Local environment
+with the SDK's verified dependency projection. This exercises the published
+format through an offline build and install. Index resolution and release
+delivery have separate evidence.

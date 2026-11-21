@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import bisect
 from collections.abc import Callable
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -76,45 +75,44 @@ def _find_file_matches(
     skip_matches: int = 0,
 ) -> tuple[list[tuple[int, int, int, str, str]], int]:
     """Find literal occurrences across contiguous chunks of one file without crossing files."""
-    if not file_rec.chunks or file_rec.chunks[0].is_empty_file_record:
+    chunks = file_rec.chunks
+    if not chunks or chunks[0].is_empty_file_record:
         return [], 0
-    full_text = "".join(c.content_text for c in file_rec.chunks)
-    if needle not in full_text:
-        return [], 0
+    full_text = "".join(chunk.content_text for chunk in chunks)
+    snippet_digest: str | None = None
 
-    line_starts: list[int] | None = None
-    chunk_char_ends: list[int] | None = None
-    snippet_digest = frame_digest("sha256", (needle,))
+    needle_len = len(needle)
+    line_span = 0
+    line = 1
+    line_cursor = 0
+    chunk_idx = 0
+    chunk_end = len(chunks[0].content_text)
 
     matches: list[tuple[int, int, int, str, str]] = []
     total_count = 0
     start_pos = 0
-    needle_len = len(needle)
     while True:
+        page_full = max_materialize is not None and len(matches) >= max_materialize
+        if page_full and needle_len == 1:
+            # Single-character occurrences cannot overlap.
+            total_count += full_text.count(needle, start_pos)
+            break
         found = full_text.find(needle, start_pos)
         if found == -1:
             break
         total_count += 1
-        if total_count > skip_matches and (max_materialize is None or len(matches) < max_materialize):
-            if line_starts is None or chunk_char_ends is None:
-                line_starts = [0]
-                for idx, ch in enumerate(full_text):
-                    if ch == "\n" and idx + 1 < len(full_text):
-                        line_starts.append(idx + 1)
-                chunk_char_ends = []
-                running_chars = 0
-                for chunk in file_rec.chunks:
-                    running_chars += len(chunk.content_text)
-                    chunk_char_ends.append(running_chars)
-            end_pos = found + needle_len - 1
-            end_line_pos = end_pos - 1 if (full_text[end_pos] == "\n" and end_pos > found) else end_pos
-            start_line = bisect.bisect_right(line_starts, found)
-            end_line = bisect.bisect_right(line_starts, end_line_pos)
-            chunk_idx = bisect.bisect_right(chunk_char_ends, found)
-            if chunk_idx >= len(file_rec.chunks):
-                chunk_idx = len(file_rec.chunks) - 1
-            covering_chunk = file_rec.chunks[chunk_idx]
-            matches.append((start_line, end_line, found, covering_chunk.chunk_id, snippet_digest))
+        if total_count > skip_matches and not page_full:
+            line += full_text.count("\n", line_cursor, found)
+            line_cursor = found
+            while found >= chunk_end and chunk_idx + 1 < len(chunks):
+                chunk_idx += 1
+                chunk_end += len(chunks[chunk_idx].content_text)
+            if snippet_digest is None:
+                # A trailing newline in a multi-character hit stays on the preceding line.
+                end_line_offset = needle_len - 1 - int(needle_len > 1 and needle.endswith("\n"))
+                line_span = needle.count("\n", 0, end_line_offset)
+                snippet_digest = frame_digest("sha256", (needle,))
+            matches.append((line, line + line_span, found, chunks[chunk_idx].chunk_id, snippet_digest))
         start_pos = found + 1
     return matches, total_count
 

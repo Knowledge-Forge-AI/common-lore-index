@@ -1,0 +1,40 @@
+{
+  "approval": {
+    "adr_sha256": "831771f7064ed798117ca3f588c330464767de31d0bf39b86ebfee9388bf0b23",
+    "operator_request": "CI failed. Try again.",
+    "phase": "CLOE-CI157REPAIR1",
+    "schema": "cloe-ci158-approval-v1",
+    "scope": "One finite staging synchronize for the CI157 grant-test repair. CI158 attempt 1 uses the existing pipeline. Retain the consumed CI157 evidence and exact consent, context, event and manifest checks.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 64,
+    "attempt": 1,
+    "component_runtime_executions": 34,
+    "native_report_sha256": "292ecc4ad7ed7403cca9d88a0f67b896f02c34b59dfa3a68164245f576c1600a",
+    "preceding_campaign": 157,
+    "previous_rust_downloads": 2,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 36,
+    "rust_report_sha256": "1d290aa63a2fed130218dda5618d388f26bac2aefa1ac90491b9c6964a0f5738",
+    "schema": "cloe-ci158-ledger-before-v1",
+    "system_report_sha256": "8e9e5aca85c209ae466aee242916ab206da72fdf95d63936b79b5060b5f6f4ba",
+    "wheel_transfers": 70
+  },
+  "reservation": {
+    "application_start": 65,
+    "approval_sha256": "9461b436d6935776c4053eacdae26e4dd37f6349478916ff4ba4e0dfed9874a8",
+    "component_runtime_cumulative": 35,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "77efbb05abfc2abd2a6d8ef22cf95ff03e6ac1afa22c0ba576ff12cd3a0eb5fb",
+    "nonce": "b908cdcd89d854333d5b3ad52d360737",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 37,
+    "schema": "cloe-ci158-reservation-v1",
+    "wheel_transfers_cumulative": 72,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 158
+  }
+}

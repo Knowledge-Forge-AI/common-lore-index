@@ -1,0 +1,40 @@
+{
+  "approval": {
+    "adr_sha256": "831771f7064ed798117ca3f588c330464767de31d0bf39b86ebfee9388bf0b23",
+    "operator_request": "Advance the roadmap until the next milestone is on public staging and undergoing CI.",
+    "phase": "CLOE-W5-W7-MILESTONE1",
+    "schema": "cloe-ci157-approval-v1",
+    "scope": "One finite staging synchronize for the reviewed W5 lexical comparator and replay and W7 COPY, counter and connected custody batch. CI157 attempt 1 uses the existing pipeline. Retain the consumed CI156 evidence and exact consent, context, event and manifest checks.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 63,
+    "attempt": 1,
+    "component_runtime_executions": 33,
+    "native_report_sha256": "8d287ed9bd43b80dad97ae0d91980c64092590d0c1b918b4811d62cfc4c783f0",
+    "preceding_campaign": 156,
+    "previous_rust_downloads": 2,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 35,
+    "rust_report_sha256": "d741e4beb42960813356b16850b7bffd9533755c365aecaa9d89359e76cf2851",
+    "schema": "cloe-ci157-ledger-before-v1",
+    "system_report_sha256": "87885003a54b2dc97eb048204aa17d30823943b3cea2e060af05501e96873242",
+    "wheel_transfers": 68
+  },
+  "reservation": {
+    "application_start": 64,
+    "approval_sha256": "f89866e8fe9a8bb4e183fc94308048857de986b047cf49619decd86e51ee12d1",
+    "component_runtime_cumulative": 34,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "2c1bf889da0dcb780aec288ffcf17c4019a75954dcaa6fa27c59392e46720fbf",
+    "nonce": "691d68c061c24e8f6db471cc71296c18",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 36,
+    "schema": "cloe-ci157-reservation-v1",
+    "wheel_transfers_cumulative": 70,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 157
+  }
+}

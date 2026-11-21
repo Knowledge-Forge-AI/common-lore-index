@@ -47,11 +47,13 @@ def _write_boundary_files(working_copy: Path) -> None:
         target = working_copy / "core" / directory / BOUNDARY_RELATIVE_PATH
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(body, encoding="utf-8")
+    (working_copy / "core" / "pkg" / "transport.txt").write_text("http server\n", encoding="utf-8")
 
 
 def _request(
     query_style: str,
     *,
+    query: str = BOUNDARY_MARKER,
     source_path_prefix: str | None = None,
     path_prefixes: tuple[str, ...] = (),
 ) -> LexicalQueryRequest:
@@ -64,7 +66,7 @@ def _request(
             reason_code="scope_boundary_literal",
         )
     return LexicalQueryRequest(
-        query=BOUNDARY_MARKER,
+        query=query,
         query_style=query_style,
         selected_binding_ids=(CORE_ID,),
         source_path_prefix=source_path_prefix,
@@ -79,6 +81,7 @@ def _query(
     config: OpsConfig,
     query_style: str,
     *,
+    query: str = BOUNDARY_MARKER,
     source_path_prefix: str | None = None,
     path_prefixes: tuple[str, ...] = (),
     connection_factory: Callable[..., Any] | None = None,
@@ -91,6 +94,7 @@ def _query(
         MIXED_V1_GRAPH_ID,
         _request(
             query_style,
+            query=query,
             source_path_prefix=source_path_prefix,
             path_prefixes=path_prefixes,
         ),
@@ -185,6 +189,11 @@ def test_postgres_lexical_scope_prefixes_are_segment_bounded_and_ordered(
         assert build.published.projected_chunk_count >= 2
         assert build.published.aggregate_projected_bytes > 0
         assert set(build.admitted_binding_ids) == {CORE_ID, COMPANION_ID}
+
+        acronym = _query(config, "ranked_terms", query="HTTPServer", source_path_prefix="pkg")
+        _assert_hits_for_scope(acronym, "ranked_terms", ("pkg/transport.txt",))
+        for style in ("normalized_phrase", "literal_captured_text"):
+            assert not _query(config, style, query="HTTPServer", source_path_prefix="pkg").hits
 
         expected_pkg = (f"pkg/{BOUNDARY_RELATIVE_PATH}",)
         expected_pkg2 = (f"pkg2/{BOUNDARY_RELATIVE_PATH}",)

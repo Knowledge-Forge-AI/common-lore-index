@@ -55,9 +55,7 @@ from common_lore_index.storage.staged_validation import (
 )
 from common_lore_index.storage.staging_copy import copy_stage_rows as copy_stage_rows
 from common_lore_index.storage.staging_merge import MergeContext
-from common_lore_index.storage.staging_observability import (
-    StagingMeasurementCategory, StagingMeasurements,
-)
+from common_lore_index.storage.staging_observability import StagingMeasurementCategory, StagingMeasurements
 from common_lore_index.storage.staging_ownership import StageOwner
 from common_lore_index.storage.staging_resource_observability import (
     capture_staging_resources, emit_staging_resource_measurements,
@@ -251,7 +249,9 @@ def _run_staged_full_refresh_admitted(
     owner: StageOwner | None = None
     primary: BaseException | None = None
     try:
-        resources_before = capture_staging_resources(connection) if staging_measurements is not None else None
+        if staging_measurements is not None:
+            with staging_measurements.sample_resources():
+                resources_before = capture_staging_resources(connection)
         repository_id = _ensure_repository(connection, repository_name, root_path, repository_identity)
         owner = authority.owner(repository_id)
         receipt = receipt_override or authority.receipt()
@@ -370,9 +370,9 @@ def _run_staged_full_refresh_admitted(
                 )
             raise StorageCommitUnknownError("staged publication commit is unknown") from error
         if staging_measurements is not None and resources_before is not None:
-            emit_staging_resource_measurements(
-                staging_measurements, resources_before, capture_staging_resources(connection)
-            )
+            with staging_measurements.sample_resources():
+                resources_after = capture_staging_resources(connection)
+                emit_staging_resource_measurements(staging_measurements, resources_before, resources_after)
         return LoadSummary(
             repository_id=repository_id,
             run_id=run_id,

@@ -1,0 +1,39 @@
+{
+  "approval": {
+    "operator_request": "Ci failed try again",
+    "phase": "CLOE-CI163REPAIR1",
+    "schema": "cloe-ci164-approval-v1",
+    "scope": "One staging synchronize on draft PR 27 for CI163 lexical fixture and exact Trixie archive acquisition repairs.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 69,
+    "attempt": 1,
+    "component_runtime_executions": 39,
+    "native_report_sha256": "5fe86c8e1561ea7bd11044ef80628f86c232b71973ae018fb95822b83d6e12f3",
+    "preceding_campaign": 163,
+    "previous_rust_downloads": 0,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 42,
+    "rust_report_sha256": "f0b43ac1b447fed5382ae0ac3dde69578cf5de29fa1c1051e341e8f566ed5f5d",
+    "schema": "cloe-ci164-ledger-before-v1",
+    "system_report_sha256": "b9a5a9200c659cdff53e2ad3f4517c4174b273b3f45e667d33f9b20b243043b9",
+    "wheel_transfers": 80
+  },
+  "reservation": {
+    "application_start": 70,
+    "approval_sha256": "e6545584f99e787874a396c8f4ba4e7c6566370ae0e0165b739df6745b1023b4",
+    "component_runtime_cumulative": 40,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "4850febc4bfd22f0d3a1c414b960df4087cd3472c4927e5f46c049b543a8af9e",
+    "nonce": "9e2e22e26e838edb8038b72834053cb6",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 43,
+    "schema": "cloe-ci164-reservation-v1",
+    "wheel_transfers_cumulative": 82,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 164
+  }
+}
