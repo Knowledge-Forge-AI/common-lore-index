@@ -17,6 +17,7 @@ from common_lore_index.storage._external_row_sort_helpers import (
     _encode_row,
     _iter_encoded_run,
     _write_encoded_rows,
+    consolidate_run_tail,
 )
 
 __all__ = (
@@ -232,33 +233,21 @@ def _finalize_run_levels(
     artifacts: _ArtifactTracker,
 ) -> list[Path]:
     remaining = [path for group in levels for path in group]
-    if len(remaining) <= merge_fan_in:
-        return remaining
-    heap = [
-        (artifacts.size_of(path), order, path)
-        for order, path in enumerate(remaining)
-    ]
-    heapq.heapify(heap)
-    next_order = len(heap)
-    arity = 2 + (len(heap) - 2) % (merge_fan_in - 1)
-    while len(heap) > merge_fan_in:
-        group = [heapq.heappop(heap)[2] for _ in range(arity)]
+
+    def compact(inputs: list[Path]) -> Path:
         output = _write_merged_run(
             directory,
-            group,
+            inputs,
             key_indexes,
             key_types,
             field_count,
             cancellation_check,
             artifacts,
         )
-        _remove_runs(group, artifacts)
-        heapq.heappush(heap, (artifacts.size_of(output), next_order, output))
-        next_order += 1
-        arity = merge_fan_in
-    return [
-        path for _size, _order, path in sorted(heap, key=lambda item: item[1])
-    ]
+        _remove_runs(inputs, artifacts)
+        return output
+
+    return consolidate_run_tail(remaining, merge_fan_in, artifacts.size_of, compact)
 
 
 def _remove_runs(runs: Sequence[Path], artifacts: _ArtifactTracker) -> None:

@@ -10,6 +10,25 @@ from collections.abc import Callable, Generator, Iterable, Mapping
 from pathlib import Path
 
 
+def _encode_spool_row(row: Mapping[str, object]) -> tuple[str, int]:
+    """Serialize one staged row to compact JSON text and UTF-8 JSONL byte count."""
+    if not isinstance(row, Mapping):
+        raise ValueError("staged row is invalid")
+    encoded = json.dumps(
+        dict(row),
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+    return encoded, len(encoded.encode("utf-8")) + 1
+
+
+def _spool_row_byte_count(row: Mapping[str, object]) -> int:
+    """Return the UTF-8 compact-JSONL byte count for one staged row."""
+    _, byte_count = _encode_spool_row(row)
+    return byte_count
+
+
 class RowSpool:
     """Replay one deterministic row sequence from a private JSONL file."""
 
@@ -53,15 +72,8 @@ class RowSpool:
                     if not isinstance(row, Mapping):
                         raise ValueError("staged row is invalid")
                     started = monotonic_ns() if timing_observer is not None else 0
-                    encoded = json.dumps(
-                        dict(row),
-                        ensure_ascii=False,
-                        separators=(",", ":"),
-                        sort_keys=True,
-                    )
-                    projected_bytes = (
-                        byte_count + len(encoded.encode("utf-8")) + 1
-                    )
+                    encoded, row_bytes = _encode_spool_row(row)
+                    projected_bytes = byte_count + row_bytes
                     if artifact_observer is not None:
                         artifact_observer(projected_bytes)
                     handle.write(encoded)
@@ -161,15 +173,8 @@ class RowSpoolWriter:
     def write_row(self, row: Mapping[str, object]) -> None:
         if self._finished:
             raise RuntimeError("writer already finished")
-        if not isinstance(row, Mapping):
-            raise ValueError("staged row is invalid")
-        encoded = json.dumps(
-            dict(row),
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        )
-        projected_bytes = self._byte_count + len(encoded.encode("utf-8")) + 1
+        encoded, row_bytes = _encode_spool_row(row)
+        projected_bytes = self._byte_count + row_bytes
         if self._artifact_observer is not None:
             self._artifact_observer(projected_bytes)
         self._handle.write(encoded)

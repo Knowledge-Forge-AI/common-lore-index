@@ -186,3 +186,44 @@ def test_completeness_explain_matches_ordinary_validation(tmp_path: Path) -> Non
                        "ordinary_validation_passed": True, "families": families}
             print(f"W7_STAGED_SQL_VALIDATION {json.dumps(payload, sort_keys=True)}")
             (tmp_path / "w7_validation_diagnostics.json").write_text(json.dumps(payload, indent=2))
+
+
+def test_wide_prepared_observation_spills_and_publishes_through_copy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    require_postgres_binaries()
+    payload = "public é" * (160 * 1024)
+    observation = RawObservation(
+        kind="file", source_id="wide.py", path="wide.py", confidence="manual",
+        extractor="copy-fixture", extractor_version="1.0.0",
+        metadata={"language": "python", "role": "source", "fixture_body": payload},
+    )
+    tracked: list[RowSpool] = []
+    from_rows = RowSpool.from_rows
+
+    def observe_spool(cls, rows, **kwargs):
+        spool = from_rows(rows, **kwargs)
+        tracked.append(spool)
+        return spool
+
+    monkeypatch.setattr(RowSpool, "from_rows", classmethod(observe_spool))
+    with temporary_postgres() as postgres:
+        apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
+        result = run_staged_full_refresh(
+            postgres.psql_args, (observation,), stage_id="wide-stage",
+            repository_name="copy-wide-fixture", root_path="fixtures/copy-wide-fixture",
+            authority=new_direct_authority(
+                source_generation="sg1:copy", config_generation="cg1:copy",
+                extractor_generation="eg1:copy", canonicalizer_generation="kg1:copy",
+            ),
+        )
+        assert result.publication_receipt is not None
+        assert tracked and all(not spool.path.exists() for spool in tracked)
+        assert any(spool.count == 1 and spool.byte_count > 1024 * 1024 for spool in tracked)
+        params = _psycopg_connection_params_from_psql_args(postgres.psql_args)
+        with psycopg.connect(make_conninfo(**params)) as connection:
+            assert connection.execute("SELECT path FROM files").fetchall() == [("wide.py",)]
+            assert connection.execute(
+                "SELECT payload_json -> 'metadata' ->> 'fixture_body' = %s FROM raw_observations",
+                (payload,),
+            ).fetchall() == [(True,)]
