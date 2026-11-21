@@ -55,6 +55,9 @@ class _Cursor:
             if isinstance(self.current, Exception):
                 raise self.current
 
+    def executemany(self, sql: str, rows: tuple[tuple[Any, ...], ...]) -> None:
+        self.execute(sql, rows)
+
     def fetchone(self) -> Any:
         return self.current
 

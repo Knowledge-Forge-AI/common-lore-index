@@ -115,6 +115,36 @@ def test_resolve_simulates_the_exact_selector_with_every_hold_and_binds_it_to_a_
     assert result["trusted_targets"][0]["Suite"] == "bookworm" and result["preexisting_rows"] == len(BASE)
 
 
+def test_archive_builder_requires_the_exact_base_trust_and_complete_frozen_selection(monkeypatch):
+    source, keyring = "/etc/apt/sources.list.d/pgdg.list", "/usr/local/share/keyrings/postgres.gpg.asc"
+    trust = {source: b"source", keyring: b"key"}
+    frozen = preflight.D12_CANDIDATE_PACKAGE_MANIFEST["amd64"]._replace(
+        pgdg_source=(source, _sha("source")), pgdg_keyring=(keyring, _sha("key")),
+        builder=tuple(DebPackage(name, version, "arm64", _sha(name)) for name, version in PLAN),
+    )
+
+    class ArchiveBox(Box):
+        def answer(self, command):
+            return (0, "") if command[:2] == ["sh", "-c"] else super().answer(command)
+
+    monkeypatch.setattr(preflight, "read_bytes", lambda _box, path: trust[path])
+    bad = ArchiveBox()
+    with pytest.raises(preflight.PreflightRefusal, match="frozen base source and keyring"):
+        preflight.resolve(bad, "linux/arm64", REQUEST, trust={**trust, keyring: b"other"}, frozen=frozen)
+    assert bad.commands == []
+
+    box = ArchiveBox()
+    result = preflight.resolve(box, "linux/arm64", REQUEST, trust=trust, frozen=frozen)
+    archive = next(command for command in box.commands if preflight.ARCHIVE_APT_PATH in command)
+    assert archive[-1] == preflight.archive_apt_sources(keyring)
+    assert box.commands.index(archive) < box.commands.index(["apt-get", "update"])
+    assert _simulations(box)[0][-len(PLAN):] == [f"{name}={version}" for name, version in PLAN]
+    assert len(result["packages"]) == len(PLAN)
+    drift = frozen._replace(builder=(frozen.builder[0]._replace(sha256="0" * 64), *frozen.builder[1:]))
+    with pytest.raises(preflight.PreflightRefusal, match="frozen builder package identities"):
+        preflight.resolve(ArchiveBox(), "linux/arm64", REQUEST, trust=trust, frozen=drift)
+
+
 def test_the_bound_header_survives_into_the_validated_candidate_manifest():
     source, keyring = "/etc/apt/sources.list.d/pgdg.list", "/usr/local/share/keyrings/postgres.gpg.asc"
     steps: dict[str, Any] = {

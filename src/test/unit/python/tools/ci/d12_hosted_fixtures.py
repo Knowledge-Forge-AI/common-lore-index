@@ -238,8 +238,9 @@ def write_inner_reports(
     def _fake_resolve(
         container: Any, platform: str, request: Sequence[str], *,
         trust: Mapping[str, bytes] | None = None, missing_only: bool = False,
+        frozen: PlatformPackages | None = None,
     ) -> dict[str, Any]:
-        _ = (container, platform, request, trust)
+        _ = (container, platform, request, trust, frozen)
         return {"native": "amd64", "preexisting_rows": 140 if missing_only else 120,
                 "packages": [pkg_pq] if missing_only else [pkg_pq, pkg_dev], "trusted_targets": []}
 
