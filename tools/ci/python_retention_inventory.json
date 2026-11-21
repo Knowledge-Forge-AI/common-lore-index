@@ -2726,6 +2726,27 @@
     {
       "admission": "admitted",
       "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-matched-design1.test_owners",
+      "members": [
+        "src/test/int/python/tools/retrieval_w5_matched_grading.int.test.py",
+        "src/test/unit/python/tools/retrieval_w5_matched_design.unit.test.py"
+      ],
+      "rationale": "ADR0218 inert matched W5 design, exact outcome arithmetic and synthetic proof.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-matched-design1.tools",
+      "members": [
+        "tools/retrieval_w5_matched_design.py"
+      ],
+      "rationale": "ADR0218 inert matched W5 design, exact outcome arithmetic and synthetic proof.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
       "id": "cloe.w5-pgdg1.test_owners",
       "members": [
         "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py",
@@ -45021,6 +45042,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_w5_matched_grading.int.test.py",
+      "rationale": "ADR0218 inert matched W5 design, exact outcome arithmetic and synthetic proof.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/int/python/tools/runner_failure_recovery.int.test.py",
       "rationale": "ADR0115 bounded failure observations and recovery; immediate zero-debt enforcement.",
       "root": "test_owners",
@@ -60933,6 +60963,15 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_w5_matched_design.unit.test.py",
+      "rationale": "ADR0218 inert matched W5 design, exact outcome arithmetic and synthetic proof.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/unit/python/tools/runner_discovery_failure.unit.test.py",
       "rationale": "ADR0115 bounded failure observations and recovery; immediate zero-debt enforcement.",
       "root": "test_owners",
@@ -66902,6 +66941,15 @@
       "maintained_executable": true,
       "path": "tools/retrieval_supplement_worker_entry.py",
       "rationale": "ADR0203 selected supplement-study source; clean zero-debt admission, all predecessor debt ceilings preserved.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_w5_matched_design.py",
+      "rationale": "ADR0218 inert matched W5 design, exact outcome arithmetic and synthetic proof.",
       "root": "tools",
       "status": "active_tool"
     },

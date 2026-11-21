@@ -32,8 +32,12 @@ PostgreSQL competence proof are complete in the
 secondary paired replay on the exposed workload. The
 [replay exit](../../tools/ci/cloe-w5-lexical-replay2-exit.md) accounts for all
 48 slots. Candidate mean recall@10 was 0.9167 on the 12 body positives.
-The primary calibration remains the first admissible observation. A new
-evaluated protocol requires its own operator selection.
+The primary calibration remains the first admissible observation.
+The operator kept W5 as a v0.1.0 requirement and selected the
+[prospective matched held-out design](cloe-w5-matched-heldout-v1.md) under
+[ADR 0218](../adr/2026/11/0218-w5-prospective-matched-heldout-design.md).
+The design compares native tools, the competent comparator and incumbent
+fusion. Cohort selection and study execution remain separately gated.
 [ADR0207](../adr/2026/11/0207-body-study-retained-runtime-input-custody.md)
 defines read-only reuse of its retained runtime input within unchanged bounds.
 W6-W8 remain advanceable within their own authority; W5 is not accepted or
