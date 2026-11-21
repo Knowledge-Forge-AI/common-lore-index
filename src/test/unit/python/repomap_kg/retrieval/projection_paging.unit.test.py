@@ -13,7 +13,7 @@ from repomap_test_support.retrieval_evaluation_query_fixture import build_fixtur
 
 
 def test_dense_high_offset_does_not_retain_the_skipped_match_population(tmp_path: Path) -> None:
-    inputs, policy = build_fixture_projection(extra_tail=b"a" * 262144, spool_dir=tmp_path / "spool")
+    inputs, policy = build_fixture_projection(extra_tail=b"a\n" * 131072, spool_dir=tmp_path / "spool")
     projection = build_captured_text_projection(
         inputs, replace(policy, max_projected_file_bytes=1048576)
     )
@@ -48,3 +48,22 @@ def test_offset_crosses_files_in_canonical_order_and_preserves_total_count(tmp_p
     assert last.hits[0].locator.source_relative_path == "pkg/beta.py"
     assert last.hits[0].locator.start_line == 2
     assert last.provenance["total_matches_before_paging"] == 100
+
+
+def test_multiline_paging_preserves_overlaps_and_trailing_line_positions(tmp_path: Path) -> None:
+    inputs, policy = build_fixture_projection(
+        extra_tail="é\n\né\n\né".encode(), spool_dir=tmp_path / "spool"
+    )
+    projection = build_captured_text_projection(inputs, replace(policy, max_chunk_lines=2))
+    request = CapturedTextQueryRequest(query="é\n\né", offset=1, limit=1)
+    page = query_captured_text(projection, request)
+    assert page.provenance["total_matches_before_paging"] == 2
+    hit, = page.hits
+    assert (hit.locator.start_line, hit.locator.end_line) == (102, 104)
+    record, = (file for file in projection.projected_files if file.source_relative_path == "pkg/alpha.py")
+    covering, = (chunk for chunk in record.chunks if chunk.start_line <= 102 <= chunk.end_line)
+    assert hit.chunk_id == covering.chunk_id
+
+    terminated = query_captured_text(projection, replace(request, query="é\n\né\n\n", offset=0))
+    hit, = terminated.hits
+    assert (hit.locator.start_line, hit.locator.end_line) == (100, 102)

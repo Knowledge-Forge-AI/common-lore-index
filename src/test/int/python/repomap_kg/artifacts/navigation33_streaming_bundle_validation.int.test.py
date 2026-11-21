@@ -294,6 +294,31 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
         finally:
             lv.close()
 
+    def test_streaming_parser_keeps_links_to_wide_unicode_keys(self) -> None:
+        keys = ("雪" * 90_000, "雲" * 90_000, "風" * 95_000)
+        families = _empty_families()
+        families["raw_observations"] = ({"source_ordinal": 1, "stage_id": "stage-unassigned"},)
+        families["canonical_nodes"] = tuple(
+            {"canonical_key": key, "stage_id": "stage-unassigned"} for key in keys
+        )
+        families["canonical_evidence"] = (
+            {"evidence_key": "proof", "raw_observation_ordinal": 1, "stage_id": "stage-unassigned"},
+        )
+        families["canonical_node_evidence"] = tuple(
+            {"canonical_key": key, "evidence_key": "proof", "stage_id": "stage-unassigned"} for key in keys
+        )
+        bundle = _make_bundle(families=families)
+        receipt, _, _ = _make_receipt(bundle, InMemoryArtifactStore())
+        expected = PublicationExpectation.from_bundle(bundle, mutating_owner_count=1)
+        parsed = StreamingBundleParser().parse_and_validate(
+            io.BytesIO(bundle.canonical_bytes()), expected, receipt,
+        )
+        try:
+            self.assertEqual(parsed.bundle_id, bundle.bundle_id)
+            self.assertEqual(parsed.family_counts["canonical_node_evidence"], len(keys))
+        finally:
+            parsed.close()
+
     def test_bundle_receipt_and_validator_malformed_and_semantic_refusals(self) -> None:
         """PublicationBundle, ExtractionReceipt, and PublisherBundleValidator enforce canonical and link rules."""
         store = InMemoryArtifactStore()

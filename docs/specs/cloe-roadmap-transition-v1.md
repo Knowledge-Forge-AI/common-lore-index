@@ -42,6 +42,14 @@ and [batched PostgreSQL population](../../tools/ci/cloe-lexical-batch1-exit.md).
 The [installed Server ranked search checkpoint](../../tools/ci/cloe-w8-installed-lexical1-exit.md)
 exercises lexical build and ranked query using a retained publication.
 
+The Local streaming checkpoint binds SQLite staging parameters as they are
+consumed. A late malformed row rolls back temporary staging, and retention
+validation flushes semantic link keys by encoded size as well as row count.
+Literal captured-text paging keeps exact overlapping counts and line and chunk
+positions without building an index of every line. Scoped proofs include
+real SQLite rollback and retry, retained publications, and installed Local
+upgrade and Server ranked first use. Hosted qualification remains pending.
+
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness
 queries. The disposable spill fixture recorded 603 temporary blocks written

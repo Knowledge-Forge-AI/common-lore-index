@@ -104,6 +104,12 @@ def test_sqlite_real_publication_projection_query_and_stale_advancement_refusal(
     continuations = [chunk for chunk in wide_note.chunks if chunk.line_split_continuation]
     assert continuations and all(chunk.start_line == chunk.end_line == 2 for chunk in continuations)
     assert wide_note.chunks[-1].normalized_byte_end == len(expected_note)
+    newline_page = query_captured_text(projection_gen1, CapturedTextQueryRequest(
+        query="\n", source_path_prefix=wide_note.source_relative_path, offset=1, limit=1,
+    ))
+    newline_hit, = newline_page.hits
+    assert newline_hit.locator.start_line == newline_hit.locator.end_line == 2
+    assert newline_page.provenance["total_matches_before_paging"] == expected_note.count(b"\n")
 
     req = CapturedTextQueryRequest(
         query="ERR_CLOE_MANIFEST_SEAL_MISMATCH_409",
