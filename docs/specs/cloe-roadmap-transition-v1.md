@@ -82,6 +82,11 @@ proof covers both acquisition commands and their explicit non-publication result
 Local context and feed explanation reads decode rows into their result windows
 without holding a second collection of selected SQLite rows.
 
+Local feed reads now seek the existing graph-version and node-key indexes.
+Feed explanations reach the requested item across retained graph versions
+without scanning unrelated links. The SQLite work check and containerized
+PostgreSQL parity proof cover ordering and scoped evidence output.
+
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness
 queries. The disposable spill fixture recorded 603 temporary blocks written

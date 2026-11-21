@@ -158,3 +158,74 @@ def test_feed_explanation_decodes_evidence_before_the_remaining_rows_are_read(
         observed = source_feed_queries.source_feed_item_explanation(connection, item_key=item_key, source_id=RSS)
     assert observed == expected
     assert decoded_after[0] == 1 < len(fetched)
+
+
+def test_feed_explanation_seeks_the_item_in_each_retained_graph_version(
+    published_feeds: Path,
+) -> None:
+    binding = local_binding("source-selection")
+    with read_transaction(published_feeds, binding) as connection:
+        items = source_feed_queries.source_feed_items(connection, source_id=RSS, source_run_id=None, limit=1)
+        key = items[0].item_key
+        baseline = source_feed_queries.source_feed_item_explanation(connection, item_key=key, source_id=RSS)
+    with closing(sqlite3.connect(published_feeds)) as writer:
+        base = writer.execute(
+            "SELECT id FROM canonical_nodes WHERE graph_key_version = 1 AND canonical_key = ?", (key,),
+        ).fetchone()[0]
+        later = writer.execute(
+            "INSERT INTO canonical_nodes(graph_key_version, canonical_key, kind, display_name, "
+            "metadata_json, confidence, conflict, first_seen_run_id, last_seen_run_id) "
+            "SELECT 7, canonical_key, kind, 'Later graph version', metadata_json, confidence, "
+            "conflict, first_seen_run_id, last_seen_run_id FROM canonical_nodes WHERE id = ?", (base,),
+        ).lastrowid
+        assert later is not None
+        writer.execute(
+            "INSERT INTO canonical_node_evidence "
+            "SELECT ?, canonical_evidence_id, link_kind "
+            "FROM canonical_node_evidence WHERE canonical_node_id = ?", (later, base),
+        )
+        writer.executemany(
+            "INSERT INTO canonical_nodes(graph_key_version, canonical_key, kind, display_name, "
+            "metadata_json, confidence, conflict, first_seen_run_id, last_seen_run_id) "
+            "VALUES (?, ?, 'file', 'unrelated', '{}', 'observed', 0, 1, 1)",
+            ((version, f"unrelated:{index}") for version in (1, 3, 7) for index in range(8000)),
+        )
+        writer.execute(
+            "INSERT INTO canonical_node_evidence "
+            "SELECT id, (SELECT min(id) FROM canonical_evidence), 'observed' "
+            "FROM canonical_nodes WHERE canonical_key LIKE 'unrelated:%'",
+        )
+        writer.commit()
+
+    callbacks = 0
+
+    def observe_work() -> int:
+        nonlocal callbacks
+        callbacks += 1
+        return 0
+
+    with read_transaction(published_feeds, binding) as connection:
+        connection.set_progress_handler(observe_work, 100)
+        try:
+            result = source_feed_queries.source_feed_item_explanation(connection, item_key=key, source_id=RSS)
+        finally:
+            connection.set_progress_handler(None, 0)
+    assert result["item"]["graph_key_version"] == 1
+    assert len(baseline["evidence"]) > 1
+    assert result["evidence"] == [row for earlier in baseline["evidence"] for row in (earlier, earlier)]
+    assert callbacks < 150
+
+
+def test_feed_explanation_reports_invalid_item_metadata_first(published_feeds: Path) -> None:
+    binding = local_binding("source-selection")
+    with read_transaction(published_feeds, binding) as connection:
+        page = source_feed_queries.source_feed_items(connection, source_id=RSS, source_run_id=None, limit=1)
+    key = page[0].item_key
+    with closing(sqlite3.connect(published_feeds)) as writer:
+        writer.execute("UPDATE canonical_nodes SET metadata_json = '!item' WHERE canonical_key = ?", (key,))
+        writer.execute("UPDATE canonical_evidence SET metadata_json = '!evidence'")
+        writer.commit()
+    with read_transaction(published_feeds, binding) as connection:
+        with pytest.raises(json.JSONDecodeError) as caught:
+            source_feed_queries.source_feed_item_explanation(connection, item_key=key, source_id=RSS)
+    assert caught.value.doc == "!item"

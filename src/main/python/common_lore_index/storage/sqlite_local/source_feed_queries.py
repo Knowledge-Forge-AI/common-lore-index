@@ -12,8 +12,9 @@ import sqlite3
 from collections.abc import Iterator
 from heapq import nlargest, nsmallest
 from itertools import batched
-from typing import Any
+from typing import Any, Literal
 
+from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.source_rows import (
     SourceFeedItemRecord,
     SourceReferenceRecord,
@@ -47,6 +48,17 @@ def _kind_prefix(key: str) -> str:
     return key.split(":", 1)[0]
 
 
+def _graph_version_seeks(table: Literal["canonical_nodes", "canonical_edges"]) -> str:
+    # Each MIN starts after the previous version in the existing identity index.
+    return (
+        "WITH RECURSIVE graph_versions(version) AS ("
+        f"SELECT min(graph_key_version) FROM {table} UNION ALL "
+        f"SELECT (SELECT min(next_version.graph_key_version) FROM {table} next_version "
+        "WHERE next_version.graph_key_version > graph_versions.version) "
+        "FROM graph_versions WHERE version IS NOT NULL) "
+    )
+
+
 def _item_references(
     connection: sqlite3.Connection, keys: set[str]
 ) -> dict[str, tuple[set[str], set[str], set[str]]]:
@@ -61,7 +73,9 @@ def _item_references(
     ordered_keys = sorted(keys)
     # The existing edge identity index leads with graph version. Keep every
     # stored version, and keep the target join by key alone for readback parity.
-    versions = connection.execute("SELECT DISTINCT graph_key_version FROM canonical_edges")
+    versions = connection.execute(
+        _graph_version_seeks("canonical_edges") + "SELECT version FROM graph_versions WHERE version IS NOT NULL"
+    )
     for (version,) in versions:
         for page in batched(ordered_keys, _REFERENCE_KEY_BATCH):
             placeholders = ", ".join("?" for _ in page)
@@ -251,16 +265,19 @@ def _selected_item_and_evidence(
     earliest_node: tuple[Any, Any] | None = None
     item_inputs: tuple[Any, Any, Any, Any, Any, Any, Any] | None = None
     evidence: list[dict[str, Any]] = []
+    evidence_error: Exception | None = None
     for row in connection.execute(
+        _graph_version_seeks("canonical_nodes") +
         "SELECT evidence.run_id, evidence.raw_observation_ordinal, node.graph_key_version, "
         "node.id, node.canonical_key, node.kind, node.display_name, node.confidence, "
         "node.conflict, node.metadata_json, evidence.evidence_key, evidence.raw_kind, "
         "evidence.raw_source_id, evidence.path, evidence.start_line, evidence.end_line, "
         "evidence.extractor, evidence.extractor_version, evidence.confidence, "
-        "evidence.metadata_json FROM canonical_nodes node "
+        "evidence.metadata_json FROM graph_versions CROSS JOIN canonical_nodes node "
         "JOIN canonical_node_evidence link ON link.canonical_node_id = node.id "
         "JOIN canonical_evidence evidence ON evidence.id = link.canonical_evidence_id "
-        "WHERE node.canonical_key = ? ORDER BY evidence.raw_observation_ordinal, "
+        "WHERE node.graph_key_version = graph_versions.version AND node.canonical_key = ? "
+        "ORDER BY evidence.raw_observation_ordinal, "
         "evidence.run_id, evidence.evidence_key, link.link_kind, node.graph_key_version, node.id",
         (item_key,),
     ):
@@ -270,6 +287,15 @@ def _selected_item_and_evidence(
         if earliest_node is None or node_order < earliest_node:
             earliest_node = node_order
             item_inputs = (row[4], row[2], row[5], row[6], row[7], row[8], row[9])
+        if evidence_error is not None:
+            continue
+        try:
+            metadata = _json(row[19])
+        except (ArithmeticError, StorageSchemaError, TypeError, ValueError) as error:
+            # Find the winning item even when evidence is corrupt. The
+            # explanation's item metadata has precedence over evidence errors.
+            evidence_error = error
+            continue
         evidence.append({
             "evidence_key": row[10],
             "raw_kind": row[11],
@@ -280,7 +306,7 @@ def _selected_item_and_evidence(
             "extractor": row[16],
             "extractor_version": row[17],
             "confidence": row[18],
-            "metadata": _json(row[19]),
+            "metadata": metadata,
         })
     if item_inputs is None:
         return None, evidence
@@ -293,6 +319,8 @@ def _selected_item_and_evidence(
         "conflict": bool(item_inputs[5]),
         "metadata": _json(item_inputs[6]),
     }
+    if evidence_error is not None:
+        raise evidence_error
     return item, evidence
 
 

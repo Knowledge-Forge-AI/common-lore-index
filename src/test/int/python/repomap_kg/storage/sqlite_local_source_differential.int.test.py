@@ -286,6 +286,18 @@ def _check_feed_page_reference_read(pair: _Pair, source_id: str) -> None:
     assert len(page) == 1 and fetched <= {page[0].item_key}
     assert hydrated and hydrated <= evidence
 
+    statements: list[str] = []
+    with read_transaction(pair.path, pair.binding) as connection:
+        connection.set_trace_callback(statements.append)
+        explanation = source_feed_queries.source_feed_item_explanation(
+            connection, item_key=page[0].item_key, source_id=source_id,
+        )
+        query, = [sql for sql in statements if "JOIN canonical_node_evidence" in sql]
+        plan = [row[3] for row in connection.execute("EXPLAIN QUERY PLAN " + query)]
+    equivalent = pair.pg(query_source_feed_item_explanation, item_key=page[0].item_key, source_id=source_id)
+    pair.same("indexed feed explanation", explanation, equivalent, None)
+    assert any("SEARCH node " in step and "canonical_key=?" in step for step in plan), plan
+
 
 def _prove(tmp_path: Path, database: Any) -> None:
     collation = database.psql_scalar("SELECT datcollate || '|' || datctype FROM pg_database "
