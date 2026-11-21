@@ -230,6 +230,44 @@ def by_source(observations: Iterable[SourceObservation]) -> dict[str, list[Sourc
     return group_by((observation.source_id, observation) for observation in observations)
 
 
+def _observation_fanout_count(
+    observation: SourceObservation,
+    evidence: dict[RawKey, list[int]],
+    nodes: dict[int, list[_Node]],
+    edges: dict[int, list[_Edge]] | None = None,
+) -> int:
+    matched = evidence.get(observation.key)
+    if not matched:
+        return 1
+    if edges is None:
+        return sum(max(1, len(nodes.get(evidence_id, ()))) for evidence_id in matched)
+    return sum(
+        max(1, len(nodes.get(evidence_id, ()))) * max(1, len(edges.get(evidence_id, ())))
+        for evidence_id in matched
+    )
+
+
+def _matched_evidence(group: Iterable[SourceObservation], evidence: dict[RawKey, list[int]]) -> set[int]:
+    return {evidence_id for item in group for evidence_id in evidence.get(item.key, ())}
+
+
+def _node_counts(evidence_set: Iterable[int], nodes: dict[int, list[_Node]]) -> dict[str, int]:
+    by_kind: dict[str, set[str]] = {}
+    for evidence_id in evidence_set:
+        for node in nodes.get(evidence_id, ()):
+            by_kind.setdefault(node.kind, set()).add(node.key)
+    return {kind: len(keys) for kind, keys in by_kind.items()}
+
+
+def _reference_counts(evidence_set: Iterable[int], edges: dict[int, list[_Edge]]) -> tuple[int, int]:
+    unique = {
+        edge.id: edge for evidence_id in evidence_set
+        for edge in edges.get(evidence_id, ()) if edge.kind == "references"
+    }
+    scopes = [raw_payload.text_at(edge.metadata, "scope") for edge in unique.values()]
+    return scopes.count("link"), scopes.count("enclosure")
+
+
 def ingested_sources(
     connection: sqlite3.Connection, *, source_type: str | None, policy_status: str | None, limit: int
 ) -> tuple[IngestedSourceRecord, ...]:
@@ -240,12 +278,14 @@ def ingested_sources(
         if (source_type is None or observation.source_type == source_type)
         and (policy_status is None or observation.policy_status == policy_status)
     )
+    if not groups:
+        return ()
     evidence, nodes = evidence_ids(connection), node_links(connection)
     records = []
     for source_id in sorted(groups)[:safe_limit]:
         group = groups[source_id]
-        rows = list(fanout(group, evidence, nodes))
         latest = _latest(group)
+        node_counts = _node_counts(_matched_evidence(group, evidence), nodes)
         records.append(ingested_source_record_from_storage_payload({
             "source_id": source_id,
             "source_type": min_of(item.source_type for item in group),
@@ -255,10 +295,8 @@ def ingested_sources(
             "latest_artifact_id": latest.artifact_id,
             "latest_artifact_path": latest.artifact_path,
             "latest_acquired_at": max_of(item.acquired_at for item in group),
-            "feed_observation_count": len(rows),
-            "canonical_feed_item_count": len(
-                {node.key for _, node, _ in rows if node is not None and node.kind == "feed.item"}
-            ),
+            "feed_observation_count": sum(_observation_fanout_count(item, evidence, nodes) for item in group),
+            "canonical_feed_item_count": node_counts.get("feed.item", 0),
         }))
     return tuple(records)
 
@@ -276,19 +314,11 @@ def source_summary(connection: sqlite3.Connection, *, source_id: str) -> SourceS
             "enclosure_references": 0, "parse_errors": 0,
             "known_limitations": ["source metadata unavailable"],
         })
-    rows = list(fanout(group, evidence_ids(connection), node_links(connection), edge_links(connection)))
+    evidence, nodes, edges = evidence_ids(connection), node_links(connection), edge_links(connection)
+    matched = _matched_evidence(group, evidence)
+    node_counts = _node_counts(matched, nodes)
+    references = _reference_counts(matched, edges)
     latest = _latest(group)
-
-    def nodes(kind: str) -> int:
-        return len({node.key for _, node, _ in rows if node is not None and node.kind == kind})
-
-    def references(scope: str) -> int:
-        return len({
-            edge.id for _, _, edge in rows
-            if edge is not None and edge.kind == "references"
-            and raw_payload.text_at(edge.metadata, "scope") == scope
-        })
-
     return source_summary_from_storage_payload({
         "source_id": source_id,
         "source_type": min_of(item.source_type for item in group),
@@ -299,14 +329,17 @@ def source_summary(connection: sqlite3.Connection, *, source_id: str) -> SourceS
         "latest_artifact_id": latest.artifact_id,
         "latest_artifact_path": latest.artifact_path,
         "latest_acquired_at": max_of(item.acquired_at for item in group),
-        "feed_documents": nodes("feed.document"),
-        "feed_channels": nodes("feed.channel"),
-        "feed_items": nodes("feed.item"),
-        "feed_authors": nodes("feed.author"),
-        "feed_categories": nodes("feed.category"),
-        "link_references": references("link"),
-        "enclosure_references": references("enclosure"),
-        "parse_errors": sum(1 for observation, _, _ in rows if observation.kind == "feed.parse_error"),
+        "feed_documents": node_counts.get("feed.document", 0),
+        "feed_channels": node_counts.get("feed.channel", 0),
+        "feed_items": node_counts.get("feed.item", 0),
+        "feed_authors": node_counts.get("feed.author", 0),
+        "feed_categories": node_counts.get("feed.category", 0),
+        "link_references": references[0],
+        "enclosure_references": references[1],
+        "parse_errors": sum(
+            _observation_fanout_count(item, evidence, nodes, edges)
+            for item in group if item.kind == "feed.parse_error"
+        ),
         "known_limitations": ["source metadata is inferred from RSS2 evidence"],
     })
 

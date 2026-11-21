@@ -30,6 +30,7 @@ an unspecified order.
 from __future__ import annotations
 
 import json
+import sqlite3
 import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, replace
@@ -64,6 +65,7 @@ from common_lore_index.storage import (
     source_summary_to_jsonable,
 )
 from common_lore_index.storage.readback_driver import READBACK_DRIVER_ENV
+from common_lore_index.storage.sqlite_local import source_feed_queries
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
 from common_lore_index.storage.sqlite_local.source_queries import source_observations
@@ -246,6 +248,27 @@ def _latest_ties(pair: _Pair) -> None:
     assert len(present) == len(set(present)), (pair.graph, maxima)
 
 
+def _check_feed_page_reference_read(pair: _Pair, source_id: str) -> None:
+    fetched: set[str] = set()
+    columns = ("source_canonical_key", "target_canonical_key", "metadata_json", "kind", "display_name")
+
+    def observe(cursor: sqlite3.Cursor, row: tuple[Any, ...]) -> tuple[Any, ...]:
+        if cursor.description and tuple(column[0] for column in cursor.description) == columns:
+            fetched.add(row[0])
+        return row
+
+    with read_transaction(pair.path, pair.binding) as connection:
+        total_sources, = connection.execute(
+            "SELECT count(DISTINCT source_canonical_key) FROM canonical_edges WHERE edge_kind='references'"
+        ).fetchone()
+        assert total_sources > 1
+        connection.row_factory = observe
+        page = source_feed_queries.source_feed_items(connection, source_id=source_id, source_run_id=None, limit=1)
+    expected = pair.pg(query_source_feed_item_records, source_id=source_id, source_run_id=None, limit=1)
+    pair.same("bounded feed page references", page, expected, SERIALIZERS["items"])
+    assert len(page) == 1 and fetched <= {page[0].item_key}
+
+
 def _prove(tmp_path: Path, database: Any) -> None:
     collation = database.psql_scalar("SELECT datcollate || '|' || datctype FROM pg_database "
                                      "WHERE datname = current_database();")
@@ -289,5 +312,6 @@ def _prove(tmp_path: Path, database: Any) -> None:
     assert {row.not_fetched for row in references} == {True, False}, references
     items = crafted.store.source_feed_items(SourceFeedItemsQuery("crafted-alpha", None, 50))
     assert any(item.link_targets for item in items), items
+    _check_feed_page_reference_read(crafted, "crafted-alpha")
     assert {item.duplicate_identity for item in items} == {True, False}, items
     assert feeds.compared > 400 and crafted.compared > 150, (feeds.compared, crafted.compared)

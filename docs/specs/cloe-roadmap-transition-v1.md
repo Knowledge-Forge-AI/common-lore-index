@@ -50,6 +50,12 @@ positions without building an index of every line. Scoped proofs include
 real SQLite rollback and retry, retained publications, and installed Local
 upgrade and Server ranked first use. Hosted qualification remains pending.
 
+The Local source-read checkpoint bounds feed item and reference pages,
+aggregates summary link counts without expanding the underlying joins,
+and reuses observation JSON rendering only where the query needs it.
+Scoped tests compare source, feed and observation results against the
+maintained PostgreSQL owners across paging and retained generations.
+
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness
 queries. The disposable spill fixture recorded 603 temporary blocks written

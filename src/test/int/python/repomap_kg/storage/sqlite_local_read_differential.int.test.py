@@ -84,6 +84,8 @@ SEARCHES: tuple[tuple[str, str | None, str | None, int, int, bool], ...] = (
     ('\\"quoted\\"\\ttab', None, None, 5, 0, False),
     ('"quoted"', None, None, 5, 0, False),
     ("ÄRGER", None, None, 5, 0, False),
+    ("ÄRGER", "custom.note", None, 1, 0, True),
+    ("CUSTOM.NOTE", "custom.note", None, 1, 0, False),
     ("ärger", None, None, 5, 0, False),
     ("Ünïcode", None, None, 5, 0, True),
     ('"program": null', None, None, 5, 0, False),

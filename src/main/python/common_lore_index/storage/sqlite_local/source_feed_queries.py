@@ -9,6 +9,9 @@ PostgreSQL semantics both halves keep.
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Iterator
+from heapq import nlargest, nsmallest
+from itertools import batched
 from typing import Any
 
 from common_lore_index.storage.source_rows import (
@@ -21,6 +24,8 @@ from common_lore_index.storage.sql_core import positive_limit
 from common_lore_index.storage.sqlite_local import raw_payload
 from common_lore_index.storage.sqlite_local.queries import require_accepted_publication
 from common_lore_index.storage.sqlite_local.source_queries import (
+    RawKey,
+    SourceObservation,
     by_source,
     desc_nulls_last,
     edge_links,
@@ -35,6 +40,7 @@ from common_lore_index.storage.sqlite_local.source_queries import (
 )
 
 CONTENT_POLICY = "full feed bodies are not exposed"
+_REFERENCE_KEY_BATCH = 500
 
 
 def _kind_prefix(key: str) -> str:
@@ -45,7 +51,7 @@ def _kind_prefix(key: str) -> str:
 def _item_references(
     connection: sqlite3.Connection, keys: set[str]
 ) -> dict[str, tuple[set[str], set[str], set[str]]]:
-    """The three feed-item lateral lookups (not run-filtered), from one references scan.
+    """The three feed-item lateral lookups for the selected keys.
 
     Link targets are ``references`` edges scoped ``link``/``enclosure``;
     authors and categories are target display names joined by key alone.
@@ -53,21 +59,28 @@ def _item_references(
     found: dict[str, tuple[set[str], set[str], set[str]]] = {}
     if not keys:
         return found
-    for source, target, metadata, target_kind, name in connection.execute(
-        "SELECT edge.source_canonical_key, edge.target_canonical_key, edge.metadata_json, "
-        "target.kind, target.display_name FROM canonical_edges edge "
-        "LEFT JOIN canonical_nodes target ON target.canonical_key = edge.target_canonical_key "
-        "WHERE edge.edge_kind = 'references'"
-    ):
-        if source not in keys:
-            continue
-        links, authors, categories = found.setdefault(source, (set(), set(), set()))
-        if raw_payload.text_at(raw_payload.load(metadata), "scope") in ("link", "enclosure"):
-            links.add(target)
-        if target_kind == "feed.author":
-            authors.add(name)
-        elif target_kind == "feed.category":
-            categories.add(name)
+    ordered_keys = sorted(keys)
+    # The existing edge identity index leads with graph version. Keep every
+    # stored version, and keep the target join by key alone for readback parity.
+    versions = connection.execute("SELECT DISTINCT graph_key_version FROM canonical_edges")
+    for (version,) in versions:
+        for page in batched(ordered_keys, _REFERENCE_KEY_BATCH):
+            placeholders = ", ".join("?" for _ in page)
+            for source, target, metadata, target_kind, name in connection.execute(
+                "SELECT edge.source_canonical_key, edge.target_canonical_key, edge.metadata_json, "
+                "target.kind, target.display_name FROM canonical_edges edge "
+                "LEFT JOIN canonical_nodes target ON target.canonical_key = edge.target_canonical_key "
+                "WHERE edge.graph_key_version = ? AND edge.edge_kind = 'references' "
+                f"AND edge.source_canonical_key IN ({placeholders})",
+                (version, *page),
+            ):
+                links, authors, categories = found.setdefault(source, (set(), set(), set()))
+                if raw_payload.text_at(raw_payload.load(metadata), "scope") in ("link", "enclosure"):
+                    links.add(target)
+                if target_kind == "feed.author":
+                    authors.add(name)
+                elif target_kind == "feed.category":
+                    categories.add(name)
     return found
 
 
@@ -85,15 +98,21 @@ def source_feed_items(
         (node.id, observation) for observation, node, _ in fanout(group, evidence, nodes)
         if node is not None
     )
-    items = [
-        (row[1], raw_payload.load(row[2]), linked[row[0]])
-        for row in connection.execute(
+    items = (
+        (key, raw_payload.load(metadata), linked[node_id])
+        for node_id, key, metadata in connection.execute(
             "SELECT id, canonical_key, metadata_json FROM canonical_nodes "
             "WHERE kind = 'feed.item' ORDER BY canonical_key, id"
         )
-        if row[0] in linked
-    ]
-    page = desc_nulls_last(items, lambda item: raw_payload.text_at(item[1], "published_at"))[:safe_limit]
+        if node_id in linked
+    )
+
+    def published_order(item: tuple[str, Any, list[SourceObservation]]) -> tuple[bool, str]:
+        published = raw_payload.text_at(item[1], "published_at")
+        return published is not None, published or ""
+
+    # The bounded heap keeps the SQL order among ties, including undated items.
+    page = nlargest(safe_limit, items, key=published_order)
     lookups = _item_references(connection, {key for key, _, _ in page})
     records = []
     for key, metadata, observations in page:
@@ -131,28 +150,32 @@ def source_references(
         if item.source_id == source_id and (source_run_id is None or item.source_run_id == source_run_id)
     ]
     evidence, edges = evidence_ids(connection), edge_links(connection)
-    rows = []
-    for observation in group:
-        for evidence_id in evidence.get(observation.key, []):
-            for edge in edges.get(evidence_id, []):
-                if edge.kind != "references" or _kind_prefix(edge.source) != "feed.item":
-                    continue
-                if target_kind is not None and _kind_prefix(edge.target) != target_kind:
-                    continue
-                order = (edge.source, edge.target, edge.identity_hash, observation.key, edge.link_kind)
-                rows.append((order, {
-                    "source_item_key": edge.source,
-                    "relation": edge.kind,
-                    "target_key": edge.target,
-                    "target_display": raw_payload.text_at(edge.metadata, "raw_target_summary"),
-                    "not_fetched": not_fetched(raw_payload.text_at(edge.metadata, "not_fetched")),
-                    "media_type": raw_payload.text_at(edge.metadata, "mime_type"),
-                    "source_run_id": observation.source_run_id,
-                    "artifact_id": observation.artifact_id,
-                    "artifact_path": observation.artifact_path,
-                }))
-    rows.sort(key=lambda row: row[0])
-    return tuple(source_reference_record_from_storage_payload(row[1]) for row in rows[:safe_limit])
+
+    def candidates() -> Iterator[tuple[tuple[str, str, str, RawKey, str], dict[str, Any]]]:
+        for observation in group:
+            for evidence_id in evidence.get(observation.key, []):
+                for edge in edges.get(evidence_id, []):
+                    if edge.kind != "references" or _kind_prefix(edge.source) != "feed.item":
+                        continue
+                    if target_kind is not None and _kind_prefix(edge.target) != target_kind:
+                        continue
+                    order = (edge.source, edge.target, edge.identity_hash, observation.key, edge.link_kind)
+                    yield order, {
+                        "source_item_key": edge.source,
+                        "relation": edge.kind,
+                        "target_key": edge.target,
+                        "target_display": raw_payload.text_at(edge.metadata, "raw_target_summary"),
+                        "not_fetched": not_fetched(raw_payload.text_at(edge.metadata, "not_fetched")),
+                        "media_type": raw_payload.text_at(edge.metadata, "mime_type"),
+                        "source_run_id": observation.source_run_id,
+                        "artifact_id": observation.artifact_id,
+                        "artifact_path": observation.artifact_path,
+                    }
+
+    return tuple(
+        source_reference_record_from_storage_payload(payload)
+        for _, payload in nsmallest(safe_limit, candidates(), key=lambda row: row[0])
+    )
 
 
 def _json(text: str) -> Any:

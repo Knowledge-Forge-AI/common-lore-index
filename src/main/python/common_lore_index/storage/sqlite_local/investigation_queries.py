@@ -155,11 +155,11 @@ def observation_search(
     try:
         for ordinal, row_kind, source_id, row_path, text in rows:
             payload = raw_payload.load(text)
-            if not any(
-                needle in raw_payload.ascii_lower(field)
-                for field in (row_kind, source_id, row_path, raw_payload.jsonb_text(payload))
-            ):
-                continue
+            payload_text = None
+            if not any(needle in raw_payload.ascii_lower(field) for field in (row_kind, source_id, row_path)):
+                payload_text = raw_payload.jsonb_text(payload)
+                if needle not in raw_payload.ascii_lower(payload_text):
+                    continue
             if skipped < offset:
                 skipped += 1
                 continue
@@ -172,7 +172,7 @@ def observation_search(
                 "metadata": None if metadata is None else raw_payload.jsonb_value(metadata),
             }
             if include_raw:
-                row["payload"] = raw_payload.jsonb_value(payload)
+                row["payload"] = raw_payload.jsonb_value(payload) if payload_text is None else json.loads(payload_text)
             page.append(row)
             if len(page) > limit:
                 break
