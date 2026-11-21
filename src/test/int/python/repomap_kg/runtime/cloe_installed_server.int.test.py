@@ -40,6 +40,12 @@ from repomap_test_support.installed_experience_fixture import (
 from repomap_test_support.installed_mcp_session import result_digest, useful_question
 from repomap_test_support.installed_origin import classify, closure, observe_origin
 from repomap_test_support.postgres_harness import temporary_postgres
+from repomap_test_support.retrieval_evaluation_fixture import (
+    MIXED_V1_GRAPH_ID,
+    binding_id_for_alias,
+    materialize_mixed_v1_working_copy,
+    write_mixed_v1_postgres_home,
+)
 
 OUT, MCP = "child-stdout", "mcp-reply"
 READBACK = {"REPOMAP_STORAGE_READBACK_DRIVER": "psycopg"}
@@ -242,3 +248,48 @@ def test_released_provisioned_server_upgrade(
                       "baseline_generation": 1, "candidate_generation": 2,
                       "environment_class": "provisioned-server", "source_blind_readback": True},
                      sort_keys=True))
+
+
+def test_installed_server_builds_ranked_index_from_retained_sources(
+    tmp_path_factory: pytest.TempPathFactory, tmp_path: Path,
+) -> None:
+    wheel = candidate_wheel(tmp_path_factory)
+    installed = pure_environment(tmp_path / "lexical env", wheel, env_class="provisioned-server")
+    material = materialize_mixed_v1_working_copy(tmp_path / "public material")
+    relative = "generated/installed_alias.md"
+    (material / "companion" / relative).write_text(
+        "W" * 6000 + " InstallMarkerVector\n", encoding="utf-8",
+    )
+    with temporary_postgres() as postgres:
+        home = write_mixed_v1_postgres_home(
+            tmp_path / "lexical home", material, host=postgres.host, port=postgres.port,
+            database=postgres.database, user=postgres.user, password=postgres.password,
+            declared_aliases=("core", "companion"),
+        )
+        init = run_child(
+            installed,
+            (str(installed.python), "-I", "-c", SERVER_PROBE, str(home), str(Path(POSTGRES_BIN) / "psql"),
+             postgres.database, MIXED_V1_GRAPH_ID, "execute_pipeline"),
+            extra=READBACK,
+        )
+        assert init.returncode == 0
+        initialized = json_object(init.stdout.strip().splitlines()[-1])
+        assert initialized is not None and initialized["publication_state"] == "committed"
+        material.rename(tmp_path / "retained-source-only")
+        selected = binding_id_for_alias("companion")
+        common = ("--repo-map-home", str(home), "--graph", MIXED_V1_GRAPH_ID, "--authorize-body", "--json")
+        cli = (str(installed.wrapper("cloe")), "ops")
+        build = run_child(installed, (*cli, "lexical-build", *common, "--binding", selected), extra=READBACK)
+        assert build.returncode == 0
+        publication = json_object(build.stdout)
+        assert publication is not None and publication["result"] == "published"
+        readback = run_child(
+            installed,
+            (*cli, "lexical-query", *common, "--binding-id", selected,
+             "--query", "install marker vector", "--query-style", "ranked_terms", "--path-prefix", relative),
+            extra=READBACK,
+        )
+        answer = json_object(readback.stdout)
+        assert answer is not None and readback.returncode == 0, (answer or {}).get("reason")
+        assert any(hit["locator"]["source_relative_path"] == relative for hit in answer["envelope"]["hits"])
+        assert not material.exists()

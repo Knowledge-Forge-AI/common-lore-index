@@ -36,6 +36,12 @@ Python declaration.
 Batch further local work before spending a new public CI campaign.
 Main promotion, release and production admission remain separate.
 
+The local batch after CI162 includes [bounded staging and digest work](../../tools/ci/cloe-staging-bounds1-exit.md),
+[ordered lexical capture](../../tools/ci/cloe-lexical-capture2-exit.md),
+and [batched PostgreSQL population](../../tools/ci/cloe-lexical-batch1-exit.md).
+The [installed Server ranked search checkpoint](../../tools/ci/cloe-w8-installed-lexical1-exit.md)
+exercises lexical build and ranked query using a retained publication.
+
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness
 queries. The disposable spill fixture recorded 603 temporary blocks written
