@@ -20,6 +20,7 @@ rows are compared as exact JSON text, so key order and number spelling count.
 from __future__ import annotations
 
 import json
+import sqlite3
 import uuid
 from collections.abc import Callable
 from dataclasses import asdict, replace
@@ -39,6 +40,11 @@ from common_lore_index.storage import (
     query_openapi_summary,
     query_python_summary,
     query_terraform_summary,
+)
+from common_lore_index.storage.canonical import (
+    query_canonical_edge_explanation,
+    query_canonical_edge_records,
+    query_canonical_node_records,
 )
 from common_lore_index.storage.readback_driver import READBACK_DRIVER_ENV, execute_json_readback
 from common_lore_index.storage.sqlite_local import (
@@ -155,6 +161,25 @@ def test_read_corpus_matches_postgresql_query_owners(tmp_path: Path, monkeypatch
             postgres.psql_scalar(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE);')
 
 
+def _compare_edge_pages(connection: sqlite3.Connection, database: Any, run_id: int) -> None:
+    pg: dict[str, Any] = {"root_path": ROOT, "psql_command": database.psql_command}
+    expected = query_canonical_edge_records(database.psql_args, limit=2, offset=0, **pg)
+    actual = queries.canonical_edges(
+        connection, kind=None, source_key=None, target_key=None, graph_key_version=1, limit=2, offset=0,
+    )
+    assert [asdict(edge) for edge in actual] == [_runs(asdict(edge), run_id) for edge in expected]
+    assert actual
+    first = actual[0]
+    window: dict[str, Any] = {
+        "source_key": first.source_key, "kind": first.edge_kind, "target_key": first.target_key,
+        "identity_metadata_hash": first.identity_metadata_hash, "graph_key_version": 1,
+        "evidence_limit": 1, "evidence_offset": 0,
+    }
+    actual_explanation = queries.canonical_edge_explanation(connection, **window).to_dict()
+    pg_explanation = query_canonical_edge_explanation(database.psql_args, **pg, **window).to_dict()
+    assert actual_explanation == _runs(pg_explanation, run_id) and actual_explanation["evidence"]
+
+
 def _prove(tmp_path: Path, database: Any) -> None:
     collation = database.psql_scalar("SELECT datcollate || '|' || datctype FROM pg_database "
                                      "WHERE datname = current_database();")
@@ -187,10 +212,20 @@ def _prove(tmp_path: Path, database: Any) -> None:
             database.psql_args, root_path=ROOT, **pg)), pg_run)
         actual_summary = asdict(investigation_queries.storage_summary(connection, root_path=ROOT))
         assert actual_summary == expected_summary and actual_summary["raw_observations"] > 0
+        _compare_edge_pages(connection, database, pg_run)
 
         centers = [node.canonical_key for node in queries.canonical_nodes(
             connection, kind=None, canonical_key=None, path_prefix=None, graph_key_version=1,
             limit=None, offset=0)]
+        for prefix, limit, offset in ((".", 3, 1), ("pkg/", 10, 0), ("PKG", 10, 0)):
+            expected_nodes = query_canonical_node_records(
+                database.psql_args, root_path=ROOT, path_prefix=prefix, limit=limit, offset=offset, **pg,
+            )
+            actual_nodes = queries.canonical_nodes(
+                connection, kind=None, canonical_key=None, path_prefix=prefix,
+                graph_key_version=1, limit=limit, offset=offset,
+            )
+            assert [asdict(node) for node in actual_nodes] == [_runs(asdict(node), pg_run) for node in expected_nodes]
         compared_edges = 0
         for center in (*centers, "file:absent.nix"):
             for direction in ("both", "in", "out"):

@@ -65,6 +65,11 @@ feed rows. Local summary reads use the kind index and observation pages
 decode returned bodies on demand. Scoped SQLite and PostgreSQL proof covers
 context vector validation and ranked acronym lookup.
 
+Canonical file pages now seek by the encoded key prefix instead of scanning
+unrelated nodes. Local graph lists and edge explanations stream their rows
+into the existing result records. PostgreSQL parity and the Local MCP
+loop cover pages and explanation evidence.
+
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness
 queries. The disposable spill fixture recorded 603 temporary blocks written

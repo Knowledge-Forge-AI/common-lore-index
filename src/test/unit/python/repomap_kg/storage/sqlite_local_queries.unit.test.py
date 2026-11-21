@@ -116,6 +116,38 @@ def test_edges_order_and_filters(published: Path) -> None:
         assert edges(target_key=EDGES[-1][2]) == [edge for edge in EDGES if edge[2] == EDGES[-1][2]]
 
 
+def test_canonical_file_windows_skip_unrelated_node_keys(published: Path) -> None:
+    prefix = canonical_file_path_prefix("pkg %雪")
+    with closing(sqlite3.connect(published)) as writer:
+        writer.executemany(
+            "INSERT INTO canonical_nodes(graph_key_version, canonical_key, kind, display_name, "
+            "metadata_json, confidence, conflict, first_seen_run_id, last_seen_run_id) "
+            "VALUES (1, ?, 'file', 'fixture', '{}', 'observed', 0, 1, 1)",
+            [(f"file:noise/{index:05}",) for index in range(15000)]
+            + [(prefix + f"file{index}.py",) for index in range(3)]
+            + [(prefix[:-1] + "0/other.py",)],
+        )
+        writer.commit()
+    with read_transaction(published, BINDING) as connection:
+        callbacks = 0
+
+        def tick() -> int:
+            nonlocal callbacks
+            callbacks += 1
+            return 0
+
+        connection.set_progress_handler(tick, 50)
+        try:
+            rows = queries.canonical_nodes(
+                connection, kind=None, canonical_key=None, path_prefix="pkg %雪",
+                graph_key_version=1, limit=1, offset=1,
+            )
+        finally:
+            connection.set_progress_handler(None, 0)
+    assert [row.canonical_key for row in rows] == [prefix + "file1.py"]
+    assert callbacks < 100
+
+
 def test_edge_explanation_windows_evidence_and_misses_cleanly(published: Path) -> None:
     source, kind, target, digest = EDGES[0]
     expected = sorted(
