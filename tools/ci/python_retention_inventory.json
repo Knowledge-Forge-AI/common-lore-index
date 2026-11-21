@@ -2785,6 +2785,27 @@
     {
       "admission": "admitted",
       "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-matched-dry1.test_owners",
+      "members": [
+        "src/test/int/python/tools/retrieval_w5_matched_dry.int.test.py",
+        "src/test/unit/python/tools/retrieval_w5_matched_dry.unit.test.py"
+      ],
+      "rationale": "ADR0218 synthetic matched controller admission, settlement and owned runtime proof.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-matched-dry1.tools",
+      "members": [
+        "tools/retrieval_w5_matched_dry.py"
+      ],
+      "rationale": "ADR0218 synthetic matched controller admission, settlement and owned runtime proof.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
       "id": "cloe.w5-pgdg1.test_owners",
       "members": [
         "src/test/int/python/repomap_test_support/pgvector_prebuilt_runtime.int.test.py",
@@ -44792,6 +44813,24 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_w5_matched_dry.unit.test.py",
+      "rationale": "ADR0218 synthetic matched controller admission, settlement and owned runtime proof.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_w5_matched_dry.int.test.py",
+      "rationale": "ADR0218 synthetic matched controller admission, settlement and owned runtime proof.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/int/python/tools/retrieval_w5_matched_adapter.int.test.py",
       "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
       "root": "test_owners",
@@ -64180,6 +64219,15 @@
       "maintained_executable": true,
       "path": "tools/related_source_context.py",
       "rationale": "RELATED-CONTEXT1 optional one-hop caller composition and focused static-extraction fixture evidence; no runtime or quality-policy change.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_w5_matched_dry.py",
+      "rationale": "ADR0218 synthetic matched controller admission, settlement and owned runtime proof.",
       "root": "tools",
       "status": "active_tool"
     },

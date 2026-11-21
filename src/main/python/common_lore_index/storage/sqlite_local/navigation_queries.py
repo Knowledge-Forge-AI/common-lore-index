@@ -38,6 +38,9 @@ def candidate_predicate(query: NavigationSearchQuery) -> tuple[str, dict[str, An
 
 def evidence_sql(predicate: str, *, role_sql: str = _EVIDENCE_ROLE_SQL) -> str:
     # Run selection deliberately precedes role selection, just like the locator.
+    # Materialize the bounded relational identity/sort window before joining wide
+    # evidence metadata, run vectors, or raw observation payload hashes; post-limit
+    # runs parity relies on schema FK canonical_evidence.run_id -> runs(id).
     return f"""WITH selected AS (
         SELECT subject.id AS node_id,
                coalesce(max(CASE WHEN e.run_id = :accepted THEN e.run_id END), max(e.run_id)) AS run_id
@@ -45,22 +48,41 @@ def evidence_sql(predicate: str, *, role_sql: str = _EVIDENCE_ROLE_SQL) -> str:
         JOIN canonical_node_evidence link ON link.canonical_node_id = subject.id
         JOIN canonical_evidence e ON e.id = link.canonical_evidence_id AND e.graph_key_version = 1
         WHERE {predicate} GROUP BY subject.id
+    ),
+    bounded AS MATERIALIZED (
+        SELECT subject.id AS node_id,
+               subject.canonical_key AS canonical_key,
+               e.id AS evidence_id,
+               e.run_id AS run_id,
+               e.raw_observation_ordinal AS raw_observation_ordinal,
+               e.evidence_key AS evidence_key,
+               link.link_kind AS link_kind,
+               {role_sql} AS evidence_role
+        FROM selected
+        CROSS JOIN canonical_nodes subject ON subject.id = selected.node_id
+        CROSS JOIN canonical_node_evidence link ON link.canonical_node_id = subject.id
+        CROSS JOIN canonical_evidence e ON e.id = link.canonical_evidence_id
+                                       AND e.run_id = selected.run_id AND e.graph_key_version = 1
+        WHERE ({role_sql}) = 'direct'
+        ORDER BY subject.canonical_key, e.raw_observation_ordinal, e.evidence_key, link.link_kind
+        LIMIT :evidence_fetch
     )
-    SELECT e.evidence_key, link.link_kind, e.run_id, e.raw_observation_ordinal,
+    SELECT bounded.evidence_key AS evidence_key,
+           bounded.link_kind AS link_kind,
+           bounded.run_id AS run_id,
+           bounded.raw_observation_ordinal AS raw_observation_ordinal,
            raw.payload_hash, e.raw_kind, e.raw_source_id, e.path, e.start_line, e.end_line,
            e.extractor, e.extractor_version, e.confidence, e.metadata_json,
            r.publication_bundle_id, r.snapshot_manifest_id, r.extraction_receipt_id,
-           r.graph_candidate_id, r.snapshot_vector_json, {role_sql}, subject.id
-    FROM selected
-    JOIN canonical_nodes subject ON subject.id = selected.node_id
-    JOIN canonical_node_evidence link ON link.canonical_node_id = subject.id
-    JOIN canonical_evidence e ON e.id = link.canonical_evidence_id
-                            AND e.run_id = selected.run_id AND e.graph_key_version = 1
-    JOIN runs r ON r.id = e.run_id
-    LEFT JOIN raw_observations raw ON raw.run_id = e.run_id AND raw.ordinal = e.raw_observation_ordinal
-    WHERE ({role_sql}) = 'direct'
-    ORDER BY subject.canonical_key, e.raw_observation_ordinal, e.evidence_key, link.link_kind
-    LIMIT :evidence_fetch"""
+           r.graph_candidate_id, r.snapshot_vector_json,
+           bounded.evidence_role, bounded.node_id AS id
+    FROM bounded
+    CROSS JOIN canonical_evidence e ON e.id = bounded.evidence_id
+    CROSS JOIN runs r ON r.id = bounded.run_id
+    LEFT JOIN raw_observations raw
+      ON raw.run_id = bounded.run_id AND raw.ordinal = bounded.raw_observation_ordinal
+    ORDER BY bounded.canonical_key, bounded.raw_observation_ordinal,
+             bounded.evidence_key, bounded.link_kind"""
 
 
 def _direct_location(row: Any, accepted_run_id: int, *,
@@ -207,8 +229,13 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
     nodes = {row[0]: {"canonical_key": row[1], "kind": row[2], "display_name": row[3],
                       "first_seen_run_id": row[4], "last_seen_run_id": row[5], "locations": []}
              for row in rows}
+    vectors = dict(admission.vectors) if admission is not None else {}
     for row in evidence:
-        vector = admission.vectors.get(row[2]) if admission is not None else None
+        vector = (
+            vectors[row[2]] if row[2] in vectors
+            else vectors.setdefault(row[2], json.loads(row[18])) if read_context_vector is None
+            else None
+        )
         location = _direct_location(
             row[:20], accepted.run_id, snapshot_vector=vector,
             read_context_vector=read_context_vector,
