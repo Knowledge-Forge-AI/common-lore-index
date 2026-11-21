@@ -97,6 +97,13 @@ def test_sqlite_real_publication_projection_query_and_stale_advancement_refusal(
     assert projection_gen1.accepted_reference.backend == "sqlite"
     assert projection_gen1.accepted_reference.accepted_generation == 1
     assert len(projection_gen1.projected_files) > 0
+    wide_note, = (record for record in projection_gen1.projected_files
+                  if record.source_relative_path == "generated/long_line_notes.md")
+    expected_note = (wc_gen1 / "companion" / wide_note.source_relative_path).read_bytes()
+    assert b"".join(chunk.content_text.encode("utf-8") for chunk in wide_note.chunks) == expected_note
+    continuations = [chunk for chunk in wide_note.chunks if chunk.line_split_continuation]
+    assert continuations and all(chunk.start_line == chunk.end_line == 2 for chunk in continuations)
+    assert wide_note.chunks[-1].normalized_byte_end == len(expected_note)
 
     req = CapturedTextQueryRequest(
         query="ERR_CLOE_MANIFEST_SEAL_MISMATCH_409",

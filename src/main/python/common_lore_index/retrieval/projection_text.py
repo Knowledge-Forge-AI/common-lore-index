@@ -17,32 +17,12 @@ def _count_lf_lines(text: str) -> int:
     return text.count("\n") if text.endswith("\n") else text.count("\n") + 1
 
 
-def _count_raw_lines(raw_bytes: bytes) -> int:
-    if not raw_bytes:
-        return 0
-    normalized = raw_bytes.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
-    return normalized.count(b"\n") if normalized.endswith(b"\n") else normalized.count(b"\n") + 1
-
-
 def _utf8_safe_prefix(data: bytes, max_bytes: int) -> bytes:
-    if len(data) <= max_bytes:
-        return data
+    """Cut already validated UTF-8 before any incomplete code point."""
     cut = max_bytes
     while cut > 0 and (data[cut] & 0xC0) == 0x80:
         cut -= 1
-    candidate = data[:cut]
-    try:
-        candidate.decode("utf-8", errors="strict")
-        return candidate
-    except UnicodeDecodeError:
-        while cut > 0:
-            cut -= 1
-            try:
-                data[:cut].decode("utf-8", errors="strict")
-                return data[:cut]
-            except UnicodeDecodeError:
-                continue
-        return b""
+    return data[:cut]
 
 
 @dataclass(frozen=True)
@@ -73,16 +53,15 @@ def normalize_and_bound_text(
         raise ValueError("max_projected_bytes must be positive")
     if b"\x00" in raw_bytes:
         return None, ExclusionReason.NUL_BYTE_REJECTED
+    had_crlf_or_cr = b"\r" in raw_bytes
+    full_normalized_bytes = bytes(raw_bytes)
+    if had_crlf_or_cr:
+        full_normalized_bytes = full_normalized_bytes.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
     try:
-        decoded = raw_bytes.decode("utf-8", errors="strict")
+        full_normalized_text = full_normalized_bytes.decode("utf-8", errors="strict")
     except UnicodeDecodeError:
         return None, ExclusionReason.INVALID_UTF8
 
-    raw_byte_length = len(raw_bytes)
-    raw_line_count = _count_raw_lines(raw_bytes)
-    had_crlf_or_cr = ("\r" in decoded)
-    full_normalized_text = decoded.replace("\r\n", "\n").replace("\r", "\n")
-    full_normalized_bytes = full_normalized_text.encode("utf-8")
     normalized_byte_length = len(full_normalized_bytes)
     normalized_line_count = _count_lf_lines(full_normalized_text)
 
@@ -106,8 +85,8 @@ def normalize_and_bound_text(
             representation_version=REPRESENTATION_VERSION,
             normalized_text=projected_text,
             normalized_bytes=projected_bytes,
-            raw_byte_length=raw_byte_length,
-            raw_line_count=raw_line_count,
+            raw_byte_length=len(raw_bytes),
+            raw_line_count=normalized_line_count,
             normalized_byte_length=normalized_byte_length,
             normalized_line_count=normalized_line_count,
             projected_byte_length=projected_byte_length,

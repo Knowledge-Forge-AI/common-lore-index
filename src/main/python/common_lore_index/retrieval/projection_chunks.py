@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 import hashlib
 from typing import Any
@@ -22,32 +22,50 @@ def frame_digest(prefix: str, parts: Sequence[str | bytes]) -> str:
     return f"{prefix}:{hasher.hexdigest()}"
 
 
-def _split_lf_lines_keepends(text: str) -> list[str]:
-    if not text:
-        return []
-    parts = text.split("\n")
-    lines = [part + "\n" for part in parts[:-1]]
-    if parts[-1]:
-        lines.append(parts[-1])
-    return lines
+def _iter_lf_lines_keepends(text: str) -> Iterator[str]:
+    start = 0
+    while start < len(text):
+        end = text.find("\n", start)
+        if end == -1:
+            yield text[start:]
+            return
+        yield text[start : end + 1]
+        start = end + 1
 
 
-def _split_long_utf8_line(line: str, max_chunk_bytes: int) -> list[str]:
-    pieces: list[str] = []
-    current_chars: list[str] = []
-    current_bytes = 0
-    for ch in line:
-        ch_len = len(ch.encode("utf-8"))
-        if current_chars and current_bytes + ch_len > max_chunk_bytes:
-            pieces.append("".join(current_chars))
-            current_chars = [ch]
-            current_bytes = ch_len
+def _split_long_utf8_line(encoded: bytes, max_chunk_bytes: int) -> Iterator[str]:
+    start = 0
+    while start < len(encoded):
+        end = min(start + max_chunk_bytes, len(encoded))
+        while end < len(encoded) and (encoded[end] & 0xC0) == 0x80:
+            end -= 1
+        yield encoded[start:end].decode("utf-8")
+        start = end
+
+
+def _iter_chunk_specs(
+    text: str, max_chunk_lines: int, max_chunk_bytes: int,
+) -> Iterator[tuple[int, int, str, bool]]:
+    buffer: list[str] = []
+    buffered_bytes = 0
+    start_line = 1
+    for line_no, line in enumerate(_iter_lf_lines_keepends(text), start=1):
+        encoded = line.encode("utf-8")
+        line_bytes = len(encoded)
+        if buffer and (len(buffer) >= max_chunk_lines or buffered_bytes + line_bytes > max_chunk_bytes):
+            yield start_line, line_no - 1, "".join(buffer), False
+            buffer.clear()
+            buffered_bytes = 0
+        if line_bytes > max_chunk_bytes:
+            for index, piece in enumerate(_split_long_utf8_line(encoded, int(max_chunk_bytes))):
+                yield line_no, line_no, piece, index > 0
         else:
-            current_chars.append(ch)
-            current_bytes += ch_len
-    if current_chars:
-        pieces.append("".join(current_chars))
-    return pieces
+            if not buffer:
+                start_line = line_no
+            buffer.append(line)
+            buffered_bytes += line_bytes
+    if buffer:
+        yield start_line, start_line + len(buffer) - 1, "".join(buffer), False
 
 
 @dataclass(frozen=True)
@@ -147,46 +165,10 @@ def build_file_chunks(
             ),
         )
 
-    lines = _split_lf_lines_keepends(normalized_text)
-    raw_specs: list[tuple[int, int, str, bool]] = []
-    buf_lines: list[str] = []
-    buf_bytes = 0
-    buf_start_line = 1
-    buf_end_line = 1
-
-    def _flush() -> None:
-        nonlocal buf_lines, buf_bytes
-        if not buf_lines:
-            return
-        raw_specs.append((buf_start_line, buf_end_line, "".join(buf_lines), False))
-        buf_lines = []
-        buf_bytes = 0
-
-    for line_no, line in enumerate(lines, start=1):
-        line_bytes = len(line.encode("utf-8"))
-        if line_bytes > max_chunk_bytes:
-            _flush()
-            pieces = _split_long_utf8_line(line, max_chunk_bytes)
-            for idx, piece in enumerate(pieces):
-                raw_specs.append((line_no, line_no, piece, idx > 0))
-            continue
-
-        if buf_lines and (
-            len(buf_lines) >= max_chunk_lines or buf_bytes + line_bytes > max_chunk_bytes
-        ):
-            _flush()
-
-        if not buf_lines:
-            buf_start_line = line_no
-        buf_lines.append(line)
-        buf_bytes += line_bytes
-        buf_end_line = line_no
-
-    _flush()
-
     chunks: list[ProjectedChunk] = []
     byte_cursor = 0
-    for chunk_index, (start_line, end_line, text_piece, is_cont) in enumerate(raw_specs):
+    specs = _iter_chunk_specs(normalized_text, max_chunk_lines, max_chunk_bytes)
+    for chunk_index, (start_line, end_line, text_piece, is_cont) in enumerate(specs):
         piece_bytes = text_piece.encode("utf-8")
         byte_len = len(piece_bytes)
         byte_start = byte_cursor

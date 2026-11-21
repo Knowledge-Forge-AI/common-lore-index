@@ -76,3 +76,19 @@ def test_empty_file_normalization() -> None:
     assert res.normalized_line_count == 0
     assert res.projected_line_count == 0
     assert res.truncated is False
+
+
+def test_lf_only_projection_reuses_the_validated_input_bytes() -> None:
+    raw = "café\n🚀\nx".encode("utf-8")
+    result, reason = normalize_and_bound_text(raw, max_projected_bytes=len(raw))
+    assert result is not None and reason is None
+    assert result.normalized_bytes is raw
+    assert result.normalized_text == raw.decode("utf-8")
+    assert result.raw_line_count == result.normalized_line_count == 3
+    assert not result.had_crlf_or_cr and not result.truncated
+
+
+def test_invalid_utf8_after_the_projected_prefix_still_refuses() -> None:
+    raw = b"public\r\n" + bytes([0xFF])
+    result, reason = normalize_and_bound_text(raw, max_projected_bytes=6)
+    assert result is None and reason == ExclusionReason.INVALID_UTF8

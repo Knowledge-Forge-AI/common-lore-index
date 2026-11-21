@@ -105,3 +105,21 @@ def test_chunk_line_splitting_uses_lf_only_not_unicode_or_control_separators() -
     assert len(chunks) == 1
     assert chunks[0].start_line == 1 and chunks[0].end_line == 2
     assert chunks[0].line_count == 2
+
+
+def test_long_utf8_lines_preserve_offsets_and_isolate_continuations() -> None:
+    chunks = build_file_chunks(
+        file_projection_id="projfile1:" + "a" * 64,
+        binding_id="bind1:core",
+        source_relative_path="docs/unicode.md",
+        normalized_text="a\nééé\n\n🚀βo\nz",
+        artifact_privacy="raw_source",
+        policy_digest="sha256:" + "b" * 64,
+        publication_bundle_id="bundle1:" + "c" * 64,
+        max_chunk_lines=2,
+        max_chunk_bytes=6,
+    )
+    assert [chunk.content_text for chunk in chunks] == ["a\n", "ééé", "\n", "\n", "🚀β", "o\n", "z"]
+    assert [chunk.end_line for chunk in chunks] == [1, 2, 2, 3, 4, 4, 5]
+    assert [chunk.normalized_byte_end for chunk in chunks] == [2, 8, 9, 10, 16, 18, 19]
+    assert [chunk.line_split_continuation for chunk in chunks] == [False, False, True, False, False, True, False]
