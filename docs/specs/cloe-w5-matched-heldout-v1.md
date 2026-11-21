@@ -178,6 +178,35 @@ including intentionally unstarted ones. No hidden warm-up or automatic
 retry is permitted. The later runtime grant binds the exact model census,
 offline dependencies, source, publications and ownership proof.
 
+## Source adapter
+
+The matched adapter reads a committed evaluator USTAR archive and
+reconstructs the fixed cases, native plans, standalone lexical requests and
+72-slot schedule. The committed evaluator archive independently binds its
+projected source inventory and the historical source-frame identifier. Its
+only observation inputs are current publication and capture readbacks and
+measured fit for the complete rankable census. Each arm receives binding IDs
+after evaluator admission. Privacy and semantic-mode refusals enter the
+journal before any treatment callback can receive a plan.
+
+The adapter reuses the maintained native and lexical services. Fusion uses
+the incumbent direct-text lexical leg and the existing file RRF owner with a
+matched exact public-text-v2 vector reader. The runner supplying that reader
+must bind the observed component generations and retained inference artifacts
+before work. Caller publication and snapshot defaults stay unset in lexical
+calls. A current pair is required before ranking and before closing the
+journal. The append-only journal records admission before delegating a rank,
+preserves pending work after loss of authority and binds the complete event
+chain into the final 72-slot ranking receipt.
+
+The custodian opens the separate grading archive only for that receipt, after
+complete eligible output and verified postflight. Synthetic proof exercises
+the source adapter with separate SQLite and PostgreSQL fixture publications,
+real native and lexical literal controls, and an inert vector input.
+The runtime envelope must identify and admit the approved offline worker,
+artifact closure, concrete publication lifecycle, and one-use command before
+evaluation of the sealed corpus.
+
 ## Grading and decision rule
 
 Grade unique files by binding identity and relative path with the existing

@@ -280,7 +280,7 @@ def _ready_observation(case: Case, slot: Slot, row: Observation) -> bool:
 
 def _below_floor_observation(case: Case, slot: Slot, row: Observation) -> bool:
     return row.state is ObservationState.UNSTARTED or (
-        _planned_refusal(case, slot) and row.state is ObservationState.CONTROL_CHECKED
+        _planned_refusal(case, slot) and row.state is ObservationState.CONTROL_CHECKED and row.control_correct is True
     )
 
 
@@ -312,10 +312,9 @@ def assess(
         or postflight is Postflight.INADMISSIBLE
         or any(
             row.state is ObservationState.FORBIDDEN_WORK
-            or (
-                row.state is ObservationState.RANKED
-                and (preflight is not Preflight.READY or _planned_refusal(by_ordinal[key.ordinal], key))
-            )
+            or (row.state is ObservationState.CONTROL_CHECKED and not _planned_refusal(by_ordinal[key.ordinal], key))
+            or (row.state not in (ObservationState.UNSTARTED, ObservationState.CONTROL_CHECKED)
+                and (preflight is not Preflight.READY or _planned_refusal(by_ordinal[key.ordinal], key)))
             for key, row in observations.items()
         )
     ):

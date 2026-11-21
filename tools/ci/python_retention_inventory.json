@@ -2726,6 +2726,44 @@
     {
       "admission": "admitted",
       "governing_profile": "clean_test_owners",
+      "id": "cloe.w5-matched-adapter1.test_owners",
+      "members": [
+        "src/test/int/python/tools/retrieval_w5_matched_adapter.int.test.py",
+        "src/test/unit/python/tools/retrieval_w5_matched_adapter.unit.test.py"
+      ],
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_support",
+      "id": "cloe.w5-matched-adapter1.test_support",
+      "members": [
+        "src/test/support/python/repomap_test_support/retrieval_w5_matched_fixture.py"
+      ],
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "test_support"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "cloe.w5-matched-adapter1.tools",
+      "members": [
+        "tools/retrieval_w5_matched_archive.py",
+        "tools/retrieval_w5_matched_attempt.py",
+        "tools/retrieval_w5_matched_baselines.py",
+        "tools/retrieval_w5_matched_grading.py",
+        "tools/retrieval_w5_matched_inputs.py",
+        "tools/retrieval_w5_matched_journal.py",
+        "tools/retrieval_w5_matched_postgres.py",
+        "tools/retrieval_w5_matched_publications.py"
+      ],
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
       "id": "cloe.w5-matched-design1.test_owners",
       "members": [
         "src/test/int/python/tools/retrieval_w5_matched_grading.int.test.py",
@@ -44754,6 +44792,24 @@
       "confidence": 0.95,
       "governing_profile": "clean_test_owners",
       "maintained_executable": true,
+      "path": "src/test/int/python/tools/retrieval_w5_matched_adapter.int.test.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "test_owners",
+      "status": "active_int_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/retrieval_w5_matched_adapter.unit.test.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
       "path": "src/test/int/python/tools/retrieval_body_capture.int.test.py",
       "rationale": "ADR0205 separate public captured-text source foundation; additive clean owners, unchanged tasks and immutable predecessor history; inherited profiles and debt ceilings preserved.",
       "root": "test_owners",
@@ -47294,6 +47350,15 @@
       "maintained_executable": true,
       "path": "src/test/support/python/repomap_test_support/retention_pipeline_fixture.py",
       "rationale": "Maintained retention evidence or synthetic history contract owner.",
+      "root": "test_support",
+      "status": "active_test_support"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_support",
+      "maintained_executable": true,
+      "path": "src/test/support/python/repomap_test_support/retrieval_w5_matched_fixture.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
       "root": "test_support",
       "status": "active_test_support"
     },
@@ -64115,6 +64180,78 @@
       "maintained_executable": true,
       "path": "tools/related_source_context.py",
       "rationale": "RELATED-CONTEXT1 optional one-hop caller composition and focused static-extraction fixture evidence; no runtime or quality-policy change.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_w5_matched_archive.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_w5_matched_attempt.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_w5_matched_baselines.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_w5_matched_grading.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_w5_matched_inputs.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_w5_matched_journal.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_w5_matched_postgres.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/retrieval_w5_matched_publications.py",
+      "rationale": "ADR0218 sealed matched-study admission, evidence custody and source-only proof.",
       "root": "tools",
       "status": "active_tool"
     },

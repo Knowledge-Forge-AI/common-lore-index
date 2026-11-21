@@ -153,10 +153,10 @@ def test_preflight_stops_ranking_and_preserves_technical_failure(
     pending[Slot(21, Arm.NATIVE)] = Observation(ObservationState.CONTROL_CHECKED, control_correct=True)
     assert _disposition(cases, Preflight.BELOW_FLOOR, pending) is Outcome.BELOW_FLOOR
     pending[key] = Observation(ObservationState.CONTROL_CHECKED, control_correct=True)
-    assert _disposition(cases, Preflight.BELOW_FLOOR, pending) is Outcome.INCOMPLETE
+    assert _disposition(cases, Preflight.BELOW_FLOOR, pending) is Outcome.INADMISSIBLE
     assert _disposition(cases, Preflight.BELOW_FLOOR, {
         key: Observation(ObservationState.TECHNICAL_FAILURE),
-    }) is Outcome.INCOMPLETE
+    }) is Outcome.INADMISSIBLE
     assert _disposition(cases, Preflight.BELOW_FLOOR, {
         key: Observation(ObservationState.RANKED, FileMetrics(0, 0, 0)),
     }) is Outcome.INADMISSIBLE
@@ -185,6 +185,8 @@ def test_refusal_can_be_incorrect_incomplete_or_inadmissible(
     for row, outcome in (
         (Observation(ObservationState.CONTROL_CHECKED, control_correct=False), Outcome.NOT_DEMONSTRATED),
         (Observation(ObservationState.RANKED), Outcome.INADMISSIBLE),
+        (Observation(ObservationState.UNAVAILABLE), Outcome.INADMISSIBLE),
+        (Observation(ObservationState.TECHNICAL_FAILURE), Outcome.INADMISSIBLE),
         (Observation(ObservationState.FORBIDDEN_WORK), Outcome.INADMISSIBLE),
     ):
         complete[key] = row
@@ -255,7 +257,7 @@ def test_literal_control_executes_native_and_lexical_and_refuses_fusion(
     complete[key] = Observation(ObservationState.RANKED, control_correct=False)
     assert _disposition(cases, Preflight.READY, complete) is Outcome.NOT_DEMONSTRATED
     complete[key] = Observation(ObservationState.CONTROL_CHECKED, control_correct=True)
-    assert _disposition(cases, Preflight.READY, complete) is Outcome.INCOMPLETE
+    assert _disposition(cases, Preflight.READY, complete) is Outcome.INADMISSIBLE
 
 
 def test_absence_remains_separate_from_the_body_signal(
