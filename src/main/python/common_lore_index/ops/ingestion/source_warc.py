@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import urllib.parse
 from collections.abc import Mapping, Sequence
+from io import BufferedReader
 from typing import Any
 
 from common_lore_index.graph.keys import (
@@ -54,27 +56,35 @@ SENSITIVE_HEADER_NAMES = frozenset(
         "api-key",
     }
 )
+_WARC_HEADER_END = re.compile(rb"\r\n\r\n|\n\n")
 
 
 def _next_warc_record(
     data: bytes,
     offset: int,
 ) -> tuple[int, str, dict[str, str], bytes, bytes] | str:
-    crlf_header_end = data.find(b"\r\n\r\n", offset)
-    lf_header_end = data.find(b"\n\n", offset)
-    candidates = [
-        (position, 4)
-        for position in (crlf_header_end,)
-        if position >= 0
-    ] + [
-        (position, 2)
-        for position in (lf_header_end,)
-        if position >= 0
-    ]
-    if not candidates:
+    search_start = len(data) + offset if offset < 0 else offset
+    delimiter = _WARC_HEADER_END.search(data, search_start)
+    if delimiter is None:
         return f"malformed WARC record at byte {offset}: missing header terminator"
-    header_end, separator_length = min(candidates, key=lambda item: item[0])
-    raw_header_bytes = data[offset:header_end]
+    raw_header_bytes = data[offset:delimiter.start()]
+    parsed = _parse_warc_header(raw_header_bytes, offset)
+    if isinstance(parsed, str):
+        return parsed
+    version, headers, content_length = parsed
+    payload_start = delimiter.end()
+    payload_end = payload_start + content_length
+    if payload_end > len(data):
+        return f"malformed WARC record at byte {offset}: truncated payload"
+    next_offset = payload_end
+    if data[next_offset : next_offset + 2] == b"\r\n":
+        next_offset += 2
+    elif data[next_offset : next_offset + 1] == b"\n":
+        next_offset += 1
+    return next_offset, version, headers, raw_header_bytes, data[payload_start:payload_end]
+
+
+def _parse_warc_header(raw_header_bytes: bytes, offset: int) -> tuple[str, dict[str, str], int] | str:
     header_text = raw_header_bytes.decode("utf-8", errors="replace")
     lines = header_text.splitlines()
     if not lines or lines[0] not in {"WARC/1.0", "WARC/1.1"}:
@@ -89,16 +99,70 @@ def _next_warc_record(
         return f"malformed WARC record at byte {offset}: invalid Content-Length"
     if content_length < 0:
         return f"malformed WARC record at byte {offset}: negative Content-Length"
-    payload_start = header_end + separator_length
-    payload_end = payload_start + content_length
-    if payload_end > len(data):
-        return f"malformed WARC record at byte {offset}: truncated payload"
-    next_offset = payload_end
-    if data[next_offset : next_offset + 2] == b"\r\n":
-        next_offset += 2
-    elif data[next_offset : next_offset + 1] == b"\n":
-        next_offset += 1
-    return next_offset, lines[0], headers, raw_header_bytes, data[payload_start:payload_end]
+    return lines[0], headers, content_length
+
+
+def _skip_warc_record_padding(source: BufferedReader[Any], artifact_end: int) -> bool:
+    """Position the stream at the next record's first non-padding byte."""
+    while (remaining := artifact_end - source.tell()) > 0:
+        chunk = source.peek(1)[:remaining]
+        if not chunk:
+            return False
+        padding = len(chunk) - len(chunk.lstrip(b"\r\n"))
+        source.read(padding)
+        if padding < len(chunk):
+            return True
+    return False
+
+
+def _read_warc_header(source: BufferedReader[Any], artifact_end: int) -> bytes | None:
+    offset = source.tell()
+    tail = b""
+    while (remaining := artifact_end - source.tell()) > 0:
+        # A header delimiter ends in LF. readline stops at that boundary even
+        # when a long line spans multiple bounded reads.
+        chunk = source.readline(min(65536, remaining))
+        if not chunk:
+            break
+        tail = (tail + chunk[-4:])[-4:]
+        delimiter = _WARC_HEADER_END.search(tail)
+        if delimiter is not None:
+            payload_start = source.tell()
+            header_length = payload_start - offset - len(delimiter.group())
+            source.seek(offset)
+            raw_header = source.read(header_length)
+            source.seek(payload_start)
+            return raw_header if len(raw_header) == header_length else None
+    return None
+
+
+def _read_warc_record(
+    source: BufferedReader[Any], artifact_end: int, max_record_bytes: int,
+) -> tuple[str, dict[str, str], int, bytes | None] | str:
+    """Read one header and only allocate a payload when its record fits policy."""
+    offset = source.tell()
+    raw_header = _read_warc_header(source, artifact_end)
+    if raw_header is None:
+        return f"malformed WARC record at byte {offset}: missing header terminator"
+    parsed = _parse_warc_header(raw_header, offset)
+    if isinstance(parsed, str):
+        return parsed
+    version, headers, content_length = parsed
+    payload_end = source.tell() + content_length
+    truncated = f"malformed WARC record at byte {offset}: truncated payload"
+    if payload_end > artifact_end:
+        return truncated
+    record_size = len(raw_header) + content_length
+    if record_size > max_record_bytes:
+        if content_length:
+            source.seek(payload_end - 1)
+            if not source.read(1):
+                return truncated
+        return version, headers, record_size, None
+    block = source.read(content_length)
+    if len(block) != content_length:
+        return truncated
+    return version, headers, record_size, block
 
 
 def _parse_header_lines(lines: Sequence[str]) -> dict[str, str]:

@@ -209,12 +209,19 @@ def _source(pair: _Pair, source_id: str) -> tuple[list[str], list[str]]:
 def _explanations(pair: _Pair, sources: list[str], item_keys: list[str]) -> int:
     explained = 0
     for key in (*item_keys, ABSENT_ITEM):
+        references = None
         for source_id in (None, *sources, ABSENT_SOURCE):
             actual = pair.store.source_feed_item_explanation(SourceFeedItemExplanationQuery(key, source_id))
             expected = pair.pg(query_source_feed_item_explanation, item_key=key, source_id=source_id)
             payload = pair.same(f"explain {key} {source_id}", actual, expected, None)
             _ties_identical(payload["evidence"], lambda row: _ordinal(row), "evidence")
             _ties_identical(payload["references"], lambda row: row["target_key"], "explained references")
+            if source_id is None:
+                references = payload["references"]
+            else:
+                assert payload["references"] == references
+            if source_id == ABSENT_SOURCE:
+                assert payload["item"] is None and payload["source"] is None and payload["evidence"] == []
             explained += payload["item"] is not None and bool(payload["evidence"])
     return explained
 

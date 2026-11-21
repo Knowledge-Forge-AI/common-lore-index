@@ -1,12 +1,45 @@
+import hashlib
 import unittest
+from io import BufferedReader, BytesIO
 from pathlib import Path
-from typing import Mapping
+from typing import Any, Mapping
 
 
 from common_lore_index.ops.ingestion import source
+from common_lore_index.ops.ingestion import source_common
+from common_lore_index.ops.ingestion.source_warc import _read_warc_record
 
 
 class SourceIngestionHelperBranchUnitTests(unittest.TestCase):
+    def test_streamed_source_manifest_identity_equals_the_compact_json_digest(self):
+        payload = {"ζ": {"nested": [True, None, -320, 0.25]}, "a": "輸入\0\n"}
+        serialized = source.json_dumps_stable(payload).encode("utf-8")
+        self.assertEqual(source_common._source_manifest_id(payload), hashlib.sha256(serialized).hexdigest()[:16])
+
+    def test_warc_record_reader_skips_oversized_payload_io(self):
+        class CountedFile(BytesIO):
+            bytes_read = 0
+
+            def readinto(self, buffer: Any) -> int:
+                count = super().readinto(buffer)
+                self.bytes_read += count
+                return count
+
+        body = b"x" * (1024 * 1024)
+        header = f"WARC/1.0\r\nContent-Length: {len(body)}".encode()
+        first = header + b"\r\n\r\n" + body
+        second = b"WARC/1.1\nContent-Length: 2\n\n{}"
+        raw = CountedFile(first + second)
+        with BufferedReader(raw) as reader:
+            skipped = _read_warc_record(reader, len(first + second), 512)
+            self.assertEqual(skipped, ("WARC/1.0", {"content-length": str(len(body))}, len(header) + len(body), None))
+            self.assertEqual(reader.tell(), len(first))
+            accepted = _read_warc_record(reader, len(first + second), 512)
+            self.assertIsInstance(accepted, tuple)
+            assert isinstance(accepted, tuple)
+            self.assertEqual(accepted[-1], b"{}")
+            self.assertLess(raw.bytes_read, 32768)
+
     def test_source_ingestion_validation_helpers_cover_safe_error_branches(self):
         self.assertEqual(source._mapping({"source": {"id": "x"}}, "source"), {"id": "x"})
         with self.assertRaises(source.SourcePolicyError):

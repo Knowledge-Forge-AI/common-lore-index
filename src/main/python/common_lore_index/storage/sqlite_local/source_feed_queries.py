@@ -27,7 +27,6 @@ from common_lore_index.storage.sqlite_local.source_queries import (
     RawKey,
     SourceObservation,
     by_source,
-    desc_nulls_last,
     edge_links,
     evidence_ids,
     fanout,
@@ -198,6 +197,105 @@ def _json(text: str) -> Any:
     return raw_payload.jsonb_value(raw_payload.load(text))
 
 
+def _is_preferred_source(
+    candidate_id: str,
+    acquired_at: Any,
+    best_id: str,
+    best_acquired_at: Any,
+) -> bool:
+    if acquired_at is None:
+        return best_acquired_at is None and candidate_id < best_id
+    if best_acquired_at is None:
+        return True
+    if acquired_at != best_acquired_at:
+        return bool(acquired_at > best_acquired_at)
+    return candidate_id < best_id
+
+
+def _latest_source(observations: list[SourceObservation]) -> dict[str, Any] | None:
+    """Select the latest source summary without sorting all source groups.
+
+    Source selection summarizes the scoped ``source_observations`` rows (all
+    sources when ``source_id`` is ``None``, or that exact source) independently
+    of whether ``item_key`` resolves to any canonical node or evidence row.
+    """
+    best_id: str | None = None
+    best_acquired_at: Any = None
+    best_group: list[SourceObservation] | None = None
+    for candidate_id, group in by_source(observations).items():
+        acquired_at = max_of(entry.acquired_at for entry in group)
+        if best_id is None or _is_preferred_source(
+            candidate_id, acquired_at, best_id, best_acquired_at
+        ):
+            best_id = candidate_id
+            best_acquired_at = acquired_at
+            best_group = group
+    if best_id is None or best_group is None:
+        return None
+    return {
+        "source_id": best_id,
+        "source_type": min_of(entry.source_type for entry in best_group),
+        "policy_status": min_of(entry.policy_status for entry in best_group),
+        "source_run_id": max_of(entry.source_run_id for entry in best_group),
+        "artifact_id": max_of(entry.artifact_id for entry in best_group),
+        "artifact_path": max_of(entry.artifact_path for entry in best_group),
+        "acquired_at": best_acquired_at,
+    }
+
+
+def _selected_item_and_evidence(
+    connection: sqlite3.Connection, item_key: str, selected: set[RawKey]
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    if not selected:
+        return None, []
+    earliest_node: tuple[Any, Any] | None = None
+    item_inputs: tuple[Any, Any, Any, Any, Any, Any, Any] | None = None
+    evidence: list[dict[str, Any]] = []
+    for row in connection.execute(
+        "SELECT evidence.run_id, evidence.raw_observation_ordinal, node.graph_key_version, "
+        "node.id, node.canonical_key, node.kind, node.display_name, node.confidence, "
+        "node.conflict, node.metadata_json, evidence.evidence_key, evidence.raw_kind, "
+        "evidence.raw_source_id, evidence.path, evidence.start_line, evidence.end_line, "
+        "evidence.extractor, evidence.extractor_version, evidence.confidence, "
+        "evidence.metadata_json FROM canonical_nodes node "
+        "JOIN canonical_node_evidence link ON link.canonical_node_id = node.id "
+        "JOIN canonical_evidence evidence ON evidence.id = link.canonical_evidence_id "
+        "WHERE node.canonical_key = ? ORDER BY evidence.raw_observation_ordinal, "
+        "evidence.run_id, evidence.evidence_key, link.link_kind, node.graph_key_version, node.id",
+        (item_key,),
+    ):
+        if (row[0], row[1]) not in selected:
+            continue
+        node_order = (row[2], row[3])
+        if earliest_node is None or node_order < earliest_node:
+            earliest_node = node_order
+            item_inputs = (row[4], row[2], row[5], row[6], row[7], row[8], row[9])
+        evidence.append({
+            "evidence_key": row[10],
+            "raw_kind": row[11],
+            "raw_source_id": row[12],
+            "path": row[13],
+            "start_line": row[14],
+            "end_line": row[15],
+            "extractor": row[16],
+            "extractor_version": row[17],
+            "confidence": row[18],
+            "metadata": _json(row[19]),
+        })
+    if item_inputs is None:
+        return None, evidence
+    item = {
+        "canonical_key": item_inputs[0],
+        "graph_key_version": item_inputs[1],
+        "kind": item_inputs[2],
+        "display_name": item_inputs[3],
+        "confidence": item_inputs[4],
+        "conflict": bool(item_inputs[5]),
+        "metadata": _json(item_inputs[6]),
+    }
+    return item, evidence
+
+
 def source_feed_item_explanation(
     connection: sqlite3.Connection, *, item_key: str, source_id: str | None
 ) -> dict[str, Any]:
@@ -207,62 +305,21 @@ def source_feed_item_explanation(
         if source_id is None or item.source_id == source_id
     ]
     selected = {item.key for item in observations}
-    rows = [
-        row for row in connection.execute(
-            "SELECT evidence.run_id, evidence.raw_observation_ordinal, node.graph_key_version, "
-            "node.id, node.canonical_key, node.kind, node.display_name, node.confidence, "
-            "node.conflict, node.metadata_json, evidence.evidence_key, evidence.raw_kind, "
-            "evidence.raw_source_id, evidence.path, evidence.start_line, evidence.end_line, "
-            "evidence.extractor, evidence.extractor_version, evidence.confidence, "
-            "evidence.metadata_json FROM canonical_nodes node "
-            "JOIN canonical_node_evidence link ON link.canonical_node_id = node.id "
-            "JOIN canonical_evidence evidence ON evidence.id = link.canonical_evidence_id "
-            "WHERE node.canonical_key = ? ORDER BY evidence.raw_observation_ordinal, "
-            "evidence.run_id, evidence.evidence_key, link.link_kind, node.graph_key_version, node.id",
-            (item_key,),
-        )
-        if (row[0], row[1]) in selected
-    ]
-    item = None
-    if rows:
-        first = min(rows, key=lambda row: (row[2], row[3]))
-        item = {
-            "canonical_key": first[4], "graph_key_version": first[2], "kind": first[5],
-            "display_name": first[6], "confidence": first[7], "conflict": bool(first[8]),
-            "metadata": _json(first[9]),
-        }
-    sources = by_source(observations)
-    candidates = [
-        {
-            "source_id": key,
-            "source_type": min_of(entry.source_type for entry in group),
-            "policy_status": min_of(entry.policy_status for entry in group),
-            "source_run_id": max_of(entry.source_run_id for entry in group),
-            "artifact_id": max_of(entry.artifact_id for entry in group),
-            "artifact_path": max_of(entry.artifact_path for entry in group),
-            "acquired_at": max_of(entry.acquired_at for entry in group),
-        }
-        for key, group in sorted(sources.items())
-    ]
-    ranked = desc_nulls_last(candidates, lambda candidate: candidate["acquired_at"])
-    references = connection.execute(
-        "SELECT target_canonical_key, metadata_json FROM canonical_edges "
-        "WHERE source_canonical_key = ? AND edge_kind = 'references' "
-        "ORDER BY target_canonical_key, identity_metadata_hash",
-        (item_key,),
-    ).fetchall()
+    source = _latest_source(observations)
+    item, evidence = _selected_item_and_evidence(connection, item_key, selected)
     return {
         "item": item,
-        "source": ranked[0] if ranked else None,
-        "evidence": [
-            {
-                "evidence_key": row[10], "raw_kind": row[11], "raw_source_id": row[12],
-                "path": row[13], "start_line": row[14], "end_line": row[15], "extractor": row[16],
-                "extractor_version": row[17], "confidence": row[18], "metadata": _json(row[19]),
-            }
-            for row in rows
+        "source": source,
+        "evidence": evidence,
+        "references": [
+            {"target_key": target_key, "metadata": _json(metadata_json)}
+            for target_key, metadata_json in connection.execute(
+                "SELECT target_canonical_key, metadata_json FROM canonical_edges "
+                "WHERE source_canonical_key = ? AND edge_kind = 'references' "
+                "ORDER BY target_canonical_key, identity_metadata_hash",
+                (item_key,),
+            )
         ],
-        "references": [{"target_key": row[0], "metadata": _json(row[1])} for row in references],
         "content_policy": CONTENT_POLICY,
     }
 

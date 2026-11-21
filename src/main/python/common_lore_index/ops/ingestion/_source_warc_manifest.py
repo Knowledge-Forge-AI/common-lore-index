@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -28,8 +27,8 @@ from common_lore_index.ops.ingestion.source_archive import (
 )
 from common_lore_index.ops.ingestion.source_common import (
     SourcePolicyError,
+    _source_manifest_id,
     _utc_now,
-    json_dumps_stable,
 )
 from common_lore_index.ops.ingestion.source_warc_config import (
     _warc_policy_snapshot,
@@ -96,9 +95,7 @@ def build_warc_manifest(
         "warnings": list(warnings),
         "errors": list(errors),
     }
-    artifact_manifest_id = hashlib.sha256(
-        json_dumps_stable(manifest_payload).encode("utf-8")
-    ).hexdigest()[:16]
+    artifact_manifest_id = _source_manifest_id(manifest_payload)
     return WarcManifest(
         source_id=config.source_id,
         source_type=config.source_type,

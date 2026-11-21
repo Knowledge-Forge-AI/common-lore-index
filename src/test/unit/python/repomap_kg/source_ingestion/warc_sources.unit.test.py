@@ -1,6 +1,7 @@
 import json
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from repomap_test_support.source_ingestion import (
     SourceIngestionUnitTestCase,
@@ -17,6 +18,16 @@ from common_lore_index.ops.ingestion.source import (
 
 
 class WarcSourceIngestionUnitTests(SourceIngestionUnitTestCase):
+    def test_warc_manifest_reads_the_fixture_without_materializing_the_archive(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self.write_warc_fixture(root)
+            config = load_warc_source_config(self.write_warc_config(root / "source.toml"))
+            expected = build_warc_manifest(config, root_path=root, clock=self.fixed_clock)
+            with patch.object(Path, "read_bytes", side_effect=AssertionError("whole-file read")):
+                actual = build_warc_manifest(config, root_path=root, clock=self.fixed_clock)
+        self.assertEqual(actual.to_jsonable(), expected.to_jsonable())
+
     def test_warc_config_policy_rejects_blocked_url_fields_and_missing_limits(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir) / "repo"

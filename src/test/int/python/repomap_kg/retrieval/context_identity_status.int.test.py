@@ -19,6 +19,7 @@ from common_lore_index.retrieval.context_work import WorkLedger
 from common_lore_index.server.context_read_sqlite import SqliteContextReadAdapter
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
+from common_lore_index.storage.sqlite_local import context_expansion_queries
 from common_lore_index.storage.sqlite_local.context_expansion_queries import (
     batch_neighbor_direct_locations,
     read_sqlite_context_publication,
@@ -341,7 +342,9 @@ def test_sqlite_compact_context_tight_budget_preserves_utf8_bytes_and_rank_prefi
     assert [item["rank"] for item in tight_packet["items"]] == [1]
     assert tight_packet["omission_counts"]["output_budget"] == len(wide_keys) - len(tight_keys)
 
-def test_neighbor_read_rechecks_persisted_vectors_with_a_valid_accepted_override(tmp_path: Path) -> None:
+def test_neighbor_read_rechecks_persisted_vectors_with_a_valid_accepted_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     db_path, _, _, _, adapter = build_sqlite_context_fixture(tmp_path)
     adapter.close()
     with closing(sqlite3.connect(db_path)) as connection:
@@ -353,6 +356,16 @@ def test_neighbor_read_rechecks_persisted_vectors_with_a_valid_accepted_override
             snapshot_vector=publication.snapshot_vector,
         )
         assert healthy["evidence_scanned"] > 1
+        with monkeypatch.context() as small_window:
+            small_window.setattr(context_expansion_queries, "EVIDENCE_SCAN_LIMIT", 1)
+            prefix = batch_neighbor_direct_locations(
+                connection, neighbor_ids=ids, accepted_run_id=publication.run_id,
+                snapshot_vector=publication.snapshot_vector,
+            )
+        assert prefix["incomplete"] and prefix["evidence_scanned"] == 1
+        assert sum(len(rows) for rows in prefix["locations_by_node_id"].values()) == 1
+        for node_id, rows in prefix["locations_by_node_id"].items():
+            assert rows == healthy["locations_by_node_id"][node_id][:len(rows)]
         with connection:
             connection.execute("UPDATE runs SET snapshot_vector_json = '[]' WHERE id = ?", (publication.run_id,))
         with pytest.raises(StorageSchemaError, match="malformed context snapshot vector"):

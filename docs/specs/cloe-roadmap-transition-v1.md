@@ -75,6 +75,13 @@ selected literal queries from retained sources, plus revocation and the
 subsequent unavailable read. The CLI checks the exact escaped output size
 without allocating a second serialized byte buffer.
 
+Local archive import now hashes files and manifest JSON incrementally. WARC
+import reads one record at a time and seeks past oversized payloads, preserving
+plain-WARC format, accepted ordinals and diagnostics. The installed Local wheel
+proof covers both acquisition commands and their explicit non-publication results.
+Local context and feed explanation reads decode rows into their result windows
+without holding a second collection of selected SQLite rows.
+
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness
 queries. The disposable spill fixture recorded 603 temporary blocks written

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import tomllib
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
@@ -58,7 +57,7 @@ from common_lore_index.ops.ingestion.source_common import (
     _validate_local_artifact_path,
     _validate_policy_status,
     _validate_source_id,
-    json_dumps_stable,
+    _source_manifest_id,
 )
 
 Clock = Callable[[], datetime]
@@ -174,9 +173,7 @@ def build_archive_manifest(
         "skipped_files": [item.to_jsonable() for item in skipped],
         "policy_snapshot": policy_snapshot,
     }
-    artifact_manifest_id = hashlib.sha256(
-        json_dumps_stable(manifest_payload).encode("utf-8")
-    ).hexdigest()[:16]
+    artifact_manifest_id = _source_manifest_id(manifest_payload)
     return ArchiveManifest(
         source_id=config.source_id,
         source_type=config.source_type,

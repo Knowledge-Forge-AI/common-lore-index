@@ -5,12 +5,13 @@ from __future__ import annotations
 from contextlib import closing
 from pathlib import Path
 import sqlite3
+from typing import Any
 
 import pytest
 
 from common_lore_index.retrieval.context_work import WorkLedger
 from common_lore_index.server.context_read_sqlite import SqliteContextReadAdapter
-from common_lore_index.storage.sqlite_local import node_location_queries
+from common_lore_index.storage.sqlite_local import context_expansion_queries, node_location_queries
 from common_lore_index.storage.sqlite_local.context_expansion_queries import (
     batch_neighbor_direct_locations,
     expand_seed_incident_edges,
@@ -161,3 +162,38 @@ def test_neighbor_context_validates_the_shared_persisted_snapshot_vector_once(
         )
     assert result["evidence_scanned"] > 1
     assert len(inputs) == 1 and isinstance(inputs[0], str)
+
+
+def test_neighbor_location_cursor_keeps_only_the_result_prefix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db_path, _, _, _, adapter = build_sqlite_context_fixture(tmp_path)
+    adapter.close()
+    fetched_keys: list[str] = []
+    decoded_after: list[int] = []
+    render = context_expansion_queries._direct_location
+
+    def observe(cursor: sqlite3.Cursor, row: tuple[object, ...]) -> tuple[object, ...]:
+        if cursor.description and cursor.description[0][0] == "evidence_key":
+            fetched_keys.append(str(row[0]))
+        return row
+
+    def decode(row: tuple[object, ...], accepted_run_id: int, **kwargs: Any) -> dict[str, Any]:
+        decoded_after.append(len(fetched_keys))
+        return render(row, accepted_run_id, **kwargs)
+
+    monkeypatch.setattr(context_expansion_queries, "EVIDENCE_SCAN_LIMIT", 2)
+    monkeypatch.setattr(context_expansion_queries, "_direct_location", decode)
+    with closing(sqlite3.connect(db_path)) as connection:
+        ids = [int(row[0]) for row in connection.execute("SELECT id FROM canonical_nodes")]
+        connection.row_factory = observe
+        prefix = batch_neighbor_direct_locations(connection, neighbor_ids=ids, accepted_run_id=1)
+
+    decoded_keys = [
+        location["evidence_key"]
+        for locations in prefix["locations_by_node_id"].values()
+        for location in locations
+    ]
+    assert sorted(decoded_keys) == sorted(fetched_keys[:2])
+    assert prefix["incomplete"] and prefix["evidence_scanned"] == 2
+    assert len(fetched_keys) == 3 and decoded_after == [1, 2]

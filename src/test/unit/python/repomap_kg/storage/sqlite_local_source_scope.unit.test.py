@@ -129,3 +129,32 @@ def test_feed_node_batches_stream_in_global_tie_order() -> None:
         first = next(items)
         assert len(fetched) == 1
         assert [(key, int(metadata["title"])) for key, metadata, _ in (first, *items)] == sorted(keys)
+
+
+def test_feed_explanation_decodes_evidence_before_the_remaining_rows_are_read(
+    published_feeds: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fetched: list[int] = []
+    decoded_after: list[int] = []
+    decode = source_feed_queries._json
+
+    def observe(cursor: sqlite3.Cursor, row: tuple[Any, ...]) -> tuple[Any, ...]:
+        if cursor.description and "evidence_key" in {column[0] for column in cursor.description}:
+            fetched.append(len(fetched) + 1)
+        return row
+
+    def track_decode(raw: str) -> Any:
+        if fetched:
+            decoded_after.append(len(fetched))
+        return decode(raw)
+
+    with read_transaction(published_feeds, local_binding("source-selection")) as connection:
+        items = source_feed_queries.source_feed_items(connection, source_id=RSS, source_run_id=None, limit=1)
+        item_key = items[0].item_key
+        expected = source_feed_queries.source_feed_item_explanation(connection, item_key=item_key, source_id=RSS)
+        assert len(expected["evidence"]) > 1
+        connection.row_factory = observe
+        monkeypatch.setattr(source_feed_queries, "_json", track_decode)
+        observed = source_feed_queries.source_feed_item_explanation(connection, item_key=item_key, source_id=RSS)
+    assert observed == expected
+    assert decoded_after[0] == 1 < len(fetched)

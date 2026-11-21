@@ -5,7 +5,9 @@ from __future__ import annotations
 from common_lore_index.storage.sqlite_local.schema import SqliteReadConnection
 
 from collections.abc import Sequence
+from contextlib import closing
 from dataclasses import dataclass
+from itertools import islice
 import json
 from typing import Any
 
@@ -222,25 +224,23 @@ def batch_neighbor_direct_locations(
 
     predicate = "subject.id IN (" + ",".join(str(nid) for nid in unique_ids) + ")"
     sql = evidence_sql(predicate, role_sql=role_sql)
-    rows = connection.execute(
-        sql,
-        {"accepted": accepted_run_id, "evidence_fetch": EVIDENCE_SCAN_LIMIT + 1},
-    ).fetchall()
-    incomplete = len(rows) > EVIDENCE_SCAN_LIMIT
-    kept_rows = rows[:EVIDENCE_SCAN_LIMIT]
-
     by_node: dict[int, list[dict[str, Any]]] = {nid: [] for nid in unique_ids}
     vec_arg = list(normalized_vector) if normalized_vector is not None else None
     read_context_vector = _context_vector_reader()
-    for row in kept_rows:
-        node_id = int(row[20])
-        loc = _direct_location(
-            row[:20], accepted_run_id, snapshot_vector=vec_arg, read_context_vector=read_context_vector
-        )
-        if node_id in by_node:
-            by_node[node_id].append(loc)
+    scanned = 0
+    with closing(connection.execute(
+        sql, {"accepted": accepted_run_id, "evidence_fetch": EVIDENCE_SCAN_LIMIT + 1},
+    )) as rows:
+        for scanned, row in enumerate(islice(rows, EVIDENCE_SCAN_LIMIT), start=1):
+            node_id = int(row[20])
+            loc = _direct_location(
+                row[:20], accepted_run_id, snapshot_vector=vec_arg, read_context_vector=read_context_vector
+            )
+            if node_id in by_node:
+                by_node[node_id].append(loc)
+        incomplete = rows.fetchone() is not None
     return {
         "locations_by_node_id": by_node,
-        "evidence_scanned": len(kept_rows),
+        "evidence_scanned": scanned,
         "incomplete": incomplete,
     }

@@ -16,6 +16,7 @@ Covers:
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 import tempfile
 import unittest
@@ -32,6 +33,27 @@ from repomap_test_support.test_scratch import select_scratch_root
 
 class Slice12ArchiveWarcAcquisitionIntegrationTests(unittest.TestCase):
     """Slice 12 Group S12-B integration tests for WARC ingestion and canonical evidence."""
+
+    def test_oversized_warc_payload_is_skipped_before_an_admissible_record(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            config = replace(load_warc_source_config(self._write_config(root)), max_record_bytes=1024)
+            padding = b"\r\n" * 10000
+            oversized = b"x" * 131072
+            headers = b"WARC/1.1\nWARC-Type: resource\nContent-Length: 131072"
+            valid = self._build_warc(body=b'{"archived":true}')
+            contents = padding + headers + b"\n\n" + oversized + b"\r\n" + valid
+            (root / "test.warc").write_bytes(contents + b"WARC/1.0\r\n")
+            manifest = build_warc_manifest(config, root_path=root, clock=fixed_clock)
+
+        self.assertEqual(manifest.warc_version, "WARC/1.1")
+        self.assertEqual(manifest.record_count, 1)
+        self.assertEqual(manifest.records[0].ordinal, 1)
+        self.assertEqual(manifest.routed_payload_count, 1)
+        self.assertEqual(manifest.errors, (
+            f"max_record_bytes exceeded at record 1: {len(headers) + len(oversized)} > 1024",
+            f"malformed WARC record at byte {len(contents)}: missing header terminator",
+        ))
 
     def _write_config(self, directory: Path, path: str = "test.warc") -> Path:
         cfg = directory / f"src_{Path(path).stem}.toml"
