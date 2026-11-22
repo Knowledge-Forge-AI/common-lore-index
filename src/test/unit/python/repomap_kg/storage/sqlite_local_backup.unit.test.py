@@ -115,6 +115,16 @@ def test_manifest_encoding_is_deterministic_path_free_and_round_trips(tmp_path: 
     }
 
 
+def test_manifest_reader_reassembles_short_reads(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "manifest.json"
+    encoded = b'{"manifest":"fixture"}'
+    path.write_bytes(encoded)
+    read = os.read
+
+    monkeypatch.setattr(restore.os, "read", lambda fd, count: read(fd, min(count, 4)))
+    assert restore._read_manifest(path) == encoded
+
+
 def test_manifest_records_the_exact_head_migration_of_its_schema_version() -> None:
     v1 = json.loads(_manifest(schema_version=1).encode())["sqlite"]
     assert v1 == {  # byte-identical to every LOCAL7-era manifest, so those read as v1 backups

@@ -39,7 +39,7 @@ import secrets
 import sqlite3
 import stat
 from collections.abc import Iterator
-from contextlib import suppress
+from contextlib import closing, suppress
 from pathlib import Path
 
 from common_lore_index.storage.sqlite_local.backup_manifest import (
@@ -160,8 +160,10 @@ def inspect_sealed_database(
         connection.execute("BEGIN")
         state = require_open_state(classify(connection), accept_behind=True)
         require_binding(connection, binding)
-        if connection.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
-            raise LocalStoreError(UNRECOGNIZED, "integrity check failed")
+        # Verify the same invariants, with only the first failure needed for refusal.
+        with closing(connection.execute("PRAGMA integrity_check(1)")) as integrity:
+            if integrity.fetchone() != ("ok",):
+                raise LocalStoreError(UNRECOGNIZED, "integrity check failed")
         publication = read_publication(connection)
         connection.execute("COMMIT")
     except sqlite3.Error:

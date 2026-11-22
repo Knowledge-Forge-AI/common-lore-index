@@ -96,7 +96,13 @@ def _read_manifest(path: Path) -> bytes:
         details = os.fstat(descriptor)
         if not stat.S_ISREG(details.st_mode) or details.st_size > MAX_MANIFEST_BYTES:
             raise _invalid("manifest-invalid")
-        return os.read(descriptor, MAX_MANIFEST_BYTES + 1)
+        encoded = bytearray()
+        while len(encoded) <= MAX_MANIFEST_BYTES:
+            chunk = os.read(descriptor, MAX_MANIFEST_BYTES + 1 - len(encoded))
+            if not chunk:
+                break
+            encoded.extend(chunk)
+        return bytes(encoded)
     finally:
         os.close(descriptor)
 
