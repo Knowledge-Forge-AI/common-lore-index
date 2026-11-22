@@ -19,7 +19,7 @@ from common_lore_index.storage.context_postgres_identity import (
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.navigation_search import EVIDENCE_SCAN_LIMIT
 from common_lore_index.storage.postgres_navigation_search import _evidence_tuple_from_json
-from common_lore_index.storage.sqlite_local.navigation_queries import _direct_location
+from common_lore_index.storage.sqlite_local.navigation_queries import _direct_location_from_vector
 from common_lore_index.storage.sqlite_local.node_location_queries import _context_vector_reader
 
 
@@ -295,12 +295,14 @@ def parse_postgres_context_expansion_payload(
     if len(seen_relations) > 256:
         raise _schema_error("admitted relation rows exceed the bounded expansion cap")
     node_by_id = {int(node["id"]): key for key, node in neighbors.items()}
+    read_context_vector = _context_vector_reader()
     evidence_rows: list[tuple[Any, ...]] = []
     for index, raw in enumerate(raw_evidence):
         if not isinstance(raw, Mapping) or frozenset(raw) != _EVIDENCE_KEYS:
             raise _schema_error(f"evidence[{index}] has an unexpected shape")
         try:
-            row = _evidence_tuple_from_json(raw, context_identity=True)
+            persisted_vector = read_context_vector(raw["snapshot_vector_json"])
+            row = _evidence_tuple_from_json(raw, persisted_vector)
         except (KeyError, TypeError, ValueError, StorageSchemaError) as exc:
             raise _schema_error(f"evidence[{index}] is malformed") from exc
         if row[20] not in node_by_id:
@@ -308,14 +310,10 @@ def parse_postgres_context_expansion_payload(
         evidence_rows.append(row)
     accepted_run_id = int(accepted["run_id"])
     snapshot_vector = accepted.get("snapshot_vector") or []
-    read_context_vector = _context_vector_reader()
     for row in evidence_rows[:EVIDENCE_SCAN_LIMIT]:
         node_key = node_by_id[int(row[20])]
         neighbors[node_key]["locations"].append(
-            _direct_location(
-                row[:20], accepted_run_id,
-                snapshot_vector=snapshot_vector, read_context_vector=read_context_vector,
-            )
+            _direct_location_from_vector(row[:20], accepted_run_id, snapshot_vector)
         )
     incomplete = len(evidence_rows) > EVIDENCE_SCAN_LIMIT
     return {

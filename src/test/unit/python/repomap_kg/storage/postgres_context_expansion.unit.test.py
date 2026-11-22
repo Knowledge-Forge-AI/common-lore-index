@@ -327,20 +327,44 @@ def test_parser_formats_admitted_evidence_and_rejects_bad_or_unadmitted_rows() -
         neighbor="repo:neighbor",
     )
     valid = _payload([edge])
-    valid["evidence"] = [_evidence(101)]
+    valid["evidence"] = [{
+        **_evidence(101),
+        "snapshot_vector_json": [["binding:public", 8, "snapshot:public"]],
+    }]
     result = parse_postgres_context_expansion_payload(
         valid, seed_keys=("repo:seed",), node_limit=4, edge_limit=3,
         expected_identity=_EXPECTED,
     )
-    assert result["neighbor_units"][0]["node"]["locations"][0]["path"] == "src/example.py"
+    location = result["neighbor_units"][0]["node"]["locations"][0]
+    assert location["path"] == "src/example.py"
+    assert location["source_identity_status"] == "verified_vector"
 
     malformed = _payload([edge])
     malformed["evidence"] = [{**_evidence(101), "extra": True}]
     unadmitted = _payload([edge])
     unadmitted["evidence"] = [_evidence(999)]
-    for payload in (malformed, unadmitted):
+    malformed_vector = _payload([edge])
+    malformed_vector["evidence"] = [{**_evidence(101), "snapshot_vector_json": "{"}]
+    for payload in (malformed, unadmitted, malformed_vector):
         with pytest.raises(StorageSchemaError):
             parse_postgres_context_expansion_payload(
                 payload, seed_keys=("repo:seed",), node_limit=4, edge_limit=3,
                 expected_identity=_EXPECTED,
             )
+
+
+def test_expansion_validates_evidence_lookahead_vector(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("common_lore_index.storage.postgres_context_expansion.EVIDENCE_SCAN_LIMIT", 1)
+    edge = _edge(
+        action="new", step=1, direction="outgoing", edge_hash="8" * 64,
+        source="repo:seed", target="repo:neighbor", neighbor_id=101, neighbor="repo:neighbor",
+    )
+    payload = _payload([edge])
+    first = _evidence(101)
+    sentinel = {**first, "snapshot_vector_json": "{"}
+    payload["evidence"] = [first, sentinel]
+    with pytest.raises(StorageSchemaError, match=r"evidence\[1\] is malformed"):
+        parse_postgres_context_expansion_payload(
+            payload, seed_keys=("repo:seed",), node_limit=4, edge_limit=3,
+            expected_identity=_EXPECTED,
+        )

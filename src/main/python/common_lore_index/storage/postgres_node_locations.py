@@ -18,11 +18,12 @@ from common_lore_index.storage.postgres_navigation_sql import transport_budget_s
 from common_lore_index.storage.readback_driver import execute_json_readback
 from common_lore_index.storage.sql_core import sql_literal
 from common_lore_index.storage.sqlite_local.node_location_queries import (
+    ContextVectorReader,
     _EVIDENCE_ROLE_SQL,
     _context_vector_reader,
     _location,
+    _location_from_vector,
     _metadata_location,
-    _parse_context_snapshot_vector,
     _relation,
 )
 
@@ -217,11 +218,14 @@ SELECT json_build_object(
 
 
 def _row_tuple_from_json(
-    raw: Mapping[str, Any], *, include_role: bool, context_identity: bool = False
+    raw: Mapping[str, Any], *, include_role: bool, read_context_vector: ContextVectorReader | None = None
 ) -> tuple[Any, ...]:
     raw_vector = raw.get("snapshot_vector_json")
-    if context_identity:
-        raw_vector = _parse_context_snapshot_vector(raw_vector)
+    vector = (
+        read_context_vector(raw_vector)
+        if read_context_vector is not None
+        else _compact_json_str(raw_vector or "[]")
+    )
     base: tuple[Any, ...] = (
         raw.get("evidence_key"),
         raw.get("link_kind"),
@@ -241,7 +245,7 @@ def _row_tuple_from_json(
         raw.get("snapshot_manifest_id"),
         raw.get("extraction_receipt_id"),
         raw.get("graph_candidate_id"),
-        _compact_json_str(raw_vector or "[]"),
+        vector,
     )
     if include_role:
         return (*base, raw.get("evidence_role"))
@@ -294,26 +298,32 @@ def read_postgres_node_locations_with_executor(
     loc_run_id = int(selected_run_id) if selected_run_id is not None else None
     include_role = query.evidence_role != "all"
 
+    read_context_vector = _context_vector_reader() if context_identity else None
     cur_tuples = [
-        _row_tuple_from_json(r, include_role=include_role, context_identity=context_identity)
+        _row_tuple_from_json(r, include_role=include_role, read_context_vector=read_context_vector)
         for r in (payload.get("current_rows") or ())
         if isinstance(r, Mapping)
     ]
     hist_tuples = [
-        _row_tuple_from_json(r, include_role=include_role, context_identity=context_identity)
+        _row_tuple_from_json(r, include_role=include_role, read_context_vector=read_context_vector)
         for r in (payload.get("historical_rows") or ())
         if isinstance(r, Mapping)
     ]
-    read_context_vector = _context_vector_reader() if context_identity else None
+
+    def location(row: tuple[Any, ...]) -> dict[str, Any]:
+        if read_context_vector is not None:
+            return _location_from_vector(row, accepted_run_id, row[18])
+        return _location(row, accepted_run_id, read_context_vector=None)
+
     result: dict[str, Any] = {
         "status": "ok",
         "reason": None,
         "locations": [
-            _location(row, accepted_run_id, read_context_vector=read_context_vector)
+            location(row)
             for row in cur_tuples[: query.limit]
         ],
         "historical_locations": [
-            _location(row, accepted_run_id, read_context_vector=read_context_vector)
+            location(row)
             for row in hist_tuples[: query.limit]
         ],
         "historical_has_more": len(hist_tuples) > query.limit,
