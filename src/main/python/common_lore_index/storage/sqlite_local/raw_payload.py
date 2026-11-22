@@ -83,6 +83,12 @@ def jsonb_text(value: Any) -> str:
 
 def jsonb_value(value: Any) -> Any:
     """The value a PostgreSQL JSON readback decodes for this ``jsonb`` value."""
+    if isinstance(value, Mapping):
+        return {str(key): jsonb_value(item) for key, item in sorted(value.items(), key=lambda row: _key_order(row[0]))}
+    if isinstance(value, (list, tuple)):
+        return [jsonb_value(item) for item in value]
+    if value is None or type(value) is bool or type(value) is str:
+        return value
     return json.loads(jsonb_text(value))
 
 
@@ -182,6 +188,20 @@ def ascii_lower(value: str) -> str:
 
 _UPPER = {code: code - 32 for code in range(ord("a"), ord("z") + 1)}
 _LOWER = {code: code + 32 for code in range(ord("A"), ord("Z") + 1)}
+
+
+def contains_ascii_folded(value: str, folded_needle: str) -> bool:
+    """Match a pre-folded literal without duplicating a large payload."""
+    if not folded_needle:
+        return True
+    last_start = len(value) - len(folded_needle)
+    if last_start < 0:
+        return False
+    step = max(64 * 1024, len(folded_needle))
+    return any(
+        folded_needle in ascii_lower(value[start:start + step + len(folded_needle) - 1])
+        for start in range(0, last_start + 1, step)
+    )
 
 
 def basename(path: str) -> str:

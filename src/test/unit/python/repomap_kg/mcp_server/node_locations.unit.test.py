@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import hashlib
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -170,6 +171,22 @@ def test_search_literal_order_and_pages_are_unchanged(store: Path) -> None:
     assert first["total"] == 2 and first["has_more"] is True
     assert second["total"] == min(4, len(keys))
     assert mcp.repomap_search_nodes(graph_id=GRAPH, query="sample%service")["results"] == []
+
+
+def test_node_search_lookahead_does_not_transfer_metadata(store: Path) -> None:
+    from common_lore_index.storage.sqlite_local.investigation_queries import search
+
+    transferred: list[str | None] = []
+    with closing(sqlite3.connect(store)) as connection:
+        def observe(cursor, row):
+            if len(cursor.description) == 9 and cursor.description[6][0] == "metadata_json":
+                transferred.append(row[6])
+            return row
+
+        connection.row_factory = observe
+        page = search(connection, target="nodes", query="root", kind=None, path=None, limit=1, offset=0)
+    assert page["has_more"] and len(page["results"]) == 1
+    assert len(transferred) == 2 and transferred[0] is not None and transferred[1] is None
 
 
 def test_contradictory_ranges_remain_distinct_without_reranking(store: Path) -> None:

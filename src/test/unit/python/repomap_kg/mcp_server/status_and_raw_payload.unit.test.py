@@ -1,8 +1,11 @@
+import json
+from decimal import Decimal
 from pathlib import Path
 import tempfile
 from unittest.mock import patch
 
 from common_lore_index.storage import StorageSchemaError
+from common_lore_index.storage.sqlite_local.raw_payload import ascii_lower, contains_ascii_folded, jsonb_text, jsonb_value
 
 from repomap_test_support.mcp_server import McpServerTestSupport
 
@@ -285,3 +288,19 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
         self.assertIn("payload", payload["results"][0])
         self.assert_raw_payload_policy(payload, include_raw=True)
         self.assert_read_only_payload(payload)
+
+    def test_observation_payload_literal_match_crosses_fold_window(self):
+        payload = "x" * (65536 - 3) + "CrOSSing É"
+        for needle, expected in (("", True), ("crossing", True), ("CROSSING É", True), ("crossing é", False),
+                                 ("y" * (len(payload) + 1), False)):
+            with self.subTest(needle=needle[:24]):
+                self.assertEqual(contains_ascii_folded(payload, ascii_lower(needle)), expected)
+
+    def test_sqlite_jsonb_projection_preserves_key_order_and_numeric_types(self):
+        value = {"z": (Decimal("-0.000"), Decimal("12"), "é\t"), "é": [None, True], "a": Decimal("1.20")}
+        actual = jsonb_value(value)
+        expected = json.loads(jsonb_text(value))
+        self.assertEqual(list(actual), ["a", "z", "é"])
+        self.assertEqual(json.dumps(actual, ensure_ascii=False), json.dumps(expected, ensure_ascii=False))
+        self.assertIsInstance(actual["z"][0], float)
+        self.assertIsInstance(actual["z"][1], int)

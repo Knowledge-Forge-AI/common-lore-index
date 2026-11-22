@@ -239,6 +239,19 @@ def _prove(tmp_path: Path, database: Any) -> None:
                 compared_edges += len(actual_around["edges"])
         assert compared_edges > 0
 
+        for node_query in ("file", "docs", "%"):
+            payload = investigation_queries.search(
+                connection, target="nodes", query=node_query, kind=None, path=None, limit=1, offset=0,
+            )
+            pg_page = execute_json_readback(
+                build_mcp_search_sql(root_path=ROOT, target="nodes", query=node_query, kind=None,
+                                     path=None, limit=1, offset=0, include_raw=False),
+                psql_args=database.psql_args, label="node search differential", expected_shape="array", **pg,
+            )
+            assert isinstance(pg_page, list)
+            assert payload["has_more"] == (len(pg_page) > 1)
+            assert [node["canonical_key"] for node in payload["results"]] == [node["canonical_key"] for node in pg_page[:1]]
+
         nonempty = 0
         for query, kind, file_path, limit, offset, include_raw in SEARCHES:
             rows = execute_json_readback(

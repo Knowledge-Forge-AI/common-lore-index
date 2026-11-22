@@ -81,10 +81,16 @@ def search(
         if kind is not None:
             filters.append("kind = :kind")
         sql = (
-            "SELECT canonical_key, graph_key_version, kind, display_name, confidence, "
-            "conflict, metadata_json, first_seen_run_id, last_seen_run_id "
-            f"FROM canonical_nodes WHERE {' AND '.join(filters)} "
-            "ORDER BY canonical_key LIMIT :fetch OFFSET :offset"
+            "WITH selected AS MATERIALIZED ("
+            f"SELECT id, canonical_key FROM canonical_nodes WHERE {' AND '.join(filters)} "
+            "ORDER BY canonical_key LIMIT :fetch OFFSET :offset) "
+            "SELECT node.canonical_key, node.graph_key_version, node.kind, node.display_name, "
+            "node.confidence, node.conflict, "
+            "CASE WHEN (SELECT count(*) FROM selected) <> :fetch OR "
+            "selected.canonical_key <> (SELECT max(canonical_key) FROM selected) "
+            "THEN node.metadata_json END AS metadata_json, node.first_seen_run_id, node.last_seen_run_id "
+            "FROM selected CROSS JOIN canonical_nodes node ON node.id = selected.id "
+            "ORDER BY selected.canonical_key"
         )
     elif target == "files":
         filters = [
@@ -171,7 +177,7 @@ def observation_search(
             ):
                 payload = raw_payload.load(text)
                 payload_text = raw_payload.jsonb_text(payload)
-                if needle not in raw_payload.ascii_lower(payload_text):
+                if not raw_payload.contains_ascii_folded(payload_text, needle):
                     continue
             if skipped < pending_offset:
                 skipped += 1
