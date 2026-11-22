@@ -1,0 +1,35 @@
+name: Deploy Common Lore Index website
+on:
+  push:
+    branches: [main]
+    paths: ['website/**', '.github/workflows/project-pages.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloe-pages
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
+        with:
+          path: website
+  deploy:
+    needs: stage
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
+        id: pages
