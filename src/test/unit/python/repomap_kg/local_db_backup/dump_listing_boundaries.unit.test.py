@@ -1,3 +1,4 @@
+import hashlib
 import json
 import subprocess
 import tempfile
@@ -5,6 +6,7 @@ from pathlib import Path
 
 from repomap_test_support.local_db_backup import LocalDbBackupUnitTestCase
 
+from common_lore_index.runtime import _backup_manifest_records as records
 from common_lore_index.runtime.backup import (
     LocalDbBackupError,
     dump_database,
@@ -14,6 +16,8 @@ from common_lore_index.runtime.backup import (
     list_backups,
     read_backup_info,
 )
+from common_lore_index.runtime.backup_manifests import summarize_pg_restore_toc
+from common_lore_index.runtime.backup_records import MAX_TOC_TABLE_NAMES
 from common_lore_index.runtime.local import setup_local_runtime
 
 
@@ -102,3 +106,81 @@ class LocalDbBackupDumpListingBoundariesUnitTests(LocalDbBackupUnitTestCase):
 
             self.assertIn("Common Lore Index local DB backup info", table)
             self.assertIn("restore_supported=false", table)
+
+
+def test_manifest_walk_preserves_literal_lookup_directory_order_and_symlink_boundary(tmp_path, monkeypatch):
+    for directory, filename in (("a/inner", "Manifest.json"), ("a/x", "manifest.json"), ("a-b", "manifest.json")):
+        branch = tmp_path / directory
+        branch.mkdir(parents=True)
+        (branch / filename).write_text("{}")
+    (tmp_path / "alias").symlink_to(tmp_path / "a", target_is_directory=True)
+
+    expected = sorted(tmp_path.rglob("manifest.json"))
+    iterdir = Path.iterdir
+
+    def deny_listing(path):
+        if path == tmp_path / "a-b":
+            raise PermissionError("directory may only be searched")
+        return iterdir(path)
+
+    monkeypatch.setattr(Path, "iterdir", deny_listing)
+    actual = list(records.iter_backup_manifest_paths(tmp_path))
+    assert actual == expected
+    assert all("alias" not in path.parts for path in actual)
+
+
+def test_manifest_lookup_stops_before_later_branches(tmp_path, monkeypatch):
+    first = tmp_path / "a" / "manifest.json"
+    later = tmp_path / "z" / "nested" / "manifest.json"
+    for path in (later, first):
+        path.parent.mkdir(parents=True)
+        path.write_text('{"backup_id":"selected"}', encoding="utf-8")
+
+    original = Path.iterdir
+    visited = []
+
+    def observe(path):
+        visited.append(path)
+        return original(path)
+
+    monkeypatch.setattr(Path, "iterdir", observe)
+    assert records.resolve_backup_manifest_path(tmp_path, "selected") == first
+    assert visited == [tmp_path, first.parent]
+    assert list(records.iter_backup_manifest_paths(tmp_path)) == [first, later]
+
+
+def test_inspection_rejects_wrong_length_without_hashing(tmp_path, monkeypatch):
+    path = tmp_path / "backup.pgcustom"
+    path.write_bytes(b"good")
+    original = records.describe_dump_file
+    hashed = []
+
+    def observe(path):
+        hashed.append(path)
+        return original(path)
+
+    monkeypatch.setattr(records, "describe_dump_file", observe)
+    manifest = {"size_bytes": 5, "sha256": hashlib.sha256(b"good").hexdigest()}
+    ok, diagnostics = records.verify_dump_file_checksum_for_inspection(path, manifest, path.name)
+    assert not ok and diagnostics[0].code == "backup-checksum-mismatch"
+    assert not hashed
+    ok, diagnostics = records.verify_dump_file_checksum_for_inspection(
+        path, {"size_bytes": 4, "sha256": "0" * 64}, path.name,
+    )
+    assert not ok and diagnostics[0].code == "backup-checksum-mismatch"
+    assert hashed == [path]
+
+
+def test_large_toc_keeps_sorted_unique_prefix_and_exact_entry_count():
+    size = MAX_TOC_TABLE_NAMES + 9
+    lines = [
+        f"{n + 1}; 1259 16390 TABLE public item_{n:03} owner"
+        for n in reversed(range(size))
+    ]
+    summary = summarize_pg_restore_toc(
+        "\r\n".join(["; comment", "", *lines, lines[-1], "invalid; 0 0 TABLE public ignored"]),
+        dump_file="test.pgcustom", dump_format="pgcustom",
+    )
+    assert summary.toc_entry_count == size + 1
+    assert summary.tables == tuple(f"item_{n:03}" for n in range(MAX_TOC_TABLE_NAMES))
+    assert summary.table_count == MAX_TOC_TABLE_NAMES

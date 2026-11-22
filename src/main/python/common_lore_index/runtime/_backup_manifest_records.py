@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -20,15 +21,35 @@ from common_lore_index.runtime.local import LocalRuntimeDiagnostic
 SAFE_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,62}$")
 
 
+def iter_backup_manifest_paths(backups_root: Path) -> Iterator[Path]:
+    """Yield the same path order as sorted rglob without visiting later branches."""
+    stack: list[Iterator[tuple[Path, bool]]] = [iter(((backups_root, True),))]
+    while stack:
+        entry = next(stack[-1], None)
+        if entry is None:
+            stack.pop()
+            continue
+        path, scan_directory = entry
+        if not scan_directory:
+            yield path
+            continue
+        try:
+            if (path == backups_root or not path.is_symlink()) and path.is_dir():
+                # A searchable directory can expose its manifest even if listing is denied.
+                children = [(manifest, False) for manifest in path.glob("manifest.json")]
+                try:
+                    children.extend((child, True) for child in path.iterdir())
+                except OSError:
+                    pass
+                stack.append(iter(sorted(children)))
+        except OSError:
+            continue
+
+
 def list_manifest_paths(backups_root: Path) -> tuple[Path, ...]:
-    if not backups_root.exists():
-        return ()
     return tuple(
-        sorted(
-            path
-            for path in backups_root.rglob("manifest.json")
-            if not is_incomplete_backup_path(backups_root, path)
-        )
+        path for path in iter_backup_manifest_paths(backups_root)
+        if not is_incomplete_backup_path(backups_root, path)
     )
 
 
@@ -195,8 +216,8 @@ def verify_dump_file_checksum_for_inspection(
         )
     expected_size = dump_file.get("size_bytes")
     expected_sha = dump_file.get("sha256")
-    actual = describe_dump_file(path)
-    if actual.size_bytes != expected_size or actual.sha256 != expected_sha:
+    actual = describe_dump_file(path) if path.stat().st_size == expected_size else None
+    if actual is None or actual.size_bytes != expected_size or actual.sha256 != expected_sha:
         return (
             False,
             (
@@ -279,7 +300,9 @@ def resolve_backup_manifest_path(
         if is_incomplete_backup_path(backups_root, path) or not path.is_file():
             raise backup_not_found(candidate_text)
         return path
-    for manifest_path in list_manifest_paths(backups_root):
+    for manifest_path in iter_backup_manifest_paths(backups_root):
+        if is_incomplete_backup_path(backups_root, manifest_path):
+            continue
         try:
             with manifest_path.open("rb") as handle:
                 raw = handle.read(MAX_MANIFEST_UTF8_BYTES + 1)

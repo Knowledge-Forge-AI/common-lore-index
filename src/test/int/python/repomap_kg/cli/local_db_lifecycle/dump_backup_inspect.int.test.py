@@ -67,6 +67,9 @@ class CliLocalDbDumpBackupInspectIntegrationTests(CliIntegrationTestCase):
                 encoding="utf-8",
             )
             (backup_dir / "dump.pgcustom").write_bytes(b"dump")
+            later = home / "backups" / "zz-runtime" / "repomap" / "later"
+            later.mkdir(parents=True)
+            (later / "manifest.json").write_text(json.dumps(manifest | {"backup_id": "later"}))
 
             list_exit, list_stdout, list_stderr = self.run_module_entrypoint(
                 "local", "db", "backups", "--repo-map-home", str(home), "--json",
@@ -84,7 +87,7 @@ class CliLocalDbDumpBackupInspectIntegrationTests(CliIntegrationTestCase):
 
         self.assertEqual(list_exit, 0, list_stderr)
         listing = json.loads(list_stdout)
-        self.assertEqual(listing["backup_count"], 1)
+        self.assertEqual(listing["backup_count"], 2)
         self.assertEqual(listing["backups"][0]["backup_id"], manifest["backup_id"])
         self.assertEqual(list_table_exit, 0, list_table_stderr)
         self.assertIn("Common Lore Index local DB backups", list_table_stdout)
@@ -140,6 +143,7 @@ class CliLocalDbDumpBackupInspectIntegrationTests(CliIntegrationTestCase):
                     "1; 1259 16390 TABLE public repositories repomap",
                     "2; 1259 16391 TABLE public raw_observations repomap",
                     "3; 0 16390 TABLE DATA public repositories repomap",
+                    *(f"{n+4}; 1259 16390 TABLE public zz_{n:03} repomap" for n in reversed(range(60))),
                 ]
             )
 
@@ -159,6 +163,15 @@ class CliLocalDbDumpBackupInspectIntegrationTests(CliIntegrationTestCase):
                 inspect_table_exit, inspect_table_stdout, inspect_table_stderr = self.run_repo_map_in_process(
                     "local", "db", "backup-inspect", "--repo-map-home", str(home), manifest["backup_id"],
                 )
+            (backup_dir / "dump.pgcustom").write_bytes(dump_bytes + b"!")
+            with patch("common_lore_index.runtime._backup_manifest_records.describe_dump_file") as describe:
+                _, mismatch_stdout, _ = self.run_repo_map_in_process(
+                    "local", "db", "backup-inspect", "--repo-map-home", str(home), manifest["backup_id"], "--json",
+                )
+                describe.assert_not_called()
+            mismatch = json.loads(mismatch_stdout)
+            self.assertFalse(mismatch["checksum_verified"])
+            self.assertFalse(mismatch["dump_contents_read"])
             info_exit, info_stdout, info_stderr = self.run_module_entrypoint(
                 "local", "db", "backup-info", "--repo-map-home", str(home), manifest["backup_id"], "--json",
             )
@@ -171,7 +184,8 @@ class CliLocalDbDumpBackupInspectIntegrationTests(CliIntegrationTestCase):
         self.assertTrue(payload["manifest_verified"])
         self.assertTrue(payload["checksum_verified"])
         self.assertTrue(payload["dump_contents_read"])
-        self.assertEqual(payload["toc_entry_count"], 3)
+        self.assertEqual(payload["toc_entry_count"], 63)
+        self.assertEqual(payload["table_count"], 50)
         self.assertTrue(payload["expected_repomap_tables"]["repositories"])
         self.assertTrue(payload["expected_repomap_tables"]["raw_observations"])
         self.assertFalse(payload["destructive_db_actions"])
