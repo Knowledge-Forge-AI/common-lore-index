@@ -15,6 +15,7 @@ from common_lore_index.runtime.database_role_contract import read_role_secrets
 from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.server import mcp
 from common_lore_index.server.mcp_core import RepoMapMcpError
+from common_lore_index.storage.sqlite_local.connection import read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
 from repomap_test_support.host_read_store_config import (
     NO_FALLBACK_GUARDS, PG_BINDING_TRIPWIRES, patched_guards, setup_owned_config,
@@ -319,3 +320,30 @@ def test_postgres_helper_routes_via_read_status_and_refuses_missing_credentials(
     serialized = json.dumps(result)
     assert secret not in serialized and "/Users/example/private.py" not in serialized and str(tmp_path) not in serialized
     assert "chunk_text" not in serialized and "normalized_text" not in serialized
+
+
+def test_node_location_pages_decode_only_selected_and_historical_results(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.storage.node_locations import NodeLocationsQuery
+    from common_lore_index.storage.sqlite_local import node_location_queries
+    from repomap_test_support.sqlite_local_fixtures import local_binding
+
+    _, database = locator_home(tmp_path)
+    for generation in (2, 3):
+        publish_locator_generation(database, generation, start_line=40, alternatives=True)
+    render = node_location_queries._location
+    decoded_runs: list[int] = []
+
+    def observe(row: Any, accepted_run_id: int, **kwargs: Any) -> dict[str, Any]:
+        decoded_runs.append(row[2])
+        return render(row, accepted_run_id, **kwargs)
+
+    monkeypatch.setattr(node_location_queries, "_location", observe)
+    with read_transaction(database, local_binding(GRAPH)) as connection:
+        page = node_location_queries.node_locations(
+            connection, NodeLocationsQuery(canonical_key=SYMBOL, limit=1),
+        )
+    assert decoded_runs == [3, 2]
+    assert page["location_scope"] == "accepted_run" and page["location_run_id"] == 3
+    assert page["has_more"] and page["historical_has_more"]

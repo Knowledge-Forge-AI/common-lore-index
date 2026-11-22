@@ -87,6 +87,12 @@ Feed explanations reach the requested item across retained graph versions
 without scanning unrelated links. The SQLite work check and containerized
 PostgreSQL parity proof cover ordering and scoped evidence output.
 
+The [Local readback batch](../../tools/ci/cloe-ci164-localread1-exit.md)
+keeps search and location look-ahead rows out of rendered results. Incident
+expansion applies one byte-ordered cap across incoming and outgoing edges
+before normalizing the returned rows. Scoped tests cover real pagination and
+SQLite/PostgreSQL parity, context fan-out and retained node-location history.
+
 The next local W7 checkpoints preserve committed outcomes on optional RSS
 sampling failure and measure the actual staged INSERT and completeness
 queries. The disposable spill fixture recorded 603 temporary blocks written

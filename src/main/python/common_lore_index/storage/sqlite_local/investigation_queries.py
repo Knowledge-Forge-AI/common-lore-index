@@ -12,6 +12,8 @@ functions are needed.
 
 from __future__ import annotations
 
+from contextlib import closing
+from itertools import islice
 import json
 import sqlite3
 from typing import Any
@@ -97,25 +99,26 @@ def search(
         )
     else:
         raise StorageSchemaError("search target must be nodes or files")
-    rows = connection.execute(
+    with closing(connection.execute(
         sql,
         {"pattern": pattern, "kind": kind, "path": path, "fetch": limit + 1, "offset": offset},
-    ).fetchall()
-    if target == "nodes":
-        payload = [node_payload(row) for row in rows]
-    else:
-        payload = [
-            {
-                "path": row[0],
-                "language": row[1],
-                "role": row[2],
-                "executable": bool(row[3]),
-                "generated": bool(row[4]),
-            }
-            for row in rows
-        ]
-    page = payload[:limit]
-    return {"results": page, "total": offset + len(page), "has_more": len(payload) > limit}
+    )) as rows:
+        visible = islice(rows, limit)
+        if target == "nodes":
+            page = [node_payload(row) for row in visible]
+        else:
+            page = [
+                {
+                    "path": row[0],
+                    "language": row[1],
+                    "role": row[2],
+                    "executable": bool(row[3]),
+                    "generated": bool(row[4]),
+                }
+                for row in visible
+            ]
+        has_more = rows.fetchone() is not None
+    return {"results": page, "total": offset + len(page), "has_more": has_more}
 
 
 def observation_search_sql(*, kind: bool, path: bool) -> str:

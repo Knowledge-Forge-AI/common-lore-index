@@ -106,7 +106,7 @@ def expand_seed_incident_edges(
 
     kind_placeholders = ", ".join("?" for _ in ordered_kinds)
     fetch_limit = per_seed_limit + 1
-    sql = f"""SELECT * FROM (
+    sql = f"""SELECT * FROM (SELECT * FROM (
         SELECT
             'outgoing' AS direction,
             e.identity_metadata_hash AS edge_key,
@@ -158,47 +158,41 @@ def expand_seed_incident_edges(
           AND e.edge_kind IN ({kind_placeholders})
         ORDER BY e.edge_kind, e.source_canonical_key, e.identity_metadata_hash
         LIMIT ?
-    )"""
+    ))
+    ORDER BY edge_kind COLLATE BINARY,
+             CASE direction WHEN 'outgoing' THEN 0 ELSE 1 END,
+             neighbor_canonical_key COLLATE BINARY, edge_key COLLATE BINARY
+    LIMIT ?"""
     params: tuple[Any, ...] = (
         seed_canonical_key, *ordered_kinds, fetch_limit,
         seed_canonical_key, *ordered_kinds, fetch_limit,
+        fetch_limit,
     )
-    rows = connection.execute(sql, params).fetchall()
     kind_priority = {k: idx for idx, k in enumerate(ordered_kinds)}
 
     parsed: list[dict[str, Any]] = []
-    for row in rows:
-        direction = str(row[0])
-        edge_kind = str(row[2])
-        neighbor_ck = str(row[10])
-        parsed.append(incident_edge_record(
-            {
-                "direction": direction,
-                "direction_rank": 0 if direction == "outgoing" else 1,
-                "edge_key": row[1], "edge_kind": edge_kind,
-                "source_canonical_key": row[3], "target_canonical_key": row[4],
-                "confidence": row[5], "conflict": row[6],
-                "first_seen_run_id": row[7], "last_seen_run_id": row[8],
-                "neighbor_id": row[9], "neighbor_canonical_key": neighbor_ck,
-                "neighbor_kind": row[11], "neighbor_display_name": row[12],
-                "neighbor_first_seen_run_id": row[13],
-                "neighbor_last_seen_run_id": row[14],
-            },
-            edge_kind_priority=kind_priority.get(edge_kind, len(ordered_kinds)),
-        ))
-
-    parsed.sort(
-        key=lambda item: (
-            item["edge_kind_priority"],
-            item["edge_kind"],
-            item["direction_rank"],
-            item["neighbor_canonical_key"].encode("utf-8"),
-            item["edge_key"].encode("utf-8"),
-        )
-    )
-    truncated = len(parsed) > per_seed_limit
-    kept = parsed[:per_seed_limit]
-    return {"edges": kept, "truncated": truncated, "scanned": len(kept)}
+    with closing(connection.execute(sql, params)) as rows:
+        for row in islice(rows, per_seed_limit):
+            direction = str(row[0])
+            edge_kind = str(row[2])
+            neighbor_ck = str(row[10])
+            parsed.append(incident_edge_record(
+                {
+                    "direction": direction,
+                    "direction_rank": 0 if direction == "outgoing" else 1,
+                    "edge_key": row[1], "edge_kind": edge_kind,
+                    "source_canonical_key": row[3], "target_canonical_key": row[4],
+                    "confidence": row[5], "conflict": row[6],
+                    "first_seen_run_id": row[7], "last_seen_run_id": row[8],
+                    "neighbor_id": row[9], "neighbor_canonical_key": neighbor_ck,
+                    "neighbor_kind": row[11], "neighbor_display_name": row[12],
+                    "neighbor_first_seen_run_id": row[13],
+                    "neighbor_last_seen_run_id": row[14],
+                },
+                edge_kind_priority=kind_priority.get(edge_kind, len(ordered_kinds)),
+            ))
+        truncated = rows.fetchone() is not None
+    return {"edges": parsed, "truncated": truncated, "scanned": len(parsed)}
 
 
 def batch_neighbor_direct_locations(

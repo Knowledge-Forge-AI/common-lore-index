@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import sqlite3
 from collections.abc import Callable
+from contextlib import closing
 from functools import lru_cache
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
@@ -67,34 +69,29 @@ def node_locations(
     if node is None:
         return unavailable("node_not_found")
     selected = connection.execute(
-        "SELECT e.run_id FROM canonical_node_evidence link "
+        "SELECT COALESCE(MAX(CASE WHEN e.run_id = ? THEN e.run_id END), MAX(e.run_id)) "
+        "FROM canonical_node_evidence link "
         "JOIN canonical_evidence e ON e.id = link.canonical_evidence_id "
-        "WHERE link.canonical_node_id = ? AND e.graph_key_version = 1 "
-        "ORDER BY (e.run_id = ?) DESC, e.run_id DESC LIMIT 1",
-        (node[0], accepted.run_id),
+        "WHERE link.canonical_node_id = ? AND e.graph_key_version = 1",
+        (accepted.run_id, node[0]),
     ).fetchone()
     location_run_id = selected[0] if selected else None
-    rows = _evidence_window(
-        connection, node[0], location_run_id, query, historical=False, role_sql=role_sql
-    )
-    history = _evidence_window(
-        connection, node[0], location_run_id, query, historical=True, role_sql=role_sql
-    )
     read_context_vector = _context_vector_reader() if context_identity else None
+    locations, has_more = _evidence_window(
+        connection, node[0], location_run_id, query, historical=False, role_sql=role_sql,
+        accepted_run_id=accepted.run_id, read_context_vector=read_context_vector,
+    )
+    history, historical_has_more = _evidence_window(
+        connection, node[0], location_run_id, query, historical=True, role_sql=role_sql,
+        accepted_run_id=accepted.run_id, read_context_vector=read_context_vector,
+    )
     result: dict[str, Any] = {
         "status": "ok", "reason": None,
-        "locations": [
-            _location(row, accepted.run_id, read_context_vector=read_context_vector)
-            for row in rows[:query.limit]
-        ],
-        "historical_locations": [
-            _location(row, accepted.run_id, read_context_vector=read_context_vector)
-            for row in history[:query.limit]
-        ],
-        "historical_has_more": len(history) > query.limit,
+        "locations": locations, "historical_locations": history,
+        "historical_has_more": historical_has_more,
         "location_run_id": location_run_id,
-        "location_scope": _relation(selected[0], accepted.run_id) if selected else "unavailable",
-        "metadata_location": _metadata_location(node), "has_more": len(rows) > query.limit,
+        "location_scope": _relation(location_run_id, accepted.run_id) if location_run_id is not None else "unavailable",
+        "metadata_location": _metadata_location(node), "has_more": has_more,
         "node_first_seen_run_id": node[2], "node_last_seen_run_id": node[3],
         "accepted_publication": {"generation": accepted.generation, "run_id": accepted.run_id,
                                  "publication_bundle_id": accepted.publication_bundle_id},
@@ -114,10 +111,12 @@ def _evidence_window(
     query: NodeLocationsQuery,
     *,
     historical: bool,
-    role_sql: str = _EVIDENCE_ROLE_SQL,
-) -> list[Any]:
+    role_sql: str,
+    accepted_run_id: int,
+    read_context_vector: ContextVectorReader | None,
+) -> tuple[list[dict[str, Any]], bool]:
     if run_id is None:
-        return []
+        return [], False
     relation = "<>" if historical else "="
     filtered = query.evidence_role != "all"
     role_column = f", {role_sql}" if filtered else ""
@@ -125,7 +124,7 @@ def _evidence_window(
     parameters = (node_id, run_id, query.evidence_role, query.limit + 1) if filtered else (
         node_id, run_id, query.limit + 1,
     )
-    return connection.execute(
+    with closing(connection.execute(
         "SELECT e.evidence_key, link.link_kind, e.run_id, e.raw_observation_ordinal, "
         "raw.payload_hash, e.raw_kind, e.raw_source_id, e.path, e.start_line, e.end_line, "
         "e.extractor, e.extractor_version, e.confidence, e.metadata_json, "
@@ -141,7 +140,12 @@ def _evidence_window(
         f"{role_predicate}"
         "ORDER BY e.run_id DESC, e.raw_observation_ordinal, e.evidence_key, link.link_kind "
         "LIMIT ?", parameters,
-    ).fetchall()
+    )) as rows:
+        page = [
+            _location(row, accepted_run_id, read_context_vector=read_context_vector)
+            for row in islice(rows, query.limit)
+        ]
+        return page, rows.fetchone() is not None
 
 
 def _metadata_location(node: sqlite3.Row | tuple[Any, ...]) -> dict[str, Any] | None:

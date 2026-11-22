@@ -13,6 +13,7 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -210,7 +211,9 @@ def test_search_is_ascii_case_insensitive_escaped_and_probes_one_extra_row(publi
         assert search("nodes", "INIT")["results"] == lower["results"] and lower["results"]
         assert search("nodes", "init_fn")["results"] and not search("nodes", "initXfn")["results"]
         assert search("nodes", "%")["results"] == []
-        page = search("nodes", "pkg", limit=1)
+        with patch.object(investigation_queries, "node_payload", wraps=investigation_queries.node_payload) as render:
+            page = search("nodes", "pkg", limit=1)
+        render.assert_called_once()
         assert page["has_more"] is True and page["total"] == 1
         files = search("files", "PY")
         assert files["results"] == [

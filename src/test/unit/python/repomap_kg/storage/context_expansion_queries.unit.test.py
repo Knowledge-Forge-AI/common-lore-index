@@ -80,6 +80,30 @@ def test_expand_seed_incident_edges_and_batch_neighbor_locations(tmp_path: Path)
             assert len(nbr_map["locations_by_node_id"][nid]) >= 1
 
 
+def test_incident_expansion_only_decodes_edges_in_the_returned_page(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed = "py:pkg.billing.InvoiceService"
+    db_path, _, _, _, _ = build_sqlite_context_fixture(
+        tmp_path, extra_edges=[("contains", seed, seed)],
+    )
+    render = context_expansion_queries.incident_edge_record
+    rendered_directions: list[str] = []
+
+    def observe(value: dict[str, Any], *, edge_kind_priority: int) -> dict[str, Any]:
+        rendered_directions.append(value["direction"])
+        return render(value, edge_kind_priority=edge_kind_priority)
+
+    monkeypatch.setattr(context_expansion_queries, "incident_edge_record", observe)
+    with closing(sqlite3.connect(db_path)) as connection:
+        page = expand_seed_incident_edges(
+            connection, seed_canonical_key=seed, edge_kinds=("contains", "contains"), per_seed_limit=1,
+        )
+    assert page["truncated"] and page["scanned"] == 1
+    assert page["edges"][0]["direction"] == "outgoing"
+    assert rendered_directions == ["outgoing"]
+
+
 def test_sqlite_adapter_progress_handler_interrupt_discards_partial_statement(
     tmp_path: Path,
 ) -> None:

@@ -177,7 +177,11 @@ def test_frozen_manifest_compares_package_additions_in_one_c_byte_order() -> Non
         # The postgres base sets LANG=en_US.utf8, where libgdbm-compat4/libgdbm6 and
         # libpq-dev/libpq5 collate differently from Python's sorted() expectation.
         assert line.index("export LC_ALL=C && ") < line.index("sort") < line.index("comm -23"), line
-    assert steps[0].lstrip().startswith("arm64) printf ") and " | sha256sum -c - && export LC_ALL=C" in steps[0]
+    builder = steps[0].lstrip()
+    assert builder.startswith("arm64) printf ")
+    trust_check = builder.index(" | sha256sum --check --strict - && ")
+    archive_write = builder.index(" > /etc/apt/sources.list.d/cloe-d12-archive.sources")
+    assert trust_check < archive_write < builder.index("export LC_ALL=C")
     assert steps[1].lstrip().startswith("arm64) export LC_ALL=C && "), steps[1]
     assert ("printf '%s\\n' 'ii  gcc:arm64=4:12.2.0-3' 'ii  libpq-dev:arm64=18.4-1.pgdg120+1' "
             "'ii  libpq5:arm64=18.4-1.pgdg120+1' > /tmp/repomap-apt/exp") in steps[0], steps[0]

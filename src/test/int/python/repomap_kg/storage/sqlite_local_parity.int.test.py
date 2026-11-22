@@ -288,6 +288,10 @@ def _prove(tmp_path: Path, dbs: dict[str, Any], postgres: Any) -> None:
     assert structured(sqlite, 200 + CALLS)["summary"]["nix_observations"] > 0
     for base in (100, 200):
         assert structured(sqlite, base + 20)["results"] and structured(sqlite, base + 25)["result"]["edges"]
+    all_files = structured(sqlite, 217)
+    offset_file = structured(sqlite, 218)
+    assert offset_file["results"] == all_files["results"][1:2]
+    assert offset_file["has_more"] and offset_file["total"] == 2
     flakes = [row["path"] for row in structured(sqlite, 222)["results"]]
     assert sorted(flakes) == ["composition/flake.nix"] * 2 + ["entry/flake.nix"] * 2, flakes  # both generations
     assert structured(sqlite, 227)["result"]["center"] is None
