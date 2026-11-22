@@ -304,6 +304,9 @@ def test_auxiliary_runtime_delayed_startup_retains_parent_provenance(tmp_path):
                 "assert os.path.exists(os.path.join(manifest, f'{child_pid}.start'))",
                 "with open(os.environ['COVERAGE_CHILD_RELEASE_FIFO'], 'w', encoding='utf-8') as rf:",
                 "    rf.write('ok' + chr(10))",
+                # Join the tracker before this launcher exits and the test cleans
+                # up its coverage directory. Its atexit handler may write a shard.
+                "rt._resource_tracker._stop()",
             ])
             proc = subprocess.Popen([sys.executable, '-c', launcher_cmd], env=env)
             with open(str(pause_fifo), 'w', encoding='utf-8') as pf:

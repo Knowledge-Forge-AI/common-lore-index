@@ -185,6 +185,8 @@ def test_neighborhood_directions_depth_and_missing_center(published: Path) -> No
                 connection, node=node, direction=direction, depth=1, graph_key_version=1,
                 node_limit=50, node_offset=0, edge_limit=50, edge_offset=0,
             )
+            assert record.center is None or record.center.canonical_key == node
+            assert isinstance(record.nodes, tuple) and isinstance(record.edges, tuple)
             return [n.canonical_key for n in record.nodes], [e.target_key for e in record.edges]
 
         out_nodes, out_edges = around("out")

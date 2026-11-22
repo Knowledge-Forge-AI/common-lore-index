@@ -288,6 +288,10 @@ def _prove(tmp_path: Path, dbs: dict[str, Any], postgres: Any) -> None:
     assert structured(sqlite, 200 + CALLS)["summary"]["nix_observations"] > 0
     for base in (100, 200):
         assert structured(sqlite, base + 20)["results"] and structured(sqlite, base + 25)["result"]["edges"]
+        outgoing = structured(sqlite, base + 10)
+        incoming = structured(sqlite, base + 11)
+        assert outgoing["result"]["center"] and incoming["result"]["center"]
+        assert len(incoming["result"]["nodes"]) <= 1
     all_files = structured(sqlite, 217)
     offset_file = structured(sqlite, 218)
     assert offset_file["results"] == all_files["results"][1:2]

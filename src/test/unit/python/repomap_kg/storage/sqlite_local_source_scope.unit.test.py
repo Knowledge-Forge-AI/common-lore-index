@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from contextlib import closing
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -74,6 +75,45 @@ def test_selected_read_keeps_link_hydration_within_source(
             assert bool(references) == bool(selected_keys)
         assert fetched <= selected_ids
         assert bool(fetched) == bool(selected_ids)
+
+
+def test_reference_projection_only_reads_metadata_for_the_page(
+    published_feeds: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with read_transaction(published_feeds, local_binding("source-selection")) as connection:
+        full = source_feed_queries.source_references(
+            connection, source_id=RSS, source_run_id=None, target_kind=None, limit=100,
+        )
+        assert len(full) > 1
+        original = source_feed_queries.raw_payload.text_at
+        projected_targets: list[Any] = []
+
+        def observe(payload: Any, *keys: str) -> str | None:
+            if keys == ("raw_target_summary",):
+                projected_targets.append(payload)
+            return original(payload, *keys)
+
+        monkeypatch.setattr(source_feed_queries.raw_payload, "text_at", observe)
+        assert source_feed_queries.source_references(
+            connection, source_id=RSS, source_run_id=None, target_kind=None, limit=1,
+        ) == full[:1]
+        assert len(projected_targets) == 1
+
+
+def test_latest_source_aggregates_all_rows_of_the_tied_winner(published_feeds: Path) -> None:
+    with read_transaction(published_feeds, local_binding("source-selection")) as connection:
+        sample = source_queries.source_observations(connection)[0]
+    recent = "2026-02-01T00:00:00Z"
+    rows = [
+        replace(sample, source_id="z", acquired_at=recent, artifact_path="z"),
+        replace(sample, source_id="a", acquired_at=recent, artifact_path="b"),
+        replace(sample, source_id="a", acquired_at=None, artifact_path="y"),
+        replace(sample, source_id="0", acquired_at=None, artifact_path="z"),
+    ]
+    selected = source_feed_queries._latest_source(rows)
+    assert selected is not None
+    assert (selected["source_id"], selected["acquired_at"], selected["artifact_path"]) == ("a", recent, "y")
+    assert source_feed_queries._latest_source(list(reversed(rows))) == selected
 
 
 def test_evidence_batches_keep_exact_keys_and_per_key_link_order() -> None:

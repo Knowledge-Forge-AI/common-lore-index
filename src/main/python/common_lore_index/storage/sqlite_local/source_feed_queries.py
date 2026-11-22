@@ -26,8 +26,8 @@ from common_lore_index.storage.sqlite_local import raw_payload
 from common_lore_index.storage.sqlite_local.queries import require_accepted_publication
 from common_lore_index.storage.sqlite_local.source_queries import (
     RawKey,
+    _Edge,
     SourceObservation,
-    by_source,
     edge_links,
     evidence_ids,
     fanout,
@@ -180,7 +180,7 @@ def source_references(
     evidence = evidence_ids(connection, (item.key for item in group))
     edges = edge_links(connection, (eid for ids in evidence.values() for eid in ids))
 
-    def candidates() -> Iterator[tuple[tuple[str, str, str, RawKey, str], dict[str, Any]]]:
+    def candidates() -> Iterator[tuple[tuple[str, str, str, RawKey, str], SourceObservation, _Edge]]:
         for observation in group:
             for evidence_id in evidence.get(observation.key, []):
                 for edge in edges.get(evidence_id, []):
@@ -189,21 +189,21 @@ def source_references(
                     if target_kind is not None and _kind_prefix(edge.target) != target_kind:
                         continue
                     order = (edge.source, edge.target, edge.identity_hash, observation.key, edge.link_kind)
-                    yield order, {
-                        "source_item_key": edge.source,
-                        "relation": edge.kind,
-                        "target_key": edge.target,
-                        "target_display": raw_payload.text_at(edge.metadata, "raw_target_summary"),
-                        "not_fetched": not_fetched(raw_payload.text_at(edge.metadata, "not_fetched")),
-                        "media_type": raw_payload.text_at(edge.metadata, "mime_type"),
-                        "source_run_id": observation.source_run_id,
-                        "artifact_id": observation.artifact_id,
-                        "artifact_path": observation.artifact_path,
-                    }
+                    yield order, observation, edge
 
     return tuple(
-        source_reference_record_from_storage_payload(payload)
-        for _, payload in nsmallest(safe_limit, candidates(), key=lambda row: row[0])
+        source_reference_record_from_storage_payload({
+            "source_item_key": edge.source,
+            "relation": edge.kind,
+            "target_key": edge.target,
+            "target_display": raw_payload.text_at(edge.metadata, "raw_target_summary"),
+            "not_fetched": not_fetched(raw_payload.text_at(edge.metadata, "not_fetched")),
+            "media_type": raw_payload.text_at(edge.metadata, "mime_type"),
+            "source_run_id": observation.source_run_id,
+            "artifact_id": observation.artifact_id,
+            "artifact_path": observation.artifact_path,
+        })
+        for _, observation, edge in nsmallest(safe_limit, candidates(), key=lambda row: row[0])
     )
 
 
@@ -233,27 +233,24 @@ def _latest_source(observations: list[SourceObservation]) -> dict[str, Any] | No
     sources when ``source_id`` is ``None``, or that exact source) independently
     of whether ``item_key`` resolves to any canonical node or evidence row.
     """
-    best_id: str | None = None
-    best_acquired_at: Any = None
-    best_group: list[SourceObservation] | None = None
-    for candidate_id, group in by_source(observations).items():
-        acquired_at = max_of(entry.acquired_at for entry in group)
-        if best_id is None or _is_preferred_source(
-            candidate_id, acquired_at, best_id, best_acquired_at
+    best: SourceObservation | None = None
+    for observation in observations:
+        if best is None or _is_preferred_source(
+            observation.source_id, observation.acquired_at, best.source_id, best.acquired_at
         ):
-            best_id = candidate_id
-            best_acquired_at = acquired_at
-            best_group = group
-    if best_id is None or best_group is None:
+            best = observation
+    if best is None:
         return None
+    best_id = best.source_id
+    group = [entry for entry in observations if entry.source_id == best_id]
     return {
         "source_id": best_id,
-        "source_type": min_of(entry.source_type for entry in best_group),
-        "policy_status": min_of(entry.policy_status for entry in best_group),
-        "source_run_id": max_of(entry.source_run_id for entry in best_group),
-        "artifact_id": max_of(entry.artifact_id for entry in best_group),
-        "artifact_path": max_of(entry.artifact_path for entry in best_group),
-        "acquired_at": best_acquired_at,
+        "source_type": min_of(entry.source_type for entry in group),
+        "policy_status": min_of(entry.policy_status for entry in group),
+        "source_run_id": max_of(entry.source_run_id for entry in group),
+        "artifact_id": max_of(entry.artifact_id for entry in group),
+        "artifact_path": max_of(entry.artifact_path for entry in group),
+        "acquired_at": best.acquired_at,
     }
 
 

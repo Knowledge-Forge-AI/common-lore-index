@@ -139,12 +139,17 @@ def test_reader_parses_every_real_workflow() -> None:
             "repomap-main-system-gate.yml",
         }
     else:
-        assert names in ({"repomap-release-qualification.yml"}, {"pipeline.yml"})
+        assert names in (
+            {"repomap-release-qualification.yml"},
+            {"repomap-release-qualification.yml", "project-pages.yml"},
+            {"pipeline.yml"},
+        )
     for workflow in workflows:
         assert isinstance(workflow, Workflow)
-        expected_name = {"repomap-release-qualification": "cloe-release-qualification"}.get(
-            workflow.path.stem, workflow.path.stem,
-        )
+        expected_name = {
+            "repomap-release-qualification": "cloe-release-qualification",
+            "project-pages": "Deploy Common Lore Index website",
+        }.get(workflow.path.stem, workflow.path.stem)
         assert workflow.name == expected_name
         assert workflow.triggers
         assert workflow.permissions

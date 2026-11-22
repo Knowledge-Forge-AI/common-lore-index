@@ -1,0 +1,41 @@
+{
+  "approval": {
+    "operator_request": "Remediate CI165 and complete several product slices before staging again.",
+    "phase": "CLOE-CI165-READBACK1",
+    "schema": "cloe-ci166-approval-v1",
+    "scope": "Publish one fast-forward to staging, triggering one automatic synchronize campaign on draft PR 28.",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 71,
+    "attempt": 1,
+    "component_runtime_executions": 41,
+    "native_report_sha256": "79b8e7c34f4145ce925d0b2f0253d69a8a25e7065db2c988d4775205b2269943",
+    "preceding_campaign": 165,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 44,
+    "rust_report_sha256": "8e0580b179d88210aa84504888cf8ee8a784e9fae369c52232b6e50735ea6be0",
+    "schema": "cloe-ci166-ledger-before-v1",
+    "staging_report_sha256": "64953a4e3824d7689d4e42932d6f7fe410e8ad27d8ecc4767cb309fecc3d18f6",
+    "system_intent_report_sha256": "2fc7b9216310ad68873b5dab1332d2575eef46ccd3455a25667fee204506f189",
+    "system_report_sha256": "4cad50e7b859c23480f162d00265c3d8cf1848801c6ecacca4ff13177c4f2fb0",
+    "wheel_transfers": 84
+  },
+  "reservation": {
+    "application_start": 72,
+    "approval_sha256": "aff97c2b541a9d8e34b5d6503f8fcf36d80ab02bd82d2619535fd0cf2559348e",
+    "base": "da0a6ba92350da994082574cea70d1fb27542a21",
+    "before": "0dda2ec3d1da0e9e7004a80d27cf42a6324cc566",
+    "component_runtime_cumulative": 42,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "c7c37c6017f4b618770dda8e718e2d7e0295c2aba61394bd0bfa9d9f3a6a01a3",
+    "nonce": "739d063f313d445f62e5cef2c968e04e",
+    "pull_request": 28,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 45,
+    "schema": "cloe-ci166-reservation-v1",
+    "wheel_transfers_cumulative": 86,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 166
+  }
+}

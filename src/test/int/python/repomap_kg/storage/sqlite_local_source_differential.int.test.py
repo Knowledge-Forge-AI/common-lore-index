@@ -193,6 +193,7 @@ def _source(pair: _Pair, source_id: str) -> tuple[list[str], list[str]]:
             if run is None and limit == 50:
                 item_keys = [item.item_key for item in items]
         for kind in TARGET_KINDS:
+            first_reference: object = None
             for limit in (100, 1):
                 references = pair.same(
                     f"references {source_id} {run} {kind} {limit}",
@@ -203,6 +204,10 @@ def _source(pair: _Pair, source_id: str) -> tuple[list[str], list[str]]:
                 )
                 _ties_identical(
                     references, lambda row: (row.source_item_key, row.target_key), "references")
+                if limit == 100:
+                    first_reference = references[:1]
+                else:
+                    assert references == first_reference
     return run_ids, item_keys
 
 
@@ -218,6 +223,7 @@ def _explanations(pair: _Pair, sources: list[str], item_keys: list[str]) -> int:
             _ties_identical(payload["references"], lambda row: row["target_key"], "explained references")
             if source_id is None:
                 references = payload["references"]
+                assert payload["source"] is not None and payload["source"]["source_id"] in sources
             else:
                 assert payload["references"] == references
             if source_id == ABSENT_SOURCE:

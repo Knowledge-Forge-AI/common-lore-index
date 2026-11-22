@@ -23,7 +23,6 @@ from common_lore_index.storage.canonical_readback_rows import (
     CanonicalNodeRecord,
     canonical_edge_evidence_record_from_storage_payload,
     canonical_edge_record_from_storage_payload,
-    canonical_neighborhood_from_storage_payload,
     canonical_node_record_from_storage_payload,
 )
 from common_lore_index.storage.errors import StorageSchemaError
@@ -289,8 +288,8 @@ def canonical_neighborhood(
         "AND canonical_nodes.canonical_key = ?",
         (graph_key_version, node),
     ).fetchone()
-    nodes: list[dict[str, Any]] = []
-    edges: list[dict[str, Any]] = []
+    nodes: tuple[CanonicalNodeRecord, ...] = ()
+    edges: tuple[CanonicalEdgeRecord, ...] = ()
     if center is not None:
         sides = []
         if direction in {"both", "out"}:
@@ -309,32 +308,26 @@ def canonical_neighborhood(
             incident_ids, neighbor_keys = _incident_selects(direction)
             edge_filter = f"canonical_edges.id IN ({incident_ids})"
         params = {"version": graph_key_version, "node": node}
-        edges = [
-            _edge_payload(row)
-            for row in connection.execute(
-                f"SELECT {_EDGE} FROM canonical_edges WHERE {edge_filter} "
-                f"ORDER BY {_EDGE_ORDER} LIMIT :limit OFFSET :offset",
-                {**params, "limit": edge_window[0], "offset": edge_window[1]},
-            )
-        ]
-        nodes = [
-            node_payload(row)
-            for row in connection.execute(
-                f"WITH neighbor_keys AS ({neighbor_keys}) "
-                f"SELECT {_NODE} FROM canonical_nodes "
-                "WHERE canonical_nodes.graph_key_version = :version "
-                "AND canonical_nodes.canonical_key IN (SELECT canonical_key FROM neighbor_keys) "
-                "AND canonical_nodes.canonical_key <> :node "
-                "ORDER BY canonical_nodes.canonical_key LIMIT :limit OFFSET :offset",
-                {**params, "limit": node_window[0], "offset": node_window[1]},
-            )
-        ]
-    return canonical_neighborhood_from_storage_payload(
-        {
-            "center": None if center is None else node_payload(center),
-            "nodes": nodes,
-            "edges": edges,
-        }
+        with closing(connection.execute(
+            f"SELECT {_EDGE} FROM canonical_edges WHERE {edge_filter} "
+            f"ORDER BY {_EDGE_ORDER} LIMIT :limit OFFSET :offset",
+            {**params, "limit": edge_window[0], "offset": edge_window[1]},
+        )) as rows:
+            edges = tuple(canonical_edge_record_from_storage_payload(_edge_payload(row)) for row in rows)
+        with closing(connection.execute(
+            f"WITH neighbor_keys AS ({neighbor_keys}) "
+            f"SELECT {_NODE} FROM canonical_nodes "
+            "WHERE canonical_nodes.graph_key_version = :version "
+            "AND canonical_nodes.canonical_key IN (SELECT canonical_key FROM neighbor_keys) "
+            "AND canonical_nodes.canonical_key <> :node "
+            "ORDER BY canonical_nodes.canonical_key LIMIT :limit OFFSET :offset",
+            {**params, "limit": node_window[0], "offset": node_window[1]},
+        )) as rows:
+            nodes = tuple(canonical_node_record_from_storage_payload(node_payload(row)) for row in rows)
+    return CanonicalNeighborhoodRecord(
+        center=None if center is None else canonical_node_record_from_storage_payload(node_payload(center)),
+        nodes=nodes,
+        edges=edges,
     )
 
 
