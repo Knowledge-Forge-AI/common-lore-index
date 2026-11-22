@@ -101,6 +101,7 @@ def test_platforms_and_systemd_adapter_contract_matrix(tmp_path: Path) -> None:
         assert adapter.recognizes(bad_argv_text.encode("utf-8")) is False
 
         # decode_systemd_exec_argv & quoting/decoding helpers
+        assert decode_systemd_exec_argv('ExecStart="one" ""\u2028[Install]'.encode()) == ("one", "")
         with pytest.raises(ValueError, match="service_definition_invalid"):
             decode_systemd_exec_argv(b"x" * (_MAX_DEFINITION_BYTES + 1))
         for bad_exec in (

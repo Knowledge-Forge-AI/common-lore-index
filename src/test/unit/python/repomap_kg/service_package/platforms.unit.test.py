@@ -11,7 +11,7 @@ from common_lore_index.service_package.platforms import (
     NativeServiceUnavailable,
     select_service_adapter,
 )
-from common_lore_index.service_package.systemd import SystemdUserAdapter
+from common_lore_index.service_package.systemd import SystemdUserAdapter, decode_systemd_exec_argv
 
 
 def test_platform_selection_is_explicit_and_never_falls_back(tmp_path):
@@ -51,3 +51,11 @@ def test_native_adapters_preserve_identical_portable_semantics(
 def test_adapter_selection_rejects_unsafe_user_home(home):
     with pytest.raises(ValueError, match="service_user_home_invalid"):
         select_service_adapter("linux", user_home=home, uid=1000)
+
+
+def test_systemd_argv_readback_streams_directives_and_preserves_empty_token():
+    content = '# fixture\r\nExecStart="one" "" "three"\u2028[Install]'.encode()
+    assert decode_systemd_exec_argv(content) == ("one", "", "three")
+    for invalid in (b'ExecStart="one"\rExecStart=""', b'ExecStart='):
+        with pytest.raises(ValueError, match="service_definition_invalid"):
+            decode_systemd_exec_argv(invalid)

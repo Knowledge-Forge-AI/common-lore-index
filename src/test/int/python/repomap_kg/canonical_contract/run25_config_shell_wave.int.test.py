@@ -269,8 +269,8 @@ class Run25ConfigShellWaveIntegrationTests(unittest.TestCase):
         )
         self.assertIsNone(_resolve_manifest_reference("dir/manifest.psd1", "../../out.psm1"))
 
-        arr, _ = _collect_manifest_array(["'item1'", "'item2')"], 0)
-        self.assertEqual(len(arr), 2)
+        arr, end = _collect_manifest_array(["ignored", "'item1'", "'item2')", "ignored"], 1)
+        self.assertEqual((arr, end), (("item1", "item2"), 2))
 
     def test_config_nix_terraform_and_openapi_branch_helpers(self) -> None:
         view = NixBindingView(

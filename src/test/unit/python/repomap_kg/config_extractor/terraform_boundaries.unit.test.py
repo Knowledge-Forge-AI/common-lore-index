@@ -15,6 +15,24 @@ from common_lore_index.extractors.config.terraform_hcl_helpers import (
 
 
 class ConfigExtractorTerraformBoundariesUnitTests(unittest.TestCase):
+    def test_hcl_streams_blocks_and_collection_attributes_across_line_boundaries(self):
+        from common_lore_index.extractors.config.terraform_hcl_observations import _terraform_hcl_parse_error_observation
+        from common_lore_index.extractors.config.terraform_hcl_scan import (
+            _terraform_hcl_scan_blocks,
+            _terraform_hcl_top_level_attributes,
+        )
+
+        observe = _terraform_hcl_parse_error_observation
+        text = 'output "one" {\r\n value = [\u2028 "a",\r "b"\n ]\r\n}\noutput "two" {'
+        blocks, diagnostics = _terraform_hcl_scan_blocks("fixture.tf", text, parse_error_observation=observe)
+        self.assertEqual([(block.start_line, block.end_line) for block in blocks], [(1, 6), (7, 7)])
+        self.assertEqual([item.start_line for item in diagnostics], [7])
+        attributes, diagnostics = _terraform_hcl_top_level_attributes(
+            "fixture.tf", blocks[0].body + "\nnext = true", base_line=2, parse_error_observation=observe,
+        )
+        self.assertEqual([(item.name, item.start_line) for item in attributes], [("value", 2), ("next", 6)])
+        self.assertEqual(diagnostics, [])
+
     def test_terraform_hcl_import_moved_check_removed_blocks(self):
         hcl_content = """
 terraform {

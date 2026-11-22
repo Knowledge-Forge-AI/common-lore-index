@@ -44,6 +44,7 @@ def test_escaped_delimiters_do_not_swallow_following_blocks_and_rows(tmp_path):
     outputs = [item for item in observations if item.kind == "terraform.output"]
     assert [item.name for item in outputs] == ["result"]
     assert outputs[0].metadata["sensitive"] is True
+    assert (outputs[0].start_line, outputs[0].end_line) == (12, 15)
     canonical = canonicalize_observations(observations, repository_scope="slice20")
     assert canonical.ok
     rows = build_staged_rows(observations, repository_name="slice20", stage_id="quoted")
