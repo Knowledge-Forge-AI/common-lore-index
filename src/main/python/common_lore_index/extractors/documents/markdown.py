@@ -19,18 +19,20 @@ from common_lore_index.graph.keys import (
     dynamic_key,
     unknown_key,
 )
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.observations.raw import RawObservation
 from common_lore_index.extractors.documents.markdown_structure import (
     FENCE_PATTERN,
     FrontmatterInfo,
     HEADING_PATTERN,
     HeadingInfo,
+    _iter_markdown_headings,
     _nearest_parent_anchor,
     _strip_closing_heading_marks,
     markdown_anchor,
     markdown_anchors_for_content,
     parse_frontmatter,
-    parse_markdown_headings,
+    parse_markdown_headings as parse_markdown_headings,
 )
 
 
@@ -51,7 +53,6 @@ class LinkResolution:
     resolution_reason: str | None = None
 
 
-
 def extract_markdown_file_observations(
     relative_path: str,
     content: str,
@@ -67,8 +68,9 @@ def extract_markdown_file_observations(
         for path, anchors in (markdown_anchors or {}).items()
     }
     frontmatter = parse_frontmatter(content)
-    headings = parse_markdown_headings(content)
-    title = next((heading.text for heading in headings if heading.level == 1), None)
+    skip_until = frontmatter.end_line if frontmatter is not None else 0
+    title = next((heading.text for heading in _iter_markdown_headings(content, skip_until=skip_until)
+                  if heading.level == 1), None)
     observations: list[RawObservation] = [
         _document_observation(
             relative_path,
@@ -88,10 +90,11 @@ def extract_markdown_file_observations(
             content,
             repository_paths=repository_paths,
             markdown_anchors=markdown_anchors,
+            skip_until=skip_until,
         )
     )
 
-    adr = _adr_metadata_observation(relative_path, content, frontmatter)
+    adr = _adr_metadata_observation(relative_path, content, frontmatter, first_heading=title)
     if adr is not None:
         observations.append(adr)
     skill = _skill_metadata_observation(relative_path, frontmatter)
@@ -197,9 +200,8 @@ def _line_structural_observations(
     *,
     repository_paths: set[str],
     markdown_anchors: dict[str, set[str]],
+    skip_until: int,
 ) -> tuple[RawObservation, ...]:
-    frontmatter = parse_frontmatter(content)
-    skip_until = frontmatter.end_line if frontmatter is not None else 0
     definitions = _link_definitions(content, skip_until=skip_until)
     observations: list[RawObservation] = []
     anchor_counts: dict[str, int] = {}
@@ -209,7 +211,7 @@ def _line_structural_observations(
     link_ordinal = 0
     fence_ordinal = 0
 
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         if line_number <= skip_until:
             continue
         fence_match = FENCE_PATTERN.match(line)
@@ -287,7 +289,7 @@ def _line_structural_observations(
             _code_fence_observation(
                 relative_path,
                 start_line=in_fence[2],
-                end_line=len(content.splitlines()) or in_fence[2],
+                end_line=line_number,
                 marker=in_fence[0] * in_fence[1],
                 info_string=in_fence[3],
                 section_anchor=in_fence[4],
@@ -565,6 +567,8 @@ def _adr_metadata_observation(
     relative_path: str,
     content: str,
     frontmatter: FrontmatterInfo | None,
+    *,
+    first_heading: str | None,
 ) -> RawObservation | None:
     path = PurePosixPath(relative_path)
     if len(path.parts) < 3 or path.parts[0] != "docs" or path.parts[1] != "adr":
@@ -573,10 +577,6 @@ def _adr_metadata_observation(
     if match is None:
         return None
     number = match.group("number")
-    first_heading = next(
-        (heading.text for heading in parse_markdown_headings(content) if heading.level == 1),
-        None,
-    )
     title = _adr_title_from_heading(first_heading) or match.group("slug").replace("-", " ")
     metadata: dict[str, Any] = {
         "adr_number": number,
@@ -641,7 +641,7 @@ def _skill_metadata_observation(
 def _link_definitions(content: str, *, skip_until: int) -> dict[str, str]:
     definitions: dict[str, str] = {}
     in_fence: tuple[str, int] | None = None
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         if line_number <= skip_until:
             continue
         fence_match = FENCE_PATTERN.match(line)
@@ -750,14 +750,14 @@ def _adr_title_from_heading(heading: str | None) -> str | None:
 
 
 def _section_value(content: str, heading_text: str) -> str | None:
-    lines = content.splitlines()
-    for index, line in enumerate(lines):
+    lines = iter_text_lines(content)
+    for line in lines:
         match = HEADING_PATTERN.match(line)
         if match is None:
             continue
         if _strip_closing_heading_marks(match.group("text")).lower() != heading_text.lower():
             continue
-        for following in lines[index + 1 :]:
+        for following in lines:
             if HEADING_PATTERN.match(following):
                 return None
             stripped = following.strip()

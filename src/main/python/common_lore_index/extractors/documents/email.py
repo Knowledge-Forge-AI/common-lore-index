@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
+from itertools import islice
 from email import policy
 from email.parser import BytesParser
 from email.utils import getaddresses
@@ -148,7 +150,10 @@ def extract_mbox_file_observations(
         )
         return tuple(observations)
 
-    messages, has_separator = _split_mbox_messages(content)
+    spans = _mbox_message_spans(content)
+    scan_limit = None if max_messages < 0 else min(max_messages, len(content)) + 1
+    messages = list(islice(spans, scan_limit))
+    has_separator = bool(messages)
     message_count_limited = len(messages) > max_messages
     parsed_messages = messages[:max_messages]
     parse_status = "parsed" if has_separator else "malformed"
@@ -193,7 +198,7 @@ def extract_mbox_file_observations(
             )
         )
 
-    for ordinal, message_bytes in enumerate(parsed_messages, start=1):
+    for ordinal, (start, end) in enumerate(parsed_messages, start=1):
         source_id_prefix = f"{relative_path}#mbox-message:{ordinal}"
         message_context = _MessageContext(
             relative_path=relative_path,
@@ -203,7 +208,7 @@ def extract_mbox_file_observations(
             mailbox_file_key=mailbox_file_key,
             mbox_message_ordinal=ordinal,
         )
-        if len(message_bytes) > max_message_bytes:
+        if end - start > max_message_bytes:
             observations.append(
                 _parse_error(
                     message_context,
@@ -214,7 +219,7 @@ def extract_mbox_file_observations(
             )
             continue
         try:
-            message = BytesParser(policy=policy.default).parsebytes(message_bytes)
+            message = BytesParser(policy=policy.default).parsebytes(content[start:end])
         except Exception as error:  # pragma: no cover - stdlib parser is permissive.
             observations.append(
                 _parse_error(
@@ -409,31 +414,25 @@ def _mailbox_observation(
     )
 
 
-def _split_mbox_messages(content: bytes) -> tuple[list[bytes], bool]:
-    messages: list[bytes] = []
-    current: list[bytes] | None = None
-    has_separator = False
-    for line in content.splitlines(keepends=True):
-        if line.startswith(b"From "):
-            has_separator = True
-            if current is not None:
-                messages.append(b"".join(current))
-            current = []
-            continue
-        if current is not None:
-            current.append(line)
-    if current is not None:
-        messages.append(b"".join(current))
-    return messages, has_separator
+_MBOX_SEPARATOR = re.compile(rb"(?:\A|(?<=[\r\n]))From [^\r\n]*(?:\r\n|\r|\n|$)")
+
+
+def _mbox_message_spans(content: bytes) -> Iterator[tuple[int, int]]:
+    start = None
+    for separator in _MBOX_SEPARATOR.finditer(content):
+        if start is not None:
+            yield start, separator.start()
+        start = separator.end()
+    if start is not None:
+        yield start, len(content)
 
 
 def _normalize_message_id(value: str | None) -> str | None:
     if not isinstance(value, str) or not value.strip():
         return None
-    matches = MESSAGE_ID_RE.findall(value)
-    if len(matches) != 1:
-        return None
-    return matches[0].strip().lower()
+    matches = MESSAGE_ID_RE.finditer(value)
+    match = next(matches, None)
+    return match[1].strip().lower() if match is not None and next(matches, None) is None else None
 
 
 def _message_ids(value: str | None) -> list[str]:

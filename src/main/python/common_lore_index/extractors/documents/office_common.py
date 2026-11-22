@@ -8,6 +8,7 @@ from collections.abc import Iterator
 
 from common_lore_index import __version__
 from common_lore_index.extractors.documents.office_references import EXTRACTOR_NAME, URL_PATTERN
+from common_lore_index.extractors.shared.scanner import iter_text_lines as _text_lines
 from common_lore_index.observations.raw import RawObservation
 
 
@@ -78,19 +79,6 @@ def _pointer_for_slug(prefix: str, slug: str) -> str:
 def _slugify(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9_-]+", "-", value.strip().lower()).strip("-")
     return slug[:64] or "untitled"
-
-
-_LINE_BREAK = re.compile(r"\r\n|[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]")
-
-
-def _text_lines(content: str) -> Iterator[str]:
-    """Match splitlines() without retaining the list or a final empty line."""
-    start = 0
-    for boundary in _LINE_BREAK.finditer(content):
-        yield content[start:boundary.start()]
-        start = boundary.end()
-    if start < len(content):
-        yield content[start:]
 
 
 def _latex_lines(content: str) -> Iterator[str]:

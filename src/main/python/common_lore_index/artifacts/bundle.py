@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass, replace
 import hashlib
+from io import BytesIO
 from types import MappingProxyType
 from typing import ClassVar, Mapping, Sequence, cast
 
@@ -109,15 +111,28 @@ class PublicationBundle:
         return header
 
     def canonical_bytes(self) -> bytes:
-        frames = [canonical_json(self.header_mapping())]
-        frames.extend(_family_frames(self.families))
-        frames.append(canonical_json(self._trailer_mapping()))
-        if any(len(frame) > MAX_BUNDLE_LINE_BYTES for frame in frames):
-            raise ValueError("publication bundle line bounds exceeded")
-        data = b"".join(frames)
-        if len(data) > MAX_BUNDLE_BYTES:
+        with BytesIO() as output:
+            for frame in self._canonical_frames():
+                output.write(frame)
+            return output.getvalue()
+
+    def _canonical_frames(self) -> Iterator[bytes]:
+        frames = _bundle_frames(self)
+        size = 0
+        for frame in frames:
+            if len(frame) > MAX_BUNDLE_LINE_BYTES:
+                raise ValueError("publication bundle line bounds exceeded")
+            size += len(frame)
+            if size <= MAX_BUNDLE_BYTES:
+                yield frame
+        if size > MAX_BUNDLE_BYTES:
             raise ValueError("publication bundle byte bounds exceeded")
-        return data
+
+    def _canonical_identifier(self) -> str:
+        digest = hashlib.sha256(b"repomap-publication-bundle-v1\x00")
+        for frame in self._canonical_frames():
+            digest.update(frame)
+        return "bundle1:" + digest.hexdigest()
 
     def _trailer_mapping(self) -> dict[str, object]:
         return {
@@ -174,25 +189,13 @@ class PublicationBundle:
             raise ValueError("bundle terminal completeness is invalid")
         if set(families) != set(PUBLICATION_FAMILIES):
             raise ValueError("publication bundle family inventory is invalid")
-        normalized: dict[StageFamily, tuple[dict[str, object], ...]] = {}
-        count = 0
-        for family in PUBLICATION_FAMILIES:
-            rows = tuple(dict(item) for item in families[family])
-            ordered = tuple(sorted(rows, key=canonical_json))
-            count += len(ordered)
-            normalized[family] = ordered
-        if count > MAX_BUNDLE_RECORDS:
+        if sum(len(families[family]) for family in PUBLICATION_FAMILIES) > MAX_BUNDLE_RECORDS:
             raise ValueError("publication bundle record bounds exceeded")
-        family_frames = _family_frame_groups(normalized)
-        summaries = tuple(
-            FamilySummary(
-                family,
-                len(normalized[family]),
-                len(family_frames[family]),
-                "sha256:" + hashlib.sha256(family_frames[family]).hexdigest(),
-            )
+        normalized = {
+            family: tuple(sorted((dict(row) for row in families[family]), key=canonical_json))
             for family in PUBLICATION_FAMILIES
-        )
+        }
+        summaries = tuple(_family_summary(family, normalized[family]) for family in PUBLICATION_FAMILIES)
         value = cls(
             request_id, job_id, attempt, graph_id, candidate_id,
             snapshot_manifest_id, tuple(snapshot_vector), source_generation,
@@ -203,23 +206,20 @@ class PublicationBundle:
             MappingProxyType(normalized), summaries,
             terminal_complete, schema_version, "",
         )
-        data = value.canonical_bytes()
-        return replace(
-            value,
-            bundle_id=prefixed_digest(
-                "bundle1:", b"repomap-publication-bundle-v1", data
-            ),
-        )
+        return replace(value, bundle_id=value._canonical_identifier())
 
     @classmethod
     def from_bytes(cls, data: bytes) -> "PublicationBundle":
         if not isinstance(data, bytes) or len(data) > MAX_BUNDLE_BYTES or not data.endswith(b"\n"):
             raise ValueError("publication bundle framing is invalid")
-        lines = data.splitlines(keepends=True)
-        if len(lines) < 2 or any(len(line) > MAX_BUNDLE_LINE_BYTES for line in lines):
+        header_end = data.find(b"\n") + 1
+        trailer_start = data.rfind(b"\n", 0, len(data) - 1) + 1
+        if trailer_start < header_end or any(
+            end - start > MAX_BUNDLE_LINE_BYTES for start, end in _line_offsets(data, 0, len(data))
+        ):
             raise ValueError("publication bundle framing is invalid")
-        frames = [decode_canonical_json(line) for line in lines]
-        header, trailer = frames[0], frames[-1]
+        header = decode_canonical_json(data[:header_end])
+        trailer = decode_canonical_json(data[trailer_start:])
         if header.get("frame") != "header" or trailer.get("frame") != "trailer":
             raise ValueError("publication bundle framing is invalid")
         if header.get("schema_version") != 1 or header.get("framing_version") != cls.FRAMING_VERSION:
@@ -228,7 +228,10 @@ class PublicationBundle:
             family: [] for family in PUBLICATION_FAMILIES
         }
         prior_index = -1
-        for frame in frames[1:-1]:
+        for count, (start, end) in enumerate(_line_offsets(data, header_end, trailer_start), start=1):
+            if count > MAX_BUNDLE_RECORDS:
+                raise ValueError("publication bundle record bounds exceeded")
+            frame = decode_canonical_json(data[start:end])
             if set(frame) != {"family", "frame", "record"} or frame["frame"] != "record":
                 raise ValueError("publication bundle record frame is invalid")
             family = frame["family"]
@@ -262,7 +265,7 @@ class PublicationBundle:
                 else "legacy-absent-v1"
             ),
         )
-        if trailer != value._trailer_mapping() or value.canonical_bytes() != data:
+        if trailer != value._trailer_mapping() or not _frames_match(value._canonical_frames(), data):
             raise ValueError("publication bundle summary is inconsistent")
         return value
 
@@ -292,22 +295,46 @@ class PublicationBundle:
         raise ValueError("unknown test mutation")
 
 
-def _family_frame_groups(families: Mapping[StageFamily, Sequence[Mapping[str, object]]]) -> dict[StageFamily, bytes]:
-    return {
-        family: b"".join(
-            canonical_json({"family": family, "frame": "record", "record": row})
-            for row in families[family]
-        )
-        for family in PUBLICATION_FAMILIES
-    }
+def _line_offsets(data: bytes, start: int, stop: int) -> Iterator[tuple[int, int]]:
+    while start < stop:
+        end = data.index(b"\n", start, stop) + 1
+        yield start, end
+        start = end
 
 
-def _family_frames(families: Mapping[StageFamily, Sequence[Mapping[str, object]]]) -> list[bytes]:
-    return [
-        canonical_json({"family": family, "frame": "record", "record": row})
-        for family in PUBLICATION_FAMILIES
-        for row in families[family]
-    ]
+def _frames_match(frames: Iterator[bytes], data: bytes) -> bool:
+    offset = 0
+    for frame in frames:
+        if not data.startswith(frame, offset):
+            return False
+        offset += len(frame)
+    return offset == len(data)
+
+
+def _record_frame(family: StageFamily, row: Mapping[str, object]) -> bytes:
+    return canonical_json({"family": family, "frame": "record", "record": row})
+
+
+def _family_summary(family: StageFamily, rows: Sequence[Mapping[str, object]]) -> FamilySummary:
+    digest = hashlib.sha256()
+    size = 0
+    for row in rows:
+        frame = _record_frame(family, row)
+        digest.update(frame)
+        size += len(frame)
+    return FamilySummary(family, len(rows), size, "sha256:" + digest.hexdigest())
+
+
+def _family_frames(families: Mapping[StageFamily, Sequence[Mapping[str, object]]]) -> Iterator[bytes]:
+    for family in PUBLICATION_FAMILIES:
+        for row in families[family]:
+            yield _record_frame(family, row)
+
+
+def _bundle_frames(bundle: PublicationBundle) -> Iterator[bytes]:
+    yield canonical_json(bundle.header_mapping())
+    yield from _family_frames(bundle.families)
+    yield canonical_json(bundle._trailer_mapping())
 
 
 def _validate_metadata(**values: object) -> None:

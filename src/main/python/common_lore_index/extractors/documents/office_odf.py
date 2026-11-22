@@ -22,6 +22,7 @@ from common_lore_index.extractors.documents.office_references import (
     ODF_NAMESPACES,
     ODF_SAFE_PARTS,
     _contains_secret_marker,
+    _odf_element_context,
     _odf_href_values,
     _odf_manifest_references,
     _odf_reference,
@@ -250,9 +251,7 @@ def _odf_package_metadata(
     template: bool,
 ) -> dict[str, Any]:
     total_uncompressed = sum(member.file_size for member in members)
-    skipped_parts = [
-        member.filename for member in members if member.filename not in ODF_SAFE_PARTS
-    ]
+    skipped_part_count = sum(1 for member in members if member.filename not in ODF_SAFE_PARTS)
     metadata: dict[str, Any] = {
         "format": document_format,
         "parser": PARSER_NAME,
@@ -262,7 +261,7 @@ def _odf_package_metadata(
         "package_byte_count": len(package_bytes),
         "package_part_count": len(members),
         "parsed_part_count": len(parsed_parts),
-        "skipped_part_count": len(skipped_parts),
+        "skipped_part_count": skipped_part_count,
         "total_uncompressed_bytes": total_uncompressed,
         "macro_script_ignored": True,
     }
@@ -286,19 +285,15 @@ def _extract_odf_text_document(
     repository_paths: frozenset[str] | None,
 ) -> tuple[RawObservation, ...]:
     document_key = document_file_key(relative_path)
-    parent_map = _parent_map(content_root)
-    headings = list(content_root.iter(_q("text", "h")))
-    paragraphs = [
-        paragraph
-        for paragraph in content_root.iter(_q("text", "p"))
-        if not _has_ancestor(paragraph, parent_map, _q("table", "table"))
-    ]
-    tables = list(content_root.iter(_q("table", "table")))
+    tables: list[ElementTree.Element] = []
+    paragraph_count = 0
     references: list[_Reference] = []
     observations: list[RawObservation] = []
     current_source_key = document_key
     heading_count = 0
-    for element in content_root.iter():
+    for element, within_table in _odf_element_context(content_root):
+        if element.tag == _q("table", "table"):
+            tables.append(element)
         if element.tag == _q("text", "h"):
             heading_count += 1
             heading = _element_text(element)
@@ -327,6 +322,7 @@ def _extract_odf_text_document(
                 )
             )
         elif element.tag == _q("text", "p"):
+            paragraph_count += not within_table
             for href in _odf_href_values(element):
                 references.append(
                     _odf_reference(
@@ -359,8 +355,8 @@ def _extract_odf_text_document(
     )
     metadata = {
         **package_metadata,
-        "paragraph_count": len(paragraphs),
-        "heading_count": len(headings),
+        "paragraph_count": paragraph_count,
+        "heading_count": heading_count,
         "table_count": len(tables),
         "sheet_count": 0,
         "reference_count": len(references),
@@ -412,25 +408,20 @@ def _extract_odf_spreadsheet(
         repository_paths=repository_paths,
     )
     references.extend(table_references)
-    row_counts = [
-        observation.metadata.get("row_count", 0)
-        for observation in table_observations
-        if observation.kind == "document.odf_sheet"
-    ]
-    column_counts = [
-        observation.metadata.get("column_count", 0)
-        for observation in table_observations
-        if observation.kind == "document.odf_sheet"
-    ]
-    formula_count = sum(_odf_formula_count(table) for table in tables)
+    row_count = column_count = formula_count = 0
+    for observation in table_observations:
+        if observation.kind == "document.odf_sheet":
+            row_count = max(row_count, int(observation.metadata.get("row_count", 0)))
+            column_count = max(column_count, int(observation.metadata.get("column_count", 0)))
+            formula_count += int(observation.metadata.get("formula_count", 0))
     metadata = {
         **package_metadata,
         "paragraph_count": 0,
         "heading_count": 0,
         "table_count": len(tables),
         "sheet_count": len(tables),
-        "row_count_summary": max(row_counts) if row_counts else 0,
-        "column_count_summary": max(column_counts) if column_counts else 0,
+        "row_count_summary": row_count,
+        "column_count_summary": column_count,
         "reference_count": len(references),
         "formulas_evaluated": False,
         "formula_count": formula_count,
@@ -638,4 +629,4 @@ def _odf_meta_title(root: ElementTree.Element | None) -> str | None:
 def _odf_style_count(root: ElementTree.Element | None) -> int:
     if root is None:
         return 0
-    return len(list(root.iter(_q("style", "style"))))
+    return sum(1 for _ in root.iter(_q("style", "style")))

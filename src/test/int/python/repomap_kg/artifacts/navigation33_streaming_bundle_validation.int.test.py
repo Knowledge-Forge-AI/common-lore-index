@@ -15,7 +15,7 @@ from common_lore_index.artifacts._bundle_stream_encode import (
 from common_lore_index.artifacts._bundle_stream_links import DiskFamilyLinkValidator
 from common_lore_index.artifacts._bundle_stream_parse import StreamingBundleParser
 from common_lore_index.artifacts._bundle_stream_sort import BoundedExternalRowSorter
-from common_lore_index.artifacts._canonical import canonical_json, decode_canonical_json
+from common_lore_index.artifacts._canonical import canonical_json, decode_canonical_json, prefixed_digest
 from common_lore_index.artifacts.bundle import (
     MAX_BUNDLE_LINE_BYTES,
     PUBLICATION_FAMILIES,
@@ -308,6 +308,9 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
             {"canonical_key": key, "evidence_key": "proof", "stage_id": "stage-unassigned"} for key in keys
         )
         bundle = _make_bundle(families=families)
+        raw = bundle.canonical_bytes()
+        self.assertEqual(PublicationBundle.from_bytes(raw), bundle)
+        self.assertEqual(bundle.bundle_id, prefixed_digest("bundle1:", b"repomap-publication-bundle-v1", raw))
         receipt, _, _ = _make_receipt(bundle, InMemoryArtifactStore())
         expected = PublicationExpectation.from_bundle(bundle, mutating_owner_count=1)
         parsed = StreamingBundleParser().parse_and_validate(

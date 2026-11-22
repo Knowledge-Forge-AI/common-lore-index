@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import posixpath
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any
@@ -359,3 +360,18 @@ def _safe_value_summary(value: str) -> str:
 def _contains_secret_marker(value: str) -> bool:
     lowered = value.lower()
     return any(marker in lowered for marker in SECRET_PRONE_MARKERS)
+
+
+def _odf_element_context(root: ElementTree.Element) -> Iterator[tuple[ElementTree.Element, bool]]:
+    """Visit elements in document order with only their open ancestors retained."""
+    stack: list[tuple[Iterator[ElementTree.Element], bool]] = [(iter((root,)), False)]
+    table_tag = _q("table", "table")
+    while stack:
+        siblings, inside_table = stack[-1]
+        element = next(siblings, None)
+        if element is None:
+            stack.pop()
+            continue
+        yield element, inside_table
+        if len(element):
+            stack.append((iter(element), inside_table or element.tag == table_tag))

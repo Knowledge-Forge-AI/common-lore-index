@@ -126,7 +126,7 @@
         "path": "src/main/python/common_lore_index/extractors/documents/css_support.py"
       },
       {
-        "line_count": 618,
+        "line_count": 617,
         "path": "src/main/python/common_lore_index/extractors/documents/email.py"
       },
       {
@@ -142,7 +142,7 @@
         "path": "src/main/python/common_lore_index/extractors/documents/markdown.py"
       },
       {
-        "line_count": 641,
+        "line_count": 632,
         "path": "src/main/python/common_lore_index/extractors/documents/office_odf.py"
       },
       {

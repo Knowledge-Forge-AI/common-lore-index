@@ -250,8 +250,8 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
                 "limited.mbox",
                 (
                     b"From MAILER-DAEMON Tue Jun 30 12:00:00 2026\n"
-                    b"Message-ID: <limited-one@example.invalid>\n\nbody\n"
-                    b"From MAILER-DAEMON Tue Jun 30 12:01:00 2026\n"
+                    b"Message-ID: <limited-one@example.invalid>\r\n\r\nbody\r"
+                    b"From MAILER-DAEMON Tue Jun 30 12:01:00 2026\r\n"
                     b"Message-ID: <limited-two@example.invalid>\n\nbody\n"
                 ),
                 max_messages=1,

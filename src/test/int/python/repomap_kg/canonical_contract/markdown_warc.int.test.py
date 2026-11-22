@@ -53,7 +53,7 @@ class CanonicalMarkdownWarcIntegrationTests(unittest.TestCase):
             "docs/guide.md",
             (
                 "---\n"
-                "title: Docs\n"
+                "title: Docs\r\n"
                 "---\n"
                 "# Guide\n"
                 "## Usage\n"
@@ -66,7 +66,7 @@ class CanonicalMarkdownWarcIntegrationTests(unittest.TestCase):
                 "\n"
                 "[ref]: #usage-1 \"title\"\n"
                 "```sh\n"
-                "echo not executed\n"
+                "echo not executed\u2028more\n"
             ),
             repository_paths={"docs/guide.md", "assets/logo.png"},
             markdown_anchors={"docs/guide.md": {"guide", "usage", "details", "usage-1"}},
@@ -83,6 +83,7 @@ class CanonicalMarkdownWarcIntegrationTests(unittest.TestCase):
         self.assertEqual(headings[2].metadata["parent_anchor"], "usage")
         self.assertEqual(headings[3].metadata["parent_anchor"], "guide")
         self.assertFalse(fences[0].metadata["closed"])
+        self.assertEqual(fences[0].end_line, 14)
         self.assertEqual(
             {item.target for item in links},
             {

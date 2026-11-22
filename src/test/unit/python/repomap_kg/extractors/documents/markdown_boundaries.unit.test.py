@@ -121,6 +121,29 @@ Here is a link with valid escape: [escaped](file%20name.md).
         fm = parse_frontmatter("---\nkey: scalar\n- item\n---\n")
         self.assertIsNotNone(fm)
 
+    def test_streamed_markdown_preserves_frontmatter_anchors_and_adr_precedence(self):
+        from common_lore_index.extractors.documents.markdown_structure import (
+            markdown_anchors_for_content, parse_frontmatter, parse_markdown_headings,
+        )
+
+        source = (
+            "---\r\nStatus: accepted\n---\u2028# ADR 0001: Example\r"
+            "[ref]: #topic\n## Topic\n[Jump][ref]\n## Date\n2026-11-22\n```\n## Hidden"
+        )
+        frontmatter = parse_frontmatter(source)
+        assert frontmatter is not None and frontmatter.end_line == 3
+        headings = parse_markdown_headings(source)
+        assert [h.line_number for h in headings] == [4, 6, 8]
+        assert markdown_anchors_for_content(source) == {h.anchor for h in headings}
+        rows = extract_markdown_file_observations(
+            "docs/adr/0001-example.md", source, markdown_anchors={"docs/adr/0001-example.md": {"topic"}},
+        )
+        adr, = [row for row in rows if row.kind == "markdown.adr_metadata"]
+        assert adr.metadata["title"] == "Example"
+        assert adr.metadata["date"] == "2026-11-22"
+        fence, = [row for row in rows if row.kind == "markdown.code_fence"]
+        assert fence.end_line == 11 and fence.metadata["closed"] is False
+
 
 if __name__ == "__main__":
     unittest.main()

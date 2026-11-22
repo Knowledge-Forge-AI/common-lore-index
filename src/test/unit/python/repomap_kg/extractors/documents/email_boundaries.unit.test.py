@@ -160,6 +160,17 @@ class EmailExtractorBoundariesUnitTests(unittest.TestCase):
         self.assertNotIn("fallback private subject", payload)
         self.assertNotIn("fallback body", payload)
 
+    def test_mbox_spans_and_count_cap_handle_mixed_and_empty_records(self):
+        from common_lore_index.extractors.documents.email import _mbox_message_spans
+
+        content = b"preamble\rFrom first\r\nFirst body\rFrom second\nFrom third"
+        spans = list(_mbox_message_spans(content))
+        assert [content[start:end] for start, end in spans] == [b"First body\r", b"", b""]
+        for count in (0, 1, -1):
+            rows = extract_mbox_file_observations("fixture.mbox", content, max_messages=count, max_message_bytes=1)
+            assert rows[0].metadata["mailbox_message_count"] == (2 if count == -1 else count)
+            assert rows[0].metadata["mailbox_limit_reason"] == "message-count-limit"
+
 
 if __name__ == "__main__":
     unittest.main()

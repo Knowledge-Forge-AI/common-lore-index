@@ -287,7 +287,9 @@ Read https://example.com/docs.
                 (fixture / "dangerous.odt").read_bytes(),
             ),
         )
-
+        sheet = next(row for row in observations if row.kind == "document.odf_sheet" and row.path == "spreadsheet.ods")
+        document = next(row for row in observations if row.kind == "document.odf_document" and row.path == sheet.path)
+        self.assertEqual(document.metadata["formula_count"], sheet.metadata["formula_count"])
         result = canonicalize_observations(observations)
         payload = result.to_dict()
 
