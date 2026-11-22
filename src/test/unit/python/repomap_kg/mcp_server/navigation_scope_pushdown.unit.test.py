@@ -16,6 +16,7 @@ from common_lore_index.storage.sqlite_local import navigation_queries as queries
 from common_lore_index.storage.sqlite_local.connection import read_transaction
 from repomap_test_support.navigation_pushdown_fixtures import add_alternatives, fixture_oracle, pushdown_home
 from repomap_test_support.navigation_search_fixtures import BINDING, GRAPH
+from repomap_test_support.sqlite_local_fixtures import local_binding
 
 
 def call(**options):
@@ -150,6 +151,23 @@ def test_admission_exhaustion_cannot_claim_empty_and_unregisters_predicate(tmp_p
         with pytest.raises(sqlite3.OperationalError):
             connection.execute("SELECT repomap_navigation_admits(2, '', '{}', '[]')").fetchall()
     assert call(source_path_prefix="docs/missing")["status"] == "ok"
+
+
+def test_evidence_overflow_transfers_only_a_narrow_sentinel(tmp_path, monkeypatch):
+    _, database = pushdown_home(tmp_path, noise=4)
+    monkeypatch.setattr(queries, "EVIDENCE_SCAN_LIMIT", 2)
+    transferred = []
+
+    def observe(cursor, row):
+        if cursor.description[-1][0] == "overflow":
+            transferred.append(row)
+        return row
+
+    with read_transaction(database, local_binding(GRAPH)) as connection:
+        connection.row_factory = observe
+        scan = queries.navigation_candidates(connection, NavigationSearchQuery("needle"))
+    assert scan["reason"] == "evidence_scan_limit" and scan["scan"]["evidence"] == 2
+    assert scan["nodes"] == [] and transferred == [(None,) * 21 + (1,)]
 
 
 def test_small_pages_group_after_admission_agree_with_independent_oracle(tmp_path, monkeypatch):

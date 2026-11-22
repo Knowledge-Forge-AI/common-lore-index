@@ -347,3 +347,32 @@ def test_node_location_pages_decode_only_selected_and_historical_results(
     assert decoded_runs == [3, 2]
     assert page["location_scope"] == "accepted_run" and page["location_run_id"] == 3
     assert page["has_more"] and page["historical_has_more"]
+
+
+def test_node_location_reuses_vector_across_adjacent_rows(tmp_path, monkeypatch) -> None:
+    from itertools import groupby
+
+    from common_lore_index.storage.node_locations import NodeLocationsQuery
+    from common_lore_index.storage.sqlite_local import node_location_queries
+    from repomap_test_support.sqlite_local_fixtures import local_binding
+
+    _, database = locator_home(tmp_path)
+    publish_locator_generation(database, 2, start_line=40, alternatives=True)
+    original = json.loads
+    queried_vectors = []
+
+    def observe(raw):
+        value = original(raw)
+        if isinstance(value, list) and value and isinstance(value[0], list):
+            queried_vectors.append(raw)
+        return value
+
+    monkeypatch.setattr(node_location_queries.json, "loads", observe)
+    with read_transaction(database, local_binding(GRAPH)) as connection:
+        vectors = dict(connection.execute("SELECT id, snapshot_vector_json FROM runs"))
+        page = node_location_queries.node_locations(
+            connection, NodeLocationsQuery(canonical_key=SYMBOL, limit=5),
+        )
+    assert len(page["locations"]) > 1 and page["historical_locations"]
+    raw = [vectors[loc["run_id"]] for loc in page["locations"] + page["historical_locations"]]
+    assert queried_vectors == [vector for vector, _ in groupby(raw)]

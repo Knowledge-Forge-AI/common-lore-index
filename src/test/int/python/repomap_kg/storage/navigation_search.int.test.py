@@ -11,7 +11,9 @@ from typing import Any
 import pytest
 
 from common_lore_index.graph.keys import file_key
-from common_lore_index.storage.navigation_search import EVIDENCE_SCAN_LIMIT
+from common_lore_index.storage.navigation_search import EVIDENCE_SCAN_LIMIT, NavigationSearchQuery
+from common_lore_index.storage.sqlite_local.connection import read_transaction
+from common_lore_index.storage.sqlite_local.navigation_queries import navigation_candidates
 from repomap_test_support.navigation_search_fixtures import (
     ALPHA_DOC,
     BETA_DOC,
@@ -20,6 +22,7 @@ from repomap_test_support.navigation_search_fixtures import (
     GRAPH,
     navigation_home,
 )
+from repomap_test_support.sqlite_local_fixtures import local_binding
 from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
 from repomap_test_support.navigation_pushdown_fixtures import pushdown_home
 
@@ -324,5 +327,18 @@ def test_navigation_bounded_evidence_window_with_wide_payloads_over_guarded_stdi
     assert selective["status"] == "ok" and selective["scan"]["complete"] is True
     assert selective["scan"]["nodes"] == 1 and selective["scan"]["evidence"] == 33
     assert selective["results"][0]["destination"]["source_relative_path"] == late_rel_path
+    # The storage cursor must discard the overflow before marshalling wide evidence rows.
+    transferred: list[tuple[Any, ...]] = []
+
+    def observe(cursor: sqlite3.Cursor, row: tuple[Any, ...]) -> tuple[Any, ...]:
+        if cursor.description and cursor.description[-1][0] == "overflow":
+            transferred.append(row)
+        return row
+
+    with read_transaction(database, local_binding(GRAPH)) as connection:
+        connection.row_factory = observe
+        bounded = navigation_candidates(connection, NavigationSearchQuery("Beacon", kind="doc.page"))
+    assert bounded["reason"] == "evidence_scan_limit"
+    assert transferred == [(None,) * 21 + (1,)]
     assert hashlib.sha256(database.read_bytes()).hexdigest() == before
     assert harness.forbidden_events() == [] and harness.shim_invocations() == ""

@@ -5,6 +5,7 @@ from __future__ import annotations
 import sqlite3
 import json
 from collections.abc import Callable
+from contextlib import closing
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -36,11 +37,20 @@ def candidate_predicate(query: NavigationSearchQuery) -> tuple[str, dict[str, An
     return " AND ".join(filters), params
 
 
-def evidence_sql(predicate: str, *, role_sql: str = _EVIDENCE_ROLE_SQL) -> str:
+def evidence_sql(
+    predicate: str, *, role_sql: str = _EVIDENCE_ROLE_SQL, refuse_overflow: bool = False,
+) -> str:
     # Run selection deliberately precedes role selection, just like the locator.
     # Materialize the bounded relational identity/sort window before joining wide
     # evidence metadata, run vectors, or raw observation payload hashes; post-limit
     # runs parity relies on schema FK canonical_evidence.run_id -> runs(id).
+    window_state, source, join, overflow = "", "bounded", "CROSS JOIN", ""
+    if refuse_overflow:
+        # Keep a single narrow sentinel on empty or overflow. No wide rows are joined.
+        window_state = ", window_state AS (SELECT count(*) = :evidence_fetch AS overflow FROM bounded)"
+        source = "window_state LEFT JOIN bounded ON NOT window_state.overflow"
+        join = "LEFT JOIN"
+        overflow = ", window_state.overflow"
     return f"""WITH selected AS (
         SELECT subject.id AS node_id,
                coalesce(max(CASE WHEN e.run_id = :accepted THEN e.run_id END), max(e.run_id)) AS run_id
@@ -66,7 +76,7 @@ def evidence_sql(predicate: str, *, role_sql: str = _EVIDENCE_ROLE_SQL) -> str:
         WHERE ({role_sql}) = 'direct'
         ORDER BY subject.canonical_key, e.raw_observation_ordinal, e.evidence_key, link.link_kind
         LIMIT :evidence_fetch
-    )
+    ){window_state}
     SELECT bounded.evidence_key AS evidence_key,
            bounded.link_kind AS link_kind,
            bounded.run_id AS run_id,
@@ -75,10 +85,10 @@ def evidence_sql(predicate: str, *, role_sql: str = _EVIDENCE_ROLE_SQL) -> str:
            e.extractor, e.extractor_version, e.confidence, e.metadata_json,
            r.publication_bundle_id, r.snapshot_manifest_id, r.extraction_receipt_id,
            r.graph_candidate_id, r.snapshot_vector_json,
-           bounded.evidence_role, bounded.node_id AS id
-    FROM bounded
-    CROSS JOIN canonical_evidence e ON e.id = bounded.evidence_id
-    CROSS JOIN runs r ON r.id = bounded.run_id
+           bounded.evidence_role, bounded.node_id AS id{overflow}
+    FROM {source}
+    {join} canonical_evidence e ON e.id = bounded.evidence_id
+    {join} runs r ON r.id = bounded.run_id
     LEFT JOIN raw_observations raw
       ON raw.run_id = bounded.run_id AND raw.ordinal = bounded.raw_observation_ordinal
     ORDER BY bounded.canonical_key, bounded.raw_observation_ordinal,
@@ -189,12 +199,13 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
     try:
         if admission is not None:
             connection.create_function("repomap_navigation_admits", 4, admission.matches)
-        rows = connection.execute(
+        with closing(connection.execute(
             "SELECT subject.id, subject.canonical_key, subject.kind, subject.display_name, "
             "subject.first_seen_run_id, subject.last_seen_run_id FROM canonical_nodes subject WHERE "
             + predicate + " ORDER BY subject.canonical_key LIMIT :node_fetch",
             {**params, "accepted": accepted.run_id, "node_fetch": NODE_SCAN_LIMIT + 1},
-        ).fetchall()
+        )) as candidates:
+            rows = candidates.fetchall()
     except sqlite3.OperationalError:
         if admission is not None and admission.error is not None:
             raise admission.error from None
@@ -220,27 +231,28 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
     # The trusted integer ID set is at most NODE_SCAN_LIMIT, independent of
     # SQLite's bound-variable ceiling. Admit subjects, never prune alternatives.
     evidence_predicate = "subject.id IN (" + ",".join(str(int(row[0])) for row in rows) + ")" if rows else "0"
-    evidence = connection.execute(evidence_sql(evidence_predicate, role_sql=role_sql), {
-        **params, "accepted": accepted.run_id, "evidence_fetch": EVIDENCE_SCAN_LIMIT + 1,
-    }).fetchall()
-    result["scan"]["evidence"] = min(len(evidence), EVIDENCE_SCAN_LIMIT)
-    if len(evidence) > EVIDENCE_SCAN_LIMIT:
-        return {**result, "status": "incomplete", "reason": "evidence_scan_limit"}
     nodes = {row[0]: {"canonical_key": row[1], "kind": row[2], "display_name": row[3],
                       "first_seen_run_id": row[4], "last_seen_run_id": row[5], "locations": []}
              for row in rows}
     vectors = dict(admission.vectors) if admission is not None else {}
-    for row in evidence:
-        vector = (
-            vectors[row[2]] if row[2] in vectors
-            else vectors.setdefault(row[2], json.loads(row[18])) if read_context_vector is None
-            else None
-        )
-        location = _direct_location(
-            row[:20], accepted.run_id, snapshot_vector=vector,
-            read_context_vector=read_context_vector,
-        )
-        nodes[row[20]]["locations"].append(location)
+    sql = evidence_sql(evidence_predicate, role_sql=role_sql, refuse_overflow=True)
+    with closing(connection.execute(sql, {
+        **params, "accepted": accepted.run_id, "evidence_fetch": EVIDENCE_SCAN_LIMIT + 1,
+    })) as evidence:
+        for row in evidence:
+            if row[21]:
+                result["scan"]["evidence"] = EVIDENCE_SCAN_LIMIT
+                return {**result, "status": "incomplete", "reason": "evidence_scan_limit"}
+            if row[20] is None:
+                break
+            if read_context_vector is None and row[2] not in vectors:
+                vectors[row[2]] = json.loads(row[18])
+            location = _direct_location(
+                row[:20], accepted.run_id, snapshot_vector=vectors.get(row[2]),
+                read_context_vector=read_context_vector,
+            )
+            nodes[row[20]]["locations"].append(location)
+            result["scan"]["evidence"] += 1
     result["nodes"] = list(nodes.values())
     result["scan"]["complete"] = True
     return result

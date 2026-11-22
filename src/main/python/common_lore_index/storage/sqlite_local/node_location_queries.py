@@ -65,18 +65,20 @@ def node_locations(
         else "SELECT id, metadata_json, first_seen_run_id, last_seen_run_id "
         "FROM canonical_nodes WHERE graph_key_version = 1 AND canonical_key = ?"
     )
-    node = connection.execute(node_sql, (query.canonical_key,)).fetchone()
+    with closing(connection.execute(node_sql, (query.canonical_key,))) as nodes:
+        node = nodes.fetchone()
     if node is None:
         return unavailable("node_not_found")
-    selected = connection.execute(
+    with closing(connection.execute(
         "SELECT COALESCE(MAX(CASE WHEN e.run_id = ? THEN e.run_id END), MAX(e.run_id)) "
         "FROM canonical_node_evidence link "
         "JOIN canonical_evidence e ON e.id = link.canonical_evidence_id "
         "WHERE link.canonical_node_id = ? AND e.graph_key_version = 1",
         (accepted.run_id, node[0]),
-    ).fetchone()
+    )) as runs:
+        selected = runs.fetchone()
     location_run_id = selected[0] if selected else None
-    read_context_vector = _context_vector_reader() if context_identity else None
+    read_context_vector = _context_vector_reader() if context_identity else _cached_vector_reader(json.loads)
     locations, has_more = _evidence_window(
         connection, node[0], location_run_id, query, historical=False, role_sql=role_sql,
         accepted_run_id=accepted.run_id, read_context_vector=read_context_vector,
@@ -119,27 +121,37 @@ def _evidence_window(
         return [], False
     relation = "<>" if historical else "="
     filtered = query.evidence_role != "all"
-    role_column = f", {role_sql}" if filtered else ""
+    role_column = ", bounded.evidence_role" if filtered else ""
+    projected_role = f", {role_sql} AS evidence_role" if filtered else ""
     role_predicate = f"AND ({role_sql}) = ? " if filtered else ""
     parameters = (node_id, run_id, query.evidence_role, query.limit + 1) if filtered else (
         node_id, run_id, query.limit + 1,
     )
     with closing(connection.execute(
-        "SELECT e.evidence_key, link.link_kind, e.run_id, e.raw_observation_ordinal, "
-        "raw.payload_hash, e.raw_kind, e.raw_source_id, e.path, e.start_line, e.end_line, "
-        "e.extractor, e.extractor_version, e.confidence, e.metadata_json, "
-        "r.publication_bundle_id, r.snapshot_manifest_id, r.extraction_receipt_id, "
-        f"r.graph_candidate_id, r.snapshot_vector_json{role_column} "
-        "FROM canonical_node_evidence link "
-        "JOIN canonical_nodes subject ON subject.id = link.canonical_node_id "
-        "JOIN canonical_evidence e ON e.id = link.canonical_evidence_id "
-        "LEFT JOIN raw_observations raw ON raw.run_id = e.run_id "
-        "AND raw.ordinal = e.raw_observation_ordinal "
-        "JOIN runs r ON r.id = e.run_id "
-        f"WHERE link.canonical_node_id = ? AND e.graph_key_version = 1 AND e.run_id {relation} ? "
-        f"{role_predicate}"
-        "ORDER BY e.run_id DESC, e.raw_observation_ordinal, e.evidence_key, link.link_kind "
-        "LIMIT ?", parameters,
+        f"""WITH bounded AS MATERIALIZED (
+            SELECT e.id AS evidence_id, e.run_id, e.raw_observation_ordinal,
+                   e.evidence_key, link.link_kind{projected_role}
+            FROM canonical_node_evidence link
+            JOIN canonical_nodes subject ON subject.id = link.canonical_node_id
+            JOIN canonical_evidence e ON e.id = link.canonical_evidence_id
+            JOIN runs r ON r.id = e.run_id
+            WHERE link.canonical_node_id = ? AND e.graph_key_version = 1 AND e.run_id {relation} ?
+            {role_predicate}
+            ORDER BY e.run_id DESC, e.raw_observation_ordinal, e.evidence_key, link.link_kind
+            LIMIT ?
+        )
+        SELECT bounded.evidence_key, bounded.link_kind, bounded.run_id, bounded.raw_observation_ordinal,
+               raw.payload_hash, e.raw_kind, e.raw_source_id, e.path, e.start_line, e.end_line,
+               e.extractor, e.extractor_version, e.confidence, e.metadata_json,
+               r.publication_bundle_id, r.snapshot_manifest_id, r.extraction_receipt_id,
+               r.graph_candidate_id, r.snapshot_vector_json{role_column}
+        FROM bounded
+        CROSS JOIN canonical_evidence e ON e.id = bounded.evidence_id
+        CROSS JOIN runs r ON r.id = bounded.run_id
+        LEFT JOIN raw_observations raw
+          ON raw.run_id = bounded.run_id AND raw.ordinal = bounded.raw_observation_ordinal
+        ORDER BY bounded.run_id DESC, bounded.raw_observation_ordinal, bounded.evidence_key, bounded.link_kind""",
+        parameters,
     )) as rows:
         page = [
             _location(row, accepted_run_id, read_context_vector=read_context_vector)
@@ -181,14 +193,18 @@ def _parse_context_snapshot_vector(raw_vector: Any) -> list[list[Any]]:
 ContextVectorReader = Callable[[Any], list[list[Any]]]
 
 
-def _context_vector_reader() -> ContextVectorReader:
-    """Reuse one validated persisted JSON vector within the current read."""
-    read_cached = lru_cache(maxsize=1)(_parse_context_snapshot_vector)
+def _cached_vector_reader(decode: ContextVectorReader) -> ContextVectorReader:
+    """Retain only the most recent persisted vector within the current read."""
+    read_cached = lru_cache(maxsize=1)(decode)
 
     def read(raw: Any) -> list[list[Any]]:
-        return read_cached(raw) if isinstance(raw, str) else _parse_context_snapshot_vector(raw)
+        return read_cached(raw) if isinstance(raw, str) else decode(raw)
 
     return read
+
+
+def _context_vector_reader() -> ContextVectorReader:
+    return _cached_vector_reader(_parse_context_snapshot_vector)
 
 
 def _location(row: sqlite3.Row | tuple[Any, ...], accepted_run_id: int, *,
