@@ -11,6 +11,7 @@ from typing import Any
 
 import pytest
 
+from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.sqlite_local import source_feed_queries, source_queries
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
@@ -51,10 +52,15 @@ def test_selected_read_keeps_link_hydration_within_source(
             if (run_id, ordinal) in selected_keys
         }
         fetched: set[int] = set()
+        transferred: set[tuple[int, int]] = set()
 
         def observe(cursor: sqlite3.Cursor, row: tuple[Any, ...]) -> tuple[Any, ...]:
             if cursor.description and cursor.description[0][0] == "canonical_evidence_id":
                 fetched.add(int(row[0]))
+            if cursor.description and tuple(column[0] for column in cursor.description) == (
+                "run_id", "raw_observation_ordinal", "id",
+            ):
+                transferred.add((row[0], row[1]))
             return row
 
         connection.row_factory = observe
@@ -73,8 +79,45 @@ def test_selected_read_keeps_link_hydration_within_source(
                 connection, source_id=source_id, source_run_id=None, target_kind=None, limit=1
             )
             assert bool(references) == bool(selected_keys)
+        assert transferred <= selected_keys
+        assert bool(transferred) == bool(selected_ids)
         assert fetched <= selected_ids
         assert bool(fetched) == bool(selected_ids)
+
+
+def test_source_and_run_filters_precede_metadata_projection(published_feeds: Path, monkeypatch) -> None:
+    with read_transaction(published_feeds, local_binding("source-selection")) as connection:
+        all_rows = source_queries.source_observations(connection)
+        run_id = next(row.source_run_id for row in all_rows if row.source_id == RSS and row.source_run_id)
+        selected = [row for row in all_rows if row.source_id == RSS and row.source_run_id == run_id]
+        assert 0 < len(selected) < len(all_rows)
+        meta = source_queries.raw_payload.meta
+        projected = []
+
+        def observe(payload, field):
+            if field == "source_display_name":
+                projected.append((meta(payload, "source_id_configured"), meta(payload, "source_run_id")))
+            return meta(payload, field)
+
+        monkeypatch.setattr(source_queries.raw_payload, "meta", observe)
+        assert source_queries.source_observations(connection, source_id=RSS, source_run_id=run_id) == selected
+        assert projected == [(RSS, run_id)] * len(selected)
+
+
+def test_run_page_preserves_ties_and_validates_unreturned_runs(published_feeds: Path, monkeypatch) -> None:
+    with read_transaction(published_feeds, local_binding("source-selection")) as connection:
+        sample = source_queries.source_observations(connection, source_id=RSS)[0]
+        dated = replace(sample, source_run_id="b", acquired_at="2026-02-01T00:00:00Z")
+        undated = replace(sample, source_run_id="z", acquired_at=None)
+        rows = [replace(dated, source_run_id="a"), undated, dated]
+        monkeypatch.setattr(source_queries, "_iter_source_observations", lambda *_: iter(rows))
+
+        page = source_queries.source_runs(connection, source_id=RSS, limit=2)
+        assert [row.source_run_id for row in page] == ["b", "a"]
+        assert source_queries.source_runs(connection, source_id=RSS, limit=1) == page[:1]
+        rows[1] = replace(undated, artifact_bytes="12x")
+        with pytest.raises(StorageSchemaError, match="not a valid integer"):
+            source_queries.source_runs(connection, source_id=RSS, limit=1)
 
 
 def test_reference_projection_only_reads_metadata_for_the_page(
@@ -139,12 +182,35 @@ def test_evidence_batches_keep_exact_keys_and_per_key_link_order() -> None:
         assert source_queries.edge_links(connection, ()) == {}
         assert not statements
         keys = [(1, i) for i in range(1, 502)]
-        selected = source_queries.evidence_ids(connection, keys)
+        selected = source_queries.evidence_ids(connection, [*reversed(keys), keys[0]])
         assert set(selected) == set(keys) and selected[(1, 1)] == [1, 600]
-        assert all("ORDER BY" not in sql for sql in statements if "FROM canonical_evidence WHERE" in sql)
+        assert len(statements) == 1  # the large selection scans its run once
         links = source_queries.node_links(connection, (i for evidence in selected.values() for i in evidence))
         assert set(links) == {*range(1, 502), 600}
         assert all(len(nodes) == 1 and nodes[0].kind == "feed.item" for nodes in links.values())
+
+
+def test_sparse_evidence_uses_bounded_exact_pairs_across_runs() -> None:
+    with closing(sqlite3.connect(":memory:")) as connection:
+        connection.execute("CREATE TABLE canonical_evidence(id INTEGER PRIMARY KEY, run_id, raw_observation_ordinal)")
+        connection.execute("CREATE INDEX evidence_run ON canonical_evidence(run_id)")
+        connection.executemany(
+            "INSERT INTO canonical_evidence VALUES (?, ?, ?)",
+            ((run_id * 1000 + ordinal, run_id, ordinal) for run_id in range(1, 4) for ordinal in range(300)),
+        )
+        connection.setlimit(sqlite3.SQLITE_LIMIT_VARIABLE_NUMBER, 500)
+        keys = [(run_id, ordinal) for run_id in range(1, 4) for ordinal in range(200)]
+        fetched = []
+
+        def observe(_cursor, row):
+            fetched.append(row[:2])
+            return row
+
+        connection.row_factory = observe
+        evidence = source_queries.evidence_ids(connection, [*keys, keys[0], (9, 9)])
+        assert set(evidence) == set(keys)
+        assert sorted(fetched) == sorted(keys)
+
 
 
 def test_feed_node_batches_stream_in_global_tie_order() -> None:

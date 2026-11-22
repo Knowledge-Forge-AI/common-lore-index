@@ -286,10 +286,7 @@ def test_unpublished_graph_refuses_every_operation(tmp_path: Path) -> None:
             source_queries.ingested_sources(connection, source_type=None, policy_status=None, limit=0)
 
 
-def test_ordering_and_default_helpers() -> None:
-    rows = [("a", None), ("b", "2"), ("c", "10"), ("d", "2"), ("e", None)]
-    ordered = source_queries.desc_nulls_last(rows, lambda row: row[1])
-    assert [row[0] for row in ordered] == ["b", "d", "c", "a", "e"]  # text DESC, stable ties, NULLs last
+def test_aggregate_and_default_helpers() -> None:
     assert [source_queries.not_fetched(value) for value in (None, "true", "off", "Y", "0")] == [
         True, True, False, True, False]
     with pytest.raises(StorageSchemaError):

@@ -117,10 +117,7 @@ def source_feed_items(
 ) -> tuple[SourceFeedItemRecord, ...]:
     safe_limit = positive_limit(limit)
     require_accepted_publication(connection)
-    group = [
-        item for item in source_observations(connection)
-        if item.source_id == source_id and (source_run_id is None or item.source_run_id == source_run_id)
-    ]
+    group = source_observations(connection, source_id=source_id, source_run_id=source_run_id)
     if not group:
         return ()
     evidence = evidence_ids(connection, (item.key for item in group))
@@ -171,10 +168,7 @@ def source_references(
 ) -> tuple[SourceReferenceRecord, ...]:
     safe_limit = positive_limit(limit)
     require_accepted_publication(connection)
-    group = [
-        item for item in source_observations(connection)
-        if item.source_id == source_id and (source_run_id is None or item.source_run_id == source_run_id)
-    ]
+    group = source_observations(connection, source_id=source_id, source_run_id=source_run_id)
     if not group:
         return ()
     evidence = evidence_ids(connection, (item.key for item in group))
@@ -325,10 +319,7 @@ def source_feed_item_explanation(
     connection: sqlite3.Connection, *, item_key: str, source_id: str | None
 ) -> dict[str, Any]:
     require_accepted_publication(connection)
-    observations = [
-        item for item in source_observations(connection)
-        if source_id is None or item.source_id == source_id
-    ]
+    observations = source_observations(connection, source_id=source_id)
     selected = {item.key for item in observations}
     source = _latest_source(observations)
     item, evidence = _selected_item_and_evidence(connection, item_key, selected)

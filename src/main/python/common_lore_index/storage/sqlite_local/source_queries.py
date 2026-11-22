@@ -1,37 +1,19 @@
-"""Source/feed read operations over one accepted SQLite Local graph.
+"""Read accepted SQLite Local source records using the Server projection contract.
 
-The SQLite form of the six maintained PostgreSQL source readback owners
-(``storage.source_readback`` over ``storage.sql_sources``). Nothing new is
-persisted for them: every field is reconstructed from the accepted
-publication's ``raw_observations`` payload metadata and the canonical
-node/edge/evidence tables, joined by the raw ``(run_id, ordinal)`` identity
-that PostgreSQL stores as ``canonical_evidence.raw_observation_id``.
-
-Each function runs inside the caller's :func:`read_transaction`, binds its
-parameters, and returns what the PostgreSQL owner returns: records decoded
-through the maintained ``*_from_storage_payload`` decoders, or the explanation
-object. Stored JSON is read with the PostgreSQL ``->``/``->>`` meaning
-(``storage.sqlite_local.raw_payload``); no SQLite JSON function is used.
-
-Exact PostgreSQL semantics kept here: WHERE filters before grouping;
-``COUNT(*)`` over the LEFT JOIN fan-out (observation x evidence x node link
-[x edge link]); ``MIN``/``MAX`` ignore NULL and compare text in C byte order;
-the run byte length and HTTP status compare as ``bigint``/``int`` and refuse
-values those casts reject; ``DESC NULLS LAST``; ``json_agg(DISTINCT ...)`` is
-sorted; ``duplicate_identity`` defaults to false and ``not_fetched`` to true.
-Where PostgreSQL leaves an order unspecified among tied rows, SQLite breaks
-the tie deterministically (raw ``(run_id, ordinal)``, then link identity; the
-explanation source by source id). ``source_id_configured`` pre-filters the raw
-scan before exact decoding, and scoped reads hydrate evidence/links only for
-the selected ``(run_id, ordinal)`` keys in bounded batches.
+SQLite decodes stored JSON without a JSON SQL extension, counts LEFT JOIN
+fan-out, validates PostgreSQL integer casts, and keeps NULLs last in descending
+order. Raw and link keys break otherwise unspecified ties.
 """
 
 from __future__ import annotations
 
 import re
 import sqlite3
-from collections.abc import Callable, Iterable, Iterator
+from collections import Counter
+from collections.abc import Iterable, Iterator, Sequence
+from contextlib import closing
 from dataclasses import dataclass
+from heapq import nlargest
 from itertools import batched
 from typing import Any, NamedTuple, TypeVar
 
@@ -48,7 +30,6 @@ from common_lore_index.storage.sql_core import positive_limit
 from common_lore_index.storage.sqlite_local import raw_payload
 from common_lore_index.storage.sqlite_local.queries import require_accepted_publication
 
-T = TypeVar("T")
 Ordered = TypeVar("Ordered", str, int)
 RawKey = tuple[int, int]
 
@@ -99,26 +80,35 @@ class _Edge(NamedTuple):
     metadata: Any
 
 
-def source_observations(connection: sqlite3.Connection) -> list[SourceObservation]:
-    rows = connection.execute(
+def source_observations(connection: sqlite3.Connection, *, source_id: str | None = None,
+                        source_run_id: str | None = None) -> list[SourceObservation]:
+    return list(_iter_source_observations(connection, source_id, source_run_id))
+
+
+def _iter_source_observations(connection: sqlite3.Connection, source_id: str | None = None,
+                              source_run_id: str | None = None) -> Iterator[SourceObservation]:
+    with closing(connection.execute(
         "SELECT run_id, ordinal, kind, payload_json FROM raw_observations raw "
-        f"WHERE {_SOURCE_RAW} ORDER BY run_id, ordinal",
-        _MARKER,
-    )
-    found: list[SourceObservation] = []
-    for run_id, ordinal, kind, text in rows:
-        payload = raw_payload.load(text)
-        source_id = raw_payload.meta(payload, "source_id_configured")
-        if source_id is None:
-            continue
-        field = [raw_payload.meta(payload, name) for name in (
-            "source_type", "source_display_name", "source_policy_status", "source_run_id",
-            "source_artifact_id", "source_artifact_path", "source_artifact_sha256",
-            "source_artifact_bytes", "source_acquired_at", "acquisition_http_status",
-            "acquisition_content_type", "acquisition_url_summary",
-        )]
-        found.append(SourceObservation((int(run_id), int(ordinal)), kind, source_id, *field))
-    return found
+        f"WHERE {_SOURCE_RAW} ORDER BY run_id, ordinal", _MARKER,
+    )) as rows:
+        for run_id, ordinal, kind, text in rows:
+            payload = raw_payload.load(text)
+            configured_id = raw_payload.meta(payload, "source_id_configured")
+            if configured_id is None or (source_id is not None and configured_id != source_id):
+                continue
+            observed_run_id = raw_payload.meta(payload, "source_run_id")
+            if source_run_id is not None and observed_run_id != source_run_id:
+                continue
+            yield SourceObservation(
+                (int(run_id), int(ordinal)), kind, configured_id,
+                raw_payload.meta(payload, "source_type"), raw_payload.meta(payload, "source_display_name"),
+                raw_payload.meta(payload, "source_policy_status"), observed_run_id,
+                *(raw_payload.meta(payload, name) for name in (
+                    "source_artifact_id", "source_artifact_path", "source_artifact_sha256",
+                    "source_artifact_bytes", "source_acquired_at", "acquisition_http_status",
+                    "acquisition_content_type", "acquisition_url_summary",
+                )),
+            )
 
 
 def group_by(rows: Iterable[tuple[Any, ...]]) -> dict[Any, list[Any]]:
@@ -157,13 +147,31 @@ def evidence_ids(
             f"FROM canonical_evidence evidence {_RAW_JOIN} WHERE {_SOURCE_RAW} ORDER BY evidence.id"
         )
         return group_by(((r[0], r[1]), r[2]) for r in connection.execute(sql, _MARKER))
-    selected = {(int(run_id), int(ordinal)) for run_id, ordinal in keys}
-    sql = "SELECT run_id, raw_observation_ordinal, id FROM canonical_evidence WHERE run_id IN"
-    rows = _batched_in(connection, sql, (run_id for run_id, _ in selected), "")
-    matches = group_by(((int(r), int(o)), int(eid)) for r, o, eid in rows if (int(r), int(o)) in selected)
-    # Sort the matches for each key after filtering out unrelated ordinals.
+    selected = {(int(run), int(ordinal)) for run, ordinal in keys}
+    pair_limit = _ID_BATCH // 2
+    # A run with many selected keys would otherwise be scanned for every batch.
+    counts = Counter(run for run, _ in selected)
+    wide_runs = {run for run, count in counts.items() if count > pair_limit}
+    query = "SELECT run_id, raw_observation_ordinal, id FROM canonical_evidence WHERE run_id IN"
+    matches = group_by(
+        ((run, ordinal), evidence_id)
+        for run, ordinal, evidence_id in _batched_in(connection, query, wide_runs, "")
+        if (run, ordinal) in selected
+    )
     for ids in matches.values():
         ids.sort()
+    sparse = sorted(key for key in selected if key[0] not in wide_runs)
+    for page in batched(sparse, pair_limit):
+        values = ", ".join("(?, ?)" for _ in page)
+        # The run predicate uses the existing run-led index. The tuple predicate admits exact observations.
+        sql = f"""WITH selected(run_id, ordinal) AS (VALUES {values})
+            SELECT run_id, raw_observation_ordinal, id FROM canonical_evidence
+            WHERE run_id IN (SELECT run_id FROM selected)
+              AND (run_id, raw_observation_ordinal) IN (SELECT run_id, ordinal FROM selected)
+            ORDER BY id"""
+        with closing(connection.execute(sql, tuple(value for key in page for value in key))) as rows:
+            for run_id, ordinal, evidence_id in rows:
+                matches.setdefault((run_id, ordinal), []).append(evidence_id)
     return matches
 
 
@@ -195,14 +203,12 @@ def fanout(
 ) -> Iterator[tuple[SourceObservation, _Node | None, _Edge | None]]:
     """The LEFT JOIN rows: an unmatched observation or evidence row still counts once."""
     for observation in observations:
-        evidence_rows: list[int | None] = [*evidence.get(observation.key, [])] or [None]
+        evidence_rows: Sequence[int | None] = evidence.get(observation.key) or (None,)
         for evidence_id in evidence_rows:
-            node_rows: list[_Node | None] = [None]
-            edge_rows: list[_Edge | None] = [None]
-            if evidence_id is not None:
-                node_rows = [*nodes.get(evidence_id, [])] or [None]
-                if edges is not None:
-                    edge_rows = [*edges.get(evidence_id, [])] or [None]
+            node_rows: Sequence[_Node | None] = (nodes.get(evidence_id) if evidence_id is not None else None) or (None,)
+            edge_rows: Sequence[_Edge | None] = (
+                edges.get(evidence_id) if edges is not None and evidence_id is not None else None
+            ) or (None,)
             for node in node_rows:
                 for edge in edge_rows:
                     yield observation, node, edge
@@ -210,14 +216,12 @@ def fanout(
 
 def max_of(values: Iterable[Ordered | None]) -> Ordered | None:
     """``MAX``: NULLs ignored; NULL when nothing remains."""
-    present = [value for value in values if value is not None]
-    return max(present) if present else None
+    return max((value for value in values if value is not None), default=None)
 
 
 def min_of(values: Iterable[Ordered | None]) -> Ordered | None:
     """``MIN``: NULLs ignored; NULL when nothing remains."""
-    present = [value for value in values if value is not None]
-    return min(present) if present else None
+    return min((value for value in values if value is not None), default=None)
 
 
 def _integer(value: str | None, bound: int) -> int | None:
@@ -230,13 +234,6 @@ def _integer(value: str | None, bound: int) -> int | None:
     return int(text)
 
 
-def desc_nulls_last(items: Iterable[T], value: Callable[[T], Any]) -> list[T]:
-    """Stable ``ORDER BY value DESC NULLS LAST``; ties keep their incoming order."""
-    ordered = list(items)
-    present = sorted((item for item in ordered if value(item) is not None), key=value, reverse=True)
-    return present + [item for item in ordered if value(item) is None]
-
-
 def not_fetched(value: str | None) -> bool:
     """``COALESCE(value::boolean, true)``."""
     return True if value is None else raw_payload.flag(value)
@@ -244,7 +241,7 @@ def not_fetched(value: str | None) -> bool:
 
 def _latest(group: list[SourceObservation]) -> SourceObservation:
     """First element of ``ARRAY_AGG(... ORDER BY source_acquired_at DESC NULLS LAST)``."""
-    return desc_nulls_last(group, lambda observation: observation.acquired_at)[0]
+    return max(group, key=lambda item: (item.acquired_at is not None, item.acquired_at or ""))
 
 
 def by_source(observations: Iterable[SourceObservation]) -> dict[str, list[SourceObservation]]:
@@ -295,7 +292,7 @@ def ingested_sources(
     safe_limit = positive_limit(limit)
     require_accepted_publication(connection)
     groups = by_source(
-        observation for observation in source_observations(connection)
+        observation for observation in _iter_source_observations(connection)
         if (source_type is None or observation.source_type == source_type)
         and (policy_status is None or observation.policy_status == policy_status)
     )
@@ -326,7 +323,7 @@ def ingested_sources(
 
 def source_summary(connection: sqlite3.Connection, *, source_id: str) -> SourceSummaryRecord:
     require_accepted_publication(connection)
-    group = [item for item in source_observations(connection) if item.source_id == source_id]
+    group = source_observations(connection, source_id=source_id)
     if not group:
         return source_summary_from_storage_payload({
             "source_id": source_id, "source_type": None, "display_name": None,
@@ -370,28 +367,30 @@ def source_runs(
     safe_limit = positive_limit(limit)
     require_accepted_publication(connection)
     runs = group_by(
-        (item.source_run_id, item) for item in source_observations(connection)
-        if item.source_id == source_id and item.source_run_id is not None
+        (item.source_run_id, item) for item in _iter_source_observations(connection, source_id)
+        if item.source_run_id is not None
     )
-    payloads = []
-    for run_id in sorted(runs, reverse=True):
-        group = runs[run_id]
-        payloads.append({
-            "source_run_id": run_id, "acquired_at": max_of(item.acquired_at for item in group),
-            "artifact_id": max_of(item.artifact_id for item in group),
-            "artifact_path": max_of(item.artifact_path for item in group),
-            "artifact_byte_length": max_of(_integer(item.artifact_bytes, _BIGINT) for item in group),
-            "artifact_sha256": max_of(item.artifact_sha256 for item in group),
-            "http_status": max_of(_integer(item.http_status, _INT4) for item in group),
-            "content_type": max_of(item.content_type for item in group), "observation_count": len(group),
-            "status_summary": "parse_errors" if any(i.kind == "feed.parse_error" for i in group) else "ok",
-        })
-    ordered = desc_nulls_last(payloads, lambda payload: payload["acquired_at"])[:safe_limit]
-    return tuple(source_run_record_from_storage_payload(payload) for payload in ordered)
+
+    def summaries() -> Iterator[dict[str, Any]]:
+        for run_id in sorted(runs, reverse=True):
+            group = runs[run_id]
+            yield {
+                "source_run_id": run_id, "acquired_at": max_of(item.acquired_at for item in group),
+                "artifact_id": max_of(item.artifact_id for item in group),
+                "artifact_path": max_of(item.artifact_path for item in group),
+                "artifact_byte_length": max_of(_integer(item.artifact_bytes, _BIGINT) for item in group),
+                "artifact_sha256": max_of(item.artifact_sha256 for item in group),
+                "http_status": max_of(_integer(item.http_status, _INT4) for item in group),
+                "content_type": max_of(item.content_type for item in group), "observation_count": len(group),
+                "status_summary": "parse_errors" if any(i.kind == "feed.parse_error" for i in group) else "ok",
+            }
+
+    page = nlargest(safe_limit, summaries(), key=lambda row: (row["acquired_at"] is not None, row["acquired_at"] or ""))
+    return tuple(source_run_record_from_storage_payload(payload) for payload in page)
 
 
 __all__ = (
-    "RawKey", "SourceObservation", "by_source", "desc_nulls_last", "edge_links",
+    "RawKey", "SourceObservation", "by_source", "edge_links",
     "evidence_ids", "fanout", "group_by", "ingested_sources", "max_of", "min_of",
     "node_links", "not_fetched", "source_observations", "source_runs", "source_summary",
 )

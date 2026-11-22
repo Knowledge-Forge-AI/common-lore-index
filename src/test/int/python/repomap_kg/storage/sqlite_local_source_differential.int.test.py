@@ -264,6 +264,7 @@ def _latest_ties(pair: _Pair) -> None:
 def _check_feed_page_reference_read(pair: _Pair, source_id: str) -> None:
     fetched: set[str] = set()
     hydrated: set[int] = set()
+    transferred: set[tuple[int, int]] = set()
     columns = ("source_canonical_key", "target_canonical_key", "metadata_json", "kind", "display_name")
 
     def observe(cursor: sqlite3.Cursor, row: tuple[Any, ...]) -> tuple[Any, ...]:
@@ -271,6 +272,10 @@ def _check_feed_page_reference_read(pair: _Pair, source_id: str) -> None:
             fetched.add(row[0])
         if cursor.description and cursor.description[0][0] == "canonical_evidence_id":
             hydrated.add(int(row[0]))
+        if cursor.description and tuple(column[0] for column in cursor.description) == (
+            "run_id", "raw_observation_ordinal", "id",
+        ):
+            transferred.add((row[0], row[1]))
         return row
 
     with read_transaction(pair.path, pair.binding) as connection:
@@ -291,6 +296,7 @@ def _check_feed_page_reference_read(pair: _Pair, source_id: str) -> None:
     pair.same("bounded feed page references", page, expected, SERIALIZERS["items"])
     assert len(page) == 1 and fetched <= {page[0].item_key}
     assert hydrated and hydrated <= evidence
+    assert transferred and transferred <= selected
 
     statements: list[str] = []
     with read_transaction(pair.path, pair.binding) as connection:
