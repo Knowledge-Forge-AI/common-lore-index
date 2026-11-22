@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.shell.awk_calls import (
     BUILTIN_FAMILIES,
@@ -105,7 +106,7 @@ def extract_awk_file_observations(
     block_depth = 0
     current_context = "file"
 
-    for line_number, raw_line in enumerate(content.splitlines(), start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         stripped_for_comment = raw_line.lstrip()
         if not stripped_for_comment or stripped_for_comment.startswith("#"):
             continue
@@ -189,8 +190,7 @@ def top_level_observations(
 
 
 def awk_program_observation(relative_path: str, content: str, dialect: str) -> RawObservation:
-    lines = content.splitlines()
-    first = lines[0].strip() if lines else ""
+    first = next(iter_text_lines(content), "").strip()
     metadata = awk_metadata(
         dialect,
         {
@@ -213,7 +213,7 @@ def awk_program_observation(relative_path: str, content: str, dialect: str) -> R
 
 
 def classification_evidence(relative_path: str, content: str) -> list[str]:
-    first = content.splitlines()[0].strip() if content.splitlines() else ""
+    first = next(iter_text_lines(content), "").strip()
     evidence: list[str] = []
     if Path(relative_path).suffix == ".awk":
         evidence.append("extension")
@@ -526,7 +526,7 @@ def dynamic_expression_observation(
 
 def collect_function_definitions(relative_path: str, content: str) -> dict[str, str]:
     definitions: dict[str, str] = {}
-    for line_number, raw_line in enumerate(content.splitlines(), start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         stripped = strip_inline_comment(raw_line).strip()
         match = FUNCTION_RE.match(stripped)
         if match is None:

@@ -5,10 +5,11 @@ from __future__ import annotations
 import hashlib
 import re
 import urllib.parse
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping
 from io import BufferedReader
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,
@@ -86,10 +87,11 @@ def _next_warc_record(
 
 def _parse_warc_header(raw_header_bytes: bytes, offset: int) -> tuple[str, dict[str, str], int] | str:
     header_text = raw_header_bytes.decode("utf-8", errors="replace")
-    lines = header_text.splitlines()
-    if not lines or lines[0] not in {"WARC/1.0", "WARC/1.1"}:
+    lines = iter_text_lines(header_text)
+    version = next(lines, "")
+    if version not in {"WARC/1.0", "WARC/1.1"}:
         return f"malformed WARC record at byte {offset}: unsupported WARC version"
-    headers = _parse_header_lines(lines[1:])
+    headers = _parse_header_lines(lines)
     content_length_text = headers.get("content-length")
     if content_length_text is None:
         return f"malformed WARC record at byte {offset}: missing Content-Length"
@@ -99,7 +101,7 @@ def _parse_warc_header(raw_header_bytes: bytes, offset: int) -> tuple[str, dict[
         return f"malformed WARC record at byte {offset}: invalid Content-Length"
     if content_length < 0:
         return f"malformed WARC record at byte {offset}: negative Content-Length"
-    return lines[0], headers, content_length
+    return version, headers, content_length
 
 
 def _skip_warc_record_padding(source: BufferedReader[Any], artifact_end: int) -> bool:
@@ -165,7 +167,7 @@ def _read_warc_record(
     return version, headers, record_size, block
 
 
-def _parse_header_lines(lines: Sequence[str]) -> dict[str, str]:
+def _parse_header_lines(lines: Iterable[str]) -> dict[str, str]:
     headers: dict[str, str] = {}
     current_key: str | None = None
     for line in lines:
@@ -222,13 +224,12 @@ def _parse_http_message_payload(
     if header_end < 0:
         return {}, b""
     header_text = block[:header_end].decode("utf-8", errors="replace")
-    lines = header_text.splitlines()
-    if not lines:
-        return {}, b""
-    if response and not lines[0].upper().startswith("HTTP/"):
+    lines = iter_text_lines(header_text)
+    start_line = next(lines, None)
+    if start_line is None or (response and not start_line.upper().startswith("HTTP/")):
         return {}, b""
     return (
-        _parse_header_lines(lines[1:]),
+        _parse_header_lines(lines),
         block[header_end + separator_length :],
     )
 

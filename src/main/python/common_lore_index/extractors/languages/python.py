@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePath
 from typing import Any, Iterable, Mapping
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.languages.python_common import (
     EXTRACTOR_NAME,
@@ -171,7 +172,7 @@ def extract_python_file_observations(
 def python_module_observation(
     relative_path: str, module: str, tree: ast.Module, content: str
 ) -> RawObservation:
-    line_count = max(1, len(content.splitlines()))
+    line_count = max(1, sum(1 for _ in iter_text_lines(content)))
     return RawObservation(
         kind="python.module",
         source_id=f"{relative_path}#module:{module}",

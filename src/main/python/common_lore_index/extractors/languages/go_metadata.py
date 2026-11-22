@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from itertools import islice
 from collections import defaultdict
 from pathlib import PurePosixPath
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.extractors.languages.go_metadata_scanner import scan_go_directives
 from common_lore_index.extractors.languages.go_metadata_support import (
     EXTRACTOR,
@@ -62,7 +64,10 @@ WORKSPACE_DIRECTIVES = frozenset({"go", "toolchain", "use", "replace"})
 
 
 def detect_go_generated_marker(content: str, max_lines: int = 40) -> int | None:
-    for line_number, line in enumerate(content.splitlines()[:max_lines], start=1):
+    limit = min(max_lines, len(content))
+    if limit < 0:
+        limit = max(0, sum(1 for _ in iter_text_lines(content)) + limit)
+    for line_number, line in enumerate(islice(iter_text_lines(content), limit), start=1):
         if line.startswith("// Code generated ") and line.rstrip().endswith(
             " DO NOT EDIT."
         ):

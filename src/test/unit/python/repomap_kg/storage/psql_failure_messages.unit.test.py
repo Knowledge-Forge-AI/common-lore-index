@@ -1,6 +1,6 @@
 import subprocess
 
-from common_lore_index.storage.psql import psql_failure_message
+from common_lore_index.storage.psql import last_output_line, psql_failure_message
 
 
 def _failure(*, stderr: str = "", stdout: str = "") -> subprocess.CalledProcessError:
@@ -45,3 +45,9 @@ def test_psql_failure_message_without_detail_uses_exit_code() -> None:
     message = psql_failure_message(_failure())
 
     assert message == "psql failed with exit code 9"
+
+
+def test_psql_detail_and_summary_keep_mixed_line_boundaries() -> None:
+    details = "\r\nfirst problem\u2028  \rsecond problem\n"
+    assert psql_failure_message(_failure(stderr=details)) == "psql failed: first problem ... [truncated]"
+    assert last_output_line("notice\r\n{\"ok\":true}  \u2028  ") == '{"ok":true}  '

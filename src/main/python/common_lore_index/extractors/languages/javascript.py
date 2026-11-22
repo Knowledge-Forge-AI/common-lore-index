@@ -7,6 +7,7 @@ from pathlib import PurePosixPath
 from typing import Any
 
 import common_lore_index.extractors.languages.javascript_line_references as _line_references
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.graph.keys import (
     dynamic_key,
     js_class_key,
@@ -205,7 +206,6 @@ def extract_javascript_file_observations(
     repository_paths: frozenset[str] | None = None,
 ) -> tuple[RawObservation, ...]:
     """Extract safe, static JavaScript-family facts from local text."""
-
     file_bytes = len(content.encode("utf-8", errors="replace"))
     js_format = _detect_format(relative_path)
     profile = _detect_profile(relative_path, content, js_format)
@@ -318,7 +318,7 @@ def extract_javascript_file_observations(
             )
         )
 
-    for line_number, raw_line in enumerate(content.splitlines(), start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         line = _strip_line_comment(raw_line)
         stripped = line.strip()
         if not stripped:

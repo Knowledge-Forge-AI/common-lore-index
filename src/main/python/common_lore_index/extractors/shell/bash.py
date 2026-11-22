@@ -6,6 +6,7 @@ import posixpath
 import re
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.shell.bash_arguments import (
     LONG_FLAGS_WITH_VALUE,
@@ -182,8 +183,7 @@ def extract_bash_file_observations(
     pending_heredoc: PendingHeredoc | None = None
     case_expression_kind: str | None = None
     case_branch_index = 0
-
-    for line_number, raw_line in enumerate(content.splitlines(), start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         stripped = raw_line.strip()
         if pending_heredoc is not None:
             terminator = raw_line.lstrip("\t").strip() if pending_heredoc.tab_stripping else stripped

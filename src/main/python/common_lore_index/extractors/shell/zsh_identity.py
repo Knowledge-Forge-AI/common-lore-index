@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.shell.zsh_common import (
     EXTRACTOR,
@@ -57,7 +58,7 @@ def is_zsh_completion_candidate(path: Path, content: str | None = None) -> bool:
 
 
 def has_completion_content_evidence(content: str) -> bool:
-    for raw_line in content.splitlines():
+    for raw_line in iter_text_lines(content):
         stripped = raw_line.strip()
         if not stripped:
             continue
@@ -69,7 +70,7 @@ def has_completion_content_evidence(content: str) -> bool:
 
 
 def zsh_script_observation(relative_path: str, content: str) -> RawObservation:
-    first = content.splitlines()[0].strip() if content.splitlines() else ""
+    first = next(iter_text_lines(content), "").strip()
     metadata = zsh_metadata(
         {
             "file_type": file_type(relative_path, content),
@@ -92,7 +93,7 @@ def zsh_script_observation(relative_path: str, content: str) -> RawObservation:
 
 def classification_evidence(relative_path: str, content: str) -> list[str]:
     path = Path(relative_path)
-    first = content.splitlines()[0].strip() if content.splitlines() else ""
+    first = next(iter_text_lines(content), "").strip()
     evidence: list[str] = []
     if path.suffix == ".zsh":
         evidence.append("extension")
@@ -121,7 +122,7 @@ def file_type(relative_path: str, content: str) -> str:
     ):
         return "completion"
     if path.suffix == ".zsh" or is_zsh_shebang(
-        content.splitlines()[0].strip() if content.splitlines() else ""
+        next(iter_text_lines(content), "").strip()
     ):
         return "script"
     return "unknown"
@@ -163,7 +164,7 @@ def completion_function_observations(
     compdef_line = None
     uses_arguments = False
     arguments_line = None
-    for line_number, raw_line in enumerate(content.splitlines(), start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         stripped = raw_line.strip()
         if stripped.startswith("#compdef"):
             words = split_words(stripped)

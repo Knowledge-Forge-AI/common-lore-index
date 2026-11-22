@@ -7,6 +7,7 @@ import posixpath
 import re
 import shlex
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.observations.raw import RawObservation
 
@@ -87,16 +88,14 @@ def extract_shell_command_observations(
 
 def extract_shell_observations(path: str, content: str) -> tuple[RawObservation, ...]:
     observations = []
-    for line_number, raw_line in enumerate(content.splitlines(), start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         line = command_line(raw_line)
         if not line:
             continue
         words = command_words(line)
         if not words:
             continue
-        observations.extend(
-            shell_env_observations(path, line_number, raw_line, line, words)
-        )
+        observations.extend(shell_env_observations(path, line_number, raw_line, line, words))
         argv = command_argv_from_words(words)
         if not argv:
             continue

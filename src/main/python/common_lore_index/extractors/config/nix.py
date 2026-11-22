@@ -6,6 +6,7 @@ import re
 from pathlib import PurePosixPath
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.config.nix_common import (
     EXTRACTOR_NAME,
@@ -152,8 +153,7 @@ def _extract_output_section_observations(
     brace_depth = 0
     in_outputs_context = False
     outputs_context_root_depth: int | None = None
-
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         if OUTPUTS_ATTR_PATTERN.match(line) is not None:
             in_outputs_context = True
             outputs_context_root_depth = brace_depth
@@ -497,7 +497,7 @@ def _extract_import_observations(
 ) -> tuple[RawObservation, ...]:
     observations: list[RawObservation] = []
     in_imports_list = False
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         if "imports" in line and "=" in line and "[" in line:
             in_imports_list = True
         for match in IMPORT_PATTERN.finditer(line):
@@ -673,7 +673,7 @@ def _output_kind_and_target(
 def _app_program_metadata(
     relative_path: str, block: str, start_line: int
 ) -> tuple[dict[str, Any], tuple[int, str] | None]:
-    for offset, line in enumerate(block.splitlines()):
+    for offset, line in enumerate(iter_text_lines(block)):
         match = PROGRAM_ASSIGNMENT_PATTERN.search(line)
         if match is None:
             continue
@@ -730,7 +730,7 @@ def _extract_path_ref_observations(
     consumed_paths: set[tuple[int, str]],
 ) -> tuple[RawObservation, ...]:
     observations: list[RawObservation] = []
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         for match in NIX_PATH_PATTERN.finditer(line):
             path_ref = _clean_path_literal(match.group("path"))
             if (line_number, path_ref) in consumed_paths:

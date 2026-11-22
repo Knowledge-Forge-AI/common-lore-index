@@ -6,6 +6,7 @@ import re
 from pathlib import PurePosixPath
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.languages.ruby_helpers import (
     REFERENCE_SCHEMES,
@@ -148,8 +149,7 @@ def extract_ruby_file_observations(
     last_rake_desc: str | None = None
     spec_case_count = 0
     spec_method_counts: dict[str, int] = {}
-    lines = content.splitlines()
-    for line_number, raw_line in enumerate(lines, start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         line = _strip_comment(raw_line)
         stripped = line.strip()
         if not stripped:

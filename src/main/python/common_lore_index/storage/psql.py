@@ -5,8 +5,10 @@ from __future__ import annotations
 import json
 import subprocess
 from collections.abc import Sequence
+from itertools import islice
 from typing import Any, Literal as _Literal, TypedDict as _TypedDict
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.storage.errors import StorageSchemaError
 
 __all__ = (
@@ -65,7 +67,7 @@ def psql_failure_message(error: subprocess.CalledProcessError) -> str:
 
 
 def _bounded_psql_failure_details(details: str) -> str:
-    lines = [line.strip() for line in details.splitlines() if line.strip()]
+    lines = list(islice(filter(None, map(str.strip, iter_text_lines(details))), 2))
     first_line = lines[0]
     if len(lines) == 1 and len(first_line) <= _PSQL_FAILURE_DETAIL_LIMIT:
         return first_line
@@ -86,9 +88,12 @@ def parse_psql_json(stdout: str, label: str) -> Any:
 
 
 def last_output_line(stdout: str, *, label: str | None = None) -> str:
-    lines = [line for line in stdout.splitlines() if line.strip()]
-    if not lines:
-        if label is not None:
-            raise StorageSchemaError(f"psql did not return {label} as JSON")
-        raise StorageSchemaError("psql did not return a load summary")
-    return lines[-1]
+    last = None
+    for line in iter_text_lines(stdout):
+        if line.strip():
+            last = line
+    if last is not None:
+        return last
+    if label is not None:
+        raise StorageSchemaError(f"psql did not return {label} as JSON")
+    raise StorageSchemaError("psql did not return a load summary")

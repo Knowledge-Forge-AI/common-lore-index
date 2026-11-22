@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.shell.powershell_common import (
     EXTRACTOR_NAME,
@@ -50,11 +51,10 @@ ASSIGNMENT_PATTERN = re.compile(r"^\s*\$(?P<name>[A-Za-z_][0-9A-Za-z_]*)\s*=")
 
 
 def _static_scan_lines(content: str) -> list[str]:
-    lines = content.splitlines()
     sanitized: list[str] = []
     in_block_comment = False
     in_here_string: str | None = None
-    for line in lines:
+    for line in iter_text_lines(content):
         stripped = line.strip()
         if in_here_string is not None:
             sanitized.append("")

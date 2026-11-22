@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import DISTRIBUTION_NAME
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.row_helpers import clean_yaml_value
@@ -83,7 +84,7 @@ def discover_migrations(rdbms_root: Path | str | None = None) -> tuple[Migration
 def include_all_paths(changelog: Path) -> tuple[str, ...]:
     paths = []
     in_include_all = False
-    for raw_line in changelog.read_text(encoding="utf-8").splitlines():
+    for raw_line in iter_text_lines(changelog.read_text(encoding="utf-8")):
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
@@ -99,7 +100,7 @@ def include_all_paths(changelog: Path) -> tuple[str, ...]:
 
 
 def migration_from_path(path: Path, *, root: Path, ordinal: int) -> Migration:
-    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = iter_text_lines(path.read_text(encoding="utf-8"))
     first_content = next((line.strip().lower() for line in lines if line.strip()), "")
     if first_content != "--liquibase formatted sql":
         raise StorageSchemaError(f"{path} is not liquibase formatted sql")
@@ -107,12 +108,14 @@ def migration_from_path(path: Path, *, root: Path, ordinal: int) -> Migration:
     for line in lines:
         match = CHANGESET_PATTERN.match(line.strip())
         if match:
+            with path.open("rb") as source:
+                checksum = hashlib.file_digest(source, "sha256").hexdigest()
             return Migration(
                 path=path,
                 changeset_id=match.group(1),
                 ordinal=ordinal,
                 relative_path=path.relative_to(root).as_posix(),
-                checksum=hashlib.sha256(path.read_bytes()).hexdigest(),
+                checksum=checksum,
             )
     raise StorageSchemaError(f"{path} is missing a changeset")
 

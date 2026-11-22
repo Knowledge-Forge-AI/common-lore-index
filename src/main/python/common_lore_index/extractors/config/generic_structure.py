@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.config.generic_profile_helpers import EXTRACTOR_NAME
 from common_lore_index.extractors.config.format_contracts import (
@@ -492,16 +493,13 @@ def _line_for_pointer(content: str, pointer: str) -> int | None:
     toml_line = _line_for_toml_pointer(content, pointer)
     if toml_line is not None:
         return toml_line
-    key = pointer.rsplit("/", 1)[-1].replace("~1", "/").replace("~0", "~")
-    json_pattern = re.compile(rf'"{re.escape(key)}"\s*:')
-    toml_pattern = re.compile(
-        rf"^\s*(?:{re.escape(key)}|\"{re.escape(key)}\"|'{re.escape(key)}')\s*="
-    )
-    yaml_pattern = re.compile(
-        rf"^\s*(?:{re.escape(key)}|\"{re.escape(key)}\"|'{re.escape(key)}')\s*:"
-    )
-    plist_pattern = re.compile(rf"<key>\s*{re.escape(key)}\s*</key>")
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    key = re.escape(pointer.rsplit("/", 1)[-1].replace("~1", "/").replace("~0", "~"))
+    json_pattern = re.compile(rf'"{key}"\s*:')
+    bare_or_quoted = rf"(?:{key}|\"{key}\"|'{key}')"
+    toml_pattern = re.compile(rf"^\s*{bare_or_quoted}\s*=")
+    yaml_pattern = re.compile(rf"^\s*{bare_or_quoted}\s*:")
+    plist_pattern = re.compile(rf"<key>\s*{key}\s*</key>")
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         if (
             json_pattern.search(line)
             or toml_pattern.search(line)

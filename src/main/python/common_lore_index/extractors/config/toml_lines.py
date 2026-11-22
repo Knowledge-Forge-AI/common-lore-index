@@ -5,6 +5,7 @@ from __future__ import annotations
 import tomllib
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.extractors.config.generic_values import (
     _safe_value_summary,
     _stable_member_key,
@@ -57,7 +58,7 @@ def _toml_sections(content: str) -> tuple[_TomlSection, ...]:
     header_line: int | None = None
     is_array = False
     lines: list[tuple[int, str]] = []
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         header = _toml_table_header(line)
         if header is not None:
             sections.append(

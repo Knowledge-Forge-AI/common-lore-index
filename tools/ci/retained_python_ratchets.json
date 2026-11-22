@@ -78,7 +78,7 @@
         "path": "src/main/python/common_lore_index/extractors/config/generic.py"
       },
       {
-        "line_count": 512,
+        "line_count": 510,
         "path": "src/main/python/common_lore_index/extractors/config/generic_structure.py"
       },
       {
@@ -98,7 +98,7 @@
         "path": "src/main/python/common_lore_index/extractors/config/openapi_helpers.py"
       },
       {
-        "line_count": 764,
+        "line_count": 762,
         "path": "src/main/python/common_lore_index/extractors/config/python.py"
       },
       {
@@ -110,7 +110,7 @@
         "path": "src/main/python/common_lore_index/extractors/config/xml.py"
       },
       {
-        "line_count": 756,
+        "line_count": 753,
         "path": "src/main/python/common_lore_index/extractors/config/yaml.py"
       },
       {
@@ -170,7 +170,7 @@
         "path": "src/main/python/common_lore_index/extractors/shell/awk_runtime.py"
       },
       {
-        "line_count": 493,
+        "line_count": 492,
         "path": "src/main/python/common_lore_index/extractors/shell/base.py"
       },
       {

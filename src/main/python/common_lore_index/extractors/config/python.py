@@ -8,6 +8,7 @@ from pathlib import PurePosixPath
 from typing import Any
 from urllib.parse import urlsplit
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.config.paths import json_pointer
 from common_lore_index.graph.keys import external_key, external_url_key, file_key
@@ -58,11 +59,8 @@ def _extract_python_requirements_observations(
     content: str,
 ) -> tuple[RawObservation, ...]:
     observations: list[RawObservation] = []
-    requirement_count = 0
-    reference_count = 0
-    redaction_count = 0
-    parse_error_count = 0
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    requirement_count = reference_count = redaction_count = parse_error_count = 0
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         stripped = _python_requirement_line_without_comment(line)
         if not stripped:
             continue
