@@ -71,6 +71,7 @@ def test_production_cap_scope_admission_over_guarded_stdio(tmp_path: Path) -> No
     assert target["results"][0]["matched_member_count"] == 2
     assert empty["status"] == "ok" and empty["results"] == [] and not empty["has_more"]
     assert overflow["status"] == "incomplete" and overflow["reason"] == "node_scan_limit"
+    assert overflow["scan"]["nodes"] == 2000 and overflow["results"] == []
     assert harness.forbidden_events() == [] and harness.shim_invocations() == ""
 
 

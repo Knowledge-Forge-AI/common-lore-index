@@ -4,6 +4,7 @@ from common_lore_index.extractors.documents.email import (
     MAX_MBOX_BYTES,
     extract_mbox_file_observations,
 )
+from common_lore_index.extractors.documents.email_parts import _walk_parts
 
 SAMPLE_MBOX = b"""From MAILER-DAEMON Tue Jun 30 12:00:00 2026
 Message-ID: <mbox-one@example.invalid>
@@ -40,6 +41,25 @@ attachment body must not leak.
 
 
 class EmailExtractorBoundariesUnitTests(unittest.TestCase):
+    def test_mime_part_walk_stops_before_later_siblings(self):
+        from email.message import EmailMessage
+
+        root = EmailMessage()
+        root.make_mixed()
+        nested = EmailMessage()
+        nested.make_mixed()
+        leaf = EmailMessage()
+        nested.attach(leaf)
+        root.attach(nested)
+        traversal = _walk_parts(root)
+        self.assertEqual(next(traversal), (root, "1", 0))
+        self.assertEqual(next(traversal), (nested, "1.1", 1))
+        self.assertEqual(next(traversal), (leaf, "1.1.1", 2))
+
+        later = EmailMessage()
+        root.attach(later)
+        self.assertEqual(list(traversal), [(later, "1.2", 1)])
+
     def test_extracts_mbox_mailbox_and_reuses_safe_message_metadata(self):
         observations = extract_mbox_file_observations(
             "mail/sample.mbox",

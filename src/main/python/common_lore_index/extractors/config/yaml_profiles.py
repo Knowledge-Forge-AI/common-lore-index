@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import PurePosixPath
 from typing import Any
 
@@ -172,21 +173,15 @@ def _apply_yaml_stable_array_metadata(
     walk(value, (), ())
 
 
-def _yaml_pointer_values(value: Any) -> tuple[tuple[str, Any], ...]:
-    result: list[tuple[str, Any]] = []
-
-    def walk(current: Any, segments: tuple[str, ...]) -> None:
-        if segments:
-            result.append((json_pointer(segments), current))
-        if isinstance(current, dict):
-            for key, child in current.items():
-                walk(child, (*segments, str(key)))
-        elif isinstance(current, list):
-            for member in _stable_array_members(current):
-                walk(member.value, (*segments, member.segment))
-
-    walk(value, ())
-    return tuple(result)
+def _yaml_pointer_values(value: Any, segments: tuple[str, ...] = ()) -> Iterator[tuple[str, Any]]:
+    if segments:
+        yield json_pointer(segments), value
+    if isinstance(value, dict):
+        for key, child in value.items():
+            yield from _yaml_pointer_values(child, (*segments, str(key)))
+    elif isinstance(value, list):
+        for member in _stable_array_members(value):
+            yield from _yaml_pointer_values(member.value, (*segments, member.segment))
 
 
 def _yaml_document_index_from_pointer(pointer: str) -> int | None:

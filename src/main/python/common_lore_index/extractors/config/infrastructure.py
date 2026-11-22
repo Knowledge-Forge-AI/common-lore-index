@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 
 from common_lore_index.extractors.config.paths import _pointer_segments, json_pointer
@@ -221,26 +222,20 @@ def _docker_image_observations(
     return tuple(observations)
 
 
-def _json_image_values(value: Any) -> tuple[tuple[str, str], ...]:
-    result: list[tuple[str, str]] = []
-
-    def walk(current: Any, segments: tuple[str, ...]) -> None:
-        if isinstance(current, dict):
-            for key, child in current.items():
-                child_segments = (*segments, str(key))
-                if (
-                    _normalized_key(str(key)) == "image"
-                    and isinstance(child, str)
-                    and _looks_like_container_image(child)
-                ):
-                    result.append((json_pointer(child_segments), child))
-                walk(child, child_segments)
-        elif isinstance(current, list):
-            for index, child in enumerate(current):
-                walk(child, (*segments, str(index)))
-
-    walk(value, ())
-    return tuple(result)
+def _json_image_values(value: Any, segments: tuple[str, ...] = ()) -> Iterator[tuple[str, str]]:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            child_segments = (*segments, str(key))
+            if (
+                _normalized_key(str(key)) == "image"
+                and isinstance(child, str)
+                and _looks_like_container_image(child)
+            ):
+                yield json_pointer(child_segments), child
+            yield from _json_image_values(child, child_segments)
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            yield from _json_image_values(child, (*segments, str(index)))
 
 
 def _is_argocd_json_document(value: Any) -> bool:

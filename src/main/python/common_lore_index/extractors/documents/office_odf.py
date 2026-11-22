@@ -525,7 +525,7 @@ def _odf_table_observations(
                         "type_summary": "redacted"
                         if redacted
                         else _column_type_summary(values),
-                        "non_empty_count": len([value for value in values if value.strip()]),
+                        "non_empty_count": sum(1 for value in values if value.strip()),
                         "redacted": redacted,
                         "redaction_reason": "secret-prone-column-or-value"
                         if redacted

@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 
 from common_lore_index import __version__
 from common_lore_index.extractors.documents.office_references import EXTRACTOR_NAME, URL_PATTERN
@@ -41,18 +40,16 @@ def _parse_error(
         },
     )
 
-def _column_type_summary(values: list[str]) -> str:
-    non_empty = [value.strip() for value in values if value.strip()]
-    if not non_empty:
-        return "empty"
-    counts = Counter(_scalar_type(value) for value in non_empty)
-    if len(counts) == 1:
-        return next(iter(counts))
-    if len(counts) == 2 and "empty" in counts:
-        del counts["empty"]
-        if len(counts) == 1:
-            return next(iter(counts))
-    return "mixed"
+def _column_type_summary(values: Iterable[str]) -> str:
+    observed = "empty"
+    for value in values:
+        scalar = _scalar_type(value)
+        if scalar == "empty":
+            continue
+        if observed != "empty" and scalar != observed:
+            return "mixed"
+        observed = scalar
+    return observed
 
 
 def _scalar_type(value: str) -> str:

@@ -173,6 +173,10 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
         self.assertIn("missing-or-invalid-message-id", parse_error_kinds)
         self.assertIn("header-size-limit", parse_error_kinds)
         self.assertIn("mime-part-count-limit", parse_error_kinds)
+        capped_parts = [part for part in observations if part.path == "many-parts.eml" and part.kind == "email.part"]
+        self.assertEqual(len(capped_parts), MAX_MIME_PARTS)
+        self.assertEqual(capped_parts[0].metadata["part_path"], "/parts/1")
+        self.assertEqual(capped_parts[-1].metadata["part_path"], f"/parts/1.{MAX_MIME_PARTS - 1}")
         self.assertIn("parser-defect", parse_error_kinds)
         self.assertIn("file-size-limit", parse_error_kinds)
         self.assertTrue(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any
@@ -719,20 +720,17 @@ def _python_dependency_source_metadata(value: str) -> dict[str, Any]:
     return metadata
 
 
-
-
 def _python_pyproject_walk(
     value: Any,
     pointer_segments: tuple[str, ...] = (),
-) -> tuple[tuple[tuple[str, ...], Any], ...]:
-    items: list[tuple[tuple[str, ...], Any]] = [(pointer_segments, value)]
+) -> Iterator[tuple[tuple[str, ...], Any]]:
+    yield pointer_segments, value
     if isinstance(value, dict):
         for key, item in value.items():
-            items.extend(_python_pyproject_walk(item, (*pointer_segments, str(key))))
+            yield from _python_pyproject_walk(item, (*pointer_segments, str(key)))
     elif isinstance(value, list):
         for index, item in enumerate(value):
-            items.extend(_python_pyproject_walk(item, (*pointer_segments, str(index))))
-    return tuple(items)
+            yield from _python_pyproject_walk(item, (*pointer_segments, str(index)))
 
 
 def _python_pyproject_value_requires_redaction(

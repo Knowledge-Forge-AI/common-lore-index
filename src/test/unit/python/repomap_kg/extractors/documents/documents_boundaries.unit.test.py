@@ -4,6 +4,7 @@ from io import BytesIO
 from unittest.mock import patch
 
 from common_lore_index.extractors.documents.office import extract_odf_file_observations
+from common_lore_index.extractors.documents.office_common import _column_type_summary
 from common_lore_index.observations.raw import RawObservation
 
 
@@ -117,6 +118,17 @@ def styles_xml():
 
 
 class DocumentsExtractorBoundariesUnitTests(unittest.TestCase):
+    def test_mixed_column_summary_short_circuits_without_counting_blank_values(self):
+        def cells():
+            yield " "
+            yield "23"
+            yield "true"
+            raise AssertionError("mixed types were already established")
+
+        self.assertEqual(_column_type_summary(cells()), "mixed")
+        self.assertEqual(_column_type_summary(iter((" ", "\t"))), "empty")
+        self.assertEqual(_column_type_summary(iter((" ", " 3", "4 "))), "integer")
+
     def test_odt_extracts_headings_tables_and_references_without_body_leakage(self):
         with patch("subprocess.run") as run:
             observations = extract_odf_file_observations(

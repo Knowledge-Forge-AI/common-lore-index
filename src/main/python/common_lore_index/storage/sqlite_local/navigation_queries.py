@@ -195,7 +195,8 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
             return unavailable("source_scope_predicate_unavailable")
         admission = _Admission(admits_location, read_context_vector=read_context_vector)
         predicate = _scope_predicate(predicate, role_sql=role_sql)
-    rows = []
+    nodes: dict[int, dict[str, Any]] = {}
+    fetched = 0
     try:
         if admission is not None:
             connection.create_function("repomap_navigation_admits", 4, admission.matches)
@@ -205,12 +206,18 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
             + predicate + " ORDER BY subject.canonical_key LIMIT :node_fetch",
             {**params, "accepted": accepted.run_id, "node_fetch": NODE_SCAN_LIMIT + 1},
         )) as candidates:
-            rows = candidates.fetchall()
+            for fetched, row in enumerate(candidates, start=1):
+                if fetched > NODE_SCAN_LIMIT:
+                    break
+                node_id, key, kind, name, first, last = row[:6]
+                nodes[node_id] = {"canonical_key": key, "kind": kind, "display_name": name,
+                                  "first_seen_run_id": first, "last_seen_run_id": last, "locations": []}
     except sqlite3.OperationalError:
         if admission is not None and admission.error is not None:
             raise admission.error from None
         if admission is None or not admission.exhausted:
             raise
+        fetched = 0
     finally:
         if admission is not None:
             connection.create_function("repomap_navigation_admits", 4, None)
@@ -218,22 +225,19 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
         "status": "ok", "reason": None, "nodes": [],
         "accepted_publication": {"generation": accepted.generation, "run_id": accepted.run_id,
                                  "publication_bundle_id": accepted.publication_bundle_id},
-        "scan": {"complete": False, "nodes": min(len(rows), NODE_SCAN_LIMIT), "evidence": 0,
+        "scan": {"complete": False, "nodes": min(fetched, NODE_SCAN_LIMIT), "evidence": 0,
                  "node_limit": NODE_SCAN_LIMIT, "evidence_limit": EVIDENCE_SCAN_LIMIT},
     }
     if admission is not None:
         result["scan"]["admission"] = admission.diagnostics()
         if admission.exhausted:
             return {**result, "status": "incomplete", "reason": "admission_work_limit"}
-    if len(rows) > NODE_SCAN_LIMIT:
+    if fetched > NODE_SCAN_LIMIT:
         return {**result, "status": "incomplete", "reason": "node_scan_limit"}
     # A fixed number of relational reads, irrespective of candidate/member count.
     # The trusted integer ID set is at most NODE_SCAN_LIMIT, independent of
     # SQLite's bound-variable ceiling. Admit subjects, never prune alternatives.
-    evidence_predicate = "subject.id IN (" + ",".join(str(int(row[0])) for row in rows) + ")" if rows else "0"
-    nodes = {row[0]: {"canonical_key": row[1], "kind": row[2], "display_name": row[3],
-                      "first_seen_run_id": row[4], "last_seen_run_id": row[5], "locations": []}
-             for row in rows}
+    evidence_predicate = "subject.id IN (" + ",".join(str(int(node_id)) for node_id in nodes) + ")" if nodes else "0"
     vectors = dict(admission.vectors) if admission is not None else {}
     sql = evidence_sql(evidence_predicate, role_sql=role_sql, refuse_overflow=True)
     with closing(connection.execute(sql, {

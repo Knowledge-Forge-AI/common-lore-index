@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from pathlib import PurePosixPath
 from typing import Any
 from urllib.parse import urlsplit
@@ -187,23 +188,20 @@ def _openapi_server_count(value: dict[str, Any], spec_family: str) -> int:
     return 1 if value.get("host") is not None or value.get("basePath") is not None else 0
 
 
-def _openapi_ref_values(value: Any) -> tuple[tuple[tuple[str, ...], str], ...]:
-    refs: list[tuple[tuple[str, ...], str]] = []
+def _openapi_ref_values(value: Any) -> Iterator[tuple[tuple[str, ...], str]]:
     for pointer_segments, path_value in _openapi_walk(value):
         if pointer_segments and pointer_segments[-1] == "$ref" and isinstance(path_value, str):
-            refs.append((pointer_segments, path_value))
-    return tuple(refs)
+            yield pointer_segments, path_value
 
 
-def _openapi_walk(value: Any, pointer_segments: tuple[str, ...] = ()) -> tuple[tuple[tuple[str, ...], Any], ...]:
-    items: list[tuple[tuple[str, ...], Any]] = [(pointer_segments, value)]
+def _openapi_walk(value: Any, pointer_segments: tuple[str, ...] = ()) -> Iterator[tuple[tuple[str, ...], Any]]:
+    yield pointer_segments, value
     if isinstance(value, dict):
         for key, item in value.items():
-            items.extend(_openapi_walk(item, (*pointer_segments, str(key))))
+            yield from _openapi_walk(item, (*pointer_segments, str(key)))
     elif isinstance(value, list):
         for index, item in enumerate(value):
-            items.extend(_openapi_walk(item, (*pointer_segments, str(index))))
-    return tuple(items)
+            yield from _openapi_walk(item, (*pointer_segments, str(index)))
 
 
 def _openapi_reference_metadata(

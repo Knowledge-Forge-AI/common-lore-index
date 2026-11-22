@@ -18,12 +18,13 @@ def test_reference_privacy_survives_extraction_canonicalization_and_rows(tmp_pat
     project = tmp_path / "project"
     project.mkdir()
     document = {"openapi": "3.0.3", "info": {"title": "Fixture", "version": "1"},
-                "paths": {}, "components": {"schemas": {"Pet": {"type": "object"}, "Alias": {"$ref": reference}}}}
+                "paths": {}, "components": {"schemas": {"Pet": {"type": "object"}, "Alias/~": {"allOf": [{"$ref": reference}, {"$ref": 123}]}}}}
     (project / "openapi.json").write_text(json.dumps(document))
     candidate = capture_multi_source_candidate(create_composition_graph_config(project))
     references = [item for item in candidate.observations if item.kind == "openapi.reference"]
     assert len(references) == 1
     observation = references[0]
+    assert observation.metadata["pointer"] == "/components/schemas/Alias~1~0/allOf/0/$ref"
     assert observation.metadata["reference_scope"] == scope
     assert observation.metadata["redacted"] is redacted
     assert observation.metadata.get("redaction_reason") == reason

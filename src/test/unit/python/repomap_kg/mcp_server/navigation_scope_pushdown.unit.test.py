@@ -57,6 +57,7 @@ def test_production_cap_same_binding_subtree_and_empty_scope(tmp_path, monkeypat
         overflow = call(offset=offset)
         assert overflow["status"] == "incomplete" and overflow["reason"] == "node_scan_limit"
         assert overflow["results"] == [] and overflow["has_more"]
+        assert overflow["scan"]["nodes"] == overflow["scan"]["node_limit"]
     assert call(source_binding_id=None)["reason"] == "node_scan_limit"
 
 

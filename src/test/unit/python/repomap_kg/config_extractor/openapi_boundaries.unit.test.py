@@ -8,6 +8,7 @@ from common_lore_index.extractors.config.openapi_helpers import (
     _openapi_bounded_string,
     _openapi_oauth_flow_names,
     _openapi_pointer_is_redacted,
+    _openapi_ref_values,
     _openapi_reference_scope,
     _openapi_safe_string,
     _openapi_scope_names,
@@ -18,6 +19,19 @@ from common_lore_index.extractors.config.openapi_helpers import (
 
 
 class ConfigExtractorOpenApiBoundariesUnitTests(unittest.TestCase):
+    def test_nested_reference_walk_is_lazy_and_preserves_preorder(self):
+        class Tail(dict):
+            def items(self):
+                raise AssertionError("the later branch was traversed prematurely")
+
+        first = {"a/b": [{"$ref": "#/one"}, {"$ref": 9}]}
+        values = _openapi_ref_values({"first": first, "last": Tail()})
+        self.assertEqual(next(values), (("first", "a/b", "0", "$ref"), "#/one"))
+        self.assertEqual(
+            list(_openapi_ref_values({"first": first, "last": {"~": {"$ref": "#/two"}}})),
+            [(("first", "a/b", "0", "$ref"), "#/one"), (("last", "~", "$ref"), "#/two")],
+        )
+
     def test_openapi3_components_webhooks_and_security_schemes(self):
         payload = {
             "openapi": "3.1.0",

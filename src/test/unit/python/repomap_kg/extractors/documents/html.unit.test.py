@@ -28,7 +28,7 @@ HTML_FIXTURE = """\
       <img src="images/logo.png" alt="Logo">
       <video poster="media/poster.png"></video>
       <form id="login" method="post" action="submit/login">
-        <input name="username" value="alice">
+        <label><span><input name="username" value="alice"></span></label>
         <input name="password" type="password" value="html1-secret">
       </form>
     </main>
@@ -118,6 +118,7 @@ class HtmlExtractorUnitTests(unittest.TestCase):
         self.assertIn(("html.asset", "src", "file:assets/app.js"), references)
         self.assertIn(("html.asset", "poster", "file:media/poster.png"), references)
         self.assertIn(("html.form", "action", "file:submit/login"), references)
+        self.assertEqual(by_kind["html.form"][0].metadata["field_count"], 2)
 
         script = next(
             item

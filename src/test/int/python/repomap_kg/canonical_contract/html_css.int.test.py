@@ -60,7 +60,8 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
     <a href="${ASSET_DIR}/logo.png">Dynamic</a>
     <img src="images/logo.png">
     <form method="post" action="submit/login">
-      <input name="password" value="html-contract-secret">
+      <label><input name="password" value="html-contract-secret"></label>
+      <fieldset><div><textarea name="note"></textarea></div></fieldset>
     </form>
   </body>
 </html>
@@ -74,6 +75,8 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
         payload = result.to_dict()
 
         self.assertNotIn("html-contract-secret", serialized)
+        form = next(item for item in observations if item.kind == "html.form")
+        self.assertEqual(form.metadata["field_count"], 2)
         self.assertNotIn("html-contract-js", serialized)
         self.assertTrue({"html.document", "html.element", "html.heading", "html.link", "html.asset", "html.form"}.issubset(kinds))
         self.assertEqual(broken[-1].kind, "html.parse_error")

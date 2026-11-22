@@ -94,11 +94,11 @@
         "path": "src/main/python/common_lore_index/extractors/config/openapi.py"
       },
       {
-        "line_count": 470,
+        "line_count": 468,
         "path": "src/main/python/common_lore_index/extractors/config/openapi_helpers.py"
       },
       {
-        "line_count": 762,
+        "line_count": 760,
         "path": "src/main/python/common_lore_index/extractors/config/python.py"
       },
       {
@@ -134,7 +134,7 @@
         "path": "src/main/python/common_lore_index/extractors/documents/feed.py"
       },
       {
-        "line_count": 696,
+        "line_count": 695,
         "path": "src/main/python/common_lore_index/extractors/documents/html.py"
       },
       {

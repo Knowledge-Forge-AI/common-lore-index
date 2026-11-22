@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import PurePosixPath
@@ -574,7 +575,7 @@ def _node_text(node: _HtmlNode) -> str:
 
 
 def _text_length(node: _HtmlNode) -> int:
-    return len("".join(node.text_parts))
+    return sum(map(len, node.text_parts))
 
 
 def _safe_text_summary(value: str) -> str | None:
@@ -647,12 +648,10 @@ def _form_field_count(node: _HtmlNode) -> int:
     return sum(1 for child in _walk_descendants(node) if child.tag in FORM_FIELD_TAGS)
 
 
-def _walk_descendants(node: _HtmlNode) -> tuple[_HtmlNode, ...]:
-    descendants: list[_HtmlNode] = []
+def _walk_descendants(node: _HtmlNode) -> Iterator[_HtmlNode]:
     for child in node.children:
-        descendants.append(child)
-        descendants.extend(_walk_descendants(child))
-    return tuple(descendants)
+        yield child
+        yield from _walk_descendants(child)
 
 
 def _parse_error_observation(

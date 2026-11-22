@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 
 from common_lore_index.extractors.documents.email_common import (
@@ -114,17 +115,11 @@ def _part_observations(
     return observations, summary
 
 
-def _walk_parts(message: Any) -> list[tuple[Any, str, int]]:
-    parts: list[tuple[Any, str, int]] = []
-
-    def visit(part: Any, path: str, depth: int) -> None:
-        parts.append((part, path, depth))
-        if part.is_multipart():
-            for child_index, child in enumerate(part.iter_parts(), start=1):
-                visit(child, f"{path}.{child_index}", depth + 1)
-
-    visit(message, "1", 0)
-    return parts
+def _walk_parts(message: Any, path: str = "1", depth: int = 0) -> Iterator[tuple[Any, str, int]]:
+    yield message, path, depth
+    if message.is_multipart():
+        for index, child in enumerate(message.iter_parts(), start=1):
+            yield from _walk_parts(child, f"{path}.{index}", depth + 1)
 
 
 def _part_byte_count(part: Any) -> int:
