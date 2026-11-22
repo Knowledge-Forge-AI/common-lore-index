@@ -44,7 +44,7 @@ REPO_ROOT = Path(__file__).resolve().parents[6]
 
 def _event_payload(grant: dict[str, Any], *, draft: object = True) -> dict[str, Any]:
     pr: dict[str, Any] = {
-        "number": 27,
+        "number": 28,
         "base": {
             "ref": "main",
             "sha": grant["base"],
@@ -59,10 +59,8 @@ def _event_payload(grant: dict[str, Any], *, draft: object = True) -> dict[str, 
     if draft is not ...:
         pr["draft"] = draft
     return {
-        "action": "synchronize",
-        "before": grant["before"],
-        "after": "d" * 40,
-        "number": 27,
+        "action": "opened",
+        "number": 28,
         "pull_request": pr,
     }
 
@@ -179,7 +177,7 @@ def test_load_tracked_system_build_grant_matches_ci165_and_refuses_drifted_candi
     assert grant["base"] == EXPECTED_BASE_SHA
     assert grant["approval_sha256"] == EXPECTED_APPROVAL_SHA256
     assert grant["ledger_before_sha256"] == EXPECTED_LEDGER_BEFORE_SHA256
-    assert grant["pull_request"] == 27 and grant["repository"] == "Knowledge-Forge-AI/common-lore-index"
+    assert grant["pull_request"] == 28 and grant["repository"] == "Knowledge-Forge-AI/common-lore-index"
     assert len(grant_sha) == 64
 
 
@@ -305,7 +303,7 @@ def test_write_and_load_system_admission_proof_enforces_0600_and_no_overwrite(
         require_parent_mode_0700=True,
     )
     assert loaded_sha == written_sha
-    assert loaded["approval_id"] == "pr-27"
+    assert loaded["approval_id"] == "pr-28"
 
     os.chmod(proof_file, 0o644)
     with pytest.raises(D12SystemGrantError, match="mode 0600"):
@@ -341,7 +339,7 @@ def test_verify_host_system_proof_for_dispatch_validates_live_bindings(tmp_path:
         "GITHUB_REPOSITORY": str(grant["repository"]),
         "GITHUB_BASE_REF": "main",
         "GITHUB_HEAD_REF": "staging",
-        "GITHUB_WORKFLOW_REF": f"{grant['repository']}/{grant['workflow_path']}@refs/pull/27/merge",
+        "GITHUB_WORKFLOW_REF": f"{grant['repository']}/{grant['workflow_path']}@refs/pull/28/merge",
         "GITHUB_RUN_NUMBER": str(grant["workflow_ordinal"]),
         "GITHUB_RUN_ID": "12345678",
         "GITHUB_RUN_ATTEMPT": "1",
@@ -369,8 +367,8 @@ def test_verify_host_system_proof_for_dispatch_validates_live_bindings(tmp_path:
         candidate_tree="b" * 40,
         candidate_base_parent=str(grant["base"]),
         candidate_head_parent="d" * 40,
-        approval_id="pr-27",
-        pr_number="27",
+        approval_id="pr-28",
+        pr_number="28",
         repository=str(grant["repository"]),
     )
     verified = verify_host_system_proof_for_dispatch(

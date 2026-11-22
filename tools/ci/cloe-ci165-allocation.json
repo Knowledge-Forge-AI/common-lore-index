@@ -1,9 +1,9 @@
 {
   "approval": {
-    "operator_request": "Remediate the unit failure and complete a few more product slices before staging.",
+    "operator_request": "Proceed with the website-base refresh and staging publication.",
     "phase": "CLOE-CI164-LOCALREAD1",
     "schema": "cloe-ci165-approval-v1",
-    "scope": "One staging synchronize on draft PR 27 for the CI164 unit repair and the Local readback product batch.",
+    "scope": "Close draft PR 27, publish the reviewed staging batch, and open one draft PR against the current public main.",
     "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
     "standing_routine_allocation": "infinite"
   },
@@ -25,15 +25,16 @@
   },
   "reservation": {
     "application_start": 71,
-    "approval_sha256": "4a75b2bc7714fd97006ab74494f0b5fec91ec04b675db2cc034858149ce47cc0",
+    "approval_sha256": "15ec47017172275e82346b55c9142570c89ec0e63fd6525a123e7364bac0b326",
+    "base": "da0a6ba92350da994082574cea70d1fb27542a21",
     "component_runtime_cumulative": 41,
-    "event_action": "synchronize",
+    "event_action": "opened",
     "ledger_before_sha256": "2e52bb0656143486621b9b68792bc24386d03faddb00d3139a2a9811016216e5",
-    "nonce": "5376b6d5265675a5949f4b7b054efd04",
-    "pull_request": 27,
+    "nonce": "8eaf6d3dfab414e22a6d3f8891dca89b",
+    "pull_request": 28,
     "repository": "Knowledge-Forge-AI/common-lore-index",
     "rust_entry": 44,
-    "schema": "cloe-ci165-reservation-v1",
+    "schema": "cloe-ci165-reservation-v2",
     "wheel_transfers_cumulative": 84,
     "workflow_attempt": 1,
     "workflow_ordinal": 165

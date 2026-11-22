@@ -41,8 +41,11 @@ coverage were unselected.
 
 ## Hosted campaign
 
-The [allocation](cloe-ci165-allocation.json) reserves one automatic
-synchronize campaign on draft PR #27. Actual cumulative application starts,
+The [allocation](cloe-ci165-allocation.json) reserves one automatic campaign on the opening
+of draft PR #28. Public main advanced with the project site, and the README
+change is included in the projected merge's build-context digest. The topology
+checker admits the exact reviewed Pages deployment. Changes to its triggers,
+steps or permissions require an updated review and pin. Actual cumulative application starts,
 Rust qualifier entries, pinned wheel transfers and native component executions
 after CI164 were 70/43/82/40. The new ceilings are 71/44/84/41. The workflow,
 pinned SDK and release recipe retain their previous identities. Hosted CI

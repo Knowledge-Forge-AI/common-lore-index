@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+import hashlib
 from pathlib import Path
 import sys
 
@@ -14,6 +15,7 @@ TOOLS_CI = TOOLS_ROOT / "ci"
 if str(TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOLS_ROOT))
 
+from ci import ci_topology
 from ci.ci_topology import check_topology
 from ci.ci_topology_contracts import (
     MAIN_SYSTEM_GATE_WORKFLOW,
@@ -213,6 +215,27 @@ def test_projected_public_release_qualification_topology_requires_four_runners_a
     projected = project_public_qualification_workflow(PUBLIC_RELEASE_QUALIFICATION_WORKFLOW_TEXT)
     write_public_qualification_workflow_tree(repo_dir, projected)
     assert check_topology(repo_dir) == ()
+
+
+def test_only_exact_project_pages_workflow_is_exempt_from_release_topology(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo_dir = tmp_path / "repo"
+    projected = project_public_qualification_workflow(PUBLIC_RELEASE_QUALIFICATION_WORKFLOW_TEXT)
+    write_public_qualification_workflow_tree(repo_dir, projected)
+    pages = repo_dir / ".github" / "workflows" / "project-pages.yml"
+    approved = b"name: Pages\non:\n  push:\n    branches: [main]\njobs:\n  pages:\n    runs-on: ubuntu-latest\n"
+    monkeypatch.setattr(ci_topology, "_PROJECT_PAGES_SHA256", hashlib.sha256(approved).hexdigest())
+    pages.write_bytes(approved)
+    assert check_topology(repo_dir) == ()
+
+    pages.write_bytes(approved.replace(b"[main]", b"[staging]"))
+    assert any("project-pages.yml: unexpected workflow file" in item for item in check_topology(repo_dir))
+
+    impostor = pages.with_name("duplicate-pages.yml")
+    pages.rename(impostor)
+    impostor.write_bytes(approved)
+    assert any("duplicate-pages.yml: unexpected workflow file" in item for item in check_topology(repo_dir))
 
 
 def test_unprojected_three_runner_public_workflow_is_rejected_by_connected_topology(

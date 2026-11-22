@@ -109,7 +109,13 @@ def test_pr_fast_targets_staging_pull_requests_only() -> None:
 
 def test_no_workflow_declares_a_duplicate_branch_push_lane() -> None:
     for path in WORKFLOW_DIR.iterdir():
-        assert "push" not in load_workflow(path).triggers, path.name
+        triggers = load_workflow(path).triggers
+        if path.name == "project-pages.yml":
+            assert triggers == {"push": {"branches": ["main"], "paths": [
+                "website/**", ".github/workflows/project-pages.yml",
+            ]}}
+        else:
+            assert "push" not in triggers, path.name
 
 
 def test_no_workflow_grants_a_write_permission() -> None:
