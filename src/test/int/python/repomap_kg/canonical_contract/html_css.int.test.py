@@ -50,7 +50,7 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
   </head>
   <body>
     <h1 id="welcome">Welcome</h1>
-    <h2>Plain Heading</h2>
+    <h2>Plain <span>Heading</span><script>html-contract-js</script></h2>
     <a href="#welcome">Jump</a>
     <a href="https://example.com/docs">Docs</a>
     <a href="mailto:dev@example.com">Email</a>
@@ -77,6 +77,9 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
         self.assertNotIn("html-contract-secret", serialized)
         form = next(item for item in observations if item.kind == "html.form")
         self.assertEqual(form.metadata["field_count"], 2)
+        self.assertIn("Plain Heading", [
+            item.metadata.get("text_summary") for item in observations if item.kind == "html.heading"
+        ])
         self.assertNotIn("html-contract-js", serialized)
         self.assertTrue({"html.document", "html.element", "html.heading", "html.link", "html.asset", "html.form"}.issubset(kinds))
         self.assertEqual(broken[-1].kind, "html.parse_error")

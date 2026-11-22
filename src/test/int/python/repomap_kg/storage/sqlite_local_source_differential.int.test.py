@@ -350,6 +350,8 @@ def _prove(tmp_path: Path, database: Any) -> None:
     alpha_runs = crafted.store.source_runs(SourceRunsQuery("crafted-alpha", 25))
     assert [(run.acquired_at is None, run.artifact_byte_length, run.http_status) for run in alpha_runs] == [
         (False, 1000, 201), (True, None, None)], alpha_runs
+    first_reference = crafted.store.source_references(SourceReferencesQuery("crafted-alpha", None, None, 1))
+    assert first_reference == tuple(crafted.pg(query_source_reference_records, source_id="crafted-alpha", limit=1))
     references = crafted.store.source_references(SourceReferencesQuery("crafted-alpha", None, None, 100))
     assert {row.not_fetched for row in references} == {True, False}, references
     items = crafted.store.source_feed_items(SourceFeedItemsQuery("crafted-alpha", None, 50))

@@ -46,6 +46,20 @@ class RowSpoolUnitTests(unittest.TestCase):
             byte_length(text)
         self.assertEqual(actual.exception.args, expected.exception.args)
 
+    def test_strict_utf8_boundary_errors_match_the_full_encoder(self):
+        with patch("common_lore_index._utf8._CHUNK_CHARACTERS", 4):
+            for value in (
+                "aaa\ud800b", "aaa\ud800\udfff", "aaaa\ud800b",
+                "aa\ud800\udfffb", "aa\ud800a\udfff", "楚😀a\ud800\udfff",
+            ):
+                with self.subTest(value=value):
+                    with self.assertRaises(UnicodeEncodeError) as expected:
+                        value.encode("utf-8")
+                    with self.assertRaises(UnicodeEncodeError) as actual:
+                        byte_length(value)
+                    self.assertIs(actual.exception.object, value)
+                    self.assertEqual(actual.exception.args, expected.exception.args)
+
     def test_closed_spool_rejects_replay(self):
         spool = RowSpool.from_rows(({"value": "test"},))
         spool.close()

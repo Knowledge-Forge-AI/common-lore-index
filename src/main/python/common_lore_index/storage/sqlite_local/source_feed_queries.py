@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Iterator
+from contextlib import closing
 from heapq import nlargest, nsmallest
 from itertools import batched
 from typing import Any, Literal
@@ -172,7 +173,7 @@ def source_references(
     if not group:
         return ()
     evidence = evidence_ids(connection, (item.key for item in group))
-    edges = edge_links(connection, (eid for ids in evidence.values() for eid in ids))
+    edges = edge_links(connection, (eid for ids in evidence.values() for eid in ids), include_metadata=False)
 
     def candidates() -> Iterator[tuple[tuple[str, str, str, RawKey, str], SourceObservation, _Edge]]:
         for observation in group:
@@ -185,19 +186,28 @@ def source_references(
                     order = (edge.source, edge.target, edge.identity_hash, observation.key, edge.link_kind)
                     yield order, observation, edge
 
+    page = nsmallest(safe_limit, candidates(), key=lambda row: row[0])
+    metadata_by_id: dict[int, Any] = {}
+    for ids in batched(sorted({edge.id for _, _, edge in page}), _REFERENCE_KEY_BATCH):
+        placeholders = ", ".join("?" for _ in ids)
+        with closing(connection.execute(
+            f"SELECT id, metadata_json FROM canonical_edges WHERE id IN ({placeholders})", ids,
+        )) as metadata_rows:
+            for edge_id, text in metadata_rows:
+                metadata_by_id[edge_id] = raw_payload.load(text)
     return tuple(
         source_reference_record_from_storage_payload({
             "source_item_key": edge.source,
             "relation": edge.kind,
             "target_key": edge.target,
-            "target_display": raw_payload.text_at(edge.metadata, "raw_target_summary"),
-            "not_fetched": not_fetched(raw_payload.text_at(edge.metadata, "not_fetched")),
-            "media_type": raw_payload.text_at(edge.metadata, "mime_type"),
+            "target_display": raw_payload.text_at(metadata_by_id[edge.id], "raw_target_summary"),
+            "not_fetched": not_fetched(raw_payload.text_at(metadata_by_id[edge.id], "not_fetched")),
+            "media_type": raw_payload.text_at(metadata_by_id[edge.id], "mime_type"),
             "source_run_id": observation.source_run_id,
             "artifact_id": observation.artifact_id,
             "artifact_path": observation.artifact_path,
         })
-        for _, observation, edge in nsmallest(safe_limit, candidates(), key=lambda row: row[0])
+        for _, observation, edge in page
     )
 
 

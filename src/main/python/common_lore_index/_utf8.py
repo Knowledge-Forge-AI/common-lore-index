@@ -12,11 +12,14 @@ def byte_length(text: str, *, errors: Literal["strict", "replace", "surrogatepas
         return len(text)
     if len(text) <= _CHUNK_CHARACTERS:
         return len(text.encode("utf-8", errors))
-    try:
-        return sum(
-            len(text[start:start + _CHUNK_CHARACTERS].encode("utf-8", errors))
-            for start in range(0, len(text), _CHUNK_CHARACTERS)
-        )
-    except UnicodeEncodeError:
-        # Preserve the original text and absolute offsets on strict errors.
-        return len(text.encode("utf-8", errors))
+    byte_count = 0
+    for start in range(0, len(text), _CHUNK_CHARACTERS):
+        try:
+            byte_count += len(text[start:start + _CHUNK_CHARACTERS].encode("utf-8", errors))
+        except UnicodeEncodeError as error:
+            # UTF-8 groups adjacent surrogates into one strict error, even across a chunk boundary.
+            end = start + error.end
+            while end < len(text) and "\ud800" <= text[end] <= "\udfff":
+                end += 1
+            raise UnicodeEncodeError("utf-8", text, start + error.start, end, error.reason) from None
+    return byte_count

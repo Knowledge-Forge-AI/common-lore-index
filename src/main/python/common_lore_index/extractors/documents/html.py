@@ -6,11 +6,13 @@ import re
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
+from itertools import chain
 from pathlib import PurePosixPath
 from typing import Any
 from urllib.parse import urlsplit
 
 from common_lore_index import __version__
+from common_lore_index._utf8 import byte_length
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,
@@ -28,24 +30,10 @@ EXTRACTOR_NAME = "repo-html"
 PARSER_NAME = "stdlib-htmlparser"
 PARSER_MODE = "static-recovering-no-render-no-js"
 MAX_HTML_STRUCTURAL_BYTES = 4 * 1024 * 1024
-VOID_TAGS = frozenset(
-    {
-        "area",
-        "base",
-        "br",
-        "col",
-        "embed",
-        "hr",
-        "img",
-        "input",
-        "link",
-        "meta",
-        "param",
-        "source",
-        "track",
-        "wbr",
-    }
-)
+VOID_TAGS = frozenset({
+    "area", "base", "br", "col", "embed", "hr", "img",
+    "input", "link", "meta", "param", "source", "track", "wbr",
+})
 HEADING_TAGS = frozenset({"h1", "h2", "h3", "h4", "h5", "h6"})
 ASSET_ATTRIBUTES = {
     "img": ("src",),
@@ -266,7 +254,7 @@ def extract_html_file_observations(
 def _content_exceeds_structural_limit(content: str) -> bool:
     if len(content) > MAX_HTML_STRUCTURAL_BYTES:
         return True
-    return len(content.encode("utf-8")) > MAX_HTML_STRUCTURAL_BYTES
+    return byte_length(content) > MAX_HTML_STRUCTURAL_BYTES
 
 
 def _size_limited_observations(relative_path: str) -> tuple[RawObservation, ...]:
@@ -567,11 +555,11 @@ def _document_title(nodes: list[_HtmlNode]) -> str | None:
 
 
 def _node_text(node: _HtmlNode) -> str:
-    pieces = list(node.text_parts)
-    for child in node.children:
-        if child.tag not in ("script", "style"):
-            pieces.append(_node_text(child))
-    return " ".join(piece.strip() for piece in pieces if piece.strip())
+    descendants = _walk_descendants(node, omit_tags=frozenset(("script", "style")))
+    return " ".join(
+        stripped for current in chain((node,), descendants)
+        for piece in current.text_parts if (stripped := piece.strip())
+    )
 
 
 def _text_length(node: _HtmlNode) -> int:
@@ -648,10 +636,16 @@ def _form_field_count(node: _HtmlNode) -> int:
     return sum(1 for child in _walk_descendants(node) if child.tag in FORM_FIELD_TAGS)
 
 
-def _walk_descendants(node: _HtmlNode) -> Iterator[_HtmlNode]:
-    for child in node.children:
-        yield child
-        yield from _walk_descendants(child)
+def _walk_descendants(node: _HtmlNode, *, omit_tags: frozenset[str] = frozenset()) -> Iterator[_HtmlNode]:
+    stack = [iter(node.children)]
+    while stack:
+        child = next(stack[-1], None)
+        if child is None:
+            stack.pop()
+        elif child.tag not in omit_tags:
+            yield child
+            if child.children:
+                stack.append(iter(child.children))
 
 
 def _parse_error_observation(

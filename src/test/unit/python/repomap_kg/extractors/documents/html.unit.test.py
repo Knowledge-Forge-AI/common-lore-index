@@ -150,6 +150,18 @@ class HtmlExtractorUnitTests(unittest.TestCase):
         )
         self.assertTrue(all(item.metadata["id_is_unique"] is False for item in headings))
 
+    def test_deep_form_and_heading_walks_preserve_nesting_and_text_policy(self):
+        span_open, span_close = "<span>" * 1050, "</span>" * 1050
+        observations = extract_html_file_observations(
+            "nested.html",
+            f'<h1>left{span_open}middle<script>private-script</script>{span_close}right</h1>'
+            f'<form>{span_open}<input name="field">{span_close}</form>',
+        )
+        forms = [item for item in observations if item.kind == "html.form"]
+        headings = [item for item in observations if item.kind == "html.heading"]
+        self.assertEqual(forms[0].metadata["field_count"], 1)
+        self.assertEqual(headings[0].metadata["text_summary"], "left right middle")
+
     def test_malformed_html_emits_recoverable_parse_warning(self):
         observations = extract_html_file_observations(
             "broken.html",

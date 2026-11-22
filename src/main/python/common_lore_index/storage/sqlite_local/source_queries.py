@@ -8,12 +8,11 @@ order. Raw and link keys break otherwise unspecified ties.
 from __future__ import annotations
 
 import sqlite3
-from bisect import insort
 from collections import Counter
 from collections.abc import Iterable, Iterator, Sequence
 from contextlib import closing
 from dataclasses import dataclass
-from heapq import nlargest
+from heapq import heappush, heapreplace, nlargest
 from itertools import batched
 from typing import Any, NamedTuple, TypeVar
 
@@ -181,14 +180,17 @@ def node_links(connection: sqlite3.Connection, ids: Iterable[int] | None = None)
     return group_by((row[0], _Node(*row[1:])) for row in _link_rows(connection, sql, "node", ids))
 
 
-def edge_links(connection: sqlite3.Connection, ids: Iterable[int] | None = None) -> dict[int, list[_Edge]]:
+def edge_links(connection: sqlite3.Connection, ids: Iterable[int] | None = None, *,
+               include_metadata: bool = True) -> dict[int, list[_Edge]]:
+    projection = "edge.metadata_json" if include_metadata else "NULL"
     sql = (
         "SELECT link.canonical_evidence_id, edge.id, edge.source_canonical_key, edge.edge_kind, "
-        "edge.target_canonical_key, edge.identity_metadata_hash, link.link_kind, edge.metadata_json "
+        f"edge.target_canonical_key, edge.identity_metadata_hash, link.link_kind, {projection} "
         "FROM canonical_edge_evidence link JOIN canonical_edges edge ON edge.id = link.canonical_edge_id"
     )
     return group_by(
-        (row[0], _Edge(row[1], row[2], row[3], row[4], row[5], row[6], raw_payload.load(row[7])))
+        (row[0], _Edge(row[1], row[2], row[3], row[4], row[5], row[6],
+                       raw_payload.load(row[7]) if include_metadata else None))
         for row in _link_rows(connection, sql, "edge", ids)
     )
 
@@ -274,13 +276,20 @@ def _reference_counts(evidence_set: Iterable[int], edges: dict[int, list[_Edge]]
     return scopes.count("link"), scopes.count("enclosure")
 
 
+class _DescendingSourceId(str):
+    """Reverse the lexical order for the retained inventory max heap."""
+
+    def __lt__(self, other: str) -> bool:
+        return str.__gt__(self, other)
+
+
 def ingested_sources(
     connection: sqlite3.Connection, *, source_type: str | None, policy_status: str | None, limit: int
 ) -> tuple[IngestedSourceRecord, ...]:
     safe_limit = positive_limit(limit)
     require_accepted_publication(connection)
     groups: dict[str, list[SourceObservation]] = {}
-    selected_ids: list[str] = []
+    selected: list[_DescendingSourceId] = []
     for observation in _iter_source_observations(connection):
         if ((source_type is not None and observation.source_type != source_type)
                 or (policy_status is not None and observation.policy_status != policy_status)):
@@ -289,12 +298,14 @@ def ingested_sources(
         if source_id in groups:
             groups[source_id].append(observation)
             continue
-        if len(selected_ids) == safe_limit:
-            if source_id >= selected_ids[-1]:
+        if len(selected) == safe_limit:
+            if source_id >= selected[0]:
                 continue
-            del groups[selected_ids.pop()]
-        insort(selected_ids, source_id)
+            del groups[heapreplace(selected, _DescendingSourceId(source_id))]
+        else:
+            heappush(selected, _DescendingSourceId(source_id))
         groups[source_id] = [observation]
+    selected_ids = sorted(groups)
     if not selected_ids:
         return ()
     evidence = evidence_ids(

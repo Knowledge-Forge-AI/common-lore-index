@@ -169,11 +169,28 @@ def test_reference_projection_only_reads_metadata_for_the_page(
                 projected_targets.append(payload)
             return original(payload, *keys)
 
+        edge_ids: set[int] = set()
+
+        def measure(cursor: sqlite3.Cursor, row: tuple[Any, ...]) -> tuple[Any, ...]:
+            if tuple(column[0] for column in cursor.description) == ("id", "metadata_json"):
+                edge_ids.add(row[0])
+            return row
+
+        assert connection.in_transaction
+        identity_queries: list[str] = []
+
+        def trace(sql: str) -> None:
+            if "link.canonical_evidence_id, edge.id" in sql:
+                identity_queries.append(sql)
+
+        connection.set_trace_callback(trace)
+        connection.row_factory = measure
         monkeypatch.setattr(source_feed_queries.raw_payload, "text_at", observe)
         assert source_feed_queries.source_references(
             connection, source_id=RSS, source_run_id=None, target_kind=None, limit=1,
         ) == full[:1]
-        assert len(projected_targets) == 1
+        assert len(projected_targets) == len(edge_ids) == 1
+        assert identity_queries and all("link.link_kind, NULL" in sql for sql in identity_queries)
 
 
 def test_latest_source_aggregates_all_rows_of_the_tied_winner(published_feeds: Path) -> None:
