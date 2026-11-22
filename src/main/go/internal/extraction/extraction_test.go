@@ -236,3 +236,30 @@ func TestParserDiagnosticsPreserveTruncationPositionWithNilEntries(t *testing.T)
 		t.Fatalf("unexpected truncation marker: %+v", last)
 	}
 }
+
+func TestValidSpanObservationsClearsDiscardedRows(t *testing.T) {
+	rows := []protocol.Observation{
+		{StartLine: 0, EndLine: 1, Metadata: map[string]any{"start_offset": 0, "end_offset": 1}},
+		{Kind: "go.package", StartLine: 1, EndLine: 1, Metadata: map[string]any{"start_offset": 0, "end_offset": 1}},
+	}
+	valid := validSpanObservations(rows)
+	if len(valid) != 1 || valid[0].Kind != "go.package" || rows[1].Metadata != nil {
+		t.Fatalf("valid rows = %+v; backing tail = %+v", valid, rows[1])
+	}
+}
+
+func TestHasPathPartMatchesOnlyWholePathSegments(t *testing.T) {
+	for _, tc := range []struct {
+		path string
+		want bool
+	}{
+		{"vendor/pkg/file.go", true},
+		{"prefix//vendor/", true},
+		{"prefix/vendor2/file.go", false},
+		{"vendor.go", false},
+	} {
+		if got := hasPathPart(tc.path, "vendor"); got != tc.want {
+			t.Errorf("hasPathPart(%q, vendor) = %v, want %v", tc.path, got, tc.want)
+		}
+	}
+}

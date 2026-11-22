@@ -83,6 +83,8 @@ class CliDiscoverGoIntegrationTests(CliIntegrationTestCase):
                 "go.vendor_package",
             }.issubset(kinds)
         )
+        cgo = [item for item in observations if item["kind"] == "go.cgo"]
+        self.assertEqual([item["metadata"]["directive_count"] for item in cgo], [1])
         package = next(
             observation
             for observation in observations

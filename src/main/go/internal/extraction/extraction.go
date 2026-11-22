@@ -60,13 +60,14 @@ func ParseFile(path string, relative string) Result {
 	if parsed == nil || parsed.Name == nil {
 		return result
 	}
+	normalizedRelative := filepath.ToSlash(relative)
 	context := fileContext{
 		fset:         fset,
-		relative:     filepath.ToSlash(relative),
+		relative:     normalizedRelative,
 		packageName:  parsed.Name.Name,
 		testFile:     strings.HasSuffix(relative, "_test.go"),
 		generated:    ast.IsGenerated(parsed),
-		vendor:       hasPathPart(filepath.ToSlash(relative), "vendor"),
+		vendor:       hasPathPart(normalizedRelative, "vendor"),
 		partialParse: parseErr != nil,
 		ordinals:     make(map[string]int),
 	}
@@ -120,6 +121,7 @@ func validSpanObservations(observations []protocol.Observation) []protocol.Obser
 		}
 		valid = append(valid, observation)
 	}
+	clear(observations[len(valid):])
 	return valid
 }
 
@@ -372,7 +374,7 @@ func boundedParserMessage(message string) string {
 }
 
 func hasPathPart(path string, part string) bool {
-	for _, candidate := range strings.Split(path, "/") {
+	for candidate := range strings.SplitSeq(path, "/") {
 		if candidate == part {
 			return true
 		}

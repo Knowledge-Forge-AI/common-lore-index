@@ -133,7 +133,7 @@ func cgoDirectiveCount(group *ast.CommentGroup) int {
 	}
 	count := 0
 	for _, comment := range group.List {
-		for _, line := range strings.Split(comment.Text, "\n") {
+		for line := range strings.SplitSeq(comment.Text, "\n") {
 			trimmed := strings.TrimSpace(line)
 			trimmed = strings.TrimSpace(strings.TrimPrefix(trimmed, "/*"))
 			trimmed = strings.TrimSpace(strings.TrimPrefix(trimmed, "//"))
