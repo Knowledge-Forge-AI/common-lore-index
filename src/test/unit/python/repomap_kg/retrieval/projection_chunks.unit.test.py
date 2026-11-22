@@ -63,7 +63,7 @@ def test_contiguous_gapless_non_overlapping_chunk_coverage() -> None:
 
 def test_single_long_line_splits_only_at_valid_utf8_boundaries() -> None:
     """A single line exceeding max_chunk_bytes splits cleanly at UTF-8 codepoint boundaries."""
-    long_line = ("café-🚀-" * 300) + "\n"
+    long_line = ("café-🚀-" * 3500) + "\n"
     chunks = build_file_chunks(
         file_projection_id="projfile1:" + "a" * 64,
         binding_id="bind1:companion",

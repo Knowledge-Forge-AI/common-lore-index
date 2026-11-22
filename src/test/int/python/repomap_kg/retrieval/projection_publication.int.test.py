@@ -104,6 +104,9 @@ def test_sqlite_real_publication_projection_query_and_stale_advancement_refusal(
     continuations = [chunk for chunk in wide_note.chunks if chunk.line_split_continuation]
     assert continuations and all(chunk.start_line == chunk.end_line == 2 for chunk in continuations)
     assert wide_note.chunks[-1].normalized_byte_end == len(expected_note)
+    short_policy = replace(state_gen1.policy, max_projected_file_bytes=16)
+    short = build_captured_text_projection(state_gen1.projection_inputs(), short_policy)
+    assert any(f.truncated and f.normalized_byte_length == len(expected_note) for f in short.projected_files)
     newline_page = query_captured_text(projection_gen1, CapturedTextQueryRequest(
         query="\n", source_path_prefix=wide_note.source_relative_path, offset=1, limit=1,
     ))

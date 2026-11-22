@@ -7,6 +7,8 @@ from dataclasses import dataclass
 import hashlib
 from typing import Any
 
+from common_lore_index._utf8 import byte_length
+
 
 def frame_digest(prefix: str, parts: Sequence[str | bytes]) -> str:
     """Compute a length-prefixed SHA-256 digest (`<prefix>:<64hex>`) over ordered parts."""
@@ -33,14 +35,21 @@ def _iter_lf_lines_keepends(text: str) -> Iterator[str]:
         start = end + 1
 
 
-def _split_long_utf8_line(encoded: bytes, max_chunk_bytes: int) -> Iterator[str]:
-    start = 0
-    while start < len(encoded):
-        end = min(start + max_chunk_bytes, len(encoded))
-        while end < len(encoded) and (encoded[end] & 0xC0) == 0x80:
-            end -= 1
-        yield encoded[start:end].decode("utf-8")
-        start = end
+def _split_long_utf8_line(line: str, max_chunk_bytes: int) -> Iterator[str]:
+    pending = b""
+    block_chars = 8192
+    for block_start in range(0, len(line), block_chars):
+        encoded = pending + line[block_start:block_start + block_chars].encode("utf-8")
+        start = 0
+        while len(encoded) - start > max_chunk_bytes:
+            end = start + max_chunk_bytes
+            while (encoded[end] & 0xC0) == 0x80:
+                end -= 1
+            yield encoded[start:end].decode("utf-8")
+            start = end
+        pending = encoded[start:]
+    if pending:
+        yield pending.decode("utf-8")
 
 
 def _iter_chunk_specs(
@@ -50,14 +59,13 @@ def _iter_chunk_specs(
     buffered_bytes = 0
     start_line = 1
     for line_no, line in enumerate(_iter_lf_lines_keepends(text), start=1):
-        encoded = line.encode("utf-8")
-        line_bytes = len(encoded)
+        line_bytes = byte_length(line)
         if buffer and (len(buffer) >= max_chunk_lines or buffered_bytes + line_bytes > max_chunk_bytes):
             yield start_line, line_no - 1, "".join(buffer), False
             buffer.clear()
             buffered_bytes = 0
         if line_bytes > max_chunk_bytes:
-            for index, piece in enumerate(_split_long_utf8_line(encoded, int(max_chunk_bytes))):
+            for index, piece in enumerate(_split_long_utf8_line(line, int(max_chunk_bytes))):
                 yield line_no, line_no, piece, index > 0
         else:
             if not buffer:

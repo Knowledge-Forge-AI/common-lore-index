@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import codecs
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 import os
 from pathlib import Path
@@ -27,6 +28,37 @@ def _utf8_safe_prefix(data: bytes, max_bytes: int) -> bytes:
     while cut > 0 and (data[cut] & 0xC0) == 0x80:
         cut -= 1
     return data[:cut]
+
+
+_NORMALIZATION_BLOCK_BYTES = 64 * 1024
+
+
+def _normalized_blocks(raw: bytes) -> Iterator[bytes]:
+    start = 0
+    while start < len(raw):
+        end = min(start + _NORMALIZATION_BLOCK_BYTES, len(raw))
+        if end < len(raw) and raw[end - 1] == 13 and raw[end] == 10:
+            end += 1
+        yield raw[start:end].replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        start = end
+
+
+def _bounded_normalized_prefix(raw: bytes, limit: int) -> tuple[bytes, int, int]:
+    decoder = codecs.getincrementaldecoder("utf-8")("strict")
+    prefix = bytearray()
+    size = breaks = 0
+    ends_in_lf = False
+    for block in _normalized_blocks(raw):
+        decoder.decode(block)
+        size += len(block)
+        breaks += block.count(b"\n")
+        ends_in_lf = block.endswith(b"\n")
+        if len(prefix) <= limit:
+            prefix.extend(block[:limit + 1 - len(prefix)])
+    decoder.decode(b"", final=True)
+    if size <= limit:
+        return bytes(prefix), size, breaks + int(size > 0 and not ends_in_lf)
+    return _utf8_safe_prefix(bytes(prefix), limit), size, breaks + int(not ends_in_lf)
 
 
 @dataclass(frozen=True)
@@ -58,26 +90,22 @@ def normalize_and_bound_text(
     if b"\x00" in raw_bytes:
         return None, ExclusionReason.NUL_BYTE_REJECTED
     had_crlf_or_cr = b"\r" in raw_bytes
-    full_normalized_bytes = bytes(raw_bytes)
-    if had_crlf_or_cr:
-        full_normalized_bytes = full_normalized_bytes.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    raw = bytes(raw_bytes)
     try:
-        full_normalized_text = full_normalized_bytes.decode("utf-8", errors="strict")
+        if len(raw) > max_projected_bytes:
+            projected_bytes, normalized_byte_length, normalized_line_count = _bounded_normalized_prefix(
+                raw, max_projected_bytes,
+            )
+            projected_text = projected_bytes.decode("utf-8", errors="strict")
+        else:
+            projected_bytes = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n") if had_crlf_or_cr else raw
+            projected_text = projected_bytes.decode("utf-8", errors="strict")
+            normalized_byte_length = len(projected_bytes)
+            normalized_line_count = _count_lf_lines(projected_text)
     except UnicodeDecodeError:
         return None, ExclusionReason.INVALID_UTF8
 
-    normalized_byte_length = len(full_normalized_bytes)
-    normalized_line_count = _count_lf_lines(full_normalized_text)
-
-    if normalized_byte_length > max_projected_bytes:
-        projected_bytes = _utf8_safe_prefix(full_normalized_bytes, max_projected_bytes)
-        projected_text = projected_bytes.decode("utf-8", errors="strict")
-        truncated = True
-    else:
-        projected_bytes = full_normalized_bytes
-        projected_text = full_normalized_text
-        truncated = False
-
+    truncated = normalized_byte_length > max_projected_bytes
     projected_byte_length = len(projected_bytes)
     projected_line_count = _count_lf_lines(projected_text)
     rep_digest = frame_digest(
