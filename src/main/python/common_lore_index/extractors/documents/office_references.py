@@ -329,10 +329,19 @@ def _odf_manifest_references(
 def _safe_summary(content: str) -> str | None:
     if _contains_secret_marker(content):
         return None
-    collapsed = " ".join(content.split())
-    if not collapsed:
-        return None
-    return collapsed[:MAX_TEXT_SUMMARY_CHARS]
+    parts: list[str] = []
+    remaining = MAX_TEXT_SUMMARY_CHARS
+    for word in re.finditer(r"\S+", content):
+        if parts:
+            parts.append(" ")
+            remaining -= 1
+        start, end = word.span()
+        part = content[start:min(end, start + remaining)]
+        parts.append(part)
+        remaining -= len(part)
+        if remaining == 0:
+            break
+    return "".join(parts) or None
 
 
 def _redacted_or_summary(value: str) -> str:

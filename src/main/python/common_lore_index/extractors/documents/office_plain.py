@@ -12,6 +12,9 @@ from common_lore_index import __version__
 from common_lore_index.extractors.documents.office_common import (
     PARSER_NAME,
     _column_type_summary,
+    _latex_lines,
+    _strip_latex_comment,
+    _text_lines,
     _parse_error,
     _pointer_for_slug,
     _scalar_type,
@@ -104,33 +107,34 @@ def _extract_text(
     *,
     repository_paths: frozenset[str] | None,
 ) -> tuple[RawObservation, ...]:
-    lines = content.splitlines()
+    line_count = 0
     sections: list[tuple[str, str, int, int]] = []
     current_section_key = document_file_key(relative_path)
     references: list[_Reference] = []
-    for index, line in enumerate(lines, start=1):
+    for line_count, line in enumerate(_text_lines(content), start=1):
         match = TXT_HEADING_PATTERN.match(line)
         if match:
             pointer = _pointer_for_slug("sections", _slugify(match.group(2)))
             current_section_key = document_section_key(relative_path, pointer)
-            sections.append((pointer, match.group(2), len(match.group(1)), index))
+            sections.append((pointer, match.group(2), len(match.group(1)), line_count))
             continue
         references.extend(
             _references_from_text(
                 relative_path,
                 line,
-                index,
+                line_count,
                 source_key=current_section_key,
                 repository_paths=repository_paths,
             )
         )
 
-    paragraph_count = len([block for block in re.split(r"\n\s*\n", content.strip()) if block])
+    stripped = content.strip()
+    paragraph_count = 1 + sum(1 for _ in re.finditer(r"\n\s*\n", stripped)) if stripped else 0
     metadata: dict[str, Any] = {
         "format": "txt",
         "parser": PARSER_NAME,
         "byte_count": len(content.encode("utf-8")),
-        "line_count": len(lines),
+        "line_count": line_count,
         "paragraph_count": paragraph_count,
         "section_count": len(sections),
         "reference_count": len(references),
@@ -187,22 +191,15 @@ def _extract_table(
     document_format: str,
     repository_paths: frozenset[str] | None,
 ) -> tuple[RawObservation, ...]:
-    rows: list[list[str]]
+    non_empty_rows = []
     try:
-        rows = list(csv.reader(io.StringIO(content), delimiter=delimiter))
+        # Parse the entire input for diagnostics, retaining only eligible prefix rows.
+        with io.StringIO(content) as source:
+            for index, row in enumerate(csv.reader(source, delimiter=delimiter)):
+                if index < MAX_ROWS and any(cell.strip() for cell in row):
+                    non_empty_rows.append(row)
     except csv.Error as error:
-        return (
-            _parse_error(
-                relative_path,
-                document_format,
-                "csv-parser-error",
-                str(error),
-                line_number=None,
-            ),
-        )
-    if len(rows) > MAX_ROWS:
-        rows = rows[:MAX_ROWS]
-    non_empty_rows = [row for row in rows if any(cell.strip() for cell in row)]
+        return (_parse_error(relative_path, document_format, "csv-parser-error", str(error), line_number=None),)
     if not non_empty_rows:
         return (
             RawObservation(
@@ -317,12 +314,12 @@ def _extract_latex(
     *,
     repository_paths: frozenset[str] | None,
 ) -> tuple[RawObservation, ...]:
-    lines = _strip_latex_comments(content).splitlines()
+    line_count = 0
     observations: list[RawObservation] = []
     references: list[_Reference] = []
     section_count = 0
     command_count = 0
-    for line_number, line in enumerate(lines, start=1):
+    for line_count, line in enumerate(_latex_lines(content), start=1):
         for match in LATEX_COMMAND_PATTERN.finditer(line):
             command = match.group(1)
             argument = (match.group(2) or "").strip()
@@ -334,8 +331,8 @@ def _extract_latex(
                         kind="document.latex_section",
                         source_id=f"{relative_path}#latex-section:{pointer}",
                         path=relative_path,
-                        start_line=line_number,
-                        end_line=line_number,
+                        start_line=line_count,
+                        end_line=line_count,
                         name=pointer,
                         confidence="heuristic",
                         extractor=EXTRACTOR_NAME,
@@ -363,8 +360,8 @@ def _extract_latex(
                     kind="document.latex_command",
                     source_id=f"{relative_path}#latex-command:{pointer}",
                     path=relative_path,
-                    start_line=line_number,
-                    end_line=line_number,
+                    start_line=line_count,
+                    end_line=line_count,
                     name=pointer,
                     confidence="heuristic",
                     extractor=EXTRACTOR_NAME,
@@ -384,7 +381,7 @@ def _extract_latex(
                 relative_path,
                 command,
                 argument,
-                line_number,
+                line_count,
                 command_key,
                 repository_paths=repository_paths,
             )
@@ -404,7 +401,7 @@ def _extract_latex(
             metadata={
                 "format": "latex",
                 "parser": PARSER_NAME,
-                "line_count": len(lines),
+                "line_count": line_count,
                 "section_count": section_count,
                 "command_count": command_count,
                 "reference_count": len(references),
@@ -428,23 +425,6 @@ def _looks_like_header(header: list[str], data_rows: list[list[str]]) -> bool:
     data_non_text = sum(1 for cell in first_data if _scalar_type(cell) != "text")
     return header_textish >= max(1, len(header) // 2) and data_non_text > 0
 
+
 def _strip_latex_comments(content: str) -> str:
-    stripped_lines = []
-    for line in content.splitlines():
-        index = 0
-        comment_at: int | None = None
-        while True:
-            index = line.find("%", index)
-            if index == -1:
-                break
-            backslashes = 0
-            cursor = index - 1
-            while cursor >= 0 and line[cursor] == "\\":
-                backslashes += 1
-                cursor -= 1
-            if backslashes % 2 == 0:
-                comment_at = index
-                break
-            index += 1
-        stripped_lines.append(line[:comment_at] if comment_at is not None else line)
-    return "\n".join(stripped_lines)
+    return "\n".join(_strip_latex_comment(line) for line in _text_lines(content))

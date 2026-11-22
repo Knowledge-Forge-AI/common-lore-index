@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from collections.abc import Iterator
 
 from common_lore_index import __version__
 from common_lore_index.extractors.documents.office_references import EXTRACTOR_NAME, URL_PATTERN
@@ -77,3 +78,46 @@ def _pointer_for_slug(prefix: str, slug: str) -> str:
 def _slugify(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9_-]+", "-", value.strip().lower()).strip("-")
     return slug[:64] or "untitled"
+
+
+_LINE_BREAK = re.compile(r"\r\n|[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]")
+
+
+def _text_lines(content: str) -> Iterator[str]:
+    """Match splitlines() without retaining the list or a final empty line."""
+    start = 0
+    for boundary in _LINE_BREAK.finditer(content):
+        yield content[start:boundary.start()]
+        start = boundary.end()
+    if start < len(content):
+        yield content[start:]
+
+
+def _latex_lines(content: str) -> Iterator[str]:
+    """Strip comments per line, dropping the last line if it becomes empty."""
+    pending = None
+    for line in _text_lines(content):
+        if pending is not None:
+            yield pending
+        pending = _strip_latex_comment(line)
+    if pending:
+        yield pending
+
+
+def _strip_latex_comment(line: str) -> str:
+    index = 0
+    comment_at: int | None = None
+    while True:
+        index = line.find("%", index)
+        if index == -1:
+            break
+        backslashes = 0
+        cursor = index - 1
+        while cursor >= 0 and line[cursor] == "\\":
+            backslashes += 1
+            cursor -= 1
+        if backslashes % 2 == 0:
+            comment_at = index
+            break
+        index += 1
+    return line[:comment_at] if comment_at is not None else line

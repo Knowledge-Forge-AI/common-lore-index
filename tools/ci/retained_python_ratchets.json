@@ -146,7 +146,7 @@
         "path": "src/main/python/common_lore_index/extractors/documents/office_odf.py"
       },
       {
-        "line_count": 450,
+        "line_count": 430,
         "path": "src/main/python/common_lore_index/extractors/documents/office_plain.py"
       },
       {
