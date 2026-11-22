@@ -32514,6 +32514,15 @@
       "status": "retained_ratchet"
     },
     {
+      "confidence": 0.95,
+      "governing_profile": "retained_python_ratchets",
+      "maintained_executable": true,
+      "path": "src/main/python/common_lore_index/_utf8.py",
+      "rationale": "W7 bounded exact UTF-8 byte accounting shared by maintained extraction and staging owners.",
+      "root": "product",
+      "status": "retained_ratchet"
+    },
+    {
       "confidence": 0.85,
       "governing_profile": "retained_python_ratchets",
       "maintained_executable": true,
@@ -39638,6 +39647,15 @@
       "maintained_executable": true,
       "path": "src/main/python/common_lore_index/storage/sqlite_local/source_queries.py",
       "rationale": "Product3 SQLite Local source-observation scan and source inventory, summary and run reads.",
+      "root": "product",
+      "status": "retained_ratchet"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "retained_python_ratchets",
+      "maintained_executable": true,
+      "path": "src/main/python/common_lore_index/storage/sqlite_local/source_run_summary.py",
+      "rationale": "W7 SQLite Local bounded per-source-run metadata aggregation with retained Server parity.",
       "root": "product",
       "status": "retained_ratchet"
     },

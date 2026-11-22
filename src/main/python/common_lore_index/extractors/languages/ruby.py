@@ -6,6 +6,7 @@ import re
 from pathlib import PurePosixPath
 from typing import Any
 
+from common_lore_index._utf8 import byte_length
 from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.languages.ruby_helpers import (
@@ -71,7 +72,6 @@ from common_lore_index.extractors.languages.ruby_profiles import (
 )
 
 
-
 EXTRACTOR = "repo-ruby"
 PARSER = "stdlib-ruby-lexical"
 MAX_FILE_BYTES = 512 * 1024
@@ -114,6 +114,7 @@ def extract_ruby_file_observations(
     """Extract safe, static Ruby facts from local text."""
 
     profile = _detect_profile(relative_path, content)
+    file_bytes = byte_length(content, errors="replace")
     observations: list[RawObservation] = []
     file_canonical_key = ruby_file_key(relative_path)
     observations.append(
@@ -128,12 +129,12 @@ def extract_ruby_file_observations(
                 "profile": profile,
                 "profiles": [profile],
                 "parser": PARSER,
-                "file_bytes": len(content.encode("utf-8", errors="replace")),
+                "file_bytes": file_bytes,
             },
         )
     )
 
-    if len(content.encode("utf-8", errors="replace")) > MAX_FILE_BYTES:
+    if file_bytes > MAX_FILE_BYTES:
         observations.append(
             _parse_error(
                 relative_path,
@@ -613,8 +614,6 @@ def _detect_profile(relative_path: str, content: str) -> str:
     if "minitest" in content.lower() or lower_path.startswith("test/"):
         return "minitest"
     return "generic_ruby"
-
-
 
 
 def _require_observations(relative_path: str, profile: str, line_number: int, require_form: str, raw_value: str, source_key: str, repository_paths: frozenset[str] | None) -> tuple[RawObservation, ...]:

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any
 
+from common_lore_index._utf8 import byte_length
 from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.extractors.config import generic_contracts as _generic_contracts
 from common_lore_index.extractors.config import infrastructure as _infrastructure
@@ -307,8 +308,7 @@ def _parse_yaml_documents(
     relative_path: str,
     content: str,
 ) -> tuple[Any, dict[str, dict[str, Any]], int]:
-    encoded_size = len(content.encode("utf-8"))
-    if encoded_size > _yaml_max_file_bytes():
+    if byte_length(content) > _yaml_max_file_bytes():
         raise YamlParseError(
             "YAML file exceeds conservative byte limit",
             error_kind="yaml-file-byte-limit",

@@ -6,6 +6,7 @@ import json
 from collections.abc import Iterable, Sequence
 from typing import Any
 
+from common_lore_index._utf8 import byte_length
 from common_lore_index.retrieval.lexical_capture import LexicalCapturePlan
 from common_lore_index.storage.lexical_build_lease import (
     LEXICAL_BUILD_LEASE_SECONDS,
@@ -223,7 +224,7 @@ def _omission_params(plan: LexicalCapturePlan, omission: Any, ordinal: int) -> t
 
 
 def _utf8_param_bytes(params: Sequence[Any]) -> int:
-    return sum(len(v.encode("utf-8", "surrogatepass")) for v in params if isinstance(v, str))
+    return sum(byte_length(v, errors="surrogatepass") for v in params if isinstance(v, str))
 
 
 def _executemany_bounded(

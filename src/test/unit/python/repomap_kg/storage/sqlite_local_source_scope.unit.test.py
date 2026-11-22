@@ -104,16 +104,49 @@ def test_source_and_run_filters_precede_metadata_projection(published_feeds: Pat
         assert projected == [(RSS, run_id)] * len(selected)
 
 
+def test_inventory_releases_evicted_groups_and_retains_selected_rows(published_feeds, monkeypatch):
+    from weakref import ref
+
+    with read_transaction(published_feeds, local_binding("source-selection")) as connection:
+        sample = source_queries.source_observations(connection, source_id=RSS)[0]
+
+        def observations(*_):
+            outside = replace(sample, source_id="zzz")
+            reference = ref(outside)
+            yield outside
+            del outside
+            yield replace(sample, source_id="a", artifact_id="early", acquired_at="2026-02-01")
+            assert reference() is None
+            yield replace(sample, source_id="zzz")
+            yield replace(sample, source_id="a", artifact_id="latest", acquired_at="2026-02-02")
+
+        monkeypatch.setattr(source_queries, "_iter_source_observations", observations)
+        monkeypatch.setattr(source_queries, "evidence_ids", lambda *_: {})
+        monkeypatch.setattr(source_queries, "node_links", lambda *_: {})
+        (chosen,) = source_queries.ingested_sources(connection, source_type=None, policy_status=None, limit=1)
+        assert chosen.source_id == "a"
+        assert chosen.latest_artifact_id == "latest"
+        assert chosen.feed_observation_count == 2
+
+        rows = [replace(sample, source_id=source_id) for source_id in ("c", "a", "d", "b", "c", "a")]
+        monkeypatch.setattr(source_queries, "_iter_source_observations", lambda *_: iter(rows))
+        page = source_queries.ingested_sources(connection, source_type=None, policy_status=None, limit=2)
+        assert [(row.source_id, row.feed_observation_count) for row in page] == [("a", 2), ("b", 1)]
+
+
 def test_run_page_preserves_ties_and_validates_unreturned_runs(published_feeds: Path, monkeypatch) -> None:
     with read_transaction(published_feeds, local_binding("source-selection")) as connection:
         sample = source_queries.source_observations(connection, source_id=RSS)[0]
         dated = replace(sample, source_run_id="b", acquired_at="2026-02-01T00:00:00Z")
         undated = replace(sample, source_run_id="z", acquired_at=None)
-        rows = [replace(dated, source_run_id="a"), undated, dated]
+        rows = [replace(dated, source_run_id="a"), undated, replace(dated, artifact_bytes="2", http_status="201"),
+                replace(dated, kind="feed.parse_error", artifact_bytes="10", http_status="200")]
         monkeypatch.setattr(source_queries, "_iter_source_observations", lambda *_: iter(rows))
 
         page = source_queries.source_runs(connection, source_id=RSS, limit=2)
         assert [row.source_run_id for row in page] == ["b", "a"]
+        assert (page[0].artifact_byte_length, page[0].http_status, page[0].observation_count) == (10, 201, 2)
+        assert page[0].status_summary == "parse_errors"
         assert source_queries.source_runs(connection, source_id=RSS, limit=1) == page[:1]
         rows[1] = replace(undated, artifact_bytes="12x")
         with pytest.raises(StorageSchemaError, match="not a valid integer"):

@@ -9,6 +9,8 @@ import time
 from collections.abc import Callable, Generator, Iterable, Mapping
 from pathlib import Path
 
+from common_lore_index._utf8 import byte_length
+
 
 def _encode_spool_row(row: Mapping[str, object]) -> tuple[str, int]:
     """Serialize one staged row to compact JSON text and UTF-8 JSONL byte count."""
@@ -20,7 +22,7 @@ def _encode_spool_row(row: Mapping[str, object]) -> tuple[str, int]:
         separators=(",", ":"),
         sort_keys=True,
     )
-    return encoded, len(encoded.encode("utf-8")) + 1
+    return encoded, byte_length(encoded) + 1
 
 
 def _spool_row_byte_count(row: Mapping[str, object]) -> int:

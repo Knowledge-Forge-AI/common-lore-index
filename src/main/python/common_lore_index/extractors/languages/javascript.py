@@ -7,6 +7,7 @@ from pathlib import PurePosixPath
 from typing import Any
 
 import common_lore_index.extractors.languages.javascript_line_references as _line_references
+from common_lore_index._utf8 import byte_length
 from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.graph.keys import (
     dynamic_key,
@@ -141,7 +142,6 @@ from common_lore_index.extractors.languages.javascript_reference_observations im
     _literal_reference_observations,
 )
 
-
 MAX_FILE_BYTES = 512 * 1024
 REACT_HOOKS = frozenset(
     ("useState", "useEffect", "useMemo", "useCallback", "useReducer")
@@ -206,7 +206,7 @@ def extract_javascript_file_observations(
     repository_paths: frozenset[str] | None = None,
 ) -> tuple[RawObservation, ...]:
     """Extract safe, static JavaScript-family facts from local text."""
-    file_bytes = len(content.encode("utf-8", errors="replace"))
+    file_bytes = byte_length(content, errors="replace")
     js_format = _detect_format(relative_path)
     profile = _detect_profile(relative_path, content, js_format)
     observations: list[RawObservation] = []

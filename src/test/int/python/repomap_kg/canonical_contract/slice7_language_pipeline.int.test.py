@@ -140,6 +140,15 @@ class Slice7LanguagePipelineIntegrationTests(unittest.TestCase):
         self.assertIn((class_node, "defines", inst_method), edge_triples)
         self.assertIn((class_node, "defines", sing_method), edge_triples)
 
+    def test_ruby_multibyte_size_refusal_still_emits_file_and_diagnostic(self) -> None:
+        source = "# " + "é" * (256 * 1024)
+        observations = extract_ruby_file_observations("large.rb", source)
+        self.assertEqual(observations[0].metadata["file_bytes"], len(source.encode("utf-8")))
+        self.assertEqual(observations[1].metadata["error_kind"], "file-size-limit")
+        result = canonicalize_observations(observations)
+        self.assertTrue(result.ok)
+        self.assertTrue(any(node.kind == "file" for node in result.graph.nodes))
+
     def test_s7_a04_ruby_source_reference_resolution_and_repaired_recovery(self) -> None:
         """Ruby relative require resolves local target vs uncommitted candidate and escaping refusal."""
         repo_paths = frozenset({"lib/app.rb", "lib/helper.rb"})

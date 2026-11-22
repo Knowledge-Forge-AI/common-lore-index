@@ -75,6 +75,12 @@ class RubyExtractorUnitTests(unittest.TestCase):
             },
         )
 
+    def test_reports_exact_replacement_utf8_size_before_oversize_refusal(self):
+        content = "# " + "😀" * (128 * 1024) + "\ud800"
+        observations = extract_ruby_file_observations("large.rb", content)
+        self.assertEqual(observations[0].metadata["file_bytes"], len(content.encode("utf-8", "replace")))
+        self.assertEqual([item.metadata.get("error_kind") for item in observations], [None, "file-size-limit"])
+
     def test_detects_minitest_cases_and_methods(self):
         content = (
             'require "minitest/autorun"\n'

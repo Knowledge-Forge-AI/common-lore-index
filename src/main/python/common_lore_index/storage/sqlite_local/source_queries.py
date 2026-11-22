@@ -7,8 +7,8 @@ order. Raw and link keys break otherwise unspecified ties.
 
 from __future__ import annotations
 
-import re
 import sqlite3
+from bisect import insort
 from collections import Counter
 from collections.abc import Iterable, Iterator, Sequence
 from contextlib import closing
@@ -17,18 +17,17 @@ from heapq import nlargest
 from itertools import batched
 from typing import Any, NamedTuple, TypeVar
 
-from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.source_rows import (
     IngestedSourceRecord,
     SourceRunRecord,
     SourceSummaryRecord,
     ingested_source_record_from_storage_payload,
-    source_run_record_from_storage_payload,
     source_summary_from_storage_payload,
 )
 from common_lore_index.storage.sql_core import positive_limit
 from common_lore_index.storage.sqlite_local import raw_payload
 from common_lore_index.storage.sqlite_local.queries import require_accepted_publication
+from common_lore_index.storage.sqlite_local.source_run_summary import SourceRunSummary
 
 Ordered = TypeVar("Ordered", str, int)
 RawKey = tuple[int, int]
@@ -39,8 +38,7 @@ _RAW_JOIN = (
     "JOIN raw_observations raw ON raw.run_id = evidence.run_id "
     "AND raw.ordinal = evidence.raw_observation_ordinal"
 )
-_INTEGER = re.compile(r"[+-]?[0-9]+")
-_BIGINT, _INT4, _ID_BATCH = 2**63, 2**31, 500
+_ID_BATCH = 500
 
 
 @dataclass(frozen=True)
@@ -224,16 +222,6 @@ def min_of(values: Iterable[Ordered | None]) -> Ordered | None:
     return min((value for value in values if value is not None), default=None)
 
 
-def _integer(value: str | None, bound: int) -> int | None:
-    """``text::bigint``/``::int`` for decimal spellings; anything else refuses."""
-    if value is None:
-        return None
-    text = value.strip(" \t\n\r\v\f")
-    if _INTEGER.fullmatch(text) is None or not -bound <= int(text) < bound:
-        raise StorageSchemaError("stored source metadata is not a valid integer")
-    return int(text)
-
-
 def not_fetched(value: str | None) -> bool:
     """``COALESCE(value::boolean, true)``."""
     return True if value is None else raw_payload.flag(value)
@@ -291,12 +279,22 @@ def ingested_sources(
 ) -> tuple[IngestedSourceRecord, ...]:
     safe_limit = positive_limit(limit)
     require_accepted_publication(connection)
-    groups = by_source(
-        observation for observation in _iter_source_observations(connection)
-        if (source_type is None or observation.source_type == source_type)
-        and (policy_status is None or observation.policy_status == policy_status)
-    )
-    selected_ids = sorted(groups)[:safe_limit]
+    groups: dict[str, list[SourceObservation]] = {}
+    selected_ids: list[str] = []
+    for observation in _iter_source_observations(connection):
+        if ((source_type is not None and observation.source_type != source_type)
+                or (policy_status is not None and observation.policy_status != policy_status)):
+            continue
+        source_id = observation.source_id
+        if source_id in groups:
+            groups[source_id].append(observation)
+            continue
+        if len(selected_ids) == safe_limit:
+            if source_id >= selected_ids[-1]:
+                continue
+            del groups[selected_ids.pop()]
+        insort(selected_ids, source_id)
+        groups[source_id] = [observation]
     if not selected_ids:
         return ()
     evidence = evidence_ids(
@@ -366,27 +364,20 @@ def source_runs(
 ) -> tuple[SourceRunRecord, ...]:
     safe_limit = positive_limit(limit)
     require_accepted_publication(connection)
-    runs = group_by(
-        (item.source_run_id, item) for item in _iter_source_observations(connection, source_id)
-        if item.source_run_id is not None
+    runs: dict[str, SourceRunSummary] = {}
+    for item in _iter_source_observations(connection, source_id):
+        if item.source_run_id is None:
+            continue
+        summary = runs.get(item.source_run_id)
+        if summary is None:
+            summary = SourceRunSummary()
+            runs[item.source_run_id] = summary
+        summary.add(item)
+    page = nlargest(
+        safe_limit, runs,
+        key=lambda run_id: (runs[run_id].acquired_at is not None, runs[run_id].acquired_at or "", run_id),
     )
-
-    def summaries() -> Iterator[dict[str, Any]]:
-        for run_id in sorted(runs, reverse=True):
-            group = runs[run_id]
-            yield {
-                "source_run_id": run_id, "acquired_at": max_of(item.acquired_at for item in group),
-                "artifact_id": max_of(item.artifact_id for item in group),
-                "artifact_path": max_of(item.artifact_path for item in group),
-                "artifact_byte_length": max_of(_integer(item.artifact_bytes, _BIGINT) for item in group),
-                "artifact_sha256": max_of(item.artifact_sha256 for item in group),
-                "http_status": max_of(_integer(item.http_status, _INT4) for item in group),
-                "content_type": max_of(item.content_type for item in group), "observation_count": len(group),
-                "status_summary": "parse_errors" if any(i.kind == "feed.parse_error" for i in group) else "ok",
-            }
-
-    page = nlargest(safe_limit, summaries(), key=lambda row: (row["acquired_at"] is not None, row["acquired_at"] or ""))
-    return tuple(source_run_record_from_storage_payload(payload) for payload in page)
+    return tuple(runs[run_id].record(run_id) for run_id in page)
 
 
 __all__ = (

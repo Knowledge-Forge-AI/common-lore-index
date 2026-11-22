@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from common_lore_index._utf8 import byte_length
 from common_lore_index import __version__
 from common_lore_index.extractors.config.terraform_hcl_helpers import (
     TERRAFORM_HCL_BLOCK_HEADER_PATTERN,
@@ -99,7 +100,7 @@ def _extract_terraform_hcl_observations(
 ) -> tuple[RawObservation, ...]:
     diagnostics: list[RawObservation] = []
     observations: list[RawObservation] = []
-    encoded_size = len(content.encode("utf-8"))
+    encoded_size = byte_length(content)
     observations.append(
         _terraform_hcl_observation(
             "terraform.file",
@@ -135,7 +136,7 @@ def _extract_terraform_hcl_tfvars_observations(
     content: str,
 ) -> tuple[RawObservation, ...]:
     observations: list[RawObservation] = []
-    encoded_size = len(content.encode("utf-8"))
+    encoded_size = byte_length(content)
     observations.append(
         _terraform_hcl_observation(
             "terraform.file",

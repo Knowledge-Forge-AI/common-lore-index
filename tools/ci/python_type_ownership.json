@@ -28,6 +28,15 @@
       "ownership_class": "python_retained"
     },
     {
+      "architecture_box": "go_control_and_supervisor",
+      "disposition": "retained_python_ratcheted",
+      "enforcement_tier": "T1-future",
+      "justification": "Shared W7 byte accounting for maintained text inputs.",
+      "match": "exact",
+      "module_prefix": "common_lore_index._utf8",
+      "ownership_class": "python_retained"
+    },
+    {
       "architecture_box": "transitional_graph_store_and_publisher",
       "disposition": "retained_python_ratcheted",
       "enforcement_tier": "T1-future",
@@ -5137,6 +5146,15 @@
       "justification": "SQLite Local source-observation scan, fan-out and source inventory, summary and run reads; admitted with zero new quality debt.",
       "match": "exact",
       "module_prefix": "common_lore_index.storage.sqlite_local.source_queries",
+      "ownership_class": "python_retained"
+    },
+    {
+      "architecture_box": "transitional_graph_store_and_publisher",
+      "disposition": "retained_python_ratcheted",
+      "enforcement_tier": "T1-future",
+      "justification": "W7 SQLite Local source-run aggregation with unchanged Server projection.",
+      "match": "exact",
+      "module_prefix": "common_lore_index.storage.sqlite_local.source_run_summary",
       "ownership_class": "python_retained"
     },
     {

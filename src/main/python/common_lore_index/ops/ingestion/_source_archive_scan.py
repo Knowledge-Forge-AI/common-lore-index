@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 
 from common_lore_index.ops.ingestion._source_archive_records import (
@@ -65,7 +66,8 @@ def _scan_archive_file(
     root: Path,
     artifact_path: Path,
 ) -> tuple[tuple[ArchiveIncludedFile, ...], tuple[ArchiveSkippedFile, ...]]:
-    if artifact_path.stat().st_size > config.max_artifact_bytes:
+    byte_length = artifact_path.stat().st_size
+    if byte_length > config.max_artifact_bytes:
         return (), (ArchiveSkippedFile(artifact_path.name, "max_artifact_bytes"),)
     return (
         (
@@ -73,7 +75,7 @@ def _scan_archive_file(
                 root,
                 artifact_path.parent,
                 artifact_path,
-                artifact_path.stat().st_size,
+                byte_length,
             ),
         ),
         (),
@@ -86,13 +88,28 @@ def _archive_included_file(
     file_path: Path,
     byte_length: int,
 ) -> ArchiveIncludedFile:
+    digest = hashlib.sha256()
     with file_path.open("rb") as source:
-        digest = hashlib.file_digest(source, "sha256").hexdigest()
+        initial = os.fstat(source.fileno())
+        if initial.st_size != byte_length:
+            raise SourcePolicyError("archive file size changed during manifest scan")
+        remaining = byte_length
+        while remaining:
+            block = source.read(min(remaining, 256 * 1024))
+            if not block:
+                raise SourcePolicyError("archive file shrank during manifest scan")
+            digest.update(block)
+            remaining -= len(block)
+        final = os.fstat(source.fileno())
+        if (initial.st_size, initial.st_mtime_ns, initial.st_ctime_ns) != (
+            final.st_size, final.st_mtime_ns, final.st_ctime_ns,
+        ):
+            raise SourcePolicyError("archive file changed during manifest scan")
     return ArchiveIncludedFile(
         relative_path=file_path.relative_to(artifact_root).as_posix(),
         repository_path=file_path.relative_to(root).as_posix(),
         byte_length=byte_length,
-        sha256=digest,
+        sha256=digest.hexdigest(),
         extractor_route=_archive_extractor_route(file_path),
         media_type=_archive_media_type(file_path),
     )

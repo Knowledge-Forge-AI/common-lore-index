@@ -1,3 +1,4 @@
+import hashlib
 import json
 import unittest
 
@@ -47,6 +48,10 @@ class StorageSourceArchiveReadbackIntegrationTests(unittest.TestCase):
                 root_path=root_path,
                 clock=fixed_source_clock,
             )
+            for included in summary.manifest.included_files:
+                captured = (root_path / included.repository_path).read_bytes()
+                self.assertEqual(included.byte_length, len(captured))
+                self.assertEqual(included.sha256, hashlib.sha256(captured).hexdigest())
             publication = publish_acquisition_summary(
                 postgres,
                 summary,

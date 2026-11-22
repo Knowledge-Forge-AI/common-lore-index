@@ -10,6 +10,7 @@ from email.parser import BytesParser
 from email.utils import getaddresses
 from typing import Any
 
+from common_lore_index._utf8 import byte_length
 from common_lore_index.extractors.documents.email_common import (
     EXTRACTOR,
     MAX_MIME_PARTS,
@@ -444,8 +445,7 @@ def _message_ids(value: str | None) -> list[str]:
 def _header_byte_count(message: Any) -> int:
     total = 0
     for name, value in message.raw_items():
-        total += len(name.encode("utf-8", errors="replace"))
-        total += len(str(value).encode("utf-8", errors="replace"))
+        total += byte_length(name, errors="replace") + byte_length(str(value), errors="replace")
     return total
 
 

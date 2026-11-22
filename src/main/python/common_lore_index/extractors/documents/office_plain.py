@@ -8,6 +8,7 @@ import re
 from pathlib import PurePosixPath
 from typing import Any
 
+from common_lore_index._utf8 import byte_length
 from common_lore_index import __version__
 from common_lore_index.extractors.documents.office_common import (
     PARSER_NAME,
@@ -127,13 +128,12 @@ def _extract_text(
                 repository_paths=repository_paths,
             )
         )
-
     stripped = content.strip()
     paragraph_count = 1 + sum(1 for _ in re.finditer(r"\n\s*\n", stripped)) if stripped else 0
     metadata: dict[str, Any] = {
         "format": "txt",
         "parser": PARSER_NAME,
-        "byte_count": len(content.encode("utf-8")),
+        "byte_count": byte_length(content),
         "line_count": line_count,
         "paragraph_count": paragraph_count,
         "section_count": len(sections),

@@ -158,7 +158,7 @@ def _ingested(pair: _Pair) -> list[str]:
     sources: list[str] = []
     for source_type in (None, "feed.rss", "feed.atom", "feed.json", "nope"):
         for policy in (None, "allowed", "allowed_with_limits"):
-            for limit in (50, 1):
+            for limit in (50, 2, 1):
                 actual = pair.store.ingested_sources(IngestedSourcesQuery(source_type, policy, limit))
                 expected = pair.pg(query_ingested_source_records, source_type=source_type,
                                    policy_status=policy, limit=limit)
@@ -175,7 +175,7 @@ def _source(pair: _Pair, source_id: str) -> tuple[list[str], list[str]]:
                         pair.pg(query_source_summary, source_id=source_id), source_summary_to_jsonable)
     assert summary.source_id == source_id
     run_ids: list[str] = []
-    for limit in (25, 1):
+    for limit in (25, 2, 1):
         runs = pair.same(f"runs {source_id} {limit}",
                          pair.store.source_runs(SourceRunsQuery(source_id, limit)),
                          pair.pg(query_source_run_records, source_id=source_id, limit=limit),
@@ -183,7 +183,7 @@ def _source(pair: _Pair, source_id: str) -> tuple[list[str], list[str]]:
         run_ids = run_ids or [run.source_run_id for run in runs]
     item_keys: list[str] = []
     for run in (None, *run_ids, ABSENT_RUN):
-        for limit in (50, 1):
+        for limit in (50, 2, 1):
             items = pair.same(
                 f"items {source_id} {run} {limit}",
                 pair.store.source_feed_items(SourceFeedItemsQuery(source_id, run, limit)),

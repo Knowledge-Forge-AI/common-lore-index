@@ -8,6 +8,7 @@ from repomap_test_support.source_ingestion import (
     SourceIngestionUnitTestCase,
 )
 
+from common_lore_index.ops.ingestion._source_archive_scan import _archive_included_file
 from common_lore_index.ops.ingestion.source import (
     SourcePolicyError,
     archive_observations_from_manifest,
@@ -31,6 +32,16 @@ class ArchiveSourceIngestionUnitTests(SourceIngestionUnitTestCase):
                 manifest = build_archive_manifest(config, root_path=root, clock=self.fixed_clock)
         (included,) = manifest.included_files
         self.assertEqual((included.byte_length, included.sha256), (len(content), hashlib.sha256(content).hexdigest()))
+
+    def test_archive_manifest_never_hashes_a_file_at_a_different_observed_size(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            item = root / "fixture.txt"
+            item.write_text("fixture", encoding="utf-8")
+            for declared_bytes in (1, 8):
+                with self.subTest(declared_bytes=declared_bytes):
+                    with self.assertRaisesRegex(SourcePolicyError, "size changed"):
+                        _archive_included_file(root, root, item, declared_bytes)
 
     def test_archive_config_policy_rejects_unknown_blocked_and_url_fields(self):
         with tempfile.TemporaryDirectory() as tmpdir:

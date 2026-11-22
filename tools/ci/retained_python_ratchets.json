@@ -158,7 +158,7 @@
         "path": "src/main/python/common_lore_index/extractors/languages/python_tests.py"
       },
       {
-        "line_count": 697,
+        "line_count": 696,
         "path": "src/main/python/common_lore_index/extractors/languages/ruby.py"
       },
       {
@@ -769,7 +769,7 @@
   },
   "ownership": {
     "manifest_path": "tools/ci/python_type_ownership.json",
-    "sha256": "935a93401167c5758576dda56d3929e9fd10c05058a8ac2462c177cf861b2efd"
+    "sha256": "fcf53151c8c4e2703f7da60902b60e45b29522d34c922a26c4f689cb5c49391c"
   },
   "ruff": {
     "findings": [
@@ -14139,6 +14139,12 @@
         "tier": "T1-future"
       },
       {
+        "module": "common_lore_index._utf8",
+        "ownership_class": "python_retained",
+        "path": "src/main/python/common_lore_index/_utf8.py",
+        "tier": "T1-future"
+      },
+      {
         "module": "common_lore_index.artifacts",
         "ownership_class": "python_retained",
         "path": "src/main/python/common_lore_index/artifacts/__init__.py",
@@ -18888,6 +18894,12 @@
         "module": "common_lore_index.storage.sqlite_local.source_queries",
         "ownership_class": "python_retained",
         "path": "src/main/python/common_lore_index/storage/sqlite_local/source_queries.py",
+        "tier": "T1-future"
+      },
+      {
+        "module": "common_lore_index.storage.sqlite_local.source_run_summary",
+        "ownership_class": "python_retained",
+        "path": "src/main/python/common_lore_index/storage/sqlite_local/source_run_summary.py",
         "tier": "T1-future"
       },
       {

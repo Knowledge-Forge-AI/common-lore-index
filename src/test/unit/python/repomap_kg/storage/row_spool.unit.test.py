@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from common_lore_index._utf8 import byte_length
 from common_lore_index.storage.row_spool import RowSpool
 
 
@@ -28,6 +29,22 @@ class RowSpoolUnitTests(unittest.TestCase):
             )
 
         self.assertFalse(path.exists())
+
+    def test_wide_unicode_row_preserves_encoded_byte_count(self):
+        row = {"value": "é楚😀" * 10000}
+        with RowSpool.from_rows((row,)) as spool:
+            self.assertEqual(spool.byte_count, spool.path.stat().st_size)
+            self.assertEqual(tuple(spool), (row,))
+
+    def test_chunked_utf8_preserves_replacement_and_strict_error_offsets(self):
+        text = "é" * 16383 + "\ud800\ud801" + "😀" * 9000
+        self.assertEqual(byte_length(text, errors="replace"), len(text.encode("utf-8", "replace")))
+        self.assertEqual(byte_length(text, errors="surrogatepass"), len(text.encode("utf-8", "surrogatepass")))
+        with self.assertRaises(UnicodeEncodeError) as expected:
+            text.encode("utf-8")
+        with self.assertRaises(UnicodeEncodeError) as actual:
+            byte_length(text)
+        self.assertEqual(actual.exception.args, expected.exception.args)
 
     def test_closed_spool_rejects_replay(self):
         spool = RowSpool.from_rows(({"value": "test"},))
