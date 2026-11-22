@@ -88,8 +88,12 @@ func WriteResponse(writer io.Writer, response Response) error {
 		return ErrInvalidMessage
 	}
 	encoded = append(encoded, '\n')
-	if _, err := writer.Write(encoded); err != nil {
+	written, err := writer.Write(encoded)
+	if err != nil {
 		return fmt.Errorf("write protocol response: %w", err)
+	}
+	if written != len(encoded) {
+		return fmt.Errorf("write protocol response: %w", io.ErrShortWrite)
 	}
 	return nil
 }

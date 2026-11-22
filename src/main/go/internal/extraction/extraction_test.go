@@ -1,6 +1,8 @@
 package extraction
 
 import (
+	"go/scanner"
+	"go/token"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -217,4 +219,20 @@ func withoutGO6Observations(
 		}
 	}
 	return filtered
+}
+
+func TestParserDiagnosticsPreserveTruncationPositionWithNilEntries(t *testing.T) {
+	var diagnostics scanner.ErrorList
+	for line := 1; line <= MaxDiagnostics+2; line++ {
+		diagnostics = append(diagnostics, nil, &scanner.Error{
+			Pos: token.Position{Line: line}, Msg: "missing comma",
+		})
+	}
+	result := parserDiagnostics(diagnostics)
+	if len(result) != MaxDiagnostics {
+		t.Fatalf("got %d diagnostics, want %d", len(result), MaxDiagnostics)
+	}
+	if last := result[MaxDiagnostics-1]; last.Line != MaxDiagnostics || last.Code != "go-parse-errors-truncated" {
+		t.Fatalf("unexpected truncation marker: %+v", last)
+	}
 }

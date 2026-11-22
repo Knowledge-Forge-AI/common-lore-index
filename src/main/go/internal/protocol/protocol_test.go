@@ -3,6 +3,7 @@ package protocol
 import (
 	"bytes"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 )
@@ -153,5 +154,18 @@ func TestWriteResponseRejectsOversizedLine(t *testing.T) {
 
 	if err := WriteResponse(&bytes.Buffer{}, response); err == nil {
 		t.Fatal("WriteResponse() error = nil")
+	}
+}
+
+type shortWriter struct{}
+
+func (shortWriter) Write(encoded []byte) (int, error) {
+	return len(encoded) - 1, nil
+}
+
+func TestWriteResponseReportsMissingFrameBytes(t *testing.T) {
+	response := Response{ProtocolVersion: ProtocolVersion, Type: "file_end", Sequence: 1, Path: "a.go"}
+	if err := WriteResponse(shortWriter{}, response); !errors.Is(err, io.ErrShortWrite) {
+		t.Fatalf("WriteResponse() error = %v, want io.ErrShortWrite", err)
 	}
 }

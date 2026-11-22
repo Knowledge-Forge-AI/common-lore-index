@@ -291,25 +291,34 @@ func parserDiagnostics(parseErr error) []Diagnostic {
 	if parseErr == nil {
 		return nil
 	}
-	entries := make([]scanner.Error, 0)
 	var list scanner.ErrorList
-	if errors.As(parseErr, &list) {
-		for _, item := range list {
-			if item != nil {
-				entries = append(entries, *item)
-			}
-		}
-	} else {
+	if !errors.As(parseErr, &list) {
 		return []Diagnostic{{Severity: "warning", Code: "go-parse-error", Line: 1, Message: "syntax error"}}
 	}
+	present, truncationLine := 0, 1
+	for _, item := range list {
+		if item == nil {
+			continue
+		}
+		present++
+		if present == MaxDiagnostics {
+			truncationLine = max(item.Pos.Line, 1)
+		}
+		if present > MaxDiagnostics {
+			break
+		}
+	}
 	seen := make(map[string]struct{})
-	truncated := len(entries) > MaxDiagnostics
+	truncated := present > MaxDiagnostics
 	diagnosticLimit := MaxDiagnostics
 	if truncated {
 		diagnosticLimit--
 	}
-	diagnostics := make([]Diagnostic, 0, min(len(entries), MaxDiagnostics))
-	for _, item := range entries {
+	diagnostics := make([]Diagnostic, 0, min(present, MaxDiagnostics))
+	for _, item := range list {
+		if item == nil {
+			continue
+		}
 		line := max(item.Pos.Line, 1)
 		message := boundedParserMessage(item.Msg)
 		key := fmt.Sprintf("%d:%s", line, message)
@@ -331,7 +340,7 @@ func parserDiagnostics(parseErr error) []Diagnostic {
 		diagnostics = append(diagnostics, Diagnostic{
 			Severity: "warning",
 			Code:     "go-parse-errors-truncated",
-			Line:     max(entries[diagnosticLimit].Pos.Line, 1),
+			Line:     truncationLine,
 			Message:  "additional syntax errors omitted",
 		})
 	}
