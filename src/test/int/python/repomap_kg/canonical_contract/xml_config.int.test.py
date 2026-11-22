@@ -147,6 +147,11 @@ class CanonicalXmlConfigIntegrationTests(unittest.TestCase):
 """,
         )
 
+        bean_paths = [
+            item.metadata["xml_pointer"] for item in observations
+            if item.kind == "xml.element" and item.metadata["local_name"] == "bean"
+        ]
+        self.assertEqual(bean_paths, ["/beans/bean", "/beans/bean[2]"])
         serialized = json.dumps(
             [
                 observation.to_dict()

@@ -106,7 +106,7 @@
         "path": "src/main/python/common_lore_index/extractors/config/terraform_hcl_profiles.py"
       },
       {
-        "line_count": 746,
+        "line_count": 745,
         "path": "src/main/python/common_lore_index/extractors/config/xml.py"
       },
       {
