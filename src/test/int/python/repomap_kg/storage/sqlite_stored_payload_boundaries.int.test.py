@@ -70,6 +70,20 @@ def test_observation_search_matches_literal_across_payload_fold_window(tmp_path:
         assert missing["results"] == []
 
 
+def test_observation_search_streams_cross_value_literals_and_returns_raw_payload(tmp_path: Path) -> None:
+    path = published_sqlite_database(tmp_path / "store")
+    payload = {"body": ["A" * 70000 + "TaIL", "boundary", "end"], "metadata": {"kept": True}}
+    _stored_payload(path, "custom.note", json.dumps(payload))
+    with read_transaction(path, BINDING) as reader:
+        page = observation_search(
+            reader, query='tail", "boundary', kind="custom.note", path=None,
+            limit=1, offset=0, include_raw=True,
+        )
+    row, = page["results"]
+    assert page["total"] == 1 and not page["has_more"]
+    assert row["payload"] == payload and row["metadata"] == {"kept": True}
+
+
 @pytest.mark.parametrize("flag", [" \t\n", "o"], ids=["blank", "ambiguous-prefix"])
 def test_invalid_persisted_boolean_refuses_summary_and_a_corrected_retry_succeeds(tmp_path: Path, flag: str) -> None:
     path = published_sqlite_database(tmp_path / "store")

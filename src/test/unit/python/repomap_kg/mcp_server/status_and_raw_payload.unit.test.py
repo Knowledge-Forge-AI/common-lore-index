@@ -5,7 +5,9 @@ import tempfile
 from unittest.mock import patch
 
 from common_lore_index.storage import StorageSchemaError
-from common_lore_index.storage.sqlite_local.raw_payload import ascii_lower, contains_ascii_folded, jsonb_text, jsonb_value
+from common_lore_index.storage.sqlite_local.raw_payload import (
+    ascii_lower, contains_ascii_folded, jsonb_contains_ascii_folded, jsonb_text, jsonb_value,
+)
 
 from repomap_test_support.mcp_server import McpServerTestSupport
 
@@ -304,3 +306,16 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
         self.assertEqual(json.dumps(actual, ensure_ascii=False), json.dumps(expected, ensure_ascii=False))
         self.assertIsInstance(actual["z"][0], float)
         self.assertIsInstance(actual["z"][1], int)
+
+
+def test_streamed_jsonb_literal_matches_fragment_boundaries_and_numeric_spelling():
+    value = {
+        "a": ["x" * 65542 + "Ab", "", "é"],
+        "β": {"text": "quote\" slash\\", "number": 0.00002},
+        "z": ["", *([["k", True]] * 27000)],
+    }
+    canonical = ascii_lower(jsonb_text(value))
+    needles = ['Ab", "", "é"', ']["different"', ', "β": {', '0.00002', 'ab", "", "É"', ""]
+    for needle in needles:
+        folded = ascii_lower(needle)
+        assert jsonb_contains_ascii_folded(value, folded) is (folded in canonical)

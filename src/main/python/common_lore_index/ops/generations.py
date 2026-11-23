@@ -27,28 +27,17 @@ def source_generation_records(
 ) -> str:
     """Hash one deterministic repository-relative source inventory."""
 
-    normalized = [
-        {
-            "path": path,
-            "entry_type": entry_type,
-            "content_digest": content_digest,
-        }
-        for path, entry_type, content_digest in records
-    ]
-    normalized.sort(
-        key=lambda record: (
-            record["path"],
-            record["entry_type"],
-            record["content_digest"],
-        )
-    )
-    payload = {
-        "algorithm": "source-inventory-v1",
-        "records": normalized,
-    }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-    digest = hashlib.sha256(encoded).hexdigest()
-    return f"sg1:{digest}"
+    encoder = json.JSONEncoder(sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(b'{"algorithm":"source-inventory-v1","records":[')
+    separator = b""
+    for path, entry_type, content_digest in sorted(records):
+        digest.update(separator)
+        digest.update(encoder.encode({
+            "content_digest": content_digest, "entry_type": entry_type, "path": path,
+        }).encode("utf-8"))
+        separator = b","
+    digest.update(b"]}")
+    return "sg1:" + digest.hexdigest()
 
 
 def source_generation(observations: Sequence[RawObservation]) -> str:
@@ -113,8 +102,13 @@ def source_generation(observations: Sequence[RawObservation]) -> str:
         json.dumps(item.to_dict(), sort_keys=True, separators=(",", ":"))
         for item in observations
     )
-    digest = hashlib.sha256("\n".join(records).encode("utf-8")).hexdigest()
-    return f"sg1:{digest}"
+    digest = hashlib.sha256()
+    separator = b""
+    for record in records:
+        digest.update(separator)
+        digest.update(record.encode("utf-8"))
+        separator = b"\n"
+    return "sg1:" + digest.hexdigest()
 
 
 def config_generation(

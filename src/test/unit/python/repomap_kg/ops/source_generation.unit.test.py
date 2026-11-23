@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import threading
 
@@ -289,3 +291,21 @@ def test_source_growth_is_bounded_by_one_lookahead_byte(tmp_path, monkeypatch):
         )
     assert result.category == "source_limit_exceeded"
     assert requests == [5]
+
+
+def test_source_inventory_digest_preserves_exact_framing_for_order_and_escapes():
+    records = [
+        ('pkg/quote".py', "file", "a"),
+        ("pkg/é.py", "file", "b"),
+        ("pkg/é.py", "file", "a"),
+        ("pkg/é.py", "test", "b"),
+    ]
+    for entries in (records, []):
+        expected_bytes = json.dumps({
+            "algorithm": "source-inventory-v1",
+            "records": [
+                {"path": path, "entry_type": entry_type, "content_digest": content}
+                for path, entry_type, content in sorted(entries)
+            ],
+        }, sort_keys=True, separators=(",", ":")).encode()
+        assert source_generation_records(iter(entries)) == "sg1:" + hashlib.sha256(expected_bytes).hexdigest()

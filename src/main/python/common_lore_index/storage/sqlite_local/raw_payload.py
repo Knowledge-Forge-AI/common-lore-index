@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Collection, Mapping
+from collections.abc import Collection, Iterator, Mapping
 from decimal import Decimal
 from functools import lru_cache
 from typing import Any
@@ -79,6 +79,57 @@ def jsonb_text(value: Any) -> str:
     if isinstance(value, (list, tuple)):
         return "[" + ", ".join(jsonb_text(item) for item in value) + "]"
     raise StorageSchemaError("stored raw observation payload is not JSON")
+
+
+def _jsonb_text_fragments(value: Any) -> Iterator[str]:
+    if isinstance(value, Mapping):
+        yield "{"
+        for index, (key, item) in enumerate(sorted(value.items(), key=lambda row: _key_order(row[0]))):
+            if index:
+                yield ", "
+            yield _string(key)
+            yield ": "
+            yield from _jsonb_text_fragments(item)
+        yield "}"
+    elif isinstance(value, (list, tuple)):
+        yield "["
+        for index, item in enumerate(value):
+            if index:
+                yield ", "
+            yield from _jsonb_text_fragments(item)
+        yield "]"
+    else:
+        yield jsonb_text(value)
+
+
+def jsonb_contains_ascii_folded(value: Any, folded_needle: str) -> bool:
+    """Match rendered JSONB text without building a complete serialization."""
+    overlap = max(0, len(folded_needle) - 1)
+    target_size = max(64 * 1024, overlap)
+    pending: list[str] = []
+    length = 0
+    tail = ""
+    matched = False
+    for fragment in _jsonb_text_fragments(value):
+        # Keep validating later keys and values even after a hit.
+        if matched:
+            continue
+        if len(fragment) >= target_size:
+            prefix = tail + "".join(pending) + fragment[:overlap]
+            matched = contains_ascii_folded(prefix, folded_needle) or contains_ascii_folded(fragment, folded_needle)
+            tail = fragment[-overlap:] if overlap else ""
+            pending.clear()
+            length = 0
+            continue
+        pending.append(fragment)
+        length += len(fragment)
+        if length >= target_size:
+            window = tail + "".join(pending)
+            matched = contains_ascii_folded(window, folded_needle)
+            tail = window[-overlap:] if overlap else ""
+            pending.clear()
+            length = 0
+    return matched or contains_ascii_folded(tail + "".join(pending), folded_needle)
 
 
 def jsonb_value(value: Any) -> Any:
@@ -216,6 +267,7 @@ __all__ = (
     "flag",
     "has_key",
     "is_in",
+    "jsonb_contains_ascii_folded",
     "jsonb_text",
     "jsonb_value",
     "like",

@@ -171,13 +171,12 @@ def observation_search(
     try:
         for ordinal, row_kind, source_id, row_path, text in rows:
             payload: Any = None
-            payload_text = None
-            if not guaranteed_match and not any(
+            header_matches = guaranteed_match or any(
                 needle in raw_payload.ascii_lower(field) for field in (row_kind, source_id, row_path)
-            ):
+            )
+            if not header_matches:
                 payload = raw_payload.load(text)
-                payload_text = raw_payload.jsonb_text(payload)
-                if not raw_payload.contains_ascii_folded(payload_text, needle):
+                if not raw_payload.jsonb_contains_ascii_folded(payload, needle):
                     continue
             if skipped < pending_offset:
                 skipped += 1
@@ -185,7 +184,7 @@ def observation_search(
             if len(page) >= limit:
                 return {"results": page, "total": offset + len(page), "has_more": True}
             # The header was sufficient to test membership. Decode only for emission.
-            if payload_text is None:
+            if header_matches:
                 payload = raw_payload.load(text)
             metadata = payload.get("metadata") if isinstance(payload, dict) else None
             row: dict[str, Any] = {
@@ -196,7 +195,7 @@ def observation_search(
                 "metadata": None if metadata is None else raw_payload.jsonb_value(metadata),
             }
             if include_raw:
-                row["payload"] = raw_payload.jsonb_value(payload) if payload_text is None else json.loads(payload_text)
+                row["payload"] = raw_payload.jsonb_value(payload)
             page.append(row)
     finally:
         rows.close()
