@@ -60,7 +60,7 @@ from common_lore_index.ops.ingestion.api_records import (
     ApiSourceConfig,
     ApiTransportResponse,
 )
-from common_lore_index.ops.ingestion.source_common import _read_fixture_body
+from common_lore_index.ops.ingestion.source_common import _read_bounded_body
 
 
 class FixtureApiTransport:
@@ -78,7 +78,7 @@ class FixtureApiTransport:
         )
         try:
             with response_path.open("rb") as stream:
-                body = _read_fixture_body(stream, config.max_bytes_per_run)
+                body = _read_bounded_body(stream.read, config.max_bytes_per_run)
         except OSError as error:
             raise ApiPolicyError(
                 f"fixture response is not readable for endpoint {endpoint.name}: {error}"
@@ -96,6 +96,8 @@ def load_api_source_config(path: Path | str) -> ApiSourceConfig:
     config_path = Path(path).resolve()
     try:
         payload = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except UnicodeDecodeError as error:
+        raise ApiPolicyError("invalid UTF-8 API config") from error
     except (OSError, tomllib.TOMLDecodeError) as error:
         raise ApiPolicyError(f"invalid API config: {error}") from error
 

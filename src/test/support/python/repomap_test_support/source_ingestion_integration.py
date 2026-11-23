@@ -1,3 +1,4 @@
+import io
 import json
 import shutil
 from datetime import UTC, datetime
@@ -46,7 +47,7 @@ class FakeOpener:
 class FakeResponse:
     def __init__(self, status, body, headers):
         self.status = status
-        self._body = body
+        self._body = io.BytesIO(body)
         self.headers = headers
 
         self.closed = False
@@ -58,7 +59,7 @@ class FakeResponse:
         return self.status
 
     def read(self, limit):
-        return self._body[:limit]
+        return self._body.read(limit)
 
 
 class FakeBody:
@@ -96,7 +97,7 @@ class IntFakeGitHubResponse:
     def __init__(self, *, status: int, headers: dict[str, str], body: bytes):
         self.status = status
         self.headers = headers
-        self.body = body
+        self.body = io.BytesIO(body)
 
         self.closed = False
 
@@ -107,7 +108,7 @@ class IntFakeGitHubResponse:
         return self.status
 
     def read(self, _size):
-        return self.body
+        return self.body.read(_size)
 
 
 def fake_loader(_psql_args, _observations, **_kwargs):

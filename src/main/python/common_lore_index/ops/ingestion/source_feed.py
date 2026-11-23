@@ -24,6 +24,7 @@ from common_lore_index.ops.ingestion.source_common import (
     _optional_bool,
     _optional_text,
     _positive_int_or_default,
+    _read_bounded_body,
     _required_positive_int,
     _required_text,
     _safe_url_summary,
@@ -207,7 +208,7 @@ def fetch_feed_source(
         response = opener.open(request, timeout=config.timeout_seconds)
     except urllib.error.HTTPError as error:
         with closing(error):
-            body = error.read(config.max_artifact_bytes + 1)
+            body = _read_bounded_body(error.read, config.max_artifact_bytes)
             return FeedFetchResponse(
                 status=error.code,
                 headers=_header_mapping(error.headers),
@@ -218,7 +219,7 @@ def fetch_feed_source(
             f"feed acquisition failed: {error.reason}"
         ) from error
     with closing(response):
-        body = response.read(config.max_artifact_bytes + 1)
+        body = _read_bounded_body(response.read, config.max_artifact_bytes)
         return FeedFetchResponse(
             status=int(getattr(response, "status", response.getcode())),
             headers=_header_mapping(getattr(response, "headers", {})),

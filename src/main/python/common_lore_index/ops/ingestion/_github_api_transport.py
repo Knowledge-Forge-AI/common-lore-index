@@ -34,7 +34,7 @@ from common_lore_index.ops.ingestion.github_api_records import (
     GitHubResponseRecord,
     GitHubTransportResponse,
 )
-from common_lore_index.ops.ingestion.source_common import _read_fixture_body
+from common_lore_index.ops.ingestion.source_common import _read_bounded_body
 
 
 class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -61,7 +61,7 @@ class FixtureGitHubApiTransport:
         endpoint = endpoint_by_name(config, request.endpoint_name)
         response_path = resolve_fixture_response_path(config, endpoint)
         with response_path.open("rb") as stream:
-            body = _read_fixture_body(stream, config.max_bytes_per_run)
+            body = _read_bounded_body(stream.read, config.max_bytes_per_run)
         if len(body) > config.max_bytes_per_run:
             raise GitHubApiPolicyError("response bytes exceed max_bytes_per_run")
         return GitHubTransportResponse(
@@ -102,7 +102,7 @@ class PublicGitHubRestTransport:
         except urllib.error.HTTPError as error:
             with closing(error):
                 headers_map = header_mapping(error.headers)
-                body = error.read(config.max_bytes_per_run + 1)
+                body = _read_bounded_body(error.read, config.max_bytes_per_run)
                 return GitHubTransportResponse(
                     status_code=error.code,
                     body=body,
@@ -116,7 +116,7 @@ class PublicGitHubRestTransport:
             ) from error
         with closing(response):
             headers_map = header_mapping(getattr(response, "headers", {}))
-            body = response.read(config.max_bytes_per_run + 1)
+            body = _read_bounded_body(response.read, config.max_bytes_per_run)
             return GitHubTransportResponse(
                 status_code=int(getattr(response, "status", response.getcode())),
                 body=body,

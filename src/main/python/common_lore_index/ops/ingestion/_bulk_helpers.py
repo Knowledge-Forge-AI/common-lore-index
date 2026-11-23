@@ -280,6 +280,8 @@ def load_bulk_source_config(path: Path | str) -> BulkSourceConfig:
     config_path = Path(path).resolve()
     try:
         payload = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except UnicodeDecodeError as error:
+        raise BulkPolicyError("invalid UTF-8 bulk source config") from error
     except (OSError, tomllib.TOMLDecodeError) as error:
         raise BulkPolicyError(f"invalid bulk config: {error}") from error
 

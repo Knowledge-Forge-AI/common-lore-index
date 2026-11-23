@@ -1,5 +1,6 @@
 from email.message import Message
 import io
+from dataclasses import replace
 import json
 import tempfile
 import urllib.error
@@ -165,6 +166,23 @@ class FeedSourceIngestionUnitTests(SourceIngestionUnitTestCase):
             dict(opener.request.header_items())["User-agent"],
             "RepoMap feed ingestion test fixture",
         )
+
+    def test_default_fetcher_reads_short_chunks_under_large_limit(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config = load_feed_source_config(self.write_config(Path(tmpdir) / "rss.toml"))
+            config = replace(config, max_artifact_bytes=2**63 - 1)
+            sizes: list[int] = []
+
+            class ShortResponse(FakeResponse):
+                def read(self, size: int) -> bytes:
+                    sizes.append(size)
+                    return super().read(min(size, 2))
+
+            owner = ShortResponse(200, b"abcdef", {})
+            response = fetch_feed_source(config, opener=FakeOpener(owner))
+        self.assertEqual(response.body, b"abcdef")
+        self.assertEqual(sizes, [65536] * 4)
+        self.assertTrue(owner.closed)
 
     def test_default_fetcher_captures_http_error_without_following_redirect(self):
         with tempfile.TemporaryDirectory() as tmpdir:

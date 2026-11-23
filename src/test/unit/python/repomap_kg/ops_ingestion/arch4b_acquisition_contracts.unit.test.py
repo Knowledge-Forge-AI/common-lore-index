@@ -59,3 +59,20 @@ def test_scale7_report_is_version_two_and_staged_only() -> None:
     assert '"staged": staged' in source
     assert '"current": current' not in source
     assert "def _run_current(" not in source
+
+
+def test_acquisition_loaders_report_invalid_utf8_as_policy_error(tmp_path: Path) -> None:
+    from common_lore_index.ops.ingestion.api import ApiPolicyError, load_api_source_config
+    from common_lore_index.ops.ingestion.bulk import BulkPolicyError, load_bulk_source_config
+    from common_lore_index.ops.ingestion.github_api import GitHubApiPolicyError, load_github_api_source_config
+
+    config = tmp_path / "config.toml"
+    config.write_bytes(b"# fixture\xff")
+    for loader, error in (
+        (load_api_source_config, ApiPolicyError),
+        (load_bulk_source_config, BulkPolicyError),
+        (load_github_api_source_config, GitHubApiPolicyError),
+    ):
+        with pytest.raises(error, match="invalid UTF-8") as raised:
+            loader(config)
+        assert "fixture" not in str(raised.value)

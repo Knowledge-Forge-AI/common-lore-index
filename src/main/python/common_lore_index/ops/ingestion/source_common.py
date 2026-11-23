@@ -6,9 +6,9 @@ import hashlib
 import json
 import re
 import urllib.parse
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
-from typing import Any, BinaryIO
+from typing import Any
 
 
 FEED_SOURCE_TYPES = frozenset({"feed.rss", "feed.atom", "feed.json"})
@@ -77,12 +77,12 @@ def json_dumps_stable(payload: Mapping[str, Any]) -> str:
     return _STABLE_SOURCE_JSON.encode(payload)
 
 
-def _read_fixture_body(source: BinaryIO, limit: int) -> bytes:
+def _read_bounded_body(read: Callable[[int], bytes], limit: int) -> bytes:
     """Read up to one byte beyond the configured budget in fixed-size reads."""
     remaining = limit + 1
     chunks: list[bytes] = []
     while remaining > 0:
-        chunk = source.read(min(remaining, 64 * 1024))
+        chunk = read(min(remaining, 64 * 1024))
         if not chunk:
             break
         chunks.append(chunk)

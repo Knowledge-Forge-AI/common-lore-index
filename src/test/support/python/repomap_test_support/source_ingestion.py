@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 import unittest
 from datetime import UTC, datetime
@@ -373,7 +374,7 @@ class FakeOpener:
 class FakeResponse:
     def __init__(self, status, body, headers):
         self.status = status
-        self._body = body
+        self._body = io.BytesIO(body)
         self.headers = headers
 
         self.closed = False
@@ -385,7 +386,7 @@ class FakeResponse:
         return self.status
 
     def read(self, _limit):
-        return self._body
+        return self._body.read(_limit)
 
 class FakeBody:
     def __init__(self, body):

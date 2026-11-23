@@ -1,6 +1,7 @@
 import json
 from email.message import Message
 from io import BytesIO
+from dataclasses import replace
 import tempfile
 import unittest
 import urllib.error
@@ -29,7 +30,7 @@ class FeedFetchSourceIngestionIntegrationTests(unittest.TestCase):
         owner = FakeResponse(200, b"<rss />", {"content-type": "text/xml"})
         opener = FakeOpener(owner)
 
-        response = fetch_feed_source(config, opener=opener)
+        response = fetch_feed_source(replace(config, max_artifact_bytes=2**63 - 1), opener=opener)
 
         self.assertTrue(owner.closed)
         self.assertEqual(response.status, 200)
@@ -100,6 +101,20 @@ class FeedFetchSourceIngestionIntegrationTests(unittest.TestCase):
             artifacts = list((root / ".repomap" / "source-artifacts").rglob("feed.json"))
 
         self.assertEqual(len(artifacts), 1)
+
+    def test_invalid_utf8_feed_is_retained_with_safe_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            body = b"<rss>fixture\xff</rss>"
+            response = FeedFetchResponse(200, {"content-type": "text/xml"}, body)
+            with self.assertRaisesRegex(SourceAcquisitionError, "valid UTF-8") as raised:
+                ingest_feed_source(
+                    source_fixture("allowed-rss.toml"), root_path=root, fetcher=lambda _: response,
+                    clock=fixed_clock,
+                )
+            self.assertNotIn("fixture", str(raised.exception))
+            artifact, = root.rglob("*.xml")
+            self.assertEqual(artifact.read_bytes(), body)
 
     def test_oversized_and_redirect_responses_stop_before_load(self):
         cases = (
