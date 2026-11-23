@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import threading
 
 from common_lore_index.ops import source_generation
@@ -168,3 +169,123 @@ def test_scan_source_generation_reports_persistent_file_instability(tmp_path, mo
 
     assert result.category == "source_unstable"
     assert result.generation is None
+
+
+def test_nested_source_budget_refuses_before_opening_the_next_subtree_file(tmp_path, monkeypatch):
+    root = tmp_path / "repository"
+    (root / "a").mkdir(parents=True)
+    (root / "b").mkdir()
+    allowed = root / "a" / "first.txt"
+    denied = root / "b" / "second.txt"
+    allowed.write_bytes(b"12345678")
+    denied.write_bytes(b"12345678")
+    real_open = source_generation.os.open
+    opened = []
+
+    def record_open(path, *args, **kwargs):
+        opened.append(path)
+        return real_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(source_generation.os, "open", record_open)
+    result = source_generation.scan_source_generation(
+        root, limits=source_generation.SourceGenerationLimits(max_file_bytes=16, max_total_bytes=15),
+    )
+    assert result.category == "source_limit_exceeded"
+    assert allowed in opened and denied not in opened
+
+
+def test_source_generation_refuses_descriptor_replacement_before_reading(tmp_path, monkeypatch):
+    path = tmp_path / "source.txt"
+    other = tmp_path / "replacement.txt"
+    path.write_bytes(b"before")
+    other.write_bytes(b"after!")
+    real_open, real_fdopen = source_generation.os.open, source_generation.os.fdopen
+
+    def replace_at_open(requested, *args, **kwargs):
+        if requested == path:
+            other.replace(path)
+        return real_open(requested, *args, **kwargs)
+
+    class NoRead:
+        def __init__(self, stream):
+            self.stream = stream
+
+        def fileno(self):
+            return self.stream.fileno()
+
+        def read(self, size):
+            raise AssertionError("read from an unexpected inode")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exception):
+            self.stream.close()
+
+    monkeypatch.setattr(source_generation.os, "open", replace_at_open)
+    monkeypatch.setattr(source_generation.os, "fdopen", lambda *a, **kw: NoRead(real_fdopen(*a, **kw)))
+    result = source_generation._read_stable_file(
+        path, source_generation.SourceGenerationLimits(max_file_retries=0),
+        None, lambda: 0.0, 1.0, max_bytes=100,
+    )
+    assert result is None
+
+
+def test_source_scan_checks_cancellation_during_directory_enumeration(tmp_path, monkeypatch):
+    source = tmp_path / "fixture.txt"
+    source.write_text("fixture")
+    cancelled = threading.Event()
+    real_scandir = os.scandir
+
+    class CancellingDirectory:
+        def __init__(self, repository):
+            self.iterator = real_scandir(repository)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exception):
+            self.iterator.close()
+
+        def __iter__(self):
+            cancelled.set()
+            yield next(self.iterator)
+            raise AssertionError("enumeration continued after cancellation")
+
+    monkeypatch.setattr(source_generation.os, "scandir", CancellingDirectory)
+    result = source_generation.scan_source_generation(tmp_path, cancel_event=cancelled)
+    assert result.category == "cancelled"
+
+
+def test_source_growth_is_bounded_by_one_lookahead_byte(tmp_path, monkeypatch):
+    source = tmp_path / "fixture.txt"
+    source.write_bytes(b"1234")
+    with source.open("ab", buffering=0) as writer:
+        real_fdopen = source_generation.os.fdopen
+        requests = []
+
+        class GrowingStream:
+            def __init__(self, stream):
+                self.stream = stream
+
+            def fileno(self):
+                return self.stream.fileno()
+
+            def read(self, size):
+                requests.append(size)
+                if len(requests) == 1:
+                    writer.write(b"567890123456")
+                return self.stream.read(size)
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exception):
+                self.stream.close()
+
+        monkeypatch.setattr(source_generation.os, "fdopen", lambda *a, **kw: GrowingStream(real_fdopen(*a, **kw)))
+        result = source_generation.scan_source_generation(
+            tmp_path, limits=source_generation.SourceGenerationLimits(max_file_bytes=8),
+        )
+    assert result.category == "source_limit_exceeded"
+    assert requests == [5]

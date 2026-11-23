@@ -22,6 +22,7 @@ from common_lore_index.graph.discovery import (
     DEFAULT_DISCOVERY_EXCLUDE_PATHS,
     normalize_discovery_exclude_paths,
 )
+from common_lore_index.graph._capture_contracts import _file_signature
 from common_lore_index.ops.generations import source_generation_records
 
 
@@ -126,6 +127,7 @@ def scan_source_generation(
             monotonic,
             deadline,
             records,
+            remaining_bytes=limits.max_total_bytes,
         )
         file_count = len(records)
         for _, _, _digest in records:
@@ -185,6 +187,8 @@ def _scan_directory(
     monotonic: Callable[[], float],
     deadline: float,
     records: list[tuple[str, str, str]],
+    *,
+    remaining_bytes: int,
 ) -> int:
     total_bytes = 0
     try:
@@ -193,7 +197,11 @@ def _scan_directory(
         raise _SourceUnavailable from error
     try:
         with os.scandir(directory) as iterator:
-            entries = sorted(iterator, key=lambda entry: entry.name)
+            entries = []
+            for entry in iterator:
+                _check_cancel_or_timeout(cancel_event, monotonic, deadline)
+                entries.append(entry)
+        entries.sort(key=lambda entry: entry.name)
     except OSError as error:
         raise _SourceUnavailable from error
     for entry in entries:
@@ -226,9 +234,8 @@ def _scan_directory(
                 monotonic,
                 deadline,
                 records,
+                remaining_bytes=remaining_bytes - total_bytes,
             )
-            if total_bytes > limits.max_total_bytes:
-                raise _LimitExceeded
             continue
         if not stat.S_ISREG(details.st_mode):
             raise _SourceInvalid
@@ -240,13 +247,12 @@ def _scan_directory(
             cancel_event,
             monotonic,
             deadline,
+            max_bytes=min(limits.max_file_bytes, remaining_bytes - total_bytes),
         )
         if stable is None:
             raise _SourceUnstable
         digest, size = stable
         total_bytes += size
-        if total_bytes > limits.max_total_bytes:
-            raise _LimitExceeded
         records.append((relative, "file", digest))
     try:
         directory_after = directory.stat()
@@ -263,50 +269,45 @@ def _read_stable_file(
     cancel_event: Event | None,
     monotonic: Callable[[], float],
     deadline: float,
+    *,
+    max_bytes: int,
 ) -> tuple[str, int] | None:
     for _attempt in range(limits.max_file_retries + 1):
         _check_cancel_or_timeout(cancel_event, monotonic, deadline)
         try:
-            before_lstat = path.lstat()
-            if path.is_symlink() or _is_reparse(before_lstat):
+            before = path.lstat()
+            if not stat.S_ISREG(before.st_mode) or _is_reparse(before):
                 raise _SourceInvalid
-            before = path.stat()
-            if before.st_size > limits.max_file_bytes:
+            if before.st_size > max_bytes:
                 raise _LimitExceeded
             digest = hashlib.sha256()
             flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
-            flags |= getattr(os, "O_NOFOLLOW", 0)
+            flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
             descriptor = os.open(path, flags)
-            with os.fdopen(descriptor, "rb") as source:
+            with os.fdopen(descriptor, "rb", buffering=0) as source:
+                opened = os.fstat(source.fileno())
+                if _file_signature(opened) != _file_signature(before):
+                    continue
+                remaining = opened.st_size
                 while True:
                     _check_cancel_or_timeout(cancel_event, monotonic, deadline)
-                    chunk = source.read(limits.chunk_bytes)
-                    if not chunk:
+                    chunk = source.read(min(limits.chunk_bytes, remaining + 1))
+                    if not chunk or len(chunk) > remaining:
+                        complete = not chunk and remaining == 0
                         break
                     digest.update(chunk)
-            after = path.stat()
-        except _LimitExceeded:
-            raise
+                    remaining -= len(chunk)
+                after = os.fstat(source.fileno())
+            named = path.lstat()
         except (OSError, UnicodeError) as error:
             raise _SourceUnavailable from error
-        if after.st_size > limits.max_file_bytes:
-            raise _LimitExceeded
-        after_lstat = path.lstat()
-        if path.is_symlink() or _is_reparse(after_lstat):
+        if not stat.S_ISREG(named.st_mode) or _is_reparse(named):
             raise _SourceInvalid
-        if _file_signature(before) == _file_signature(after):
+        if after.st_size > max_bytes or named.st_size > max_bytes:
+            raise _LimitExceeded
+        if complete and _file_signature(opened) == _file_signature(after) == _file_signature(named):
             return digest.hexdigest(), after.st_size
     return None
-
-
-def _file_signature(details: os.stat_result) -> tuple[int, int, int, int, int]:
-    return (
-        details.st_mode,
-        details.st_size,
-        details.st_mtime_ns,
-        details.st_ctime_ns,
-        details.st_ino,
-    )
 
 
 def _directory_signature(details: os.stat_result) -> tuple[int, int, int, int]:
