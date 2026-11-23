@@ -154,3 +154,25 @@ def test_lexical_published_plan_is_projected_and_refusal_has_no_zero_measurement
     assert next(
         limit for limit in report.limits if limit.name == "lexical_build_statement_timeout"
     ).enforcement == "database_statement_timeout"
+
+
+def test_staging_projection_consumes_duplicate_stream_without_retaining_it() -> None:
+    import tracemalloc
+
+    def staging():
+        for k in range(20_000):
+            yield SimpleNamespace(category="wal_upper_bound", availability="measured", value=k)
+
+    tracing = tracemalloc.is_tracing()
+    tracemalloc.start()
+    tracemalloc.reset_peak()
+    baseline, _ = tracemalloc.get_traced_memory()
+    try:
+        metrics = project_staging_resources(staging(), measurements_failed=False)
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        if not tracing:
+            tracemalloc.stop()
+    wal = next(metric for metric in metrics if metric.name == "wal_upper_bound")
+    assert wal.reason == "ambiguous_repeat"
+    assert peak - baseline < 512 * 1024

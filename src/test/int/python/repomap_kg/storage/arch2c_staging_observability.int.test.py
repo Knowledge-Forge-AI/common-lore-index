@@ -302,6 +302,10 @@ def test_staging_temporary_bytes_are_unavailable_across_owned_database_reset(
     metric = projected["temporary_byte_upper_bound"]
     assert (metric.availability, metric.reason, metric.value) == ("unavailable", "not_observed", None)
     assert projected["wal_upper_bound"].availability == "measured"
+    repeated = project_staging_resources(
+        (event for _ in range(10) for event in events), measurements_failed=False,
+    )
+    assert all(metric.reason == "ambiguous_repeat" and metric.value is None for metric in repeated)
 
 
 def test_staging_samples_and_statement_counters_on_disposable_workload() -> None:

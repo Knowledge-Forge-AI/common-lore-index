@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 import resource
 import sys
 from typing import Any
@@ -119,24 +120,29 @@ def _safe_row(connection: Any, query: str) -> tuple[object, ...] | None:
     return tuple(row)
 
 
+_HEX_DIGITS = frozenset("0123456789ABCDEFabcdef")
+
+
 def _parse_wal_position(value: object) -> int | None:
-    if not isinstance(value, str) or value.count("/") != 1:
+    if not isinstance(value, str) or len(value) > 17:
         return None
-    high, low = value.split("/", 1)
-    try:
-        return (int(high, 16) << 32) + int(low, 16)
-    except ValueError:
+    high, _, low = value.partition("/")
+    if not (
+        1 <= len(high) <= 8 and 1 <= len(low) <= 8
+        and _HEX_DIGITS.issuperset(high) and _HEX_DIGITS.issuperset(low)
+    ):
         return None
+    return (int(high, 16) << 32) + int(low, 16)
 
 
 def _nonnegative_int(value: Any) -> int | None:
-    if isinstance(value, bool):
-        return None
-    try:
-        result = int(value)
-    except (TypeError, ValueError):
-        return None
-    return result if result >= 0 else None
+    if type(value) is int:
+        return value if value >= 0 else None
+    # PostgreSQL SUM(bigint) is NUMERIC through Psycopg. Preserve exact
+    # integral samples and refuse values that would be rounded or coerced.
+    if isinstance(value, Decimal) and value.is_finite() and value >= 0 and value == value.to_integral_value():
+        return int(value)
+    return None
 
 
 def _record_delta(

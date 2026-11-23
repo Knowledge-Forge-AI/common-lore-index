@@ -311,3 +311,15 @@ def test_restore_scratch_is_preserved_when_backup_drift_prevents_recovery(
     assert codes(result) == ["config-migration-drift"]
     assert tree(home) == before
     assert result["writes_performed"] == 0
+
+
+def test_effective_config_digest_keeps_existing_bytes_with_unicode_and_toml_date() -> None:
+    from common_lore_index.ops.config_migration_journal import effective_sha256
+
+    payload = (
+        'schema_version = 1\nfixture_date = 2026-11-22\nfixture_name = "café"\n'
+        '[postgres]\nhost = "127.0.0.1"\n'
+    ).encode()
+    assert effective_sha256([("fixture.rp.toml", payload)]) == (
+        "f32b0c22a3cf432746c02e8d6ccc7ad321004183bcfb9464a8ec83e891a8e6ac"
+    )

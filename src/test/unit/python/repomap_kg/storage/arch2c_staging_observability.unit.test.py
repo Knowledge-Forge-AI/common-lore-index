@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from contextlib import nullcontext
+from decimal import Decimal
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import cast
@@ -344,7 +345,7 @@ def test_arch2c_resource_fallbacks_are_explicit_and_identifier_free() -> None:
 
 @pytest.mark.parametrize(
     ("value", "expected"),
-    (("1/A", (1 << 32) + 10), ("bad", None), ("G/0", None)),
+    (("1/A", (1 << 32) + 10), ("bad", None), ("G/0", None), ("1/100000000", None), ("-1/0", None), ("0/0_1", None), ("FFFFFFFF/FFFFFFFF", 2**64 - 1)),
 )
 def test_arch2c_wal_position_parsing_is_bounded(
     value: object, expected: int | None
@@ -354,7 +355,7 @@ def test_arch2c_wal_position_parsing_is_bounded(
 
 @pytest.mark.parametrize(
     ("value", "expected"),
-    ((1, 1), (True, None), (-1, None), (object(), None)),
+    ((1, 1), (True, None), (-1, None), (object(), None), (Decimal("1.0"), 1), (Decimal("1.5"), None), (Decimal("Infinity"), None), (0.4, None), ("2", None)),
 )
 def test_arch2c_nonnegative_resource_values_are_strict(
     value: object, expected: int | None

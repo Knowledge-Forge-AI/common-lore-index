@@ -60,11 +60,15 @@ def effective_sha256(named_bytes: Sequence[tuple[str, bytes]]) -> str:
     errors = sorted({item.code for item in diagnostics if item.severity == "error"})
     if errors:
         raise MigrationRefusal(errors[0], more=tuple({"code": code, "file": ""} for code in errors[1:]))
-    canonical = json.dumps(
-        {"merged": merged, "diagnostics": [[item.severity, item.code] for item in diagnostics]},
-        sort_keys=True, separators=(",", ":"), default=_toml_value,
-    )
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    encoder = json.JSONEncoder(sort_keys=True, separators=(",", ":"), default=_toml_value)
+    canonical_input = {
+        "merged": merged,
+        "diagnostics": [[item.severity, item.code] for item in diagnostics],
+    }
+    digest = hashlib.sha256()
+    for fragment in encoder.iterencode(canonical_input):
+        digest.update(fragment.encode("utf-8"))
+    return digest.hexdigest()
 
 
 def build_journal(home: Home, operation_id: str, plan: dict[str, Any], records: Sequence[Any], digest: str) -> dict[str, Any]:
