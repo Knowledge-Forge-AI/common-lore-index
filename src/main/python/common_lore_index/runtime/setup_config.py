@@ -98,6 +98,8 @@ def prepare_setup_config(
             try:
                 _home, payload, _names, diagnostics = _read_ops_config_home_payload(home)
             except OpsConfigError as error:
+                if isinstance(error.__cause__, UnicodeDecodeError):
+                    _refuse("runtime-config-unavailable", "configuration preflight could not decode the selected home")
                 # Preserve legacy bootstrap tolerance; the new CLOE producer fails closed.
                 if selected == "cloe" or any(d.code == "config-home-mixed-format" for d in error.diagnostics):
                     _config_refusal(error)

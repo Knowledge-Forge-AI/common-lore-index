@@ -10,7 +10,6 @@ from dataclasses import dataclass as dataclass
 from enum import Enum as Enum
 from pathlib import Path
 
-from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.canonicalization.records import CanonicalizationResult as CanonicalizationResult
 from common_lore_index.canonicalization.main import canonicalize_observations as canonicalize_observations
 from common_lore_index.observations.raw import RawObservation as RawObservation
@@ -370,6 +369,8 @@ def _psql_query(
     if field_separator is not None:
         command.extend(("-F", field_separator))
     command.extend(("-c", sql))
+    from common_lore_index.extractors.shared.scanner import iter_text_lines
+
     result = run_psql(command)
     return tuple(line for line in iter_text_lines(result.stdout) if line)
 

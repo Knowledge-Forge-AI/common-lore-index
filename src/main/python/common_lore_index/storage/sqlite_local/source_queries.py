@@ -11,7 +11,6 @@ import sqlite3
 from collections import Counter
 from collections.abc import Iterable, Iterator, Sequence
 from contextlib import closing
-from dataclasses import dataclass
 from heapq import heappush, heapreplace, nlargest
 from itertools import batched
 from typing import Any, NamedTuple, TypeVar
@@ -26,7 +25,7 @@ from common_lore_index.storage.source_rows import (
 from common_lore_index.storage.sql_core import positive_limit
 from common_lore_index.storage.sqlite_local import raw_payload
 from common_lore_index.storage.sqlite_local.queries import require_accepted_publication
-from common_lore_index.storage.sqlite_local.source_run_summary import SourceRunSummary
+from common_lore_index.storage.sqlite_local.source_run_summary import SourceObservation, SourceRunSummary
 
 Ordered = TypeVar("Ordered", str, int)
 RawKey = tuple[int, int]
@@ -38,27 +37,6 @@ _RAW_JOIN = (
     "AND raw.ordinal = evidence.raw_observation_ordinal"
 )
 _ID_BATCH = 500
-
-
-@dataclass(frozen=True)
-class SourceObservation:
-    """One raw row with ``metadata.source_id_configured``: the ``source_observations`` CTE."""
-
-    key: RawKey
-    kind: str
-    source_id: str
-    source_type: str | None
-    display_name: str | None
-    policy_status: str | None
-    source_run_id: str | None
-    artifact_id: str | None
-    artifact_path: str | None
-    artifact_sha256: str | None
-    artifact_bytes: str | None
-    acquired_at: str | None
-    http_status: str | None
-    content_type: str | None
-    url_summary: str | None
 
 
 class _Node(NamedTuple):

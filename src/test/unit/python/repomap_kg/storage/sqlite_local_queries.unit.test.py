@@ -329,16 +329,16 @@ def test_local_feed_reference_lookup_copies_only_page_keys_from_sqlite() -> None
         }
         assert len(fetched) == 3
 
-def test_observation_search_renders_payload_only_when_needed(corpus: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    original = raw_payload.jsonb_text
+def test_observation_search_searches_payload_only_when_needed(corpus: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    original = raw_payload.jsonb_contains_ascii_folded
     payload_calls = []
 
-    def count(value: object) -> str:
+    def count(value: object, needle: str) -> bool:
         if isinstance(value, dict) and "metadata" in value:
             payload_calls.append(value)
-        return original(value)
+        return original(value, needle)
 
-    monkeypatch.setattr(raw_payload, "jsonb_text", count)
+    monkeypatch.setattr(raw_payload, "jsonb_contains_ascii_folded", count)
     with read_transaction(corpus, BINDING) as connection:
         def search(query: str, *, include_raw: bool, path: str | None = None) -> dict[str, Any]:
             return investigation_queries.observation_search(

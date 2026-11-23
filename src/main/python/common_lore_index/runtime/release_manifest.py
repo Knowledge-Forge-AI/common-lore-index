@@ -58,7 +58,7 @@ HISTORICAL_31215_PYTHON_PAYLOAD_EXCLUSIONS: Mapping[str, PayloadExclusion] = Map
 
 D12_CANDIDATE_LIBPQ_VERSION = 180006
 CI68_MANIFEST_SHA256 = '13f616f876ebc6e2ef6c9772e55e39426184944a15cce61ef2690187b2ef0273'
-D12_CANDIDATE_MANIFEST_SHA256 = '60c6bdda0824261d623f96570e2614ec510a2cf4fa2b1c04008cb30399554eed'
+D12_CANDIDATE_MANIFEST_SHA256 = '05992133b0d207bf7fc3abd7b8cf828030b61dbe9bff89913812ac9619296ede'
 
 D12_CANDIDATE_PACKAGE_MANIFEST: Mapping[str, PlatformPackages] = MappingProxyType({
     "amd64": PlatformPackages(
@@ -173,8 +173,8 @@ D12_CANDIDATE_PACKAGE_MANIFEST: Mapping[str, PlatformPackages] = MappingProxyTyp
                 '0d36d0bde85c467ac6735dded08e19dd30ae1369e3908b9eb48ccc0d6ff66648',
             ),
             DebPackage(
-                'libgssapi-krb5-2', '1.21.3-5+deb13u1', 'amd64',
-                '30847c1fde4240567d7ed3aeab4f655dd591203758b857e85e824045aae70299',
+                'libgssapi-krb5-2', '1.21.3-5+deb13u2', 'amd64',
+                '92e4d11b61d702ae5bcb4293c9af69625ea1cd62aac0d87db9b0344217d749be',
             ),
             DebPackage(
                 'libhwasan0', '14.2.0-19', 'amd64',
@@ -193,20 +193,20 @@ D12_CANDIDATE_PACKAGE_MANIFEST: Mapping[str, PlatformPackages] = MappingProxyTyp
                 '60707a62fe6c1228c3389b12a13ca4efd76defc5532473e547a29e99cf7d2a6e',
             ),
             DebPackage(
-                'libk5crypto3', '1.21.3-5+deb13u1', 'amd64',
-                '7da07ee674b47f1f0be7cc89317c25310086a1f1761217d0f72e6ae2c5a69b84',
+                'libk5crypto3', '1.21.3-5+deb13u2', 'amd64',
+                '782e113c8186a413b422ff2bf989874f9a5496002fd6f0ca05bd136eaca4b8b3',
             ),
             DebPackage(
                 'libkeyutils1', '1.6.3-6', 'amd64',
                 '0b11ad17be0300b63ad4eeb4c6450fed24d34b7b740f23e5363dcb29ee6d5eba',
             ),
             DebPackage(
-                'libkrb5-3', '1.21.3-5+deb13u1', 'amd64',
-                '47d71d6a7f2e59b9bae5f89602397594805113b95889ad18fa703cd53abafc97',
+                'libkrb5-3', '1.21.3-5+deb13u2', 'amd64',
+                'cf58784dc2160fbab7968edbfa8a789c7149b5c81ae2e8300286f98763c4d92d',
             ),
             DebPackage(
-                'libkrb5support0', '1.21.3-5+deb13u1', 'amd64',
-                '3a0acd8b37955c0e102c756b52c97df2a31f67b96453c35dab70df218d309117',
+                'libkrb5support0', '1.21.3-5+deb13u2', 'amd64',
+                'b4e2515f3d5ebda994498cee895d7ba3942ac9182570087acbd1638df2b8acf4',
             ),
             DebPackage(
                 'libldap2', '2.6.10+dfsg-1', 'amd64',

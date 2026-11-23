@@ -4,17 +4,36 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.source_rows import SourceRunRecord, source_run_record_from_storage_payload
 
-if TYPE_CHECKING:
-    from common_lore_index.storage.sqlite_local.source_queries import SourceObservation
-
 Ordered = TypeVar("Ordered", str, int)
 _INTEGER = re.compile(r"[+-]?[0-9]+")
 _BIGINT, _INT4 = 2**63, 2**31
+
+
+@dataclass(frozen=True)
+class SourceObservation:
+    """One raw row with ``metadata.source_id_configured``: the ``source_observations`` CTE."""
+
+    key: tuple[int, int]
+    kind: str
+    source_id: str
+    source_type: str | None
+    display_name: str | None
+    policy_status: str | None
+    source_run_id: str | None
+    artifact_id: str | None
+    artifact_path: str | None
+    artifact_sha256: str | None
+    artifact_bytes: str | None
+    acquired_at: str | None
+    http_status: str | None
+    content_type: str | None
+    url_summary: str | None
+
 
 
 def _integer(value: str | None, bound: int) -> int | None:

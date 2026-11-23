@@ -238,16 +238,20 @@ def test_invalid_retained_framing_or_terminal_state_is_held(case: str) -> None:
             _read(record, _Store(bundle, reference))
 
 
-def test_canonical_json_bounds_recursive_encoding_and_decoding() -> None:
-    from common_lore_index.artifacts._canonical import CanonicalEncodingError, decode_canonical_json
+def test_canonical_json_bounds_recursive_encoding_and_decoding(monkeypatch: pytest.MonkeyPatch) -> None:
+    from common_lore_index.artifacts import _canonical
 
-    data = b'{"deep":' + b"[" * 4200 + b"]" * 4200 + b"}\n"
-    with pytest.raises(CanonicalEncodingError):
-        decode_canonical_json(data)
     recursive: dict[str, object] = {}
     recursive["self"] = recursive
-    with pytest.raises(CanonicalEncodingError):
+    with pytest.raises(_canonical.CanonicalEncodingError):
         canonical_json(recursive)
+
+    def recursion_limit(_data: str, **_options: object) -> object:
+        raise RecursionError("fixture decoder depth limit")
+
+    monkeypatch.setattr(_canonical.json, "loads", recursion_limit)
+    with pytest.raises(_canonical.CanonicalEncodingError, match="canonical JSON is invalid"):
+        _canonical.decode_canonical_json(b'{"deep":[]}\n')
 
 
 def test_prefixed_artifact_hash_matches_exact_concatenated_bytes() -> None:

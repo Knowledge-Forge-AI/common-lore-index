@@ -212,6 +212,7 @@ def test_restore_requires_matching_persisted_readback_after_install(
     ("phase", "pattern"),
     [("backup:snapshot-complete", ".graph.sqlite3.backup-*"),
      ("backup:before-manifest-link", ".manifest.json.tmp-*")],
+    ids=("snapshot-temporary", "manifest-temporary"),
 )
 def test_backup_refuses_and_keeps_a_foreign_temporary_replacement(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, phase: str, pattern: str,

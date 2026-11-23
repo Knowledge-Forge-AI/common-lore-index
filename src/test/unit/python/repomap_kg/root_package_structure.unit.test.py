@@ -8,7 +8,10 @@ import common_lore_index
 STANDARD_ROOT_FILES = {"__init__.py", "__main__.py", "entrypoints.py"}
 
 
-PHASED_ROOT_FILES: dict[str, str] = {"_temporary.py": "ADR0106 shared owned temporary cleanup"}
+PHASED_ROOT_FILES: dict[str, str] = {
+    "_temporary.py": "ADR0106 shared owned temporary cleanup",
+    "_utf8.py": "CLOE-PRODUCT256 shared UTF-8 extent accounting",
+}
 
 
 COMPATIBILITY_HOLDS = {

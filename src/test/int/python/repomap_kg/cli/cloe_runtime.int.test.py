@@ -15,6 +15,21 @@ def snapshot(home: Path) -> dict[str, bytes]:
     return {str(p.relative_to(home)): p.read_bytes() for p in home.rglob("*") if p.is_file()}
 
 
+@pytest.mark.parametrize("name", ["repomap.rpl.toml", "repomap.local.cloe.toml"], ids=("legacy", "cloe"))
+def test_setup_refuses_undecodable_config_before_writing_runtime(tmp_path: Path, name: str) -> None:
+    home = tmp_path / "home"
+    home.mkdir(mode=0o700)
+    (home / name).write_bytes(b"\xfffixture-confidential-marker")
+    before = snapshot(home)
+    harness = LocalHarness(tmp_path / "guard")
+    result = harness.run("local", "setup", "--repo-map-home", str(home), "--json")
+    assert result.returncode == 1
+    assert "runtime-config-unavailable" in result.stderr
+    assert "fixture-confidential-marker" not in result.stderr + result.stdout
+    assert snapshot(home) == before
+    assert not harness.forbidden_events() and not harness.shim_invocations()
+
+
 def test_cloe_setup_readback_status_and_plan_without_runtime_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     home = tmp_path / "cloe home"
     harness = LocalHarness(tmp_path / "guard")
