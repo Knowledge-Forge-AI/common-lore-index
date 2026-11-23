@@ -1,0 +1,41 @@
+{
+  "approval": {
+    "operator_request": "Keep working on and batching 256 product slices. Once you're done, public staging/ci.",
+    "phase": "CLOE-PRODUCT256",
+    "schema": "cloe-ci168-approval-v1",
+    "scope": "Publish the verified 256-slice batch with one fast-forward to staging and one automatic synchronize campaign on draft PR 28.",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 73,
+    "attempt": 1,
+    "component_runtime_executions": 43,
+    "native_report_sha256": "49f84d2699000ab9080d0ace1d9e042321c1b16e72acacfec61431d0b58178c3",
+    "preceding_campaign": 167,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 46,
+    "rust_report_sha256": "10d29b864d645ff5ebcb97bb5fc9150d9e19ee3479a13ea5a3ddf6de8e45ca01",
+    "schema": "cloe-ci168-ledger-before-v1",
+    "staging_report_sha256": "1997c88023d224faf0d2c2453659961e3e0e02a592f46fc620aada1394e0491e",
+    "system_intent_report_sha256": "562dbabe14ea7fff4586adb39fe57fde39b35f54775e4cb1e57c833f3faeb054",
+    "system_report_sha256": "87030489fde8ea97153dae49e9863dadd47849af98d42ea8e1118e9fded5c60f",
+    "wheel_transfers": 88
+  },
+  "reservation": {
+    "application_start": 74,
+    "approval_sha256": "f5fa63b87e5153a2ebbf733bdc8c7131ab4d922d5cde56ca06de18b8b480082f",
+    "base": "da0a6ba92350da994082574cea70d1fb27542a21",
+    "before": "c48bb4d055b2208106d86968de72cfb1a1236091",
+    "component_runtime_cumulative": 44,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "66d0b0d87a333d3778d70e4424a518332bb73976ba8e12761c909e0c53219dc6",
+    "nonce": "6a661f2685637ea6abebdf2633b6ab08",
+    "pull_request": 28,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 47,
+    "schema": "cloe-ci168-reservation-v1",
+    "wheel_transfers_cumulative": 90,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 168
+  }
+}

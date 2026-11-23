@@ -112,7 +112,7 @@ def _coherent_candidate_record(grant: dict[str, Any]) -> tuple[dict[str, Any], b
     return validate_expected_candidate_record(cand_doc), raw, hashlib.sha256(raw).hexdigest()
 
 
-def test_load_tracked_system_build_grant_matches_ci167_and_refuses_drifted_candidate() -> None:
+def test_load_tracked_system_build_grant_matches_ci168_and_refuses_drifted_candidate() -> None:
     cand_path = REPO_ROOT / DEFAULT_CANDIDATE_RELPATH
     grant_path = REPO_ROOT / DEFAULT_GRANT_RELPATH
     raw_grant, _ = load_and_validate_system_build_grant(grant_path)
@@ -133,7 +133,7 @@ def test_load_tracked_system_build_grant_matches_ci167_and_refuses_drifted_candi
             expected_candidate=live_cand,
             frozen_identity=dict(live_cand["d12_context"]),
         )
-    assert (EXPECTED_PHASE_ID, SPENT_CI113_NONCE, SPENT_CI113_RESERVATION_SHA256) == ('CLOE-CI166-BACKUPREAD1', "e64f3c00f5e534736056558e3048ad5a", "c8944eaa5913f57cd94cb6f72ddb4eda0380925c54193e1f0e65163d4766b565"); assert (SPENT_CI114_NONCE, SPENT_CI114_RESERVATION_SHA256) == ("1e26115a9014b0d1426080a7caa57138", "2b66689167899aafb2f537ae4db3d50ddceb8e464128f71979693c9eb0dc2fe6"); assert (SPENT_CI115_NONCE, SPENT_CI115_RESERVATION_SHA256) == ("c7ce7c0b96549e046af7a5ec4e9b95e4", "e9d68de8dbf1a127bd9c1786606aa5e5015b2e6961ba18bca3c9c4422db50b4f"); assert (SPENT_CI138_NONCE, SPENT_CI138_RESERVATION_SHA256) == ("f13a639a93f6ab95f45011f905c5facc", "8ba4cdc59438053ad0732089d4f4dc85b2f028ee2d0c3d718d57a7e8b797e63d"); assert (SPENT_CI139_NONCE, SPENT_CI139_RESERVATION_SHA256) == ("468126a1a148587df20a8dda75d0d4e3", "0b3ab9190d3a3d1deae5733450ac099a24957166ce7c4c858f5e050aef38eb67"); assert (SPENT_CI140_NONCE, SPENT_CI140_RESERVATION_SHA256) == ("23c864a8d997e5ccdc37018c9c2adea9", "a881ed5aad3954f97a216b4e28184ed53128f1cd1427f46fe22a1389d2fcc372"); assert (SPENT_CI141_NONCE, SPENT_CI141_RESERVATION_SHA256) == ("9f5b0c5424a42090fcb8e9b6e953db4b", "f0a8ef46f980f12dc9cc49cb38d3cbf658273790ab804c85df563c0318a83877"); assert (SPENT_CI142_NONCE, SPENT_CI142_RESERVATION_SHA256) == ("6bfa13134cb078233771246e74850978", "20279ba9c466da67867747ab2dfe20c22116cd41367abdc56cb708a4475b974c"); assert (SPENT_CI143_NONCE, SPENT_CI143_RESERVATION_SHA256) == ("a6f6a8c08742985e01590e95cffd85ad", "ed4a26b7079a94abf2c3b1daebcddb07a655ba84141078dc70a074f4addb5dfd"); assert (SPENT_CI144_NONCE, SPENT_CI144_RESERVATION_SHA256) == ("dcbf41dfa43442600d7eb9a3f9c074db", "bb9930be0172ea711c540f4d0d0d1ce2373ec4db73540f367437193bb60de591"); assert (SPENT_CI145_NONCE, SPENT_CI145_RESERVATION_SHA256) == ("f3d84d991ae06b04f7237d38fc54ca72", "5b203f117b3f618fb373ba4d0a92b2aba6d673061c5396dc3320232f39a932a9")
+    assert (EXPECTED_PHASE_ID, SPENT_CI113_NONCE, SPENT_CI113_RESERVATION_SHA256) == ('CLOE-PRODUCT256', "e64f3c00f5e534736056558e3048ad5a", "c8944eaa5913f57cd94cb6f72ddb4eda0380925c54193e1f0e65163d4766b565"); assert (SPENT_CI114_NONCE, SPENT_CI114_RESERVATION_SHA256) == ("1e26115a9014b0d1426080a7caa57138", "2b66689167899aafb2f537ae4db3d50ddceb8e464128f71979693c9eb0dc2fe6"); assert (SPENT_CI115_NONCE, SPENT_CI115_RESERVATION_SHA256) == ("c7ce7c0b96549e046af7a5ec4e9b95e4", "e9d68de8dbf1a127bd9c1786606aa5e5015b2e6961ba18bca3c9c4422db50b4f"); assert (SPENT_CI138_NONCE, SPENT_CI138_RESERVATION_SHA256) == ("f13a639a93f6ab95f45011f905c5facc", "8ba4cdc59438053ad0732089d4f4dc85b2f028ee2d0c3d718d57a7e8b797e63d"); assert (SPENT_CI139_NONCE, SPENT_CI139_RESERVATION_SHA256) == ("468126a1a148587df20a8dda75d0d4e3", "0b3ab9190d3a3d1deae5733450ac099a24957166ce7c4c858f5e050aef38eb67"); assert (SPENT_CI140_NONCE, SPENT_CI140_RESERVATION_SHA256) == ("23c864a8d997e5ccdc37018c9c2adea9", "a881ed5aad3954f97a216b4e28184ed53128f1cd1427f46fe22a1389d2fcc372"); assert (SPENT_CI141_NONCE, SPENT_CI141_RESERVATION_SHA256) == ("9f5b0c5424a42090fcb8e9b6e953db4b", "f0a8ef46f980f12dc9cc49cb38d3cbf658273790ab804c85df563c0318a83877"); assert (SPENT_CI142_NONCE, SPENT_CI142_RESERVATION_SHA256) == ("6bfa13134cb078233771246e74850978", "20279ba9c466da67867747ab2dfe20c22116cd41367abdc56cb708a4475b974c"); assert (SPENT_CI143_NONCE, SPENT_CI143_RESERVATION_SHA256) == ("a6f6a8c08742985e01590e95cffd85ad", "ed4a26b7079a94abf2c3b1daebcddb07a655ba84141078dc70a074f4addb5dfd"); assert (SPENT_CI144_NONCE, SPENT_CI144_RESERVATION_SHA256) == ("dcbf41dfa43442600d7eb9a3f9c074db", "bb9930be0172ea711c540f4d0d0d1ce2373ec4db73540f367437193bb60de591"); assert (SPENT_CI145_NONCE, SPENT_CI145_RESERVATION_SHA256) == ("f3d84d991ae06b04f7237d38fc54ca72", "5b203f117b3f618fb373ba4d0a92b2aba6d673061c5396dc3320232f39a932a9")
     assert SPENT_CI70_NONCE == "2ca8d5a3ad7645798437728db064e8d4"
     assert SPENT_CI70_RESERVATION_SHA256 == "aba49e31a10db6bb6326e48f0fd681ede763e3be0fa86f37ddda1bae0df76a91"
     assert SPENT_CI71_NONCE == "549ee11fd8a44b4f8723030412032fa3"
@@ -171,9 +171,9 @@ def test_load_tracked_system_build_grant_matches_ci167_and_refuses_drifted_candi
     assert grant["schema"] == SYSTEM_BUILD_GRANT_SCHEMA
     assert grant["platform"] == "linux/amd64"
     assert grant["owner"] == "main-system-gate"
-    assert grant["workflow_ordinal"] == 167
+    assert grant["workflow_ordinal"] == 168
     assert grant["workflow_attempt"] == 1
-    assert (grant["maximum_total"], grant["maximum_per_platform"]) == (73, 73)
+    assert (grant["maximum_total"], grant["maximum_per_platform"]) == (74, 74)
     assert grant["before"] == EXPECTED_BEFORE_SHA
     assert grant["base"] == EXPECTED_BASE_SHA
     assert grant["approval_sha256"] == EXPECTED_APPROVAL_SHA256
