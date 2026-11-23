@@ -148,6 +148,14 @@ class GitHubApiIngestionTransportContract(GitHubApiIngestionTestSupport):
             self.assertTrue(body.closed)
             self.assertEqual(body.last_read, config.max_bytes_per_run + 1)
 
+    def test_github_fixture_accepts_small_body_under_large_budget(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_github_fixture(Path(tmpdir), max_bytes_per_run=9223372036854775807)
+            config = load_github_api_source_config(path)
+            request = build_github_api_plan_from_config(path).requests[0]
+            response = FixtureGitHubApiTransport().fetch(config, request)
+            self.assertIsInstance(json.loads(response.body), dict)
+
     def test_github_real_transport_rejects_unsafe_acquisition_settings(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

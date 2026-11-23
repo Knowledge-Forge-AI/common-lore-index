@@ -16,7 +16,7 @@ from common_lore_index.ops.ingestion.source_warc import (
     _http_content_type,
     _read_warc_record,
     _normalise_warc_record_id,
-    _parse_http_message_payload,
+    _http_headers_and_body_offset,
     _safe_warc_headers,
     _skip_warc_record_padding,
     _warc_payload_extension,
@@ -122,14 +122,15 @@ def _warc_record_summary(
         record_identity = f"{identity}:{duplicate_disambiguator}"
     record_key = warc_record_key(document_key, record_identity)
     content_type = headers.get("content-type")
-    payload = b""
+    payload: bytes | memoryview = b""
     payload_content_type = content_type
     extractor_route: str | None = None
     materialized_path: str | None = None
     skip_reason: str | None = None
 
     if record_type == "response":
-        http_headers, payload = _parse_http_message_payload(block, response=True)
+        http_headers, body_offset = _http_headers_and_body_offset(block, response=True)
+        payload = memoryview(block)[body_offset:]
         payload_content_type = _http_content_type(http_headers) or content_type
         extractor_route = _warc_payload_route(payload_content_type)
     elif record_type == "resource":
@@ -205,7 +206,7 @@ def _materialize_warc_payload(
     materialization_root: Path,
     ordinal: int,
     extractor_route: str,
-    payload: bytes,
+    payload: bytes | memoryview,
 ) -> str:
     extension = _warc_payload_extension(extractor_route)
     directory = materialization_root / f"record-{ordinal:04d}"

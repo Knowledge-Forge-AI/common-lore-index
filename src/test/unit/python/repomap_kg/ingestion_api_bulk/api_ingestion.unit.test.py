@@ -141,4 +141,12 @@ class ApiIngestionUnitTests(unittest.TestCase):
             self.assertTrue(body.closed)
             self.assertEqual(body.last_read, config.max_bytes_per_run + 1)
 
+    def test_fixture_transport_accepts_small_body_under_large_budget(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_api_fixture(Path(tmpdir), max_bytes_per_run=9223372036854775807)
+            config = load_api_source_config(path)
+            request = build_api_plan_from_config(path).requests[0]
+            response = FixtureApiTransport().fetch(config, request)
+            self.assertIn(b"fixture", response.body)
+
     write_api_fixture = staticmethod(write_api_fixture)

@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 
-from common_lore_index.storage.sqlite_local.backup import check_backup_output, write_backup
+from common_lore_index.storage.sqlite_local.backup import check_backup_output, inspect_sealed_database, write_backup
 from common_lore_index.storage.sqlite_local.backup_manifest import BackupManifest
 from common_lore_index.storage.sqlite_local.connection import graph_database_uri, publisher_lock, read_transaction
 from common_lore_index.storage.sqlite_local.migrations import MIGRATION_V1
@@ -186,3 +186,15 @@ def test_unpublished_backup_restores_without_inventing_a_publication(tmp_path: P
         assert accepted_identity(reader) is None
         assert reader.execute("SELECT count(*) FROM runs").fetchone() == (0,)
     assert sqlite_logical_dump(target) == sqlite_logical_dump(backup / "graph.sqlite3")
+
+
+def test_sealed_snapshot_accepts_backup_and_refuses_nonregular_input(tmp_path: Path) -> None:
+    artifact, manifest = _artifact(tmp_path)
+    database, = artifact.glob("*.sqlite3")
+    _, publication = inspect_sealed_database(database, BINDING)
+    assert publication == manifest.publication
+
+    pipe = tmp_path / "pipe.sqlite3"
+    os.mkfifo(pipe)
+    with pytest.raises(LocalStoreError, match="graph-database-unrecognized"):
+        inspect_sealed_database(pipe, BINDING)

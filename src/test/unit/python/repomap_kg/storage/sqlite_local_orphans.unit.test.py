@@ -25,7 +25,7 @@ from pathlib import Path
 import pytest
 
 from common_lore_index.storage.sqlite_local import connection, orphans, restore
-from common_lore_index.storage.sqlite_local.backup import write_backup
+from common_lore_index.storage.sqlite_local.backup import inspect_sealed_database, write_backup
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, publisher_lock
 from common_lore_index.storage.sqlite_local.restore import install_backup, verify_backup
 from common_lore_index.storage.sqlite_local.schema import LocalGraphBinding, LocalStoreError
@@ -371,3 +371,18 @@ def test_a_symlinked_store_directory_is_refused(tmp_path: Path) -> None:
     alias.symlink_to(store)
     with pytest.raises(OSError), orphans.pinned_store(alias):
         pass
+
+def test_sealed_database_refuses_pipe_before_reading_header(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "pipe.sqlite3"
+    os.mkfifo(path)
+    original_open = os.open
+
+    def checked_open(name: Path, flags: int) -> int:
+        assert flags & os.O_NONBLOCK
+        return original_open(name, flags)
+
+    monkeypatch.setattr(os, "open", checked_open)
+    with pytest.raises(LocalStoreError, match="graph-database-unrecognized"):
+        inspect_sealed_database(path, BINDING)

@@ -29,7 +29,11 @@ from repomap_test_support.source_ingestion_integration import (
 
 class StorageSourceWarcReadbackIntegrationTests(unittest.TestCase):
     def test_warc_and_http_header_readback_preserve_start_lines_and_duplicate_order(self):
-        from common_lore_index.ops.ingestion.source_warc import _parse_http_message_payload, _parse_warc_header
+        from common_lore_index.ops.ingestion.source_warc import (
+            _http_headers_and_body_offset,
+            _parse_http_message_payload,
+            _parse_warc_header,
+        )
 
         header = "WARC/1.1\r\nContent-Length: 3\rX-Fixture: first\nX-Fixture: second\u2028\tcontinued".encode()
         self.assertEqual(_parse_warc_header(header, 0), (
@@ -39,6 +43,8 @@ class StorageSourceWarcReadbackIntegrationTests(unittest.TestCase):
         self.assertEqual(
             _parse_http_message_payload(payload, response=True), ({"x-fixture": "second continued"}, b"ABC"),
         )
+        headers, offset = _http_headers_and_body_offset(payload, response=True)
+        self.assertEqual((headers, memoryview(payload)[offset:].tobytes()), ({"x-fixture": "second continued"}, b"ABC"))
 
     def test_sources_import_warc_loads_local_warc_fixture(self):
         require_postgres_binaries()

@@ -276,3 +276,16 @@ class SourceIngestionHelperBranchUnitTests(unittest.TestCase):
             ),
             ({}, b""),
         )
+
+
+def test_warc_http_body_offset_preserves_raw_bytes_and_legacy_empty_result():
+    from common_lore_index.ops.ingestion.source_warc import _http_headers_and_body_offset
+
+    body = b"\x00\xff\r\n"
+    block = b"HTTP/1.0 200 OK\r\nX-Test: synthetic\r\n\r\n" + body
+    headers, offset = _http_headers_and_body_offset(block, response=True)
+    view = memoryview(block)[offset:]
+    assert view.obj is block and view.tobytes() == body
+    assert headers == {"x-test": "synthetic"}
+    malformed = b"not-http\n\n" + body
+    assert _http_headers_and_body_offset(malformed, response=True) == ({}, len(malformed))

@@ -60,6 +60,7 @@ from common_lore_index.ops.ingestion.api_records import (
     ApiSourceConfig,
     ApiTransportResponse,
 )
+from common_lore_index.ops.ingestion.source_common import _read_fixture_body
 
 
 class FixtureApiTransport:
@@ -77,7 +78,7 @@ class FixtureApiTransport:
         )
         try:
             with response_path.open("rb") as stream:
-                body = stream.read(config.max_bytes_per_run + 1)
+                body = _read_fixture_body(stream, config.max_bytes_per_run)
         except OSError as error:
             raise ApiPolicyError(
                 f"fixture response is not readable for endpoint {endpoint.name}: {error}"

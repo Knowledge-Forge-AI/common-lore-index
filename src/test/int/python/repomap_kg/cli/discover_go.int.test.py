@@ -1,4 +1,5 @@
 import json
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -7,6 +8,20 @@ from repomap_test_support.cli_integration import CliIntegrationTestCase
 
 
 class CliDiscoverGoIntegrationTests(CliIntegrationTestCase):
+    def test_discover_reports_high_cardinality_build_tags_in_canonical_order(self):
+        tags = [f"tag{number:03}" for number in range(100)]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directive = " || ".join([*reversed(tags), tags[0]])
+            (root / "sample.go").write_text(f"//go:build {directive}\n\npackage sample\n", encoding="utf-8")
+            code, stdout, stderr = self.run_module_entrypoint("discover", str(root), "--jsonl")
+        self.assertEqual(code, 0, stderr)
+        records = [json.loads(line) for line in stdout.splitlines() if line.strip()]
+        constraint, = (item["metadata"] for item in records if item["kind"] == "go.build_constraint")
+        self.assertEqual(constraint["tag_count"], len(tags))
+        self.assertTrue(constraint["tags_truncated"])
+        self.assertEqual(constraint["tags"], tags[:64])
+
     def test_discover_command_emits_static_go_metadata_as_jsonl(self):
         fixture = REPO_ROOT / "src" / "test" / "fixtures" / "go"
 

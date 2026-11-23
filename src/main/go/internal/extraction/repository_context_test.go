@@ -2,6 +2,9 @@ package extraction
 
 import (
 	"encoding/json"
+	"fmt"
+	"go/build/constraint"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -82,5 +85,28 @@ func TestParseFileExtractsSyntacticTestProfiles(t *testing.T) {
 	nonTestResult := ParseFile(path, "sample/context.go")
 	if len(observationsByKind(nonTestResult)["go.test"]) != 0 {
 		t.Fatal("test profile emitted outside a _test.go file")
+	}
+}
+
+func TestConstraintTagsKeepsSortedPrefixAndFullUniqueCount(t *testing.T) {
+	long := strings.Repeat("a", maxBuildTagLength)
+	expression := constraint.Expr(&constraint.OrExpr{
+		X: &constraint.TagExpr{Tag: long + "x"},
+		Y: &constraint.TagExpr{Tag: long + "y"},
+	})
+	expected := []string{long, long}
+	for index := 100; index >= 0; index-- {
+		tag := fmt.Sprintf("z%03d", index)
+		expression = &constraint.OrExpr{X: expression, Y: &constraint.TagExpr{Tag: tag}}
+		expected = append(expected, tag)
+	}
+	expression = &constraint.AndExpr{X: expression, Y: &constraint.TagExpr{Tag: "z000"}}
+	slices.Sort(expected)
+	tags, count, truncated := constraintTags(expression)
+	if !truncated || count != len(expected) || cap(tags) != maxBuildConstraintTags {
+		t.Fatalf("constraint summary: count=%d capacity=%d truncated=%v", count, cap(tags), truncated)
+	}
+	if !slices.Equal(tags, expected[:maxBuildConstraintTags]) {
+		t.Fatalf("constraint tags do not match canonical prefix: %v", tags)
 	}
 }

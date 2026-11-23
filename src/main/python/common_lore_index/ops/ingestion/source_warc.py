@@ -214,6 +214,15 @@ def _parse_http_message_payload(
     *,
     response: bool,
 ) -> tuple[dict[str, str], bytes]:
+    headers, body_offset = _http_headers_and_body_offset(block, response=response)
+    return headers, block[body_offset:]
+
+
+def _http_headers_and_body_offset(
+    block: bytes,
+    *,
+    response: bool,
+) -> tuple[dict[str, str], int]:
     delimiter = b"\r\n\r\n"
     separator_length = 4
     header_end = block.find(delimiter)
@@ -222,15 +231,15 @@ def _parse_http_message_payload(
         separator_length = 2
         header_end = block.find(delimiter)
     if header_end < 0:
-        return {}, b""
+        return {}, len(block)
     header_text = block[:header_end].decode("utf-8", errors="replace")
     lines = iter_text_lines(header_text)
     start_line = next(lines, None)
     if start_line is None or (response and not start_line.upper().startswith("HTTP/")):
-        return {}, b""
+        return {}, len(block)
     return (
         _parse_header_lines(lines),
-        block[header_end + separator_length :],
+        header_end + separator_length,
     )
 
 

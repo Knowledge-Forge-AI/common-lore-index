@@ -34,6 +34,7 @@ from common_lore_index.ops.ingestion.github_api_records import (
     GitHubResponseRecord,
     GitHubTransportResponse,
 )
+from common_lore_index.ops.ingestion.source_common import _read_fixture_body
 
 
 class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -60,7 +61,7 @@ class FixtureGitHubApiTransport:
         endpoint = endpoint_by_name(config, request.endpoint_name)
         response_path = resolve_fixture_response_path(config, endpoint)
         with response_path.open("rb") as stream:
-            body = stream.read(config.max_bytes_per_run + 1)
+            body = _read_fixture_body(stream, config.max_bytes_per_run)
         if len(body) > config.max_bytes_per_run:
             raise GitHubApiPolicyError("response bytes exceed max_bytes_per_run")
         return GitHubTransportResponse(

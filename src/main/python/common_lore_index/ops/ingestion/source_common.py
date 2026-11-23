@@ -8,7 +8,7 @@ import re
 import urllib.parse
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, BinaryIO
 
 
 FEED_SOURCE_TYPES = frozenset({"feed.rss", "feed.atom", "feed.json"})
@@ -75,6 +75,19 @@ class SourcePolicyError(ValueError):
 
 def json_dumps_stable(payload: Mapping[str, Any]) -> str:
     return _STABLE_SOURCE_JSON.encode(payload)
+
+
+def _read_fixture_body(source: BinaryIO, limit: int) -> bytes:
+    """Read up to one byte beyond the configured budget in fixed-size reads."""
+    remaining = limit + 1
+    chunks: list[bytes] = []
+    while remaining > 0:
+        chunk = source.read(min(remaining, 64 * 1024))
+        if not chunk:
+            break
+        chunks.append(chunk)
+        remaining -= len(chunk)
+    return b"".join(chunks)
 
 
 def _source_manifest_id(payload: Mapping[str, Any]) -> str:
