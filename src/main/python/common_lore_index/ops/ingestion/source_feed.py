@@ -8,7 +8,6 @@ from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 import hashlib
 from pathlib import Path
-import tomllib
 from typing import Any
 import urllib.error
 import urllib.request
@@ -17,6 +16,7 @@ from common_lore_index.observations.raw import RawObservation
 from common_lore_index.ops.ingestion.acquisition_contracts import NonPublicationResult
 from common_lore_index.ops.ingestion.source_common import (
     SourcePolicyError,
+    _load_source_toml,
     _artifact_filename,
     _content_type,
     _header_mapping,
@@ -125,8 +125,7 @@ Clock = Callable[[], datetime]
 
 def load_feed_source_config(path: Path | str) -> FeedSourceConfig:
     config_path = Path(path)
-    with config_path.open("rb") as handle:
-        payload = tomllib.load(handle)
+    payload = _load_source_toml(config_path)
     if not isinstance(payload, Mapping):
         raise SourcePolicyError("source config must be a TOML object")
     source = _mapping(payload, "source")

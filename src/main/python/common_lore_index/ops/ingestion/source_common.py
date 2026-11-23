@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import tomllib
 import re
 import urllib.parse
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 
@@ -72,6 +74,14 @@ _STABLE_SOURCE_JSON = json.JSONEncoder(sort_keys=True, separators=(",", ":"))
 class SourcePolicyError(ValueError):
     """Raised when a source definition is not policy-approved."""
 
+
+
+def _load_source_toml(path: Path) -> Mapping[str, Any]:
+    try:
+        with path.open("rb") as source:
+            return tomllib.load(source)
+    except UnicodeDecodeError as error:
+        raise SourcePolicyError("invalid UTF-8 source config") from error
 
 def json_dumps_stable(payload: Mapping[str, Any]) -> str:
     return _STABLE_SOURCE_JSON.encode(payload)

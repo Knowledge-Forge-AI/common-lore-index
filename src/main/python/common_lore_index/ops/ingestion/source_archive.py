@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import tomllib
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
@@ -43,6 +42,7 @@ from common_lore_index.ops.ingestion.acquisition_contracts import (
 )
 from common_lore_index.ops.ingestion.source_common import (
     SourcePolicyError,
+    _load_source_toml,
     _mapping,
     _optional_bool,
     _optional_text,
@@ -65,8 +65,7 @@ Clock = Callable[[], datetime]
 
 def load_archive_source_config(path: Path | str) -> ArchiveSourceConfig:
     config_path = Path(path)
-    with config_path.open("rb") as handle:
-        payload = tomllib.load(handle)
+    payload = _load_source_toml(config_path)
     if not isinstance(payload, Mapping):
         raise SourcePolicyError("source config must be a TOML object")
     _reject_archive_network_fields(payload)

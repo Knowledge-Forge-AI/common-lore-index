@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import tomllib
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 from common_lore_index.ops.ingestion.source_common import (
     SourcePolicyError,
+    _load_source_toml,
     _mapping,
     _optional_bool,
     _optional_text,
@@ -27,8 +27,7 @@ from common_lore_index.ops.ingestion.source_warc_records import WarcSourceConfig
 
 def load_warc_source_config(path: Path | str) -> WarcSourceConfig:
     config_path = Path(path)
-    with config_path.open("rb") as handle:
-        payload = tomllib.load(handle)
+    payload = _load_source_toml(config_path)
     if not isinstance(payload, Mapping):
         raise SourcePolicyError("source config must be a TOML object")
     _reject_archive_network_fields(payload)

@@ -90,3 +90,16 @@ def test_github_http_transport_accepts_large_configured_budget():
     result = PublicGitHubRestTransport(opener=opener).fetch(config, request)
     assert result.body == b"{}" and result.status_code == 200
     assert opener.response is not None and opener.response.closed
+
+
+@pytest.mark.parametrize("command", ["ingest-feed", "import-archive", "import-warc"])
+def test_source_acquisition_refuses_invalid_utf8_definition(tmp_path, capsys, command):
+    from common_lore_index.cli.main import main
+
+    config = tmp_path / "source.toml"
+    config.write_bytes(b"# fixture\xff")
+    result = main(["sources", command, "--config", str(config), "--root-path", str(tmp_path), "--json"])
+    output = capsys.readouterr()
+    assert result == 1 and output.out == ""
+    assert "invalid UTF-8 source config" in output.err
+    assert list(tmp_path.iterdir()) == [config]

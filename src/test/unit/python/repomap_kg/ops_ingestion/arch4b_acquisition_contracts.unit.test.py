@@ -76,3 +76,15 @@ def test_acquisition_loaders_report_invalid_utf8_as_policy_error(tmp_path: Path)
         with pytest.raises(error, match="invalid UTF-8") as raised:
             loader(config)
         assert "fixture" not in str(raised.value)
+
+
+def test_feed_archive_and_warc_reject_invalid_utf8_through_source_policy(tmp_path: Path) -> None:
+    from common_lore_index.ops.ingestion.source import (
+        SourcePolicyError, load_archive_source_config, load_feed_source_config, load_warc_source_config,
+    )
+
+    config = tmp_path / "source.toml"
+    config.write_bytes(b"# fixture\xff")
+    for load in (load_archive_source_config, load_feed_source_config, load_warc_source_config):
+        with pytest.raises(SourcePolicyError, match="invalid UTF-8 source config"):
+            load(config)

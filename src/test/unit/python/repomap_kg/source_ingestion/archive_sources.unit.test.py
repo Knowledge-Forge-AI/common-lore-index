@@ -43,6 +43,16 @@ class ArchiveSourceIngestionUnitTests(SourceIngestionUnitTestCase):
                     with self.assertRaisesRegex(SourcePolicyError, "size changed"):
                         _archive_included_file(root, root, item, declared_bytes)
 
+    def test_manifest_digest_requires_regular_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "target.txt"
+            target.write_bytes(b"fixture")
+            link = root / "link.txt"
+            link.symlink_to(target.name)
+            with self.assertRaisesRegex(SourcePolicyError, "regular file"):
+                _archive_included_file(root, root, link, len(b"fixture"))
+
     def test_archive_config_policy_rejects_unknown_blocked_and_url_fields(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir) / "repo"

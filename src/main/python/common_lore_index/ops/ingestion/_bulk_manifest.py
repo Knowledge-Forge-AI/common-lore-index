@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import stat
 from collections import Counter
+from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
 
@@ -71,8 +72,9 @@ def build_bulk_manifest(
     def add_skipped_tree(path: Path, reason: str) -> None:
         nonlocal total_seen
         if path.is_file() or path.is_symlink():
-            add_skipped(path, reason, byte_count=safe_size(path))
-            total_seen += safe_size(path) or 0
+            byte_count = safe_size(path)
+            add_skipped(path, reason, byte_count=byte_count)
+            total_seen += byte_count or 0
             return
         for directory, dirnames, filenames in os.walk(path, followlinks=False):
             dirnames[:] = sorted(dirnames)
@@ -82,9 +84,17 @@ def build_bulk_manifest(
                 total_seen += byte_count or 0
                 add_skipped(file_path, reason, byte_count=byte_count)
 
-    def walk(directory: Path) -> None:
+    def children(directory: Path) -> Iterator[Path]:
+        return iter(sorted(directory.iterdir(), key=lambda item: relative_to_root(source_root, item)))
+
+    def walk() -> None:
         nonlocal total_seen
-        for entry in sorted(directory.iterdir(), key=lambda item: relative_to_root(source_root, item)):
+        pending = [children(source_root)]
+        while pending:
+            entry = next(pending[-1], None)
+            if entry is None:
+                pending.pop()
+                continue
             relative = relative_to_root(source_root, entry)
             if is_excluded_path(relative, config.excluded_paths):
                 add_skipped_tree(entry, "excluded_path")
@@ -107,25 +117,24 @@ def build_bulk_manifest(
                 if depth(relative) > config.max_depth:
                     add_skipped_tree(entry, "max_depth_exceeded")
                     continue
-                walk(entry)
+                pending.append(children(entry))
                 continue
             try:
-                mode = entry.stat().st_mode
+                info = entry.stat()
             except OSError:
                 add_skipped(entry, "special_file")
                 continue
-            if not stat.S_ISREG(mode):
+            if not stat.S_ISREG(info.st_mode):
                 add_skipped(entry, "special_file")
                 continue
-            total_seen += entry.stat().st_size
-            process_file(entry)
+            total_seen += info.st_size
+            process_file(entry, info.st_size)
 
-    def process_file(path: Path) -> None:
+    def process_file(path: Path, byte_count: int) -> None:
         nonlocal total_included
         relative = relative_to_root(source_root, path)
         file_depth = depth(relative)
         route = classify_bulk_route(path)
-        byte_count = path.stat().st_size
         if file_depth > config.max_depth:
             add_skipped(path, "max_depth_exceeded", byte_count=byte_count, route=route)
             return
@@ -160,7 +169,7 @@ def build_bulk_manifest(
         )
         total_included += byte_count
 
-    walk(source_root)
+    walk()
     included.sort(key=lambda item: item.relative_path)
     skipped.sort(key=lambda item: item.relative_path)
     extractor_counts = Counter(item.route for item in included)
