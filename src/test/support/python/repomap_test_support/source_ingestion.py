@@ -376,6 +376,11 @@ class FakeResponse:
         self._body = body
         self.headers = headers
 
+        self.closed = False
+
+    def close(self):
+        self.closed = True
+
     def getcode(self):
         return self.status
 

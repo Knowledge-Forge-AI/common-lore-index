@@ -26,10 +26,12 @@ from common_lore_index.ops.ingestion.source import (
 class FeedFetchSourceIngestionIntegrationTests(unittest.TestCase):
     def test_default_fetcher_uses_configured_timeout_method_and_user_agent(self):
         config = load_feed_source_config(source_fixture("allowed-rss.toml"))
-        opener = FakeOpener(FakeResponse(200, b"<rss />", {"content-type": "text/xml"}))
+        owner = FakeResponse(200, b"<rss />", {"content-type": "text/xml"})
+        opener = FakeOpener(owner)
 
         response = fetch_feed_source(config, opener=opener)
 
+        self.assertTrue(owner.closed)
         self.assertEqual(response.status, 200)
         self.assertEqual(response.body, b"<rss />")
         self.assertEqual(response.headers["content-type"], "text/xml")

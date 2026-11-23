@@ -258,14 +258,16 @@ class FakeGitHubOpener:
         self.headers = headers
         self.body = body
         self.requests = []
+        self.response = None
 
     def open(self, request, timeout):
         self.requests.append(request)
-        return FakeGitHubHttpResponse(
+        self.response = FakeGitHubHttpResponse(
             status=self.status,
             headers=self.headers,
             body=self.body,
         )
+        return self.response
 
 
 class FakeGitHubErrorOpener:
@@ -281,6 +283,11 @@ class FakeGitHubHttpResponse:
         self.status = status
         self.headers = headers
         self._body = body
+
+        self.closed = False
+
+    def close(self):
+        self.closed = True
 
     def getcode(self):
         return self.status

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import closing
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 import hashlib
@@ -205,22 +206,24 @@ def fetch_feed_source(
     try:
         response = opener.open(request, timeout=config.timeout_seconds)
     except urllib.error.HTTPError as error:
-        body = error.read(config.max_artifact_bytes + 1)
-        return FeedFetchResponse(
-            status=error.code,
-            headers=_header_mapping(error.headers),
-            body=body,
-        )
+        with closing(error):
+            body = error.read(config.max_artifact_bytes + 1)
+            return FeedFetchResponse(
+                status=error.code,
+                headers=_header_mapping(error.headers),
+                body=body,
+            )
     except urllib.error.URLError as error:
         raise SourceAcquisitionError(
             f"feed acquisition failed: {error.reason}"
         ) from error
-    body = response.read(config.max_artifact_bytes + 1)
-    return FeedFetchResponse(
-        status=int(getattr(response, "status", response.getcode())),
-        headers=_header_mapping(getattr(response, "headers", {})),
-        body=body,
-    )
+    with closing(response):
+        body = response.read(config.max_artifact_bytes + 1)
+        return FeedFetchResponse(
+            status=int(getattr(response, "status", response.getcode())),
+            headers=_header_mapping(getattr(response, "headers", {})),
+            body=body,
+        )
 
 
 def retain_feed_artifact(

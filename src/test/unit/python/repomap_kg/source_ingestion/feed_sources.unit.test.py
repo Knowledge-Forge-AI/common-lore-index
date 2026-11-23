@@ -149,12 +149,12 @@ class FeedSourceIngestionUnitTests(SourceIngestionUnitTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             config = load_feed_source_config(self.write_config(root / "rss.toml"))
-            opener = FakeOpener(
-                FakeResponse(200, b"<rss />", {"content-type": "text/xml"}),
-            )
+            owner = FakeResponse(200, b"<rss />", {"content-type": "text/xml"})
+            opener = FakeOpener(owner)
 
             response = fetch_feed_source(config, opener=opener)
 
+        self.assertTrue(owner.closed)
         self.assertEqual(response.status, 200)
         self.assertEqual(response.body, b"<rss />")
         self.assertEqual(response.headers["content-type"], "text/xml")
@@ -172,18 +172,20 @@ class FeedSourceIngestionUnitTests(SourceIngestionUnitTestCase):
             config = load_feed_source_config(self.write_config(root / "rss.toml"))
             headers = Message()
             headers["location"] = "https://example.invalid/redirect"
+            body = io.BytesIO(b"redirect")
             opener = FakeOpener(
                 urllib.error.HTTPError(
                     config.url,
                     302,
                     "Found",
                     headers,
-                    io.BytesIO(b"redirect"),
+                    body,
                 ),
             )
 
             response = fetch_feed_source(config, opener=opener)
 
+        self.assertTrue(body.closed)
         self.assertEqual(response.status, 302)
         self.assertEqual(response.body, b"redirect")
         self.assertEqual(

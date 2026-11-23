@@ -49,6 +49,11 @@ class FakeResponse:
         self._body = body
         self.headers = headers
 
+        self.closed = False
+
+    def close(self):
+        self.closed = True
+
     def getcode(self):
         return self.status
 
@@ -75,14 +80,16 @@ class IntFakeGitHubOpener:
         self.headers = headers
         self.body = body
         self.requests: list[object] = []
+        self.response: IntFakeGitHubResponse | None = None
 
     def open(self, request, timeout):
         self.requests.append(request)
-        return IntFakeGitHubResponse(
+        self.response = IntFakeGitHubResponse(
             status=self.status,
             headers=self.headers,
             body=self.body,
         )
+        return self.response
 
 
 class IntFakeGitHubResponse:
@@ -90,6 +97,11 @@ class IntFakeGitHubResponse:
         self.status = status
         self.headers = headers
         self.body = body
+
+        self.closed = False
+
+    def close(self):
+        self.closed = True
 
     def getcode(self):
         return self.status

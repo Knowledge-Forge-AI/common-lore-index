@@ -2,6 +2,8 @@ from repomap_test_support.policy_helper_branches import write_api_fixture
 import json
 import tempfile
 import unittest
+from io import BytesIO
+from unittest.mock import patch
 from pathlib import Path
 
 from common_lore_index.ops.ingestion.api import (
@@ -121,5 +123,22 @@ class ApiIngestionUnitTests(unittest.TestCase):
                 )
 
         self.assertFalse((root / ".repomap" / "api-runs").exists())
+
+    def test_fixture_transport_reads_only_limit_plus_lookahead(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_api_fixture(Path(tmpdir), max_bytes_per_run=10)
+            config = load_api_source_config(path)
+            request = build_api_plan_from_config(path).requests[0]
+            class TrackingBody(BytesIO):
+                def read(self, size=-1):
+                    self.last_read = size
+                    return super().read(size)
+
+            body = TrackingBody(b"x" * 40)
+            with patch.object(Path, "open", return_value=body):
+                with self.assertRaisesRegex(ApiPolicyError, "response bytes exceed"):
+                    FixtureApiTransport().fetch(config, request)
+            self.assertTrue(body.closed)
+            self.assertEqual(body.last_read, config.max_bytes_per_run + 1)
 
     write_api_fixture = staticmethod(write_api_fixture)

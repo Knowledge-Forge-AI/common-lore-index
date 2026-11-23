@@ -76,11 +76,14 @@ class FixtureApiTransport:
             endpoint.fixture_response_path,
         )
         try:
-            body = response_path.read_bytes()
+            with response_path.open("rb") as stream:
+                body = stream.read(config.max_bytes_per_run + 1)
         except OSError as error:
             raise ApiPolicyError(
                 f"fixture response is not readable for endpoint {endpoint.name}: {error}"
             ) from error
+        if len(body) > config.max_bytes_per_run:
+            raise ApiPolicyError("response bytes exceed max_bytes_per_run")
         return ApiTransportResponse(
             status_code=200,
             body=body,
