@@ -291,3 +291,59 @@ def test_ensure_private_directory_permission_and_uid_rejections(tmp_path):
     file_path.chmod(0o700)
     with pytest.raises(ServiceArtifactError, match="service_directory_unavailable"):
         artifacts.ensure_private_directory(file_path)
+
+
+def test_owned_artifact_rejects_a_read_that_does_not_match_its_opening_version(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.service_package import _artifacts_io
+
+    path = tmp_path / "unit.service"
+    path.write_bytes(b"fixture")
+    path.chmod(0o600)
+    read = os.read
+    changed = False
+
+    def changed_read(fd: int, count: int) -> bytes:
+        nonlocal changed
+        part = read(fd, count)
+        if part and not changed:
+            with path.open("ab") as stream:
+                stream.write(b"-new")
+            changed = True
+        return part
+
+    def validate(_data: bytes) -> bool:
+        raise AssertionError("inconsistent bytes reached admission")
+
+    with monkeypatch.context() as local:
+        local.setattr(_artifacts_io.os, "read", changed_read)
+        with pytest.raises(ServiceArtifactError, match="service_definition_unsafe"):
+            inspect_owned_artifact(path, validate)
+    assert path.read_bytes() == b"fixture-new"
+
+
+def test_private_temporary_completes_short_writes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from common_lore_index.service_package import _artifacts_io
+
+    write = os.write
+
+    def short_write(fd: int, data: memoryview) -> int:
+        return write(fd, data[:1])
+
+    with monkeypatch.context() as local:
+        local.setattr(_artifacts_io.os, "write", short_write)
+        path = _artifacts_io._write_private_temporary(tmp_path, b"fixture")
+    assert path.read_bytes() == b"fixture"
+
+
+def test_service_process_lock_drops_inactive_paths_after_nested_use(tmp_path: Path) -> None:
+    from common_lore_index.service_package._artifacts_locking import _LOCK_REGISTRY, _process_lock
+
+    target = tmp_path / "fixture.lock"
+    with _process_lock(target):
+        entry = _LOCK_REGISTRY[target]
+        with _process_lock(target):
+            assert _LOCK_REGISTRY[target] is entry and entry.users == 2
+        assert entry.users == 1
+    assert target not in _LOCK_REGISTRY

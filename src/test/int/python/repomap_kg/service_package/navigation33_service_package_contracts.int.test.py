@@ -276,3 +276,66 @@ def test_owned_artifacts_io_and_locking_safety_boundaries(tmp_path: Path) -> Non
     with pytest.raises(ServiceArtifactError, match="service_mutation_lock_unsafe"):
         with _mutation_lock(target, owner_uid=999999):
             pass
+
+
+def test_interrupted_service_definition_write_settles_its_temporary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.service_package import _artifacts_io
+
+    parent = tmp_path / "service-definitions"
+    parent.mkdir(mode=0o700)
+    target = parent / "fixture.service"
+    interrupt = KeyboardInterrupt()
+
+    def write(_descriptor: int, _data: memoryview) -> int:
+        raise interrupt
+
+    with monkeypatch.context() as local:
+        local.setattr(_artifacts_io.os, "write", write)
+        with pytest.raises(KeyboardInterrupt) as raised:
+            install_owned_artifact(target, b"fixture", lambda data: data == b"fixture")
+    assert raised.value is interrupt
+    assert not target.exists()
+    assert not list(parent.glob(".repomap-service-*"))
+    install_owned_artifact(target, b"fixture", lambda data: data == b"fixture")
+    assert target.read_bytes() == b"fixture"
+
+
+def test_service_lock_refuses_inconsistent_descriptor_and_name_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+    from common_lore_index.service_package import _artifacts_locking
+
+    parent = tmp_path / "service"
+    parent.mkdir(mode=0o700)
+    target = parent / "fixture.service"
+    lstat = os.lstat
+    assert _artifacts_locking.fcntl is not None
+    flock = _artifacts_locking.fcntl.flock
+    exclusive = _artifacts_locking.fcntl.LOCK_EX
+    locked = False
+
+    def watch_lock(descriptor: int, operation: int) -> None:
+        nonlocal locked
+        flock(descriptor, operation)
+        if operation == exclusive:
+            locked = True
+
+    def observed_name(path, *args, **kwargs):
+        details = lstat(path, *args, **kwargs)
+        if path == parent / ".fixture.service.lock":
+            assert locked
+            return SimpleNamespace(st_mode=details.st_mode, st_uid=details.st_uid,
+                                   st_dev=details.st_dev, st_ino=details.st_ino + 1)
+        return details
+
+    with monkeypatch.context() as local:
+        local.setattr(_artifacts_locking.fcntl, "flock", watch_lock)
+        local.setattr(_artifacts_locking.os, "lstat", observed_name)
+        with pytest.raises(ServiceArtifactError, match="service_mutation_lock_unsafe"):
+            install_owned_artifact(target, b"fixture", lambda data: data == b"fixture")
+    assert not target.exists()
+    install_owned_artifact(target, b"fixture", lambda data: data == b"fixture")
+    assert target.read_bytes() == b"fixture"

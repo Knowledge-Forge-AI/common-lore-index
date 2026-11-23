@@ -1,10 +1,12 @@
 """Private file validation and reads for owned service artifacts."""
 from __future__ import annotations
+import errno
 import os
 import stat
 import tempfile
 from pathlib import Path
 from collections.abc import Callable
+from contextlib import suppress
 from common_lore_index.service_package._artifact_contracts import (
     ServiceArtifactError, OwnedArtifact, _MAX_DEFINITION_BYTES,
 )
@@ -41,26 +43,18 @@ def inspect_owned_artifact(
             raise ServiceArtifactError("service_definition_unsafe") from None
     if not _safe_file_details(details, expected_uid):
         raise ServiceArtifactError("service_definition_unsafe")
-    flags = os.O_RDONLY
-    if os.name != "nt" and hasattr(os, "O_NOFOLLOW"):
-        flags |= os.O_NOFOLLOW
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
+    if os.name != "nt":
+        flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOCTTY", 0)
     try:
         descriptor = os.open(target, flags)
-        with os.fdopen(descriptor, "rb") as stream:
-            opened = os.fstat(stream.fileno())
-            if (
-                not _safe_file_details(opened, expected_uid)
-                or opened.st_dev != details.st_dev
-                or opened.st_ino != details.st_ino
-            ):
-                raise ServiceArtifactError("service_definition_unsafe")
-            content = stream.read(_MAX_DEFINITION_BYTES + 1)
-    except ServiceArtifactError:
-        raise
+        try:
+            content = _read_owned_file(descriptor, details, expected_uid)
+        finally:
+            with suppress(OSError):
+                os.close(descriptor)
     except OSError:
         raise ServiceArtifactError("service_definition_unsafe") from None
-    if len(content) > _MAX_DEFINITION_BYTES:
-        raise ServiceArtifactError("service_definition_unsafe")
     try:
         recognized = validator(content)
     except Exception:
@@ -73,6 +67,32 @@ def inspect_owned_artifact(
         device=details.st_dev,
         inode=details.st_ino,
     )
+
+
+def _version(details: os.stat_result) -> tuple[int, int, int, int, int]:
+    return details.st_dev, details.st_ino, details.st_size, details.st_mtime_ns, details.st_ctime_ns
+
+
+def _read_owned_file(
+    descriptor: int, details: os.stat_result, owner_uid: int | None,
+) -> bytes:
+    opened = os.fstat(descriptor)
+    if not _safe_file_details(opened, owner_uid) or _version(opened) != _version(details):
+        raise ServiceArtifactError("service_definition_unsafe")
+    content = bytearray()
+    while len(content) <= opened.st_size:
+        chunk = os.read(descriptor, opened.st_size + 1 - len(content))
+        if not chunk:
+            break
+        content.extend(chunk)
+    after = os.fstat(descriptor)
+    if (
+        not _safe_file_details(after, owner_uid)
+        or _version(after) != _version(opened)
+        or len(content) != opened.st_size
+    ):
+        raise ServiceArtifactError("service_definition_unsafe")
+    return bytes(content)
 
 
 def _absolute_path(path: Path) -> Path:
@@ -131,28 +151,38 @@ def _validate_new_content(content: bytes, validator: Callable[[bytes], bool]) ->
 def _write_private_temporary(parent: Path, content: bytes) -> Path:
     descriptor = -1
     temporary_path = ""
+    identity: tuple[int, int] | None = None
     try:
         descriptor, temporary_path = tempfile.mkstemp(
             prefix=".repomap-service-",
             dir=parent,
         )
+        details = os.fstat(descriptor)
+        identity = details.st_dev, details.st_ino
         if hasattr(os, "fchmod"):
             os.fchmod(descriptor, 0o600)
-        with os.fdopen(descriptor, "wb") as stream:
-            descriptor = -1
-            stream.write(content)
-            stream.flush()
-            os.fsync(stream.fileno())
+        view = memoryview(content)
+        while view:
+            written = os.write(descriptor, view)
+            if not 0 < written <= len(view):
+                raise OSError(errno.EIO, "service definition write made invalid progress")
+            view = view[written:]
+        os.fsync(descriptor)
+        closing_descriptor, descriptor = descriptor, -1
+        os.close(closing_descriptor)
         temporary = Path(temporary_path)
         if os.name == "nt":  # pragma: no cover - native Windows runner
             apply_owner_private_acl(temporary)
         return temporary
-    except (OSError, WindowsSecurityError):
+    except BaseException as error:
         if descriptor >= 0:
-            os.close(descriptor)
-        if temporary_path:
-            try:
-                os.unlink(temporary_path)
-            except OSError:
-                pass
-        raise ServiceArtifactError("service_definition_write_failed") from None
+            with suppress(OSError):
+                os.close(descriptor)
+        if identity is not None:
+            with suppress(OSError):
+                current = os.lstat(temporary_path)
+                if (current.st_dev, current.st_ino) == identity:
+                    os.unlink(temporary_path)
+        if isinstance(error, (OSError, WindowsSecurityError)):
+            raise ServiceArtifactError("service_definition_write_failed") from None
+        raise
