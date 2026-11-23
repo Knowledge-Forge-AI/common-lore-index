@@ -44,18 +44,20 @@ def _normalized_blocks(raw: bytes) -> Iterator[bytes]:
 
 
 def _bounded_normalized_prefix(raw: bytes, limit: int) -> tuple[bytes, int, int]:
-    decoder = codecs.getincrementaldecoder("utf-8")("strict")
+    decoder = None if raw.isascii() else codecs.getincrementaldecoder("utf-8")("strict")
     prefix = bytearray()
     size = breaks = 0
     ends_in_lf = False
     for block in _normalized_blocks(raw):
-        decoder.decode(block)
+        if decoder is not None:
+            decoder.decode(block)
         size += len(block)
         breaks += block.count(b"\n")
         ends_in_lf = block.endswith(b"\n")
         if len(prefix) <= limit:
             prefix.extend(block[:limit + 1 - len(prefix)])
-    decoder.decode(b"", final=True)
+    if decoder is not None:
+        decoder.decode(b"", final=True)
     if size <= limit:
         return bytes(prefix), size, breaks + int(size > 0 and not ends_in_lf)
     return _utf8_safe_prefix(bytes(prefix), limit), size, breaks + int(not ends_in_lf)
@@ -137,7 +139,7 @@ def _overlaps_any_private_root(target: Path, private_roots: Sequence[Path]) -> b
     try:
         resolved = target.resolve(strict=False)
         return any(resolved.is_relative_to(root.resolve(strict=False)) for root in private_roots)
-    except OSError:
+    except (OSError, RuntimeError):
         return True
 
 
@@ -147,7 +149,10 @@ def _read_bounded_regular_file(
     if _overlaps_any_private_root(path, private_roots):
         return None, ExclusionReason.ARTIFACT_PRIVACY_FORBIDDEN
     try:
-        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        fd = os.open(
+            path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+            | getattr(os, "O_BINARY", 0),
+        )
     except OSError:
         return None, ExclusionReason.UNSUPPORTED_SOURCE_FORMAT
     try:
@@ -157,13 +162,20 @@ def _read_bounded_regular_file(
         if metadata.st_size > max_input_bytes:
             return None, ExclusionReason.ARTIFACT_OVERSIZED
         chunks: list[bytes] = []
-        remaining = max_input_bytes
-        # A file can grow after fstat. Consume at most one byte to detect it.
+        remaining = metadata.st_size
+        # Even growth within the configured budget must not supply a mixed snapshot.
         while chunk := os.read(fd, min(65536, remaining + 1)):
             remaining -= len(chunk)
             if remaining < 0:
-                return None, ExclusionReason.ARTIFACT_OVERSIZED
+                break
             chunks.append(chunk)
+        final = os.fstat(fd)
+        if final.st_size > max_input_bytes:
+            return None, ExclusionReason.ARTIFACT_OVERSIZED
+        if remaining != 0 or (metadata.st_size, metadata.st_mtime_ns, metadata.st_ctime_ns) != (
+            final.st_size, final.st_mtime_ns, final.st_ctime_ns,
+        ):
+            return None, ExclusionReason.ARTIFACT_CORRUPT
         return b"".join(chunks), None
     except OSError:
         return None, ExclusionReason.ARTIFACT_CORRUPT

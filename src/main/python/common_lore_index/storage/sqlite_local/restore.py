@@ -47,6 +47,8 @@ from common_lore_index.storage.sqlite_local.backup import (
     _DatabaseLengthMismatch,
     _database_chunks,
     _file_version,
+    _matches_temporary,
+    _remember_temporary,
     file_digest,
     inspect_sealed_database,
     owned_names,
@@ -170,18 +172,21 @@ def require_absent_target(target: Path) -> None:
         raise LocalStoreError(RESTORE_TARGET_EXISTS, "database sidecars present")
 
 
-def _copy(source: Path, temporary: Path, expected_bytes: int) -> str:
+def _copy(
+    source: Path, temporary: Path, expected_bytes: int, owned: dict[Path, tuple[int, int]],
+) -> str:
     reader = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
         writer = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
         try:
+            _remember_temporary(writer, temporary, owned)
             digest = hashlib.sha256()
             for chunk in _database_chunks(reader, expected_bytes):
                 digest.update(chunk)
                 view = memoryview(chunk)
                 while view:
                     written = os.write(writer, view)
-                    if written <= 0:
+                    if not 0 < written <= len(view):
                         raise OSError(errno.EIO, "short write")
                     view = view[written:]
             fsync_descriptor(writer)
@@ -205,15 +210,18 @@ def install_backup(
     fsync_directory_chain(target.parent, durable_ancestors)
     temporary = target.with_name(f".{target.name}.restore-{secrets.token_hex(8)}")
     installed = False
+    owned: dict[Path, tuple[int, int]] = {}
     try:
         try:
-            digest = _copy(backup / DATABASE_FILE, temporary, manifest.database_bytes)
+            digest = _copy(backup / DATABASE_FILE, temporary, manifest.database_bytes, owned)
         except (_DatabaseLengthMismatch, LocalStoreError):
             raise _invalid("database-changed-during-restore") from None
         if digest != manifest.database_sha256:
             raise _invalid("database-changed-during-restore")
         _require_database(temporary, binding, manifest)
         _fault_point("restore:before-install")
+        if not _matches_temporary(temporary, owned.get(temporary)):
+            raise _invalid("database-changed-during-restore")
         try:
             os.link(temporary, target)
         except FileExistsError:
@@ -224,16 +232,18 @@ def install_backup(
                     DATABASE_UNAVAILABLE, "graph store does not support atomic no-clobber install"
                 ) from None
             raise
+        if not _matches_temporary(target, owned.get(temporary)):
+            raise _invalid("database-changed-during-restore")
         installed = True
         _fault_point("restore:installed")
         fsync_directory(target.parent)
         _fault_point("restore:after-install")
     finally:
-        # Only this attempt's names; after install the temporary name is a
-        # second link to the installed database, so removing it is best-effort.
-        for owned in owned_names(temporary):
+        # Verification opens the sealed temporary with immutable=1, so it
+        # creates no sidecars. After install this name is a second hard link.
+        if _matches_temporary(temporary, owned.get(temporary)):
             with suppress(OSError):
-                owned.unlink()
+                temporary.unlink()
         if installed:
             with suppress(OSError, LocalStoreError):
                 fsync_directory(target.parent)

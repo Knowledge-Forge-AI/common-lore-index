@@ -130,6 +130,28 @@ def build_file_chunks(
     max_chunk_lines: int = 80,
     max_chunk_bytes: int = 8192,
 ) -> tuple[ProjectedChunk, ...]:
+    """Return the established immutable contiguous projection."""
+    return tuple(_iter_file_chunks(
+        file_projection_id=file_projection_id, binding_id=binding_id,
+        source_relative_path=source_relative_path, normalized_text=normalized_text,
+        artifact_privacy=artifact_privacy, policy_digest=policy_digest,
+        publication_bundle_id=publication_bundle_id, max_chunk_lines=max_chunk_lines,
+        max_chunk_bytes=max_chunk_bytes,
+    ))
+
+
+def _iter_file_chunks(
+    *,
+    file_projection_id: str,
+    binding_id: str,
+    source_relative_path: str,
+    normalized_text: str,
+    artifact_privacy: str,
+    policy_digest: str,
+    publication_bundle_id: str,
+    max_chunk_lines: int = 80,
+    max_chunk_bytes: int = 8192,
+) -> Iterator[ProjectedChunk]:
     """Split normalized text into contiguous chunks bounded by lines and UTF-8 bytes."""
     if max_chunk_lines < 1 or max_chunk_bytes < 4:
         raise ValueError("max_chunk_lines >= 1 and max_chunk_bytes >= 4 are required")
@@ -152,28 +174,26 @@ def build_file_chunks(
                 content_digest,
             ),
         )
-        return (
-            ProjectedChunk(
-                chunk_id=chunk_id,
-                file_projection_id=file_projection_id,
-                chunk_index=0,
-                binding_id=binding_id,
-                source_relative_path=source_relative_path,
-                start_line=0,
-                end_line=0,
-                normalized_byte_start=0,
-                normalized_byte_end=0,
-                byte_length=0,
-                line_count=0,
-                line_split_continuation=False,
-                is_empty_file_record=True,
-                content_text="",
-                content_digest=content_digest,
-                artifact_privacy=artifact_privacy,
-            ),
+        yield ProjectedChunk(
+            chunk_id=chunk_id,
+            file_projection_id=file_projection_id,
+            chunk_index=0,
+            binding_id=binding_id,
+            source_relative_path=source_relative_path,
+            start_line=0,
+            end_line=0,
+            normalized_byte_start=0,
+            normalized_byte_end=0,
+            byte_length=0,
+            line_count=0,
+            line_split_continuation=False,
+            is_empty_file_record=True,
+            content_text="",
+            content_digest=content_digest,
+            artifact_privacy=artifact_privacy,
         )
+        return
 
-    chunks: list[ProjectedChunk] = []
     byte_cursor = 0
     specs = _iter_chunk_specs(normalized_text, max_chunk_lines, max_chunk_bytes)
     for chunk_index, (start_line, end_line, text_piece, is_cont) in enumerate(specs):
@@ -200,24 +220,21 @@ def build_file_chunks(
                 c_digest,
             ),
         )
-        chunks.append(
-            ProjectedChunk(
-                chunk_id=c_id,
-                file_projection_id=file_projection_id,
-                chunk_index=chunk_index,
-                binding_id=binding_id,
-                source_relative_path=source_relative_path,
-                start_line=start_line,
-                end_line=end_line,
-                normalized_byte_start=byte_start,
-                normalized_byte_end=byte_end,
-                byte_length=byte_len,
-                line_count=line_cnt,
-                line_split_continuation=is_cont,
-                is_empty_file_record=False,
-                content_text=text_piece,
-                content_digest=c_digest,
-                artifact_privacy=artifact_privacy,
-            )
+        yield ProjectedChunk(
+            chunk_id=c_id,
+            file_projection_id=file_projection_id,
+            chunk_index=chunk_index,
+            binding_id=binding_id,
+            source_relative_path=source_relative_path,
+            start_line=start_line,
+            end_line=end_line,
+            normalized_byte_start=byte_start,
+            normalized_byte_end=byte_end,
+            byte_length=byte_len,
+            line_count=line_cnt,
+            line_split_continuation=is_cont,
+            is_empty_file_record=False,
+            content_text=text_piece,
+            content_digest=c_digest,
+            artifact_privacy=artifact_privacy,
         )
-    return tuple(chunks)

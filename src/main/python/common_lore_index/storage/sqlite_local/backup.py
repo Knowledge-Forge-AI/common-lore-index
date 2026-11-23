@@ -239,7 +239,24 @@ def _snapshot(
     return version, publication
 
 
-def _link(source: Path, target: Path) -> tuple[int, int]:
+def _remember_temporary(descriptor: int, path: Path, owned: dict[Path, tuple[int, int]]) -> None:
+    details = os.fstat(descriptor)
+    owned[path] = details.st_dev, details.st_ino
+
+
+def _matches_temporary(path: Path, identity: tuple[int, int] | None) -> bool:
+    if identity is None:
+        return False
+    try:
+        details = os.lstat(path)
+    except OSError:
+        return False
+    return stat.S_ISREG(details.st_mode) and (details.st_dev, details.st_ino) == identity
+
+
+def _link(source: Path, target: Path, identity: tuple[int, int]) -> tuple[int, int]:
+    if not _matches_temporary(source, identity):
+        raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup temporary identity changed")
     try:
         os.link(source, target)
     except FileExistsError:
@@ -248,17 +265,19 @@ def _link(source: Path, target: Path) -> tuple[int, int]:
         if error.errno in _NO_ATOMIC_INSTALL:
             raise LocalStoreError(DATABASE_UNAVAILABLE, "backup store does not support atomic no-clobber install") from None
         raise
-    details = os.lstat(target)
-    return details.st_dev, details.st_ino
+    if not _matches_temporary(target, identity):
+        raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup installed identity changed")
+    return identity
 
 
-def _write_new(path: Path, encoded: bytes) -> None:
+def _write_new(path: Path, encoded: bytes, owned: dict[Path, tuple[int, int]]) -> None:
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     try:
+        _remember_temporary(descriptor, path, owned)
         view = memoryview(encoded)
         while view:
             written = os.write(descriptor, view)
-            if written <= 0:
+            if not 0 < written <= len(view):
                 raise OSError(errno.EIO, "short write")
             view = view[written:]
         fsync_descriptor(descriptor)
@@ -284,18 +303,27 @@ def write_backup(
     manifest_temporary = output / f".{MANIFEST_FILE}.tmp-{token}"
     final_database, final_manifest = output / DATABASE_FILE, output / MANIFEST_FILE
     linked: dict[Path, tuple[int, int]] = {}
+    temporaries: dict[Path, tuple[int, int]] = {}
     try:
         if created:
             fsync_directory(output.parent)
-        os.close(os.open(temporary, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600))
+        descriptor = os.open(temporary, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        try:
+            _remember_temporary(descriptor, temporary, temporaries)
+        finally:
+            os.close(descriptor)
         version, publication = _snapshot(source, binding, temporary)
         _fault_point("backup:snapshot-complete")
+        if not _matches_temporary(temporary, temporaries[temporary]):
+            raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup temporary identity changed")
         seal_database_file(temporary, binding, accept_behind=True)
         if inspect_sealed_database(temporary, binding) != (version, publication):
             raise LocalStoreError(GENERATION_ADVANCED, "backup snapshot changed")
         size, digest = file_digest(temporary)
-        linked[final_database] = _link(temporary, final_database)
+        linked[final_database] = _link(temporary, final_database, temporaries[temporary])
         _fault_point("backup:database-linked")
+        if not _matches_temporary(temporary, temporaries[temporary]):
+            raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup temporary identity changed")
         temporary.unlink()
         fsync_directory(output)
         with os.scandir(output) as entries:
@@ -303,21 +331,32 @@ def write_backup(
             if first is None or first.name != DATABASE_FILE or next(entries, None) is not None:
                 raise LocalStoreError(BACKUP_OUTPUT_INVALID, "output directory changed during backup")
         manifest = BackupManifest(created_at, binding, publication, size, digest, version)
-        _write_new(manifest_temporary, manifest.encode())
+        _write_new(manifest_temporary, manifest.encode(), temporaries)
         _fault_point("backup:before-manifest-link")
-        linked[final_manifest] = _link(manifest_temporary, final_manifest)
+        if not _matches_temporary(final_database, linked[final_database]):
+            raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup installed identity changed")
+        linked[final_manifest] = _link(manifest_temporary, final_manifest, temporaries[manifest_temporary])
         _fault_point("backup:manifest-linked")
+        if (
+            not _matches_temporary(manifest_temporary, temporaries[manifest_temporary])
+            or not _matches_temporary(final_manifest, linked[final_manifest])
+        ):
+            raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup manifest identity changed")
         manifest_temporary.unlink()
         fsync_directory(output)
     except BaseException:
-        _discard_attempt(output, (*owned_names(temporary), manifest_temporary), linked, created=created)
+        if _matches_temporary(temporary, temporaries.get(temporary)):
+            for sidecar in owned_names(temporary)[1:]:
+                with suppress(OSError):
+                    sidecar.unlink()
+        _discard_attempt(output, temporaries, linked, created=created)
         raise
     return manifest
 
 
 def _discard_attempt(
     output: Path,
-    temporaries: tuple[Path, ...],
+    temporaries: dict[Path, tuple[int, int]],
     linked: dict[Path, tuple[int, int]],
     *,
     created: bool,
@@ -328,9 +367,10 @@ def _discard_attempt(
             details = os.lstat(final)
             if (details.st_dev, details.st_ino) == linked[final]:
                 final.unlink()
-    for name in temporaries:
-        with suppress(OSError):
-            name.unlink()
+    for name, identity in temporaries.items():
+        if _matches_temporary(name, identity):
+            with suppress(OSError):
+                name.unlink()
     with suppress(OSError, LocalStoreError):
         if created:
             output.rmdir()

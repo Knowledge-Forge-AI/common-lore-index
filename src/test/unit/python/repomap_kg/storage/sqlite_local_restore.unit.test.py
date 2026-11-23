@@ -294,11 +294,12 @@ def test_bytes_changing_during_restore_are_refused_before_install(
 ) -> None:
     backup, manifest = _artifact(tmp_path)
     target = _target(tmp_path)
-    def changed_copy(_source: Path, temporary: Path, expected_bytes: int) -> str:
+    def changed_copy(_source: Path, temporary: Path, expected_bytes: int, owned: dict) -> str:
         assert expected_bytes == manifest.database_bytes
         temporary.write_bytes(b"x")
+        info = temporary.stat()
+        owned[temporary] = (info.st_dev, info.st_ino)
         return "0" * 64
-
     monkeypatch.setattr(restore, "_copy", changed_copy)
     with pytest.raises(LocalStoreError) as caught:
         _install(backup, manifest, target)

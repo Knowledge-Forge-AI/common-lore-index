@@ -123,3 +123,16 @@ def test_long_utf8_lines_preserve_offsets_and_isolate_continuations() -> None:
     assert [chunk.end_line for chunk in chunks] == [1, 2, 2, 3, 4, 4, 5]
     assert [chunk.normalized_byte_end for chunk in chunks] == [2, 8, 9, 10, 16, 18, 19]
     assert [chunk.line_split_continuation for chunk in chunks] == [False, False, True, False, False, True, False]
+
+
+def test_streaming_chunks_preserve_public_tuple_contents() -> None:
+    from common_lore_index.retrieval.projection_chunks import _iter_file_chunks
+
+    options = dict(file_projection_id="file", binding_id="binding", source_relative_path="fixture.md",
+                   artifact_privacy="public-dev", policy_digest="policy", publication_bundle_id="bundle")
+    for text in ("", "ascii\n", "🧭" * 20 + "\nlast"):
+        stream = _iter_file_chunks(normalized_text=text, max_chunk_lines=3, max_chunk_bytes=16, **options)
+        assert iter(stream) is stream
+        assert tuple(stream) == build_file_chunks(
+            normalized_text=text, max_chunk_lines=3, max_chunk_bytes=16, **options,
+        )

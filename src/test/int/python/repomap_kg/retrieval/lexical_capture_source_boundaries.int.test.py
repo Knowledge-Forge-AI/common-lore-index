@@ -54,7 +54,7 @@ def _read_accepted_publication(config: OpsConfig) -> AcceptedGraphPublicationRec
 
 
 def test_direct_filesystem_capture_uses_accepted_fence_and_policy_boundaries(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     with temporary_postgres() as postgres:
         working_copy = materialize_mixed_v1_working_copy(tmp_path / "fixture-working-copy")
@@ -89,26 +89,41 @@ def test_direct_filesystem_capture_uses_accepted_fence_and_policy_boundaries(
             "CANARY_PRIVATE_THREAD_PAYLOAD_44102\n", encoding="utf-8"
         )
 
+        changing = synthetic_core / "changing.py"
+        changing.write_bytes(b"initial")
+        changing_inode = changing.stat().st_ino
+        read = os.read
+        changed = False
+
+        def read_after_change(descriptor: int, size: int) -> bytes:
+            nonlocal changed
+            if not changed and os.fstat(descriptor).st_ino == changing_inode:
+                changed = True
+                changing.write_bytes(b"new file extent")
+            return read(descriptor, size)
+
         policy = build_lexical_generation_policy(
             graph,
             selected_binding_ids=(core_id,),
             max_input_artifact_bytes=128,
             max_projected_file_bytes=128,
         )
-        plan = capture_lexical_generation_plan(
-            graph=graph,
-            lexical_policy=policy,
-            fence=fence,
-            repository_id=accepted.repository_id,
-            extraction_receipt_id=accepted.extraction_receipt_id,
-            graph_candidate_id=accepted.graph_candidate_id,
-            binding_roots_override={core_id: synthetic_core},
-            private_roots=(private_root,),
-            manifest=None,
-            store=None,
-        )
+        with monkeypatch.context() as local:
+            local.setattr(os, "read", read_after_change)
+            plan = capture_lexical_generation_plan(
+                graph=graph,
+                lexical_policy=policy,
+                fence=fence,
+                repository_id=accepted.repository_id,
+                extraction_receipt_id=accepted.extraction_receipt_id,
+                graph_candidate_id=accepted.graph_candidate_id,
+                binding_roots_override={core_id: synthetic_core},
+                private_roots=(private_root,),
+                manifest=None,
+                store=None,
+            )
 
-    assert len(plan.documents) == 1
+    assert changed and len(plan.documents) == 1
     document = plan.documents[0]
     assert document.binding_id == core_id
     assert document.source_relative_path == "eligible.py"
@@ -121,6 +136,7 @@ def test_direct_filesystem_capture_uses_accepted_fence_and_policy_boundaries(
     assert omission_map[(core_id, "symlink.py")] == ExclusionReason.UNSUPPORTED_SOURCE_FORMAT.value
     assert omission_map[(core_id, "unsupported.bin")] == ExclusionReason.UNSUPPORTED_SOURCE_FORMAT.value
     assert omission_map[(core_id, "oversized.py")] == ExclusionReason.ARTIFACT_OVERSIZED.value
+    assert omission_map[(core_id, "changing.py")] == ExclusionReason.ARTIFACT_CORRUPT.value
     assert omission_map[(core_id, "private-data/private-note.py")] == (
         ExclusionReason.ARTIFACT_PRIVACY_FORBIDDEN.value
     )

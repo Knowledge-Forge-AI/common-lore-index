@@ -339,10 +339,33 @@ def test_lexical_read_uses_a_single_detection_byte_if_the_file_grows_after_stat(
         sizes.append(size)
         return read(fd, size)
 
+    def sample_version(_descriptor: int):
+        return metadata if sizes else SimpleNamespace(st_mode=metadata.st_mode, st_size=cap)
+
     with monkeypatch.context() as patch:
-        patch.setattr(os, "fstat", lambda _: SimpleNamespace(st_mode=metadata.st_mode, st_size=cap))
+        patch.setattr(os, "fstat", sample_version)
         patch.setattr(os, "read", record)
         assert _read_bounded_regular_file(source, max_input_bytes=cap, private_roots=()) == (
             None, ExclusionReason.ARTIFACT_OVERSIZED,
         )
     assert sizes == [cap + 1]
+
+
+def test_projection_refuses_growth_within_the_configured_cap(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    source = tmp_path / "public.py"
+    source.write_bytes(b"public")
+    actual_read = os.read
+    requests: list[int] = []
+
+    def read_after_update(fd: int, size: int) -> bytes:
+        if not requests:
+            source.write_bytes(b"public more")
+        requests.append(size)
+        return actual_read(fd, size)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(os, "read", read_after_update)
+        assert _read_bounded_regular_file(source, max_input_bytes=128, private_roots=()) == (
+            None, ExclusionReason.ARTIFACT_CORRUPT,
+        )
+    assert requests == [7]
