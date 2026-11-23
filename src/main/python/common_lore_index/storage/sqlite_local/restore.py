@@ -46,6 +46,7 @@ from pathlib import Path
 from common_lore_index.storage.sqlite_local.backup import (
     _DatabaseLengthMismatch,
     _database_chunks,
+    _file_version,
     file_digest,
     inspect_sealed_database,
     owned_names,
@@ -97,12 +98,16 @@ def _read_manifest(path: Path) -> bytes:
         if not stat.S_ISREG(details.st_mode) or details.st_size > MAX_MANIFEST_BYTES:
             raise _invalid("manifest-invalid")
         encoded = bytearray()
-        while len(encoded) <= MAX_MANIFEST_BYTES:
-            chunk = os.read(descriptor, MAX_MANIFEST_BYTES + 1 - len(encoded))
+        while len(encoded) <= details.st_size:
+            chunk = os.read(descriptor, details.st_size + 1 - len(encoded))
             if not chunk:
                 break
             encoded.extend(chunk)
+        if len(encoded) != details.st_size or _file_version(os.fstat(descriptor)) != _file_version(details):
+            raise _invalid("manifest-invalid")
         return bytes(encoded)
+    except OSError:
+        raise _invalid("manifest-unreadable") from None
     finally:
         os.close(descriptor)
 

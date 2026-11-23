@@ -89,6 +89,10 @@ class _DatabaseLengthMismatch(ValueError):
     """A backup database no longer has its declared byte length."""
 
 
+def _file_version(info: os.stat_result) -> tuple[int, int, int, int, int]:
+    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+
+
 def _database_chunks(
     descriptor: int, expected_bytes: int | None = None
 ) -> Iterator[bytes]:
@@ -98,18 +102,21 @@ def _database_chunks(
     if expected_bytes is not None and details.st_size != expected_bytes:
         raise _DatabaseLengthMismatch
 
-    remaining = expected_bytes
+    remaining = details.st_size
     while True:
-        # The extra byte detects growth without reading or copying an
-        # unbounded suffix. Short reads are allowed until EOF.
-        chunk = os.read(descriptor, _CHUNK if remaining is None else min(_CHUNK, remaining + 1))
-        if remaining is not None:
-            if len(chunk) > remaining or (not chunk and remaining):
-                raise _DatabaseLengthMismatch
-            remaining -= len(chunk)
+        # Even without a manifest, read at most the observed size and a lookahead byte.
+        chunk = os.read(descriptor, min(_CHUNK, remaining + 1))
+        if len(chunk) > remaining or (not chunk and remaining):
+            raise _DatabaseLengthMismatch
         if not chunk:
-            return
+            break
+        remaining -= len(chunk)
         yield chunk
+    after = os.fstat(descriptor)
+    if after.st_size != details.st_size:
+        raise _DatabaseLengthMismatch
+    if _file_version(after) != _file_version(details):
+        raise LocalStoreError(UNRECOGNIZED, "database file changed while reading")
 
 
 def file_digest(path: Path, *, expected_bytes: int | None = None) -> tuple[int, str]:
@@ -118,9 +125,14 @@ def file_digest(path: Path, *, expected_bytes: int | None = None) -> tuple[int, 
     try:
         digest = hashlib.sha256()
         size = 0
-        for chunk in _database_chunks(descriptor, expected_bytes):
-            digest.update(chunk)
-            size += len(chunk)
+        try:
+            for chunk in _database_chunks(descriptor, expected_bytes):
+                digest.update(chunk)
+                size += len(chunk)
+        except _DatabaseLengthMismatch:
+            if expected_bytes is not None:
+                raise
+            raise LocalStoreError(UNRECOGNIZED, "database size changed while hashing") from None
     finally:
         os.close(descriptor)
     return size, digest.hexdigest()
@@ -139,9 +151,15 @@ def inspect_sealed_database(
     require_runtime_support()
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+        details = os.fstat(descriptor)
+        if not stat.S_ISREG(details.st_mode):
             raise LocalStoreError(UNRECOGNIZED)
-        header = os.read(descriptor, 20)
+        header = bytearray()
+        while len(header) < 20:
+            part = os.read(descriptor, 20 - len(header))
+            if not part:
+                break
+            header.extend(part)
     finally:
         os.close(descriptor)
     if len(header) < 20 or header[:16] != _HEADER:
@@ -172,6 +190,12 @@ def inspect_sealed_database(
         raise LocalStoreError(UNRECOGNIZED) from None
     finally:
         connection.close()
+    try:
+        current = os.lstat(path)
+    except OSError:
+        raise LocalStoreError(UNRECOGNIZED, "sealed database changed while inspecting") from None
+    if not stat.S_ISREG(current.st_mode) or _file_version(current) != _file_version(details):
+        raise LocalStoreError(UNRECOGNIZED, "sealed database changed while inspecting")
     return state.version, publication
 
 

@@ -315,3 +315,23 @@ def test_publisher_lock_is_held_by_the_caller(tmp_path: Path, monkeypatch: pytes
     assert caught.value.code == "graph-publication-in-progress"
     assert not (tmp_path / "out").exists()
     _exact_v1(path, publication)
+
+
+def test_unmanifested_database_digest_obeys_opening_size(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "snapshot"
+    path.write_bytes(b"fixture")
+    read = os.read
+    requests: list[int] = []
+
+    def read_growing_snapshot(descriptor: int, request: int) -> bytes:
+        requests.append(request)
+        if len(requests) == 1:
+            with path.open("ab") as stream:
+                stream.write(b"following-data")
+        return read(descriptor, request)
+
+    with monkeypatch.context() as local:
+        local.setattr(backup.os, "read", read_growing_snapshot)
+        with pytest.raises(LocalStoreError, match="database size changed while hashing"):
+            backup.file_digest(path)
+    assert requests == [len(b"fixture") + 1]

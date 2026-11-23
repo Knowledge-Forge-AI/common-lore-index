@@ -89,9 +89,12 @@ def _required_directory_names(names: Iterable[str]) -> set[str]:
     return directories
 
 
+def _record_digest(digest: bytes) -> str:
+    return "sha256=" + base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+
+
 def record_hash(data: bytes) -> str:
-    digest = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).rstrip(b"=")
-    return "sha256=" + digest.decode("ascii")
+    return _record_digest(hashlib.sha256(data).digest())
 
 
 def _classify_unexpected(name: str, dist_info: str, top_level: Sequence[str]) -> str:
@@ -152,8 +155,7 @@ def verify_archive(data: bytes, *, size: int, sha256: str, dist_info: str,
         raise ArchiveRefused("invalid_archive") from None
     with archive:
         infos = archive.infolist()
-        names = [info.filename for info in infos]
-        if len(names) != len(set(names)):
+        if len(infos) != len({info.filename for info in infos}):
             raise ArchiveRefused("duplicate_member")
         regular_infos: list[zipfile.ZipInfo] = []
         for info in infos:
@@ -167,13 +169,15 @@ def verify_archive(data: bytes, *, size: int, sha256: str, dist_info: str,
             if info.filename not in expected:
                 raise ArchiveRefused(_classify_unexpected(info.filename, dist_info, top_level))
             regular_infos.append(info)
-        if {info.filename for info in regular_infos} != set(expected):
+        if len(regular_infos) != len(expected):
             raise ArchiveRefused("member_set_mismatch")
         if sum(info.file_size for info in infos) > MAX_ARCHIVE_UNCOMPRESSED:
             raise ArchiveRefused("archive_too_large")
         verified = tuple((info.filename, _read_member(archive, info, expected[info.filename]))
                          for info in regular_infos)
-    _verify_record(dict(verified), f"{dist_info}/RECORD")
+    record_name = f"{dist_info}/RECORD"
+    record = next((content for name, content in verified if name == record_name), None)
+    _verify_record(record, record_name, expected)
     return verified
 
 
@@ -194,8 +198,8 @@ def _read_member(archive: zipfile.ZipFile, info: zipfile.ZipInfo, lock: MemberLo
     return content
 
 
-def _verify_record(contents: dict[str, bytes], record_name: str) -> None:
-    raw = contents.get(record_name)
+def _verify_record(raw: bytes | None, record_name: str, verified_locks: dict[str, MemberLock]) -> None:
+    """Check RECORD against locks whose corresponding bytes already passed _read_member."""
     if raw is None:
         raise ArchiveRefused("record_missing")
     seen: set[str] = set()
@@ -207,17 +211,17 @@ def _verify_record(contents: dict[str, bytes], record_name: str) -> None:
                 # CSV keeps precedence over a RECORD content mismatch.
                 if first_refusal is not None:
                     continue
-                first_refusal = _record_row_refusal(row, contents, record_name, seen)
+                first_refusal = _record_row_refusal(row, verified_locks, record_name, seen)
     except (UnicodeDecodeError, csv.Error):
         raise ArchiveRefused("record_invalid") from None
     if first_refusal is not None:
         raise ArchiveRefused(first_refusal)
-    if seen != set(contents):
+    if seen != verified_locks.keys():
         raise ArchiveRefused("record_incomplete")
 
 
 def _record_row_refusal(
-    row: list[str], contents: dict[str, bytes], record_name: str, seen: set[str],
+    row: list[str], verified_locks: dict[str, MemberLock], record_name: str, seen: set[str],
 ) -> str | None:
     if len(row) != 3 or row[0] in seen:
         return "record_invalid"
@@ -225,10 +229,10 @@ def _record_row_refusal(
     seen.add(name)
     if name == record_name:
         return "record_self_entry" if digest or length else None
-    content = contents.get(name)
-    if content is None:
+    item = verified_locks.get(name)
+    if item is None:
         return "record_extra_entry"
-    if digest != record_hash(content) or length != str(len(content)):
+    if digest != _record_digest(bytes.fromhex(item.sha256)) or length != str(item.size):
         return "record_mismatch"
     return None
 

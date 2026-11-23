@@ -97,6 +97,24 @@ def test_locked_synthetic_wheel_is_verified_member_for_member() -> None:
     assert [name for name, _ in verified.members][-1] == f"{DIST}/RECORD"
 
 
+def test_parent_reuses_digests_proved_during_member_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    from common_lore_index.extractors.rust_pilot import archive_verifier
+
+    wheel = synthetic_wheel("demo", FILES)
+    real_hash = hashlib.sha256
+    hashed: list[int] = []
+
+    def count(data: bytes = b""):
+        hashed.append(len(data))
+        return real_hash(data)
+
+    with monkeypatch.context() as local:
+        local.setattr(archive_verifier.hashlib, "sha256", count)
+        verified = verify_wheel(wheel.data, wheel.lock)
+    assert len(hashed) == 1 + len(verified.members)
+    assert dict(verified.members)["demo/_binding.so"] == FILES["demo/_binding.so"]
+
+
 def test_artifact_size_and_digest_are_checked_before_parsing() -> None:
     wheel = synthetic_wheel("demo", FILES)
     with pytest.raises(ArchiveRefused, match="artifact_size_mismatch"):

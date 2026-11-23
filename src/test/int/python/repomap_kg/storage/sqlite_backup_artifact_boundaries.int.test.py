@@ -198,3 +198,25 @@ def test_sealed_snapshot_accepts_backup_and_refuses_nonregular_input(tmp_path: P
     os.mkfifo(pipe)
     with pytest.raises(LocalStoreError, match="graph-database-unrecognized"):
         inspect_sealed_database(pipe, BINDING)
+
+
+def test_sealed_database_header_allows_short_descriptor_reads(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    artifact, manifest = _artifact(tmp_path)
+    path = artifact / "graph.sqlite3"
+    identity = path.stat()
+    read = os.read
+    header: list[bytes] = []
+
+    def read_short(descriptor: int, size: int) -> bytes:
+        details = os.fstat(descriptor)
+        if (details.st_dev, details.st_ino) == (identity.st_dev, identity.st_ino):
+            chunk = read(descriptor, min(size, 7))
+            header.append(chunk)
+            return chunk
+        return read(descriptor, size)
+
+    with monkeypatch.context() as local:
+        local.setattr(os, "read", read_short)
+        checked = inspect_sealed_database(path, BINDING)
+    assert checked == (manifest.schema_version, manifest.publication)
+    assert [len(chunk) for chunk in header] == [7, 7, 6]

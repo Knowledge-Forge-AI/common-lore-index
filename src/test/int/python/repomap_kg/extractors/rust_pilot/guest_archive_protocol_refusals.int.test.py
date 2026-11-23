@@ -145,6 +145,26 @@ def test_synthetic_wheel_stream_is_accepted_before_negative_variants(tmp_path: P
     assert (root / "site" / "evil" / "__init__.py").read_bytes() == b"VALUE = 1\n"
 
 
+def test_parent_and_guest_refuse_a_record_that_disagrees_with_verified_members(tmp_path: Path) -> None:
+    from common_lore_index.extractors.rust_pilot.archive_verifier import ArchiveRefused, verify_archive
+    from common_lore_index.extractors.rust_pilot.component_lock import MemberLock
+
+    stream = _wheel_stream(record_rows=["evil/__init__.py,sha256=bad,10", "evil-1.0.dist-info/RECORD,,"])
+    _, header, body = stream.split(b"\n", 2)
+    descriptor = json.loads(header)["payloads"][0]
+    with pytest.raises(ArchiveRefused, match="record_mismatch"):
+        verify_archive(
+            body[:descriptor["size"]], size=descriptor["size"], sha256=descriptor["sha256"],
+            dist_info=descriptor["dist_info"], top_level=descriptor["top_level"],
+            members=[MemberLock(*record) for record in descriptor["members"]],
+        )
+    root = tmp_path / "runtime"
+    root.mkdir(mode=0o755)
+    result = _run_writer(root, stream)
+    assert (result.returncode, result.stdout, result.settled, result.timed_out) == (2, b"", True, False)
+    assert not (root / "site").exists()
+
+
 @pytest.mark.parametrize(
     ("label", "stream_factory"),
     [
