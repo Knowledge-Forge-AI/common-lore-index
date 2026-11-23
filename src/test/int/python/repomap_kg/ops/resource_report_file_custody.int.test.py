@@ -111,3 +111,30 @@ def test_missing_and_dangling_inputs_do_not_create_or_follow_anything(tmp_path: 
         assert completed.stderr == f"ERROR: resource-report-invalid: {expected}\n"
         assert str(tmp_path) not in completed.stderr
     assert not (tmp_path / "does-not-exist").exists()
+
+
+def test_cli_rejects_an_inconsistent_private_report_read(tmp_path: Path, monkeypatch, capsys) -> None:
+    from common_lore_index.cli.main import main
+    from common_lore_index.ops.resource_reports import _files
+
+    path = private_directory(tmp_path / "reports") / "test.json"
+    data = _data()
+    path.write_bytes(data)
+    path.chmod(0o600)
+    read = os.read
+    identity = (path.stat().st_dev, path.stat().st_ino)
+
+    def shorter_read(descriptor: int, count: int) -> bytes:
+        info = os.fstat(descriptor)
+        chunk = read(descriptor, count)
+        if (info.st_dev, info.st_ino) == identity:
+            return chunk[:-1]
+        return chunk
+
+    with monkeypatch.context() as local:
+        local.setattr(_files.os, "read", shorter_read)
+        status = main(["ops", "resource-report", "check", "--input", str(path)])
+    captured = capsys.readouterr()
+    assert status == 1 and captured.out == ""
+    assert captured.err == "ERROR: resource-report-invalid: unsafe_input\n"
+    assert path.read_bytes() == data

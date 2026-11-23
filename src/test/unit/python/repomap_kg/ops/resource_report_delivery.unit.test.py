@@ -226,12 +226,14 @@ def test_foreign_replacement_of_the_temp_is_never_removed(
 ) -> None:
     directory, admitted = _admitted(tmp_path)
 
-    def swap_then_fail(_destination: Any, _directory: int, temp_name: str) -> None:
+    install = delivery._install
+
+    def swap_then_fail(destination: Any, directory_fd: int, temp_name: str, identity: tuple[int, int]) -> None:
         # Create the replacement while the temp still exists so no inode is reused.
         foreign = tmp_path / "foreign"
         foreign.write_bytes(b"foreign")
         os.replace(foreign, directory / temp_name)
-        raise DeliveryError("install_failed")
+        install(destination, directory_fd, temp_name, identity)
 
     monkeypatch.setattr(delivery, "_install", swap_then_fail)
     with pytest.raises(DeliveryError, match="install_failed"):

@@ -258,7 +258,7 @@ class StorageOpsRefreshPreflightIntegrationTests(unittest.TestCase):
                 self.skipTest(f"symlink creation unavailable: {error}")
             config_path.write_text(_cfg(
                 "127.0.0.1", 5432, "repomap",
-                _graph("flakes", "Flakes", graph_root, "flakes", priv="private-config", prof="private-ops", db="repomap_flakes", exc=["result", "result-*"]),
+                _graph("flakes", "Flakes", graph_root, "flakes", priv="private-config", prof="private-ops", db="repomap_flakes", exc=["result", "result-*", "result-store"]),
                 db="repomap",
             ), encoding="utf-8")
             exit_code, stdout, stderr = run_repo_map_in_process(
@@ -276,6 +276,9 @@ class StorageOpsRefreshPreflightIntegrationTests(unittest.TestCase):
         self.assertEqual(graph["default_exclude_hit_counts"][".direnv"], 1)
         self.assertEqual(graph["configured_exclude_hit_counts"]["result"], 1)
         self.assertEqual(graph["configured_exclude_hit_counts"]["result-*"], 1)
+        self.assertEqual(graph["configured_exclude_hit_counts"]["result-store"], 0)
+        self.assertEqual(graph["top_level_file_count"], 2)
+        self.assertEqual(graph["top_level_directory_count"], 0)
         self.assertGreaterEqual(graph["symlink_count"], 2)
         self.assertGreaterEqual(graph["symlinks_skipped_outside_root"], 2)
         self.assertGreaterEqual(graph["symlinks_skipped_nix_store"], 1)

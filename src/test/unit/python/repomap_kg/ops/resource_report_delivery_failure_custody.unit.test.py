@@ -117,3 +117,53 @@ def test_synced_temporary_close_failure_refuses_installation(
         assert owned == set()
     finally:
         destination.close()
+
+
+def test_failed_parent_admission_preserves_the_refusal_when_close_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reports = tmp_path / "shared"
+    reports.mkdir(mode=0o755)
+    reports.chmod(0o755)
+    real_close = os.close
+
+    def close(descriptor: int) -> None:
+        target = os.fstat(descriptor).st_ino == reports.stat().st_ino
+        real_close(descriptor)
+        if target:
+            raise OSError(errno.EIO, "close")
+
+    monkeypatch.setattr(delivery.os, "close", close)
+    with pytest.raises(delivery.DeliveryError, match="parent_not_private"):
+        delivery.admit_destination(str(reports / "report.json"))
+
+
+def test_reader_refuses_inconsistent_metadata_from_the_same_private_descriptor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+    from common_lore_index.ops.resource_reports import _files
+
+    reports = private_directory(tmp_path / "reports")
+    report = reports / "resource.json"
+    report.write_bytes(b"{}".ljust(100))
+    report.chmod(0o600)
+    real_fstat = os.fstat
+    calls = 0
+
+    def inspect(descriptor: int):
+        nonlocal calls
+        info = real_fstat(descriptor)
+        calls += 1
+        if calls == 1:
+            return info
+        return SimpleNamespace(
+            **{name: getattr(info, name) for name in ("st_mode", "st_uid", "st_nlink", "st_size")},
+            st_mtime_ns=info.st_mtime_ns + 1,
+        )
+
+    with monkeypatch.context() as local:
+        local.setattr(_files.os, "fstat", inspect)
+        with pytest.raises(_files.ResourceReportError, match="unsafe_input"):
+            _files.read_report_file(report)
+    assert calls == 2

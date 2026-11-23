@@ -118,8 +118,10 @@ def _open_parent(lexical_parent: Path) -> tuple[int, Path, tuple[int, int]]:
         identity = (held.st_dev, held.st_ino)
         if (before.st_dev, before.st_ino) != identity:
             raise DeliveryError("parent_changed")
-    except BaseException:
-        os.close(descriptor)
+    except BaseException as error:
+        primary = _cleanup_failure(error, lambda: os.close(descriptor))
+        if primary is not error:
+            raise primary from None
         raise
     return descriptor, canonical, identity
 
@@ -251,9 +253,19 @@ def _fill(descriptor: int, data: bytes) -> None:
         raise DeliveryError("file_close_failed") from None
 
 
-def _install(destination: AdmittedDestination, directory: int, temp_name: str) -> None:
+def _install(
+    destination: AdmittedDestination, directory: int, temp_name: str, identity: tuple[int, int],
+) -> None:
     _verify_parent(destination)
     try:
+        details = os.lstat(temp_name, dir_fd=directory)
+        if (
+            not stat.S_ISREG(details.st_mode)
+            or (details.st_dev, details.st_ino) != identity
+            or details.st_uid != os.geteuid()
+            or details.st_mode & 0o077 != 0
+        ):
+            raise DeliveryError("install_failed")
         os.link(
             temp_name, destination.name, src_dir_fd=directory, dst_dir_fd=directory,
             follow_symlinks=False,
@@ -274,7 +286,7 @@ def deliver(destination: AdmittedDestination, data: bytes) -> None:
     descriptor, temp_name, identity = _create_temp(directory)
     try:
         _fill(descriptor, data)
-        _install(destination, directory, temp_name)
+        _install(destination, directory, temp_name, identity)
     except BaseException as error:
         primary = _cleanup_failure(error, lambda: _discard(directory, temp_name, identity))
         if primary is not error:

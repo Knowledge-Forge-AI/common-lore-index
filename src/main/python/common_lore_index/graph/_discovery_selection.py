@@ -67,22 +67,25 @@ def _is_excluded_relative_path(
     relative_path: str,
     exclude_paths: Sequence[str],
 ) -> bool:
+    return first_matching_exclude(relative_path, exclude_paths) is not None
+
+
+def first_matching_exclude(relative_path: str, exclude_paths: Sequence[str]) -> str | None:
+    """Return the first matching rule, including ancestor matches for globs."""
     relative_path = relative_path.strip("/")
     if not relative_path:
-        return False
+        return None
     parts = relative_path.split("/")
     for exclude_path in exclude_paths:
         if any(marker in exclude_path for marker in "*?["):
             if _matches_glob(relative_path, exclude_path):
-                return True
+                return exclude_path
             continue
         if "/" not in exclude_path and exclude_path in parts:
-            return True
-        if relative_path == exclude_path or relative_path.startswith(
-            f"{exclude_path}/"
-        ):
-            return True
-    return False
+            return exclude_path
+        if relative_path == exclude_path or relative_path.startswith(f"{exclude_path}/"):
+            return exclude_path
+    return None
 
 
 def _relative_posix_path(root: Path, path: Path) -> str:
