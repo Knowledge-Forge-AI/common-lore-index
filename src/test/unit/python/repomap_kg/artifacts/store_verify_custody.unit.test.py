@@ -186,3 +186,29 @@ def test_artifact_reads_refuse_fifo_replacement_without_blocking(tmp_path: Path,
         case.cleanup()
         if switched:
             case.path.unlink(missing_ok=True)
+
+
+def test_direct_artifact_read_releases_fd_on_buffer_wrapper_refusal(tmp_path, monkeypatch):
+    case = _VerificationCase(tmp_path, "fdopen", OSError)
+    case.install(monkeypatch)
+    released = []
+
+    def fail_after_creating_wrapper(fd, *args, **kwargs):
+        assert kwargs["closefd"] is False
+        case.real_fdopen(fd, *args, **kwargs).close()
+        assert case.real_stat(fd)
+        raise case.primary
+
+    def record_close(fd):
+        released.append(fd)
+        case.real_close(fd)
+
+    monkeypatch.setattr(os, "fdopen", fail_after_creating_wrapper)
+    monkeypatch.setattr(os, "close", record_close)
+    try:
+        with pytest.raises(ArtifactIntegrityError, match="artifact read failed"):
+            case.store.read(case.reference)
+        assert released == [case.acquired[0][0]]
+        assert not case.leaked()
+    finally:
+        case.cleanup()

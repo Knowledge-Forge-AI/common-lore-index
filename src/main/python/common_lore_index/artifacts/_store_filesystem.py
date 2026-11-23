@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from contextlib import suppress
 import hashlib
 import io
 import os
@@ -164,7 +165,7 @@ class FileSystemArtifactStore:
         except OSError as error:
             raise ArtifactIntegrityError("artifact is not a regular file") from error
         try:
-            with os.fdopen(descriptor, "rb", closefd=True) as stream:
+            with os.fdopen(descriptor, "rb", closefd=False) as stream:
                 opened = os.fstat(stream.fileno())
                 if not _same_file(before, opened) or not stat.S_ISREG(opened.st_mode):
                     raise ArtifactIntegrityError("artifact changed during read")
@@ -184,6 +185,9 @@ class FileSystemArtifactStore:
             raise
         except OSError as error:
             raise ArtifactIntegrityError("artifact read failed") from error
+        finally:
+            with suppress(OSError):
+                os.close(descriptor)
         if len(data) > bound:
             raise ArtifactIntegrityError(
                 "artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS

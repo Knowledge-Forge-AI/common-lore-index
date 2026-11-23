@@ -6,8 +6,8 @@ from collections.abc import Mapping
 from typing import Any
 
 from common_lore_index.retrieval.context_budget import (
+    compact_json_byte_length,
     converge_actual_bytes_from_zero_length,
-    serialize_compact_json,
 )
 
 _FRESHNESS_REASON = "structural_span_only_no_lexical_anchor"
@@ -82,19 +82,27 @@ def _project_item_for_reservation(item: Any) -> tuple[Any, int]:
     locs = item.get("locations") if isinstance(item, Mapping) else None
     if not locs:
         return item, 0
-    projected_locs = [_project_location_for_reservation(loc) for loc in locs]
-    fresh_count = sum(flag for _, flag in projected_locs)
+    projected_locs = []
+    fresh_count = 0
+    for location in locs:
+        projected, count = _project_location_for_reservation(location)
+        projected_locs.append(projected)
+        fresh_count += count
     if fresh_count == 0:
         return item, 0
-    return {**item, "locations": [loc for loc, _ in projected_locs]}, fresh_count
+    return {**item, "locations": projected_locs}, fresh_count
 
 
 def _project_group_for_reservation(group: Any) -> tuple[Any, int]:
-    projected_items = [_project_item_for_reservation(item) for item in group]
-    fresh_count = sum(count for _, count in projected_items)
+    projected_items = []
+    fresh_count = 0
+    for item in group:
+        projected, count = _project_item_for_reservation(item)
+        projected_items.append(projected)
+        fresh_count += count
     if fresh_count == 0:
         return group, 0
-    return [item for item, _ in projected_items], fresh_count
+    return projected_items, fresh_count
 
 
 def _project_reserved_packet(
@@ -183,7 +191,7 @@ def _measure_projected_packet_bytes(projected: dict[str, Any]) -> int:
     if not isinstance(work, dict):
         raise TypeError("packet work_ledger must be a dict")
     work["actual_bytes"] = 0
-    return converge_actual_bytes_from_zero_length(len(serialize_compact_json(projected)))
+    return converge_actual_bytes_from_zero_length(compact_json_byte_length(projected))
 
 
 def packet_size_with_reservation(packet: dict[str, Any]) -> int:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import UserDict
 import copy
+import hashlib
 import json
 from typing import Any
 
@@ -15,7 +16,7 @@ from common_lore_index.retrieval.context_budget import (
     apply_skeleton_compaction, compute_actual_bytes_fixpoint,
     converge_actual_bytes_from_zero_length, finalize_packet_within_budget,
     maximally_compacted_skeleton_bytes, sanitize_stored_string,
-    serialize_compact_json, validate_budget_bytes,
+    compact_json_byte_length, serialize_compact_json, sha256_prefixed, validate_budget_bytes,
 )
 from common_lore_index.retrieval.context_budget_reservation import (
     empty_packet_size_with_reservation, packet_size_with_reservation,
@@ -107,6 +108,11 @@ def test_sanitize_stored_string_caps_and_surrogates() -> None:
     )
     for raw_val, cap, expected in cases:
         assert sanitize_stored_string(raw_val, field_cap_bytes=cap) == expected
+    value = "x" * 8191 + "é𐐀" * 6000
+    packet = {"value": value, "escaped": "a\n\t\"b", "shape": ["κ", 2, None, True]}
+    assert compact_json_byte_length(packet) == len(serialize_compact_json(packet))
+    surrogate = "x" * 8191 + "\ud800\udfff" + value
+    assert sha256_prefixed(surrogate) == "sha256:" + hashlib.sha256(surrogate.encode("utf-8", "surrogatepass")).hexdigest()
 
 
 def test_skeleton_compaction_and_4096_byte_minimum_fit() -> None:

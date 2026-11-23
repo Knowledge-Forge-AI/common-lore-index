@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import tracemalloc
 from contextlib import contextmanager
 from unittest.mock import patch
 
 import pytest
 
-from common_lore_index.server import mcp
+from common_lore_index.server import _navigation_groups, mcp
 from common_lore_index.server._navigation_groups import group_page, location_in_scope
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
 from common_lore_index.storage.sqlite_local import navigation_queries as queries
@@ -286,3 +287,55 @@ def test_definitive_scope_reports_residuals_from_conservative_admission(tmp_path
     assert scan["scan"]["nodes"] == 3 and len(member_keys(page)) == 2
     assert page["scope_excluded_count"] is None
     assert page["post_admission_scope_excluded_count"] == 1
+
+
+def test_navigation_group_page_bounds_members_but_keeps_late_duplicate_counts(monkeypatch):
+    def projected(node, _markers):
+        path = node["path"]
+        location = {
+            "path": path, "run_id": 9, "publication_relation": "accepted_run",
+            "source_identity_status": "verified_vector",
+            "source": {"binding_id": BINDING, "binding_revision": 1,
+                       "snapshot_id": "snap1:public", "source_relative_path": path},
+        }
+        return {
+            "canonical_key": node["id"], "identity_status": "available",
+            "display_name": "x" * 4096 + str(node["id"]),
+        }, [location]
+
+    paths = ["docs/a.md", "docs/b.md", "docs/c.md", *(["docs/b.md"] * 650)]
+    nodes = [{"id": number, "path": path, "kind": "doc.section"} for number, path in enumerate(paths)]
+    scan = {"status": "ok", "scan": {}, "nodes": nodes}
+    query = NavigationSearchQuery("needle", grouping="source_document", offset=1, limit=1, member_limit=2)
+    monkeypatch.setattr(_navigation_groups, "_member", projected)
+    was_tracing = tracemalloc.is_tracing()
+    tracemalloc.start()
+    tracemalloc.reset_peak()
+    baseline, _ = tracemalloc.get_traced_memory()
+    try:
+        page = group_page(scan, query, ())
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        if not was_tracing:
+            tracemalloc.stop()
+    assert page["has_more"] and page["result_count"] == 1 and page["page_end"] == 2
+    group, = page["results"]
+    assert group["destination"]["source_relative_path"] == "docs/b.md"
+    assert group["matched_member_count"] == 651 and group["member_has_more"]
+    assert member_keys(page) == [1, 3]
+    assert peak - baseline < 1024 * 1024
+
+
+def test_missing_navigation_destination_takes_precedence_over_conflict():
+    base = {
+        "path": "docs/a.md", "run_id": 9, "publication_relation": "accepted_run",
+        "source_identity_status": "verified_vector",
+        "source": {"binding_id": BINDING, "binding_revision": 1,
+                   "snapshot_id": "snap1:public", "source_relative_path": "docs/a.md"},
+    }
+    conflicting = {**base, "path": "docs/b.md"}
+    missing = {**base, "source_identity_status": "withheld"}
+    assert _navigation_groups._identity([base, conflicting], ()) == (None, "conflicting_direct_identities")
+    assert _navigation_groups._identity([base, conflicting, missing], ()) == (
+        None, "missing_withheld_or_unbound_identity",
+    )

@@ -84,12 +84,12 @@ def _in_scope(locations: list[dict[str, Any]], query: NavigationSearchQuery,
         return True
     prefix = None if query.source_path_prefix is None else query.source_path_prefix.rstrip("/")
     for row in locations:
-        source = row["source"]
-        path = _relative_path(source.get("source_relative_path"), markers)
         # Unknown/withheld/unbound evidence cannot satisfy an explicit restriction.
-        if _destination(row, markers) is None or source.get("binding_id") != query.source_binding_id:
+        destination = _destination(row, markers)
+        if destination is None or destination["source_binding_id"] != query.source_binding_id:
             continue
-        if prefix is None or path == prefix or (path is not None and path.startswith(prefix + "/")):
+        path = destination["source_relative_path"]
+        if prefix is None or path == prefix or path.startswith(prefix + "/"):
             return True
     return False
 
@@ -97,11 +97,19 @@ def _in_scope(locations: list[dict[str, Any]], query: NavigationSearchQuery,
 def _identity(locations: list[dict[str, Any]], markers: tuple[str, ...]) -> tuple[dict[str, Any] | None, str | None]:
     if not locations:
         return None, "no_direct_evidence"
-    destinations = [_destination(row, markers) for row in locations]
-    if any(item is None for item in destinations):
+    first = None
+    conflict = missing = False
+    for row in locations:
+        destination = _destination(row, markers)
+        if destination is None:
+            missing = True
+        elif first is None:
+            first = destination
+        elif destination != first:
+            conflict = True
+    if missing:
         return None, "missing_withheld_or_unbound_identity"
-    first = destinations[0]
-    if any(item != first for item in destinations):
+    if conflict:
         return None, "conflicting_direct_identities"
     return first, None
 
@@ -111,7 +119,8 @@ def group_page(scan: dict[str, Any], query: NavigationSearchQuery,
     if scan["status"] != "ok":
         return {"results": [], "result_count": 0, "has_more": scan["status"] == "incomplete",
                 "page_end": query.offset, "scope_excluded_count": None}
-    groups: dict[tuple[Any, ...], dict[str, Any]] = {}
+    groups: dict[tuple[Any, ...], dict[str, Any] | None] = {}
+    page_limit = query.offset + query.limit
     excluded = 0
     for index, node in enumerate(scan["nodes"]):
         member, locations = _member(node, markers)
@@ -126,19 +135,22 @@ def group_page(scan: dict[str, Any], query: NavigationSearchQuery,
                    and member["identity_status"] == "available")
         identity = ("document", *destination.values()) if grouped and destination is not None else ("node", index)
         if identity not in groups:
-            groups[identity] = {
+            # Keys determine the full result count and first-match ordering.
+            # Keep member bodies and counts only for visible groups.
+            groups[identity] = ({
                 "basis": "direct_source_document" if grouped else "singleton",
                 "unresolved_reason": reason, "destination": destination, "members": [], "context": [],
-            }
-        groups[identity]["members"].append(member)
-    ordered = list(groups.values())  # Insertion order is the first matching canonical key.
-    page = ordered[query.offset:query.offset + query.limit]
-    for group in page:
-        members = group["members"]
-        group["matched_member_count"] = len(members)
-        group["member_has_more"] = len(members) > query.member_limit
-        group["members"] = members[:query.member_limit]
-    result = {"results": page, "result_count": len(page), "has_more": len(ordered) > query.offset + query.limit,
+                "matched_member_count": 0, "member_has_more": False,
+            } if query.offset <= len(groups) < page_limit else None)
+        group = groups[identity]
+        if group is not None:
+            group["matched_member_count"] += 1
+            if len(group["members"]) < query.member_limit:
+                group["members"].append(member)
+            else:
+                group["member_has_more"] = True
+    page = [group for group in groups.values() if group is not None]
+    result = {"results": page, "result_count": len(page), "has_more": len(groups) > page_limit,
               "page_end": query.offset + len(page), "scope_excluded_count": excluded}
     if "admission" in scan["scan"]:
         result.update(scope_excluded_count=None, scope_excluded_count_basis="not_counted_before_admission",
