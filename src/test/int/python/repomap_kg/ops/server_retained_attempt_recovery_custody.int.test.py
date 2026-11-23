@@ -164,7 +164,7 @@ def test_real_retained_namespace_and_record_refusals_never_settle_or_change_grap
             ("missing", "record-missing"), ("symlink", "unsafe-record"),
             ("hardlink", "unsafe-record"), ("record-mode", "unsafe-record"),
             ("directory-mode", "unsafe-record"), ("oversized", "unsafe-record"),
-            ("malformed", "record-invalid"), ("non-utf8", "record-invalid"),
+            ("malformed", "record-invalid"), ("deep-json", "record-invalid"), ("non-utf8", "record-invalid"),
             ("duplicate", "record-invalid"), ("legacy", "legacy-record"),
             ("state", "record-invalid"), ("extra", "record-invalid"),
             ("reference", "record-invalid"), ("missing-receipt", "record-invalid"),
@@ -188,6 +188,8 @@ def test_real_retained_namespace_and_record_refusals_never_settle_or_change_grap
                     path.write_bytes(b"x" * (records.RECORD_LIMIT + 1))
                 elif case == "malformed":
                     path.write_bytes(b"{")
+                elif case == "deep-json":
+                    path.write_bytes(b'{"manifest":' + b"[" * 3000 + b"]" * 3000 + b"}")
                 elif case == "non-utf8":
                     path.write_bytes(b"\xff")
                 elif case == "duplicate":

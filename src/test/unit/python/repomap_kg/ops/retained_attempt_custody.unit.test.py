@@ -64,7 +64,7 @@ def test_current_record_accepts_0755_anchor_and_preserves_identity(
 
     assert record.payload == payload
     assert record.root == root
-    assert record.file_identity[3:] == (1, 0o600)
+    assert record.file_identity[3] == 1 and stat.S_IMODE(record.file_identity[4]) == 0o600
     assert len(record.directory_identity) == 3
 
 
@@ -243,3 +243,86 @@ def test_temporary_name_collision_never_deletes_a_file_this_install_did_not_crea
         install_terminal_accepted(before, now=100)
     assert temporary.read_bytes() == b"independently owned retained work"
     assert before.path.read_bytes() == before.raw
+
+
+def test_nested_record_fails_with_product_reason(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root, _ = _record_tree(tmp_path)
+    (root / records.RECORD_NAME).write_bytes(b'{"manifest":' + b"[" * 3000 + b"]" * 3000 + b"}")
+
+    def decoder_exhausted(_data: str, **_options: object) -> object:
+        raise RecursionError("fixture decoder limit")
+
+    monkeypatch.setattr(json, "loads", decoder_exhausted)
+    with pytest.raises(RetainedRecordError, match="record-invalid"):
+        read_retained_record(root)
+
+
+def test_record_refuses_same_size_edit_during_descriptor_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, _ = _record_tree(tmp_path)
+    original = read_retained_record(root)
+    prior_read = os.read
+
+    def change(fd: int, count: int) -> bytes:
+        data = prior_read(fd, count)
+        if os.fstat(fd).st_ino == original.path.stat().st_ino and data:
+            changed = original.path.stat()
+            original.path.write_bytes(original.raw.replace(b"publication-", b"Publication-"))
+            os.utime(original.path, ns=(changed.st_atime_ns, changed.st_mtime_ns - 2_000_000_000))
+        return data
+
+    monkeypatch.setattr(os, "read", change)
+    with pytest.raises(RetainedRecordError, match="record-invalid"):
+        read_retained_record(root)
+
+
+def test_record_sync_refuses_changed_version(tmp_path: Path) -> None:
+    root, _ = _record_tree(tmp_path)
+    original = read_retained_record(root)
+    changed = original.path.stat()
+    original.path.write_bytes(original.raw.replace(b"publication-", b"Publication-"))
+    os.utime(original.path, ns=(changed.st_atime_ns, changed.st_mtime_ns - 2_000_000_000))
+    with pytest.raises(RetainedRecordError, match="metadata-race"):
+        records.resync_retained_record(original)
+
+
+def test_retained_record_refuses_invalid_write_progress(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, _ = _record_tree(tmp_path)
+    original = read_retained_record(root)
+
+    def overshoot(_fd: int, buffer: memoryview) -> int:
+        return len(buffer) + 1
+
+    monkeypatch.setattr(os, "write", overshoot)
+    with pytest.raises(OSError, match="retained metadata write failed"):
+        install_terminal_accepted(original, now=100)
+    assert original.path.read_bytes() == original.raw
+    assert not (root / BACKUP_NAME).exists()
+
+
+def test_settlement_preserves_record_changed_while_staging(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, _ = _record_tree(tmp_path)
+    original = read_retained_record(root)
+    write = records._write_exact
+    newest = original.raw.replace(b"publication-", b"Publication-")
+
+    def rewrite(path: Path, data: bytes) -> tuple[int, int, int]:
+        identity = write(path, data)
+        if path.suffix == ".tmp":
+            changed = original.path.stat()
+            original.path.write_bytes(newest)
+            os.utime(original.path, ns=(changed.st_atime_ns, changed.st_mtime_ns - 2_000_000_000))
+        return identity
+
+    monkeypatch.setattr(records, "_write_exact", rewrite)
+    with pytest.raises(records.MetadataInstallError) as failure:
+        install_terminal_accepted(original, now=100)
+    assert not failure.value.post_install
+    assert original.path.read_bytes() == newest
+    assert (root / BACKUP_NAME).read_bytes() == original.raw
+    assert not tuple(root.glob(".*.tmp"))

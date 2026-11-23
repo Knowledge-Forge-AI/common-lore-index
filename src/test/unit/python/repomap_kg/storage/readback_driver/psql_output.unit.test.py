@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from common_lore_index.storage.errors import StorageSchemaError
+from common_lore_index.storage.psql import last_output_line
 from common_lore_index.storage.readback_driver import (
     PG_CONNECTOR_ENV,
     READBACK_DRIVER_ENV,
@@ -209,3 +210,31 @@ def test_psycopg2_readback_driver_preserves_psql_failures_as_storage_schema_erro
                 label="storage summary",
                 expected_shape="object",
             )
+
+
+@pytest.mark.parametrize("boundary", ["\r", "\n", "\r\n", "\v", "\f", "\x1c", "\x1d",
+                                      "\x1e", "\x85", "\u2028", "\u2029"])
+def test_psql_output_retains_only_last_nonblank_line(boundary: str) -> None:
+    content = ("before\n" * 1000) + "notice" + boundary + "  result  " + boundary + "\t\n"
+    assert last_output_line(content) == "  result  "
+
+
+@pytest.mark.parametrize("driver", ["psql", "psycopg"])
+def test_nested_json_preserves_the_driver_storage_error(driver: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(READBACK_DRIVER_ENV, driver)
+    nested = "[" * 12000 + "]" * 12000
+    with (
+        patch("common_lore_index.storage.readback_driver.run_psql", return_value=_completed(nested + "\n")),
+        patch("common_lore_index.storage.readback_driver._import_psycopg", return_value=_FakePsycopg(row=(nested,))),
+        pytest.raises(StorageSchemaError, match=f"{driver} did not return fixture as JSON"),
+    ):
+        execute_json_readback("SELECT observation;", psql_args=(), label="fixture", expected_shape="array")
+
+
+def test_psycopg_malformed_byte_result_preserves_storage_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(READBACK_DRIVER_ENV, "psycopg")
+    with (
+        patch("common_lore_index.storage.readback_driver._import_psycopg", return_value=_FakePsycopg(row=(b"\xff",))),
+        pytest.raises(StorageSchemaError, match="psycopg did not return fixture as JSON"),
+    ):
+        execute_json_readback("SELECT observation;", psql_args=(), label="fixture", expected_shape="object")

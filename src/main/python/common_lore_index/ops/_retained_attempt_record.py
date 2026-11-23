@@ -21,6 +21,8 @@ BACKUP_NAME = "portable-result.json.backup"
 TERMINAL_ACCEPTED = "terminal-accepted"
 TERMINAL_FAILED = "terminal-failed"
 RECONCILIATION = "publication-reconciliation"
+_FILE_READ_FLAGS = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+_FileVersion = tuple[int, int, int, int, int, int, int, int]
 
 
 class RetainedRecordError(ValueError):
@@ -42,7 +44,7 @@ class RetainedRecord:
     payload: dict[str, object]
     raw: bytes
     digest: str
-    file_identity: tuple[int, int, int, int, int]
+    file_identity: _FileVersion
     directory_identity: tuple[tuple[int, int, int, int], ...]
 
     @property
@@ -92,7 +94,12 @@ def _layout(root: Path) -> tuple[tuple[int, int, int, int], ...]:
     )
 
 
-def _read_file(path: Path) -> tuple[bytes, tuple[int, int, int, int, int]]:
+def _file_version(info: os.stat_result) -> _FileVersion:
+    return (info.st_dev, info.st_ino, info.st_uid, info.st_nlink, info.st_mode,
+            info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+
+def _read_file(path: Path) -> tuple[bytes, _FileVersion]:
     primary: BaseException | None = None
     try:
         expected = path.lstat()
@@ -104,7 +111,7 @@ def _read_file(path: Path) -> tuple[bytes, tuple[int, int, int, int, int]]:
             or expected.st_size > RECORD_LIMIT
         ):
             raise RetainedRecordError("unsafe-record")
-        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        descriptor = os.open(path, _FILE_READ_FLAGS)
     except FileNotFoundError as error:
         raise RetainedRecordError("record-missing") from error
     except RetainedRecordError:
@@ -113,13 +120,8 @@ def _read_file(path: Path) -> tuple[bytes, tuple[int, int, int, int, int]]:
         raise RetainedRecordError("record-unavailable") from error
     try:
         opened = os.fstat(descriptor)
-        if (
-            opened.st_size > RECORD_LIMIT
-            or not stat.S_ISREG(opened.st_mode)
-            or
-            (opened.st_dev, opened.st_ino, opened.st_uid, opened.st_nlink, stat.S_IMODE(opened.st_mode))
-            != (expected.st_dev, expected.st_ino, expected.st_uid, expected.st_nlink, stat.S_IMODE(expected.st_mode))
-        ):
+        version = _file_version(opened)
+        if version != _file_version(expected):
             raise RetainedRecordError("unsafe-record")
         data = bytearray()
         while len(data) < opened.st_size:
@@ -127,9 +129,9 @@ def _read_file(path: Path) -> tuple[bytes, tuple[int, int, int, int, int]]:
             if not chunk:
                 raise RetainedRecordError("record-invalid")
             data.extend(chunk)
-        if os.read(descriptor, 1):
+        if os.read(descriptor, 1) or _file_version(os.fstat(descriptor)) != version:
             raise RetainedRecordError("record-invalid")
-        return bytes(data), (opened.st_dev, opened.st_ino, opened.st_uid, opened.st_nlink, stat.S_IMODE(opened.st_mode))
+        return bytes(data), version
     except RetainedRecordError as error:
         primary = error
         raise
@@ -202,7 +204,7 @@ def read_retained_record(root: Path) -> RetainedRecord:
             ArtifactReference.from_mapping(value)
     except RetainedRecordError:
         raise
-    except (UnicodeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+    except (KeyError, TypeError, ValueError, RecursionError) as error:
         raise RetainedRecordError("record-invalid") from error
     return RetainedRecord(root, path, payload, raw, hashlib.sha256(raw).hexdigest(), identity, directories)
 
@@ -228,7 +230,7 @@ def _write_exact(path: Path, data: bytes) -> tuple[int, int, int]:
         view = memoryview(data)
         while view:
             written = os.write(descriptor, view)
-            if written <= 0:
+            if not 0 < written <= len(view):
                 raise OSError("retained metadata write failed")
             view = view[written:]
         os.fsync(descriptor)
@@ -284,15 +286,15 @@ def _sync_directory(path: Path) -> None:
                 pass
 
 
-def _sync_file(path: Path, expected: tuple[int, int, int, int, int]) -> None:
-    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+def _sync_file(path: Path, expected: _FileVersion) -> None:
+    descriptor = os.open(path, _FILE_READ_FLAGS)
     primary: BaseException | None = None
     try:
-        details = os.fstat(descriptor)
-        identity = (details.st_dev, details.st_ino, details.st_uid, details.st_nlink, stat.S_IMODE(details.st_mode))
-        if identity != expected or not stat.S_ISREG(details.st_mode):
+        if _file_version(os.fstat(descriptor)) != expected:
             raise RetainedRecordError("metadata-race")
         os.fsync(descriptor)
+        if _file_version(path.lstat()) != expected:
+            raise RetainedRecordError("metadata-race")
     except BaseException as error:
         primary = error
         raise
@@ -333,6 +335,14 @@ def install_terminal_accepted(record: RetainedRecord, *, now: int) -> None:
     temporary_identity: tuple[int, int, int] | None = None
     try:
         temporary_identity = _write_exact(temporary, encoded)
+        current = temporary.lstat()
+        if (
+            not stat.S_ISREG(current.st_mode) or current.st_nlink != 1
+            or (current.st_dev, current.st_ino, current.st_uid) != temporary_identity
+            or _layout(record.root) != record.directory_identity
+            or _file_version(record.path.lstat()) != record.file_identity
+        ):
+            raise RetainedRecordError("metadata-race")
         os.replace(temporary, record.path)
         installed = True
         _sync_directory(record.root)

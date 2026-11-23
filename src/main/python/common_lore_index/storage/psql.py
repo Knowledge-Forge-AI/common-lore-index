@@ -22,6 +22,7 @@ PSQL_LAUNCH_ERROR = "unable to launch psql command"
 PSQL_INTERRUPTED_ERROR = "psql command interrupted"
 _PSQL_FAILURE_DETAIL_LIMIT = 512
 _PSQL_FAILURE_TRUNCATION_SUFFIX = " ... [truncated]"
+_LINE_ENDINGS = frozenset("\n\r\v\f\x1c\x1d\x1e\x85\u2028\u2029")
 
 
 class _RunOptions(_TypedDict, total=False):
@@ -81,19 +82,26 @@ def _bounded_psql_failure_details(details: str) -> str:
 
 
 def parse_psql_json(stdout: str, label: str) -> Any:
+    selected = last_output_line(stdout, label=label)
     try:
-        return json.loads(last_output_line(stdout, label=label))
-    except json.JSONDecodeError as error:
+        return json.loads(selected)
+    except (ValueError, RecursionError) as error:
         raise StorageSchemaError(f"psql did not return {label} as JSON") from error
 
 
 def last_output_line(stdout: str, *, label: str | None = None) -> str:
-    last = None
-    for line in iter_text_lines(stdout):
-        if line.strip():
-            last = line
-    if last is not None:
-        return last
+    # Find the last nonblank line and keep any whitespace on that line.
+    # A normal LF-delimited response can skip every preceding row.
+    end = len(stdout)
+    index = end - 1
+    while index >= 0 and stdout[index].isspace():
+        if stdout[index] in _LINE_ENDINGS:
+            end = index
+        index -= 1
+    if index >= 0:
+        start = stdout.rfind("\n", 0, index + 1) + 1
+        tail = stdout[start:end]
+        return tail.splitlines()[-1]
     if label is not None:
         raise StorageSchemaError(f"psql did not return {label} as JSON")
     raise StorageSchemaError("psql did not return a load summary")
