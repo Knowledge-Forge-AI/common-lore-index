@@ -48,11 +48,20 @@ type fileContext struct {
 
 // ParseFile parses one validated Go source file without type checking.
 func ParseFile(path string, relative string) Result {
+	return parseSource(path, relative, nil)
+}
+
+// ParseSource parses the exact bytes acquired by the bounded file reader.
+func ParseSource(path string, relative string, source []byte) Result {
+	return parseSource(path, relative, source)
+}
+
+func parseSource(path string, relative string, source any) Result {
 	fset := token.NewFileSet()
 	parsed, parseErr := parser.ParseFile(
 		fset,
 		path,
-		nil,
+		source,
 		parser.ParseComments|parser.AllErrors|parser.SkipObjectResolution,
 	)
 	result := Result{Diagnostics: parserDiagnostics(parseErr)}

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lair001/repo-map-go-helper/internal/pathscope"
 	"github.com/lair001/repo-map-go-helper/internal/protocol"
 )
 
@@ -259,4 +260,42 @@ func messagesByType(messages []map[string]any, messageType string) []map[string]
 		}
 	}
 	return selected
+}
+
+func TestRunCanonicalizesLinkedRoot(t *testing.T) {
+	root := t.TempDir()
+	writeGoFile(t, root, "fixture.go", "package fixture\n")
+	alias := filepath.Join(t.TempDir(), "linked")
+	if err := os.Symlink(root, alias); err != nil {
+		t.Fatal(err)
+	}
+	request := `{"protocol_version":1,"type":"file","sequence":0,"path":"fixture.go"}` + "\n"
+	var stdout, stderr bytes.Buffer
+	if status := run([]string{"--root", alias}, strings.NewReader(request), &stdout, &stderr); status != 0 {
+		t.Fatalf("linked root failed: %s", stderr.String())
+	}
+	messages := messagesByType(decodeLines(t, stdout.Bytes()), "file_end")
+	if len(messages) != 1 || messages[0]["observation_count"] != float64(1) {
+		t.Fatalf("file_end messages = %#v", messages)
+	}
+}
+
+func TestUnreadableFilePreservesNonfatalDiagnostic(t *testing.T) {
+	root := t.TempDir()
+	writeGoFile(t, root, "fixture.go", "package fixture\n")
+	root, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	request := protocol.Request{ProtocolVersion: 1, Type: "file", Path: "fixture.go"}
+	readFailure := func(string, int64) ([]byte, error) { return nil, pathscope.ErrSourceUnreadable }
+	if !processFile(root, request, &stdout, &stderr, readFailure) || stderr.Len() != 0 {
+		t.Fatalf("read failure became fatal: %s", stderr.String())
+	}
+	messages := decodeLines(t, stdout.Bytes())
+	if len(messages) != 2 || messages[0]["code"] != "go-parse-error" ||
+		messages[1]["observation_count"] != float64(0) || messages[1]["truncated"] != false {
+		t.Fatalf("unexpected response: %#v", messages)
+	}
 }

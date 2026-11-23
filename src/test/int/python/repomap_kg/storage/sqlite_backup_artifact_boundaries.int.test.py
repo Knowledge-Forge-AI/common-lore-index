@@ -51,6 +51,7 @@ def _restore(backup: Path, target: Path) -> None:
         (None, "extra", True, "manifest-invalid"),
         (None, "format", "unrecognized", "format-unsupported"),
         (None, "manifest_version", True, "format-unsupported"),
+        (None, "manifest_version", 1.0, "format-unsupported"),
         (None, "created_at", "yesterday", "manifest-invalid"),
         ("publication", "generation", True, "manifest-invalid"),
         ("publication", "publication_bundle_id", "", "manifest-invalid"),
@@ -62,7 +63,7 @@ def _restore(backup: Path, target: Path) -> None:
         ("database", "bytes", 1, "database-length-mismatch"),
         ("graph", "graph_id", "another-graph", "graph-mismatch"),
     ],
-    ids=["block-type", "unknown-key", "format", "version-bool", "timestamp", "generation-bool",
+    ids=["block-type", "unknown-key", "format", "version-bool", "version-float", "timestamp", "generation-bool",
          "empty-bundle", "false-with-identity", "accepted-integer", "file-escape", "digest-case",
          "zero-size", "wrong-size", "graph-binding"],
 )
@@ -220,3 +221,15 @@ def test_sealed_database_header_allows_short_descriptor_reads(tmp_path: Path, mo
         checked = inspect_sealed_database(path, BINDING)
     assert checked == (manifest.schema_version, manifest.publication)
     assert [len(chunk) for chunk in header] == [7, 7, 6]
+
+
+def test_restore_refuses_duplicate_manifest_members_before_creating_destination(tmp_path: Path) -> None:
+    backup, _ = _artifact(tmp_path)
+    manifest = backup / "manifest.json"
+    encoded = manifest.read_bytes()
+    assert b'"manifest_version"' in encoded
+    manifest.write_bytes(b'{"manifest_version":2,' + encoded[1:])
+    target = tmp_path / "unused" / "graph.sqlite3"
+    with pytest.raises(LocalStoreError, match="manifest-invalid"):
+        _restore(backup, target)
+    assert not target.parent.exists()

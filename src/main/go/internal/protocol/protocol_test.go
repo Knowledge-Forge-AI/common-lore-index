@@ -24,14 +24,18 @@ func TestDecodeRequestAcceptsProtocolVersionOneFileRequest(t *testing.T) {
 
 func TestDecodeRequestRejectsInvalidContract(t *testing.T) {
 	tests := map[string]string{
-		"malformed":     `{`,
-		"unknown field": `{"protocol_version":1,"type":"file","sequence":0,"path":"a.go","extra":true}`,
-		"wrong version": `{"protocol_version":2,"type":"file","sequence":0,"path":"a.go"}`,
-		"wrong type":    `{"protocol_version":1,"type":"close","sequence":0,"path":"a.go"}`,
-		"negative seq":  `{"protocol_version":1,"type":"file","sequence":-1,"path":"a.go"}`,
-		"empty path":    `{"protocol_version":1,"type":"file","sequence":0,"path":""}`,
-		"trailing JSON": `{"protocol_version":1,"type":"file","sequence":0,"path":"a.go"}{}`,
-		"empty input":   ``,
+		"malformed":        `{`,
+		"unknown field":    `{"protocol_version":1,"type":"file","sequence":0,"path":"a.go","extra":true}`,
+		"duplicate key":    `{"protocol_version":1,"type":"file","sequence":0,"path":"a.go","path":"b.go"}`,
+		"missing sequence": `{"protocol_version":1,"type":"file","path":"a.go"}`,
+		"null sequence":    `{"protocol_version":1,"type":"file","sequence":null,"path":"a.go"}`,
+		"case variant":     `{"Protocol_Version":1,"type":"file","sequence":0,"path":"a.go"}`,
+		"wrong version":    `{"protocol_version":2,"type":"file","sequence":0,"path":"a.go"}`,
+		"wrong type":       `{"protocol_version":1,"type":"close","sequence":0,"path":"a.go"}`,
+		"negative seq":     `{"protocol_version":1,"type":"file","sequence":-1,"path":"a.go"}`,
+		"empty path":       `{"protocol_version":1,"type":"file","sequence":0,"path":""}`,
+		"trailing JSON":    `{"protocol_version":1,"type":"file","sequence":0,"path":"a.go"}{}`,
+		"empty input":      ``,
 	}
 	for name, input := range tests {
 		t.Run(name, func(t *testing.T) {
