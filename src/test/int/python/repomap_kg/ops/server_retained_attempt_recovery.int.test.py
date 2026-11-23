@@ -288,7 +288,7 @@ def _repoint_retained_objects(
     "receipt-header", "receipt-cancellation", "bundle-identity", "header-vector",
     "unknown-family", "trailer-summary", "receipt-count", "header-framing",
     "header-keys", "header-types", "candidate-type", "header-values", "stage-contract",
-    "record-shape", "record-order", "missing-trailer",
+    "record-shape", "record-order", "missing-trailer", "deep-frame", "noncanonical-frame", "family-type", "stage-type",
 ])
 def test_real_rehashed_retained_objects_reach_deeper_artifact_gates(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mutation: str,
@@ -320,9 +320,15 @@ def test_real_rehashed_retained_objects_reach_deeper_artifact_gates(
                 header = json.loads(header_line)
                 header["snapshot_vector"] = ["malformed-vector-item"]
                 _repoint_retained_objects(capture, canonical_json(header) + remainder)
-            elif mutation == "unknown-family":
+            elif mutation == "deep-frame":
+                deep = b'{"record":' + b"[" * 4100 + b"]" * 4100 + b"}\n"
+                _repoint_retained_objects(capture, header_line + b"\n" + deep + remainder)
+            elif mutation == "noncanonical-frame":
+                first, rest = remainder.split(b"\n", 1)
+                _repoint_retained_objects(capture, header_line + b"\n" + first + b" \n" + rest)
+            elif mutation in {"unknown-family", "family-type"}:
                 frames = [json.loads(line) for line in raw_bundle.splitlines()]
-                frames[1]["family"] = "foreign-family"
+                frames[1]["family"] = [] if mutation == "family-type" else "foreign-family"
                 _repoint_retained_objects(capture, b"".join(canonical_json(frame) for frame in frames))
             elif mutation == "trailer-summary":
                 frames = [json.loads(line) for line in raw_bundle.splitlines()]
@@ -335,14 +341,15 @@ def test_real_rehashed_retained_objects_reach_deeper_artifact_gates(
                         value, family_counts={**value.family_counts, "files": value.family_counts["files"] + 1},
                     ),
                 )
-            elif mutation in {"header-keys", "header-types", "candidate-type", "header-values", "stage-contract"}:
+            elif mutation in {"header-keys", "header-types", "candidate-type", "header-values", "stage-contract", "stage-type"}:
                 header = json.loads(header_line)
                 if mutation == "header-keys":
                     del header["graph_id"]
                 else:
                     field, value = {"header-types": ("schema_version", True), "candidate-type": ("candidate_id", 7),
                                     "header-values": ("graph_id", "foreign-graph"),
-                                    "stage-contract": ("row_stage_contract", "foreign-stage")}[mutation]
+                                    "stage-contract": ("row_stage_contract", "foreign-stage"),
+                                    "stage-type": ("row_stage_contract", [])}[mutation]
                     header[field] = value
                 _repoint_retained_objects(capture, canonical_json(header) + remainder)
             elif mutation in {"record-shape", "record-order", "missing-trailer"}:

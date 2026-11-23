@@ -12,7 +12,9 @@ from common_lore_index.artifacts import (
     ExtractionReceipt,
     PortableSnapshotManifest,
 )
-from common_lore_index.artifacts._canonical import canonical_json, decode_canonical_json
+from common_lore_index.artifacts._canonical import (
+    CanonicalEncodingError, canonical_json, decode_canonical_json,
+)
 from common_lore_index.artifacts.bundle import (
     MAX_BUNDLE_LINE_BYTES,
     MAX_BUNDLE_RECORDS,
@@ -108,7 +110,7 @@ def _header(proof: RetainedArtifactProof, header: Mapping[str, object]) -> None:
     if any(header.get(key) != value for key, value in expected.items()):
         raise RetainedArtifactError("bundle-mismatch")
     stage = header.get("row_stage_contract", "legacy-absent-v1")
-    if stage not in {"legacy-absent-v1", "stage-unassigned-v1"}:
+    if not isinstance(stage, str) or stage not in {"legacy-absent-v1", "stage-unassigned-v1"}:
         raise RetainedArtifactError("bundle-invalid")
 
 
@@ -133,9 +135,10 @@ def read_retained_artifacts(record: RetainedRecord, store: FileSystemArtifactSto
             header_line = stream.readline(MAX_BUNDLE_LINE_BYTES + 1)
             if not header_line.endswith(b"\n") or len(header_line) > MAX_BUNDLE_LINE_BYTES:
                 raise RetainedArtifactError("bundle-invalid")
-            header = decode_canonical_json(header_line)
+            header = _decode_bundle_frame(header_line)
             raw_hash = hashlib.sha256(header_line)
-            bundle_hash = hashlib.sha256(b"repomap-publication-bundle-v1\x00" + header_line)
+            bundle_hash = hashlib.sha256(b"repomap-publication-bundle-v1\x00")
+            bundle_hash.update(header_line)
             _header_placeholder = RetainedArtifactProof(manifest, receipt, "", "", ())
             _header(_header_placeholder, header)
             counts = {family: 0 for family in PUBLICATION_FAMILIES}
@@ -143,6 +146,9 @@ def read_retained_artifacts(record: RetainedRecord, store: FileSystemArtifactSto
             hashes = {family: hashlib.sha256() for family in PUBLICATION_FAMILIES}
             total_bytes = len(header_line)
             total_records = 0
+            family_indexes: dict[str, int] = {
+                family: index for index, family in enumerate(PUBLICATION_FAMILIES)
+            }
             current_family_index = 0
             last_record: bytes | None = None
             row_stage_contract = header.get("row_stage_contract", "legacy-absent-v1")
@@ -158,16 +164,17 @@ def read_retained_artifacts(record: RetainedRecord, store: FileSystemArtifactSto
                     raise RetainedArtifactError("bundle-invalid")
                 raw_hash.update(line)
                 bundle_hash.update(line)
-                frame = decode_canonical_json(line)
+                frame = _decode_bundle_frame(line)
                 if frame.get("frame") == "trailer":
                     trailer = frame
                     break
                 if frame.get("frame") != "record" or set(frame) != {"family", "frame", "record"}:
                     raise RetainedArtifactError("bundle-invalid")
                 family, item = frame.get("family"), frame.get("record")
-                if family not in PUBLICATION_FAMILIES or not isinstance(item, dict):
+                family_index = family_indexes.get(family) if isinstance(family, str) else None
+                if family_index is None or not isinstance(item, dict):
                     raise RetainedArtifactError("bundle-invalid")
-                family_index = PUBLICATION_FAMILIES.index(family)
+                typed_family = PUBLICATION_FAMILIES[family_index]
                 if family_index < current_family_index:
                     raise RetainedArtifactError("bundle-invalid")
                 if family_index > current_family_index:
@@ -185,9 +192,9 @@ def read_retained_artifacts(record: RetainedRecord, store: FileSystemArtifactSto
                 total_records += 1
                 if total_records > MAX_BUNDLE_RECORDS:
                     raise RetainedArtifactError("bundle-invalid")
-                counts[family] += 1
-                lengths[family] += len(line)
-                hashes[family].update(line)
+                counts[typed_family] += 1
+                lengths[typed_family] += len(line)
+                hashes[typed_family].update(line)
             if trailer is None or stream.read(1):
                 raise RetainedArtifactError("bundle-invalid")
             summaries = [
@@ -234,6 +241,13 @@ def read_retained_artifacts(record: RetainedRecord, store: FileSystemArtifactSto
         raise
     except (OSError, TypeError, ValueError, KeyError) as error:
         raise RetainedArtifactError("artifact-unavailable") from error
+
+
+def _decode_bundle_frame(line: bytes) -> dict[str, object]:
+    try:
+        return decode_canonical_json(line)
+    except CanonicalEncodingError as error:
+        raise RetainedArtifactError("bundle-invalid") from error
 
 
 __all__ = ("RetainedArtifactError", "RetainedArtifactProof", "read_retained_artifacts")
