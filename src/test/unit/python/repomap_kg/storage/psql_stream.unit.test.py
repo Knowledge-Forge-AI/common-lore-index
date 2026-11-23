@@ -15,6 +15,35 @@ from common_lore_index.storage.errors import StorageSchemaError
 
 
 class PsqlStreamUnitTests(unittest.TestCase):
+    def test_chunk_write_completes_partial_unicode_and_flushes_by_chunk(self):
+        class Sink(io.BytesIO):
+            flushes = 0
+
+            def write(self, data):
+                return super().write(data[:1])
+
+            def flush(self):
+                self.flushes += 1
+                super().flush()
+
+        sink = Sink()
+        chunks = ("é\n", "λ\n", "")
+        self.assertEqual(_write_chunks(sink, chunks, batch_size=2), 3)
+        self.assertEqual(sink.getvalue(), "é\nλ\n".encode())
+        self.assertEqual(sink.flushes, 2)
+
+    def test_chunk_write_refuses_invalid_or_stalled_write(self):
+        for count, diagnostic in (
+            (None, "invalid byte count"), (-1, "invalid byte count"),
+            (200, "invalid byte count"), (0, "made no progress"),
+        ):
+            sink = MagicMock()
+            sink.write.return_value = count
+            with self.subTest(count=count), self.assertRaisesRegex(OSError, diagnostic):
+                _write_chunks(sink, ("unwritten",), batch_size=1)
+            sink.write.assert_called_once_with(b"unwritten")
+            sink.flush.assert_not_called()
+
     def test_capture_discards_only_oldest_bytes_across_chunks(self):
         capture = _BoundedTextCapture(5)
         capture.append(b"ab")
@@ -233,6 +262,7 @@ class _OneShotIterable:
         if self.iterations > 1:
             raise AssertionError("chunks were iterated twice")
         return iter(self._chunks)
+
 
 
 if __name__ == "__main__":

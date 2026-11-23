@@ -15,6 +15,7 @@ not incident-degree scan/sort work. The caller owns the transaction.
 from __future__ import annotations
 
 import sqlite3
+from dataclasses import replace
 from typing import Any
 
 from common_lore_index.storage.canonical_readback_rows import CanonicalNeighborhoodRecord
@@ -78,16 +79,17 @@ def configured_neighborhood(
         edge_offset=0,
         incident_selective=True,
     )
-    base = canonical_neighborhood_to_jsonable(record)
     bounds = {}
-    for name, limit in (("nodes", safe_node_limit), ("edges", safe_edge_limit)):
-        has_more = limit is not None and len(base[name]) > limit
-        if limit is not None:
-            base[name] = base[name][:limit]
+    for name, count, limit in (
+        ("nodes", len(record.nodes), safe_node_limit),
+        ("edges", len(record.edges), safe_edge_limit),
+    ):
+        has_more = limit is not None and count > limit
         bounds[name] = {
             "requested_limit": limit,
-            "returned_count": len(base[name]),
+            "returned_count": count if limit is None else min(count, limit),
             "has_more": has_more,
             "completeness": "truncated" if has_more else "complete",
         }
-    return {**base, "bounds": bounds}
+    visible = replace(record, nodes=record.nodes[:safe_node_limit], edges=record.edges[:safe_edge_limit])
+    return {**canonical_neighborhood_to_jsonable(visible), "bounds": bounds}

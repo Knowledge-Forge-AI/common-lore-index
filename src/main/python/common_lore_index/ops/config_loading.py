@@ -243,14 +243,14 @@ def load_ops_config(config_path: str | Path) -> OpsConfig:
 def read_toml_payload(path: Path) -> Mapping[str, Any]:
     try:
         payload = tomllib.loads(path.read_text(encoding="utf-8"))
-    except tomllib.TOMLDecodeError as error:
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as error:
         raise OpsConfigError(
             (
                 OpsConfigDiagnostic(
                     "error",
                     "invalid-toml",
                     str(path),
-                    f"invalid TOML: {error}",
+                    ("invalid UTF-8 TOML" if isinstance(error, UnicodeDecodeError) else f"invalid TOML: {error}"),
                 ),
             )
         ) from error

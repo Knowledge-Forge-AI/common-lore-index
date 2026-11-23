@@ -159,12 +159,13 @@ def test_neighborhood_windows_preserve_only_disclosed_source_identities(tmp_path
     node = file_key("root/docs/beta.md") if direction == "out" else BETA_DOC
     args = {"graph_id": GRAPH, "node": node, "direction": direction}
     limits = [{"node_limit": 1}, {"edge_limit": 1}, {"node_limit": 1, "edge_limit": 1},
-              {"node_limit": 100, "edge_limit": 100}]
+              {"node_limit": 100, "edge_limit": 100}, {"node_limit": 1, "edge_limit": 100}]
     requests = [initialize(), tool(2, "repomap_neighborhood", args),
                 *(tool(mid, "repomap_neighborhood", {**args, **options})
                   for mid, options in enumerate(limits, 3)),
                 tool(10, "repomap_neighborhood", {**args, "node": "doc.page:absent", "node_limit": 1}),
-                tool(11, "repomap_neighborhood", {**args, "node_limit": None})]
+                tool(11, "repomap_neighborhood", {**args, "node_limit": None}),
+                tool(12, "repomap_neighborhood", {**args, "node_limit": 0})]
     responses = harness.mcp(home, requests)
     full = structured(responses, 2)["result"]
     assert full["center"]["canonical_key"] == node and full["edges"]
@@ -191,6 +192,7 @@ def test_neighborhood_windows_preserve_only_disclosed_source_identities(tmp_path
     assert all(bound["has_more"] is False and bound["completeness"] == "complete"
                for bound in absent["bounds"].values())
     assert "node_limit" in refusal(responses, 11)
+    assert "node_limit" in refusal(responses, 12)
     assert responses == harness.mcp(home, requests)
     assert hashlib.sha256(database.read_bytes()).hexdigest() == before
     assert not (tmp_path / "never-created-source").exists()

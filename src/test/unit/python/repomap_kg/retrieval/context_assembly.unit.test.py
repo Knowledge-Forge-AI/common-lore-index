@@ -261,3 +261,72 @@ def test_context_admits_ranked_records_before_the_omission_detail_prefix(
     assert packet["omission_counts"]["candidate_scan_incomplete"] == 32
     raw, size = compute_actual_bytes_fixpoint(packet)
     assert size == len(raw) <= budget
+
+
+def test_location_cap_retains_late_status_without_materializing_extra_freshness(monkeypatch) -> None:
+    from common_lore_index.retrieval import context_admission
+
+    calls = []
+
+    def reserve(location):
+        calls.append(location["graph_path"])
+        return None
+
+    monkeypatch.setattr(context_admission, "reserve_freshness_observation", reserve)
+    monkeypatch.setattr(context_admission, "_public_navigation_location", lambda row, _markers: row)
+    base = {
+        "path": "docs/a.md", "path_status": "available", "run_id": 9,
+        "publication_relation": "accepted_run", "source_identity_status": "verified_vector",
+        "source": {"binding_id": "binding:public", "binding_revision": 1,
+                   "snapshot_id": "snap1:public", "source_relative_path": "docs/a.md"},
+    }
+    later = {**base, "path": "docs/b.md"}
+    missing = {**base, "path": None, "path_status": "missing_or_withheld"}
+    kept, omitted, verified, withheld = context_admission.format_and_deduplicate_locations(
+        [base, base, later, missing], markers=(), locations_per_item=1,
+        reserve_freshness=True, omissions=context_admission.OmissionCounter(),
+    )
+    assert len(kept) == 1 and omitted == 2
+    assert verified and withheld
+    assert calls == ["docs/a.md"]
+
+
+def test_admission_commits_only_successful_seed_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from common_lore_index.retrieval import context_admission
+
+    budget = 4096
+    _, _, _, _, adapter = build_sqlite_context_fixture(tmp_path)
+    initial = build_compact_context(
+        ContextRequest(graph_id=adapter.graph_id, mode="ranked_discovery",
+                       query="InvoiceService", budget_bytes=budget),
+        adapter,
+    )
+    seed, = initial["items"]
+    source = seed["locations"][0]
+    seed = {**seed, "locations": [source, {**source, "graph_path": "other.py"}],
+            "omitted_location_count": 0}
+
+    def measure(packet):
+        items = packet["items"]
+        if not items:
+            return budget - 1
+        return budget - 1 if len(items[0]["locations"]) == 1 and allow_retry else budget + 1
+
+    monkeypatch.setattr(context_admission, "packet_size_with_reservation", measure)
+    for allow_retry in (True, False):
+        packet = {**initial, "items": [], "request": dict(initial["request"]),
+                  "scope": dict(initial["scope"])}
+        omissions = OmissionCounter()
+        admit_items_and_relations(
+            packet, candidate_seeds=[seed], total_post_offset_seeds=1,
+            top_tied_keys=frozenset({seed["canonical_key"]}), neighbor_units=(),
+            extra_relations=(), omissions=omissions, budget_bytes=budget,
+        )
+        assert omissions.counts["location_limit"] == int(allow_retry)
+        assert omissions.counts["output_budget"] == int(not allow_retry)
+        assert omissions.counts["ambiguous_alternative_omitted_by_budget"] == int(not allow_retry)
+        if allow_retry:
+            assert packet["items"][0]["locations"] == [source]
+        else:
+            assert packet["items"] == []
+    assert len(seed["locations"]) == 2

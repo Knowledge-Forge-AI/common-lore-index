@@ -64,7 +64,8 @@ def format_and_deduplicate_locations(
     omissions: OmissionCounter,
 ) -> tuple[list[dict[str, Any]], int, bool, bool]:
     """Deduplicate locations by _destination + (start_line, end_line) and cap per item."""
-    deduped: list[dict[str, Any]] = []
+    kept: list[dict[str, Any]] = []
+    omitted = 0
     seen_verified: set[tuple[Any, ...]] = set()
     has_verified = False
     any_withheld = False
@@ -111,6 +112,9 @@ def format_and_deduplicate_locations(
             if err is not None:
                 omissions.increment(err)
 
+        if len(kept) >= locations_per_item:
+            omitted += 1
+            continue
         observation = row_dict.get("raw_observation")
         raw_obs = observation if isinstance(observation, Mapping) else {}
         rev = dest["binding_revision"] if dest else src.get("binding_revision")
@@ -132,10 +136,7 @@ def format_and_deduplicate_locations(
         }
         if reserve_freshness:
             loc_obj["freshness"] = reserve_freshness_observation(loc_obj)
-        deduped.append(loc_obj)
-
-    kept = deduped[:locations_per_item]
-    omitted = max(0, len(deduped) - locations_per_item)
+        kept.append(loc_obj)
     return kept, omitted, has_verified, any_withheld
 
 
@@ -279,15 +280,15 @@ def admit_items_and_relations(
     if overflow_tied_count > 0:
         omissions.increment("ambiguous_alternative_omitted_by_budget", overflow_tied_count)
     admitted_seeds: list[dict[str, Any]] = []
+    packet["items"] = admitted_seeds
     admitted_keys: set[str] = set()
     for idx, seed in enumerate(candidate_seeds):
         snap = omissions.snapshot()
         trial = copy.deepcopy(seed)
         if trial["omitted_location_count"] > 0:
             omissions.increment("location_limit", trial["omitted_location_count"])
-        packet["items"] = admitted_seeds + [trial]
+        admitted_seeds.append(trial)
         if fits_reserved_packet():
-            admitted_seeds.append(trial)
             if isinstance(trial.get("canonical_key"), str):
                 admitted_keys.add(trial["canonical_key"])
             continue
@@ -298,21 +299,19 @@ def admit_items_and_relations(
             trial["locations"] = trial["locations"][:1]
             trial["omitted_location_count"] += extra_dropped
             omissions.increment("location_limit", trial["omitted_location_count"])
-            packet["items"] = admitted_seeds + [trial]
             if fits_reserved_packet():
-                admitted_seeds.append(trial)
                 if isinstance(trial.get("canonical_key"), str):
                     admitted_keys.add(trial["canonical_key"])
                 continue
             omissions.restore(snap)
 
+        admitted_seeds.pop()
         remaining_seeds = candidate_seeds[idx:]
         omissions.increment("output_budget", len(remaining_seeds))
         for rem in remaining_seeds:
             if rem.get("canonical_key") in top_tied_keys:
                 omissions.increment("ambiguous_alternative_omitted_by_budget", 1)
         break
-    packet["items"] = admitted_seeds
     admitted_neighbors: list[dict[str, Any]] = []
     admitted_relations: list[dict[str, Any]] = []
     seen_rel_keys: set[tuple[str, str, str, str]] = set()

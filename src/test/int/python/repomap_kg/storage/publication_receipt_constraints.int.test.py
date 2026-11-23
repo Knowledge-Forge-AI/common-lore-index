@@ -171,6 +171,8 @@ def test_psql_stream_streaming_and_error_handling():
     with pytest.raises(ValueError):
         run_psql_stream(cat_cmd, [], capture_limit=0)
 
+    streamed = run_psql_stream(cat_cmd, ["λ", "é\n"])
+    assert streamed.returncode == 0 and streamed.stdout == "λé\n"
     proc = run_psql_stream(cat_cmd, ["row1\n", "row2\n"])
     assert proc.returncode == 0
     assert proc.stdout == "row1\nrow2\n"
