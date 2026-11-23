@@ -1,6 +1,7 @@
 """Verification acquisition failures release the exact descriptor without GC."""
 from __future__ import annotations
 
+import io
 import os
 from pathlib import Path
 from typing import BinaryIO
@@ -121,3 +122,67 @@ def test_verification_acquisition_keeps_descriptor_custody(
     finally:
         case.cleanup()
     assert not leaked
+
+
+def test_read_all_uses_bounded_requests_and_zero_line_reads_are_noops(tmp_path: Path):
+    store = FileSystemArtifactStore(tmp_path / "store")
+    payload = b"x" * 70000 + b"\nsecond"
+    reference = store.put(payload)
+    path = store.object_path(reference)
+    requests = []
+
+    class TrackedReader(io.BufferedReader):
+        def read(self, size=-1):
+            requests.append(size)
+            assert 0 < size <= 64 * 1024
+            return super().read(size)
+
+    with TrackedReader(path.open("rb", buffering=0)) as raw:
+        with streams.VerifyingArtifactStream(
+            raw, reference=reference, bound=reference.size_bytes,
+            before_stat=os.fstat(raw.fileno()), expected_version=reference.store_version,
+        ) as stream:
+            assert stream.readline(0) == b""
+            assert not requests
+            assert stream.read() == payload and stream.verified
+    assert len(requests) >= 3
+
+
+@pytest.mark.parametrize("operation", ("verify", "read", "open_stream", "collision"))
+def test_artifact_reads_refuse_fifo_replacement_without_blocking(tmp_path: Path, monkeypatch, operation):
+    case = _VerificationCase(tmp_path, "fifo", OSError)
+    original = case.path.with_name("preserved")
+    temporary = tmp_path / "collision-input"
+    temporary.write_bytes(b"public verification payload")
+    switched = False
+
+    def switch_at_open(path, flags, *args, **kwargs):
+        nonlocal switched
+        if Path(path) == case.path:
+            assert flags & os.O_NONBLOCK and not switched
+            switched = True
+            case.path.rename(original)
+            os.mkfifo(case.path, 0o400)
+        return case._open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", switch_at_open)
+    try:
+        with pytest.raises(ArtifactIntegrityError, match="artifact changed during read"):
+            if operation == "verify":
+                case.run()
+            elif operation == "read":
+                case.store.read(case.reference)
+            elif operation == "open_stream":
+                with case.store.open_stream(case.reference):
+                    pytest.fail("opened a replacement FIFO")
+            else:
+                streams.compare_and_verify_collision(
+                    case.path, temporary, case.reference.size_bytes, case.reference.content_digest,
+                    case.reference.size_bytes, owner_uid=os.getuid(), private_details_fn=filesystem._private_details,
+                )
+        assert switched and not case.leaked()
+        assert original.read_bytes() == b"public verification payload"
+    finally:
+        case.cleanup()
+        if switched:
+            case.path.unlink(missing_ok=True)

@@ -62,6 +62,7 @@ def test_verifying_artifact_stream_and_filesystem_store_contracts(tmp_path: Path
     with store.open_stream(ref) as s1_raw:
         s1: Any = s1_raw
         assert s1.read(0) == b""
+        assert s1.readline(0) == b"" and not s1.verified
         buf = bytearray(6)
         n = s1.readinto(buf)
         assert n == 6 and bytes(buf) == b"line1\n"
@@ -98,6 +99,7 @@ def test_verifying_artifact_stream_and_filesystem_store_contracts(tmp_path: Path
     neutral_loc = ArtifactLocator("object", f"tenant-neutral/{ref.content_digest[7:]}", ref.store_version)
     neutral_ref = replace(ref, locator=neutral_loc)
     assert store.read(neutral_ref) == b"line1\nline2\n"
+    assert store.read(neutral_ref, max_bytes=(1 << 63) - 1) == b"line1\nline2\n"
 
     bad_loc = ArtifactLocator("object", "sha256/" + "0" * 64, ref.store_version)
     with pytest.raises(ArtifactIntegrityError, match="artifact locator does not address"):

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import hashlib
+import io
 import os
 from pathlib import Path
 import stat
@@ -20,6 +21,8 @@ from common_lore_index.artifacts._store_common import (
     _validate_requested_digest,
 )
 from common_lore_index.artifacts._store_stream import (
+    _READ_BLOCK,
+    _READ_FLAGS,
     VerifyingArtifactStream,
     compare_and_verify_collision,
     open_verified_path,
@@ -156,11 +159,8 @@ class FileSystemArtifactStore:
                 "artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS
             )
         before = _private_details(path, owner_uid=self._owner_uid)
-        flags = os.O_RDONLY
-        if hasattr(os, "O_NOFOLLOW"):
-            flags |= os.O_NOFOLLOW
         try:
-            descriptor = os.open(path, flags)
+            descriptor = os.open(path, _READ_FLAGS)
         except OSError as error:
             raise ArtifactIntegrityError("artifact is not a regular file") from error
         try:
@@ -168,7 +168,15 @@ class FileSystemArtifactStore:
                 opened = os.fstat(stream.fileno())
                 if not _same_file(before, opened) or not stat.S_ISREG(opened.st_mode):
                     raise ArtifactIntegrityError("artifact changed during read")
-                data = stream.read(bound + 1)
+                collected = io.BytesIO()
+                remaining = bound + 1
+                while remaining:
+                    chunk = stream.read(min(remaining, _READ_BLOCK))
+                    if not chunk:
+                        break
+                    collected.write(chunk)
+                    remaining -= len(chunk)
+                data = collected.getvalue()
                 after = os.fstat(stream.fileno())
                 if not _same_file(opened, after):
                     raise ArtifactIntegrityError("artifact changed during read")
