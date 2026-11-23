@@ -1,9 +1,11 @@
 import json
+import os
 from pathlib import Path
 from typing import Any, Mapping, cast
 
 import pytest
 
+from common_lore_index.coordinator import endpoint
 from common_lore_index.coordinator.endpoint import (
     EndpointDescriptorError,
     LoopbackEndpointDescriptor,
@@ -177,3 +179,103 @@ def test_load_descriptor_oversized_or_malformed(tmp_path: Path):
     malformed_path.chmod(0o600)
     with pytest.raises(EndpointDescriptorError, match="invalid"):
         load_endpoint_descriptor(malformed_path)
+
+
+def test_deep_descriptor_is_rejected_as_invalid(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "endpoint.json"
+    path.write_bytes(b"[" * 1800 + b"]" * 1800)
+    path.chmod(0o600)
+
+    def decoder_exhausted(_data: str) -> object:
+        raise RecursionError("fixture decoder limit")
+
+    monkeypatch.setattr(json, "loads", decoder_exhausted)
+    with pytest.raises(EndpointDescriptorError, match="invalid"):
+        load_endpoint_descriptor(path)
+
+
+def test_read_refuses_in_place_version_change(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "endpoint.json"
+    write_endpoint_descriptor(path, descriptor())
+    saved = os.fstat
+    identity = path.stat().st_ino
+    reads = 0
+
+    def change(fd: int) -> os.stat_result:
+        nonlocal reads
+        found = saved(fd)
+        if found.st_ino == identity:
+            reads += 1
+            if reads == 2:
+                path.write_bytes(path.read_bytes().replace(b"43123", b"43124"))
+                os.utime(path, ns=(found.st_atime_ns, found.st_mtime_ns - 2_000_000_000))
+                return saved(fd)
+        return found
+
+    monkeypatch.setattr(os, "fstat", change)
+    with pytest.raises(EndpointDescriptorError, match="unsafe"):
+        load_endpoint_descriptor(path)
+    assert reads == 2
+
+
+def test_rotation_rollback_restores_exact_verified_bytes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "endpoint.json"
+    write_endpoint_descriptor(path, descriptor())
+    # Preserve older, noncanonical whitespace during rollback.
+    prior = b" " + path.read_bytes()
+    path.write_bytes(prior)
+
+    def fail(_path: Path) -> None:
+        raise OSError("fixture directory sync failure")
+
+    monkeypatch.setattr(endpoint, "_fsync_parent", fail)
+    with pytest.raises(EndpointDescriptorError, match="publication failed"):
+        write_endpoint_descriptor(path, descriptor(port=43124))
+    assert path.read_bytes() == prior
+    assert load_endpoint_descriptor(path) == descriptor()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX descriptor lock")
+@pytest.mark.parametrize("fixture", ["linked", "replaced"])
+def test_rotation_refuses_unsafe_lock_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fixture: str,
+) -> None:
+    path = tmp_path / "endpoint.json"
+    lock = tmp_path / ".endpoint.json.lock"
+    if fixture == "linked":
+        alias = tmp_path / "alias"
+        alias.touch(mode=0o600)
+        os.link(alias, lock)
+    else:
+        original = endpoint.fcntl.flock
+
+        def change(fd: int, action: int) -> None:
+            original(fd, action)
+            if action == endpoint.fcntl.LOCK_EX:
+                lock.unlink()
+                lock.touch(mode=0o600)
+
+        monkeypatch.setattr(endpoint.fcntl, "flock", change)
+    with pytest.raises(EndpointDescriptorError, match="lock unsafe"):
+        write_endpoint_descriptor(path, descriptor())
+    assert lock.exists() and not path.exists()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX descriptor lock")
+def test_rotation_keeps_published_descriptor_on_secondary_close_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "endpoint.json"
+    lock = tmp_path / ".endpoint.json.lock"
+    close = os.close
+
+    def close_with_error(fd: int) -> None:
+        owned_lock = os.fstat(fd).st_ino == lock.stat().st_ino
+        close(fd)
+        if owned_lock:
+            raise OSError("fixture lock close failure")
+
+    with monkeypatch.context() as fault:
+        fault.setattr(os, "close", close_with_error)
+        write_endpoint_descriptor(path, descriptor())
+    assert load_endpoint_descriptor(path) == descriptor()
