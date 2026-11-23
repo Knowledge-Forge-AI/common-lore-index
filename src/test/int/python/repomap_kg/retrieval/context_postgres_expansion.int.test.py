@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
+import pytest
 
 from common_lore_index.retrieval.context_assembly import build_compact_context
 from common_lore_index.retrieval.context_contracts import ContextRequest
@@ -359,7 +360,7 @@ def test_postgres_transport_overflow_returns_closed_empty_expansion(
 
 
 def test_postgres_statement_cap_and_native_empty_node_are_closed_packets(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     require_postgres_binaries()
     with temporary_postgres() as postgres:
@@ -377,6 +378,20 @@ def test_postgres_statement_cap_and_native_empty_node_are_closed_packets(
             empty = build_compact_context(
                 _request(canonical_key="py:pkg.billing.DoesNotExist"), adapter,
             )
+            execute = adapter._run_sql_object
+
+            def mismatched_subject(sql: str, *, label: str) -> dict[str, Any]:
+                result = execute(sql, label=label)
+                if label == "context expansion":
+                    result["evidence"][0]["subject_canonical_key"] = "py:unrelated.fixture"
+                return result
+
+            monkeypatch.setattr(adapter, "_run_sql_object", mismatched_subject)
+            ledger = WorkLedger(backend="postgresql")
+            identity = adapter.read_initial_identity(ledger)["accepted_publication"]
+            refused = adapter.expand_seeds_depth1((SEED,), edge_kinds=("contains",), node_limit=8,
+                                                  edge_limit=16, ledger=ledger, expected_identity=identity)
+    assert refused == {"status": "unavailable", "reason": "accepted_publication_unverified"}
     assert_valid_context_packet(empty)
     assert empty["status"] == "complete"
     assert empty["effective_mode"] == "graph_investigation"

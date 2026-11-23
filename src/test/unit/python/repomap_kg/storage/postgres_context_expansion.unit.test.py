@@ -192,7 +192,7 @@ def _evidence(node_id: int = 101) -> dict[str, Any]:
         "snapshot_vector_json": _VECTOR,
         "evidence_role": "direct",
         "node_id": node_id,
-        "subject_canonical_key": "repo:seed",
+        "subject_canonical_key": "repo:neighbor",
     }
 
 
@@ -320,6 +320,22 @@ def test_parser_rejects_step_bounds_and_duplicate_admission() -> None:
         )
 
 
+
+@pytest.mark.parametrize("change", ["different-id", "duplicate-id"])
+def test_parser_refuses_inconsistent_neighbor_ids(change: str) -> None:
+    first = _edge(action="new", step=1, direction="outgoing", edge_hash="1" * 64,
+                  source="repo:seed", target="repo:n1", neighbor_id=101, neighbor="repo:n1")
+    second = {**first, "step": 2, "edge_key": "2" * 64}
+    if change == "different-id":
+        second.update(action="existing", neighbor_id=102)
+    else:
+        second.update(target_canonical_key="repo:n2", neighbor_canonical_key="repo:n2")
+    with pytest.raises(StorageSchemaError, match="neighbor id"):
+        parse_postgres_context_expansion_payload(
+            _payload([first, second]), seed_keys=("repo:seed",), node_limit=4,
+            edge_limit=3, expected_identity=_EXPECTED,
+        )
+
 def test_parser_formats_admitted_evidence_and_rejects_bad_or_unadmitted_rows() -> None:
     edge = _edge(
         action="new", step=1, direction="outgoing", edge_hash="8" * 64,
@@ -345,7 +361,9 @@ def test_parser_formats_admitted_evidence_and_rejects_bad_or_unadmitted_rows() -
     unadmitted["evidence"] = [_evidence(999)]
     malformed_vector = _payload([edge])
     malformed_vector["evidence"] = [{**_evidence(101), "snapshot_vector_json": "{"}]
-    for payload in (malformed, unadmitted, malformed_vector):
+    wrong_subject = {**valid, "evidence": [{**_evidence(101), "subject_canonical_key": "repo:other"}]}
+    coerced_id = {**valid, "evidence": [{**_evidence(101), "node_id": "101"}]}
+    for payload in (malformed, unadmitted, malformed_vector, wrong_subject, coerced_id):
         with pytest.raises(StorageSchemaError):
             parse_postgres_context_expansion_payload(
                 payload, seed_keys=("repo:seed",), node_limit=4, edge_limit=3,
