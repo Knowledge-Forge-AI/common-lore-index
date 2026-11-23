@@ -71,3 +71,31 @@ def test_frozen_invalid_utf8_fixture_is_refused_before_any_container(tmp_path: P
     fixture = Path(__file__).resolve().parents[5] / "fixtures" / "rust_pilot" / "q06_invalid_utf8.rs"
     info = _write(tmp_path, "q06.rs", fixture.read_bytes())
     assert select_inputs(tmp_path, [info])[0].outcome == "input_not_utf8"
+
+
+def test_nested_selection_keeps_constant_number_of_directory_descriptors(tmp_path: Path, monkeypatch) -> None:
+    from common_lore_index.extractors.rust_pilot import selection
+
+    info = _write(tmp_path, "a/b/c/d/e/f/lib.rs", b"fn fixture() {}\n")
+    actual_open, actual_close = os.open, os.close
+    directories: set[int] = set()
+    peak = 0
+
+    def open_directory(path, flags, *args, **kwargs):
+        nonlocal peak
+        descriptor = actual_open(path, flags, *args, **kwargs)
+        if flags & os.O_DIRECTORY:
+            directories.add(descriptor)
+            peak = max(peak, len(directories))
+        return descriptor
+
+    def close(descriptor):
+        directories.discard(descriptor)
+        actual_close(descriptor)
+
+    with monkeypatch.context() as local:
+        local.setattr(selection.os, "open", open_directory)
+        local.setattr(selection.os, "close", close)
+        selected, = select_inputs(tmp_path, [info])
+    assert selected.outcome == "selected" and selected.input_sha256 == info.content_hash
+    assert peak == 3 and not directories

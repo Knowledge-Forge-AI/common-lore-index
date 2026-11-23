@@ -308,3 +308,18 @@ def test_apply_refuses_invalid_layouts_without_writes(
         assert (after_external.st_ino, after_external.st_nlink, after_external.st_mtime_ns) == (
             before_external.st_ino, before_external.st_nlink, before_external.st_mtime_ns,
         )
+
+
+def test_migration_duplicate_journal_fields_refuse_before_recovery(tmp_path: Path) -> None:
+    home = make_home(tmp_path, "postgresql")
+    assert cli(home, "apply", "--yes")["result"] == "applied"
+    journal = home / OPERATION / "journal.json"
+    data = journal.read_bytes()
+    assert data.startswith(b"{")
+    journal.write_bytes(b'{"state":"preparing",' + data[1:])
+    before = tree(home)
+    for command in ("rollback", "finalize"):
+        refusal = cli(home, command, "--yes", code=1)
+        assert refusal["refusals"] == [{"code": "config-migration-journal-invalid", "file": ""}]
+        assert refusal["writes_performed"] == 0
+        assert tree(home) == before

@@ -323,3 +323,69 @@ def test_effective_config_digest_keeps_existing_bytes_with_unicode_and_toml_date
     assert effective_sha256([("fixture.rp.toml", payload)]) == (
         "f32b0c22a3cf432746c02e8d6ccc7ad321004183bcfb9464a8ec83e891a8e6ac"
     )
+
+
+def test_home_descriptor_probe_failure_returns_refusal_and_closes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.ops import config_migration_fs
+
+    home_path = make_home(tmp_path)
+    opened: list[int] = []
+    closed: list[int] = []
+    real_open, real_close = os.open, os.close
+
+    def track_open(path, flags, *args, **kwargs):
+        fd = real_open(path, flags, *args, **kwargs)
+        if path == home_path:
+            opened.append(fd)
+        return fd
+
+    def track_close(fd):
+        real_close(fd)
+        if fd in opened:
+            closed.append(fd)
+
+    def stop_probe(fd):
+        assert fd in opened
+        raise OSError("fixture cannot stat handle")
+
+    with monkeypatch.context() as local:
+        local.setattr(config_migration_fs.os, "open", track_open)
+        local.setattr(config_migration_fs.os, "close", track_close)
+        local.setattr(config_migration_fs.os, "fstat", stop_probe)
+        outcome = apply_cloe_config_migration(home_path, dry_run=True)
+    assert outcome["refusals"] == [{"code": "repo-map-home-unsafe", "file": ""}]
+    assert len(opened) == 1 and opened == closed
+
+
+def test_bounded_read_and_write_failure_preserve_owned_configuration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.ops import config_migration_fs
+
+    path = make_home(tmp_path)
+    initial = ("# x\n" * 80_000).encode()
+    (path / "large.txt").write_bytes(initial)
+    home = Home.open(path)
+    reads: list[int] = []
+    actual_read = os.read
+
+    def track_read(fd, count):
+        reads.append(count)
+        return actual_read(fd, count)
+
+    try:
+        with monkeypatch.context() as local:
+            local.setattr(config_migration_fs.os, "read", track_read)
+            actual, _ = home.read("large.txt", config_migration_fs.MAX_FILE_BYTES, "fixture", in_op=False)
+        assert actual == initial and max(reads) == 65_536
+        with monkeypatch.context() as local:
+            local.setattr(config_migration_fs.os, "write", lambda _fd, _data: 0)
+            with pytest.raises(OSError, match="invalid progress"):
+                home.create("owned.tmp", b"fixture", in_op=False)
+        assert (path / "owned.tmp").read_bytes() == b""
+        assert (path / "large.txt").read_bytes() == initial
+    finally:
+        home.close()
+        home.close()

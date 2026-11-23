@@ -60,15 +60,16 @@ def _identity(value: os.stat_result) -> tuple[int, int, int, int, int]:
 
 def _read_no_follow(root_fd: int, relative: str) -> bytes:
     parts = _components(relative)
-    opened: list[int] = []
+    current = root_fd
     try:
-        current = root_fd
         for part in parts[:-1]:
+            parent = current
             try:
-                current = os.open(part, _DIR_FLAGS, dir_fd=current)
+                current = os.open(part, _DIR_FLAGS, dir_fd=parent)
             except OSError:
                 raise _Refused("selection_refused") from None
-            opened.append(current)
+            if parent != root_fd:
+                os.close(parent)
         try:
             fd = os.open(parts[-1], _READ_FLAGS, dir_fd=current)
         except OSError:
@@ -100,8 +101,8 @@ def _read_no_follow(root_fd: int, relative: str) -> bytes:
             raise _Refused("source_changed")
         return b"".join(chunks)
     finally:
-        for fd in reversed(opened):
-            os.close(fd)
+        if current != root_fd:
+            os.close(current)
 
 
 def select_one(root_fd: int, info: FileInfo) -> SelectionRecord:

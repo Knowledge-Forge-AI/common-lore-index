@@ -143,6 +143,15 @@ def validate_journal(document: Any, home: Home) -> dict[str, Any]:
     return document
 
 
+
+def _journal_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    document: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in document:
+            raise ValueError("duplicate journal key")
+        document[key] = value
+    return document
+
 def read_journal(home: Home) -> dict[str, Any] | None:
     if home.lstat(JOURNAL_NAME, in_op=True) is None:
         return None
@@ -150,8 +159,8 @@ def read_journal(home: Home) -> dict[str, Any] | None:
     if not owned_regular(info):
         raise MigrationRefusal("config-migration-journal-invalid")
     try:
-        document = json.loads(data.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
+        document = json.loads(data.decode("utf-8"), object_pairs_hook=_journal_object)
+    except (ValueError, RecursionError):
         raise MigrationRefusal("config-migration-journal-invalid") from None
     return validate_journal(document, home)
 

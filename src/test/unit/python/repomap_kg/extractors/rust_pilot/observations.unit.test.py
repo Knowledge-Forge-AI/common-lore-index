@@ -144,3 +144,24 @@ def test_frozen_fixtures_and_golds_bind_each_other() -> None:
     last = long["items"][-1]
     line = (FIXTURES / long["fixture"]).read_bytes().split(b"\n")[last["start_line"] - 1]
     assert long["line_count"] > 300 and line.index(last["name"].encode()) > 300
+
+
+@pytest.mark.parametrize(("data", "line_count"), [(b"", 0), (b"\n", 1), (b"\r\n\nc", 3), (b"\r", 1)])
+def test_parse_only_line_count_agrees_with_byte_offset_index(data: bytes, line_count: int) -> None:
+    from common_lore_index.extractors.rust_pilot.observations import parse_observation
+
+    observation = parse_observation(
+        "fixture.rs", data, input_sha256=hashlib.sha256(data).hexdigest(), outcome="succeeded",
+        completeness="complete", item_list="complete", build_script_name=False, counts={},
+    )
+    assert observation.metadata["line_count"] == LineIndex(data).count == line_count
+    assert observation.end_line == max(1, line_count)
+
+
+def test_repeat_unsupported_spans_keep_count_and_first_line() -> None:
+    data = b"x!()\ny!()\nz!()"
+    _, grouped = _build(data, [frame("u", p=-1, k=1, s=at, e=at + 4) for at in (0, 5, 10)])
+    unsupported, = grouped["rust.unsupported"]
+    assert (unsupported.start_line, unsupported.end_line) == (1, 1)
+    assert unsupported.metadata["count"] == 3
+    assert grouped["rust.parse"][0].metadata["unsupported"] == 3

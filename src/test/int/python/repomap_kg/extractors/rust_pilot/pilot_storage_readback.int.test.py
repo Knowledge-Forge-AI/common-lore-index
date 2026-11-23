@@ -137,6 +137,13 @@ def test_live_witness_staged_rows_publish_and_read_back_without_direct_inserts(
             "FROM raw_observations WHERE run_id = (SELECT max(id) FROM runs)"
         ) == ",".join(str(index) for index in range(len(live.witnessed.observations)))
 
+        assert postgres.psql_scalar(
+            "SELECT string_agg(kind || ':' || (payload_json->>'start_line') || '-' || "
+            "(payload_json->>'end_line'), ';' ORDER BY ordinal) "
+            "FROM raw_observations WHERE run_id = (SELECT max(id) FROM runs) "
+            "AND kind IN ('rust.parse', 'rust.item')"
+        ) == "rust.parse:1-1;rust.item:1-1;rust.item:1-1"
+
         # A legitimate earlier callback can close the run. The final witness
         # fence must observe that change and preserve the published graph.
         authority = new_direct_authority(
