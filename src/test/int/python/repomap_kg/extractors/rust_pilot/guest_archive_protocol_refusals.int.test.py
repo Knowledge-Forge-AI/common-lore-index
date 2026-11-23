@@ -157,6 +157,10 @@ def test_synthetic_wheel_stream_is_accepted_before_negative_variants(tmp_path: P
                 "evil-1.0.dist-info/RECORD,,",
             ]),
         ),
+        (
+            "duplicate_record_row",
+            lambda: _wheel_stream(record_rows=["evil-1.0.dist-info/RECORD,,"] * 2),
+        ),
         ("compression_refused", lambda: _wheel_stream(compression=zipfile.ZIP_BZIP2)),
         ("payload_digest_mismatch", _digest_mutated_stream),
         ("payload_order_refused", _reordered_stream),

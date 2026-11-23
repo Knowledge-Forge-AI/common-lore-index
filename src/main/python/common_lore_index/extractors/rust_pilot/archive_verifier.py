@@ -198,27 +198,39 @@ def _verify_record(contents: dict[str, bytes], record_name: str) -> None:
     raw = contents.get(record_name)
     if raw is None:
         raise ArchiveRefused("record_missing")
+    seen: set[str] = set()
+    first_refusal: str | None = None
     try:
-        rows = list(csv.reader(io.StringIO(raw.decode("utf-8"), newline="")))
+        with io.StringIO(raw.decode("utf-8"), newline="") as stream:
+            for row in csv.reader(stream):
+                # Parse the remaining CSV even after a refusal so malformed
+                # CSV keeps precedence over a RECORD content mismatch.
+                if first_refusal is not None:
+                    continue
+                first_refusal = _record_row_refusal(row, contents, record_name, seen)
     except (UnicodeDecodeError, csv.Error):
         raise ArchiveRefused("record_invalid") from None
-    seen: set[str] = set()
-    for row in rows:
-        if len(row) != 3 or row[0] in seen:
-            raise ArchiveRefused("record_invalid")
-        name, digest, length = row
-        seen.add(name)
-        if name == record_name:
-            if digest or length:
-                raise ArchiveRefused("record_self_entry")
-            continue
-        content = contents.get(name)
-        if content is None:
-            raise ArchiveRefused("record_extra_entry")
-        if digest != record_hash(content) or length != str(len(content)):
-            raise ArchiveRefused("record_mismatch")
+    if first_refusal is not None:
+        raise ArchiveRefused(first_refusal)
     if seen != set(contents):
         raise ArchiveRefused("record_incomplete")
+
+
+def _record_row_refusal(
+    row: list[str], contents: dict[str, bytes], record_name: str, seen: set[str],
+) -> str | None:
+    if len(row) != 3 or row[0] in seen:
+        return "record_invalid"
+    name, digest, length = row
+    seen.add(name)
+    if name == record_name:
+        return "record_self_entry" if digest or length else None
+    content = contents.get(name)
+    if content is None:
+        return "record_extra_entry"
+    if digest != record_hash(content) or length != str(len(content)):
+        return "record_mismatch"
+    return None
 
 
 def verify_wheel(data: bytes, wheel: WheelLock) -> VerifiedWheel:

@@ -17,8 +17,11 @@ def test_dense_high_offset_does_not_retain_the_skipped_match_population(tmp_path
     projection = build_captured_text_projection(
         inputs, replace(policy, max_projected_file_bytes=1048576)
     )
-    total = sum(chunk.content_text.count("a") for file in projection.projected_files
-                if file.source_relative_path == "pkg/alpha.py" for chunk in file.chunks)
+    needle = "a\na"
+    record, = (file for file in projection.projected_files if file.source_relative_path == "pkg/alpha.py")
+    joined = "".join(chunk.content_text for chunk in record.chunks)
+    total = sum(joined.startswith(needle, pos) for pos in range(len(joined)))
+    del joined
     already_tracing = tracemalloc.is_tracing()
     tracemalloc.start()
     tracemalloc.reset_peak()
@@ -26,7 +29,7 @@ def test_dense_high_offset_does_not_retain_the_skipped_match_population(tmp_path
     try:
         result = query_captured_text(
             projection, CapturedTextQueryRequest(
-                query="a", source_path_prefix="pkg/alpha.py", offset=10000, limit=1
+                query=needle, source_path_prefix="pkg/alpha.py", offset=10000, limit=1
             )
         )
         _, peak = tracemalloc.get_traced_memory()
@@ -36,7 +39,7 @@ def test_dense_high_offset_does_not_retain_the_skipped_match_population(tmp_path
     assert len(result.hits) == 1
     assert result.hits[0].locator.source_relative_path == "pkg/alpha.py"
     assert result.provenance["total_matches_before_paging"] == total
-    assert peak - baseline < 1024 * 1024
+    assert peak - baseline < 96 * 1024
 
 
 def test_offset_crosses_files_in_canonical_order_and_preserves_total_count(tmp_path: Path) -> None:

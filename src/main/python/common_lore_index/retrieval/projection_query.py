@@ -10,7 +10,7 @@ from common_lore_index.retrieval.projection_build import (
     CapturedTextProjection,
     ProjectedFileRecord,
 )
-from common_lore_index.retrieval.projection_chunks import frame_digest
+from common_lore_index.retrieval.projection_chunks import ProjectedChunk, frame_digest
 from common_lore_index.retrieval.projection_evidence import links_for_line_span
 from common_lore_index.retrieval.publication_binding import AcceptedPublicationReference
 from common_lore_index.retrieval.query_contracts import (
@@ -78,6 +78,9 @@ def _find_file_matches(
     chunks = file_rec.chunks
     if not chunks or chunks[0].is_empty_file_record:
         return [], 0
+    if len(needle) <= _CHUNK_LOOKAHEAD_LIMIT:
+        return _find_chunked_matches(chunks, needle, max_materialize, skip_matches)
+    # For wide needles, joining once avoids repeatedly copying their overlap.
     full_text = "".join(chunk.content_text for chunk in chunks)
     snippet_digest: str | None = None
 
@@ -108,12 +111,76 @@ def _find_file_matches(
                 chunk_idx += 1
                 chunk_end += len(chunks[chunk_idx].content_text)
             if snippet_digest is None:
-                # A trailing newline in a multi-character hit stays on the preceding line.
-                end_line_offset = needle_len - 1 - int(needle_len > 1 and needle.endswith("\n"))
-                line_span = needle.count("\n", 0, end_line_offset)
+                line_span = _matched_line_span(needle)
                 snippet_digest = frame_digest("sha256", (needle,))
             matches.append((line, line + line_span, found, chunks[chunk_idx].chunk_id, snippet_digest))
         start_pos = found + 1
+    return matches, total_count
+
+
+_CHUNK_LOOKAHEAD_LIMIT = 128
+
+
+def _matched_line_span(needle: str) -> int:
+    # Preserve the reference locator convention, including trailing LF runs.
+    last_character = len(needle) - 1
+    end_line_offset = last_character - int(last_character > 0 and needle.endswith("\n"))
+    return needle.count("\n", 0, end_line_offset)
+
+
+def _match_window(chunks: tuple[ProjectedChunk, ...], index: int, overlap: int) -> str:
+    current = chunks[index].content_text
+    if overlap == 0 or index == len(chunks) - 1:
+        return current
+    parts = [current]
+    for following_index in range(index + 1, len(chunks)):
+        tail = chunks[following_index].content_text[:overlap]
+        parts.append(tail)
+        overlap -= len(tail)
+        if overlap == 0:
+            break
+    return "".join(parts)
+
+
+def _find_chunked_matches(
+    chunks: tuple[ProjectedChunk, ...],
+    needle: str,
+    max_materialize: int | None,
+    skip_matches: int,
+) -> tuple[list[tuple[int, int, int, str, str]], int]:
+    """Count overlapping literal starts in each chunk with a bounded lookahead."""
+    matches: list[tuple[int, int, int, str, str]] = []
+    total_count = 0
+    char_base = 0
+    start_line = 1
+    digest: str | None = None
+    overlap = len(needle) - 1
+    line_span = _matched_line_span(needle)
+    for index, chunk in enumerate(chunks):
+        text = chunk.content_text
+        window = _match_window(chunks, index, overlap)
+        pos = 0
+        line = start_line
+        line_cursor = 0
+        while pos < len(text):
+            page_full = max_materialize is not None and len(matches) >= max_materialize
+            if page_full and overlap == 0:
+                total_count += text.count(needle, pos)
+                break
+            # A start in the lookahead belongs to its own chunk.
+            found = window.find(needle, pos, len(text) + overlap)
+            if found < 0:
+                break
+            total_count += 1
+            if total_count > skip_matches and not page_full:
+                line += text.count("\n", line_cursor, found)
+                line_cursor = found
+                if digest is None:
+                    digest = frame_digest("sha256", (needle,))
+                matches.append((line, line + line_span, char_base + found, chunk.chunk_id, digest))
+            pos = found + 1
+        start_line += text.count("\n")
+        char_base += len(text)
     return matches, total_count
 
 

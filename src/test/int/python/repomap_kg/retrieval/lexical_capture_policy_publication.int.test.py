@@ -16,7 +16,9 @@ from common_lore_index.ops.lexical_service import (
 )
 from common_lore_index.ops.resource_view import ResourceObserver
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
+from common_lore_index.retrieval.projection_build import build_captured_text_projection
 from common_lore_index.retrieval.projection_policy import ExclusionReason
+from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, query_captured_text
 from common_lore_index.retrieval.query_contracts import CapabilityState
 from repomap_test_support.postgres_harness import temporary_postgres
 from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
@@ -25,9 +27,11 @@ from repomap_test_support.retrieval_evaluation_fixture import (
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
+    write_mixed_v1_sqlite_home,
 )
 from repomap_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
+    publish_and_load_sqlite_corpus,
 )
 
 
@@ -318,3 +322,30 @@ def test_real_binding_privacy_reclassification_refuses_body_scope(tmp_path: Path
         assert recovered.capability_state == CapabilityState.AVAILABLE
         assert recovered.hits
         assert recovered.provenance["lexical_generation_id"] == built.published.lexical_generation_id
+
+
+def test_literal_projection_paging_reaches_match_across_chunk_continuation(tmp_path: Path) -> None:
+    working_copy = materialize_mixed_v1_working_copy(tmp_path / "working-copy")
+    home = write_mixed_v1_sqlite_home(tmp_path / "sqlite-home", working_copy)
+    state = publish_and_load_sqlite_corpus(home)
+    projection = build_captured_text_projection(state.projection_inputs(), state.policy)
+    wide_note, = (record for record in projection.projected_files
+                  if record.source_relative_path == "generated/long_line_notes.md")
+    expected_note = (working_copy / "companion" / wide_note.source_relative_path).read_bytes()
+    continuations = [chunk for chunk in wide_note.chunks if chunk.line_split_continuation]
+    assert continuations
+    second = continuations[0]
+    position = wide_note.chunks.index(second)
+    assert position > 0
+    first = wide_note.chunks[position - 1]
+    boundary_query = first.content_text[-7:] + second.content_text[:9]
+    joined = expected_note.decode("utf-8")
+    match_starts = [pos for pos in range(len(joined)) if joined.startswith(boundary_query, pos)]
+    boundary_start = sum(len(chunk.content_text) for chunk in wide_note.chunks[:position]) - 7
+    boundary_page = query_captured_text(projection, CapturedTextQueryRequest(
+        query=boundary_query, source_path_prefix=wide_note.source_relative_path,
+        offset=match_starts.index(boundary_start), limit=1,
+    ))
+    assert boundary_page.provenance["total_matches_before_paging"] == len(match_starts)
+    boundary_hit, = boundary_page.hits
+    assert boundary_hit.locator.start_line == 2 and boundary_hit.chunk_id == first.chunk_id

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import zipfile
 from dataclasses import replace
@@ -183,3 +184,10 @@ def test_expected_tree_is_sealed_closed_and_collision_free() -> None:
     for name in ("", "/abs", "a/../b", "a//b", "dir/"):
         with pytest.raises(ArchiveRefused):
             require_member_name(name)
+
+
+def test_record_csv_read_failure_takes_precedence_over_earlier_bad_row() -> None:
+    first = "demo/__init__.py,sha256=bad,10"
+    unreadable = "x" * (csv.field_size_limit() + 1)
+    data, contents = build_wheel(FILES, DIST, record_rows=[first, unreadable, f"{DIST}/RECORD,,"])
+    assert _code(data, contents) == "record_invalid"
