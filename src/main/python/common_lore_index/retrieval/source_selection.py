@@ -220,9 +220,8 @@ def write_selection_file(record: SourceSelectionRecord, output_path: Path) -> by
     raw = (
         json.dumps(record.to_dict(), ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n"
     ).encode("utf-8")
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
     try:
-        fd = os.open(str(output_path), flags, 0o600)
+        fd = os.open(output_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
     except FileExistsError as exc:
         raise ContextRequestError(
             f"selection output already exists: {output_path.name}",
@@ -234,15 +233,16 @@ def write_selection_file(record: SourceSelectionRecord, output_path: Path) -> by
             refusal_reason="invalid_selection_record",
         ) from exc
     try:
-        offset = 0
-        while offset < len(raw):
-            written = os.write(fd, raw[offset:])
-            if written <= 0 or written > len(raw) - offset:
+        remaining = memoryview(raw)
+        while remaining:
+            written = os.write(fd, remaining)
+            if not 0 < written <= len(remaining):
                 raise OSError("selection output write made no progress")
-            offset += written
+            remaining = remaining[written:]
     except OSError as exc:
         try:
-            os.unlink(output_path)
+            if os.path.samestat(os.fstat(fd), output_path.lstat()):
+                output_path.unlink()
         except OSError:
             pass
         raise ContextRequestError(f"cannot write selection output: {exc}", refusal_reason="invalid_selection_record") from exc

@@ -39,7 +39,7 @@ def test_write_selection_file_handles_short_os_writes(tmp_path: Path, monkeypatc
     real_write = source_selection.os.write
     calls: list[int] = []
 
-    def short_write(fd: int, data: bytes) -> int:
+    def short_write(fd: int, data: memoryview) -> int:
         calls.append(len(data))
         return real_write(fd, data[:1] if len(data) > 1 else data)
 
@@ -101,3 +101,27 @@ def test_read_selection_file_rejects_directory_and_invalid_utf8(tmp_path: Path) 
     with pytest.raises(ContextRequestError) as exc_utf8:
         source_selection.read_selection_file(bad_utf8)
     assert exc_utf8.value.refusal_reason == "invalid_selection_record"
+
+
+@pytest.mark.parametrize("replaced", [False, True])
+def test_selection_write_failure_cleans_only_the_opened_inode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, replaced: bool,
+) -> None:
+    output = tmp_path / "selection.json"
+    winner = tmp_path / "winner"
+    winner.write_bytes(b"keep")
+    original = output.with_suffix(".retained")
+
+    def failed_write(_fd: int, _data: memoryview) -> int:
+        if replaced:
+            output.rename(original)
+            winner.replace(output)
+        return 0
+
+    monkeypatch.setattr(source_selection.os, "write", failed_write)
+    with pytest.raises(ContextRequestError, match="made no progress"):
+        source_selection.write_selection_file(_record(), output)
+    if replaced:
+        assert output.read_bytes() == b"keep"
+    else:
+        assert not output.exists()

@@ -366,3 +366,31 @@ def test_multi_source_generations_and_semantic_identities_independently_asserted
         "quality1:default",
     )
     assert identities[1].startswith("resolver1:nix-static-v2-")
+
+
+def test_manifest_stream_preserves_digest_and_adjacent_order_validation() -> None:
+    from common_lore_index.graph._multi_source_identity import digest
+
+    seed = _snapshot(_binding("core"), "a" * 64)
+    entries = (
+        SnapshotManifestEntry('pkg/quote".go', "a" * 64, 17),
+        SnapshotManifestEntry("pkg/z.go", "b" * 64, 4, True),
+    )
+    snapshot = SourceSnapshot.create(
+        seed.binding, manifest_entries=entries[::-1],
+        git_commit=seed.git_commit, git_tree=seed.git_tree,
+        ignore_policy_id=seed.ignore_policy_id, metadata_identity=seed.metadata_identity,
+    )
+    expected = digest("repomap-selected-content-manifest-v1", {
+        "entries": [[row.relative_path, row.content_sha256, row.size_bytes, row.executable] for row in entries],
+    })
+    assert snapshot.manifest_entries == entries
+    assert snapshot.manifest_digest == "manifest1:" + expected
+    with pytest.raises(MultiSourceIdentityError, match="manifest ordering is invalid"):
+        replace(snapshot, manifest_entries=snapshot.manifest_entries[::-1])
+    with pytest.raises(MultiSourceIdentityError, match="duplicate manifest path"):
+        SourceSnapshot.create(
+            seed.binding, manifest_entries=(entries[0], entries[1], replace(entries[0], executable=True)),
+            git_commit=seed.git_commit, git_tree=seed.git_tree,
+            ignore_policy_id=seed.ignore_policy_id, metadata_identity=seed.metadata_identity,
+        )

@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any
 
 
@@ -62,3 +62,18 @@ def digest(domain: str, payload: Mapping[str, Any]) -> str:
         separators=(",", ":"),
     ).encode("ascii")
     return hashlib.sha256(encoded).hexdigest()
+
+
+_MANIFEST_JSON_FRAME = b'{"domain":"repomap-selected-content-manifest-v1","payload":{"entries":['
+
+
+def digest_manifest_entries(entries: Iterable[tuple[str, str, int, bool]]) -> str:
+    """Hash the canonical selected-content manifest row by row."""
+    hasher = hashlib.sha256(_MANIFEST_JSON_FRAME)
+    separator = b""
+    for row in entries:
+        hasher.update(separator)
+        hasher.update(json.dumps(row, ensure_ascii=True, separators=(",", ":")).encode("ascii"))
+        separator = b","
+    hasher.update(b"]}}")
+    return hasher.hexdigest()

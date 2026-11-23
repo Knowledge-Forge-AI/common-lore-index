@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
+from itertools import pairwise
 from pathlib import PurePosixPath
 import re
 
@@ -14,6 +15,7 @@ from common_lore_index.graph._multi_source_identity import (
     TOKEN_PATTERN,
     bounded_ascii,
     digest,
+    digest_manifest_entries,
     prefixed_digest,
     prefixed_token,
     token,
@@ -246,13 +248,10 @@ class SnapshotManifestEntry:
 
 
 def _manifest_identity(entries: Sequence[SnapshotManifestEntry]) -> str:
-    payload = {
-        "entries": [
-            [item.relative_path, item.content_sha256, item.size_bytes, item.executable]
-            for item in entries
-        ]
-    }
-    return "manifest1:" + digest("repomap-selected-content-manifest-v1", payload)
+    return "manifest1:" + digest_manifest_entries(
+        (item.relative_path, item.content_sha256, item.size_bytes, item.executable)
+        for item in entries
+    )
 
 
 def _snapshot_identity(
@@ -298,7 +297,9 @@ class SourceSnapshot:
         for value in (self.git_commit, self.git_tree):
             if value is not None and _GIT_OBJECT_PATTERN.fullmatch(value) is None:
                 raise MultiSourceIdentityError("Git object identity is invalid")
-        if tuple(sorted(self.manifest_entries)) != self.manifest_entries:
+        if not isinstance(self.manifest_entries, tuple) or any(
+            right < left for left, right in pairwise(self.manifest_entries)
+        ):
             raise MultiSourceIdentityError("manifest ordering is invalid")
         if self.manifest_digest != _manifest_identity(self.manifest_entries):
             raise MultiSourceIdentityError("manifest identity is invalid")
@@ -320,8 +321,7 @@ class SourceSnapshot:
         metadata_identity: str,
     ) -> "SourceSnapshot":
         entries = tuple(sorted(manifest_entries))
-        paths = [item.relative_path for item in entries]
-        if len(paths) != len(set(paths)):
+        if any(first.relative_path == second.relative_path for first, second in pairwise(entries)):
             raise MultiSourceIdentityError("duplicate manifest path")
         if not entries and git_tree is None:
             raise MultiSourceIdentityError("snapshot content identity is missing")
