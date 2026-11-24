@@ -389,3 +389,12 @@ def test_recovery_streams_namespace_proofs_and_reports_first_foreign_configurati
     done = rollback_cloe_config_migration(home, confirmed=True)
     assert done["result"] == "rolled-back" and not (home / OPERATION).exists()
     assert len(tuple(home.glob("unrelated-*.txt"))) == 128
+
+
+def test_cli_apply_and_rollback_preserve_unrelated_home_entries(tmp_path: Path) -> None:
+    home = make_home(tmp_path, "sqlite")
+    (home / "readme.txt").write_text("fixture")
+    before = tree(home)
+    assert cli(home, "apply", "--yes")["result"] == "applied"
+    assert cli(home, "rollback", "--yes")["result"] == "rolled-back"
+    assert tree(home) == before

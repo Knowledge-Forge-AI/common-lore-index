@@ -1,4 +1,6 @@
 """CLOE home selection, exact configuration layering and inert filename plans."""
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 import json
 import os
@@ -201,8 +203,9 @@ def test_runtime_setup_uses_the_existing_cloe_family(tmp_path: Path) -> None:
     assert not (home / "repomap.rpl.toml").exists()
 
 
+@pytest.mark.parametrize("refusal", ("config-entry-unsafe", "config-migration-stale"))
 def test_migration_revalidation_requires_the_admitted_file_snapshot(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, refusal: str,
 ) -> None:
     from common_lore_index.ops.config_migration import apply_cloe_config_migration
     from common_lore_index.ops.config_migration_fs import Home, OPERATION_DIRECTORY
@@ -218,7 +221,7 @@ def test_migration_revalidation_requires_the_admitted_file_snapshot(
     def read(bound: Home, name: str, limit: int, code: str, *, in_op: bool = False) -> tuple[bytes, os.stat_result]:
         nonlocal revalidated
         data, observed = original(bound, name, limit, code, in_op=in_op)
-        if code == "config-migration-stale" and name == source.name and not in_op:
+        if code == refusal and name == source.name and not in_op:
             revalidated = True
             observed = os.stat_result(observed, {
                 "st_ctime_ns": observed.st_ctime_ns + 1, "st_mtime_ns": observed.st_mtime_ns,
@@ -229,6 +232,65 @@ def test_migration_revalidation_requires_the_admitted_file_snapshot(
     outcome = apply_cloe_config_migration(home, confirmed=True)
     assert revalidated
     assert outcome["result"] == "refused"
-    assert outcome["refusals"] == [{"code": "config-migration-stale", "file": source.name}]
+    assert outcome["refusals"] == [{"code": refusal, "file": source.name}]
     assert source.read_bytes() == contents
     assert not (home / OPERATION_DIRECTORY).exists() and not (home / "00.cloe.toml").exists()
+
+
+def test_migration_streaming_namespace_check_refuses_missing_names(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.ops.config_migration import apply_cloe_config_migration
+    from common_lore_index.ops.config_migration_fs import Home, OPERATION_DIRECTORY
+
+    home = tmp_path / "home"
+    home.mkdir(mode=0o700)
+    source = home / "00.rp.toml"
+    source.write_text("schema_version = 1\n")
+    marker = home / "readme.txt"
+    marker.write_text("fixture")
+    original = Home.scan_names
+
+    @contextmanager
+    def scan(bound: Home, *, in_op: bool = False) -> Iterator[Iterator[str]]:
+        with original(bound, in_op=in_op) as names:
+            if not in_op and bound.op is not None:
+                yield (name for name in names if name != marker.name)
+            else:
+                yield names
+
+    monkeypatch.setattr(Home, "scan_names", scan)
+    outcome = apply_cloe_config_migration(home, confirmed=True)
+    assert outcome["result"] == "refused"
+    assert outcome["refusals"] == [{"code": "config-migration-stale", "file": ""}]
+    assert marker.read_text() == "fixture" and source.is_file()
+    assert not (home / OPERATION_DIRECTORY).exists() and not (home / "00.cloe.toml").exists()
+
+
+def test_journal_read_refuses_a_mismatched_admitted_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.ops.config_migration import apply_cloe_config_migration, finalize_cloe_config_migration
+    from common_lore_index.ops.config_migration_fs import Home, JOURNAL_NAME, OPERATION_DIRECTORY
+
+    home = tmp_path / "home"
+    home.mkdir(mode=0o700)
+    (home / "00.rp.toml").write_text("schema_version = 1\n")
+    assert apply_cloe_config_migration(home, confirmed=True)["result"] == "applied"
+    original = Home.read
+    journal = home / OPERATION_DIRECTORY / JOURNAL_NAME
+    before = journal.read_bytes()
+
+    def read(bound: Home, name: str, limit: int, code: str, *, in_op: bool = False) -> tuple[bytes, os.stat_result]:
+        data, observed = original(bound, name, limit, code, in_op=in_op)
+        if in_op and name == JOURNAL_NAME:
+            observed = os.stat_result(observed, {
+                "st_ctime_ns": observed.st_ctime_ns + 1, "st_mtime_ns": observed.st_mtime_ns,
+            })
+        return data, observed
+
+    monkeypatch.setattr(Home, "read", read)
+    outcome = finalize_cloe_config_migration(home, confirmed=True)
+    assert outcome["result"] == "refused" and outcome["writes_performed"] == 0
+    assert outcome["refusals"] == [{"code": "config-migration-journal-invalid", "file": ""}]
+    assert journal.read_bytes() == before

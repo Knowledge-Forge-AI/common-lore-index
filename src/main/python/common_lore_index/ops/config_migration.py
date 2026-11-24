@@ -180,12 +180,12 @@ def _preflight(home: Home) -> tuple[list[str], list[_Source], dict[str, Any], st
         if not valid_name(name):
             raise MigrationRefusal("config-filename-unsupported", name)
         info = home.lstat(name)
-        if not owned_regular(info):
+        if info is None or not owned_regular(info):
             raise MigrationRefusal("config-entry-unsafe", name)
-        if info is not None and (info.st_size > MAX_FILE_BYTES or total + info.st_size > MAX_TOTAL_BYTES):
+        if info.st_size > MAX_FILE_BYTES or total + info.st_size > MAX_TOTAL_BYTES:
             raise MigrationRefusal("config-migration-limit-exceeded", name)
         data, read = home.read(name, MAX_FILE_BYTES, "config-entry-unsafe")
-        if not owned_regular(read):
+        if not owned_regular(read) or snapshot(read) != snapshot(info):
             raise MigrationRefusal("config-entry-unsafe", name)
         sources.append(_Source(name, data, read))
         total += len(data)
@@ -225,7 +225,14 @@ def _apply(home: Home, outcome: _Outcome) -> str:
 
 
 def _revalidate(home: Home, names: list[str], sources: list[_Source]) -> None:
-    if set(home.names()) != set(names) | {OPERATION_DIRECTORY}:
+    expected_names = set(names)
+    expected_names.add(OPERATION_DIRECTORY)
+    with home.scan_names() as observed_names:
+        for name in observed_names:
+            if name not in expected_names:
+                raise MigrationRefusal("config-migration-stale")
+            expected_names.remove(name)
+    if expected_names:
         raise MigrationRefusal("config-migration-stale")
     for source in sources:
         info = home.lstat(source.name)

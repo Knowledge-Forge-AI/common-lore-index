@@ -14,7 +14,7 @@ from common_lore_index.ops.config_loading import validate_file_schema
 from common_lore_index.ops.config_loading_records import merge_ops_config_payloads
 from common_lore_index.ops.config_migration_fs import (
     JOURNAL_NAME, JOURNAL_TEMP_NAME, MAX_CONFIG_FILES, MAX_FILE_BYTES, MAX_JOURNAL_BYTES, MAX_TOTAL_BYTES,
-    Home, MigrationRefusal, owned_regular, valid_name,
+    Home, MigrationRefusal, owned_regular, snapshot, valid_name,
 )
 from common_lore_index.ops.config_records import OpsConfigError
 from common_lore_index.ops.config_storage import parse_storage_section
@@ -153,10 +153,13 @@ def _journal_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return document
 
 def read_journal(home: Home) -> dict[str, Any] | None:
-    if home.lstat(JOURNAL_NAME, in_op=True) is None:
+    admitted = home.lstat(JOURNAL_NAME, in_op=True)
+    if admitted is None:
         return None
+    if not owned_regular(admitted):
+        raise MigrationRefusal("config-migration-journal-invalid")
     data, info = home.read(JOURNAL_NAME, MAX_JOURNAL_BYTES, "config-migration-journal-invalid", in_op=True)
-    if not owned_regular(info):
+    if snapshot(info) != snapshot(admitted):
         raise MigrationRefusal("config-migration-journal-invalid")
     try:
         document = json.loads(data.decode("utf-8"), object_pairs_hook=_journal_object)
