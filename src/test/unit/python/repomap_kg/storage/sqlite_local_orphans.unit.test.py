@@ -355,13 +355,22 @@ def test_removal_rechecks_identity_and_never_follows_a_swap(tmp_path: Path) -> N
     assert base.read_bytes() == b"replacement"
 
 
-def test_no_orphan_means_the_final_database_is_never_opened(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("streaming", [True, False])
+def test_no_orphan_means_the_final_database_is_never_opened(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, streaming: bool,
+) -> None:
     store, database = _store(tmp_path)
     initialize_graph_database(database, BINDING, applied_at=APPLIED_AT)
-    monkeypatch.setattr(orphans, "read_transaction", fail_if_reached)
+    monkeypatch.setattr(orphans, "read_transaction_with_schema", fail_if_reached)
     monkeypatch.setattr(orphans, "inspect_sealed_database", fail_if_reached)
+    if not streaming:
+        monkeypatch.setattr(os, "supports_fd", os.supports_fd - {os.scandir})
+    for index in range(128):
+        (store / f".foreign-{index:03}.sqlite3.init-{TOKEN}").touch()
     before = _names(store)
-    assert _inventory(store, database) == orphans.OrphanInventory("not-inspected", ())
+    with orphans.pinned_store(store) as descriptor:
+        for _ in range(2):
+            assert orphans.inventory_orphans(descriptor, database, BINDING) == orphans.OrphanInventory("not-inspected", ())
     assert _names(store) == before
 
 

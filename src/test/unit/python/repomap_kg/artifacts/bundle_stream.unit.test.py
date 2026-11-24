@@ -120,11 +120,12 @@ def _make_expectation(bundle_val):
     )
 
 
-def test_streaming_encoder_byte_for_byte_parity_with_publication_bundle():
+@pytest.mark.parametrize("chunk_size", [1, 512, 2048, 65_536])
+def test_streaming_encoder_byte_for_byte_parity_with_publication_bundle(chunk_size: int) -> None:
     bundle = _make_bundle()
     expected_bytes = bundle.canonical_bytes()
     encoder = _make_encoder()
-    streamed_bytes = b"".join(encoder.stream_chunks())
+    streamed_bytes = b"".join(encoder.stream_chunks(chunk_size=chunk_size))
 
     assert streamed_bytes == expected_bytes
     descriptor = encoder.descriptor()

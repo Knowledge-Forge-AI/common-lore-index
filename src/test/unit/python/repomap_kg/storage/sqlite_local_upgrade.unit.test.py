@@ -43,6 +43,7 @@ from common_lore_index.storage.sqlite_local.publisher import (
 from common_lore_index.storage.sqlite_local.restore import verify_backup
 from common_lore_index.storage.sqlite_local.schema import LocalGraphBinding, LocalStoreError
 from common_lore_index.storage.sqlite_local.upgrade import UpgradeResult, upgrade_graph_database
+from repomap_test_support.host_read_store_config import fail_if_reached
 from repomap_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
 
 BINDING = local_binding()
@@ -131,9 +132,12 @@ def test_unpublished_v1_upgrades(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert _state(path)[0] == SchemaState("current", 2)
 
 
-def test_exact_current_is_already_current_and_touches_no_output(tmp_path: Path) -> None:
+def test_exact_current_is_already_current_and_touches_no_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     path = _init(tmp_path / "live" / "portable-fixture.sqlite3", 1)
     before = path.read_bytes()
+    monkeypatch.setattr(upgrade, "classify", fail_if_reached)
     result = _upgrade(path, tmp_path / "absent")
     assert (result.result, result.from_version, result.schema_version, result.backup) == ("already-current", 2, 2, None)
     assert not (tmp_path / "absent").exists()

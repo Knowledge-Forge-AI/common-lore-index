@@ -52,6 +52,7 @@ from common_lore_index.storage.sqlite_local.durability import (
 )
 from common_lore_index.storage.sqlite_local.locking import hold_graph_lock, lock_path
 from common_lore_index.storage.sqlite_local.migrations import (
+    SchemaState,
     classify,
     initialize_schema,
     require_open_state,
@@ -140,6 +141,15 @@ def read_transaction(
     path: Path, expected: LocalGraphBinding, *, accept_behind: bool = False
 ) -> Iterator[sqlite3.Connection]:
     """Yield one read-only connection inside one committed-snapshot transaction."""
+    with read_transaction_with_schema(path, expected, accept_behind=accept_behind) as (connection, _):
+        yield connection
+
+
+@contextmanager
+def read_transaction_with_schema(
+    path: Path, expected: LocalGraphBinding, *, accept_behind: bool = False
+) -> Iterator[tuple[sqlite3.Connection, SchemaState]]:
+    """Yield an admitted connection and the schema state from its transaction."""
     require_runtime_support()
     _existing_regular_file(path)
     try:
@@ -155,13 +165,13 @@ def read_transaction(
         try:
             connection.execute("PRAGMA query_only = ON")
             connection.execute("BEGIN")
-            require_open_state(classify(connection), accept_behind=accept_behind)
+            state = require_open_state(classify(connection), accept_behind=accept_behind)
             _require_wal(connection)
             require_binding(connection, expected)
         except sqlite3.Error as error:
             raise _classify(error) from None
         try:
-            yield connection
+            yield connection, state
         except sqlite3.Error as error:
             raise _classify(error) from None
         try:
@@ -368,6 +378,7 @@ __all__ = (
     "private_store_directory",
     "publisher_lock",
     "read_transaction",
+    "read_transaction_with_schema",
     "seal_database_file",
     "sidecar_paths",
 )

@@ -295,7 +295,7 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
             lv.close()
 
     def test_streaming_parser_keeps_links_to_wide_unicode_keys(self) -> None:
-        keys = ("雪" * 90_000, "雲" * 90_000, "風" * 95_000)
+        keys = ("雪" * 90_000, "雲" * 80_000, "風" * 95_000)
         families = _empty_families()
         families["raw_observations"] = ({"source_ordinal": 1, "stage_id": "stage-unassigned"},)
         families["canonical_nodes"] = tuple(
@@ -307,8 +307,22 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
         families["canonical_node_evidence"] = tuple(
             {"canonical_key": key, "evidence_key": "proof", "stage_id": "stage-unassigned"} for key in keys
         )
+        edge: dict[str, object] = {
+            "source_canonical_key": keys[0],
+            "edge_kind": "contains",
+            "target_canonical_key": keys[1],
+            "identity_metadata_hash": "a" * 64,
+            "stage_id": "stage-unassigned",
+        }
+        families["canonical_edges"] = (edge,)
+        families["canonical_edge_evidence"] = ({**edge, "evidence_key": "proof"},)
         bundle = _make_bundle(families=families)
         raw = bundle.canonical_bytes()
+        encoder = StreamingBundleEncoder(
+            **_meta(), privacy=PrivacyClassification.PUBLIC,
+            row_stage_contract="stage-unassigned-v1", family_rows=cast(Any, families),
+        )
+        self.assertEqual(b"".join(encoder.stream_chunks(chunk_size=4096)), raw)
         self.assertEqual(PublicationBundle.from_bytes(raw), bundle)
         self.assertEqual(bundle.bundle_id, prefixed_digest("bundle1:", b"repomap-publication-bundle-v1", raw))
         receipt, _, _ = _make_receipt(bundle, InMemoryArtifactStore())
@@ -319,6 +333,7 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
         try:
             self.assertEqual(parsed.bundle_id, bundle.bundle_id)
             self.assertEqual(parsed.family_counts["canonical_node_evidence"], len(keys))
+            self.assertEqual(parsed.family_counts["canonical_edge_evidence"], 1)
         finally:
             parsed.close()
 

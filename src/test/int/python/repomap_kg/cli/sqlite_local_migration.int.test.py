@@ -235,7 +235,7 @@ def test_v1_backup_upgrade_restore_round_trip(tmp_path: Path) -> None:
     # 8: a rerun is already-current: no backup, no reapply.
     upgraded_sha = _sha(live)
     again = _upgrade(harness, home, backups / "pre-upgrade")
-    assert (again["result"], again["backup_created"]) == ("already-current", False), again
+    assert (again["result"], again["backup_created"], again["accepted_generation"]) == ("already-current", False, 2), again
     assert _files(backups / "pre-upgrade") == artifact and _sha(live) == upgraded_sha
 
     # 9: the v1 backup restores into a second absent home exact-behind, never migrated.

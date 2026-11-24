@@ -249,6 +249,8 @@ def test_orphan_cleanup_beside_live_and_absent_database(tmp_path: Path) -> None:
     assert len(recoverable) == 2 and not os.path.lexists(database), temp_orphans(database)
     kept = {path: _sha(path) for path in recoverable}
     store = database.parent
+    foreign = store / ".unrelated.sqlite3.init-aabbccddeeff0011"
+    foreign.write_bytes(b"unrelated fixture")
     before = _tree(store)
     log = tmp_path / "sync.log"
     dry = _cleanup(harness, home, log)
@@ -280,6 +282,7 @@ def test_orphan_cleanup_beside_live_and_absent_database(tmp_path: Path) -> None:
     assert (removed["result"], removed["orphans"]["stale_removed"]) == ("cleaned", 3), removed
     assert temp_orphans(database) == [] and (_sha(database), database.stat().st_ino) == live
     assert database.stat().st_nlink == 1
+    assert foreign.read_bytes() == b"unrelated fixture"
     resolved = home.resolve()
     assert _synced(stale_log) == [str(resolved / "state"), str(resolved)], _synced(stale_log)
     assert _mcp_state(harness, home) == baseline

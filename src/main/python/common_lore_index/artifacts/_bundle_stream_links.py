@@ -63,13 +63,13 @@ class DiskFamilyLinkValidator:
             self._conn.execute("PRAGMA synchronous = OFF")
             self._conn.execute("PRAGMA journal_mode = OFF")
             self._conn.execute("PRAGMA temp_store = MEMORY")
-            self._conn.execute("CREATE TABLE raw_ordinals (ordinal TEXT PRIMARY KEY)")
-            self._conn.execute("CREATE TABLE node_keys (key TEXT PRIMARY KEY)")
+            self._conn.execute("CREATE TABLE raw_ordinals (ordinal TEXT PRIMARY KEY) WITHOUT ROWID")
+            self._conn.execute("CREATE TABLE node_keys (key TEXT PRIMARY KEY) WITHOUT ROWID")
             self._conn.execute(
                 "CREATE TABLE edge_keys (src TEXT, kind TEXT, tgt TEXT, hash TEXT, "
-                "PRIMARY KEY (src, kind, tgt, hash))"
+                "PRIMARY KEY (src, kind, tgt, hash)) WITHOUT ROWID"
             )
-            self._conn.execute("CREATE TABLE evidence_keys (key TEXT PRIMARY KEY)")
+            self._conn.execute("CREATE TABLE evidence_keys (key TEXT PRIMARY KEY) WITHOUT ROWID")
             self._raw_ordinals = _LinkBatch(self._conn, "INSERT OR IGNORE INTO raw_ordinals VALUES (?)")
             self._node_keys = _LinkBatch(self._conn, "INSERT OR IGNORE INTO node_keys VALUES (?)")
             self._edge_keys = _LinkBatch(self._conn, "INSERT OR IGNORE INTO edge_keys VALUES (?, ?, ?, ?)")
@@ -120,15 +120,12 @@ class DiskFamilyLinkValidator:
         self._evidence_keys.flush()
         node_key = json.dumps(record.get("canonical_key"), separators=(",", ":"))
         ev_key = json.dumps(record.get("evidence_key"), separators=(",", ":"))
-        cursor = self._conn.execute(
-            "SELECT 1 FROM node_keys WHERE key = ? LIMIT 1", (node_key,)
-        )
-        if cursor.fetchone() is None:
-            raise ValueError("bundle semantic node evidence reference is invalid")
-        cursor = self._conn.execute(
-            "SELECT 1 FROM evidence_keys WHERE key = ? LIMIT 1", (ev_key,)
-        )
-        if cursor.fetchone() is None:
+        found = self._conn.execute(
+            "SELECT CASE WHEN EXISTS (SELECT 1 FROM node_keys WHERE key = ?) "
+            "THEN EXISTS (SELECT 1 FROM evidence_keys WHERE key = ?) ELSE 0 END",
+            (node_key, ev_key),
+        ).fetchone()
+        if found != (1,):
             raise ValueError("bundle semantic node evidence reference is invalid")
 
     def validate_edge_evidence(self, record: Mapping[str, object]) -> None:
@@ -139,16 +136,13 @@ class DiskFamilyLinkValidator:
         tgt = json.dumps(record.get("target_canonical_key"), separators=(",", ":"))
         hash_val = json.dumps(record.get("identity_metadata_hash"), separators=(",", ":"))
         ev_key = json.dumps(record.get("evidence_key"), separators=(",", ":"))
-        cursor = self._conn.execute(
-            "SELECT 1 FROM edge_keys WHERE src = ? AND kind = ? AND tgt = ? AND hash = ? LIMIT 1",
-            (src, kind, tgt, hash_val),
-        )
-        if cursor.fetchone() is None:
-            raise ValueError("bundle semantic edge evidence reference is invalid")
-        cursor = self._conn.execute(
-            "SELECT 1 FROM evidence_keys WHERE key = ? LIMIT 1", (ev_key,)
-        )
-        if cursor.fetchone() is None:
+        found = self._conn.execute(
+            "SELECT CASE WHEN EXISTS (SELECT 1 FROM edge_keys "
+            "WHERE src = ? AND kind = ? AND tgt = ? AND hash = ?) "
+            "THEN EXISTS (SELECT 1 FROM evidence_keys WHERE key = ?) ELSE 0 END",
+            (src, kind, tgt, hash_val, ev_key),
+        ).fetchone()
+        if found != (1,):
             raise ValueError("bundle semantic edge evidence reference is invalid")
 
     def finish_family(self, family: str) -> None:
