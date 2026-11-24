@@ -292,7 +292,8 @@ def test_location_cap_retains_late_status_without_materializing_extra_freshness(
 
 
 def test_admission_commits_only_successful_seed_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from common_lore_index.retrieval import context_budget_reservation
+    from types import SimpleNamespace
+    from common_lore_index.retrieval import context_admission, context_budget_reservation
 
     budget = 4096
     _, _, _, _, adapter = build_sqlite_context_fixture(tmp_path)
@@ -313,6 +314,14 @@ def test_admission_commits_only_successful_seed_retry(tmp_path: Path, monkeypatc
         return budget - 1 if len(items[0]["locations"]) == 1 and allow_retry else budget + 1
 
     monkeypatch.setattr(context_budget_reservation, "_measure_projected_packet_bytes", measure)
+    real_copy = context_admission.copy.deepcopy
+    copied: list[int] = []
+
+    def track_copy(item):
+        copied.append(len(item["locations"]))
+        return real_copy(item)
+
+    monkeypatch.setattr(context_admission, "copy", SimpleNamespace(deepcopy=track_copy))
     for allow_retry in (True, False):
         packet = {**initial, "items": [], "request": dict(initial["request"]),
                   "scope": dict(initial["scope"])}
@@ -326,9 +335,11 @@ def test_admission_commits_only_successful_seed_retry(tmp_path: Path, monkeypatc
         assert omissions.counts["output_budget"] == int(not allow_retry)
         assert omissions.counts["ambiguous_alternative_omitted_by_budget"] == int(not allow_retry)
         if allow_retry:
-            assert packet["items"][0]["locations"] == [source]
+            location, = packet["items"][0]["locations"]
+            assert location == source and location is not source
         else:
             assert packet["items"] == []
+    assert copied == [1]
     assert len(seed["locations"]) == 2
 
 

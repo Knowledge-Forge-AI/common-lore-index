@@ -197,6 +197,7 @@ def test_context_budget_keeps_seed_relation_after_neighbor_refusal(tmp_path: Pat
     for packet in (local_packet, server_packet):
         assert_valid_context_packet(packet)
         assert packet["neighbors"] == [] and packet["relations"] == probe["relations"]
+        assert tuple(item["canonical_key"] for item in packet["items"]) == seeds
         assert packet["omission_counts"]["output_budget"] == 1
         assert packet["request"]["target_echo"] == "BudgetSeed"
         assert packet["scope"]["scope_echo_complete"] is True

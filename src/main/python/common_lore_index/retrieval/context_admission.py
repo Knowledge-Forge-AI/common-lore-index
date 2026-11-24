@@ -264,7 +264,7 @@ def admit_items_and_relations(
     def fits_reserved_packet(records: Sequence[dict[str, Any]] = ()) -> bool:
         packet["omission_counts"] = omissions.to_counts_dict()
         # Reserve detail bytes only after ranked items and relations.
-        packet["omissions"] = [dict(record) for record in records]
+        packet["omissions"] = list(records)
         return fits_packet_with_reservation(packet, budget_bytes)
     overflow_by_item_limit = max(0, total_post_offset_seeds - len(candidate_seeds))
     if overflow_by_item_limit > 0:
@@ -276,11 +276,12 @@ def admit_items_and_relations(
     admitted_keys: set[str] = set()
     for idx, seed in enumerate(candidate_seeds):
         snap = omissions.snapshot()
-        trial = copy.deepcopy(seed)
+        trial = dict(seed)
         if trial["omitted_location_count"] > 0:
             omissions.increment("location_limit", trial["omitted_location_count"])
         admitted_seeds.append(trial)
         if fits_reserved_packet():
+            admitted_seeds[-1] = copy.deepcopy(trial)
             if isinstance(trial.get("canonical_key"), str):
                 admitted_keys.add(trial["canonical_key"])
             continue
@@ -292,6 +293,7 @@ def admit_items_and_relations(
             trial["omitted_location_count"] += extra_dropped
             omissions.increment("location_limit", trial["omitted_location_count"])
             if fits_reserved_packet():
+                admitted_seeds[-1] = copy.deepcopy(trial)
                 if isinstance(trial.get("canonical_key"), str):
                     admitted_keys.add(trial["canonical_key"])
                 continue
