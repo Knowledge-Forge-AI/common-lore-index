@@ -14,11 +14,35 @@ from common_lore_index.ops.ingestion.bulk import (
     import_bulk_source,
     load_bulk_source_config,
     observations_for_file_info,
+    write_jsonl,
 )
 from common_lore_index.extractors.languages.python import PythonModuleIndex
 
 
 class BulkIngestionUnitTests(unittest.TestCase):
+    def test_bulk_jsonl_keeps_the_prior_file_on_a_row_encoding_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "records.jsonl"
+            write_jsonl(path, iter(({"name": "previous"},)))
+            original = path.read_bytes()
+            with self.assertRaises(TypeError):
+                write_jsonl(path, iter(({"name": "replacement"}, {"bad": object()})))
+            self.assertEqual(path.read_bytes(), original)
+            self.assertEqual(tuple(root.iterdir()), (path,))
+
+    def test_bulk_jsonl_refuses_a_destination_symlink_without_touching_its_target(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "original.jsonl"
+            target.write_bytes(b'{"name": "previous"}\n')
+            alias = root / "alias.jsonl"
+            alias.symlink_to(target)
+            with self.assertRaisesRegex(BulkPolicyError, "bulk output file must not be a symlink"):
+                write_jsonl(alias, ({"name": "replacement"},))
+            self.assertTrue(alias.is_symlink())
+            self.assertEqual(target.read_bytes(), b'{"name": "previous"}\n')
+
     def test_bulk_capture_checks_alias_digests_and_limits_before_opening_files(self) -> None:
         from common_lore_index.ops.ingestion import _bulk_manifest
 

@@ -31,6 +31,29 @@ from repomap_test_support.source_ingestion_integration import (
 class Slice9BulkAndFeedSourcesIntegrationTests(unittest.TestCase):
     """Integration slice 9 tests covering bulk traversal, feed sources, and WARC parsing."""
 
+    def test_bulk_artifact_replay_keeps_observations_when_a_later_record_cannot_encode(self) -> None:
+        from common_lore_index.ops.ingestion._bulk_observations import write_bulk_run_files
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cfg = root / "bulk.toml"
+            cfg.write_bytes((bulk_fixture_root() / "mixed_corpus" / "bulk.toml").read_bytes())
+            (root / "notes.md").write_text("# Fixture\n", encoding="utf-8")
+            first = import_bulk_source(cfg, root_path=root)
+            output = first.output_path / "observations.jsonl"
+            expected = output.read_bytes()
+            invalid = replace(first.raw_observations[-1], metadata={"invalid": object()})
+            with self.assertRaises(TypeError):
+                write_bulk_run_files(
+                    first.manifest, observations=(*first.raw_observations[:-1], invalid),
+                    repository_root=root.resolve(),
+                )
+            self.assertEqual(output.read_bytes(), expected)
+            self.assertEqual(list(first.output_path.glob(".bulk-output-*")), [])
+            repeated = import_bulk_source(cfg, root_path=root)
+            self.assertEqual(repeated.output_path, first.output_path)
+            self.assertEqual(output.read_bytes(), expected)
+
     def test_bulk_readback_captures_aliased_payload_once_and_keeps_route_order(self) -> None:
         from common_lore_index.ops.ingestion import bulk
 

@@ -63,25 +63,27 @@ def write_bulk_run_files(
     ).resolve()
     ensure_contained(output_path, repository_root, "bulk output path")
     output_path.mkdir(parents=True, exist_ok=True)
-    write_json(output_path / "plan.json", manifest.to_jsonable())
-    write_json(output_path / "manifest.json", manifest.to_jsonable())
+    manifest_payload = manifest.to_jsonable()
+    write_json(output_path / "plan.json", manifest_payload)
+    write_json(output_path / "manifest.json", manifest_payload)
+    del manifest_payload
     write_jsonl(
         output_path / "included-files.jsonl",
-        [item.to_jsonable() for item in manifest.included_files],
+        (item.to_jsonable() for item in manifest.included_files),
     )
     write_jsonl(
         output_path / "skipped-files.jsonl",
-        [item.to_jsonable() for item in manifest.skipped_files],
+        (item.to_jsonable() for item in manifest.skipped_files),
     )
     write_jsonl(
         output_path / "diagnostics.jsonl",
-        [
+        (
             {"reason": reason, "count": count}
             for reason, count in sorted(manifest.diagnostic_counts.items())
-        ],
+        ),
     )
     write_jsonl(
         output_path / "observations.jsonl",
-        [observation.to_dict() for observation in observations],
+        (observation.to_dict() for observation in observations),
     )
     return output_path

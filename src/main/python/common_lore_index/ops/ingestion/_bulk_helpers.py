@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Mapping, Sequence
+import stat
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Any
 
 import tomllib
@@ -263,17 +265,33 @@ def is_contained(path: Path, root: Path) -> bool:
 
 
 def write_json(path: Path, payload: object) -> None:
-    path.write_text(
-        json.dumps(payload, sort_keys=True, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    _write_bulk_lines(path, (json.dumps(payload, sort_keys=True, indent=2) + "\n",))
 
 
-def write_jsonl(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
-    path.write_text(
-        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
-        encoding="utf-8",
-    )
+def write_jsonl(path: Path, rows: Iterable[Mapping[str, Any]]) -> None:
+    _write_bulk_lines(path, (json.dumps(row, sort_keys=True) + "\n" for row in rows))
+
+
+def _write_bulk_lines(path: Path, lines: Iterable[str]) -> None:
+    _validate_bulk_output_file(path)
+    with TemporaryDirectory(prefix=".bulk-output-", dir=path.parent) as directory:
+        with NamedTemporaryFile(mode="w", encoding="utf-8", dir=directory, delete=False) as handle:
+            for line in lines:
+                if handle.write(line) != len(line):
+                    raise OSError("incomplete bulk output write")
+        _validate_bulk_output_file(path)
+        Path(handle.name).replace(path)
+
+
+def _validate_bulk_output_file(path: Path) -> None:
+    try:
+        mode = path.lstat().st_mode
+    except FileNotFoundError:
+        return
+    if stat.S_ISLNK(mode):
+        raise BulkPolicyError("bulk output file must not be a symlink")
+    if not stat.S_ISREG(mode):
+        raise BulkPolicyError("bulk output destination must be a regular file")
 
 
 def load_bulk_source_config(path: Path | str) -> BulkSourceConfig:
