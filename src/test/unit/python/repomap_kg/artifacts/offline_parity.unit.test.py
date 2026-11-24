@@ -209,7 +209,7 @@ def test_harness_owned_source_graph_cleans_up_on_exit(tmp_path) -> None:
     assert not owned_root.exists()
 
 
-def test_seal_graph_detects_tampered_source(tmp_path, monkeypatch) -> None:
+def test_seal_graph_detects_tampered_source(tmp_path) -> None:
     source = tmp_path / "source"
     source.mkdir()
     (source / "main.py").write_text("VALUE = 1\n", encoding="utf-8")
@@ -217,17 +217,11 @@ def test_seal_graph_detects_tampered_source(tmp_path, monkeypatch) -> None:
     incumbent = capture_multi_source_candidate(g)
     store = FileSystemArtifactStore(tmp_path / "store")
 
-    orig_read_bytes = Path.read_bytes
-
-    def tampered_read(self):
-        if self.name == "main.py":
-            return b"TAMPERED_BYTES"
-        return orig_read_bytes(self)
-
-    monkeypatch.setattr(Path, "read_bytes", tampered_read)
-
+    (source / "main.py").write_bytes(b"TAMPERED_BYTES" * 100_000)
     with pytest.raises(ValueError, match="source changed while sealing parity fixture"):
         _seal_graph(g, incumbent, store)
+    assert not list((store.root / "objects").iterdir())
+    assert not list((store.root / "temporary").iterdir())
 
 
 def test_compare_incumbent_and_subprocess_parity_detects_worker_failure(tmp_path, monkeypatch) -> None:

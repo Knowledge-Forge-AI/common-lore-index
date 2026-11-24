@@ -319,3 +319,21 @@ def test_streamed_jsonb_literal_matches_fragment_boundaries_and_numeric_spelling
     for needle in needles:
         folded = ascii_lower(needle)
         assert jsonb_contains_ascii_folded(value, folded) is (folded in canonical)
+
+
+def test_jsonb_literal_matches_across_wide_escaped_string_chunks():
+    middle = '先Ab"' + chr(92) + chr(1) + "É"
+    body = "先" * (16 * 1024 - 2) + middle + "É" * (16 * 1024)
+    data = {"key": [body, "end"]}
+    crossing = ascii_lower(json.dumps(middle, ensure_ascii=False)[1:-1])
+    assert jsonb_contains_ascii_folded(data, crossing)
+    assert jsonb_contains_ascii_folded(data, 'É", "end')
+    assert not jsonb_contains_ascii_folded(data, 'é", "end')
+
+
+def test_jsonb_projection_preserves_small_and_wide_integer_values_and_types():
+    positive = (1 << 64) - 1
+    numeric = [True, False, 0, 1, -1, positive, -positive, 1 << 64, -(1 << 128), Decimal("1.50"), 1.2e8]
+    expected = json.loads(jsonb_text(numeric))
+    value = jsonb_value(numeric)
+    assert value == expected and [type(number) for number in value] == [type(number) for number in expected]

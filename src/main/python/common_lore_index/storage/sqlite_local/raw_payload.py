@@ -35,6 +35,7 @@ from common_lore_index.storage.errors import StorageSchemaError
 
 _TRUE = ("true", "yes")
 _FALSE = ("false", "no")
+_JSON_STRING_CHUNK = 16 * 1024
 
 
 def load(text: str) -> Any:
@@ -98,6 +99,12 @@ def _jsonb_text_fragments(value: Any) -> Iterator[str]:
                 yield ", "
             yield from _jsonb_text_fragments(item)
         yield "]"
+    elif isinstance(value, str) and len(value) > _JSON_STRING_CHUNK:
+        # JSON escapes one code point at a time. Keep the outside quotes once.
+        yield '"'
+        for start in range(0, len(value), _JSON_STRING_CHUNK):
+            yield _string(value[start:start + _JSON_STRING_CHUNK])[1:-1]
+        yield '"'
     else:
         yield jsonb_text(value)
 
@@ -139,6 +146,9 @@ def jsonb_value(value: Any) -> Any:
     if isinstance(value, (list, tuple)):
         return [jsonb_value(item) for item in value]
     if value is None or type(value) is bool or type(value) is str:
+        return value
+    if type(value) is int and value.bit_length() <= 64:
+        # Small integers already have the exact decoded JSON type and value.
         return value
     return json.loads(jsonb_text(value))
 

@@ -303,10 +303,10 @@ def test_local_feed_reference_lookup_copies_only_page_keys_from_sqlite() -> None
     with closing(sqlite3.connect(":memory:")) as connection:
         assert source_feed_queries._item_references(connection, set()) == {}
         connection.execute("CREATE TABLE canonical_nodes(canonical_key, kind, display_name)")
-        connection.execute("CREATE TABLE canonical_edges(graph_key_version, source_canonical_key, target_canonical_key, edge_kind, metadata_json)")
+        connection.execute("CREATE TABLE canonical_edges(id INTEGER PRIMARY KEY, graph_key_version, source_canonical_key, target_canonical_key, edge_kind, metadata_json)")
         connection.executemany("INSERT INTO canonical_nodes VALUES (?, ?, ?)",
                                [("person", "feed.author", "Ada"), ("person", "feed.category", "News")])
-        connection.executemany("INSERT INTO canonical_edges VALUES (?, ?, ?, ?, ?)", (
+        connection.executemany("INSERT INTO canonical_edges VALUES (NULL, ?, ?, ?, ?, ?)", (
             (1, "item-000", "person", "references", "{}"),
             (2, "item-520", "asset", "references", '{"scope":"enclosure"}'),
             (2, "item-520", "ignored", "other-kind", '{"scope":"link"}'),
@@ -315,7 +315,7 @@ def test_local_feed_reference_lookup_copies_only_page_keys_from_sqlite() -> None
         fetched = []
 
         def record(_cursor: sqlite3.Cursor, row: tuple[object, ...]) -> tuple[object, ...]:
-            if len(row) == 5:
+            if len(row) == 6:
                 fetched.append(row)
             return row
 

@@ -8,7 +8,7 @@ import hashlib
 from pathlib import Path
 import shutil
 import stat
-from typing import Iterator
+from typing import BinaryIO, Iterator
 
 from common_lore_index.artifacts.manifest import (
     ManifestArtifact,
@@ -16,6 +16,7 @@ from common_lore_index.artifacts.manifest import (
     PortableSnapshotManifest,
 )
 from common_lore_index.artifacts.store import ArtifactStore
+from common_lore_index.graph.discovery_file_metadata import content_hash
 from common_lore_index.graph.multi_source import SourceKind
 from common_lore_index.graph.multi_source_pipeline import MultiSourceCandidateBundle
 from common_lore_index.ops.config_records import OpsGraphConfig
@@ -64,21 +65,31 @@ def _source_signature(graph: OpsGraphConfig) -> tuple[tuple[object, ...], ...]:
     records: list[tuple[object, ...]] = []
     for binding in graph.effective_source_bindings:
         root = Path(binding.root_path_expanded)
-        records.append((binding.binding_id, ".", root.stat().st_ino, root.stat().st_mode))
+        root_metadata = root.stat()
+        records.append((binding.binding_id, ".", root_metadata.st_ino, root_metadata.st_mode))
         for path in sorted(root.rglob("*")):
             relative = path.relative_to(root).as_posix()
             metadata = path.lstat()
-            content = path.read_bytes() if stat.S_ISREG(metadata.st_mode) else None
+            content_digest = content_hash(path) if stat.S_ISREG(metadata.st_mode) else None
             records.append(
                 (
                     binding.binding_id,
                     relative,
                     metadata.st_ino,
                     metadata.st_mode,
-                    content,
+                    content_digest,
                 )
             )
     return tuple(records)
+
+
+def _checked_source_chunks(handle: BinaryIO, expected_sha256: str) -> Iterator[bytes]:
+    hasher = hashlib.sha256()
+    for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+        hasher.update(chunk)
+        yield chunk
+    if hasher.hexdigest() != expected_sha256:
+        raise ValueError("source changed while sealing parity fixture")
 
 
 def _seal_graph(
@@ -120,15 +131,15 @@ def _seal_graph(
         )
         root = Path(configured.root_path_expanded)
         for item in snapshot.manifest_entries:
-            data = root.joinpath(*item.relative_path.split("/")).read_bytes()
-            if hashlib.sha256(data).hexdigest() != item.content_sha256:
-                raise ValueError("source changed while sealing parity fixture")
-            reference = store.put(
-                data,
-                media_type="application/octet-stream",
-                record_format="bytes-v1",
-                privacy=PrivacyClassification.RAW_SOURCE,
-            )
+            source = root.joinpath(*item.relative_path.split("/"))
+            with source.open("rb") as handle:
+                reference = store.put(
+                    _checked_source_chunks(handle, item.content_sha256),
+                    content_digest="sha256:" + item.content_sha256,
+                    media_type="application/octet-stream",
+                    record_format="bytes-v1",
+                    privacy=PrivacyClassification.RAW_SOURCE,
+                )
             entries.append(
                 ManifestArtifact(
                     configured.binding_id,

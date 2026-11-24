@@ -117,3 +117,18 @@ def test_non_object_metadata_retains_jsonb_key_semantics_in_persisted_summary(
     assert summary["programs"]["app_programs_total"] == programs
     assert summary["diagnostics"]["missing_output_identity"] == 1
     assert sqlite_logical_dump(path) == before
+
+def test_observation_search_crosses_wide_json_string_escape_boundary(tmp_path: Path) -> None:
+    path = published_sqlite_database(tmp_path / "store")
+    body = "x" * (16 * 1024 - 2) + 'A"\\' + "É" * 20000
+    numbers = [-(1 << 63), -1, 0, 1, (1 << 63) - 1, 1 << 65]
+    metadata = {"label": "fixture", "numbers": numbers}
+    _stored_payload(path, "custom.note", json.dumps({"body": body, "metadata": metadata}))
+    witness = json.dumps(body[16 * 1024 - 3:16 * 1024 + 3], ensure_ascii=False)[1:-1]
+    with read_transaction(path, BINDING) as reader:
+        page = observation_search(reader, query=witness, kind="custom.note", path=None,
+                                  limit=1, offset=0, include_raw=False)
+    row, = page["results"]
+    assert page["total"] == 1 and not page["has_more"]
+    assert row["metadata"] == metadata and "payload" not in row
+    assert all(type(number) is int for number in row["metadata"]["numbers"])
