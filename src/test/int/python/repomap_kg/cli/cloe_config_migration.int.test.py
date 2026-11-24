@@ -325,8 +325,9 @@ def test_migration_duplicate_journal_fields_refuse_before_recovery(tmp_path: Pat
         assert tree(home) == before
 
 
-def test_recovery_refuses_same_bytes_from_a_replaced_admitted_target(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize("drift", ("inode", "change-time"))
+def test_recovery_refuses_same_bytes_after_admitted_target_drift(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, drift: str,
 ) -> None:
     home = make_home(tmp_path, "postgresql")
     assert apply_cloe_config_migration(home, confirmed=True)["result"] == "applied"
@@ -341,15 +342,22 @@ def test_recovery_refuses_same_bytes_from_a_replaced_admitted_target(
     journal_before = journal.read_bytes()
 
     def swap(bound: Home, name: str, limit: int, code: str, *, in_op: bool = False) -> tuple[bytes, os.stat_result]:
-        if name == target.name and not in_op and replacement.exists():
+        targeted = name == target.name and not in_op
+        if targeted and drift == "inode" and replacement.exists():
             replacement.replace(target)
-        return actual_read(bound, name, limit, code, in_op=in_op)
+        data, info = actual_read(bound, name, limit, code, in_op=in_op)
+        if targeted and drift == "change-time":
+            info = os.stat_result(info, {
+                "st_mtime_ns": info.st_mtime_ns, "st_ctime_ns": info.st_ctime_ns + 1,
+            })
+        return data, info
 
     monkeypatch.setattr(Home, "read", swap)
     outcome = finalize_cloe_config_migration(home, confirmed=True)
     assert outcome["refusals"] == [{"code": "config-migration-drift", "file": "00-project.rp.toml"}]
     assert outcome["writes_performed"] == 0
-    assert target.stat().st_ino != admitted.st_ino and target.read_bytes() == identical
+    assert (target.stat().st_ino != admitted.st_ino) is (drift == "inode")
+    assert target.read_bytes() == identical
     assert journal.read_bytes() == journal_before
 
 

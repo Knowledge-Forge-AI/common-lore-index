@@ -75,7 +75,10 @@ def ident(info: os.stat_result) -> tuple[int, int]:
 
 def snapshot(info: os.stat_result) -> tuple[int, ...]:
     """Identity tuple compared across a bounded read or a revalidation."""
-    return (info.st_dev, info.st_ino, info.st_size, info.st_mode, info.st_uid, info.st_nlink, info.st_mtime_ns)
+    return (
+        info.st_dev, info.st_ino, info.st_size, info.st_mode, info.st_uid, info.st_nlink,
+        info.st_mtime_ns, info.st_ctime_ns,
+    )
 
 
 def valid_name(name: str) -> bool:

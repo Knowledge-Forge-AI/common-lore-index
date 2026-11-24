@@ -231,7 +231,8 @@ def _revalidate(home: Home, names: list[str], sources: list[_Source]) -> None:
         info = home.lstat(source.name)
         if info is None or snapshot(info) != snapshot(source.info):
             raise MigrationRefusal("config-migration-stale", source.name)
-        if home.read(source.name, MAX_FILE_BYTES, "config-migration-stale")[0] != source.data:
+        data, observed = home.read(source.name, MAX_FILE_BYTES, "config-migration-stale")
+        if snapshot(observed) != snapshot(source.info) or data != source.data:
             raise MigrationRefusal("config-migration-stale", source.name)
 
 

@@ -1,6 +1,7 @@
 """CLOE home selection, exact configuration layering and inert filename plans."""
 from pathlib import Path
 import json
+import os
 
 import pytest
 
@@ -198,3 +199,36 @@ def test_runtime_setup_uses_the_existing_cloe_family(tmp_path: Path) -> None:
     assert config.read_text() == "schema_version = 1\n"
     assert (home / "repomap.local.cloe.toml").is_file()
     assert not (home / "repomap.rpl.toml").exists()
+
+
+def test_migration_revalidation_requires_the_admitted_file_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.ops.config_migration import apply_cloe_config_migration
+    from common_lore_index.ops.config_migration_fs import Home, OPERATION_DIRECTORY
+
+    home = tmp_path / "home"
+    home.mkdir(mode=0o700)
+    source = home / "00.rp.toml"
+    contents = b"schema_version = 1\n"
+    source.write_bytes(contents)
+    original = Home.read
+    revalidated = False
+
+    def read(bound: Home, name: str, limit: int, code: str, *, in_op: bool = False) -> tuple[bytes, os.stat_result]:
+        nonlocal revalidated
+        data, observed = original(bound, name, limit, code, in_op=in_op)
+        if code == "config-migration-stale" and name == source.name and not in_op:
+            revalidated = True
+            observed = os.stat_result(observed, {
+                "st_ctime_ns": observed.st_ctime_ns + 1, "st_mtime_ns": observed.st_mtime_ns,
+            })
+        return data, observed
+
+    monkeypatch.setattr(Home, "read", read)
+    outcome = apply_cloe_config_migration(home, confirmed=True)
+    assert revalidated
+    assert outcome["result"] == "refused"
+    assert outcome["refusals"] == [{"code": "config-migration-stale", "file": source.name}]
+    assert source.read_bytes() == contents
+    assert not (home / OPERATION_DIRECTORY).exists() and not (home / "00.cloe.toml").exists()
