@@ -332,6 +332,7 @@ def test_file_adapters_emit_stable_read_error_diagnostics(
     assert observation.path == relative_path
     assert observation.metadata["format"] == format_name
     assert observation.metadata["error_kind"] == "read-error"
+    assert str(tmp_path) not in observation.metadata["message_summary"]
     assert observation.metadata["recovered"] is False
 
 
@@ -352,3 +353,29 @@ def test_document_adapter_distinguishes_decode_diagnostics(tmp_path):
         "message_summary": "file is not valid UTF-8",
         "recovered": False,
     }
+
+
+def test_binary_adapters_keep_oversize_diagnostics_and_exact_mailbox_digest(tmp_path, monkeypatch):
+    from common_lore_index.extractors.documents import email
+    from common_lore_index.graph import discovery_extractors as adapters
+
+    data = b"Fixture archive\n" * 10_000
+    for name in ("large.eml", "large.mbox", "large.odt"):
+        (tmp_path / name).write_bytes(data)
+    for module, name in (
+        (email, "MAX_EML_BYTES"), (email, "MAX_MBOX_BYTES"),
+        (adapters, "MAX_EML_BYTES"), (adapters, "MAX_MBOX_BYTES"),
+        (adapters, "DEFAULT_MAX_PACKAGE_BYTES"),
+    ):
+        monkeypatch.setattr(module, name, 32)
+
+    eml = adapters.extract_eml_file_observations_from_file(tmp_path, "large.eml")
+    expected_eml = email.extract_eml_file_observations("large.eml", data)
+    assert eml == expected_eml
+    mbox = adapters.extract_mbox_file_observations_from_file(tmp_path, "large.mbox")
+    expected_mbox = email.extract_mbox_file_observations("large.mbox", data)
+    assert mbox == expected_mbox
+    assert mbox[0].metadata["mailbox_digest"] == hashlib.sha256(data).hexdigest()
+    assert mbox[0].metadata["mailbox_byte_count"] == len(data)
+    odf = adapters.extract_document_file_observations_from_file(tmp_path, "large.odt")
+    assert odf[0].metadata["error_kind"] == "zip-package-size-limit"

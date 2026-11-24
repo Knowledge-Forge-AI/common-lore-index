@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from typing import Any
 
-from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.config.generic_profile_helpers import EXTRACTOR_NAME
 from common_lore_index.extractors.config.format_contracts import (
@@ -32,7 +32,10 @@ from common_lore_index.extractors.config.generic_values import (
     _value_type,
 )
 from common_lore_index.extractors.config.paths import json_pointer
-from common_lore_index.extractors.config.toml_lines import _line_for_toml_pointer
+from common_lore_index.extractors.config.toml_lines import (
+    _config_line_locator,
+    _line_for_pointer as _line_for_pointer,
+)
 from common_lore_index.extractors.config.yaml_reference_contracts import (
     _yaml_string_references,
 )
@@ -75,7 +78,7 @@ def _structure_observations(
         parent_type=None,
         format_name=format_name,
         confidence=confidence,
-        content=content,
+        line_for_pointer=_config_line_locator(content),
         source_suffix=source_suffix,
         line_offset=line_offset,
         metadata_overrides=metadata_overrides or {},
@@ -93,7 +96,7 @@ def _walk_value(
     parent_type: str | None,
     format_name: str,
     confidence: str,
-    content: str,
+    line_for_pointer: Callable[[str], int | None],
     source_suffix: str,
     line_offset: int,
     metadata_overrides: dict[str, dict[str, Any]],
@@ -103,6 +106,9 @@ def _walk_value(
     if pointer_segments:
         pointer = json_pointer(pointer_segments)
         metadata_override = metadata_overrides.get(pointer, {})
+        line_number = line_for_pointer(pointer)
+        if line_number is not None:
+            line_number += line_offset
         path_observation = _path_observation(
             relative_path,
             pointer,
@@ -110,9 +116,8 @@ def _walk_value(
             parent_type=parent_type,
             format_name=format_name,
             confidence=confidence,
-            content=content,
             source_suffix=source_suffix,
-            line_offset=line_offset,
+            line_number=line_number,
             metadata_override=metadata_override,
         )
         paths.append(path_observation)
@@ -127,9 +132,8 @@ def _walk_value(
                 ),
                 format_name=format_name,
                 confidence="heuristic",
-                content=content,
                 source_suffix=source_suffix,
-                line_offset=line_offset,
+                line_number=line_number,
                 metadata_override=metadata_override,
             )
         )
@@ -142,7 +146,7 @@ def _walk_value(
                 parent_type="object",
                 format_name=format_name,
                 confidence=confidence,
-                content=content,
+                line_for_pointer=line_for_pointer,
                 source_suffix=source_suffix,
                 line_offset=line_offset,
                 metadata_overrides=metadata_overrides,
@@ -158,7 +162,7 @@ def _walk_value(
                 parent_type="array",
                 format_name=format_name,
                 confidence=confidence,
-                content=content,
+                line_for_pointer=line_for_pointer,
                 source_suffix=source_suffix,
                 line_offset=line_offset,
                 metadata_overrides=metadata_overrides,
@@ -175,9 +179,8 @@ def _path_observation(
     parent_type: str | None,
     format_name: str,
     confidence: str,
-    content: str,
     source_suffix: str,
-    line_offset: int,
+    line_number: int | None,
     metadata_override: dict[str, Any] | None = None,
 ) -> RawObservation:
     metadata_override = metadata_override or {}
@@ -195,9 +198,6 @@ def _path_observation(
             metadata.pop("value_summary", None)
             metadata.pop("value_summaries", None)
             metadata.setdefault("redaction_reason", "secret-prone-key")
-    line_number = _line_for_pointer(content, pointer)
-    if line_number is not None:
-        line_number += line_offset
     return RawObservation(
         kind="config.path",
         source_id=f"{relative_path}#config-path:{pointer}{source_suffix}",
@@ -275,9 +275,8 @@ def _reference_observations_for_value(
     source_path_key: str,
     format_name: str,
     confidence: str,
-    content: str,
     source_suffix: str,
-    line_offset: int,
+    line_number: int | None,
     metadata_override: dict[str, Any] | None = None,
 ) -> tuple[RawObservation, ...]:
     pointer = json_pointer(pointer_segments)
@@ -292,9 +291,6 @@ def _reference_observations_for_value(
     )
     observations: list[RawObservation] = []
     for ordinal, reference in enumerate(references):
-        line_number = _line_for_pointer(content, pointer)
-        if line_number is not None:
-            line_number += line_offset
         metadata = {
             "format": format_name,
             "pointer": pointer,
@@ -482,26 +478,3 @@ def _parser_name(format_name: str) -> str:
     if format_name == GENERIC_XML_FORMAT:
         return "stdlib-elementtree-safe"
     return "stdlib-json"
-
-
-def _line_for_pointer(content: str, pointer: str) -> int | None:
-    if pointer == "":
-        return None
-    toml_line = _line_for_toml_pointer(content, pointer)
-    if toml_line is not None:
-        return toml_line
-    key = re.escape(pointer.rsplit("/", 1)[-1].replace("~1", "/").replace("~0", "~"))
-    json_pattern = re.compile(rf'"{key}"\s*:')
-    bare_or_quoted = rf"(?:{key}|\"{key}\"|'{key}')"
-    toml_pattern = re.compile(rf"^\s*{bare_or_quoted}\s*=")
-    yaml_pattern = re.compile(rf"^\s*{bare_or_quoted}\s*:")
-    plist_pattern = re.compile(rf"<key>\s*{key}\s*</key>")
-    for line_number, line in enumerate(iter_text_lines(content), start=1):
-        if (
-            json_pattern.search(line)
-            or toml_pattern.search(line)
-            or yaml_pattern.search(line)
-            or plist_pattern.search(line)
-        ):
-            return line_number
-    return None

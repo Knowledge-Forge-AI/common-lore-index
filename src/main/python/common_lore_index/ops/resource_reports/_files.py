@@ -63,15 +63,15 @@ def read_report_file(path: str | os.PathLike[str]) -> bytes:
             raise ResourceReportError("unsafe_input")
         chunks: list[bytes] = []
         total = 0
-        while total <= MAX_FILE_BYTES:
-            chunk = os.read(descriptor, MAX_FILE_BYTES + 1 - total)
+        while total < opened.st_size:
+            chunk = os.read(descriptor, opened.st_size - total)
             if not chunk:
                 break
             chunks.append(chunk)
             total += len(chunk)
-        if total > MAX_FILE_BYTES:
-            raise ResourceReportError("too_large")
         after = os.fstat(descriptor)
+        if after.st_size > MAX_FILE_BYTES:
+            raise ResourceReportError("too_large")
         if (
             not _private_regular(after)
             or _file_extent(after) != _file_extent(opened)

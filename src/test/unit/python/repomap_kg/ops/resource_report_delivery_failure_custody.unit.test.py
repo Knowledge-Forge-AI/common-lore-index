@@ -168,3 +168,32 @@ def test_reader_refuses_inconsistent_metadata_from_the_same_private_descriptor(
         with pytest.raises(_files.ResourceReportError, match="unsafe_input"):
             _files.read_report_file(report)
     assert calls == 2
+
+
+@pytest.mark.parametrize("growth,category", [(1, "unsafe_input"), (32768, "too_large")])
+def test_reader_does_not_read_past_the_admitted_file_extent(tmp_path, monkeypatch, growth, category):
+    from common_lore_index.ops.resource_reports import _files
+
+    path = private_directory(tmp_path / "reports") / "report.json"
+    data = b"{}\n"
+    path.write_bytes(data)
+    path.chmod(0o600)
+    before = path.stat()
+    observed: list[int] = []
+    read = os.read
+
+    def grow_before_read(descriptor, count):
+        details = os.fstat(descriptor)
+        if (details.st_dev, details.st_ino) == (before.st_dev, before.st_ino):
+            if not observed:
+                with path.open("ab") as output:
+                    output.write(b" " * growth)
+            observed.append(count)
+        return read(descriptor, count)
+
+    with monkeypatch.context() as local:
+        local.setattr(_files.os, "read", grow_before_read)
+        with pytest.raises(_files.ResourceReportError, match=category):
+            _files.read_report_file(path)
+    assert observed == [len(data)]
+    assert path.read_bytes() == data + b" " * growth

@@ -78,7 +78,7 @@
         "path": "src/main/python/common_lore_index/extractors/config/generic.py"
       },
       {
-        "line_count": 507,
+        "line_count": 480,
         "path": "src/main/python/common_lore_index/extractors/config/generic_structure.py"
       },
       {
@@ -126,7 +126,7 @@
         "path": "src/main/python/common_lore_index/extractors/documents/css_support.py"
       },
       {
-        "line_count": 615,
+        "line_count": 589,
         "path": "src/main/python/common_lore_index/extractors/documents/email.py"
       },
       {

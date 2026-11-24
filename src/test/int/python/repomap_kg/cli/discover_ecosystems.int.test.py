@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 from pathlib import Path
@@ -11,6 +12,29 @@ class CliDiscoverEcosystemsIntegrationTests(CliIntegrationTestCase):
         exit_code, stdout, stderr = self.run_module_entrypoint("discover", str(fixture), "--jsonl")
         self.assertEqual(exit_code, 0, stderr)
         return stdout, [json.loads(line) for line in stdout.splitlines() if line.strip()]
+
+    def test_discover_reports_archive_limits_and_preserves_oversized_mailbox_digest(self):
+        limits = {"large.eml": 2, "large.mbox": 10, "large.odt": 50}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            expected_digest = ""
+            for name, mib in limits.items():
+                path = root / name
+                with path.open("wb") as stream:
+                    stream.seek(mib * 1024 * 1024)
+                    stream.write(b"!")
+                if name == "large.mbox":
+                    with path.open("rb") as stream:
+                        expected_digest = hashlib.file_digest(stream, "sha256").hexdigest()
+            _stdout, rows = self._run_discover(root)
+        failures = {row["path"]: row["metadata"]["error_kind"] for row in rows if row["kind"].endswith(".parse_error")}
+        self.assertEqual(failures, {
+            "large.eml": "file-size-limit", "large.mbox": "mbox-file-size-limit",
+            "large.odt": "zip-package-size-limit",
+        })
+        mailbox, = [row for row in rows if row["kind"] == "email.mailbox"]
+        self.assertEqual(mailbox["metadata"]["mailbox_byte_count"], 10 * 1024 * 1024 + 1)
+        self.assertEqual(mailbox["metadata"]["mailbox_digest"], expected_digest)
 
     def test_discover_command_emits_python_ecosystem_observations_from_fixture(self):
         fixture = REPO_ROOT / "src" / "test" / "fixtures" / "python_ecosystem"

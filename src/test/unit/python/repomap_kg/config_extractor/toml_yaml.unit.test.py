@@ -130,6 +130,16 @@ command = "do-not-index-with-number"
         self.assertIn("tool:repomap-kg", {item.target for item in references})
         self.assertIn("tool:python3", {item.target for item in references})
         self.assertIn("file:bin/tool", {item.target for item in references})
+        command_lines = {
+            (item.kind, item.metadata["pointer"]): (item.start_line, item.end_line)
+            for item in (*paths, *references)
+            if item.metadata["pointer"] in ("/tools/repomap/command", "/tools/helper/command")
+        }
+        self.assertEqual(command_lines, {
+            (kind, f"/tools/{name}/command"): (line, line)
+            for kind in ("config.path", "config.reference")
+            for name, line in (("repomap", 6), ("helper", 11))
+        })
 
     def test_yaml_paths_profiles_references_and_redaction(self):
         observations = extract_config_file_observations(

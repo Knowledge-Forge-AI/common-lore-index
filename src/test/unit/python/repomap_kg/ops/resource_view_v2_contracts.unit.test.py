@@ -182,3 +182,25 @@ def test_upgrade_reexpresses_v1_tables_without_loss() -> None:
     assert upgraded.schema == SCHEMA_V2 and upgraded.to_payload() | {"schema": SCHEMA} == v1.to_payload()
     with pytest.raises(ValueError):
         upgrade_report(cast(Any, upgraded))
+
+
+def test_canonical_string_containment_and_exact_utf8_bound(monkeypatch) -> None:
+    from common_lore_index.ops.resource_view import _canonical
+
+    value = "éc\t漢"
+    expected = json.dumps({"é": value}, ensure_ascii=False, separators=(",", ":")).encode()
+    assert canonical_bytes({"é": value}, len(expected)) == expected
+    with pytest.raises(_canonical.CanonicalBoundError):
+        canonical_bytes({"é": value}, len(expected) - 1)
+
+    real_dumps = json.dumps
+    oversized = "z" * 4096
+
+    def dumps(value, **kwargs):
+        assert value != oversized
+        return real_dumps(value, **kwargs)
+
+    with monkeypatch.context() as local:
+        local.setattr(_canonical.json, "dumps", dumps)
+        with pytest.raises(_canonical.CanonicalBoundError):
+            canonical_bytes({"short": oversized}, 64)

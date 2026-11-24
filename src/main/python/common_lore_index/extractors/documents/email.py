@@ -21,16 +21,17 @@ from common_lore_index.extractors.documents.email_common import (
     _hash_text,
     _header_slug,
     _is_secret_prone,
-    _MALFORMED_URL_SUMMARY,
+    _list_unsubscribe_references as _list_unsubscribe_references,
+    _MALFORMED_URL_SUMMARY as _MALFORMED_URL_SUMMARY,
     _MessageContext,
     _observation,
     _parse_error,
     _parsed_date,
     _redacted_filename,
     _redacted_query,
-    _redact_url,
+    _redact_url as _redact_url,
     _redact_url_text,
-    _urls_in_header,
+    _urls_in_header as _urls_in_header,
 )
 from common_lore_index.extractors.documents.email_parts import (
     _part_byte_count,
@@ -42,7 +43,7 @@ from common_lore_index.graph.keys import (
     email_mailbox_key,
     email_message_key,
     email_thread_hint_key,
-    external_url_key,
+    external_url_key as external_url_key,
     unknown_key,
 )
 from common_lore_index.observations.raw import RawObservation
@@ -119,27 +120,7 @@ def extract_mbox_file_observations(
     mailbox_file_key = f"file:{relative_path}"
     observations: list[RawObservation] = []
     if len(content) > MAX_MBOX_BYTES:
-        observations.append(
-            _mailbox_observation(
-                relative_path=relative_path,
-                mailbox_key=mailbox_key,
-                message_count=0,
-                limited=True,
-                status="limit_exceeded",
-                limit_reason="file-size-limit",
-                byte_count=len(content),
-                content=content,
-            )
-        )
-        observations.append(
-            _parse_error(
-                _MessageContext(relative_path, relative_path, "mbox"),
-                "mbox-file-size-limit",
-                "MBOX file exceeds static parser byte limit",
-                recovered=False,
-            )
-        )
-        return tuple(observations)
+        return _oversized_mailbox_observations(relative_path, len(content), _hash_bytes(content))
 
     spans = _mbox_message_spans(content)
     scan_limit = None if max_messages < 0 else min(max_messages, len(content)) + 1
@@ -161,7 +142,7 @@ def extract_mbox_file_observations(
             status=parse_status,
             limit_reason=limit_reason,
             byte_count=len(content),
-            content=content,
+            digest=_hash_bytes(content),
         )
     )
     mailbox_context = _MessageContext(
@@ -382,6 +363,29 @@ def _message_identity(
     }
 
 
+def _oversized_mailbox_observations(
+    relative_path: str, byte_count: int, digest: str,
+) -> tuple[RawObservation, ...]:
+    return (
+        _mailbox_observation(
+            relative_path=relative_path,
+            mailbox_key=email_mailbox_key(relative_path),
+            message_count=0,
+            limited=True,
+            status="limit_exceeded",
+            limit_reason="file-size-limit",
+            byte_count=byte_count,
+            digest=digest,
+        ),
+        _parse_error(
+            _MessageContext(relative_path, relative_path, "mbox"),
+            "mbox-file-size-limit",
+            "MBOX file exceeds static parser byte limit",
+            recovered=False,
+        ),
+    )
+
+
 def _mailbox_observation(
     *,
     relative_path: str,
@@ -391,7 +395,7 @@ def _mailbox_observation(
     status: str,
     limit_reason: str | None,
     byte_count: int,
-    content: bytes,
+    digest: str,
 ) -> RawObservation:
     return _observation(
         kind="email.mailbox",
@@ -408,7 +412,7 @@ def _mailbox_observation(
             "mailbox_byte_count": byte_count,
             "mailbox_parse_status": status,
             "mailbox_limit_reason": limit_reason,
-            "mailbox_digest": _hash_bytes(content),
+            "mailbox_digest": digest,
             "identity_strength": "file_key",
         },
     )
@@ -489,12 +493,15 @@ def _address_observations(
     counts = {role: 0 for _header, role in ADDRESS_HEADERS}
     for header_name, role in ADDRESS_HEADERS:
         values = message.get_all(header_name, [])
+        seen: dict[str, int] = {}
         for display_name, address in getaddresses(values):
             normalized = _normalize_address(address)
             if normalized is None:
                 continue
             address_hash = _hash_text(normalized)
             domain = normalized.rsplit("@", 1)[1]
+            ordinal = seen[address_hash] = seen.get(address_hash, 0) + 1
+            suffix = f":{ordinal}" if ordinal > 1 else ""
             counts[role] += 1
             observations.append(
                 _observation(
@@ -502,7 +509,7 @@ def _address_observations(
                     relative_path=context.relative_path,
                     source_id=(
                         f"{context.source_id_prefix}#email-address:"
-                        f"{role}:{address_hash[:16]}"
+                        f"{role}:{address_hash[:16]}{suffix}"
                     ),
                     name=f"{role}:{domain}",
                     target=email_address_key(f"addrhash:{address_hash}"),
@@ -580,36 +587,3 @@ def _thread_observations(
             )
         )
     return hints, references
-
-
-def _list_unsubscribe_references(
-    context: _MessageContext,
-    message: Any,
-    message_key: str,
-) -> Iterator[RawObservation]:
-    """Yield usable List-Unsubscribe references with redacted URLs."""
-    for index, value in enumerate(message.get_all("List-Unsubscribe", []), start=1):
-        for url in _urls_in_header(value):
-            redacted_url = _redact_url(url)
-            if redacted_url == _MALFORMED_URL_SUMMARY:
-                continue
-            yield _observation(
-                kind="email.reference",
-                relative_path=context.relative_path,
-                source_id=(
-                    f"{context.source_id_prefix}#email-reference:"
-                    f"list-unsubscribe:{index}"
-                ),
-                name="list-unsubscribe",
-                target=external_url_key(redacted_url),
-                metadata={
-                    "format": context.metadata_format,
-                    "parser": PARSER,
-                    "source_key": message_key,
-                    "reference_kind": "list_unsubscribe",
-                    "raw_value_summary": redacted_url,
-                    "not_fetched": True,
-                    "redacted": True,
-                    "redaction_reason": "header-url-redacted",
-                },
-            )

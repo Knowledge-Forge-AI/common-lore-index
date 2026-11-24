@@ -8,6 +8,7 @@ from common_lore_index.extractors.documents.email import (
 from common_lore_index.extractors.documents.email_common import (
     _is_secret_prone,
     _redact_url,
+    _redact_url_text,
     _redacted_filename,
 )
 from common_lore_index.extractors.documents.feed import (
@@ -24,6 +25,32 @@ from common_lore_index.graph.keys import feed_item_key
 
 
 class EmailFeedExtractorBoundariesUnitTests(unittest.TestCase):
+    def test_unsubscribe_target_identity_retains_each_valid_occurrence(self):
+        observations = extract_eml_file_observations(
+            "subscription.eml",
+            b"List-Unsubscribe: <https://unreadable.invalid:port/a>, <https://good.invalid/a>, "
+            b"<https://good.invalid/b>\nList-Unsubscribe: <https://good.invalid/c>\n\n",
+        )
+        refs = [row for row in observations if row.kind == "email.reference"]
+        self.assertEqual([row.source_id.rsplit("list-unsubscribe:", 1)[1] for row in refs], ["1", "1:2", "2"])
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in observations]))
+
+    def test_credential_markers_are_redacted_per_span_without_affecting_prefix_neighbors(self):
+        summary = _redact_url_text(
+            "<https://example.invalid/a?token=frag>, <https://example.invalid/a?token=fragXYZ>",
+        )
+        self.assertEqual(summary.count("token=REDACTED"), 2)
+        self.assertNotIn("XYZ", summary)
+
+    def test_duplicate_addresses_have_distinct_sources_and_one_canonical_target(self):
+        observations = extract_eml_file_observations(
+            "duplicate.eml", b"To: First <same@example.invalid>, Second <same@example.invalid>\n\n",
+        )
+        addresses = [row for row in observations if row.kind == "email.address"]
+        self.assertEqual(len(addresses), 2)
+        self.assertEqual(addresses[1].source_id, addresses[0].source_id + ":2")
+        self.assertEqual(addresses[1].target, addresses[0].target)
+
     def test_email_header_limits_and_address_normalization_boundaries(self):
         eml_bytes = (
             b"From: Normal User <user@example.com>\n"

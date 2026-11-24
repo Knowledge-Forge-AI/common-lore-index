@@ -176,3 +176,34 @@ def test_cli_refuses_same_size_report_mutation_with_restored_mtime(
     after = path.stat()
     assert (after.st_ino, after.st_size, after.st_mtime_ns) == (before.st_ino, before.st_size, before.st_mtime_ns)
     assert after.st_ctime_ns != before.st_ctime_ns and path.read_bytes() == changed
+
+
+def test_cli_refuses_report_that_grows_during_the_admitted_read(tmp_path, monkeypatch, capsys):
+    from common_lore_index.cli.main import main
+    from common_lore_index.ops.resource_reports import _files
+
+    path = private_directory(tmp_path / "reports") / "report.json"
+    data = _data()
+    path.write_bytes(data)
+    path.chmod(0o600)
+    before = path.stat()
+    read = os.read
+    read_sizes: list[int] = []
+
+    def append_before_read(descriptor, count):
+        info = os.fstat(descriptor)
+        if (info.st_dev, info.st_ino) == (before.st_dev, before.st_ino):
+            if not read_sizes:
+                with path.open("ab") as output:
+                    output.write(b" ")
+            read_sizes.append(count)
+        return read(descriptor, count)
+
+    with monkeypatch.context() as local:
+        local.setattr(_files.os, "read", append_before_read)
+        status = main(["ops", "resource-report", "check", "--input", str(path)])
+    captured = capsys.readouterr()
+    assert status == 1 and captured.out == ""
+    assert captured.err == "ERROR: resource-report-invalid: unsafe_input\n"
+    assert read_sizes == [len(data)]
+    assert path.read_bytes() == data + b" "
