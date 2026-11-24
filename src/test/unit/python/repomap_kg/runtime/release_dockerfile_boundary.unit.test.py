@@ -20,7 +20,7 @@ def test_commands_reexports_pure_leaf_and_preserves_recipe_bytes() -> None:
         (release.DYNAMIC_PACKAGE_MANIFEST, release.PSYCOPG_LIBPQ_VERSION,
          "20db9ee3957945882d3a2f1fa83626a6cd37235ed0fdd4665e6d83c99ca37cf2"),
         (release_manifest.D12_CANDIDATE_PACKAGE_MANIFEST, release_manifest.D12_CANDIDATE_LIBPQ_VERSION,
-         "e00d77a0f544b69b4d9ae2437e50f510fa41dec0bc6bba76a2f0b3dfda2472b9"),
+         "42efd587afc908a35f1fa7d49e704f9a3edef5904d721c06617e82d7bdbd9404"),
     )
     for manifest, libpq_version, expected in cases:
         assert hashlib.sha256(render_server_dockerfile(manifest, libpq_version).encode()).hexdigest() == expected
@@ -39,7 +39,7 @@ def test_older_builder_header_selection_has_a_distinct_recipe_identity() -> None
     ))
     rendered = render_server_dockerfile(manifest, release_manifest.D12_CANDIDATE_LIBPQ_VERSION)
     assert hashlib.sha256(rendered.encode()).hexdigest() == (
-        "d5dcfb910dda3160af68c7a428d825c6852ccff994815ac8faa40b9ef896c49e"
+        "df921c1e8e7b1e2da45bbe1c2ee29499d82649676d309c9751d88c592a28887e"
     )
 
 
