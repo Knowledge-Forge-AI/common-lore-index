@@ -358,4 +358,10 @@ def _prove(tmp_path: Path, database: Any) -> None:
     assert any(item.link_targets for item in items), items
     _check_feed_page_reference_read(crafted, "crafted-alpha")
     assert {item.duplicate_identity for item in items} == {True, False}, items
+    beta = crafted.same(
+        "feed item nullable provenance", crafted.store.source_feed_items(SourceFeedItemsQuery("crafted-beta", None, 50)),
+        crafted.pg(query_source_feed_item_records, source_id="crafted-beta", limit=50), SERIALIZERS["items"],
+    )
+    assert beta and all((item.source_run_id, item.artifact_id, item.artifact_path)
+                        == (None, None, "crafted/beta/rss.xml") for item in beta)
     assert feeds.compared > 400 and crafted.compared > 150, (feeds.compared, crafted.compared)

@@ -11,6 +11,7 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Iterator
 from contextlib import closing
+from dataclasses import dataclass
 from heapq import nlargest, nsmallest
 from itertools import batched
 from typing import Any, Literal
@@ -32,13 +33,13 @@ from common_lore_index.storage.sqlite_local.source_queries import (
     edge_links,
     evidence_ids,
     fanout,
-    group_by,
     max_of,
     min_of,
     node_links,
     not_fetched,
     source_observations,
 )
+from common_lore_index.storage.sqlite_local.source_run_summary import _max_present
 
 CONTENT_POLICY = "full feed bodies are not exposed"
 _REFERENCE_KEY_BATCH = 500
@@ -98,9 +99,22 @@ def _item_references(
     return found
 
 
+@dataclass(slots=True)
+class _ItemProvenance:
+    source_run_id: str | None = None
+    artifact_id: str | None = None
+    artifact_path: str | None = None
+
+    def include(self, observation: SourceObservation) -> None:
+        """Apply three independent non-null SQL MAX reductions."""
+        self.source_run_id = _max_present(self.source_run_id, observation.source_run_id)
+        self.artifact_id = _max_present(self.artifact_id, observation.artifact_id)
+        self.artifact_path = _max_present(self.artifact_path, observation.artifact_path)
+
+
 def _feed_item_nodes(
-    connection: sqlite3.Connection, linked: dict[tuple[str, int], list[SourceObservation]]
-) -> Iterator[tuple[str, Any, list[SourceObservation]]]:
+    connection: sqlite3.Connection, linked: dict[tuple[str, int], _ItemProvenance]
+) -> Iterator[tuple[str, Any, _ItemProvenance]]:
     # Sort lightweight identity keys first. Each SQL batch can then emit in
     # the same global tie order without retaining the other batches' bodies.
     for page in batched(sorted(linked), _REFERENCE_KEY_BATCH):
@@ -123,15 +137,20 @@ def source_feed_items(
         return ()
     evidence = evidence_ids(connection, (item.key for item in group))
     nodes = node_links(connection, (eid for ids in evidence.values() for eid in ids))
-    linked = group_by(
-        ((node.key, node.id), observation) for observation, node, _ in fanout(group, evidence, nodes)
-        if node is not None and node.kind == "feed.item"
-    )
+    linked: dict[tuple[str, int], _ItemProvenance] = {}
+    for observation, node, _ in fanout(group, evidence, nodes):
+        if node is None or node.kind != "feed.item":
+            continue
+        location = (node.key, node.id)
+        provenance = linked.get(location)
+        if provenance is None:
+            provenance = linked[location] = _ItemProvenance()
+        provenance.include(observation)
     if not linked:
         return ()
     items = _feed_item_nodes(connection, linked)
 
-    def published_order(item: tuple[str, Any, list[SourceObservation]]) -> tuple[bool, str]:
+    def published_order(item: tuple[str, Any, _ItemProvenance]) -> tuple[bool, str]:
         published = raw_payload.text_at(item[1], "published_at")
         return published is not None, published or ""
 
@@ -139,7 +158,7 @@ def source_feed_items(
     page = nlargest(safe_limit, items, key=published_order)
     lookups = _item_references(connection, {key for key, _, _ in page})
     records = []
-    for key, metadata, observations in page:
+    for key, metadata, provenance in page:
         links, authors, categories = lookups.get(key, (set(), set(), set()))
         records.append(source_feed_item_record_from_storage_payload({
             "item_key": key,
@@ -152,9 +171,9 @@ def source_feed_items(
             "link_targets": sorted(links),
             "authors": sorted(authors),
             "categories": sorted(categories),
-            "source_run_id": max_of(item.source_run_id for item in observations),
-            "artifact_id": max_of(item.artifact_id for item in observations),
-            "artifact_path": max_of(item.artifact_path for item in observations),
+            "source_run_id": provenance.source_run_id,
+            "artifact_id": provenance.artifact_id,
+            "artifact_path": provenance.artifact_path,
         }))
     return tuple(records)
 

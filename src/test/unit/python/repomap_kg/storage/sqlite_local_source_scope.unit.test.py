@@ -280,7 +280,7 @@ def test_feed_node_batches_stream_in_global_tie_order() -> None:
             return row
 
         connection.row_factory = observe
-        linked: dict[tuple[str, int], list[source_queries.SourceObservation]] = {key: [] for key in keys}
+        linked = {key: source_feed_queries._ItemProvenance() for key in keys}
         items = source_feed_queries._feed_item_nodes(connection, linked)
         first = next(items)
         assert len(fetched) == 1
@@ -385,3 +385,13 @@ def test_feed_explanation_reports_invalid_item_metadata_first(published_feeds: P
         with pytest.raises(json.JSONDecodeError) as caught:
             source_feed_queries.source_feed_item_explanation(connection, item_key=key, source_id=RSS)
     assert caught.value.doc == "!item"
+
+
+def test_feed_item_provenance_preserves_independent_nullable_maxima(published_feeds: Path) -> None:
+    with closing(sqlite3.connect(published_feeds)) as connection:
+        sample = source_queries.source_observations(connection, source_id=RSS)[0]
+    completed = source_feed_queries._ItemProvenance()
+    completed.include(replace(sample, source_run_id=None, artifact_id=None, artifact_path="z/path"))
+    completed.include(replace(sample, source_run_id="r3", artifact_id="a1", artifact_path=None))
+    completed.include(replace(sample, source_run_id="r1", artifact_id="a2", artifact_path="a/path"))
+    assert (completed.source_run_id, completed.artifact_id, completed.artifact_path) == ("r3", "a2", "z/path")
