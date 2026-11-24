@@ -9,6 +9,7 @@ evidence (spec tier T1) and never native component evidence.
 
 from __future__ import annotations
 
+from dataclasses import replace
 import hashlib
 import json
 import os
@@ -71,7 +72,15 @@ def runtime(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Path]:
         decoded = decode_readback(readback.stdout)
         expected = expected_install_tree([verify_wheel(w.data, w.lock).members for w in wheels], helper, NOTICES)
         owner = (os.getuid(), root.stat().st_gid)
-        assert verify_install_tree(decoded, expected, owner=owner) == expected_tree_digest(expected)
+        checked = verify_install_tree(decoded, expected, owner=owner)
+        rows = [[entry.path, entry.kind, entry.mode,
+                 None if entry.data is None else hashlib.sha256(entry.data).hexdigest(),
+                 None if entry.data is None else len(entry.data)] for entry in expected]
+        canonical = json.dumps(sorted(rows), sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False)
+        assert checked == expected_tree_digest(expected) == hashlib.sha256(canonical.encode("ascii")).hexdigest()
+        duplicate = replace(decoded, entries=(*decoded.entries, decoded.entries[-1]))
+        with pytest.raises(ReadbackRefused, match="install_path_set"):
+            verify_install_tree(duplicate, expected, owner=owner)
         with pytest.raises(ReadbackRefused):
             verify_confinement(decoded)
         yield root
@@ -148,7 +157,9 @@ def test_boundary_failures_are_observed_by_the_parent(runtime: Path) -> None:
     good, nonce = run(b"pub struct A;\n")
     with pytest.raises(ProtocolViolation):
         decode_frames(good.stdout, nonce="0" * 64, input_length=14)
-    assert decode_frames(good.stdout, nonce=nonce, input_length=14).items[0].tag == 4
+    result = decode_frames(good.stdout, nonce=nonce, input_length=14)
+    assert result.items[0].tag == 4
+    assert decode_frames(good.stdout.replace(b"\n", b"\r\n"), nonce=nonce, input_length=14) == result
 
 
 def test_runtime_probe_reports_stand_in_facts_that_the_parent_still_refuses(runtime: Path) -> None:

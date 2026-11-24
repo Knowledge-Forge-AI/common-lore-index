@@ -17,6 +17,7 @@ import stat
 import zipfile
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from itertools import batched
 
 from common_lore_index.extractors.contracts.vocabulary import ContractError
 from common_lore_index.extractors.rust_pilot.component_lock import (
@@ -35,6 +36,7 @@ DIRECTORY_MODE = 0o555
 FILE_MODE = 0o444
 EXTENSION_MODE = 0o555
 ZIP_DIRECTORY_MODE = 0o755
+_TREE_DIGEST_BATCH_ROWS = 256
 
 
 class ArchiveRefused(ContractError):
@@ -158,6 +160,7 @@ def verify_archive(data: bytes, *, size: int, sha256: str, dist_info: str,
         if len(infos) != len({info.filename for info in infos}):
             raise ArchiveRefused("duplicate_member")
         regular_infos: list[zipfile.ZipInfo] = []
+        uncompressed_bytes = 0
         for info in infos:
             _check_info(info)
             if info.filename.endswith("/"):
@@ -169,9 +172,10 @@ def verify_archive(data: bytes, *, size: int, sha256: str, dist_info: str,
             if info.filename not in expected:
                 raise ArchiveRefused(_classify_unexpected(info.filename, dist_info, top_level))
             regular_infos.append(info)
+            uncompressed_bytes += info.file_size
         if len(regular_infos) != len(expected):
             raise ArchiveRefused("member_set_mismatch")
-        if sum(info.file_size for info in infos) > MAX_ARCHIVE_UNCOMPRESSED:
+        if uncompressed_bytes > MAX_ARCHIVE_UNCOMPRESSED:
             raise ArchiveRefused("archive_too_large")
         verified = tuple((info.filename, _read_member(archive, info, expected[info.filename]))
                          for info in regular_infos)
@@ -205,7 +209,7 @@ def _verify_record(raw: bytes | None, record_name: str, verified_locks: dict[str
     seen: set[str] = set()
     first_refusal: str | None = None
     try:
-        with io.StringIO(raw.decode("utf-8"), newline="") as stream:
+        with io.TextIOWrapper(io.BytesIO(raw), encoding="utf-8", newline="") as stream:
             for row in csv.reader(stream):
                 # Parse the remaining CSV even after a refusal so malformed
                 # CSV keeps precedence over a RECORD content mismatch.
@@ -289,7 +293,15 @@ def tree_digest(entries: Iterable[tuple[str, str, int, bytes | None]]) -> str:
 
     rows = [[path, kind, mode, None if data is None else hashlib.sha256(data).hexdigest(),
              None if data is None else len(data)] for path, kind, mode, data in entries]
-    return hashlib.sha256(canonical_json(sorted(rows))).hexdigest()
+    rows.sort()
+    digest = hashlib.sha256(b"[")
+    for index, page in enumerate(batched(rows, _TREE_DIGEST_BATCH_ROWS)):
+        if index:
+            digest.update(b",")
+        encoded = canonical_json(page)
+        digest.update(memoryview(encoded)[1:-1])
+    digest.update(b"]")
+    return digest.hexdigest()
 
 
 def expected_tree_digest(entries: Sequence[ExpectedEntry]) -> str:

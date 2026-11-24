@@ -8,6 +8,8 @@ import json
 import pytest
 
 from common_lore_index.extractors.rust_pilot.helper_protocol import (
+    MAX_FRAME,
+    MAX_FRAMES,
     ProtocolViolation,
     decode_frames,
     encode_request,
@@ -76,6 +78,15 @@ def test_nonce_hello_and_end_framing_are_exact() -> None:
     assert _violation(good.split(b"\n", 1)[1]) == "hello_invalid"
     assert _violation(b"".join(good.splitlines(keepends=True)[:-1])) == "frame_order"
     assert _violation(frame("hello", v=1, nonce=NONCE, ts="0.26.0", abi=15)) == "frame_count"
+
+
+def test_frame_limits_precede_decoding_and_accept_the_exact_line_size() -> None:
+    original = frames(NONCE, [])
+    hello, _, tail = original.partition(b"\n")
+    padded = hello + b" " * (MAX_FRAME - len(hello))
+    assert _decode(padded + b"\n" + tail) == _decode(original)
+    assert _violation(padded + b" \n" + tail) == "frame_too_large"
+    assert _violation(b"!\n" * (MAX_FRAMES + 1)) == "frame_count"
 
 
 def test_json_shape_violations_are_refused_without_echoing_content() -> None:

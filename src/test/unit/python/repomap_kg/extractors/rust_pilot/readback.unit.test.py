@@ -50,6 +50,8 @@ def test_guest_observed_confinement_is_checked_and_labelled() -> None:
     ({"mounts": (MOUNTS[0], MOUNTS[1].replace("nosuid,", "nosuid,noexec,"), MOUNTS[2])}, "guest_runtime_mount"),
     ({"mounts": (*MOUNTS[:2], MOUNTS[2].replace("noexec,", ""))}, "guest_scratch_mount"),
     ({"mounts": MOUNTS[:2]}, "guest_mount_scratch"),
+    ({"mounts": (*MOUNTS, MOUNTS[-1])}, "guest_mount_scratch"),
+    ({"mounts": (*MOUNTS[:2], "3 1 0:3 / /scratch rw - tmpfs")}, "guest_mount_shape"),
     ({"status": ("Uid:\t0\t0\t0\t0", *STATUS[1:])}, "guest_credentials"),
     ({"status": (*STATUS[:3], "CapEff:\t00000000a80425fb", *STATUS[4:])}, "guest_capabilities"),
     ({"status": (*STATUS[:5], "NoNewPrivs:\t0", STATUS[6])}, "guest_no_new_privs"),
@@ -162,6 +164,14 @@ def test_readback_entry_count_requires_an_exact_integer(count: object) -> None:
     rows[-1]["entries"] = count
     with pytest.raises(ReadbackRefused, match="readback_framing"):
         decode_readback(encode())
+
+
+def test_readback_refuses_a_file_extent_beyond_its_buffer() -> None:
+    header = {"t": "entry", "path": "helper/file", "type": "f", "mode": 0o444,
+              "uid": 0, "gid": 0, "nlink": 1, "size": 64}
+    wire = json.dumps(header).encode("ascii") + b"\nshort"
+    with pytest.raises(ReadbackRefused, match="readback_framing"):
+        decode_readback(wire)
 
 
 def _result(code: int | None, out: bytes = b"", *, timed_out: bool = False, overflow: bool = False) -> ExecResult:
