@@ -12,7 +12,7 @@ from typing import Any
 
 from common_lore_index import __version__
 from common_lore_index._utf8 import byte_length
-from common_lore_index.extractors.shared.web_references import (
+from common_lore_index.extractors.shared.redaction import (
     contains_web_url_userinfo, unknown_reference, web_url_reference,
 )
 from common_lore_index.graph.keys import (

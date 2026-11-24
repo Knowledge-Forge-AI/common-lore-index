@@ -141,7 +141,6 @@ class _Database:
             return _Cursor(self, tuple(self._copied_count(table) for table in tables))
         return _Cursor(self)
 
-
     def _copied_count(self, table: str) -> int:
         position = _TABLES.index(table)
         return len(self.copied[position]) if position < len(self.copied) else 0

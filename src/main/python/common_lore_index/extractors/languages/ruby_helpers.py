@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from urllib.parse import urlsplit, urlunsplit
 
-from common_lore_index.extractors.shared.web_references import contains_web_url_userinfo
+from common_lore_index.extractors.shared.redaction import contains_web_url_userinfo
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,
