@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -12,13 +11,14 @@ from common_lore_index.storage._summary_rows_api_manifest import (
     APISummaryRecord,
     api_manifest_summary_payload,
     api_summary_from_storage_payload,
+    iter_run_manifest_payloads,
     read_api_manifest_payloads,
 )
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.row_helpers import (
+    iter_manifest_mappings,
     manifest_counter,
     manifest_int,
-    manifest_list,
     optional_manifest_text,
     payload_bool,
     payload_count_map,
@@ -78,7 +78,6 @@ class BulkSummaryRecord:
 def bulk_manifest_summary_payload(root_path: Path) -> dict[str, Any]:
     resolved_root = root_path.resolve()
     run_root = resolved_root / ".repomap" / "bulk-runs"
-    manifests = read_bulk_manifest_payloads(run_root, root_path=resolved_root)
     source_ids: set[str] = set()
     run_ids: set[str] = set()
     corpus_kinds: Counter[str] = Counter()
@@ -96,7 +95,7 @@ def bulk_manifest_summary_payload(root_path: Path) -> dict[str, Any]:
     max_file_bytes_hit_count = 0
     max_depth_hit_count = 0
 
-    for manifest in manifests:
+    for manifest in iter_run_manifest_payloads(run_root, root_path=resolved_root):
         if manifest.get("_manifest_parse_error"):
             diagnostic_counts["manifest_parse_error"] += 1
             continue
@@ -118,7 +117,7 @@ def bulk_manifest_summary_payload(root_path: Path) -> dict[str, Any]:
         extractor_counts.update(manifest_counter(manifest.get("extractor_counts")))
         diagnostic_counts.update(manifest_counter(manifest.get("diagnostic_counts")))
         redaction_counts.update(manifest_counter(manifest.get("redaction_counts")))
-        for skipped_file in manifest_list(manifest.get("skipped_files")):
+        for skipped_file in iter_manifest_mappings(manifest.get("skipped_files")):
             reason = optional_manifest_text(skipped_file, "reason")
             if reason is not None:
                 skip_reasons[reason] += 1
@@ -171,31 +170,9 @@ def bulk_manifest_summary_payload(root_path: Path) -> dict[str, Any]:
 
 
 def read_bulk_manifest_payloads(
-    run_root: Path,
-    *,
-    root_path: Path,
+    run_root: Path, *, root_path: Path,
 ) -> tuple[dict[str, Any], ...]:
-    if not run_root.is_dir():
-        return ()
-    resolved_run_root = run_root.resolve()
-    try:
-        resolved_run_root.relative_to(root_path)
-    except ValueError:
-        return ({"_manifest_parse_error": True},)
-    payloads: list[dict[str, Any]] = []
-    for manifest_path in sorted(run_root.glob("*/*/manifest.json")):
-        try:
-            resolved_manifest = manifest_path.resolve()
-            resolved_manifest.relative_to(resolved_run_root)
-            payload = json.loads(resolved_manifest.read_text(encoding="utf-8"))
-        except (OSError, ValueError, json.JSONDecodeError):
-            payloads.append({"_manifest_parse_error": True})
-            continue
-        if isinstance(payload, dict):
-            payloads.append(payload)
-        else:
-            payloads.append({"_manifest_parse_error": True})
-    return tuple(payloads)
+    return tuple(iter_run_manifest_payloads(run_root, root_path=root_path))
 
 
 def bulk_summary_from_storage_payload(payload: Any) -> BulkSummaryRecord:

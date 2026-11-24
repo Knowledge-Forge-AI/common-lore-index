@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
+import pytest
+
+from common_lore_index.storage._summary_rows_api_manifest import iter_run_manifest_payloads
 
 
 def test_bulk_manifest_summary_payload_read_bulk_manifest_payloads_api_manifest_summary_payload_read_api_manifest_payloads_bulk_summary_from_storage_payload_api_summary_from_storage_payload_manifest_records_contracts(
@@ -20,7 +26,7 @@ def test_bulk_manifest_summary_payload_read_bulk_manifest_payloads_api_manifest_
             "extractor_counts": {"python": 1},
             "diagnostic_counts": {"policy": 2},
             "redaction_counts": {"private_path": 1},
-            "skipped_files": [{"reason": "archive_deferred"}],
+            "skipped_files": [false, {"reason": "archive_deferred"}, null],
             "limit_hit": true,
             "limit_reason": "max_files_exceeded,max_depth_exceeded"
         }""",
@@ -74,13 +80,13 @@ def test_bulk_manifest_summary_payload_read_bulk_manifest_payloads_api_manifest_
             "no_mutation": false,
             "no_credentials_resolved": false,
             "no_scheduler": false,
-            "requests": [{
+            "requests": [null, {
                 "endpoint_name": "repo",
                 "method": "GET",
                 "downstream_route": "json",
                 "response_type": "application/json"
             }],
-            "responses": [{
+            "responses": [false, {
                 "endpoint_name": "repo",
                 "response_byte_count": 12,
                 "redacted": true,
@@ -106,6 +112,7 @@ def test_bulk_manifest_summary_payload_read_bulk_manifest_payloads_api_manifest_
     assert api_summary_payload["sources"] == 1
     assert api_summary_payload["endpoint_names"] == ["repo"]
     assert api_summary_payload["methods"] == {"GET": 1}
+    assert api_summary_payload["requests"] == api_summary_payload["responses"] == 1
     assert api_summary_payload["redacted_responses"] == 1
     assert api_summary_payload["diagnostic_counts"] == {"manifest_parse_error": 1}
     assert api_summary_payload["no_network"] is False
@@ -118,3 +125,70 @@ def test_bulk_manifest_summary_payload_read_bulk_manifest_payloads_api_manifest_
     )
     assert api_summary.to_dict()["source_ids"] == ("source-1",)
     assert api_summary.to_dict()["no_provider_specific_behavior"] is True
+
+
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="requires a named pipe")
+def test_retained_manifest_scan_refuses_a_pipe_without_reading_its_body(tmp_path, monkeypatch):
+    run_root = tmp_path / "api-runs"
+    pipe = run_root / "source" / "pipe" / "manifest.json"
+    pipe.parent.mkdir(parents=True)
+    os.mkfifo(pipe)
+    canonical_pipe = pipe.resolve()
+    nonobject = run_root / "source" / "not-object" / "manifest.json"
+    nonobject.parent.mkdir()
+    nonobject.write_text("[]", encoding="utf-8")
+    regular = run_root / "source" / "regular" / "manifest.json"
+    regular.parent.mkdir()
+    regular.write_text('{"source_id":"fixture"}', encoding="utf-8")
+    original = Path.open
+    open_descriptor = os.open
+    open_text = os.fdopen
+    pipe_identity = pipe.stat()
+
+    def guarded_open(path, *args, **kwargs):
+        assert path != canonical_pipe, "refused FIFO must never reach text I/O"
+        return original(path, *args, **kwargs)
+
+    def guarded_descriptor(path, flags, *args, **kwargs):
+        if path == canonical_pipe:
+            assert flags & os.O_NONBLOCK, "retained manifest descriptors must not block on a pipe"
+        return open_descriptor(path, flags, *args, **kwargs)
+
+    def guarded_fdopen(descriptor, *args, **kwargs):
+        identity = os.fstat(descriptor)
+        assert (identity.st_dev, identity.st_ino) != (pipe_identity.st_dev, pipe_identity.st_ino)
+        return open_text(descriptor, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", guarded_open)
+    monkeypatch.setattr(os, "open", guarded_descriptor)
+    monkeypatch.setattr(os, "fdopen", guarded_fdopen)
+    observed = iter_run_manifest_payloads(run_root, root_path=tmp_path.resolve())
+    assert next(observed) == {"_manifest_parse_error": True}
+    assert next(observed) == {"_manifest_parse_error": True}
+    assert next(observed) == {"source_id": "fixture"}
+    assert not list(observed)
+
+
+def test_retained_manifest_reader_fetches_each_path_only_as_the_consumer_advances(tmp_path):
+    run_root = tmp_path / "bulk-runs"
+    paths = [run_root / "source" / name / "manifest.json" for name in ("a", "b")]
+    for path in paths:
+        path.parent.mkdir(parents=True)
+        path.write_text('{"source_id":"fixture"}', encoding="utf-8")
+    observed = iter_run_manifest_payloads(run_root, root_path=tmp_path.resolve())
+    assert next(observed) == {"source_id": "fixture"}
+    paths[1].write_text('{"source_id":"updated"}', encoding="utf-8")
+    assert tuple(observed) == ({"source_id": "updated"},)
+
+def test_manifest_root_probe_error_keeps_its_fatal_disposition(tmp_path, monkeypatch):
+    root = tmp_path / "api-runs"
+    probe = Path.is_dir
+
+    def is_dir(path):
+        if path == root:
+            raise PermissionError("fixture denied the root probe")
+        return probe(path)
+
+    monkeypatch.setattr(Path, "is_dir", is_dir)
+    with pytest.raises(PermissionError, match="fixture denied the root probe"):
+        tuple(iter_run_manifest_payloads(root, root_path=tmp_path))

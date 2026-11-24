@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from typing import Any
 
 from common_lore_index.observations.raw import RawObservation
@@ -92,10 +92,15 @@ def manifest_counter(value: Any) -> Counter[str]:
     return counts
 
 
+def iter_manifest_mappings(value: Any) -> Iterator[Mapping[str, Any]]:
+    if isinstance(value, list):
+        for item in value:
+            if isinstance(item, Mapping):
+                yield item
+
+
 def manifest_list(value: Any) -> tuple[Mapping[str, Any], ...]:
-    if not isinstance(value, list):
-        return ()
-    return tuple(item for item in value if isinstance(item, Mapping))
+    return tuple(iter_manifest_mappings(value))
 
 
 def payload_text(

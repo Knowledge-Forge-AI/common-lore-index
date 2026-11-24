@@ -178,6 +178,7 @@ def _create_scenarios(base: Path) -> dict[str, Path]:
     _write_manifest(roots["defects"], "public-valid", "private-run-valid")
     _raw_manifest(roots["defects"], "bad-json", "run").write_text("{bad", encoding="utf-8")
     _raw_manifest(roots["defects"], "not-object", "run").write_text("[]\n", encoding="utf-8")
+    _raw_manifest(roots["defects"], "not-a-file", "run").mkdir()
     outside = base / "private-outside-manifest.json"
     outside.write_text('{"bulk_run_id":"private-outside-run"}\n', encoding="utf-8")
     _raw_manifest(roots["defects"], "escape", "run").symlink_to(outside)
@@ -279,7 +280,7 @@ def _assert_scenario_contracts(payloads: dict[str, dict[str, object]]) -> None:
     assert payloads["equal"]["redaction_counts"] == {"raw_observations": 2}
     assert payloads["missing-zero"]["redaction_counts"] == {}
     assert payloads["defects"]["bulk_runs"] == 1
-    assert payloads["defects"]["diagnostic_counts"] == {"manifest_parse_error": 3}
+    assert payloads["defects"]["diagnostic_counts"] == {"manifest_parse_error": 4}
     assert payloads["all-invalid"]["diagnostic_counts"] == {"manifest_parse_error": 2}
     assert payloads["run-escape"]["diagnostic_counts"] == {"manifest_parse_error": 1}
 

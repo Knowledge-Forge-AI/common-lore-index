@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import re
+import sys
+import zipfile
 from collections.abc import Iterable, Iterator
+from importlib import import_module
 
 from common_lore_index import __version__
 from common_lore_index.extractors.documents.office_references import EXTRACTOR_NAME, URL_PATTERN
@@ -106,3 +109,20 @@ def _strip_latex_comment(line: str) -> str:
             break
         index += 1
     return line[:comment_at] if comment_at is not None else line
+
+
+def _odf_zip_read_errors() -> tuple[type[Exception], ...]:
+    errors: list[type[Exception]] = [EOFError, OSError, RuntimeError, zipfile.BadZipFile]
+    codecs = [("zlib", "error"), ("lzma", "LZMAError")]
+    if sys.version_info >= (3, 14):
+        codecs.append(("compression.zstd", "ZstdError"))
+    for module_name, error_name in codecs:
+        try:
+            codec = import_module(module_name)
+        except ImportError:
+            continue
+        errors.append(getattr(codec, error_name))
+    return tuple(errors)
+
+
+ODF_ZIP_READ_ERRORS = _odf_zip_read_errors()

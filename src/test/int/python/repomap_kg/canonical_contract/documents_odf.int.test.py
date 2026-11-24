@@ -1,6 +1,8 @@
 import json
+from contextlib import nullcontext
 from typing import TypedDict
 import unittest
+from unittest.mock import patch
 
 from repomap_test_support.canonical_contract import (
     DISCOVERY_FIXTURE_ROOT,
@@ -345,19 +347,16 @@ Read https://example.com/docs.
         )
 
     def test_docs2_odf_package_safety_contracts(self):
-        safe_content = (
-            b'<?xml version="1.0" encoding="UTF-8"?>'
-            b'<office:document-content '
-            b'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
-            b'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">'
-            b"<office:body><office:text><text:p>Fixture</text:p></office:text>"
-            b"</office:body></office:document-content>"
-        )
+        safe_content = (b'<?xml version="1.0" encoding="UTF-8"?><office:document-content '
+                        b'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
+                        b'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">'
+                        b"<office:body><office:text><text:p>Fixture</text:p></office:text></office:body></office:document-content>")
 
         self.assertEqual(extract_odf_file_observations("ignored.docx", b"not-odf"), ())
 
         cases: tuple[tuple[str, bytes, _OdfOptions, str], ...] = (
             ("missing-content.odt", _odf_package({"meta.xml": safe_content}), {}, "missing-content-xml"),
+            ("read-error.odt", _odf_package({"content.xml": safe_content}), {}, "malformed-zip"),
             ("traversal.odt", _odf_package({"content.xml": safe_content, "../outside.xml": b"x"}), {}, "zip-path-traversal"),
             ("absolute.odt", _odf_package({"content.xml": safe_content, "/absolute.xml": b"x"}), {}, "zip-path-traversal"),
             (
@@ -385,7 +384,8 @@ Read https://example.com/docs.
         )
 
         for path, package_bytes, options, error_kind in cases:
-            with self.subTest(path=path):
+            decoder = patch("zipfile.ZipFile.read", side_effect=EOFError("fixture decode"))
+            with self.subTest(path=path), (decoder if path == "read-error.odt" else nullcontext()):
                 observations = extract_odf_file_observations(
                     path,
                     package_bytes,

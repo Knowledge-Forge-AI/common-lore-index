@@ -1,4 +1,6 @@
+import lzma
 import unittest
+import zlib
 import zipfile
 from io import BytesIO
 from unittest.mock import patch
@@ -229,6 +231,17 @@ class DocumentsExtractorBoundariesUnitTests(unittest.TestCase):
         self.assertEqual(doctype[0].metadata["error_kind"], "dangerous-xml")
         self.assertEqual(limited[0].metadata["error_kind"], "zip-uncompressed-limit")
         self.assertEqual(malformed[0].metadata["error_kind"], "malformed-zip")
+
+    def test_odf_unreadable_member_returns_a_path_free_parse_diagnostic(self):
+        package = odf_package({"content.xml": odt_content()})
+        for error_type in (RuntimeError, NotImplementedError, EOFError, zlib.error, lzma.LZMAError):
+            with self.subTest(error_type=error_type):
+                with patch.object(zipfile.ZipFile, "read", side_effect=error_type("fixture codec detail")):
+                    (failure,) = extract_odf_file_observations("broken.odt", package)
+                self.assertEqual(failure.kind, "document.parse_error")
+                self.assertEqual(failure.metadata["error_kind"], "malformed-zip")
+                self.assertNotIn("fixture codec detail", str(failure.metadata))
+        self.assertIn("document.odf_document", by_kind(extract_odf_file_observations("good.odt", package)))
 
     def test_odf_unsupported_native_formats_are_not_docs2_observations(self):
         package = odf_package({"content.xml": odt_content()})

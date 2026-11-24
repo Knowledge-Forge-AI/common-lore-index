@@ -11,6 +11,7 @@ from xml.etree import ElementTree
 
 from common_lore_index import __version__
 from common_lore_index.extractors.documents.office_common import (
+    ODF_ZIP_READ_ERRORS,
     PARSER_NAME,
     _column_type_summary,
     _parse_error,
@@ -40,7 +41,6 @@ from common_lore_index.graph.keys import (
     document_table_key,
 )
 from common_lore_index.observations.raw import RawObservation
-
 
 ODF_FORMATS = {
     ".odt": ("odt", False, "text"),
@@ -97,7 +97,7 @@ def extract_odf_file_observations(
             for member in members:
                 if member.filename in ODF_SAFE_PARTS:
                     parts[member.filename] = package.read(member)
-    except (OSError, zipfile.BadZipFile):
+    except ODF_ZIP_READ_ERRORS:
         return (
             _parse_error(
                 relative_path,
