@@ -255,11 +255,12 @@ def test_crafted_corpus_reaches_null_and_default_paths(tmp_path: Path) -> None:
         assert beta_only["source"]["acquired_at"] is None
 
 
-def test_run_casts_refuse_what_postgresql_rejects(tmp_path: Path) -> None:
+@pytest.mark.parametrize("value", ("12x", "+", pytest.param("1" * 5000, id="wide"), str(-(2**63) - 1)))
+def test_run_casts_refuse_what_postgresql_rejects(tmp_path: Path, value: str) -> None:
     observations = list(crafted_feed_observations())
     first = observations[0]
     observations[0] = replace(first, metadata={**first.metadata, "source_run_id": "r1",
-                                               "source_artifact_bytes": "12x"})
+                                               "source_artifact_bytes": value})
     path = _database(tmp_path, "casts")
     _publish(path, 1, tuple(observations), name="casts")
     with _read(path, "casts") as connection:

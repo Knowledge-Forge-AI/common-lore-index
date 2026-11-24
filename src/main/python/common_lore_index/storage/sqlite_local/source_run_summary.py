@@ -10,8 +10,9 @@ from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.source_rows import SourceRunRecord, source_run_record_from_storage_payload
 
 Ordered = TypeVar("Ordered", str, int)
-_INTEGER = re.compile(r"[+-]?[0-9]+")
+_INTEGER = re.compile(r"([+-]?)(?:0*([1-9][0-9]*)|0+)")
 _BIGINT, _INT4 = 2**63, 2**31
+_MAX_INTEGER_DIGITS = len(str(_BIGINT))
 
 
 @dataclass(frozen=True)
@@ -41,9 +42,16 @@ def _integer(value: str | None, bound: int) -> int | None:
     if value is None:
         return None
     text = value.strip(" \t\n\r\v\f")
-    if _INTEGER.fullmatch(text) is None or not -bound <= int(text) < bound:
-        raise StorageSchemaError("stored source metadata is not a valid integer")
-    return int(text)
+    match = _INTEGER.fullmatch(text)
+    if match is not None and match.end(2) - match.start(2) <= _MAX_INTEGER_DIGITS:
+        # PostgreSQL accepts redundant leading zeros. Limit conversion to
+        # significant digits so Python's decimal conversion cap cannot refuse them.
+        digits = match[2]
+        magnitude = int(digits) if digits is not None else 0
+        result = -magnitude if match[1] == "-" else magnitude
+        if -bound <= result < bound:
+            return result
+    raise StorageSchemaError("stored source metadata is not a valid integer")
 
 
 def _max_present(left: Ordered | None, right: Ordered | None) -> Ordered | None:

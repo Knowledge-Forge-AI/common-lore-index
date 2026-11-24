@@ -111,8 +111,9 @@ def _crafted_metadata(index: int, observation: RawObservation, *, alpha: bool) -
             metadata["source_artifact_id"] = f"artifact-{run}-{index % 2}"
         if run == "r1":  # numeric MAX differs from text MAX; one HTTP status spelled as text
             metadata["source_acquired_at"] = "2026-01-02T00:00:00Z"
-            metadata["source_artifact_bytes"] = "999" if index % 2 else 1000
-            metadata["acquisition_http_status"] = "201" if index % 2 else 200
+            zeros = "0" * 5000
+            metadata["source_artifact_bytes"] = f"+{zeros}999" if index % 2 else 1000
+            metadata["acquisition_http_status"] = f" +{zeros}201 " if index % 2 else 200
         elif run is None:  # the newest rows carry no run id, so latest_source_run_id is NULL
             metadata["source_acquired_at"] = "2026-01-03T00:00:00Z"
     if observation.kind in {"feed.link", "feed.enclosure"}:
