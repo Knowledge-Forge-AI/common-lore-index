@@ -8,27 +8,31 @@ import tempfile
 import time
 from collections.abc import Callable, Generator, Iterable, Mapping
 from pathlib import Path
+from typing import BinaryIO
 
 from common_lore_index._utf8 import byte_length
 
 
-def _encode_spool_row(row: Mapping[str, object]) -> tuple[str, int]:
-    """Serialize one staged row to compact JSON text and UTF-8 JSONL byte count."""
+def _spool_row_text(row: Mapping[str, object]) -> str:
+    """Serialize one staged row to compact, deterministic JSON text."""
     if not isinstance(row, Mapping):
         raise ValueError("staged row is invalid")
-    encoded = json.dumps(
-        dict(row),
+    return json.dumps(
+        row if type(row) is dict else dict(row),
         ensure_ascii=False,
         separators=(",", ":"),
         sort_keys=True,
     )
-    return encoded, byte_length(encoded) + 1
 
 
 def _spool_row_byte_count(row: Mapping[str, object]) -> int:
-    """Return the UTF-8 compact-JSONL byte count for one staged row."""
-    _, byte_count = _encode_spool_row(row)
-    return byte_count
+    """Return the compact JSONL extent without allocating a wide byte string."""
+    return byte_length(_spool_row_text(row)) + 1
+
+
+def _write_spool_row(handle: BinaryIO, encoded: bytes) -> None:
+    if handle.write(encoded) != len(encoded) or handle.write(b"\n") != 1:
+        raise OSError("staged row spool write was incomplete")
 
 
 class RowSpool:
@@ -67,19 +71,16 @@ class RowSpool:
         elapsed_ns = 0
         descriptor_owned = True
         try:
-            handle = os.fdopen(descriptor, "w", encoding="utf-8", newline="\n")
+            handle = os.fdopen(descriptor, "wb")
             descriptor_owned = False
             try:
                 for row in rows:
-                    if not isinstance(row, Mapping):
-                        raise ValueError("staged row is invalid")
                     started = monotonic_ns() if timing_observer is not None else 0
-                    encoded, row_bytes = _encode_spool_row(row)
-                    projected_bytes = byte_count + row_bytes
+                    encoded = _spool_row_text(row).encode("utf-8")
+                    projected_bytes = byte_count + len(encoded) + 1
                     if artifact_observer is not None:
                         artifact_observer(projected_bytes)
-                    handle.write(encoded)
-                    handle.write("\n")
+                    _write_spool_row(handle, encoded)
                     count += 1
                     byte_count = projected_bytes
                     if timing_observer is not None:
@@ -154,7 +155,7 @@ class RowSpoolWriter:
         self.path = Path(raw_path)
         self._descriptor = descriptor
         try:
-            self._handle = os.fdopen(descriptor, "w", encoding="utf-8", newline="\n")
+            self._handle = os.fdopen(descriptor, "wb")
         except BaseException:
             try:
                 os.close(descriptor)
@@ -175,12 +176,11 @@ class RowSpoolWriter:
     def write_row(self, row: Mapping[str, object]) -> None:
         if self._finished:
             raise RuntimeError("writer already finished")
-        encoded, row_bytes = _encode_spool_row(row)
-        projected_bytes = self._byte_count + row_bytes
+        encoded = _spool_row_text(row).encode("utf-8")
+        projected_bytes = self._byte_count + len(encoded) + 1
         if self._artifact_observer is not None:
             self._artifact_observer(projected_bytes)
-        self._handle.write(encoded)
-        self._handle.write("\n")
+        _write_spool_row(self._handle, encoded)
         self._count += 1
         self._byte_count = projected_bytes
 

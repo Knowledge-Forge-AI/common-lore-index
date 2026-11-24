@@ -210,6 +210,9 @@ def test_wide_prepared_observation_spills_and_publishes_through_copy(
 
     def observe_spool(cls, rows, **kwargs):
         spool = from_rows(rows, **kwargs)
+        recorded = spool.path.read_bytes()
+        assert len(recorded) == spool.byte_count and recorded.endswith(b"\n")
+        assert b"\r\n" not in recorded
         tracked.append(spool)
         return spool
 

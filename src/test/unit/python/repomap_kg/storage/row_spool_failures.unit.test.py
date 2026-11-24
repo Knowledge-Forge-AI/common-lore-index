@@ -212,3 +212,30 @@ def test_handle_close_failure_does_not_replace_row_producer_failure(tmp_path: Pa
     assert caught.value is marker
     assert len(handles) == 1 and handles[0].closed
     assert not tuple(tmp_path.iterdir())
+
+
+def test_short_binary_record_write_refuses_and_reclaims_spool(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fdopen = os.fdopen
+
+    class ShortWriter:
+        def __init__(self, handle):
+            self.handle = handle
+
+        def write(self, value: bytes) -> int:
+            assert type(value) is bytes
+            return self.handle.write(value[:-1])
+
+        def close(self) -> None:
+            self.handle.close()
+
+    def short(descriptor: int, mode: str):
+        assert mode == "wb"
+        return ShortWriter(fdopen(descriptor, mode))
+
+    row = {"value": "unicode é"}
+    monkeypatch.setattr(os, "fdopen", short)
+    with pytest.raises(OSError, match="incomplete"):
+        RowSpool.from_rows((row,), dir=tmp_path)
+    with pytest.raises(OSError, match="incomplete"), RowSpoolWriter(dir=tmp_path) as writer:
+        writer.write_row(row)
+    assert not tuple(tmp_path.iterdir())
