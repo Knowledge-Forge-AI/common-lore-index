@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -18,6 +19,33 @@ from common_lore_index.ops.refresh import (
 
 
 class OpsRefreshPreflightUnitTests(OpsRefreshUnitTestCase):
+    def test_preflight_skips_nonregular_and_unavailable_paths_without_reading_bodies(self) -> None:
+        from common_lore_index.ops.preflight import _scan_preflight_root
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            (root / "guide.md").write_text("# Fixture\n", encoding="utf-8")
+            (root / "missing.md").symlink_to("absent.md")
+            loop = root / "loop.md"
+            loop.symlink_to(loop.name)
+            (root / "real").mkdir()
+            (root / "alias").symlink_to("real", target_is_directory=True)
+            if hasattr(os, "mkfifo"):
+                os.mkfifo(root / "pipe.md")
+            real_resolve = Path.resolve
+
+            def resolve(path: Path, strict: bool = False) -> Path:
+                if path == loop:
+                    raise RuntimeError("synthetic legacy pathlib loop")
+                return real_resolve(path, strict=strict)
+
+            with patch.object(Path, "resolve", resolve), patch.object(Path, "open", side_effect=AssertionError("read")):
+                result = _scan_preflight_root(root, ())
+        self.assertEqual(result["files_included"], 1)
+        self.assertEqual(result["files_skipped"], 2 + int(hasattr(os, "mkfifo")))
+        self.assertEqual(result["directories_skipped"], 1)
+        self.assertEqual(result["symlink_count"], 3)
+
     def test_refresh_preflight_counts_private_graph_without_content_or_storage_reads(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir) / "repo"

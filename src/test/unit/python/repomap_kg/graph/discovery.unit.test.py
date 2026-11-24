@@ -9,6 +9,36 @@ from common_lore_index.graph.discovery import classify_path, discover_repository
 
 
 class DiscoveryClassificationUnitTests(unittest.TestCase):
+    def test_default_discovery_classifies_each_selected_symlink_target_once(self) -> None:
+        from common_lore_index.graph import _discovery_classify
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            (root / "valid.md").write_text("# Fixture\n", encoding="utf-8")
+            (root / "a-alias.md").symlink_to("valid.md")
+            (root / "z-alias.md").symlink_to("valid.md")
+            for directory in ("build", "restricted"):
+                (root / directory).mkdir()
+                (root / directory / "input.md").write_text("# Excluded\n", encoding="utf-8")
+                (root / f"{directory}-alias.md").symlink_to(f"{directory}/input.md")
+            with patch.object(_discovery_classify, "content_hash", wraps=_discovery_classify.content_hash) as digest:
+                actual = discover_repository(root, exclude_paths=("restricted",))
+            digest.assert_called_once_with(root / "valid.md")
+        self.assertEqual([item.path for item in actual], ["valid.md"])
+
+    def test_selection_skips_legacy_path_resolution_errors(self) -> None:
+        from common_lore_index.graph._discovery_selection import selected_files
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            valid = root / "guide.md"
+            valid.write_text("# Fixture\n", encoding="utf-8")
+            loop = root / "loop.md"
+            loop.symlink_to(loop.name)
+            with patch.object(Path, "resolve", side_effect=RuntimeError("synthetic legacy pathlib loop")):
+                selected = tuple(selected_files(root, (), [(str(root), [], [valid.name, loop.name])]))
+        self.assertEqual(selected, (valid,))
+
     def test_classify_path_uses_extension_directory_and_executable_bit(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

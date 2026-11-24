@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import os
 import re
+import stat
 from collections import Counter
 from pathlib import Path
 from typing import Any, Sequence
 
-from common_lore_index.graph._discovery_selection import first_matching_exclude
+from common_lore_index.graph._discovery_selection import _resolve_link_target, first_matching_exclude
 from common_lore_index.graph.discovery import (
     DEFAULT_DISCOVERY_EXCLUDE_PATHS,
     LANGUAGE_BY_EXTENSION,
@@ -55,22 +56,15 @@ def _scan_preflight_root(
                 relative_dir,
                 configured_excludes,
             )
-            if dir_path.is_symlink():
+            is_symlink = dir_path.is_symlink()
+            if is_symlink:
                 symlink_count += 1
-                target = dir_path.resolve()
-                if not target.is_relative_to(root):
+                target = _resolve_link_target(dir_path)
+                if target is not None and not target.is_relative_to(root):
                     symlinks_skipped_outside_root += 1
                     if target.as_posix().startswith("/nix/store/"):
                         symlinks_skipped_nix_store += 1
-                    directories_skipped += 1
-                    if default_match:
-                        default_hits[default_match] += 1
-                    if configured_match:
-                        configured_hits[configured_match] += 1
-                    if _is_generated_output_skip(relative_dir, default_match, configured_match):
-                        generated_output_skips += 1
-                    continue
-            if default_match or configured_match:
+            if is_symlink or default_match or configured_match:
                 directories_skipped += 1
                 if default_match:
                     default_hits[default_match] += 1
@@ -93,22 +87,24 @@ def _scan_preflight_root(
                 relative_file,
                 configured_excludes,
             )
-            if file_path.is_symlink():
+            try:
+                mode = file_path.lstat().st_mode
+            except OSError:
+                mode = 0
+            is_regular = stat.S_ISREG(mode)
+            if stat.S_ISLNK(mode):
                 symlink_count += 1
-                target = file_path.resolve()
-                if not target.is_relative_to(root):
+                target = _resolve_link_target(file_path)
+                if target is not None and not target.is_relative_to(root):
                     symlinks_skipped_outside_root += 1
                     if target.as_posix().startswith("/nix/store/"):
                         symlinks_skipped_nix_store += 1
-                    files_skipped += 1
-                    if default_match:
-                        default_hits[default_match] += 1
-                    if configured_match:
-                        configured_hits[configured_match] += 1
-                    if _is_generated_output_skip(relative_file, default_match, configured_match):
-                        generated_output_skips += 1
-                    continue
-            if default_match or configured_match:
+                elif target is not None:
+                    target_path = target.relative_to(root).as_posix()
+                    default_match = default_match or first_matching_exclude(target_path, default_excludes)
+                    configured_match = configured_match or first_matching_exclude(target_path, configured_excludes)
+                    is_regular = file_path.is_file()
+            if default_match or configured_match or not is_regular:
                 files_skipped += 1
                 if default_match:
                     default_hits[default_match] += 1
