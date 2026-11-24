@@ -135,6 +135,11 @@ def test_compact_source_locations_over_guarded_sqlite_stdio(tmp_path: Path) -> N
     assert compact["locations"][0]["source_relative_path"] == "docs/guide.md"
     assert compact["has_more"] == full["has_more"] is False
     assert compact["accepted_publication"] == full["accepted_publication"]
+    projected = compact["locations"][0]
+    originals = full["locations"][0]
+    assert compact["publications"][projected["publication"]] == originals["publication"]
+    bound = compact["bindings"][projected["binding"]]
+    assert {**bound, "source_relative_path": projected["source_relative_path"]} == originals["source"]
     assert "detail must be full or compact" in refusal(responses, 5)
     assert responses[4]["result"]["structuredContent"] == json.loads(responses[4]["result"]["content"][0]["text"])
     assert hashlib.sha256(database.read_bytes()).hexdigest() == before

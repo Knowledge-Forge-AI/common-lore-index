@@ -64,28 +64,38 @@ def node_locations_payload(
         result["evidence_role"] = evidence_role
         if metadata is not None:
             metadata["evidence_role"] = "unknown"
-    leads = [row for row in locations if row["path"] is not None]
-    distinct = {(row["path"], row["start_line"], row["end_line"]) for row in leads}
+    first_destination = None
+    multiple = False
+    for row in locations:
+        if row["path"] is None:
+            continue
+        destination = (row["path"], row["start_line"], row["end_line"])
+        if first_destination is None:
+            first_destination = destination
+        elif destination != first_destination:
+            multiple = True
+            break
+    has_lead = first_destination is not None
     metadata_path = None if metadata is None else metadata["path"]
     # doc_path has no stored binding identity; it cannot be compared to the
     # graph-relative evidence namespace without inventing a mapping.
-    multiple = len(distinct) > 1
     if result["status"] == "ok":
-        result["status"], result["reason"] = _window_status(bool(leads), bool(metadata_path), result["has_more"])
+        result["status"], result["reason"] = _window_status(has_lead, bool(metadata_path), result["has_more"])
         if (evidence_role != "all" and result["status"] == "unavailable"
                 and any(row["path"] is not None for row in history)):
             result["reason"] = "historical_locations_only"
+    result_fields = {**result, "locations": None, "historical_locations": None, "metadata_location": None}
     payload = {
         "server": "repomap-kg", "version": __version__, "read_only": True,
         "graph": graph_payload(selection.graph, database=target.stores.storage_label(selection)),
-        **sanitize_jsonable(result, private_markers=markers),
+        **sanitize_jsonable(result_fields, private_markers=markers),
         "canonical_key": sanitize_jsonable(canonical_key, private_markers=markers),
         "repository_identity": selection.repository_identity, "graph_key_version": 1,
         "locations": locations, "metadata_location": metadata, "limit": limit,
         "historical_locations": history,
         "ambiguity": (
             "multiple_stored_locations" if multiple else "truncated" if result["has_more"]
-            else "single_stored_location" if leads
+            else "single_stored_location" if has_lead
             else "metadata_only" if metadata_path and evidence_role != "all"
             else "single_stored_location" if metadata_path else "unavailable"
         ),
@@ -100,10 +110,27 @@ def _compact_locations(full: dict[str, Any]) -> dict[str, Any]:
     bindings: list[dict[str, Any]] = []
     publications: list[dict[str, Any]] = []
 
-    def index(table: list[dict[str, Any]], value: dict[str, Any]) -> int:
-        if value not in table:
-            table.append(value)
-        return table.index(value)
+    binding_index: dict[frozenset[tuple[str, Any]], int] = {}
+    publication_index: dict[frozenset[tuple[str, Any]], int] = {}
+
+    def index(
+        table: list[dict[str, Any]], indexed: dict[frozenset[tuple[str, Any]], int], value: dict[str, Any],
+    ) -> int:
+        if table and table[-1] == value:
+            return len(table) - 1
+        try:
+            identity = frozenset(value.items())
+        except TypeError:
+            # Preserve dictionary equality for any nested sanitized values.
+            if value in table:
+                return table.index(value)
+        else:
+            existing = indexed.get(identity)
+            if existing is not None:
+                return existing
+            indexed[identity] = len(table)
+        table.append(value)
+        return len(table) - 1
 
     def location(row: dict[str, Any]) -> dict[str, Any]:
         source = row["source"]
@@ -111,8 +138,8 @@ def _compact_locations(full: dict[str, Any]) -> dict[str, Any]:
         result = {key: value for key, value in row.items() if key not in {
             "source", "publication", "raw_observation", "evidence_key", "path_namespace",
         }}
-        result["binding"] = index(bindings, binding)
-        result["publication"] = index(publications, row["publication"])
+        result["binding"] = index(bindings, binding_index, binding)
+        result["publication"] = index(publications, publication_index, row["publication"])
         if "source_relative_path" in source:
             result["source_relative_path"] = source["source_relative_path"]
         result["raw_observation"] = {
