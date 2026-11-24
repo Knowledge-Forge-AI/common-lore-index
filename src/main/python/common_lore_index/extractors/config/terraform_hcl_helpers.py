@@ -6,11 +6,11 @@ import posixpath
 import re
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import urlsplit
 
+from common_lore_index.extractors.shared.observations import contains_web_url_userinfo
 from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.extractors.config.generic_profile_helpers import _stable_text_sha256
-from common_lore_index.extractors.config.generic_values import _is_url
+from common_lore_index.extractors.config.generic_values import _config_url_redaction_reason, _is_url
 from common_lore_index.graph.keys import external_key, file_key, unknown_key
 
 
@@ -149,13 +149,14 @@ def _terraform_hcl_module_source(
     relative_path: str,
     source: str,
 ) -> tuple[dict[str, Any], str, str]:
-    if _terraform_hcl_credentialed_url(source):
+    redaction_reason = _terraform_hcl_url_redaction_reason(source)
+    if redaction_reason:
         return (
             {
                 "source_kind": "remote",
                 "not_fetched": True,
                 "redacted": True,
-                "redaction_reason": "credentialed-terraform-module-source",
+                "redaction_reason": f"{redaction_reason}-terraform-module-source",
             },
             external_key("terraform.module", "redacted-module-source"),
             "module_source",
@@ -296,13 +297,15 @@ def _terraform_hcl_text_presence_metadata(key: str, value: str) -> dict[str, Any
 
 
 def _terraform_hcl_credentialed_url(value: str) -> bool:
-    candidate = value.removeprefix("git::")
-    parsed = urlsplit(candidate)
-    if parsed.scheme in ("http", "https", "ssh", "git") and (
-        parsed.username is not None or parsed.password is not None
-    ):
-        return True
-    return bool(re.search(r"://[^/\s:@]+:[^/\s@]+@", candidate))
+    return _terraform_hcl_url_redaction_reason(value) == "credentialed"
+
+
+def _terraform_hcl_url_redaction_reason(value: str) -> str | None:
+    candidate = re.sub(r"^[A-Za-z][A-Za-z0-9+.-]*::", "", value, count=1)
+    reason = _config_url_redaction_reason(candidate)
+    if reason is not None:
+        return reason.removesuffix("-url")
+    return "credentialed" if contains_web_url_userinfo(candidate) else None
 
 
 def _terraform_hcl_bounded_string(value: str) -> str:

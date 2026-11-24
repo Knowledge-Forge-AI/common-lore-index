@@ -6,6 +6,27 @@ from common_lore_index.extractors.documents.markdown import (
 
 
 class MarkdownExtractorBoundariesUnitTests(unittest.TestCase):
+    def test_redacts_credentialed_labels_and_titles_without_changing_safe_targets(self):
+        rows = extract_markdown_file_observations(
+            "readme.md",
+            '[https://user:p#fixture@concealed.invalid](https://valid.invalid/label) '
+            '[Public](https://valid.invalid/title "https://user:fixture@concealed.invalid")',
+        )
+        links = [row for row in rows if row.kind == "markdown.link"]
+        self.assertEqual(len(links), 2)
+        self.assertTrue(all((row.target or "").startswith("external.url:") for row in links))
+        self.assertNotIn("concealed.invalid", str([row.to_dict() for row in rows]))
+
+    def test_credentialed_markdown_link_with_templated_host_is_redacted(self):
+        rows = extract_markdown_file_observations(
+            "readme.md", "See <https://user:fixture@${HOST}/private> and <https://valid.invalid/>.",
+        )
+        protected, retained = [row for row in rows if row.kind == "markdown.link"]
+        self.assertTrue((protected.target or "").startswith("unknown:"))
+        self.assertEqual(protected.metadata["resolution_reason"], "credentialed-external-url")
+        self.assertTrue((retained.target or "").startswith("external.url:"))
+        self.assertNotIn("user:fixture", str([row.to_dict() for row in rows]))
+
     def test_unreadable_external_markdown_target_does_not_hide_the_next_link(self):
         observations = extract_markdown_file_observations(
             "guide.md",

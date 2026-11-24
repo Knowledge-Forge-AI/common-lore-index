@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from urllib.parse import urlsplit, urlunsplit
 
+from common_lore_index.extractors.shared.observations import contains_web_url_userinfo
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,
@@ -179,6 +180,17 @@ def _is_dynamic_literal(value: str) -> bool:
     return "#{" in value
 
 
+def _reference_url_scheme(value: str) -> str:
+    scheme, colon, _rest = value.partition(":")
+    return scheme.lower() if colon else ""
+
+
+def _public_reference_value(value: str) -> str:
+    if _reference_url_scheme(value) in REFERENCE_SCHEMES:
+        return _sanitize_url(value)
+    return "<redacted-url>" if contains_web_url_userinfo(value) else value
+
+
 def _require_target(
     relative_path: str,
     require_form: str,
@@ -187,6 +199,11 @@ def _require_target(
 ) -> tuple[str, str]:
     if _is_dynamic_literal(raw_value):
         return dynamic_key("ruby.reference", "interpolated-require"), "dynamic"
+    if _reference_url_scheme(raw_value) in REFERENCE_SCHEMES:
+        target = _sanitized_url_target(_sanitize_url(raw_value))
+        return target, target.rsplit(":", 1)[1] if target.startswith("unknown:") else "external-url"
+    if contains_web_url_userinfo(raw_value):
+        return unknown_key("ruby.reference", "credentialed-external-url"), "credentialed-external-url"
     if require_form == "require_relative":
         candidate = _normalize_relative_path(
             relative_path,
@@ -246,8 +263,9 @@ def _path_target(raw_path: str, repository_paths: frozenset[str] | None) -> str:
     if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", raw_path):
         scheme = raw_path.split(":", 1)[0].lower()
         if scheme in REFERENCE_SCHEMES:
-            return external_url_key(_sanitize_url(raw_path))
-        return unknown_key("ruby.reference", "unsupported-scheme")
+            return _sanitized_url_target(_sanitize_url(raw_path))
+        reason = "credentialed-external-url" if contains_web_url_userinfo(raw_path) else "unsupported-scheme"
+        return unknown_key("ruby.reference", reason)
     path = PurePosixPath(raw_path)
     if path.is_absolute():
         return external_key("file", "absolute-ruby-reference")
@@ -264,18 +282,30 @@ def _path_target(raw_path: str, repository_paths: frozenset[str] | None) -> str:
 def _sanitize_url(url: str) -> str:
     try:
         parsed = urlsplit(url)
+        port = parsed.port
     except ValueError:
         return "about:invalid"
     netloc = parsed.hostname or ""
-    if parsed.port is not None:
-        netloc = f"{netloc}:{parsed.port}"
+    if ":" in netloc:
+        netloc = f"[{netloc}]"
+    if port is not None:
+        netloc = f"{netloc}:{port}"
     query = "&".join(
         f"{key}=REDACTED" if _is_secret_prone(key) else pair
         for pair in parsed.query.split("&")
         if pair
         for key in [pair.split("=", 1)[0]]
     )
-    return urlunsplit((parsed.scheme, netloc, parsed.path, query, ""))
+    sanitized = urlunsplit((parsed.scheme, netloc, parsed.path, query, ""))
+    return "<redacted-url>" if contains_web_url_userinfo(sanitized) else sanitized
+
+
+def _sanitized_url_target(value: str) -> str:
+    if value == "about:invalid":
+        return unknown_key("ruby.reference", "malformed-external-url")
+    if value == "<redacted-url>":
+        return unknown_key("ruby.reference", "credentialed-external-url")
+    return external_url_key(value)
 
 
 def _safe_summary(value: str | None) -> str | None:

@@ -237,6 +237,18 @@ class Slice7ConfigPipelineIntegrationTests(unittest.TestCase):
         self.assertTrue(any(o.kind == "terraform.module" for o in obs_fixed))
         self.assertFalse(any(o.kind == "terraform.parse_error" for o in obs_fixed))
 
+    def test_malformed_terraform_source_retains_following_local_reference(self) -> None:
+        rows = extract_config_file_observations(
+            "main.tf",
+            'module "broken" {\n  source = "git::https://[unreadable.invalid/source"\n}\n'
+            'module "local" {\n  source = "./modules/live"\n}\n',
+        )
+        self.assertTrue(canonicalize_observations(rows).ok)
+        refs = [row for row in rows if row.kind == "terraform.reference" and row.metadata["reference_kind"].startswith("module_source")]
+        self.assertEqual([row.metadata["redacted"] for row in refs], [True, False])
+        self.assertEqual(refs[1].target, "file:modules/live")
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in rows]))
+
     def test_s7_b05_openapi_nested_components_and_operation_references(self) -> None:
         """OpenAPI extraction captures raw profile observations and generic canonical structure."""
         spec = {

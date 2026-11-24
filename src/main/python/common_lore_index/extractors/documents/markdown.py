@@ -10,6 +10,7 @@ from typing import Any
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 from common_lore_index import __version__
+from common_lore_index.extractors.shared.observations import contains_web_url_userinfo
 from common_lore_index.graph.keys import (
     doc_adr_key,
     doc_page_key,
@@ -112,8 +113,8 @@ def resolve_markdown_link_target(
     markdown_anchors: Mapping[str, set[str] | frozenset[str]],
 ) -> LinkResolution:
     target = _strip_link_title(raw_target.strip())
-    if not target:
-        return _malformed_markdown_link("empty-target")
+    if not target or contains_web_url_userinfo(target):
+        return _malformed_markdown_link("credentialed-external-url" if target else "empty-target")
     if "{{" in target or "}}" in target or "${" in target:
         return LinkResolution(
             target=dynamic_key("external.url", "markdown-link-template"),
@@ -522,27 +523,26 @@ def _link_observation(
         repository_paths=repository_paths,
         markdown_anchors=markdown_anchors,
     )
-    malformed = resolution.resolution_reason == "malformed-external-url" or (
+    redacted = resolution.resolution_reason in ("credentialed-external-url", "malformed-external-url") or (
         resolution.resolution_reason == "malformed-percent-escape"
         and raw_target.lstrip().startswith(("http://", "https://", "mailto:"))
     )
-    text = "malformed external link" if malformed else text
+    if redacted or contains_web_url_userinfo(text):
+        text = "malformed external link" if redacted and resolution.resolution_reason != "credentialed-external-url" else "redacted external link"
     metadata: dict[str, Any] = {
         "link_text": text,
-        "raw_target": "<redacted-url>" if malformed else raw_target,
+        "raw_target": "<redacted-url>" if redacted or contains_web_url_userinfo(raw_target) else raw_target,
         "link_syntax": syntax,
         "resolved_target_kind": resolution.resolved_target_kind,
         "is_image": is_image,
     }
-    if definition_id is not None:
+    if definition_id is not None and not contains_web_url_userinfo(definition_id):
         metadata["definition_id"] = definition_id
     if current_anchor is not None:
-        metadata["source_anchor"] = current_anchor
-        metadata["source_key"] = doc_section_key(relative_path, current_anchor)
-    if resolution.resolved_path is not None:
-        metadata["resolved_path"] = resolution.resolved_path
-    if resolution.resolved_anchor is not None:
-        metadata["resolved_anchor"] = resolution.resolved_anchor
+        metadata.update(source_anchor=current_anchor, source_key=doc_section_key(relative_path, current_anchor))
+    for key, value in (("resolved_path", resolution.resolved_path), ("resolved_anchor", resolution.resolved_anchor)):
+        if value is not None:
+            metadata[key] = value
     if resolution.resolution_reason is not None:
         metadata["resolution_reason"] = resolution.resolution_reason
     return RawObservation(
@@ -683,9 +683,9 @@ def _span_consumed(span: tuple[int, int], consumed_spans: list[tuple[int, int]])
 
 
 def _strip_link_title(target: str) -> str:
-    if " " not in target or target.startswith(("http://", "https://", "mailto:")):
-        return target
-    return target.split()[0]
+    if target.startswith(("http://", "https://", "mailto:")):
+        return re.sub(r"""\s+(?:(["']).*\1|\([^()]*\))$""", "", target)
+    return target.split()[0] if " " in target else target
 
 
 def _malformed_markdown_link(reason: str) -> LinkResolution:

@@ -379,7 +379,7 @@ def _reference_redaction_reason(targets: list[dict[str, Any]]) -> str | None:
     reasons = {target["reason"] for target in targets}
     if "data-url-redacted" in reasons:
         return "data-url-payload-redacted"
-    return "malformed-url-redacted" if "malformed-url-redacted" in reasons else None
+    return next((reason for reason in ("malformed-url-redacted", "credentialed-url-redacted") if reason in reasons), None)
 
 
 def _declaration_observations(

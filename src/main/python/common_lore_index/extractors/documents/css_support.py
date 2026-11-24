@@ -6,13 +6,11 @@ import re
 from dataclasses import dataclass, field
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import urlsplit
 
-from common_lore_index.extractors.shared.observations import unknown_reference
+from common_lore_index.extractors.shared.observations import contains_web_url_userinfo, unknown_reference, web_url_reference
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,
-    external_url_key,
     file_key,
     unknown_key,
 )
@@ -229,19 +227,10 @@ def _target_for_reference(value: str) -> dict[str, Any]:
         return unknown_reference(
             unknown_key("external.url", "data-url-payload-redacted"), "data-url-redacted",
         )
-    try:
-        parsed = urlsplit(stripped)
-        _ = parsed.port
-    except ValueError:
-        return unknown_reference(unknown_key("external.url", "malformed-external-url"), "malformed-url-redacted")
-    if parsed.scheme in ("http", "https", "mailto"):
-        return {
-            "kind": "external.url",
-            "target": external_url_key(stripped),
-            "reason": "url-literal",
-            "summary": stripped,
-        }
-    if parsed.scheme:
+    reference, has_other_scheme = web_url_reference(stripped)
+    if reference is not None:
+        return reference
+    if has_other_scheme:
         return {
             "kind": "dynamic",
             "target": dynamic_key("url", "unsupported-css-url-scheme"),
@@ -625,7 +614,7 @@ def _is_secret_name(value: str | None) -> bool:
     if value is None:
         return False
     normalized = re.sub(r"[^a-z0-9]+", "_", value.lower())
-    return any(marker in normalized for marker in SECRET_PRONE_MARKERS)
+    return contains_web_url_userinfo(value) or any(marker in normalized for marker in SECRET_PRONE_MARKERS)
 
 
 def _is_dynamic_value(value: str) -> bool:

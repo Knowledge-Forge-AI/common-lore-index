@@ -8,6 +8,15 @@ from common_lore_index.extractors.languages import ruby_helpers as rh
 
 
 class RubyHelpersUnitTests(unittest.TestCase):
+    def test_bare_supported_scheme_names_keep_library_and_relative_targets(self):
+        self.assertEqual(rh._require_target("lib/a.rb", "require", "http", None), ("external:ruby.require:http", "external-ruby-require"))
+        self.assertEqual(rh._require_target("lib/a.rb", "require_relative", "http", None), ("file:lib/http.rb", "repo-local"))
+
+    def test_url_sanitizer_handles_invalid_ports_and_keeps_ipv6_literals(self):
+        self.assertEqual(rh._sanitize_url("https://unreadable.invalid:port/path"), "about:invalid")
+        self.assertEqual(rh._sanitize_url("https://user:fixture@[2001:db8::1]:8443/path"), "https://[2001:db8::1]:8443/path")
+        self.assertEqual(rh._sanitize_url("https://valid.invalid/?next=%2F%2Fuser%3Afixture%40concealed.invalid"), "<redacted-url>")
+
     def test_strip_comment_handles_quotes_escapes_and_hashes(self):
         self.assertEqual(rh._strip_comment("foo = 1 # comment"), "foo = 1 ")
         self.assertEqual(rh._strip_comment("str = 'hello # not a comment'"), "str = 'hello # not a comment'")

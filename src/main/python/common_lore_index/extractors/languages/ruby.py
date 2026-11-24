@@ -10,7 +10,7 @@ from common_lore_index._utf8 import byte_length
 from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.languages.ruby_helpers import (
-    REFERENCE_SCHEMES,
+    REFERENCE_SCHEMES as REFERENCE_SCHEMES,
     SECRET_MARKERS,
     _Scope,
     _current_owner,
@@ -31,10 +31,11 @@ from common_lore_index.extractors.languages.ruby_helpers import (
     _owner_key_for_scope,
     _path_target,
     _pop_scope,
+    _public_reference_value,
     _qualify_name,
     _require_target,
     _safe_summary,
-    _sanitize_url,
+    _sanitize_url as _sanitize_url,
     _strip_comment,
 )
 from common_lore_index.graph.keys import (
@@ -618,12 +619,13 @@ def _detect_profile(relative_path: str, content: str) -> str:
 
 def _require_observations(relative_path: str, profile: str, line_number: int, require_form: str, raw_value: str, source_key: str, repository_paths: frozenset[str] | None) -> tuple[RawObservation, ...]:
     target, reason = _require_target(relative_path, require_form, raw_value, repository_paths)
+    public_value = _public_reference_value(raw_value)
     metadata = {
         "format": "ruby",
         "profile": profile,
         "parser": PARSER,
         "require_form": require_form,
-        "require_path": _safe_summary(raw_value),
+        "require_path": _safe_summary(public_value),
         "source_key": source_key,
         "target_key": target,
         "not_loaded": True,
@@ -634,7 +636,7 @@ def _require_observations(relative_path: str, profile: str, line_number: int, re
             relative_path=relative_path,
             source_id=f"{relative_path}#ruby-require:{line_number}",
             start_line=line_number,
-            name=raw_value,
+            name=public_value,
             target=target,
             metadata=metadata,
         ),
@@ -649,8 +651,6 @@ def _require_observations(relative_path: str, profile: str, line_number: int, re
             resolution_reason=reason,
         ),
     )
-
-
 
 
 def _parse_error(relative_path: str, error_kind: str, message: str, profile: str, line_number: int, *, dynamic_reason: str | None = None) -> RawObservation:

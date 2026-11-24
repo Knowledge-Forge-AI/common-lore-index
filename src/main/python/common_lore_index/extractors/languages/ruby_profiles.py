@@ -9,10 +9,12 @@ from common_lore_index import __version__
 from common_lore_index.extractors.languages.ruby_helpers import (
     _first_literal,
     _path_target,
+    _public_reference_value,
     _safe_summary,
     _sanitize_url,
+    _sanitized_url_target,
 )
-from common_lore_index.graph.keys import external_key, external_url_key
+from common_lore_index.graph.keys import external_key
 from common_lore_index.observations.raw import RawObservation
 
 
@@ -71,13 +73,14 @@ def _definition_observation(kind: str, relative_path: str, profile: str, line_nu
 
 
 def _reference_observation(relative_path: str, profile: str, line_number: int, reference_kind: str, raw_value: str, target: str, source_key: str, *, resolution_reason: str, extra_metadata: dict[str, Any] | None = None) -> RawObservation:
+    summary_value = _public_reference_value(raw_value)
     metadata: dict[str, Any] = {
         "format": "ruby",
         "profile": profile,
         "profiles": [profile],
         "parser": PARSER,
         "reference_kind": reference_kind,
-        "raw_value_summary": _safe_summary(raw_value),
+        "raw_value_summary": _safe_summary(summary_value),
         "source_key": source_key,
         "target_key": target,
         "resolution_reason": resolution_reason,
@@ -208,7 +211,8 @@ def _gemfile_observations(relative_path: str, profile: str, line_number: int, li
     observations: list[RawObservation] = []
     if source_match := GEM_SOURCE_RE.match(line):
         source_url = _sanitize_url(source_match.group(2))
-        target = external_url_key(source_url)
+        target = _sanitized_url_target(source_url)
+        reason = target.rsplit(":", 1)[1] if target.startswith("unknown:") else "external-url"
         observations.append(
             _reference_observation(
                 relative_path,
@@ -218,7 +222,7 @@ def _gemfile_observations(relative_path: str, profile: str, line_number: int, li
                 source_url,
                 target,
                 source_key,
-                resolution_reason="external-url",
+                resolution_reason=reason,
             )
         )
     if gem_match := GEM_RE.match(line):

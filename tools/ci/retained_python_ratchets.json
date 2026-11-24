@@ -122,7 +122,7 @@
         "path": "src/main/python/common_lore_index/extractors/documents/css_html_matching.py"
       },
       {
-        "line_count": 665,
+        "line_count": 654,
         "path": "src/main/python/common_lore_index/extractors/documents/css_support.py"
       },
       {
@@ -134,7 +134,7 @@
         "path": "src/main/python/common_lore_index/extractors/documents/feed.py"
       },
       {
-        "line_count": 686,
+        "line_count": 679,
         "path": "src/main/python/common_lore_index/extractors/documents/html.py"
       },
       {
@@ -11297,13 +11297,6 @@
       {
         "code": "F401",
         "count": 1,
-        "fingerprint": "3c7084c42f3a7aa24d4cead89229d78c3d2ab8206b4e75cd57f0630e2d09e16c",
-        "message": "`common_lore_index.extractors.languages.ruby_helpers.REFERENCE_SCHEMES` imported but unused",
-        "path": "src/main/python/common_lore_index/extractors/languages/ruby.py"
-      },
-      {
-        "code": "F401",
-        "count": 1,
         "fingerprint": "3360ae8e90c0518ff8e45cc31cd376749a6e54b57ae5f32664c7e067343f7760",
         "message": "`common_lore_index.extractors.languages.ruby_helpers.SECRET_MARKERS` imported but unused",
         "path": "src/main/python/common_lore_index/extractors/languages/ruby.py"
@@ -11327,13 +11320,6 @@
         "count": 1,
         "fingerprint": "060b8d6525764c44634feeb9bd85c7679dcc5a162bc098984430420970fa4170",
         "message": "`common_lore_index.extractors.languages.ruby_helpers._normalize_relative_path` imported but unused",
-        "path": "src/main/python/common_lore_index/extractors/languages/ruby.py"
-      },
-      {
-        "code": "F401",
-        "count": 1,
-        "fingerprint": "1c0aad2d91b2389902b65bbc7797aaa6b014a73500c219cc54999b6860259b4c",
-        "message": "`common_lore_index.extractors.languages.ruby_helpers._sanitize_url` imported but unused",
         "path": "src/main/python/common_lore_index/extractors/languages/ruby.py"
       },
       {

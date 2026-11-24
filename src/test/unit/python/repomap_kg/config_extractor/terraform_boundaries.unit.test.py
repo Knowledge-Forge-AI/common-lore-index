@@ -15,6 +15,23 @@ from common_lore_index.extractors.config.terraform_hcl_helpers import (
 
 
 class ConfigExtractorTerraformBoundariesUnitTests(unittest.TestCase):
+    def test_malformed_module_url_keeps_following_module(self):
+        rows = extract_config_file_observations(
+            "main.tf",
+            'module "broken" {\n source = "git::https://unreadable.invalid:port/archive"\n}\n'
+            'module "credentialed" {\n source = "s3::https://user:fixture@unreadable.invalid/package"\n}\n'
+            'module "ssh" {\n source = "git::ssh://user:fixture@unreadable.invalid/package"\n}\n'
+            'module "retained" {\n source = "./modules/live"\n}\n',
+        )
+        bad, credentialed, ssh, good = [row for row in rows if row.kind == "terraform.module"]
+        self.assertEqual(
+            [row.metadata["redaction_reason"] for row in (credentialed, ssh)],
+            ["credentialed-terraform-module-source"] * 2,
+        )
+        self.assertEqual(bad.metadata["redaction_reason"], "malformed-terraform-module-source")
+        self.assertEqual(good.metadata["source_kind"], "local")
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in rows]))
+
     def test_hcl_streams_blocks_and_collection_attributes_across_line_boundaries(self):
         from common_lore_index.extractors.config.terraform_hcl_observations import _terraform_hcl_parse_error_observation
         from common_lore_index.extractors.config.terraform_hcl_scan import (

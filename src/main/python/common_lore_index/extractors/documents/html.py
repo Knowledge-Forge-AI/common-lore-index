@@ -9,15 +9,15 @@ from html.parser import HTMLParser
 from itertools import chain
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import urlsplit
 
 from common_lore_index import __version__
 from common_lore_index._utf8 import byte_length
-from common_lore_index.extractors.shared.observations import unknown_reference
+from common_lore_index.extractors.shared.observations import (
+    contains_web_url_userinfo, unknown_reference, web_url_reference,
+)
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,
-    external_url_key,
     file_key,
     html_anchor_key,
     html_document_key,
@@ -446,7 +446,9 @@ def _reference_observation(
         metadata.update(extra_metadata)
     if not metadata["redacted"] and reference.get("summary") is not None:
         metadata["raw_value_summary"] = reference["summary"]
-    if metadata["redacted"]:
+    if reference["reason"] in ("credentialed-url-redacted", "malformed-url-redacted"):
+        metadata.update(redacted=True, redaction_reason=reference["reason"])
+    elif metadata["redacted"]:
         metadata["redaction_reason"] = "secret-prone-html-attribute"
     return RawObservation(
         kind=kind,
@@ -488,19 +490,10 @@ def _target_for_reference(
                 "summary": f"#{fragment}",
             }
         return unknown_reference(unknown_key("html.anchor", "unresolved-fragment"), "unresolved-fragment")
-    try:
-        parsed = urlsplit(stripped)
-        _ = parsed.port
-    except ValueError:
-        return unknown_reference(unknown_key("external.url", "malformed-external-url"), "malformed-url-redacted")
-    if parsed.scheme in ("http", "https", "mailto"):
-        return {
-            "kind": "external.url",
-            "target": external_url_key(stripped),
-            "reason": "url-literal",
-            "summary": stripped,
-        }
-    if parsed.scheme:
+    reference, has_other_scheme = web_url_reference(stripped)
+    if reference is not None:
+        return reference
+    if has_other_scheme:
         return {
             "kind": "dynamic",
             "target": dynamic_key("url", "unsupported-url-scheme"),
@@ -565,7 +558,7 @@ def _text_length(node: _HtmlNode) -> int:
 
 def _safe_text_summary(value: str) -> str | None:
     summary = " ".join(value.split())
-    if not summary or _is_secret_name(summary):
+    if not summary or _is_secret_name(summary) or contains_web_url_userinfo(summary):
         return None
     if not summary.isprintable():
         return None

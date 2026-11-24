@@ -40,6 +40,18 @@ HTML_FIXTURE = """\
 
 
 class HtmlExtractorUnitTests(unittest.TestCase):
+    def test_credentialed_link_with_literal_label_keeps_only_public_data(self):
+        raw_url = "https://valid.invalid/?next=%2F%2Fuser%3Afixture%40concealed.invalid"
+        rows = extract_html_file_observations(
+            "index.html", f'<a href="{raw_url}">{raw_url}</a>'
+            '<a href="https://valid.invalid/">https://user:p?fixture@concealed.invalid/label</a>',
+        )
+        protected, retained = [row for row in rows if row.kind == "html.link"]
+        self.assertTrue(protected.metadata["redacted"])
+        self.assertEqual(protected.metadata["resolution_reason"], "credentialed-url-redacted")
+        self.assertTrue((retained.target or "").startswith("external.url:"))
+        self.assertNotIn("concealed.invalid", str([row.to_dict() for row in rows]))
+
     def test_malformed_literal_link_preserves_the_next_valid_target(self):
         observations = extract_html_file_observations(
             "index.html",

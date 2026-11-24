@@ -4,6 +4,39 @@ from common_lore_index.extractors.languages.ruby import extract_ruby_file_observ
 
 
 class RubyExtractorUnitTests(unittest.TestCase):
+    def test_invalid_gem_source_does_not_discard_following_gem(self):
+        rows = extract_ruby_file_observations(
+            "Gemfile", 'source "https://unreadable.invalid:port/path"\ngem "rack"\n',
+        )
+        ref = next(row for row in rows if row.kind == "ruby.reference" and row.name == "gem_source")
+        self.assertEqual(ref.metadata["resolution_reason"], "malformed-external-url")
+        self.assertTrue((ref.target or "").startswith("unknown:"))
+        self.assertTrue(any("rack" in str(row.name) for row in rows))
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in rows]))
+
+    def test_vagrant_reference_summary_drops_authority_credentials(self):
+        rows = extract_ruby_file_observations(
+            "Vagrantfile",
+            'Vagrant.configure("2") do |config|\n'
+            '  config.vm.synced_folder "https://user:fixture@[2001:db8::1]:8443/path", "/vagrant/link"\n'
+            'end\n',
+        )
+        ref = next(row for row in rows if row.kind == "ruby.reference")
+        self.assertEqual(ref.metadata["raw_value_summary"], "https://[2001:db8::1]:8443/path")
+        self.assertNotIn("user:fixture", str([row.to_dict() for row in rows]))
+
+    def test_unsupported_uri_credentials_are_removed_from_ruby_targets_and_summaries(self):
+        rows = (
+            *extract_ruby_file_observations("reader.rb", 'require "s3://user:fixture@concealed.invalid/object"\n'),
+            *extract_ruby_file_observations(
+                "Vagrantfile", 'Vagrant.configure("2") do |config|\n'
+                '  config.vm.synced_folder "s3://user:fixture@concealed.invalid/object", "/vagrant/link"\nend\n',
+            ),
+        )
+        refs = [row for row in rows if row.kind == "ruby.reference"]
+        self.assertEqual([row.target for row in refs], ["unknown:ruby.reference:credentialed-external-url"] * 2)
+        self.assertNotIn("concealed.invalid", str([row.to_dict() for row in rows]))
+
     def test_rootpkg35_ruby_profile_helpers_are_reexported(self):
         import common_lore_index.extractors.languages.ruby as ruby
         import common_lore_index.extractors.languages.ruby_profiles as ruby_profiles
