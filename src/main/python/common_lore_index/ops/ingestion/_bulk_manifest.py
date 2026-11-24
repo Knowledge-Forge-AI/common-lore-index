@@ -25,6 +25,7 @@ from common_lore_index.ops.ingestion._bulk_helpers import (
     sha256_text,
 )
 from common_lore_index.ops.ingestion._source_archive_scan import _hash_admitted_file
+from common_lore_index.ops.ingestion._source_archive_extraction import _CapturedArchiveFile, _capture_retained_file
 from common_lore_index.ops.ingestion.bulk_records import (
     BulkIncludedFile,
     BulkManifest,
@@ -32,6 +33,38 @@ from common_lore_index.ops.ingestion.bulk_records import (
     BulkSkippedFile,
     BulkSourceConfig,
 )
+from common_lore_index.ops.ingestion.source_common import SourcePolicyError
+
+
+def _capture_bulk_files(
+    config: BulkSourceConfig, manifest: BulkManifest, repository_root: Path, snapshot: Path,
+) -> dict[str, _CapturedArchiveFile]:
+    if any(type(record.byte_count) is not int or record.byte_count < 0 for record in manifest.included_files):
+        raise BulkPolicyError("invalid retained bulk file length")
+    if (
+        manifest.file_count_included > config.max_files
+        or sum(record.byte_count for record in manifest.included_files) > config.max_total_bytes
+        or any(record.byte_count > config.max_file_bytes for record in manifest.included_files)
+    ):
+        raise BulkPolicyError("retained bulk files exceed source policy")
+    ensure_contained(config.resolved_root, repository_root, "root_path")
+    source_root = config.resolved_root.relative_to(repository_root)
+    admitted: dict[str, BulkIncludedFile] = {}
+    for record in manifest.included_files:
+        path = Path(record.repository_path)
+        if not path.is_relative_to(source_root):
+            raise BulkPolicyError("retained bulk file escapes source root")
+        previous = admitted.get(record.repository_path)
+        if previous is not None and (previous.byte_count, previous.sha256) != (record.byte_count, record.sha256):
+            raise BulkPolicyError("conflicting retained bulk file references")
+        admitted[record.repository_path] = record
+    try:
+        return {
+            path: _capture_retained_file(repository_root, snapshot, path, record.byte_count, record.sha256, ordinal)
+            for ordinal, (path, record) in enumerate(admitted.items())
+        }
+    except SourcePolicyError:
+        raise BulkPolicyError("retained bulk file differs from its manifest") from None
 
 
 def build_bulk_manifest(

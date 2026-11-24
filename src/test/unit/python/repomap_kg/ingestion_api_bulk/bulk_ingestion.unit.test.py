@@ -2,6 +2,7 @@ import json
 import tempfile
 import unittest
 from collections.abc import Iterator, Mapping
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -18,6 +19,25 @@ from common_lore_index.extractors.languages.python import PythonModuleIndex
 
 
 class BulkIngestionUnitTests(unittest.TestCase):
+    def test_bulk_capture_checks_alias_digests_and_limits_before_opening_files(self) -> None:
+        from common_lore_index.ops.ingestion import _bulk_manifest
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "corpus"
+            corpus.mkdir()
+            (corpus / "fixture.md").write_text("# Example\n", encoding="utf-8")
+            config = load_bulk_source_config(self.write_bulk_config(root / "bulk.toml", corpus))
+            manifest = build_bulk_plan(config, repository_root=corpus)
+            (record,) = manifest.included_files
+            alternate = replace(record, relative_path="alias.md", sha256="0" * 64)
+            conflict = replace(manifest, included_files=(record, alternate))
+            with patch.object(_bulk_manifest, "_capture_retained_file", side_effect=AssertionError("file opened")):
+                with self.assertRaisesRegex(BulkPolicyError, "conflicting retained bulk file references"):
+                    bulk_observations_from_plan(config, conflict, repository_root=corpus)
+                with self.assertRaisesRegex(BulkPolicyError, "retained bulk files exceed source policy"):
+                    bulk_observations_from_plan(replace(config, max_file_bytes=1), manifest, repository_root=corpus)
+
     def test_bulk_markdown_resolves_links_without_cloning_the_anchor_inventory(self) -> None:
         class AnchorInventory(Mapping[str, frozenset[str]]):
             def __getitem__(self, path: str) -> frozenset[str]:

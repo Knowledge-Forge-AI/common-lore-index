@@ -76,29 +76,42 @@ def _capture_archive_contents(
     source_paths = {file.repository_path for file in manifest.included_files}
     if len(source_paths) != manifest.file_count:
         raise SourcePolicyError("duplicate retained archive file reference")
-    captured_files: dict[str, _CapturedArchiveFile] = {}
-    for ordinal, file in enumerate(manifest.included_files):
-        relative = Path(file.repository_path)
-        if not relative.parts or relative.is_absolute() or ".." in relative.parts or relative.as_posix() != file.repository_path:
-            raise SourcePolicyError("invalid retained archive file reference")
-        try:
-            source = _resolve_archive_artifact_path(repository_root, file.repository_path)
-            admitted = source.lstat()
-            executable = os.access(source, os.X_OK)
-            with open_source_body(
-                repository_root, file.repository_path,
-                expected_size=file.byte_length, expected_digest=file.sha256,
-                expected_executable=None,
-                expected_stat=admitted, allow_hardlinks=True,
-            ) as body:
-                with _open_snapshot_file(snapshot, relative, ordinal) as (captured_root, output):
-                    for chunk in body:
-                        if output.write(chunk) != len(chunk):
-                            raise OSError("incomplete archive snapshot write")
-        except (OSError, ValueError):
-            raise SourcePolicyError("retained archive file differs from its manifest") from None
-        captured_files[file.repository_path] = _CapturedArchiveFile(captured_root, executable)
-    return captured_files
+    return {
+        item.repository_path: _capture_retained_file(
+            repository_root, snapshot, item.repository_path, item.byte_length, item.sha256, ordinal,
+        )
+        for ordinal, item in enumerate(manifest.included_files)
+    }
+
+
+def _capture_retained_file(
+    repository_root: Path,
+    snapshot: Path,
+    repository_path: str,
+    byte_length: int,
+    digest: str,
+    ordinal: int,
+) -> _CapturedArchiveFile:
+    relative = Path(repository_path)
+    if not relative.parts or relative.is_absolute() or ".." in relative.parts or relative.as_posix() != repository_path:
+        raise SourcePolicyError("invalid retained archive file reference")
+    try:
+        source = _resolve_archive_artifact_path(repository_root, repository_path)
+        admitted = source.lstat()
+        executable = os.access(source, os.X_OK)
+        with open_source_body(
+            repository_root, repository_path,
+            expected_size=byte_length, expected_digest=digest,
+            expected_executable=None,
+            expected_stat=admitted, allow_hardlinks=True,
+        ) as body:
+            with _open_snapshot_file(snapshot, relative, ordinal) as (captured_root, output):
+                for chunk in body:
+                    if output.write(chunk) != len(chunk):
+                        raise OSError("incomplete archive snapshot write")
+    except (OSError, ValueError):
+        raise SourcePolicyError("retained archive file differs from its manifest") from None
+    return _CapturedArchiveFile(captured_root, executable)
 
 
 def _observations_for_archive_file(

@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -29,6 +30,38 @@ from repomap_test_support.source_ingestion_integration import (
 
 class Slice9BulkAndFeedSourcesIntegrationTests(unittest.TestCase):
     """Integration slice 9 tests covering bulk traversal, feed sources, and WARC parsing."""
+
+    def test_bulk_readback_captures_aliased_payload_once_and_keeps_route_order(self) -> None:
+        from common_lore_index.ops.ingestion import bulk
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            cfg = root / "bulk.toml"
+            cfg.write_bytes((bulk_fixture_root() / "mixed_corpus" / "bulk.toml").read_bytes())
+            content = root / "topic.md"
+            content.write_bytes(b"# Captured\n")
+            (root / "alias.md").symlink_to(content.name)
+            config = replace(load_bulk_source_config(cfg), follow_symlinks=True)
+            manifest = build_bulk_plan(config, repository_root=root)
+            self.assertEqual(
+                [record.relative_path for record in manifest.included_files if record.repository_path == "topic.md"],
+                ["alias.md", "topic.md"],
+            )
+            expected = bulk_observations_from_plan(config, manifest, repository_root=root)
+            self.assertEqual(sum(item.kind == "markdown.document" for item in expected), 2)
+            extract = bulk.observations_for_file_info
+
+            def revise_live_file(snapshot, file_info, **kwargs):
+                self.assertNotEqual(snapshot, root)
+                if file_info.path == "topic.md":
+                    content.write_bytes(b"# Modified\n")
+                return extract(snapshot, file_info, **kwargs)
+
+            with patch.object(bulk, "observations_for_file_info", side_effect=revise_live_file):
+                actual = bulk_observations_from_plan(config, manifest, repository_root=root)
+            self.assertEqual(actual, expected)
+            with self.assertRaisesRegex(BulkPolicyError, "retained bulk file differs from its manifest"):
+                bulk_observations_from_plan(config, manifest, repository_root=root)
 
     def test_bulk_plan_reuses_markdown_inventory_and_refuses_grown_file(self) -> None:
         from common_lore_index.ops.ingestion import _bulk_manifest
