@@ -305,6 +305,10 @@ def test_navigation_group_page_bounds_members_but_keeps_late_duplicate_counts(mo
 
     paths = ["docs/a.md", "docs/b.md", "docs/c.md", *(["docs/b.md"] * 650)]
     nodes = [{"id": number, "path": path, "kind": "doc.section"} for number, path in enumerate(paths)]
+    nodes.extend(
+        {"id": len(paths) + number, "path": "code/functions.py", "kind": "python.function"}
+        for number in range(12_000)
+    )
     scan = {"status": "ok", "scan": {}, "nodes": nodes}
     query = NavigationSearchQuery("needle", grouping="source_document", offset=1, limit=1, member_limit=2)
     monkeypatch.setattr(_navigation_groups, "_member", projected)
@@ -326,7 +330,7 @@ def test_navigation_group_page_bounds_members_but_keeps_late_duplicate_counts(mo
     assert peak - baseline < 1024 * 1024
 
 
-def test_missing_navigation_destination_takes_precedence_over_conflict():
+def test_missing_navigation_destination_takes_precedence_over_conflict(monkeypatch):
     base = {
         "path": "docs/a.md", "run_id": 9, "publication_relation": "accepted_run",
         "source_identity_status": "verified_vector",
@@ -335,7 +339,19 @@ def test_missing_navigation_destination_takes_precedence_over_conflict():
     }
     conflicting = {**base, "path": "docs/b.md"}
     missing = {**base, "source_identity_status": "withheld"}
-    assert _navigation_groups._identity([base, conflicting], ()) == (None, "conflicting_direct_identities")
-    assert _navigation_groups._identity([base, conflicting, missing], ()) == (
-        None, "missing_withheld_or_unbound_identity",
+    query = NavigationSearchQuery("needle", source_binding_id=BINDING, source_path_prefix="docs/")
+    assert _navigation_groups._scope_and_identity([base, conflicting], query, ()) == (
+        True, None, "conflicting_direct_identities",
     )
+    destination = _navigation_groups._destination
+    calls = []
+
+    def observe(location, markers):
+        calls.append(location)
+        return destination(location, markers)
+
+    monkeypatch.setattr(_navigation_groups, "_destination", observe)
+    assert _navigation_groups._scope_and_identity([base, conflicting, missing], query, ()) == (
+        True, None, "missing_withheld_or_unbound_identity",
+    )
+    assert calls == [base, conflicting, missing]

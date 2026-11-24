@@ -36,7 +36,8 @@ def test_scoped_grouped_navigation_over_guarded_sqlite_stdio(tmp_path: Path) -> 
                 tool(3, "repomap_navigation_search", {**args, "offset": 1}),
                 tool(4, "repomap_navigation_search", {**args, "scope": "code", "source_binding_id": BINDING,
                                                      "source_path_prefix": "src/pkg/"}),
-                tool(5, "repomap_search_nodes", {"graph_id": GRAPH, "query": "beacon", "limit": 1})]
+                tool(5, "repomap_search_nodes", {"graph_id": GRAPH, "query": "beacon", "limit": 1}),
+                tool(6, "repomap_navigation_search", {**args, "grouping": "none", "offset": 1})]
     response = harness.mcp(home, requests)
     assert response == harness.mcp(home, requests)
     first, second = structured(response, 2), structured(response, 3)
@@ -47,6 +48,9 @@ def test_scoped_grouped_navigation_over_guarded_sqlite_stdio(tmp_path: Path) -> 
     assert set(hint["raw_observation"]) == {"status", "ordinal", "kind"}
     assert structured(response, 4)["results"][0]["members"][0]["kind"].startswith("python.")
     assert structured(response, 5)["target"] == "nodes"
+    singleton = structured(response, 6)
+    assert singleton["result_count"] == 1 and singleton["page_end"] == 2
+    assert singleton["results"][0]["basis"] == "singleton"
     assert hashlib.sha256(database.read_bytes()).hexdigest() == digest
     assert harness.forbidden_events() == [] and harness.shim_invocations() == ""
 
