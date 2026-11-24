@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 import hashlib
 from typing import Any
@@ -10,7 +10,7 @@ from typing import Any
 from common_lore_index._utf8 import byte_length
 
 
-def _append_frame_parts(update: Callable[[bytes], None], parts: Sequence[str | bytes]) -> None:
+def _append_frame_parts(update: Callable[[bytes], None], parts: Iterable[str | bytes]) -> None:
     for part in parts:
         raw = part.encode("utf-8") if isinstance(part, str) else bytes(part)
         update(f"{len(raw)}:".encode("ascii"))
@@ -22,7 +22,12 @@ def frame_digest(prefix: str, parts: Sequence[str | bytes]) -> str:
     """Compute a length-prefixed SHA-256 digest (`<prefix>:<64hex>`) over ordered parts."""
     if not isinstance(prefix, str) or not prefix.strip():
         raise ValueError("prefix must be a non-empty string")
-    hasher = hashlib.sha256(f"cloe-frame-v1:{len(parts)}:".encode("ascii"))
+    return _framed_digest(prefix, len(parts), parts)
+
+
+def _framed_digest(prefix: str, part_count: int, parts: Iterable[str | bytes]) -> str:
+    """Hash an ordered stream with a caller-known exact part count."""
+    hasher = hashlib.sha256(f"cloe-frame-v1:{part_count}:".encode("ascii"))
     _append_frame_parts(hasher.update, parts)
     return f"{prefix}:{hasher.hexdigest()}"
 

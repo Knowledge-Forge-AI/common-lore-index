@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 import os
-from itertools import pairwise
+from itertools import chain, pairwise
 from pathlib import Path, PurePosixPath
 import stat
 
@@ -18,7 +18,7 @@ from common_lore_index.retrieval.lexical_policy import (
     LEXICAL_ALIAS_SPLIT_VERSION, LEXICAL_NORMALIZATION_FLAGS, LEXICAL_RANKING_FUNCTION,
     LEXICAL_REPRESENTATION_VERSION, LEXICAL_TEXT_CONFIG, LexicalGenerationPolicy, PublicationFence,
 )
-from common_lore_index.retrieval.projection_chunks import _iter_file_chunks, frame_digest
+from common_lore_index.retrieval.projection_chunks import _framed_digest, _iter_file_chunks, frame_digest
 from common_lore_index.retrieval.projection_policy import (
     ExclusionReason, ResolvedBindingPolicy, SUPPORTED_TEXT_FORMATS,
     _is_email_role_or_path, _is_feed_role_or_path, evaluate_artifact_pre_open,
@@ -375,14 +375,16 @@ def capture_lexical_generation_plan(
                 aggregate_input_bytes += appended[0]
                 aggregate_projected_bytes += appended[1]
                 projected_files_count += 1
-    doc_digests = tuple(f"{d.binding_id}:{d.source_relative_path}:{d.file_content_sha256}:{len(d.chunks)}" for d in documents)
-    omission_digests = tuple(f"{o.binding_id}:{o.source_relative_path or ''}:{o.reason_code}" for o in omissions)
-    lexical_generation_id = frame_digest("lexgen1", (
+    doc_digests = (f"{d.binding_id}:{d.source_relative_path}:{d.file_content_sha256}:{len(d.chunks)}" for d in documents)
+    omission_digests = (f"{o.binding_id}:{o.source_relative_path or ''}:{o.reason_code}" for o in omissions)
+    header = (
         LEXICAL_REPRESENTATION_VERSION, LEXICAL_TEXT_CONFIG, LEXICAL_RANKING_FUNCTION, str(LEXICAL_NORMALIZATION_FLAGS),
         LEXICAL_ALIAS_SPLIT_VERSION, lexical_policy.policy_digest, str(repository_id), str(fence.run_id),
         fence.publication_bundle_id, fence.snapshot_manifest_id, extraction_receipt_id, graph_candidate_id,
-        *doc_digests, *omission_digests,
-    ))
+    )
+    lexical_generation_id = _framed_digest(
+        "lexgen1", len(header) + len(documents) + len(omissions), chain(header, doc_digests, omission_digests),
+    )
     return LexicalCapturePlan(
         lexical_generation_id, repository_id, int(fence.run_id), fence.publication_bundle_id,
         fence.snapshot_manifest_id, extraction_receipt_id, graph_candidate_id, fence.snapshot_vector,

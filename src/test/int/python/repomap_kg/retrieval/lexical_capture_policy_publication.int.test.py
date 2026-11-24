@@ -7,6 +7,9 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+import pytest
+
+from common_lore_index.ops import lexical_publication
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.ops.lexical_publication import resolve_ops_graph
@@ -15,7 +18,9 @@ from common_lore_index.ops.lexical_service import (
     query_graph_lexical_generation,
 )
 from common_lore_index.ops.resource_view import ResourceObserver
+from common_lore_index.retrieval.lexical_capture import LexicalCapturePlan
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
+from common_lore_index.retrieval.projection_chunks import frame_digest
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
 from common_lore_index.retrieval.projection_policy import ExclusionReason
 from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, query_captured_text
@@ -76,9 +81,28 @@ def _companion_privacy_edit(text: str) -> str:
 
 
 def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Accepted bytes, strict decoding, and truncation remain queryable after roots vanish."""
+    capture = lexical_publication.capture_lexical_generation_plan
+    captures_checked = 0
+
+    def capture_with_reference_digest(**kwargs: Any) -> LexicalCapturePlan:
+        nonlocal captures_checked
+        plan = capture(**kwargs)
+        expected = frame_digest("lexgen1", (
+            plan.representation_version, plan.text_config_regconfig, plan.ranking_function,
+            str(plan.normalization_flags), plan.alias_split_rule_version, plan.policy_digest,
+            str(plan.repository_id), str(plan.run_id), plan.publication_bundle_id, plan.snapshot_manifest_id,
+            plan.extraction_receipt_id, plan.graph_candidate_id,
+            *(f"{d.binding_id}:{d.source_relative_path}:{d.file_content_sha256}:{len(d.chunks)}" for d in plan.documents),
+            *(f"{o.binding_id}:{o.source_relative_path or ''}:{o.reason_code}" for o in plan.omissions),
+        ))
+        assert plan.lexical_generation_id == expected
+        captures_checked += 1
+        return plan
+
+    monkeypatch.setattr(lexical_publication, "capture_lexical_generation_plan", capture_with_reference_digest)
     with temporary_postgres() as pg_db:
         home, working_copy, core_id, companion_id = _write_public_fixture(tmp_path, pg_db)
         alias_path = "generated/wide_alias.md"
@@ -98,6 +122,7 @@ def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion
         )
         assert built.result == "published"
         assert built.published is not None
+        assert captures_checked == 1
         assert built.published.projected_document_count > 0
         assert built.published.projected_chunk_count > 0
         omissions = {
@@ -329,6 +354,12 @@ def test_literal_projection_paging_reaches_match_across_chunk_continuation(tmp_p
     home = write_mixed_v1_sqlite_home(tmp_path / "sqlite-home", working_copy)
     state = publish_and_load_sqlite_corpus(home)
     projection = build_captured_text_projection(state.projection_inputs(), state.policy)
+    assert projection.projection_digest == frame_digest("sha256", (
+        projection.reference_version, projection.policy_digest, projection.publication_bundle_id,
+        projection.snapshot_manifest_id,
+        *(file.file_projection_id for file in projection.projected_files),
+        *(f"{file.binding_id}:{file.source_relative_path}:{file.reason.value}" for file in projection.excluded_files),
+    ))
     wide_note, = (record for record in projection.projected_files
                   if record.source_relative_path == "generated/long_line_notes.md")
     expected_note = (working_copy / "companion" / wide_note.source_relative_path).read_bytes()

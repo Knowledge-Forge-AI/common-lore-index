@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from itertools import chain
 from typing import Any
 
 from common_lore_index.artifacts._store_common import (
@@ -11,6 +12,7 @@ from common_lore_index.artifacts._store_common import (
 )
 from common_lore_index.artifacts.manifest import PortableSnapshotManifest
 from common_lore_index.retrieval.projection_chunks import (
+    _framed_digest,
     ProjectedChunk,
     build_file_chunks,
     frame_digest,
@@ -369,16 +371,11 @@ def build_captured_text_projection(
             )
         )
 
-    proj_digest = frame_digest(
-        "sha256",
-        (
-            PROJECTION_REFERENCE_VERSION,
-            policy_digest,
-            inputs.bundle.bundle_id,
-            inputs.manifest.manifest_id,
-            *(f.file_projection_id for f in projected_files),
-            *(f"{e.binding_id}:{e.source_relative_path}:{e.reason.value}" for e in excluded_files),
-        ),
+    header = (PROJECTION_REFERENCE_VERSION, policy_digest, inputs.bundle.bundle_id, inputs.manifest.manifest_id)
+    proj_digest = _framed_digest(
+        "sha256", len(header) + len(projected_files) + len(excluded_files),
+        chain(header, (f.file_projection_id for f in projected_files),
+              (f"{e.binding_id}:{e.source_relative_path}:{e.reason.value}" for e in excluded_files)),
     )
     return CapturedTextProjection(
         reference_version=PROJECTION_REFERENCE_VERSION,

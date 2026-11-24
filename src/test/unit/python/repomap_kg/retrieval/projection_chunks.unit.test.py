@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from common_lore_index.retrieval.projection_chunks import (
+    _framed_digest,
     build_file_chunks,
     frame_digest,
 )
@@ -161,3 +162,9 @@ def test_chunk_identifier_keeps_the_existing_framing_across_byte_splits() -> Non
             str(chunk.normalized_byte_start), str(chunk.normalized_byte_end), chunk.content_digest,
         )
         assert chunk.chunk_id == frame_digest("projchunk1", (*fixed, *coordinates))
+
+
+def test_streaming_frames_keep_exact_sequence_framing() -> None:
+    parts = ("", b"", "a:\x00", "β:🚀", b"\xff\n")
+    assert _framed_digest("fixture", len(parts), iter(parts)) == frame_digest("fixture", parts)
+    assert _framed_digest("fixture", 0, iter(())) == frame_digest("fixture", ())
