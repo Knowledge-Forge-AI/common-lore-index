@@ -2,20 +2,23 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from common_lore_index.extractors.documents.css_html_matching import (
     extract_css_selector_match_observations,
 )
 from common_lore_index.extractors.languages.python import PythonModuleIndex
-from common_lore_index.graph.discovery import classify_path, markdown_anchor_index
+from common_lore_index.graph.discovery import FileInfo, classify_path, markdown_anchor_index
 from common_lore_index.observations.raw import RawObservation
 from common_lore_index.ops.ingestion._source_archive_extraction import (
     _annotate_archive_observations,
     _archive_observation_metadata,
+    _capture_archive_contents,
     _observations_for_archive_file,
 )
 from common_lore_index.ops.ingestion._source_archive_records import (
@@ -195,29 +198,47 @@ def archive_observations_from_manifest(
     *,
     root_path: Path | str,
 ) -> tuple[RawObservation, ...]:
+    if not manifest.included_files:
+        return ()
     repository_root = Path(root_path).resolve()
-    file_infos = [
-        classify_path(repository_root, repository_root / item.repository_path)
-        for item in manifest.included_files
-    ]
-    file_infos = sorted(file_infos, key=lambda file_info: file_info.path)
-    module_index = PythonModuleIndex.from_python_paths(
-        (file_info.path for file_info in file_infos if file_info.language == "python"),
-        repository_root=repository_root,
-    )
-    repository_paths = frozenset(file_info.path for file_info in file_infos)
-    markdown_anchors = markdown_anchor_index(repository_root, file_infos)
-    observations: list[RawObservation] = []
-    for file_info in file_infos:
-        observations.extend(
-            _observations_for_archive_file(
-                repository_root,
-                file_info,
-                module_index=module_index,
-                repository_paths=repository_paths,
-                markdown_anchors=markdown_anchors,
+    with TemporaryDirectory(prefix="cloe-archive-readback-") as directory:
+        snapshot = Path(directory).resolve()
+        captured_files = _capture_archive_contents(repository_root, snapshot, config, manifest)
+        file_infos: list[FileInfo] = []
+        by_snapshot_root: dict[Path, list[FileInfo]] = defaultdict(list)
+        for item in sorted(manifest.included_files, key=lambda item: item.repository_path):
+            captured = captured_files[item.repository_path]
+            file_info = classify_path(
+                captured.root, captured.root / item.repository_path, captured_content_hash=item.sha256,
+                captured_executable=captured.executable,
             )
+            file_infos.append(file_info)
+            by_snapshot_root[captured.root].append(file_info)
+        captured_project = captured_files.get("pyproject.toml")
+        module_context_root = repository_root if captured_project is None else captured_project.root
+        module_index = PythonModuleIndex.from_python_paths(
+            (file_info.path for file_info in file_infos if file_info.language == "python"),
+            repository_root=module_context_root,
         )
+        repository_paths = frozenset(file_info.path for file_info in file_infos)
+        markdown_anchors = {
+            path: anchors
+            for captured_root, infos in by_snapshot_root.items()
+            for path, anchors in markdown_anchor_index(captured_root, infos).items()
+        }
+        observations: list[RawObservation] = []
+        for file_info in file_infos:
+            observations.extend(
+                _observations_for_archive_file(
+                    captured_files[file_info.path].root,
+                    file_info,
+                    module_index=module_index,
+                    repository_paths=repository_paths,
+                    markdown_anchors=markdown_anchors,
+                    python_context_root=module_context_root,
+                    source_identity_root=repository_root,
+                )
+            )
     observations.extend(extract_css_selector_match_observations(observations))
     return _annotate_archive_observations(observations, config, manifest)
 

@@ -125,12 +125,13 @@ def classify_path(
     profile: ProjectProfile | None = None,
     readers: ClassificationReaderHooks | None = None,
     captured_content_hash: str | None = None,
+    captured_executable: bool | None = None,
 ) -> FileInfo:
     """Classify a path, reusing a digest already verified for a private captured file."""
     repository_root = Path(root).resolve()
     file_path = Path(path).resolve()
     relative_path = file_path.relative_to(repository_root).as_posix()
-    executable = os.access(file_path, os.X_OK)
+    executable = os.access(file_path, os.X_OK) if captured_executable is None else captured_executable
     generated = is_generated(relative_path)
     if file_path.suffix == ".go":
         generated = generated or (

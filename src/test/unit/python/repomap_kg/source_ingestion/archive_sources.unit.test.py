@@ -1,3 +1,4 @@
+from dataclasses import replace
 import hashlib
 import json
 import tempfile
@@ -19,6 +20,34 @@ from common_lore_index.ops.ingestion.source import (
 
 
 class ArchiveSourceIngestionUnitTests(SourceIngestionUnitTestCase):
+    def test_archive_snapshot_isolates_collisions_without_renaming_files(self) -> None:
+        from common_lore_index.ops.ingestion._source_archive_extraction import _open_snapshot_file
+
+        with tempfile.TemporaryDirectory() as directory:
+            relative = Path("docs/fixture.md")
+            with _open_snapshot_file(Path(directory), relative, 0) as (one, original):
+                original.write(b"one")
+            with _open_snapshot_file(Path(directory), relative, 1) as (two, alias):
+                alias.write(b"two")
+            self.assertNotEqual(one, two)
+            self.assertEqual((one / relative).read_bytes(), b"one")
+            self.assertEqual((two / relative).read_bytes(), b"two")
+
+    def test_retained_archive_rejects_stale_bytes_and_reduced_readback_budget(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "reports" / "latest"
+            archive.mkdir(parents=True)
+            item = archive / "fixture.md"
+            item.write_bytes(b"# Old\n")
+            config = load_archive_source_config(self.write_archive_config(root / "source.toml"))
+            manifest = build_archive_manifest(config, root_path=root, clock=self.fixed_clock)
+            with self.assertRaisesRegex(SourcePolicyError, "retained archive files exceed source policy"):
+                archive_observations_from_manifest(replace(config, max_artifact_bytes=1), manifest, root_path=root)
+            item.write_bytes(b"# New\n")
+            with self.assertRaisesRegex(SourcePolicyError, "retained archive file differs from its manifest"):
+                archive_observations_from_manifest(config, manifest, root_path=root)
+
     def test_archive_scan_refuses_replacement_of_admitted_file_at_same_size(self) -> None:
         from common_lore_index.ops.ingestion import _source_archive_scan
 

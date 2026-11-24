@@ -113,6 +113,7 @@ def extract_python_file_observations_from_file(
     relative_path: str,
     *,
     module_index: PythonModuleIndex,
+    module_context_root: Path | None = None,
 ) -> tuple[RawObservation, ...]:
     content = _read_utf8(repository_root, relative_path)
     if content is None:
@@ -121,7 +122,7 @@ def extract_python_file_observations_from_file(
         relative_path,
         content,
         module_index=module_index,
-        repository_root=repository_root,
+        repository_root=repository_root if module_context_root is None else module_context_root,
     )
 
 
@@ -131,6 +132,7 @@ def extract_nix_file_observations_from_file(
     *,
     flake_ref: str | None = None,
     include_input_references: bool = False,
+    source_identity_root: Path | None = None,
 ) -> tuple[RawObservation, ...]:
     content = _read_utf8(repository_root, relative_path)
     if content is None:
@@ -138,7 +140,7 @@ def extract_nix_file_observations_from_file(
     return extract_nix_file_observations(
         relative_path,
         content,
-        flake_ref=flake_ref or repository_root.name,
+        flake_ref=flake_ref or (repository_root if source_identity_root is None else source_identity_root).name,
         include_input_references=include_input_references,
     )
 

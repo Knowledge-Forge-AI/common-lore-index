@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from dataclasses import replace
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
+from dataclasses import dataclass, replace
+import os
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
+from common_lore_index.artifacts._source_sealing_io import open_source_body
 from common_lore_index.extractors.languages.python import PythonModuleIndex
 from common_lore_index.graph.discovery import (
     FileInfo,
@@ -32,6 +35,70 @@ from common_lore_index.ops.ingestion._source_archive_records import (
     ArchiveManifest,
     ArchiveSourceConfig,
 )
+from common_lore_index.ops.ingestion._source_archive_scan import _resolve_archive_artifact_path
+from common_lore_index.ops.ingestion.source_common import SourcePolicyError
+
+
+@dataclass(frozen=True)
+class _CapturedArchiveFile:
+    root: Path
+    executable: bool
+
+
+@contextmanager
+def _open_snapshot_file(root: Path, relative: Path, ordinal: int) -> Iterator[tuple[Path, BinaryIO]]:
+    captured_root = root / "common"
+    destination = captured_root / relative
+    try:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        output = destination.open("xb")
+    except (FileExistsError, NotADirectoryError, IsADirectoryError):
+        # The temporary volume may normalize case or Unicode differently.
+        # Isolate this path while keeping its original repository-relative name.
+        captured_root = root / "aliases" / str(ordinal)
+        destination = captured_root / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        output = destination.open("xb")
+    with output:
+        yield captured_root, output
+
+
+def _capture_archive_contents(
+    repository_root: Path,
+    snapshot: Path,
+    config: ArchiveSourceConfig,
+    manifest: ArchiveManifest,
+) -> dict[str, _CapturedArchiveFile]:
+    if any(type(file.byte_length) is not int or file.byte_length < 0 for file in manifest.included_files):
+        raise SourcePolicyError("invalid retained archive file length")
+    if manifest.file_count > config.max_file_count or manifest.total_byte_count > config.max_artifact_bytes:
+        raise SourcePolicyError("retained archive files exceed source policy")
+    source_paths = {file.repository_path for file in manifest.included_files}
+    if len(source_paths) != manifest.file_count:
+        raise SourcePolicyError("duplicate retained archive file reference")
+    captured_files: dict[str, _CapturedArchiveFile] = {}
+    for ordinal, file in enumerate(manifest.included_files):
+        relative = Path(file.repository_path)
+        if not relative.parts or relative.is_absolute() or ".." in relative.parts or relative.as_posix() != file.repository_path:
+            raise SourcePolicyError("invalid retained archive file reference")
+        try:
+            source = _resolve_archive_artifact_path(repository_root, file.repository_path)
+            admitted = source.lstat()
+            executable = os.access(source, os.X_OK)
+            with open_source_body(
+                repository_root, file.repository_path,
+                expected_size=file.byte_length, expected_digest=file.sha256,
+                expected_executable=None,
+                expected_stat=admitted, allow_hardlinks=True,
+            ) as body:
+                with _open_snapshot_file(snapshot, relative, ordinal) as (captured_root, output):
+                    for chunk in body:
+                        if output.write(chunk) != len(chunk):
+                            raise OSError("incomplete archive snapshot write")
+        except (OSError, ValueError):
+            raise SourcePolicyError("retained archive file differs from its manifest") from None
+        captured_files[file.repository_path] = _CapturedArchiveFile(captured_root, executable)
+    return captured_files
 
 
 def _observations_for_archive_file(
@@ -41,6 +108,8 @@ def _observations_for_archive_file(
     module_index: PythonModuleIndex,
     repository_paths: frozenset[str],
     markdown_anchors: Mapping[str, set[str] | frozenset[str]],
+    python_context_root: Path | None = None,
+    source_identity_root: Path | None = None,
 ) -> tuple[RawObservation, ...]:
     observations = [file_info.to_observation()]
     if file_info.language == "markdown":
@@ -80,11 +149,14 @@ def _observations_for_archive_file(
                 repository_root,
                 file_info.path,
                 module_index=module_index,
+                module_context_root=python_context_root,
             )
         )
     if file_info.language == "nix":
         observations.extend(
-            extract_nix_file_observations_from_file(repository_root, file_info.path)
+            extract_nix_file_observations_from_file(
+                repository_root, file_info.path, source_identity_root=source_identity_root,
+            )
         )
     if file_info.language == "powershell":
         observations.extend(

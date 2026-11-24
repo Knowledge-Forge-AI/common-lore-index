@@ -22,9 +22,9 @@ class SourceUnsealableError(ValueError):
     """A selected source path cannot be copied as a safe regular file."""
 
 
-def _signature(details: os.stat_result) -> tuple[int, int, int, int, int, int]:
+def _signature(details: os.stat_result, *, check_mode: bool = True) -> tuple[int, int, int, int, int, int]:
     return (
-        details.st_mode,
+        details.st_mode if check_mode else stat.S_IFMT(details.st_mode),
         details.st_size,
         details.st_mtime_ns,
         details.st_ctime_ns,
@@ -58,8 +58,10 @@ def _os_open(
     return os.open(path, flags, dir_fd=dir_fd)
 
 
-def _validate_regular(details: os.stat_result) -> None:
-    if not stat.S_ISREG(details.st_mode) or details.st_nlink != 1:
+def _validate_regular(details: os.stat_result, *, allow_hardlinks: bool = False) -> None:
+    if not stat.S_ISREG(details.st_mode) or (
+        details.st_nlink < 1 or (not allow_hardlinks and details.st_nlink != 1)
+    ):
         raise SourceUnsealableError("source inventory is not sealable")
 
 
@@ -69,7 +71,7 @@ def _validate_directory(details: os.stat_result) -> None:
 
 
 def _open_anchored(
-    root: Path, parts: tuple[str, ...], meter: SealingMeter | None = None
+    root: Path, parts: tuple[str, ...], meter: SealingMeter | None = None, *, allow_hardlinks: bool = False,
 ) -> tuple[int, os.stat_result, Callable[[], bool] | None]:
     directory = _os_open(meter, root, _flags(directory=True))
     try:
@@ -94,7 +96,7 @@ def _open_anchored(
             pass
     try:
         opened = os.fstat(descriptor)
-        _validate_regular(opened)
+        _validate_regular(opened, allow_hardlinks=allow_hardlinks)
     except BaseException:
         os.close(descriptor)
         raise
@@ -102,7 +104,12 @@ def _open_anchored(
 
 
 def _open_fallback(
-    root: Path, parts: tuple[str, ...], meter: SealingMeter | None = None
+    root: Path,
+    parts: tuple[str, ...],
+    meter: SealingMeter | None = None,
+    *,
+    allow_hardlinks: bool = False,
+    check_path_mode: bool = True,
 ) -> tuple[int, os.stat_result, Callable[[], bool]]:
     parent = root
     for component in parts[:-1]:
@@ -116,7 +123,7 @@ def _open_fallback(
     before = candidate.lstat()
     if candidate.is_symlink():
         raise SourceUnsealableError("source inventory is not sealable")
-    _validate_regular(before)
+    _validate_regular(before, allow_hardlinks=allow_hardlinks)
     try:
         resolved = candidate.resolve(strict=True)
         if not resolved.is_relative_to(root):
@@ -132,9 +139,9 @@ def _open_fallback(
         raise
     try:
         opened = os.fstat(descriptor)
-        if _signature(before) != _signature(opened):
+        if _signature(before, check_mode=check_path_mode) != _signature(opened, check_mode=check_path_mode):
             raise ValueError("source changed while sealing")
-        _validate_regular(opened)
+        _validate_regular(opened, allow_hardlinks=allow_hardlinks)
     except BaseException:
         os.close(descriptor)
         raise
@@ -156,15 +163,20 @@ def _open_fallback(
 
 
 def _open_source(
-    root: Path, relative_path: str, meter: SealingMeter | None = None
+    root: Path,
+    relative_path: str,
+    meter: SealingMeter | None = None,
+    *,
+    allow_hardlinks: bool = False,
+    check_path_mode: bool = True,
 ) -> tuple[int, os.stat_result, Callable[[], bool] | None]:
     parts = tuple(relative_path.split("/"))
     if not parts or any(not part or part in {".", ".."} for part in parts):
         raise SourceUnsealableError("source inventory is not sealable")
     metered = () if meter is None else (meter,)
     if _supports_dir_fd():
-        return _open_anchored(root, parts, *metered)
-    return _open_fallback(root, parts, *metered)
+        return _open_anchored(root, parts, *metered, allow_hardlinks=allow_hardlinks)
+    return _open_fallback(root, parts, *metered, allow_hardlinks=allow_hardlinks, check_path_mode=check_path_mode)
 
 
 class _SourceBody(Iterator[bytes]):
@@ -175,7 +187,7 @@ class _SourceBody(Iterator[bytes]):
         *,
         expected_size: int,
         expected_digest: str,
-        expected_executable: bool,
+        expected_executable: bool | None,
         identity_check: Callable[[], bool] | None = None,
         meter: SealingMeter | None = None,
     ) -> None:
@@ -184,12 +196,13 @@ class _SourceBody(Iterator[bytes]):
         self._opened = opened
         self._expected_size = expected_size
         self._expected_digest = expected_digest
-        self._expected_executable = expected_executable
         self._identity_check = identity_check
         self._digest = hashlib.sha256()
         self._size = 0
         self.complete = False
-        if opened.st_size != expected_size or bool(opened.st_mode & 0o111) != expected_executable:
+        if opened.st_size != expected_size or (
+            expected_executable is not None and bool(opened.st_mode & 0o111) != expected_executable
+        ):
             raise ValueError("source changed while sealing")
 
     def __iter__(self) -> "_SourceBody":
@@ -224,10 +237,9 @@ class _SourceBody(Iterator[bytes]):
         if (
             _signature(self._opened) != _signature(after)
             or not stat.S_ISREG(after.st_mode)
-            or after.st_nlink != 1
+            or after.st_nlink != self._opened.st_nlink
             or self._size != self._expected_size
             or self._digest.hexdigest() != self._expected_digest
-            or bool(after.st_mode & 0o111) != self._expected_executable
             or (
                 self._identity_check is not None
                 and not self._identity_check()
@@ -255,15 +267,23 @@ def open_source_body(
     *,
     expected_size: int,
     expected_digest: str,
-    expected_executable: bool,
+    expected_executable: bool | None,
     io_meter: SealingMeter | None = None,
+    expected_stat: os.stat_result | None = None,
+    allow_hardlinks: bool = False,
 ) -> Iterator[_SourceBody]:
-    if io_meter is None:
-        descriptor, opened, identity_check = _open_source(root, relative_path)
-    else:
+    if io_meter is not None:
         io_meter.require_read_headroom(expected_size)  # A5: refuse before opening
-        descriptor, opened, identity_check = _open_source(root, relative_path, io_meter)
+    check_path_mode = expected_executable is not None
+    descriptor, opened, identity_check = _open_source(
+        root, relative_path, io_meter, allow_hardlinks=allow_hardlinks, check_path_mode=check_path_mode,
+    )
     try:
+        # Some platforms synthesize path permissions from filename extensions.
+        if expected_stat is not None and (
+            _signature(expected_stat, check_mode=check_path_mode) != _signature(opened, check_mode=check_path_mode)
+        ):
+            raise ValueError("source changed while sealing")
         body = _SourceBody(
             descriptor,
             opened,
