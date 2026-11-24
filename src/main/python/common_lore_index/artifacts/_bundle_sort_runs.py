@@ -9,7 +9,21 @@ import tempfile
 from typing import BinaryIO, Literal
 
 from common_lore_index.artifacts._bundle_cancellation import closing_bundle_resource
+from common_lore_index.artifacts.bundle import MAX_BUNDLE_LINE_BYTES
 from common_lore_index.storage._external_row_sort_helpers import consolidate_run_tail
+
+
+def _spill_lines(handle: BinaryIO, expected_bytes: int) -> Iterator[bytes]:
+    remaining = expected_bytes
+    while remaining:
+        limit = min(remaining, MAX_BUNDLE_LINE_BYTES)
+        line = handle.readline(limit + 1)
+        if len(line) > limit or not line.endswith(b"\n"):
+            raise ValueError("publication bundle spill framing is invalid")
+        remaining -= len(line)
+        yield line
+    if handle.read(1):
+        raise ValueError("publication bundle spill extent is invalid")
 
 
 class BundleSortRuns:
@@ -44,7 +58,8 @@ class BundleSortRuns:
         with closing_bundle_resource(handle):
             for line in lines:
                 self._checkpoint()
-                handle.write(line)
+                if handle.write(line) != len(line):
+                    raise OSError("publication bundle spill write was incomplete")
                 byte_count += len(line)
             handle.flush()
         self._owned[path] = byte_count
@@ -66,12 +81,12 @@ class BundleSortRuns:
     def _merged_lines(self, paths: Sequence[Path]) -> Iterator[bytes]:
         stack = ExitStack()
         with closing_bundle_resource(stack):
-            opened: list[BinaryIO] = []
+            opened: list[Iterator[bytes]] = []
             for path in paths:
                 self._checkpoint()
                 handle = self._opener(path, "rb")
                 stack.enter_context(closing_bundle_resource(handle))
-                opened.append(handle)
+                opened.append(_spill_lines(handle, self._owned[path]))
             for line in heapq.merge(*opened):
                 self._checkpoint()
                 yield line

@@ -44,6 +44,8 @@ class FaultingOutput:
         return self.raw.name
 
     def write(self, data: bytes) -> int:
+        if self.failure == "short":
+            return self.raw.write(data[:-1])
         result = self.raw.write(data)
         if self.failure == "write":
             raise self.error
@@ -62,7 +64,7 @@ class FaultingOutput:
             raise self.error
 
 
-@pytest.mark.parametrize("failure", ["write", "flush", "close", "cancel"])
+@pytest.mark.parametrize("failure", ["write", "short", "flush", "close", "cancel"])
 def test_partial_merge_output_failure_closes_every_handle_and_stops_input(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str,
 ) -> None:
@@ -98,7 +100,9 @@ def test_partial_merge_output_failure_closes_every_handle_and_stops_input(
     with BoundedExternalRowSorter(max_buffer_bytes=1, spool_dir=tmp_path, cancel_event=event) as sorter:
         with pytest.raises(BundleEncodingCancelled if failure == "cancel" else OSError) as caught:
             tuple(sorter.sort_family_records("files", rows()))
-        if failure != "cancel":
+        if failure == "short":
+            assert str(caught.value) == "publication bundle spill write was incomplete"
+        elif failure != "cancel":
             assert caught.value is primary
         assert not _run_files(sorter)
     assert consumed == [0, 1, 2]
@@ -118,11 +122,8 @@ def test_merge_read_failure_closes_partial_inputs_and_output(
         def __init__(self, raw: BinaryIO) -> None:
             self.raw = raw
 
-        def __iter__(self):
-            return self
-
-        def __next__(self):
-            next(self.raw)
+        def readline(self, limit: int) -> bytes:
+            self.raw.readline(limit)
             raise primary
 
         def close(self) -> None:
@@ -247,4 +248,28 @@ def test_final_bundle_merge_rewrites_only_the_lightest_runs(
         assert witness.peak_inputs == 4 and witness.all_closed
     finally:
         runs.close()
+    assert not tuple(tmp_path.iterdir())
+
+
+
+@pytest.mark.parametrize("corruption, message", [("truncate", "framing"), ("append", "extent")])
+def test_merge_refuses_run_changes_and_reclaims_its_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, corruption: str, message: str,
+) -> None:
+    handles: list[BinaryIO] = []
+
+    def open_run(path: Path, mode: Literal["rb"]) -> BinaryIO:
+        if not handles:
+            original = path.read_bytes()
+            path.write_bytes(original[:-1] if corruption == "truncate" else original + b"\n")
+        handle = builtins.open(path, mode)
+        handles.append(handle)
+        return handle
+
+    monkeypatch.setattr(sorter_module, "open", open_run, raising=False)
+    with BoundedExternalRowSorter(max_buffer_bytes=1, spool_dir=tmp_path) as sorter:
+        with pytest.raises(ValueError, match=f"publication bundle spill {message} is invalid"):
+            tuple(sorter.sort_family_records("files", [{"value": "alpha"}, {"value": "beta"}]))
+        assert not _run_files(sorter)
+    assert handles and all(handle.closed for handle in handles)
     assert not tuple(tmp_path.iterdir())

@@ -321,8 +321,10 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
         encoder = StreamingBundleEncoder(
             **_meta(), privacy=PrivacyClassification.PUBLIC,
             row_stage_contract="stage-unassigned-v1", family_rows=cast(Any, families),
+            max_sorter_buffer_bytes=512 * 1024,
         )
         self.assertEqual(b"".join(encoder.stream_chunks(chunk_size=4096)), raw)
+        self.assertGreater(encoder.spill_run_count, 0)
         self.assertEqual(PublicationBundle.from_bytes(raw), bundle)
         self.assertEqual(bundle.bundle_id, prefixed_digest("bundle1:", b"repomap-publication-bundle-v1", raw))
         receipt, _, _ = _make_receipt(bundle, InMemoryArtifactStore())

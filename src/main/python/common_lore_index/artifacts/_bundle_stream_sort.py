@@ -67,7 +67,8 @@ class BoundedExternalRowSorter:
                 except StopIteration:
                     break
                 self._check_cancelled()
-                line = canonical_json({"family": family, "frame": "record", "record": dict(row)})
+                record = row if type(row) is dict else dict(row)
+                line = canonical_json({"family": family, "frame": "record", "record": record})
                 if len(line) > MAX_BUNDLE_LINE_BYTES:
                     raise ValueError("publication bundle line bounds exceeded")
                 records += 1
@@ -98,14 +99,22 @@ class BoundedExternalRowSorter:
         try:
             buffer: list[bytes] = []
             buffer_bytes = 0
+
+            def spill_buffer() -> None:
+                nonlocal buffer_bytes
+                buffer.sort()
+                runs.spill(buffer, family)
+                buffer.clear()
+                buffer_bytes = 0
+
             for line in lines:
+                line_bytes = len(line)
+                if buffer and buffer_bytes + line_bytes > self._max_buffer_bytes:
+                    spill_buffer()
                 buffer.append(line)
-                buffer_bytes += len(line)
+                buffer_bytes += line_bytes
                 if buffer_bytes >= self._max_buffer_bytes:
-                    buffer.sort()
-                    runs.spill(buffer, family)
-                    buffer.clear()
-                    buffer_bytes = 0
+                    spill_buffer()
             buffer.sort()
             if not runs.has_runs:
                 for line in buffer:
