@@ -213,6 +213,24 @@ def test_checksum_v2_preserves_receipt_for_dict_and_mapping_rows() -> None:
     )) == expected
 
 
+def test_checksum_v2_preserves_canonical_bytes_across_wide_ascii_encoded_rows() -> None:
+    row = {"stable_key": "fixture:wide", "text": '"\\\n\tá😀\x00' * 9000}
+    assert astuple(checksum_family((row,), identity_fields=("stable_key",))) == (
+        1, 288145,
+        "0bf40d115f0ed304e4cca763036f3ba587d03c8d8ed0a7cae78fc40aed9aa8e5",
+        "be29974b03f69fa130de2381957aea989d23e5de9903dbc45820e41d6b7a9d0d",
+    )
+
+
+def test_wide_checksum_handles_deeply_nested_rows_without_encoder_recursion() -> None:
+    value: object = "fixture" * 2500
+    for _ in range(375):
+        value = {"child": value}
+    receipt = checksum_family(({"stable_key": "fixture:deep", "value": value},), identity_fields=("stable_key",))
+    assert receipt.row_count == 1
+    assert receipt.normalized_byte_count > 17500
+
+
 def test_checksum_rejects_missing_identity_field_without_exposing_row_values() -> None:
     with pytest.raises(ValueError) as caught:
         checksum_family(({"payload": "private"},), identity_fields=("stable_key",))

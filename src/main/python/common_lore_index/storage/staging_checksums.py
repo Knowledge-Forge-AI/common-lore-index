@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 import hashlib
 import json
@@ -21,6 +21,11 @@ _SUM_MODULUS = 1 << 256
 _PAYLOAD_HEAD = b'{"identity":'
 _PAYLOAD_MIDDLE = b',"payload":'
 _PAYLOAD_END = b"}"
+_ROW_ENCODING_CHUNK = 64 * 1024
+_WIDE_TEXT_CHARACTERS = 16 * 1024
+_CHECKSUM_JSON = json.JSONEncoder(
+    ensure_ascii=True, allow_nan=False, separators=(",", ":"), sort_keys=True,
+)
 
 
 def _row_digest_value(prefix: bytes, *parts: bytes) -> int:
@@ -57,6 +62,11 @@ class FamilyChecksum:
         return self
 
 
+@dataclass(slots=True)
+class _ChecksumShape:
+    wide_text: bool = False
+
+
 class _FamilyChecksumAccumulator:
     """Accumulate one order-independent checksum-v2 family receipt."""
 
@@ -80,19 +90,32 @@ class _FamilyChecksumAccumulator:
         if any(name not in row for name in self._identity_names):
             raise ValueError("checksum identity field is missing")
         identity = {name: row[name] for name in self._identity_names}
-        encoded_identity = _canonical_json(_typed_value(identity))
-        encoded_row = _canonical_json(_typed_value(row if type(row) is dict else dict(row)))
-        payload_parts = (
-            _PAYLOAD_HEAD, encoded_identity, _PAYLOAD_MIDDLE, encoded_row, _PAYLOAD_END,
-        )
+        encoded_identity = _canonical_json(_typed_value(identity)).encode("ascii")
+        shape = _ChecksumShape()
+        typed_row = _typed_value(row if type(row) is dict else dict(row), shape)
+        row_parts = _iter_tagged_json(typed_row) if shape.wide_text else (_canonical_json(typed_row),)
+        payload = hashlib.sha256(_ROW_PAYLOAD_PREFIX)
+        payload.update(_PAYLOAD_HEAD)
+        payload.update(encoded_identity)
+        payload.update(_PAYLOAD_MIDDLE)
+        row_length = 0
+        for part in row_parts:
+            row_length += len(part)
+            for offset in range(0, len(part), _ROW_ENCODING_CHUNK):
+                payload.update(part[offset:offset + _ROW_ENCODING_CHUNK].encode("ascii"))
+        payload.update(_PAYLOAD_END)
         self._key_sum = (
             self._key_sum + _row_digest_value(_ROW_KEY_PREFIX, encoded_identity)
         ) % _SUM_MODULUS
         self._payload_sum = (
-            self._payload_sum + _row_digest_value(_ROW_PAYLOAD_PREFIX, *payload_parts)
+            self._payload_sum + int.from_bytes(payload.digest(), "big")
         ) % _SUM_MODULUS
         self._row_count += 1
-        self._normalized_byte_count += sum(map(len, payload_parts)) + 1
+        # ensure_ascii makes encoded row length equal to JSON text length.
+        self._normalized_byte_count += (
+            len(_PAYLOAD_HEAD) + len(encoded_identity) + len(_PAYLOAD_MIDDLE)
+            + row_length + len(_PAYLOAD_END) + 1
+        )
 
     def finish(self) -> FamilyChecksum:
         """Finalize the checksum state without changing its contents."""
@@ -130,7 +153,7 @@ def checksum_family(
     return accumulator.finish()
 
 
-def _typed_value(value: Any) -> object:
+def _typed_value(value: Any, shape: _ChecksumShape | None = None) -> object:
     if value is None:
         return ["null"]
     if isinstance(value, bool):
@@ -142,27 +165,55 @@ def _typed_value(value: Any) -> object:
             raise ValueError("unsupported checksum value")
         return ["float", repr(value)]
     if isinstance(value, str):
+        value = str.__str__(value)
+        if shape is not None and len(value) >= _WIDE_TEXT_CHARACTERS:
+            shape.wide_text = True
         return ["str", value]
     if isinstance(value, Mapping):
-        if any(not isinstance(key, str) for key in value):
-            raise ValueError("unsupported checksum value")
+        for key in value:
+            if not isinstance(key, str):
+                raise ValueError("unsupported checksum value")
+            if shape is not None and len(key) >= _WIDE_TEXT_CHARACTERS:
+                shape.wide_text = True
         return [
             "object",
-            [[key, _typed_value(value[key])] for key in sorted(value)],
+            [[key, _typed_value(value[key], shape)] for key in sorted(value)],
         ]
     if isinstance(value, (list, tuple)):
-        return ["list", [_typed_value(item) for item in value]]
+        return ["list", [_typed_value(item, shape) for item in value]]
     raise ValueError("unsupported checksum value")
 
 
-def _canonical_json(value: object) -> bytes:
+def _canonical_json(value: object) -> str:
     try:
-        return json.dumps(
-            value,
-            ensure_ascii=True,
-            allow_nan=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
+        return _CHECKSUM_JSON.encode(value)
     except (TypeError, ValueError) as error:
         raise ValueError("unsupported checksum value") from error
+
+
+def _iter_tagged_json(value: object) -> Iterator[str]:
+    """Encode the typed array representation without building wide escaped strings."""
+    pending: list[Iterator[tuple[int, object]]] = []
+    while True:
+        if isinstance(value, list):
+            yield "["
+            pending.append(enumerate(value))
+        elif isinstance(value, str) and len(value) >= _WIDE_TEXT_CHARACTERS:
+            text = str.__str__(value)
+            yield '"'
+            for offset in range(0, len(text), _WIDE_TEXT_CHARACTERS):
+                yield _canonical_json(text[offset:offset + _WIDE_TEXT_CHARACTERS])[1:-1]
+            yield '"'
+        else:
+            yield _canonical_json(value)
+        while pending:
+            child = next(pending[-1], None)
+            if child is not None:
+                index, value = child
+                if index:
+                    yield ","
+                break
+            pending.pop()
+            yield "]"
+        else:
+            return

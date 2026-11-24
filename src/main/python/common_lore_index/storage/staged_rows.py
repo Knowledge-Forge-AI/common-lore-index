@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -120,6 +120,8 @@ def build_staged_rows(
             raise StorageSchemaError("Rust pilot witness is not live")
         if type(observations) is not tuple or observations is not witnessed.observations:
             raise StorageSchemaError("Rust pilot observation identity mismatch")
+    if isinstance(observations, Iterator) and iter(observations) is observations:
+        raise StorageSchemaError("staged observations must support replay")
     file_rows = file_rows_from_observations(
         _measured_observation_replay(
             observations,
