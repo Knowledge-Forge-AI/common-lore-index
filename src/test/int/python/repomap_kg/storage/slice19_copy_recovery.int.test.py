@@ -20,6 +20,7 @@ from common_lore_index.storage.staged_rows import PreparedStageRows
 from common_lore_index.storage.staged_validation import validate_stage
 from common_lore_index.storage.staging_copy import CopyContractError, STAGING_COPY_TABLES, copy_stage_rows
 from common_lore_index.storage.staging_family_contracts import STAGING_FAMILY_DESCRIPTORS
+from common_lore_index.storage.staging_observability import StagingMeasurements
 from repomap_test_support.canonical_merge_reference import (
     copy_diagnostic_fixture,
     create_repository_run_stage,
@@ -170,9 +171,15 @@ def test_completeness_explain_matches_ordinary_validation(tmp_path: Path) -> Non
 
             with connection.transaction():
                 connection.execute("SET TRANSACTION READ ONLY")
-                validate_stage(ExplainedValidation(), stage, expected_counts)
-                validate_stage(connection, stage, expected_counts)
+                validation = ExplainedValidation()
+                validate_stage(validation, stage, expected_counts, staging_measurements=StagingMeasurements(lambda _event: None))
+                validate_stage(validation, stage, expected_counts)
 
+            batch_sql, batch_args, batch_measurement = observed.pop()
+            assert batch_sql.count("SELECT count(*)") == len(expected_counts)
+            assert batch_args == (stage,) * len(expected_counts)
+            assert batch_measurement["statement_root"]["WAL Bytes"] == 0
+            assert batch_measurement["statement_root"]["Temp Written Blocks"] == 0
             families = {}
             for (family, descriptor), (statement, arguments, measurement) in zip(
                 STAGING_FAMILY_DESCRIPTORS.items(), observed, strict=True,

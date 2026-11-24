@@ -109,13 +109,17 @@ def _stage_row(
     proposal_ordinal: int,
     payload: Mapping[str, object],
 ) -> dict[str, object]:
-    values = dict(payload)
-    if descriptor.technical_ordinal not in values:
-        values = {descriptor.technical_ordinal: proposal_ordinal, **values}
-    row = {"stage_id": stage_id, **values}
-    if set(row) != set(descriptor.copy_columns):
+    ordinal = descriptor.technical_ordinal
+    generated = ordinal not in payload
+    if "stage_id" in payload or len(payload) != len(descriptor.copy_columns) - 1 - int(generated):
         raise StorageSchemaError("staged family row shape is invalid")
-    return {column: row[column] for column in descriptor.copy_columns}
+    row: dict[str, object] = {"stage_id": stage_id}
+    try:
+        for column in descriptor.copy_columns[1:]:
+            row[column] = proposal_ordinal if generated and column == ordinal else payload[column]
+    except KeyError:
+        raise StorageSchemaError("staged family row shape is invalid") from None
+    return row
 
 
 def _file_row(row: FileRow) -> dict[str, object]:

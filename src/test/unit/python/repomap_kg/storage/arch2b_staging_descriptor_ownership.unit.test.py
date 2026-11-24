@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import inspect
 
+import pytest
+
 from common_lore_index.storage import (
     publication_fencing,
     staged_rows,
@@ -10,6 +12,7 @@ from common_lore_index.storage import (
     staging_copy,
 )
 from common_lore_index.storage.staging import STAGING_FAMILIES
+from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.staging_checksums import checksum_family
 from common_lore_index.storage.staging_family_catalog import (
     family_privacy_classifications,
@@ -60,6 +63,14 @@ def test_arch2b_generic_row_adaptation_uses_explicit_descriptor_ordinal() -> Non
     assert tuple(raw_row) == raw.copy_columns
     assert raw_row["source_ordinal"] == 9
     assert "family_ordinal" not in raw_row
+
+
+def test_row_adaptation_refuses_payload_stage_and_unknown_columns() -> None:
+    descriptor = STAGING_FAMILY_DESCRIPTORS["files"]
+    payload: dict[str, object] = {column: None for column in descriptor.copy_columns[2:]}
+    for invalid in (dict(payload, stage_id="foreign-stage"), {k: v for k, v in payload.items() if k != "path"} | {"unknown": None}):
+        with pytest.raises(StorageSchemaError, match="staged family row shape is invalid"):
+            staged_rows._stage_row(descriptor, "stage-owned", 4, invalid)
 
 
 def test_arch2b_merge_operations_are_descriptor_owned_and_ordered() -> None:
