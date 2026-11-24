@@ -103,6 +103,38 @@ def test_legacy_default_setup_dry_run_never_initializes_new_home(tmp_path: Path,
     assert snapshot(legacy) == before and not current.exists()
 
 
+def test_local_setup_refuses_replaced_default_directory_after_recognition(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    from common_lore_index.cli.main import main
+    from common_lore_index.ops import home_selection
+
+    current, legacy = defaults(tmp_path, monkeypatch)
+    current.mkdir(mode=0o700)
+    witness = "00.cloe.toml"
+    (current / witness).write_text(sqlite_home_toml(graph_toml("fixture", "/not-read/source")))
+    previous = current.with_name("previous")
+    before = snapshot(current)
+    read_config = home_selection._read_config
+
+    def read_then_replace(descriptor: int, name: str) -> bytes:
+        payload = read_config(descriptor, name)
+        current.rename(previous)
+        current.mkdir(mode=0o700)
+        (current / "foreign.txt").write_bytes(b"foreign fixture")
+        return payload
+
+    with monkeypatch.context() as local:
+        local.setattr(home_selection, "_read_config", read_then_replace)
+        result = main(["local", "setup", "--json"])
+    captured = capsys.readouterr()
+    assert result == 1 and captured.out == "" and "default-home-unsafe" in captured.err
+    assert str(current) not in captured.err and "foreign fixture" not in captured.err
+    assert snapshot(previous) == before
+    assert snapshot(current) == {"foreign.txt": b"foreign fixture"}
+    assert not legacy.exists()
+
+
 @pytest.mark.parametrize("kind", ["foreign", "symlink", "fifo", "invalid"])
 def test_unrecognized_new_default_refuses_without_writes_or_content_disclosure(tmp_path: Path, monkeypatch, kind: str) -> None:
     current, legacy = defaults(tmp_path, monkeypatch)

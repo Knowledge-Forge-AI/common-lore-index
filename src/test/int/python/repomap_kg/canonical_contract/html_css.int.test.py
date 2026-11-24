@@ -202,7 +202,11 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
 .report-header .status-badge, .a > .b, .status-badge:hover, #dup { color: #f8fafc; }
 """,
         )
-        observations = html_observations + css_observations
+        other_html = extract_html_file_observations(
+            "unlinked.html", '<h1 id="heading" class="status-badge">Other heading</h1>',
+        )
+        other_css = extract_css_file_observations("static/unlinked.css", "#heading { color: red; }")
+        observations = html_observations + css_observations + other_html + other_css
         matches = extract_css_selector_match_observations(observations)
         result = canonicalize_observations(observations + matches)
         payload = result.to_dict()
@@ -224,6 +228,7 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
             style_pairs,
         )
         self.assertIn("html.anchor:file%3Aindex.html:heading", {edge["target_key"] for edge in styles})
+        self.assertTrue(all("unlinked" not in edge["source_key"] + edge["target_key"] for edge in styles))
         self.assertTrue(all(edge["metadata"]["not_runtime_style_observed"] for edge in styles))
 
     def test_css_html_selector_matching_skip_contracts(self):
