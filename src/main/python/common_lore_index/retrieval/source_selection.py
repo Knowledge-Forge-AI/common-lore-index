@@ -264,16 +264,13 @@ def read_selection_file(path: Path) -> SourceSelectionRecord:
         st = os.fstat(fd)
         if not stat.S_ISREG(st.st_mode) or st.st_size > MAX_SELECTION_FILE_BYTES:
             raise ContextRequestError("invalid or oversize selection file", refusal_reason="invalid_selection_record")
-        expected_size = st.st_size
+        admitted = (st.st_size, st.st_mtime_ns, st.st_ctime_ns)
         chunks: list[bytes] = []
         total = 0
         while True:
             current = os.fstat(fd)
-            if (
-                not stat.S_ISREG(current.st_mode)
-                or current.st_size != expected_size
-                or current.st_size > MAX_SELECTION_FILE_BYTES
-            ):
+            if (not stat.S_ISREG(current.st_mode)
+                    or (current.st_size, current.st_mtime_ns, current.st_ctime_ns) != admitted):
                 raise ContextRequestError(
                     "selection file changed while reading",
                     refusal_reason="invalid_selection_record",
@@ -289,11 +286,14 @@ def read_selection_file(path: Path) -> SourceSelectionRecord:
                 raise ContextRequestError("oversize selection file", refusal_reason="invalid_selection_record")
             chunks.append(chunk)
         final = os.fstat(fd)
-        if final.st_size != expected_size or final.st_size != total:
+        if (total, final.st_mtime_ns, final.st_ctime_ns) != admitted or final.st_size != total:
             raise ContextRequestError(
                 "selection file changed while reading", refusal_reason="invalid_selection_record"
             )
         raw = b"".join(chunks)
+    except OSError as exc:
+        reason = errno.errorcode.get(exc.errno or 0, "io_error")
+        raise ContextRequestError(f"cannot read selection file: {reason}", refusal_reason="invalid_selection_record") from exc
     finally:
         os.close(fd)
     try:

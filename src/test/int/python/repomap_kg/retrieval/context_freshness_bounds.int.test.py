@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import errno
+import json
 import os
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+from common_lore_index.cli.main import main
+from common_lore_index.retrieval import source_selection
 from common_lore_index.retrieval.context_assembly import build_compact_context
 from common_lore_index.retrieval.context_budget import serialize_compact_json
 from common_lore_index.retrieval.context_contracts import ContextRequest, FreshnessCheckConfig
@@ -328,3 +333,43 @@ def test_freshness_file_limit_reports_unchecked_locations(tmp_path: Path) -> Non
     assert packet["freshness"]["files_checked"] == 16
     assert sum(obs["reason"] == "file_limit" for obs in observations) == 1
     assert packet["freshness"]["counts"]["not_checked"] >= 1
+
+
+@pytest.mark.parametrize("condition", ("changed_metadata", "read_error"))
+def test_context_pack_refuses_an_unstable_selection_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsysbinary: pytest.CaptureFixture[bytes], condition: str,
+) -> None:
+    home = tmp_path / "sqlite_home"
+    home.mkdir()
+    build_sqlite_context_fixture(home)
+    path = tmp_path / "selected.json"
+    cli_scope = ["--repo-map-home", str(home), "--graph", CTX_GRAPH_ID]
+    assert main(["ops", "context-select", *cli_scope, "--binding", BINDING_CORE, "--output", str(path)]) == 0
+    capsysbinary.readouterr()
+
+    admitted = path.stat()
+    original_fstat = source_selection.os.fstat
+    calls = 0
+
+    def read_metadata(fd: int) -> object:
+        nonlocal calls
+        current = original_fstat(fd)
+        if not source_selection.os.path.samestat(current, admitted):
+            return current
+        calls += 1
+        if calls == 1:
+            return current
+        if condition == "read_error":
+            raise OSError(errno.EIO, "selection-fixture-diagnostic")
+        return SimpleNamespace(st_mode=current.st_mode, st_size=current.st_size,
+                               st_mtime_ns=current.st_mtime_ns + 1, st_ctime_ns=current.st_ctime_ns)
+
+    with monkeypatch.context() as stubs:
+        stubs.setattr(source_selection.os, "fstat", read_metadata)
+        code = main(["ops", "context-pack", *cli_scope, "--mode", "ranked_discovery", "--query", "InvoiceService",
+                     "--intent", "docs", "--selection", str(path)])
+    captured = capsysbinary.readouterr()
+    packet = json.loads(captured.out)
+    assert calls >= 2 and code == 1
+    assert packet["status"] == "refused" and packet["reason"] == "invalid_selection_record"
+    assert b"selection-fixture-diagnostic" not in captured.out + captured.err

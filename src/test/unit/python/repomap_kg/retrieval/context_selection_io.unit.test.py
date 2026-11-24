@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -50,8 +51,9 @@ def test_write_selection_file_handles_short_os_writes(tmp_path: Path, monkeypatc
     assert output.read_bytes() == raw
 
 
-def test_read_selection_file_refuses_growth_before_an_over_limit_probe(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("grow", (False, True))
+def test_read_selection_file_refuses_changed_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, grow: bool,
 ) -> None:
     output = tmp_path / "selection.json"
     output.write_bytes(
@@ -60,18 +62,20 @@ def test_read_selection_file_refuses_growth_before_an_over_limit_probe(
     real_fstat = source_selection.os.fstat
     calls = 0
 
-    def growing_fstat(fd: int) -> object:
+    def changed_fstat(fd: int) -> object:
         nonlocal calls
         calls += 1
         stat_result = real_fstat(fd)
         if calls == 3:
             return SimpleNamespace(
                 st_mode=stat_result.st_mode,
-                st_size=stat_result.st_size + 1,
+                st_size=stat_result.st_size + int(grow),
+                st_mtime_ns=stat_result.st_mtime_ns + int(not grow),
+                st_ctime_ns=stat_result.st_ctime_ns,
             )
         return stat_result
 
-    monkeypatch.setattr(source_selection.os, "fstat", growing_fstat)
+    monkeypatch.setattr(source_selection.os, "fstat", changed_fstat)
     with pytest.raises(ContextRequestError) as exc:
         source_selection.read_selection_file(output)
     assert exc.value.refusal_reason == "invalid_selection_record"
@@ -125,3 +129,18 @@ def test_selection_write_failure_cleans_only_the_opened_inode(
         assert output.read_bytes() == b"keep"
     else:
         assert not output.exists()
+
+
+def test_selection_read_error_reports_a_bounded_refusal(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "selection.json"
+    source_selection.write_selection_file(_record(), path)
+
+    def refuse_read(_fd: int, _size: int) -> bytes:
+        raise OSError(errno.EIO, "fixture-diagnostic-canary")
+
+    with monkeypatch.context() as stubs:
+        stubs.setattr(source_selection.os, "read", refuse_read)
+        with pytest.raises(ContextRequestError, match="cannot read selection file: EIO") as caught:
+            source_selection.read_selection_file(path)
+    assert caught.value.refusal_reason == "invalid_selection_record"
+    assert "fixture-diagnostic-canary" not in str(caught.value)
