@@ -6,7 +6,7 @@ import math
 import re
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import SplitResult, urlsplit
 
 from common_lore_index.extractors.config.format_contracts import YAML_SIMPLE_IMAGE_PATTERN
 from common_lore_index.extractors.config.paths import _pointer_segments
@@ -75,6 +75,8 @@ def _yaml_documents(value: Any, *, document_count: int) -> tuple[Any, ...]:
 
 def _safe_value_summary(value: Any) -> Any:
     if isinstance(value, str):
+        if _config_url_redaction_reason(value):
+            return "<redacted-url>"
         if len(value) <= 120 and all(character.isprintable() for character in value):
             return value
         return f"<string:{len(value)}>"
@@ -91,6 +93,8 @@ def _looks_like_secret_scalar(value: Any) -> bool:
     if not isinstance(value, str):
         return False
     stripped = value.strip()
+    if _config_url_redaction_reason(stripped):
+        return True
     if "-----BEGIN " in stripped and "PRIVATE KEY-----" in stripped:
         return True
     if len(stripped) >= 32 and re.fullmatch(r"[A-Za-z0-9_./+=:-]+", stripped):
@@ -130,6 +134,8 @@ def _stable_array_members(value: list[Any]) -> tuple[_StableArrayMember, ...]:
         if stable_key is None:
             return ()
         stable_value = item[stable_key]
+        if isinstance(stable_value, str) and _config_url_redaction_reason(stable_value):
+            return ()
         summary = _safe_value_summary(stable_value)
         if summary is None or isinstance(summary, bool):
             return ()
@@ -157,8 +163,35 @@ def _stable_member_key(value: dict[str, Any]) -> str | None:
     return None
 
 
+def _parse_config_url(value: str) -> SplitResult | None:
+    try:
+        parsed = urlsplit(value)
+        if parsed.netloc and not _has_config_port_template(parsed.netloc):
+            _ = parsed.port
+    except ValueError:
+        return None
+    return parsed
+
+
+def _has_config_port_template(authority: str) -> bool:
+    return "{" in authority and re.fullmatch(r"\$?\{[A-Za-z_][A-Za-z0-9_.-]*\}", authority.rpartition(":")[2]) is not None
+
+
+def _config_url_redaction_reason(value: str) -> str | None:
+    if "//" not in value:
+        return None
+    parsed = _parse_config_url(value)
+    if parsed is None:
+        return "malformed-url"
+    if parsed.username is not None or parsed.password is not None:
+        return "credentialed-url"
+    return None
+
+
 def _is_url(value: str) -> bool:
-    parsed = urlsplit(value)
+    parsed = _parse_config_url(value)
+    if parsed is None:
+        return False
     if parsed.scheme in ("http", "https"):
         return bool(parsed.netloc)
     if parsed.scheme == "mailto":

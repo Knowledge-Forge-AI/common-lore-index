@@ -78,7 +78,7 @@
         "path": "src/main/python/common_lore_index/extractors/config/generic.py"
       },
       {
-        "line_count": 510,
+        "line_count": 507,
         "path": "src/main/python/common_lore_index/extractors/config/generic_structure.py"
       },
       {
@@ -94,11 +94,11 @@
         "path": "src/main/python/common_lore_index/extractors/config/openapi.py"
       },
       {
-        "line_count": 468,
+        "line_count": 459,
         "path": "src/main/python/common_lore_index/extractors/config/openapi_helpers.py"
       },
       {
-        "line_count": 760,
+        "line_count": 749,
         "path": "src/main/python/common_lore_index/extractors/config/python.py"
       },
       {

@@ -17,9 +17,11 @@ from common_lore_index.extractors.config.format_contracts import (
 )
 from common_lore_index.extractors.config.generic_reference_contracts import (
     _file_reference,
+    _protected_url_reference,
     _reference,
 )
 from common_lore_index.extractors.config.generic_values import (
+    _config_url_redaction_reason,
     _is_dynamic_value,
     _is_secret_pointer,
     _is_url,
@@ -383,6 +385,9 @@ def _string_references(
     format_name: str,
     redacted: bool,
 ) -> tuple[dict[str, Any], ...]:
+    reason = _config_url_redaction_reason(value)
+    if reason is not None:
+        return (_protected_url_reference(value, reason),)
     if format_name == YAML_FORMAT:
         yaml_references = _yaml_string_references(
             relative_path,
@@ -395,15 +400,7 @@ def _string_references(
         if yaml_references:
             return yaml_references
     if _is_url(value):
-        return (
-            _reference(
-                "external.url",
-                external_url_key(value),
-                "url-literal",
-                value,
-                redacted=redacted,
-            ),
-        )
+        return (_reference("external.url", external_url_key(value), "url-literal", value, redacted=redacted),)
     env_match = ENV_REFERENCE_PATTERN.match(value)
     if env_match is not None:
         return (

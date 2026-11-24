@@ -7,10 +7,10 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import urlsplit
 
-from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
+from common_lore_index.extractors.config.generic_values import _config_url_redaction_reason, _parse_config_url
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.extractors.config.paths import json_pointer
 from common_lore_index.graph.keys import external_key, external_url_key, file_key
 from common_lore_index.observations.raw import RawObservation
@@ -51,7 +51,6 @@ from common_lore_index.extractors.config.python_support import (
     _safe_error_message,
     _safe_value_summary,
     _stable_text_sha256,
-    _url_has_credentials,
 )
 
 
@@ -296,22 +295,17 @@ def _python_requirement_url_reference_observations(
     reference_kind: str,
     redact_all: bool,
 ) -> tuple[list[RawObservation], list[RawObservation]]:
-    redacted = redact_all or _url_has_credentials(value)
+    source = _python_dependency_source_metadata(value)
+    redacted = redact_all or bool(source.get("redacted"))
     if redacted:
         target = external_key("url", f"redacted-python-{reference_kind}")
     elif _is_url(value) or _python_requirement_is_vcs_source(value):
         target = external_url_key(value)
     else:
         target = external_key("python.source", "unknown-direct-source")
-    metadata = {
-        "not_fetched": True,
-        "redacted": redacted,
-        **_python_dependency_source_metadata(value),
-    }
+    metadata = {"not_fetched": True, "redacted": redacted, **source}
     if redacted:
-        metadata["redaction_reason"] = (
-            "credentialed-url" if _url_has_credentials(value) else "index-url"
-        )
+        metadata.setdefault("redaction_reason", "index-url")
     references = [
         _python_reference_observation(
             relative_path,
@@ -703,20 +697,19 @@ def _python_redaction_observation(
 
 
 def _python_dependency_source_metadata(value: str) -> dict[str, Any]:
-    parsed = urlsplit(value)
-    credentialed = _url_has_credentials(value)
+    parsed = _parse_config_url(value)
+    reason = _config_url_redaction_reason(value)
     metadata: dict[str, Any] = {
         "source_present": True,
         "source_length": len(value),
         "source_sha256": _stable_text_sha256(value),
     }
-    if parsed.scheme:
+    if parsed is not None and parsed.scheme:
         metadata["source_scheme"] = _python_bounded_string(parsed.scheme)
-    if parsed.hostname and not credentialed:
+    if parsed is not None and parsed.hostname and not reason:
         metadata["source_host"] = _python_bounded_string(parsed.hostname)
-    if credentialed:
-        metadata["redacted"] = True
-        metadata["redaction_reason"] = "credentialed-url"
+    if reason:
+        metadata.update(redacted=True, redaction_reason=reason)
     return metadata
 
 
@@ -740,11 +733,7 @@ def _python_pyproject_value_requires_redaction(
     if any(_is_secret_key(segment) for segment in pointer_segments):
         return True
     if isinstance(value, str):
-        if (
-            _url_has_credentials(value)
-            or _python_value_has_credentialed_url_fragment(value)
-            or _looks_like_secret_scalar(value)
-        ):
+        if _looks_like_secret_scalar(value) or _python_value_has_credentialed_url_fragment(value):
             return True
         if pointer_segments and _normalized_key(pointer_segments[-1]) in (
             "index_url",
@@ -757,4 +746,4 @@ def _python_pyproject_value_requires_redaction(
 
 def _python_value_has_credentialed_url_fragment(value: str) -> bool:
     fragments = re.findall(r"[A-Za-z][A-Za-z0-9+.-]*://[^\s,]+", value)
-    return any(_url_has_credentials(fragment.strip("\"'")) for fragment in fragments)
+    return any(bool(_config_url_redaction_reason(fragment.strip("\"'"))) for fragment in fragments)

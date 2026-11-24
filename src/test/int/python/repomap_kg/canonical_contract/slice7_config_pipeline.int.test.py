@@ -172,6 +172,24 @@ class Slice7ConfigPipelineIntegrationTests(unittest.TestCase):
         self.assertEqual(res_import[0].target_path, "primary/modules/local.nix")
         self.assertFalse(res_import[0].cross_binding)
 
+    def test_protected_json_and_python_sources_survive_canonicalization(self):
+        json_rows = extract_config_file_observations(
+            "input.json",
+            '{"first":"https://unreadable.invalid:port/path","second":"https://valid.invalid/path"}',
+        )
+        python_rows = extract_config_file_observations(
+            "requirements.txt",
+            "--extra-index-url https://unreadable.invalid:port/index\nalpha==1.0\n",
+        )
+        combined = (*json_rows, *python_rows)
+        self.assertTrue(canonicalize_observations(combined).ok)
+        self.assertEqual(
+            [row.metadata.get("resolution_reason") for row in json_rows if row.kind == "config.reference"],
+            ["malformed-url", "url-literal"],
+        )
+        self.assertTrue(any(row.kind == "python.requirement" and row.name == "alpha" for row in python_rows))
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in combined]))
+
     def test_s7_b03_terraform_nested_modules_and_local_path_references(self) -> None:
         """Terraform extraction resolves nested module declarations and local path references."""
         tf_content = (

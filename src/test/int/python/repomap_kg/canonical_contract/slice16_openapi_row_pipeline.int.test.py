@@ -10,10 +10,11 @@ from repomap_test_support.composition_extraction_fixtures import create_composit
 
 @pytest.mark.parametrize("reference,scope,redacted,reason,target_prefix", [
     ("https://fixture-user:fixture-password@example.invalid/schema.json", "remote", True, "credentialed-url", "external:url:"),
+    ("https://unreadable.invalid:port/schema.json", "remote", True, "malformed-url", "unknown:openapi.reference:"),
     ("../../../outside.json", "local_file", True, "local-ref-outside-root", "unknown:file:"),
     ("https://example.invalid/schema.json", "remote", False, None, "external.url:"),
     ("#/components/schemas/Pet", "internal", False, None, "config.path:"),
-], ids=["credentialed", "outside-root", "remote", "internal"])
+], ids=["credentialed", "malformed-port", "outside-root", "remote", "internal"])
 def test_reference_privacy_survives_extraction_canonicalization_and_rows(tmp_path: Path, reference, scope, redacted, reason, target_prefix):
     project = tmp_path / "project"
     project.mkdir()
@@ -45,6 +46,7 @@ def test_reference_privacy_survives_extraction_canonicalization_and_rows(tmp_pat
         assert len(raw) == 1 and raw[0]["payload_json"] == observation.to_dict()
         encoded = json.dumps({family: list(items) for family, items in rows.family_rows.items()})
         assert "fixture-password" not in encoded
+        assert "unreadable.invalid" not in encoded
         assert observation.target in encoded
     finally:
         rows.close()
