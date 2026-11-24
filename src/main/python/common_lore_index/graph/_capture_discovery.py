@@ -39,7 +39,7 @@ class CaptureDiscoveryHooks:
         return ELIDED_DISCOVERY_CONTENT_HASH
 
     def first_line(self, path: Path) -> str:
-        return classification.first_line(path)
+        return classification.read_shebang_candidate(path)
 
     def is_go_generated_file(self, path: Path) -> bool:
         return classification.is_go_generated_file(path)

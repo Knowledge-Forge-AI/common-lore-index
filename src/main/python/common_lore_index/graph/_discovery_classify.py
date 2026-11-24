@@ -27,7 +27,7 @@ from common_lore_index.extractors.shell.zsh import (
     is_zsh_startup_file_path,
 )
 from common_lore_index.extractors.shell.zunit import is_zunit_file_path
-from common_lore_index.graph.discovery_file_metadata import content_hash, first_line
+from common_lore_index.graph.discovery_file_metadata import content_hash, read_shebang_candidate
 from common_lore_index.graph.discovery_records import FileInfo
 from common_lore_index.graph.profiles import ProjectProfile
 
@@ -173,7 +173,7 @@ def detect_language(
     first_line_fn: Callable[[Path], str] | None = None,
     completion_fn: Callable[[Path], bool] | None = None,
 ) -> str:
-    read_first_line = first_line if first_line_fn is None else first_line_fn
+    read_first_line = read_shebang_candidate if first_line_fn is None else first_line_fn
     go_metadata_language = GO_METADATA_LANGUAGE_BY_NAME.get(path.name)
     if go_metadata_language is not None:
         return go_metadata_language

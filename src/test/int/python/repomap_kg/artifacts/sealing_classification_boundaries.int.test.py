@@ -33,6 +33,9 @@ CASES = (
     ("completion", b"#compdef fixture\n\xff", "unknown", False),
     ("completion", b"#comp\xc3", "unknown", False),
     ("functions/_fixture", b"\xff", "zsh", False),
+    ("script", b" " * 4095 + b"#!/bin/zsh\n", "zsh", False),
+    ("completion", b"x" * (64 * 1024 - 5) + b"\n   #compdef fixture", "zsh", False),
+    ("completion", b"#compdef fixture\n" + b"a" * (2**20) + b"\xff", "unknown", False),
 )
 
 

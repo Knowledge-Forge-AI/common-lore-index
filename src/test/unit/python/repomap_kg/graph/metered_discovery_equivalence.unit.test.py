@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from io import StringIO
 from pathlib import Path
 
 import pytest
@@ -14,7 +15,10 @@ from common_lore_index.artifacts.sealing_governance import (
     SealingBudget,
     SealingBudgetExceeded,
 )
-from common_lore_index.extractors.shell.zsh_identity import is_zsh_completion_candidate
+from common_lore_index.extractors.shell.zsh_identity import (
+    has_completion_content_evidence,
+    is_zsh_completion_candidate,
+)
 from common_lore_index.graph._discovery_classify import is_go_generated_file
 from common_lore_index.graph._metered_classification import (
     metered_completion,
@@ -22,7 +26,7 @@ from common_lore_index.graph._metered_classification import (
     metered_is_go_generated,
 )
 from common_lore_index.graph._metered_discovery import MeteredDiscoveryHooks, metered_walk
-from common_lore_index.graph.discovery_file_metadata import first_line
+from common_lore_index.graph.discovery_file_metadata import first_line, read_shebang_candidate
 
 
 def _observe() -> SealingMeter:
@@ -146,6 +150,7 @@ def test_first_line_reader_preserves_every_shebang_decision(tmp_path: Path, data
     path = tmp_path / "script"
     path.write_bytes(data)
     expected = first_line(path)
+    assert read_shebang_candidate(path) == (expected if expected.startswith("#!") else "")
     observed = metered_first_line(_observe(), path)
     assert observed.startswith("#!") == expected.startswith("#!")
     if expected.startswith("#!"):
@@ -211,6 +216,8 @@ COMPLETIONS = [
     b"echo\r_arguments\n", "echo #compdef x\n".encode(), "echo\x85  _arguments\n".encode(),
     b"#compde\nf\n", b"x#compdef\n", b"#compdef x\n\xff", b"#comp" + b"\xc3", b"_argumentsXYZ\n",
     "\x1f#compdef\n".encode(), "\x0b\x0c\x1c_arguments\n".encode(), b"", b"#compdef" * 100_000,
+    b"x" * (64 * 1024 - 5) + b"\n   #compdef x",
+    b"#compdef fixture\n" + b"a" * (2**20) + b"\xff",
 ]
 
 
@@ -219,7 +226,12 @@ def test_completion_stream_equals_read_text_splitlines_semantics(tmp_path: Path,
     path = tmp_path / "candidate"
     path.write_bytes(data)
     meter = _observe()
-    assert metered_completion(meter, path) is is_zsh_completion_candidate(path)
+    try:
+        expected = has_completion_content_evidence(path.read_text(encoding="utf-8"))
+    except UnicodeDecodeError:
+        expected = False
+    assert is_zsh_completion_candidate(path) is expected
+    assert metered_completion(meter, path) is expected
     assert meter.snapshot().reader("classification") == len(data), "R4 reads to EOF"
 
 
@@ -240,3 +252,23 @@ def test_completion_refuses_a_body_beyond_the_read_budget_before_opening(tmp_pat
     with pytest.raises(SealingBudgetExceeded, match="read_bytes"):
         metered_completion(meter, path)
     assert meter.snapshot().opens == 0
+
+
+def test_shebang_candidate_stops_after_disproving_a_non_shebang_line(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "candidate"
+    sizes: list[int] = []
+
+    reader = StringIO(" " * 4095 + "#x" + "a" * (2**20))
+    readline = reader.readline
+
+    def read(size: int = -1) -> str:
+        result = readline(size)
+        sizes.append(len(result))
+        return result
+
+    monkeypatch.setattr(reader, "readline", read)
+    monkeypatch.setattr(Path, "open", lambda self, **kwargs: reader)
+    assert read_shebang_candidate(path) == ""
+    assert sizes == [4096, 4096]
