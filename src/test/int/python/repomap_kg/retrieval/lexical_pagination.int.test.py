@@ -214,3 +214,23 @@ def test_published_literal_page_retains_cross_chunk_unicode_start(
     assert [item.locator.start_line for item in repeated.hits] == [2] * 8
     assert len(repeated.hits) == 8
     assert lookups == 1
+
+
+def test_real_literal_document_budget_refuses_before_returning_hits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.storage import lexical_query_sql
+
+    with temporary_postgres() as pg_db:
+        config, core_id = _public_core_fixture(tmp_path, pg_db)
+        sql = lexical_query_sql.LITERAL_CAPTURED_TEXT_QUERY_SQL
+        assert sql.count("LIMIT 4097") == sql.count("count(*) > 4096") == 1
+        fixture_sql = sql.replace("LIMIT 4097", "LIMIT 2").replace("count(*) > 4096", "count(*) > 1")
+        monkeypatch.setattr(lexical_query_sql, "LITERAL_CAPTURED_TEXT_QUERY_SQL", fixture_sql)
+        request = LexicalQueryRequest(
+            query="def", query_style="literal_captured_text", selected_binding_ids=(core_id,),
+        )
+        result = query_graph_lexical_generation(config, MIXED_V1_GRAPH_ID, request, authorize_body=True)
+        assert result.capability_state == CapabilityState.PARTIAL and not result.hits
+        assert result.provenance["total_matches_before_paging"] == 0
+        assert any(item.reason_code == "literal_scan_budget_exceeded" for item in result.omissions)

@@ -124,14 +124,14 @@ raw_matched_chunks AS MATERIALIZED (
     LIMIT 5001
 ),
 candidate_budget AS MATERIALIZED (
-    SELECT
+    SELECT count(*)::int AS candidate_count,
         (
             count(*) > 5000
             OR count(DISTINCT (rmc.binding_id, rmc.source_relative_path)) > 1000
         ) AS overflowed
     FROM raw_matched_chunks rmc
 ),
-matched_chunks AS MATERIALIZED (
+matched_chunks AS (
     SELECT
         ch.repository_id,
         ch.lexical_generation_id,
@@ -153,7 +153,11 @@ matched_chunks AS MATERIALIZED (
             )::numeric,
             8
         )::double precision AS score
-    FROM (SELECT * FROM raw_matched_chunks LIMIT 5000) ch
+    FROM (
+        SELECT * FROM raw_matched_chunks
+        ORDER BY binding_id COLLATE "C" ASC, source_relative_path COLLATE "C" ASC, chunk_ordinal ASC
+        LIMIT 5000
+    ) ch
     CROSS JOIN parsed_tsquery tq
 ),
 paged AS MATERIALIZED (
@@ -204,7 +208,7 @@ SELECT json_build_object(
     'extraction_receipt_id', (SELECT live_receipt_id FROM fence_state),
     'graph_candidate_id', (SELECT live_candidate_id FROM fence_state),
     'empty_tsquery', (SELECT numnode(q) = 0 FROM parsed_tsquery),
-    'total_matches', (SELECT count(*)::int FROM matched_chunks),
+    'total_matches', (SELECT LEAST(candidate_count, 5000) FROM candidate_budget),
     'candidate_overflow', COALESCE((SELECT overflowed FROM candidate_budget), false),
     'capped_files', '[]'::json,
     'omissions', COALESCE(

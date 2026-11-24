@@ -374,3 +374,25 @@ def test_literal_walk_carries_positions_without_duplicating_document_text() -> N
     assert "ro.normalized_text" not in walk and walk.count("strpos(substr(") == 1
     assert "ro.occurrence_index <= %(max_occurrences_per_file)s AND ro.match_pos_1 IS NOT NULL" in compact
     assert "ro.occurrence_index > %(max_occurrences_per_file)s AND ro.match_pos_1 IS NOT NULL" in compact
+
+
+def test_literal_page_precedes_line_and_chunk_lookup_and_budget_precedes_body_read() -> None:
+    compact = _compact(LITERAL_CAPTURED_TEXT_QUERY_SQL)
+    inventory = compact.split("scoped_documents AS MATERIALIZED (", 1)[1].split("literal_scan_budget AS", 1)[0]
+    assert "doc.normalized_text" not in inventory and "LIMIT 4097" in inventory
+    assert "count(*) > 4096" in compact
+    assert "FROM budgeted_documents doc CROSS JOIN LATERAL" in compact
+    page = compact.split("paged_occurrences AS MATERIALIZED (", 1)[1].split("page_locations AS", 1)[0]
+    assert 'ORDER BY binding_id COLLATE "C" ASC, source_relative_path COLLATE "C" ASC, match_pos_1 ASC' in page
+    assert "OFFSET %(offset)s LIMIT %(limit)s" in page
+    assert "FROM paged_occurrences ro" in compact and "FROM page_locations ao LEFT JOIN LATERAL" in compact
+
+
+def test_ranked_candidate_cap_uses_the_same_order_as_raw_admission() -> None:
+    for sql in (RANKED_TERMS_QUERY_SQL, NORMALIZED_PHRASE_QUERY_SQL):
+        compact = _compact(sql)
+        assert (
+            'FROM raw_matched_chunks ORDER BY binding_id COLLATE "C" ASC, '
+            'source_relative_path COLLATE "C" ASC, chunk_ordinal ASC LIMIT 5000'
+        ) in compact
+        assert "LEAST(candidate_count, 5000) FROM candidate_budget" in compact
