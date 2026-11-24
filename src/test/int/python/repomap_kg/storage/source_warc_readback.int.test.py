@@ -30,6 +30,49 @@ from repomap_test_support.source_ingestion_integration import (
 
 
 class StorageSourceWarcReadbackIntegrationTests(unittest.TestCase):
+    def test_warc_payload_extraction_reads_the_admitted_snapshot(self) -> None:
+        from common_lore_index.ops.ingestion import _source_warc_manifest as warc
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = copy_warc_fixture_root(Path(directory)).resolve()
+            config = warc.load_warc_source_config(root / "warc_sources" / "allowed-warc.toml")
+            manifest = warc.build_warc_manifest(config, root_path=root, clock=fixed_source_clock)
+            original = warc.warc_observations_from_manifest(config, manifest, root_path=root)
+            records = {
+                record.materialized_path: record
+                for record in manifest.records
+                if record.materialized_path is not None
+            }
+            extract = warc._observations_for_archive_file
+            module_index = warc.PythonModuleIndex.from_python_paths((), repository_root=root)
+            baseline = [
+                observation
+                for path in sorted(records)
+                for observation in extract(
+                    root, warc.classify_path(root, root / path), module_index=module_index,
+                    repository_paths=frozenset(records), markdown_anchors={},
+                )
+            ]
+            self.assertTrue({"html.document", "css.document"} <= {item.kind for item in baseline})
+            baseline.extend(warc.extract_css_selector_match_observations(baseline))
+            expected = warc._annotate_warc_observations(baseline, config, manifest, records)
+            self.assertEqual(original[-len(expected):], expected)
+            snapshots: list[Path] = []
+
+            def revise_original(snapshot, file_info, **kwargs):
+                self.assertNotEqual(snapshot, root)
+                snapshots.append(snapshot)
+                (root / file_info.path).write_bytes(b"fixture file edited after capture")
+                return extract(snapshot, file_info, **kwargs)
+
+            with patch.object(warc, "_observations_for_archive_file", side_effect=revise_original):
+                repeated = warc.warc_observations_from_manifest(config, manifest, root_path=root)
+            self.assertEqual(original, repeated)
+            self.assertTrue(snapshots)
+            self.assertTrue(all(not path.exists() for path in snapshots))
+            with self.assertRaisesRegex(warc.SourcePolicyError, "payload differs from its manifest"):
+                warc.warc_observations_from_manifest(config, manifest, root_path=root)
+
     def test_warc_import_refuses_archive_changed_during_read_without_metadata_output(self) -> None:
         from common_lore_index.ops.ingestion import _source_warc_extraction
 

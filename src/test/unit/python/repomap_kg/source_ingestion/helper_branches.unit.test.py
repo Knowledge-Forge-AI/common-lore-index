@@ -1,10 +1,16 @@
 import hashlib
 import unittest
+from dataclasses import replace
 from io import BufferedReader, BytesIO
 from pathlib import Path
-from typing import Any, Mapping
+from tempfile import TemporaryDirectory
+from typing import Any, Mapping, cast
+from unittest.mock import patch
 
 
+from repomap_test_support.source_ingestion import SourceIngestionUnitTestCase
+
+from common_lore_index.ops.ingestion import _source_warc_manifest as warc
 from common_lore_index.ops.ingestion import source
 from common_lore_index.ops.ingestion import source_common
 from common_lore_index.ops.ingestion.source_warc import _parse_header_lines, _read_warc_record
@@ -310,3 +316,75 @@ def test_warc_http_body_offset_preserves_raw_bytes_and_legacy_empty_result():
     assert headers == {"x-test": "synthetic"}
     malformed = b"not-http\n\n" + body
     assert _http_headers_and_body_offset(malformed, response=True) == ({}, len(malformed))
+
+
+class RetainedWarcPayloadUnitTests(SourceIngestionUnitTestCase):
+    def test_retained_warc_payload_limits_apply_before_any_body_is_opened(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self.write_warc_fixture(root)
+            config = warc.load_warc_source_config(self.write_warc_config(root / "source.toml"))
+            manifest = warc.build_warc_manifest(config, root_path=root, clock=self.fixed_clock)
+            self.assertGreater(manifest.routed_payload_count, 1)
+            with patch.object(warc, "open_source_body", side_effect=AssertionError("body opened")):
+                for limited in (
+                    replace(config, max_file_count=1),
+                    replace(config, max_record_bytes=1),
+                    replace(config, max_total_payload_bytes=1),
+                ):
+                    with self.subTest(limited=limited):
+                        with self.assertRaisesRegex(warc.SourcePolicyError, "payloads exceed source policy"):
+                            warc.warc_observations_from_manifest(limited, manifest, root_path=root)
+                last = next(record for record in reversed(manifest.records) if record.materialized_path)
+                for length in (-1, True, "1"):
+                    with self.subTest(length=length):
+                        changed = tuple(
+                            replace(record, payload_byte_length=cast(int, length)) if record is last else record
+                            for record in manifest.records
+                        )
+                        with self.assertRaisesRegex(warc.SourcePolicyError, "invalid retained WARC payload length"):
+                            warc.warc_observations_from_manifest(config, replace(manifest, records=changed), root_path=root)
+
+    def test_retained_warc_payload_refuses_executable_and_linked_files(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self.write_warc_fixture(root)
+            config = warc.load_warc_source_config(self.write_warc_config(root / "source.toml"))
+            manifest = warc.build_warc_manifest(config, root_path=root, clock=self.fixed_clock)
+            payload = root / next(record.materialized_path for record in manifest.records if record.materialized_path)
+            payload.chmod(0o744)
+            with self.assertRaisesRegex(warc.SourcePolicyError, "payload differs from its manifest"):
+                warc.warc_observations_from_manifest(config, manifest, root_path=root)
+            payload.chmod(0o644)
+            alias = root / "payload-alias"
+            alias.hardlink_to(payload)
+            with self.assertRaisesRegex(warc.SourcePolicyError, "payload differs from its manifest"):
+                warc.warc_observations_from_manifest(config, manifest, root_path=root)
+            alias.unlink()
+            payload.rename(alias)
+            payload.symlink_to(alias)
+            with self.assertRaisesRegex(warc.SourcePolicyError, "payload differs from its manifest"):
+                warc.warc_observations_from_manifest(config, manifest, root_path=root)
+
+    def test_retained_warc_payloads_refuse_noncanonical_and_duplicate_references(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self.write_warc_fixture(root)
+            config = warc.load_warc_source_config(self.write_warc_config(root / "source.toml"))
+            manifest = warc.build_warc_manifest(config, root_path=root, clock=self.fixed_clock)
+            record = next(item for item in manifest.records if item.materialized_path is not None)
+            payload = Path(str(record.materialized_path))
+            for path in (f"/{payload}", f"../{payload}", f"bad//{payload.name}", "payload.py"):
+                with self.subTest(path=path):
+                    changed = replace(record, materialized_path=path)
+                    with self.assertRaisesRegex(warc.SourcePolicyError, "invalid retained WARC payload reference"):
+                        warc.warc_observations_from_manifest(config, replace(manifest, records=(changed,)), root_path=root)
+            for changed in (
+                replace(record, extractor_route="python"),
+                replace(record, content_type="text/x-python"),
+            ):
+                with self.subTest(route=changed.extractor_route, content_type=changed.content_type):
+                    with self.assertRaisesRegex(warc.SourcePolicyError, "invalid retained WARC payload reference"):
+                        warc.warc_observations_from_manifest(config, replace(manifest, records=(changed,)), root_path=root)
+            with self.assertRaisesRegex(warc.SourcePolicyError, "duplicate retained WARC payload reference"):
+                warc.warc_observations_from_manifest(config, replace(manifest, records=(record, record)), root_path=root)
