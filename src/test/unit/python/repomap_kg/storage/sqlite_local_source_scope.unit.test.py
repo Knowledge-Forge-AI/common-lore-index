@@ -203,11 +203,11 @@ def test_latest_source_aggregates_all_rows_of_the_tied_winner(published_feeds: P
         replace(sample, source_id="a", acquired_at=None, artifact_path="y", source_type="feed.rss", source_run_id="r2"),
         replace(sample, source_id="0", acquired_at=None, artifact_path="z"),
     ]
-    selected = source_feed_queries._latest_source(rows)
-    assert selected is not None
+    selected, keys = source_feed_queries._explanation_source_scope(iter(rows))
+    assert selected is not None and keys == {sample.key}
     assert (selected["source_id"], selected["acquired_at"], selected["artifact_path"]) == ("a", recent, "y")
     assert (selected["source_type"], selected["source_run_id"]) == ("feed.rss", "r3")
-    assert source_feed_queries._latest_source(list(reversed(rows))) == selected
+    assert source_feed_queries._explanation_source_scope(reversed(rows)) == (selected, keys)
 
 
 def test_evidence_batches_keep_exact_keys_and_per_key_link_order() -> None:
@@ -239,6 +239,8 @@ def test_evidence_batches_keep_exact_keys_and_per_key_link_order() -> None:
         links = source_queries.node_links(connection, (i for evidence in selected.values() for i in evidence))
         assert set(links) == {*range(1, 502), 600}
         assert all(len(nodes) == 1 and nodes[0].kind == "feed.item" for nodes in links.values())
+        assert source_queries._node_counts(links, links, frozenset({"feed.item"})) == {"feed.item": 1}
+        assert source_queries._node_counts(links, links, frozenset({"feed.author"})) == {}
 
 
 def test_sparse_evidence_uses_bounded_exact_pairs_across_runs() -> None:

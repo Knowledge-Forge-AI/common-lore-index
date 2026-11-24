@@ -9,7 +9,7 @@ PostgreSQL semantics both halves keep.
 from __future__ import annotations
 
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import closing
 from dataclasses import dataclass
 from heapq import nlargest, nsmallest
@@ -29,6 +29,7 @@ from common_lore_index.storage.sqlite_local.queries import require_accepted_publ
 from common_lore_index.storage.sqlite_local.source_queries import (
     RawKey,
     _Edge,
+    _iter_source_observations,
     SourceObservation,
     edge_links,
     evidence_ids,
@@ -37,7 +38,7 @@ from common_lore_index.storage.sqlite_local.source_queries import (
     not_fetched,
     source_observations,
 )
-from common_lore_index.storage.sqlite_local.source_run_summary import _max_present
+from common_lore_index.storage.sqlite_local.source_run_summary import _max_present, _min_text
 
 CONTENT_POLICY = "full feed bodies are not exposed"
 _REFERENCE_KEY_BATCH = 500
@@ -247,41 +248,44 @@ def _is_preferred_source(
     return candidate_id < best_id
 
 
-def _latest_source(observations: list[SourceObservation]) -> dict[str, Any] | None:
-    """Select the latest source summary without sorting all source groups.
+@dataclass(slots=True)
+class _ExplanationSource(_ItemProvenance):
+    source_type: str | None = None
+    policy_status: str | None = None
 
-    Source selection summarizes the scoped ``source_observations`` rows (all
-    sources when ``source_id`` is ``None``, or that exact source) independently
-    of whether ``item_key`` resolves to any canonical node or evidence row.
-    """
-    best: SourceObservation | None = None
+
+def _explanation_source_scope(
+    observations: Iterable[SourceObservation],
+) -> tuple[dict[str, Any] | None, set[RawKey]]:
+    """Accumulate evidence scope and latest-source metadata in one pass."""
+    selected: set[RawKey] = set()
+    by_source: dict[str, _ExplanationSource] = {}
+    best_id: str | None = None
+    acquired_at: str | None = None
     for observation in observations:
-        if best is None or _is_preferred_source(
-            observation.source_id, observation.acquired_at, best.source_id, best.acquired_at
-        ):
-            best = observation
-    if best is None:
-        return None
-    best_id = best.source_id
-    source_type, policy_status = best.source_type, best.policy_status
-    provenance = _ItemProvenance()
-    for entry in observations:
-        if entry.source_id != best_id:
-            continue
-        if entry.source_type is not None and (source_type is None or entry.source_type < source_type):
-            source_type = entry.source_type
-        if entry.policy_status is not None and (policy_status is None or entry.policy_status < policy_status):
-            policy_status = entry.policy_status
-        provenance.include(entry)
+        selected.add(observation.key)
+        source_id = observation.source_id
+        profile = by_source.get(source_id)
+        if profile is None:
+            profile = _ExplanationSource()
+            by_source[source_id] = profile
+        profile.source_type = _min_text(profile.source_type, observation.source_type)
+        profile.policy_status = _min_text(profile.policy_status, observation.policy_status)
+        profile.include(observation)
+        if best_id is None or _is_preferred_source(source_id, observation.acquired_at, best_id, acquired_at):
+            best_id, acquired_at = source_id, observation.acquired_at
+    if best_id is None:
+        return None, selected
+    winner = by_source[best_id]
     return {
         "source_id": best_id,
-        "source_type": source_type,
-        "policy_status": policy_status,
-        "source_run_id": provenance.source_run_id,
-        "artifact_id": provenance.artifact_id,
-        "artifact_path": provenance.artifact_path,
-        "acquired_at": best.acquired_at,
-    }
+        "source_type": winner.source_type,
+        "policy_status": winner.policy_status,
+        "source_run_id": winner.source_run_id,
+        "artifact_id": winner.artifact_id,
+        "artifact_path": winner.artifact_path,
+        "acquired_at": acquired_at,
+    }, selected
 
 
 def _selected_item_and_evidence(
@@ -355,9 +359,7 @@ def source_feed_item_explanation(
     connection: sqlite3.Connection, *, item_key: str, source_id: str | None
 ) -> dict[str, Any]:
     require_accepted_publication(connection)
-    observations = source_observations(connection, source_id=source_id)
-    selected = {item.key for item in observations}
-    source = _latest_source(observations)
+    source, selected = _explanation_source_scope(_iter_source_observations(connection, source_id))
     item, evidence = _selected_item_and_evidence(connection, item_key, selected)
     return {
         "item": item,

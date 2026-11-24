@@ -41,6 +41,8 @@ _RAW_JOIN = (
     "AND raw.ordinal = evidence.raw_observation_ordinal"
 )
 _ID_BATCH = 500
+_FEED_ITEM_KINDS = frozenset({"feed.item"})
+_SOURCE_SUMMARY_KINDS = _FEED_ITEM_KINDS | {"feed.document", "feed.channel", "feed.author", "feed.category"}
 
 
 class _Node(NamedTuple):
@@ -171,11 +173,14 @@ def edge_links(connection: sqlite3.Connection, ids: Iterable[int] | None = None,
         f"edge.target_canonical_key, edge.identity_metadata_hash, link.link_kind, {projection} "
         "FROM canonical_edge_evidence link JOIN canonical_edges edge ON edge.id = link.canonical_edge_id"
     )
-    return group_by(
-        (row[0], _Edge(row[1], row[2], row[3], row[4], row[5], row[6],
-                       raw_payload.load(row[7]) if include_metadata else None))
-        for row in _link_rows(connection, sql, "edge", ids)
-    )
+    by_evidence: dict[int, list[_Edge]] = {}
+    metadata_by_id: dict[int, Any] = {}
+    for evidence_id, edge_id, source, kind, target, identity, link_kind, text in _link_rows(connection, sql, "edge", ids):
+        if include_metadata and edge_id not in metadata_by_id:
+            metadata_by_id[edge_id] = raw_payload.load(text)
+        edge = _Edge(edge_id, source, kind, target, identity, link_kind, metadata_by_id.get(edge_id))
+        by_evidence.setdefault(evidence_id, []).append(edge)
+    return by_evidence
 
 
 def fanout(
@@ -237,11 +242,14 @@ def _matched_evidence(keys: Iterable[RawKey], evidence: dict[RawKey, list[int]])
     return {evidence_id for key in keys for evidence_id in evidence.get(key, ())}
 
 
-def _node_counts(evidence_set: Iterable[int], nodes: dict[int, list[_Node]]) -> dict[str, int]:
+def _node_counts(
+    evidence_set: Iterable[int], nodes: dict[int, list[_Node]], kinds: frozenset[str],
+) -> dict[str, int]:
     by_kind: dict[str, set[str]] = {}
     for evidence_id in evidence_set:
         for node in nodes.get(evidence_id, ()):
-            by_kind.setdefault(node.kind, set()).add(node.key)
+            if node.kind in kinds:
+                by_kind.setdefault(node.kind, set()).add(node.key)
     return {kind: len(keys) for kind, keys in by_kind.items()}
 
 
@@ -302,7 +310,7 @@ def ingested_sources(
         profile = profiles[source_id]
         latest = profile.latest
         assert latest is not None
-        node_counts = _node_counts(_matched_evidence(profile.keys, evidence), nodes)
+        node_counts = _node_counts(_matched_evidence(profile.keys, evidence), nodes, _FEED_ITEM_KINDS)
         records.append(ingested_source_record_from_storage_payload({
             "source_id": source_id, "source_type": profile.source_type,
             "display_name": profile.display_name, "policy_status": profile.policy_status,
@@ -334,7 +342,7 @@ def source_summary(connection: sqlite3.Connection, *, source_id: str) -> SourceS
     evidence = evidence_ids(connection, profile.keys)
     matched = {evidence_id for ids in evidence.values() for evidence_id in ids}
     nodes, edges = node_links(connection, matched), edge_links(connection, matched)
-    node_counts = _node_counts(matched, nodes)
+    node_counts = _node_counts(matched, nodes, _SOURCE_SUMMARY_KINDS)
     references = _reference_counts(matched, edges)
     return source_summary_from_storage_payload({
         "source_id": source_id, "source_type": profile.source_type,

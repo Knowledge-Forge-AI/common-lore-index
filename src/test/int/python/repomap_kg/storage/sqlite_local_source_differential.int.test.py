@@ -37,6 +37,7 @@ from dataclasses import asdict, replace
 from itertools import groupby
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -65,10 +66,10 @@ from common_lore_index.storage import (
     source_summary_to_jsonable,
 )
 from common_lore_index.storage.readback_driver import READBACK_DRIVER_ENV
-from common_lore_index.storage.sqlite_local import source_feed_queries
+from common_lore_index.storage.sqlite_local import raw_payload, source_feed_queries
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from common_lore_index.storage.sqlite_local.source_queries import source_observations
+from common_lore_index.storage.sqlite_local.source_queries import edge_links, source_observations
 from repomap_test_support.portable_publication_fixtures import authority, binding, publish_portable_bundle
 from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 from repomap_test_support.sqlite_local_feed_corpus import (
@@ -224,6 +225,7 @@ def _explanations(pair: _Pair, sources: list[str], item_keys: list[str]) -> int:
             if source_id is None:
                 references = payload["references"]
                 assert payload["source"] is not None and payload["source"]["source_id"] in sources
+                assert payload["source"]["artifact_id"] == expected["source"]["artifact_id"]
             else:
                 assert payload["references"] == references
             if source_id == ABSENT_SOURCE:
@@ -313,6 +315,17 @@ def _check_feed_page_reference_read(pair: _Pair, source_id: str) -> None:
     assert any("SEARCH node " in step and "canonical_key=?" in step for step in plan), plan
 
 
+def _check_shared_edge_metadata(pair: _Pair) -> None:
+    with read_transaction(pair.path, pair.binding) as connection:
+        identity_links = edge_links(connection, include_metadata=False)
+        edge_ids = [edge.id for rows in identity_links.values() for edge in rows]
+        assert len(edge_ids) > len(set(edge_ids)) > 0
+        with patch.object(raw_payload, "load", wraps=raw_payload.load) as decode:
+            detailed_links = edge_links(connection)
+        assert decode.call_count == len(set(edge_ids))
+        assert [edge.id for rows in detailed_links.values() for edge in rows] == edge_ids
+
+
 def _prove(tmp_path: Path, database: Any) -> None:
     collation = database.psql_scalar("SELECT datcollate || '|' || datctype FROM pg_database "
                                      "WHERE datname = current_database();")
@@ -333,6 +346,7 @@ def _prove(tmp_path: Path, database: Any) -> None:
                 assert len(run_ids) == generation, (generation, run_ids)
         assert len(keys) >= 8, keys
         assert _explanations(feeds, sources, keys) >= len(keys), generation
+    _check_shared_edge_metadata(feeds)
     rss = feeds.store.source_summary(SourceSummaryQuery(RSS))
     assert rss.latest_source_run_id == runs["rss2"].source_run_id and rss.parse_errors == 1, rss
     assert rss.latest_artifact_path == runs["rss2"].artifact_path, rss
