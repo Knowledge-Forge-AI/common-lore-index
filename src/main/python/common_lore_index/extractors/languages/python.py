@@ -29,7 +29,7 @@ from common_lore_index.extractors.languages.python_imports import (
 )
 from common_lore_index.extractors.languages.python_modules import (
     PythonModuleIndex,
-    importable_module_name,
+    importable_module_name as importable_module_name,
     module_name_from_suffix,
     normalize_root,
     package_roots,
@@ -130,7 +130,7 @@ def extract_python_file_observations(
     module_index: PythonModuleIndex,
     repository_root: Path | str | None = None,
 ) -> tuple[RawObservation, ...]:
-    module = importable_module_name(relative_path, repository_root=repository_root)
+    module = module_index.module_for_path(relative_path, repository_root)
     if module is None:
         return ()
     try:

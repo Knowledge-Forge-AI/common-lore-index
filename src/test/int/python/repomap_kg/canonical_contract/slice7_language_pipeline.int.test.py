@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from common_lore_index.canonicalization.main import canonicalize_observations
 from common_lore_index.extractors.languages.javascript import extract_javascript_file_observations
 from common_lore_index.extractors.languages.python import PythonModuleIndex, extract_python_file_observations
 from common_lore_index.extractors.languages.ruby import extract_ruby_file_observations
+from common_lore_index.graph.discovery import discover_observations
 import common_lore_index.graph.keys as k
 from common_lore_index.observations.raw import RawObservation
 from common_lore_index.storage.canonical_rows import prepare_canonical_load
@@ -13,6 +16,30 @@ from common_lore_index.storage.canonical_rows import prepare_canonical_load
 
 class Slice7LanguagePipelineIntegrationTests(unittest.TestCase):
     """Integration scenarios for Slice 7 Group S7-A real source to canonical graph and typed rows."""
+
+    def test_python_package_metadata_produces_consistent_canonical_import_targets(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "lib" / "example"
+            package.mkdir(parents=True)
+            (package / "entry.py").write_text("from . import service\n", encoding="utf-8")
+            (package / "service.py").write_text("def status():\n    return 1\n", encoding="utf-8")
+            metadata = root / "pyproject.toml"
+            metadata.write_text('[tool.setuptools.package-dir]\n"" = "lib"\n', encoding="utf-8")
+            configured = prepare_canonical_load(discover_observations(root))
+            metadata.write_text("[tool]\nsetuptools = false\n", encoding="utf-8")
+            fallback = prepare_canonical_load(discover_observations(root))
+            for load, name in ((configured, "example"), (fallback, "lib.example")):
+                with self.subTest(package=name):
+                    self.assertTrue(load.result.ok)
+                    edges = {
+                        (edge.source_key, edge.edge_kind, edge.target_key)
+                        for edge in load.canonical_rows.edges
+                    }
+                    self.assertIn(
+                        (k.python_module_key(f"{name}.entry"), "imports", k.python_module_key(f"{name}.service")),
+                        edges,
+                    )
 
     def test_s7_a01_python_source_to_canonical_graph_and_typed_rows(self) -> None:
         """Real Python source extracts module, class, methods, and functions into typed storage rows."""
