@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from common_lore_index.retrieval.lexical_aliases import build_alias_tokens_text
 from common_lore_index.storage import lexical_population
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
@@ -82,6 +83,11 @@ def test_published_lexical_report_matches_real_plan_aggregates(
         )
         assert outcome.result == "published" and outcome.plan is not None
         assert unicode_rows > 0
+        for document in outcome.plan.documents:
+            for chunk in document.chunks:
+                assert chunk.alias_tokens_text == build_alias_tokens_text(
+                    source_relative_path=document.source_relative_path, chunk_text=chunk.chunk_text,
+                )
         payload = observer.report().to_payload()
         assert payload["operation"] == "lexical_build"
         assert payload["backend"] == "postgresql"

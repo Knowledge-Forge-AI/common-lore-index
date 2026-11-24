@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Iterator
+from functools import lru_cache
 import re
 
 ALIAS_SPLIT_RULE_VERSION = "identifier-path-split-v1"
@@ -20,9 +21,12 @@ _CLEAN_ALNUM_RE = re.compile(r"^[a-z0-9]{2,64}$")
 def _split_camel_case(segment: str) -> list[str]:
     if not segment:
         return []
-    step1 = _ACRONYM_BOUNDARY_RE.sub(" ", segment)
-    step2 = _CAMEL_BOUNDARY_1_RE.sub(r"\1 \2", step1)
-    base = [part.lower() for part in step2.split(" ") if part]
+    if segment.isalnum() and (segment.islower() or segment.isdigit()):
+        base = [segment]
+    else:
+        step1 = _ACRONYM_BOUNDARY_RE.sub(" ", segment)
+        step2 = _CAMEL_BOUNDARY_1_RE.sub(r"\1 \2", step1)
+        base = [part.lower() for part in step2.split(" ") if part]
     expanded: list[str] = []
     for part in base:
         expanded.append(part)
@@ -34,8 +38,18 @@ def _split_camel_case(segment: str) -> list[str]:
     return expanded
 
 
+def _alias_candidates(raw: str) -> Iterator[str]:
+    parts = [part for part in _DELIMITER_SPLIT_RE.split(raw) if part]
+    for part in parts:
+        yield part
+        yield from _split_camel_case(part)
+    if len(parts) > 1:
+        yield "".join(parts)
+
+
 def _append_alias_tokens(
     text_input: str, seen: set[str], ordered: list[str], seen_candidates: set[str],
+    candidates_for: Callable[[str], Iterable[str]] = _alias_candidates,
 ) -> None:
 
     def _add(token: str) -> None:
@@ -53,14 +67,8 @@ def _append_alias_tokens(
         if raw in seen_candidates:
             continue
         seen_candidates.add(raw)
-        parts = [p for p in _DELIMITER_SPLIT_RE.split(raw) if p]
-        for part in parts:
-            _add(part)
-            for sub in _split_camel_case(part):
-                _add(sub)
-        if len(parts) > 1:
-            joined = "".join(parts)
-            _add(joined)
+        for candidate in candidates_for(raw):
+            _add(candidate)
 
 
 def extract_alias_tokens(
@@ -83,9 +91,19 @@ def _prepare_alias_text(source_relative_path: str) -> Callable[[str], str]:
     path_candidates: set[str] = set()
     _append_alias_tokens(source_relative_path, set(), ordered, path_candidates)
 
+    # Limit retained tokens to small candidates within one document.
+    @lru_cache(maxsize=256)
+    def cached_candidates(value: str) -> tuple[str, ...]:
+        return tuple(_alias_candidates(value))
+
+    def expand(value: str) -> Iterable[str]:
+        if len(value) <= 128:
+            return cached_candidates(value)
+        return _alias_candidates(value)
+
     def format_chunk(chunk_text: str) -> str:
         tokens = list(ordered)
-        _append_alias_tokens(chunk_text, set(ordered), tokens, set(path_candidates))
+        _append_alias_tokens(chunk_text, set(ordered), tokens, set(path_candidates), expand)
         return " ".join(tokens)
 
     return format_chunk

@@ -313,3 +313,35 @@ def test_prepared_path_aliases_do_not_retain_tokens_from_previous_chunks() -> No
     assert prepare(second) == build_alias_tokens_text(source_relative_path=path, chunk_text=second)
     assert "value42" not in prepare(second).split()
     assert prepare(first) == build_alias_tokens_text(source_relative_path=path, chunk_text=first)
+
+
+def test_frequent_alias_candidates_are_cached_only_within_one_document(monkeypatch) -> None:
+    from common_lore_index.retrieval import lexical_aliases
+
+    expand = lexical_aliases._alias_candidates
+    seen = []
+
+    def measure(value):
+        seen.append(value)
+        return expand(value)
+
+    monkeypatch.setattr(lexical_aliases, "_alias_candidates", measure)
+    first = lexical_aliases._prepare_alias_text("")
+    assert first("Field42") == first("Field42")
+    assert seen == ["Field42"]
+    second = lexical_aliases._prepare_alias_text("")
+    assert second("Field42") == first("Field42") and seen.count("Field42") == 2
+    too_long = "Z" * 129
+    assert first(too_long) == first(too_long) == ""
+    assert seen.count(too_long) == 2
+    boundary = "Z" * 128
+    assert first(boundary) == first(boundary) == ""
+    assert seen.count(boundary) == 1
+    for index in range(254):
+        first(f"Field{1000 + index}")
+    first("Field42")
+    assert seen.count("Field42") == 2
+    for index in range(256):
+        first(f"Field{2000 + index}")
+    first("Field42")
+    assert seen.count("Field42") == 3
