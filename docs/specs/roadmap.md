@@ -1,14 +1,21 @@
 # Common Lore Index Roadmap
 
-## Current release and CLOE transition
+## Current release and v0.1.0 readiness
 
-Public main is released Common Lore Index v0.0.4 at `39cb2b3`. Public
-staging `c323998e` is the latest qualified milestone. All nine jobs and the
-same-attempt proof passed in [CI158 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44471257873).
-The [qualification record](../../tools/ci/cloe-ci158-qualification.md) binds
-the source, host evidence and consumed counters. Unit branches reached
-87.06%. Integration branches reached 80.15%, leaving 468 branches to the 82%
-target. Main promotion, release and production admission remain separate.
+[Public source preview v0.0.5](https://github.com/Knowledge-Forge-AI/common-lore-index/releases/tag/v0.0.5)
+was promoted from the exact tested tree of
+[CI171 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/45491166838).
+Public main subsequently received the website expansion. The preview's package
+and CLI still report 0.0.4, as disclosed in its release notes.
+
+Use the [v0.1.0 acceptance ledger](cloe-v010-release-readiness.md) for
+current workstream status, required evidence and the M0–M4 schedule.
+[ADR 0221](../adr/2026/11/0221-v010-release-readiness-sequence.md) sets the
+qualification sequence. The
+[canonical-only cutover](../adr/2026/11/0222-v010-canonical-only-cutover.md)
+describes the remaining naming and deployment decisions.
+
+## Historical W5 calibration and roadmap decisions
 
 The operator selected Route A in [ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md).
 Its source foundation is qualified. The operator selected the prospective
