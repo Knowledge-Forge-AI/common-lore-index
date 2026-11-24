@@ -627,20 +627,6 @@
       },
       {
         "count": 1,
-        "error_code": "arg-type",
-        "module": "common_lore_index.extractors.documents.markdown",
-        "normalized_fingerprint": "c26de5b9ce190c72c9b1a6b789e70b290a9a5249ff61e0050cce17e1dfc05c40",
-        "path": "src/main/python/common_lore_index/extractors/documents/markdown.py"
-      },
-      {
-        "count": 1,
-        "error_code": "arg-type",
-        "module": "common_lore_index.extractors.documents.markdown",
-        "normalized_fingerprint": "c992f21eb6c212899bb702b4316592e5f46294a3571b141f113ca491329abd27",
-        "path": "src/main/python/common_lore_index/extractors/documents/markdown.py"
-      },
-      {
-        "count": 1,
         "error_code": "assignment",
         "module": "common_lore_index.extractors.documents.markdown",
         "normalized_fingerprint": "370347e4e35fd3ffc8883782a7c38dda742fb5c842c4c3ea716f1ce24bfe301e",

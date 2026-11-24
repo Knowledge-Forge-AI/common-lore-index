@@ -205,9 +205,7 @@ def archive_observations_from_manifest(
         repository_root=repository_root,
     )
     repository_paths = frozenset(file_info.path for file_info in file_infos)
-    markdown_anchors: dict[str, set[str] | frozenset[str]] = dict(
-        markdown_anchor_index(repository_root, file_infos)
-    )
+    markdown_anchors = markdown_anchor_index(repository_root, file_infos)
     observations: list[RawObservation] = []
     for file_info in file_infos:
         observations.extend(

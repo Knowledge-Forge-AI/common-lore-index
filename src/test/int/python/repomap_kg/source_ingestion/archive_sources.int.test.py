@@ -22,6 +22,34 @@ from common_lore_index.ops.ingestion.source import (
 
 
 class ArchiveSourceIngestionIntegrationTests(unittest.TestCase):
+    def test_nested_archive_markdown_links_use_only_the_included_inventory(self) -> None:
+        config = replace(load_archive_source_config(archive_source_fixture("allowed-test-report.toml")),
+                         artifact_path="reports", max_depth=2)
+        with tempfile.TemporaryDirectory(dir=select_scratch_root()) as tmpdir:
+            root = Path(tmpdir)
+            archive = root / "reports"
+            for directory in ("docs", "docs/more", ".draft"):
+                (archive / directory).mkdir(parents=True)
+            (archive / "docs/topic.md").write_text("# Topic\n", encoding="utf-8")
+            (archive / "docs/more/out.md").write_text("# Out\n", encoding="utf-8")
+            (archive / ".draft/note.md").write_text("# Draft\n", encoding="utf-8")
+            (archive / "index.md").write_text(
+                "[Topic](docs/topic.md#topic) [Out](docs/more/out.md#out) [Draft](.draft/note.md#draft)\n",
+                encoding="utf-8",
+            )
+            (archive / "symlink.md").symlink_to("docs/topic.md")
+            manifest = build_archive_manifest(config, root_path=root, clock=fixed_clock)
+            observations = archive_observations_from_manifest(config, manifest, root_path=root)
+        self.assertEqual([item.relative_path for item in manifest.included_files], ["docs/topic.md", "index.md"])
+        self.assertEqual([(item.relative_path, item.reason) for item in manifest.skipped_files], [
+            (".draft", "hidden"), ("docs/more/out.md", "max_depth"), ("symlink.md", "symlink"),
+        ])
+        self.assertEqual([item.target for item in observations if item.kind == "markdown.link"], [
+            "doc.section:file%3Areports%2Fdocs%2Ftopic.md:topic",
+            "unknown:doc.section:missing-anchor",
+            "unknown:doc.section:missing-anchor",
+        ])
+
     def test_feed_source_fixture_policy_matrix(self):
         allowed = load_feed_source_config(source_fixture("allowed-rss.toml"))
         secret = load_feed_source_config(source_fixture("secret-bearing.toml"))

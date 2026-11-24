@@ -19,6 +19,49 @@ from common_lore_index.ops.ingestion.source import (
 
 
 class ArchiveSourceIngestionUnitTests(SourceIngestionUnitTestCase):
+    def test_archive_scan_refuses_replacement_of_admitted_file_at_same_size(self) -> None:
+        from common_lore_index.ops.ingestion import _source_archive_scan
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            report = root / "reports/latest"
+            report.mkdir(parents=True)
+            item = report / "report.txt"
+            replacement = root / "next.txt"
+            item.write_text("first")
+            replacement.write_text("other")
+            config = load_archive_source_config(self.write_archive_config(root / "source.toml"))
+
+            def replace_then_read(*args, **kwargs):
+                replacement.replace(item)
+                return _archive_included_file(*args, **kwargs)
+
+            with patch.object(_source_archive_scan, "_archive_included_file", side_effect=replace_then_read):
+                with self.assertRaisesRegex(SourcePolicyError, "changed during manifest scan"):
+                    build_archive_manifest(config, root_path=root, clock=self.fixed_clock)
+            self.assertEqual(item.read_text(), "other")
+
+    def test_archive_scan_keeps_an_unavailable_listing_entry_as_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir).resolve()
+            report = root / "reports/latest"
+            report.mkdir(parents=True)
+            item = report / "gone.txt"
+            item.write_text("fixture")
+            config = load_archive_source_config(self.write_archive_config(root / "source.toml"))
+            lstat = Path.lstat
+
+            def remove_then_lstat(path: Path):
+                if path == item:
+                    path.unlink()
+                return lstat(path)
+
+            with patch.object(Path, "lstat", remove_then_lstat):
+                manifest = build_archive_manifest(config, root_path=root, clock=self.fixed_clock)
+        self.assertEqual(manifest.included_files, ())
+        (skipped,) = manifest.skipped_files
+        self.assertEqual((skipped.relative_path, skipped.reason), ("gone.txt", "special-file"))
+
     def test_archive_hashes_a_multiblock_file_without_a_whole_file_read(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

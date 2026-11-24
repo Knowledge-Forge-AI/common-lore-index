@@ -32,33 +32,41 @@ def _scan_archive_directory(
         if child is None:
             pending.pop()
             continue
-        relative_path = child.relative_to(artifact_root).as_posix()
+        relative = child.relative_to(artifact_root)
+        relative_path = relative.as_posix()
         if child.name in ARCHIVE_EXCLUDED_DIR_NAMES and child.is_dir():
             skipped.append(ArchiveSkippedFile(relative_path, "excluded-directory"))
             continue
-        if _is_hidden_relative_path(relative_path) and not config.hidden_files:
+        if child.name.startswith(".") and not config.hidden_files:
             skipped.append(ArchiveSkippedFile(relative_path, "hidden"))
             continue
-        if child.is_symlink():
+        try:
+            expected = child.lstat()
+        except OSError:
+            # Keep pathlib's version-specific handling of unavailable entries.
+            if child.exists(follow_symlinks=False):
+                raise
+            expected = None
+        if expected is not None and stat.S_ISLNK(expected.st_mode):
             skipped.append(ArchiveSkippedFile(relative_path, "symlink"))
             continue
-        if len(Path(relative_path).parts) > config.max_depth:
+        if len(relative.parts) > config.max_depth:
             skipped.append(ArchiveSkippedFile(relative_path, "max_depth"))
             continue
-        if child.is_dir():
+        if expected is not None and stat.S_ISDIR(expected.st_mode):
             pending.append(iter(sorted(child.iterdir(), key=lambda path: path.name)))
             continue
-        if not child.is_file():
+        if expected is None or not stat.S_ISREG(expected.st_mode):
             skipped.append(ArchiveSkippedFile(relative_path, "special-file"))
             continue
         if len(included) >= config.max_file_count:
             skipped.append(ArchiveSkippedFile(relative_path, "max_file_count"))
             continue
-        byte_length = child.stat().st_size
+        byte_length = expected.st_size
         if total_bytes + byte_length > config.max_artifact_bytes:
             skipped.append(ArchiveSkippedFile(relative_path, "max_artifact_bytes"))
             continue
-        included.append(_archive_included_file(root, artifact_root, child, byte_length))
+        included.append(_archive_included_file(root, artifact_root, child, byte_length, expected=expected))
         total_bytes += byte_length
 
     return tuple(included), tuple(skipped)
@@ -69,7 +77,8 @@ def _scan_archive_file(
     root: Path,
     artifact_path: Path,
 ) -> tuple[tuple[ArchiveIncludedFile, ...], tuple[ArchiveSkippedFile, ...]]:
-    byte_length = artifact_path.stat().st_size
+    expected = artifact_path.lstat()
+    byte_length = expected.st_size
     if byte_length > config.max_artifact_bytes:
         return (), (ArchiveSkippedFile(artifact_path.name, "max_artifact_bytes"),)
     return (
@@ -79,6 +88,7 @@ def _scan_archive_file(
                 artifact_path.parent,
                 artifact_path,
                 byte_length,
+                expected=expected,
             ),
         ),
         (),
@@ -90,8 +100,11 @@ def _archive_included_file(
     artifact_root: Path,
     file_path: Path,
     byte_length: int,
+    *,
+    expected: os.stat_result | None = None,
 ) -> ArchiveIncludedFile:
-    expected = file_path.lstat()
+    if expected is None:
+        expected = file_path.lstat()
     if not stat.S_ISREG(expected.st_mode):
         raise SourcePolicyError("archive manifest input must be a regular file")
     if expected.st_size != byte_length:

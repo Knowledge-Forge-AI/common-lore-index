@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any
@@ -58,15 +59,16 @@ def extract_markdown_file_observations(
     content: str,
     *,
     repository_paths: set[str] | frozenset[str] | None = None,
-    markdown_anchors: dict[str, set[str] | frozenset[str]] | None = None,
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]] | None = None,
     content_hash: str | None = None,
     generated: bool | None = None,
 ) -> tuple[RawObservation, ...]:
-    repository_paths = set(repository_paths or {relative_path})
-    markdown_anchors = {
-        path: set(anchors)
-        for path, anchors in (markdown_anchors or {}).items()
-    }
+    """Extract observations while borrowing the caller's anchor index.
+
+    Keep the supplied index stable for the duration of extraction."""
+    if not repository_paths or type(repository_paths) is not frozenset:
+        repository_paths = set(repository_paths or {relative_path})
+    markdown_anchors = markdown_anchors or {}
     frontmatter = parse_frontmatter(content)
     skip_until = frontmatter.end_line if frontmatter is not None else 0
     title = next((heading.text for heading in _iter_markdown_headings(content, skip_until=skip_until)
@@ -107,7 +109,7 @@ def resolve_markdown_link_target(
     raw_target: str,
     *,
     repository_paths: set[str] | frozenset[str],
-    markdown_anchors: dict[str, set[str] | frozenset[str]],
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]],
 ) -> LinkResolution:
     target = _strip_link_title(raw_target.strip())
     if not target:
@@ -150,9 +152,7 @@ def resolve_markdown_link_target(
 
     if anchor_part is not None:
         anchor = markdown_anchor(unquote(anchor_part))
-        if resolved_path in repository_paths and anchor in set(
-            markdown_anchors.get(resolved_path, ())
-        ):
+        if resolved_path in repository_paths and anchor in markdown_anchors.get(resolved_path, ()):
             return LinkResolution(
                 target=doc_section_key(resolved_path, anchor),
                 resolved_target_kind="doc.section",
@@ -198,8 +198,8 @@ def _line_structural_observations(
     relative_path: str,
     content: str,
     *,
-    repository_paths: set[str],
-    markdown_anchors: dict[str, set[str]],
+    repository_paths: set[str] | frozenset[str],
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]],
     skip_until: int,
 ) -> tuple[RawObservation, ...]:
     definitions = _link_definitions(content, skip_until=skip_until)
@@ -434,8 +434,8 @@ def _link_observations_from_line(
     *,
     line_number: int,
     current_anchor: str | None,
-    repository_paths: set[str],
-    markdown_anchors: dict[str, set[str]],
+    repository_paths: set[str] | frozenset[str],
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]],
     definitions: dict[str, str],
     starting_ordinal: int,
 ) -> tuple[tuple[RawObservation, ...], int]:
@@ -519,8 +519,8 @@ def _link_observation(
     raw_target: str,
     syntax: str,
     current_anchor: str | None,
-    repository_paths: set[str],
-    markdown_anchors: dict[str, set[str]],
+    repository_paths: set[str] | frozenset[str],
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]],
     is_image: bool,
     definition_id: str | None = None,
 ) -> RawObservation:

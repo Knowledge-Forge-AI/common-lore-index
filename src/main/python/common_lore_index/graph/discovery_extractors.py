@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from common_lore_index import __version__
@@ -348,7 +348,7 @@ def extract_markdown_file_observations_from_file(
     file_info: FileInfo,
     *,
     repository_paths: frozenset[str],
-    markdown_anchors: dict[str, set[str] | frozenset[str]],
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]],
 ) -> tuple[RawObservation, ...]:
     content = _read_utf8(repository_root, file_info.path)
     if content is None:

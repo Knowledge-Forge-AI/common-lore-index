@@ -49,7 +49,7 @@ def _observations_for_archive_file(
                 repository_root,
                 file_info,
                 repository_paths=repository_paths,
-                markdown_anchors=dict(markdown_anchors),
+                markdown_anchors=markdown_anchors,
             )
         )
     if file_info.language == "shell":
