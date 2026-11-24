@@ -1,6 +1,8 @@
 """COPY refusals roll back unpublished rows while preserving committed evidence."""
 
 import json
+from collections.abc import Iterator, Sequence
+from contextlib import closing
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -76,7 +78,7 @@ def test_late_copy_refusal_preserves_committed_rows_and_allows_recovery(invalid_
                 assert cursor.fetchall() == [("base.py",), ("recovered.py",)]
 
 
-@pytest.mark.parametrize("mismatch", ["short-spool", "overlong-spool", "changed-spool"])
+@pytest.mark.parametrize("mismatch", ["short-spool", "overlong-spool", "changed-spool", "changed-during-copy"])
 def test_prepared_copy_refusal_rolls_back_before_statistics_and_preserves_publication(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mismatch: str,
 ) -> None:
@@ -104,6 +106,26 @@ def test_prepared_copy_refusal_rolls_back_before_statistics_and_preserves_public
         statistics = staged_ingestion._refresh_canonical_node_evidence_statistics
         files: list[RowSpool] = []
         statistics_calls = 0
+        changed_during_copy = False
+        copy_writes = 0
+        original_iter = RowSpool.__iter__
+        original_write_row = psycopg.Copy.write_row
+
+        def observe_write(copy: psycopg.Copy, row: Sequence[Any]) -> None:
+            nonlocal copy_writes
+            original_write_row(copy, row)
+            copy_writes += 1
+
+        def change_after_first_row(spool: RowSpool) -> Iterator[dict[str, object]]:
+            nonlocal changed_during_copy
+            with closing(original_iter(spool)) as reader:
+                if files and spool is files[0]:
+                    yield next(reader)
+                    assert copy_writes == 1 and not changed_during_copy
+                    with spool.path.open("ab") as handle:
+                        handle.write(b"{}\n")
+                    changed_during_copy = True
+                yield from reader
 
         def skew_counts(*args: Any, **kwargs: Any) -> PreparedStageRows:
             prepared = original(*args, **kwargs)
@@ -113,6 +135,7 @@ def test_prepared_copy_refusal_rolls_back_before_statistics_and_preserves_public
                 "short-spool": (),
                 "overlong-spool": (*reference, {**reference[0], "family_ordinal": 1, "path": "surplus.py"}),
                 "changed-spool": reference,
+                "changed-during-copy": reference,
             }
             spool = RowSpool.from_rows(rows[mismatch], dir=tmp_path)
             if mismatch == "changed-spool":
@@ -129,14 +152,19 @@ def test_prepared_copy_refusal_rolls_back_before_statistics_and_preserves_public
         with monkeypatch.context() as patch:
             patch.setattr(staged_ingestion, "_resolve_prepared_rows", skew_counts)
             patch.setattr(staged_ingestion, "_refresh_canonical_node_evidence_statistics", observe_statistics)
+            if mismatch == "changed-during-copy":
+                patch.setattr(RowSpool, "__iter__", change_after_first_row)
+                patch.setattr(psycopg.Copy, "write_row", observe_write)
             refusal = (
                 pytest.raises(ValueError, match="staged row spool identity or extent changed")
-                if mismatch == "changed-spool"
+                if mismatch in {"changed-spool", "changed-during-copy"}
                 else pytest.raises(StorageSchemaError, match="staged family completeness failed")
             )
             with refusal:
                 run_staged_full_refresh(postgres.psql_args, current[1:], authority=authority(),
                                        stage_id="mismatch-stage", repository_name=repo, root_path=root)
+        assert changed_during_copy is (mismatch == "changed-during-copy")
+        assert copy_writes == (1 if changed_during_copy else 0)
         assert len(files) == 1 and not files[0].path.exists()
         assert statistics_calls == 0
         params = _psycopg_connection_params_from_psql_args(postgres.psql_args)

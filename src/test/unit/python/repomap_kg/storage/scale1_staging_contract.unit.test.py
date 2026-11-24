@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import astuple
 from datetime import UTC, datetime, timedelta
+from types import MappingProxyType
 
 import pytest
 
@@ -195,6 +197,20 @@ def test_checksum_is_order_independent_and_type_strict() -> None:
     assert first.stable_key_digest != checksum_family(
         rows[:2], identity_fields=("stable_key",)
     ).stable_key_digest
+
+
+def test_checksum_v2_preserves_receipt_for_dict_and_mapping_rows() -> None:
+    first = {'stable_key': 'fixture:a', 'nested': {'text': 'é🐦', 'values': [True, None, 1, 1.0]}}
+    second = {'stable_key': 'fixture:b', 'value': -2}
+    expected = (
+        2, 396,
+        '3838bab7e818fd2ba3716f8b82ce8bc6f607580328968e2897f828c22227fdb3',
+        '36e23feea04d7a3843ec2b65c8105d674358e6be5c840682f765458e47988a4a',
+    )
+    assert astuple(checksum_family((first, second), identity_fields=("stable_key",))) == expected
+    assert astuple(checksum_family(
+        (MappingProxyType(second), MappingProxyType(first)), identity_fields=("stable_key",),
+    )) == expected
 
 
 def test_checksum_rejects_missing_identity_field_without_exposing_row_values() -> None:

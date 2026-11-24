@@ -14,6 +14,15 @@ from typing import Any
 __all__ = ("FamilyChecksum", "checksum_family")
 
 _DIGEST_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
+_ROW_KEY_PREFIX = b"repomap-staging-checksum-v2\x00key\x00"
+_ROW_PAYLOAD_PREFIX = b"repomap-staging-checksum-v2\x00payload\x00"
+_SUM_MODULUS = 1 << 256
+
+
+def _row_digest_value(prefix: bytes, encoded: bytes) -> int:
+    digest = hashlib.sha256(prefix)
+    digest.update(encoded)
+    return int.from_bytes(digest.digest(), "big")
 
 
 @dataclass(frozen=True)
@@ -66,32 +75,20 @@ class _FamilyChecksumAccumulator:
         if any(name not in row for name in self._identity_names):
             raise ValueError("checksum identity field is missing")
         identity = {name: row[name] for name in self._identity_names}
-        encoded_identity = _canonical_json(_typed_value(identity))
+        typed_identity = _typed_value(identity)
+        encoded_identity = _canonical_json(typed_identity)
         encoded_payload = _canonical_json(
             {
-                "identity": _typed_value(identity),
-                "payload": _typed_value(dict(row)),
+                "identity": typed_identity,
+                "payload": _typed_value(row if type(row) is dict else dict(row)),
             }
         )
-        modulus = 1 << 256
         self._key_sum = (
-            self._key_sum
-            + int.from_bytes(
-                hashlib.sha256(
-                    b"repomap-staging-checksum-v2\x00key\x00" + encoded_identity
-                ).digest(),
-                "big",
-            )
-        ) % modulus
+            self._key_sum + _row_digest_value(_ROW_KEY_PREFIX, encoded_identity)
+        ) % _SUM_MODULUS
         self._payload_sum = (
-            self._payload_sum
-            + int.from_bytes(
-                hashlib.sha256(
-                    b"repomap-staging-checksum-v2\x00payload\x00" + encoded_payload
-                ).digest(),
-                "big",
-            )
-        ) % modulus
+            self._payload_sum + _row_digest_value(_ROW_PAYLOAD_PREFIX, encoded_payload)
+        ) % _SUM_MODULUS
         self._row_count += 1
         self._normalized_byte_count += len(encoded_payload) + 1
 

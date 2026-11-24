@@ -4,11 +4,13 @@ import json
 import scale11_profile_normalized_ingestion as profiler
 
 import psycopg
+from psycopg.conninfo import make_conninfo
 
 from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.readback_driver import (
     _psycopg_connection_params_from_psql_args,
 )
+from common_lore_index.storage.staging_checksums import FamilyChecksum
 from repomap_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
@@ -45,6 +47,19 @@ def _unresolved_stage_count(postgres) -> int:
         ).fetchone()
         assert row is not None
         return int(row[0])
+
+
+def _read_family_checksums(postgres) -> dict[str, FamilyChecksum]:
+    params = _psycopg_connection_params_from_psql_args(postgres.psql_args)
+    with psycopg.connect(make_conninfo(**params)) as connection:
+        rows = connection.execute(
+            "SELECT family_checksums FROM ingestion_stages WHERE state = 'published'"
+        ).fetchall()
+        assert len(rows) == 1
+        return {
+            family: FamilyChecksum(**payload).validate()
+            for family, payload in rows[0][0].items()
+        }
 
 
 def test_profiled_publication_is_receipt_bearing_deterministic_and_clean() -> None:
@@ -114,6 +129,7 @@ def test_instrumentation_preserves_seven_family_semantics() -> None:
             repetition=1,
             instrumented=True,
         )
+        instrumented_checksums = _read_family_checksums(instrumented_postgres)
     with temporary_postgres() as plain_postgres:
         _migrate(plain_postgres)
         plain = profiler.profile_publication(
@@ -122,7 +138,13 @@ def test_instrumentation_preserves_seven_family_semantics() -> None:
             repetition=1,
             instrumented=False,
         )
+        plain_checksums = _read_family_checksums(plain_postgres)
 
+    assert instrumented_checksums == plain_checksums
+    assert set(instrumented_checksums) == set(FAMILIES)
+    assert tuple(instrumented_checksums[family].row_count for family in FAMILIES) == tuple(
+        family.row_count for family in instrumented.families
+    )
     assert instrumented.structural_digest == plain.structural_digest
     assert tuple(family.row_count for family in instrumented.families) == tuple(
         family.row_count for family in plain.families
