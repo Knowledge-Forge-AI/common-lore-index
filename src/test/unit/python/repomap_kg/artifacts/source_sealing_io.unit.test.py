@@ -23,6 +23,35 @@ def _open(path: Path, content: bytes):
     )
 
 
+def test_archive_descriptor_accepts_synthesized_path_permissions(tmp_path: Path) -> None:
+    path = tmp_path / "fixture.cmd"
+    path.write_bytes(b"fixture")
+    path.chmod(0o600)
+    with pytest.MonkeyPatch.context() as scoped:
+        original = Path.lstat
+
+        def synthetic_lstat(candidate: Path) -> os.stat_result:
+            actual = original(candidate)
+            if candidate != path:
+                return actual
+            fields = tuple(actual)
+            return os.stat_result(
+                (actual.st_mode | 0o111, *fields[1:]),
+                {"st_mtime_ns": actual.st_mtime_ns, "st_ctime_ns": actual.st_ctime_ns},
+            )
+
+        scoped.setattr(Path, "lstat", synthetic_lstat)
+        scoped.setattr(io_mod, "_supports_dir_fd", lambda: False)
+        with open_source_body(
+            tmp_path, path.name, expected_size=7, expected_digest=hashlib.sha256(b"fixture").hexdigest(),
+            expected_executable=None, expected_stat=path.lstat(), allow_hardlinks=True,
+        ) as body:
+            assert b"".join(body) == b"fixture"
+        with pytest.raises(ValueError, match="source changed while sealing"):
+            with _open(path, b"fixture"):
+                pytest.fail("portable sealing accepted inconsistent path permissions")
+
+
 def test_partial_consumer_closes_descriptor_and_refuses_unverified_body(
     tmp_path, monkeypatch
 ):

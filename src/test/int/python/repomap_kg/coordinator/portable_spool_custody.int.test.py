@@ -112,6 +112,7 @@ def test_preparation_cancellation_and_data_faults_stop_real_owned_work(
     _, store, _, _, capability, sentinel = _setup(tmp_path, functions=4201)
     before = {path.name: path.read_bytes() for path in store._objects.iterdir()}
     event = threading.Event()
+    monkeypatch.setattr(preparation_module, "_ROW_SPOOL_BYTE_THRESHOLD", 64 * 1024 * 1024)
     consumed, growth = _observe_preparation(monkeypatch, event, boundary)
     with pytest.raises(adapter.PortableExecutionError) as caught:
         adapter.execute_portable_extraction(capability, emit_progress=lambda *_: None, cancel_event=event)
@@ -167,6 +168,40 @@ def test_actual_large_worker_spools_are_attempt_owned_and_byte_equivalent(
     assert validation.byte_integrity_valid and validation.semantic_authority_valid
     assert all(not path.exists() for path, _count in allocations)
     assert not tuple(ambient.iterdir())
+    assert tuple(capability.workspace_root.iterdir()) == (sentinel,)
+    assert sentinel.read_bytes() == b"preserved"
+
+
+def test_worker_spools_wide_rows_below_the_count_cutoff(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config, store, manifest, _, capability, sentinel = _setup(tmp_path, functions=12)
+    reference = capture_multi_source_candidate(config)
+    expected = reference_bytes(reference, manifest, capability, tmp_path / "reference-sort")
+    observed: list[tuple[Path, int, int]] = []
+    original_spool = RowSpool.from_rows
+
+    def spool(cls, rows, **kwargs):
+        result = original_spool(rows, **kwargs)
+        observed.append((result.path, result.count, result.byte_count))
+        return result
+
+    byte_limit = 512
+    monkeypatch.setattr(preparation_module, "_ROW_SPOOL_BYTE_THRESHOLD", byte_limit)
+    monkeypatch.setattr(RowSpool, "from_rows", classmethod(spool))
+    result = adapter.execute_portable_extraction(
+        capability, emit_progress=lambda *_: None, cancel_event=threading.Event(),
+    )
+    assert observed
+    for path, count, byte_count in observed:
+        assert 0 < count < 4096 and byte_count > byte_limit
+        assert path.parent.parent == capability.workspace_root and not path.exists()
+    assert store.read(result.bundle_reference) == expected
+    validation = PublisherBundleValidator().validate_bundle(
+        store=store, bundle_reference=result.bundle_reference, receipt_reference=result.receipt_reference,
+        expectation=publication_expectation(manifest, capability, result.candidate_id),
+    )
+    assert validation.byte_integrity_valid and validation.semantic_authority_valid
     assert tuple(capability.workspace_root.iterdir()) == (sentinel,)
     assert sentinel.read_bytes() == b"preserved"
 

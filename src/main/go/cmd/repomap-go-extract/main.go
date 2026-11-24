@@ -45,7 +45,7 @@ func run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int
 		if err != nil || request.Sequence != expectedSequence {
 			return processError(stderr, "invalid protocol request")
 		}
-		if !processFile(root, request, stdout, stderr) {
+		if !processFile(root, request, stdout, stderr, pathscope.ReadSource) {
 			return 1
 		}
 		expectedSequence++
@@ -61,8 +61,13 @@ func processFile(
 	request protocol.Request,
 	stdout io.Writer,
 	stderr io.Writer,
+	readSource func(string, int64) ([]byte, error),
 ) bool {
-	path, err := pathscope.Resolve(root, request.Path, maxFileBytes)
+	path, err := pathscope.ResolveFromCanonicalRoot(root, request.Path, maxFileBytes)
+	var source []byte
+	if err == nil {
+		source, err = readSource(path, maxFileBytes)
+	}
 	if errors.Is(err, pathscope.ErrFileTooLarge) {
 		if !writeDiagnostic(stdout, request, "go-file-limit", 0, "Go file exceeds the configured size limit") {
 			processError(stderr, "failed to write protocol response")
@@ -70,12 +75,19 @@ func processFile(
 		}
 		return writeFileEnd(stdout, request, 0, 1, true, stderr)
 	}
+	if errors.Is(err, pathscope.ErrSourceUnreadable) {
+		if !writeDiagnostic(stdout, request, "go-parse-error", 1, "syntax error") {
+			processError(stderr, "failed to write protocol response")
+			return false
+		}
+		return writeFileEnd(stdout, request, 0, 1, false, stderr)
+	}
 	if err != nil {
 		processError(stderr, "invalid repository-relative Go file path")
 		return false
 	}
 
-	result := extraction.ParseFile(path, request.Path)
+	result := extraction.ParseSource(path, request.Path, source)
 	observations := result.Observations
 	truncated := result.Truncated
 	if len(observations) > maxObservations {

@@ -4,6 +4,7 @@ import unittest
 
 from common_lore_index.observations.raw import RawObservation
 from common_lore_index.storage.authority import AttemptNumber, JobId, OperationId
+from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.staging import STAGING_FAMILIES
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
 from common_lore_index.storage.staged_ingestion import (
@@ -14,6 +15,16 @@ from common_lore_index.storage.staged_ingestion import (
 
 
 class Scale8StagedIngestionUnitTests(unittest.TestCase):
+    def test_row_preparation_refuses_a_one_shot_source_before_reading(self) -> None:
+        observation = RawObservation(
+            kind="file", source_id="README.md", path="README.md", confidence="manual",
+            extractor="fixture", extractor_version="0.1.0",
+        )
+        observations = iter((observation,))
+        with self.assertRaisesRegex(StorageSchemaError, "staged observations must support replay"):
+            build_staged_rows(observations, repository_name="fixture", stage_id="stage-unassigned")
+        self.assertEqual(tuple(observations), (observation,))
+
     def test_row_families_are_complete_and_checksums_ignore_stage_identity(self):
         observations = [
             RawObservation(

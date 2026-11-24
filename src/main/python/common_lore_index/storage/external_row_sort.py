@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Iterator, Sequence
+from contextlib import ExitStack
 import heapq
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from common_lore_index.storage._external_row_sort_helpers import (
     _encode_row,
     _iter_encoded_run,
     _write_encoded_rows,
+    consolidate_run_tail,
 )
 
 __all__ = (
@@ -82,67 +84,20 @@ def external_sort_encoded_rows(
     source = iter(rows)
     artifacts = _ArtifactTracker(artifact_observer)
     try:
-        with OwnedTemporaryDirectory(
-            prefix="repomap-structural-digest-"
-        ) as raw_directory:
-            directory = Path(raw_directory)
+        with ExitStack() as resources:
+            directory: Path | None = None
             buffered: list[tuple[tuple[object, ...], str]] = []
             buffered_bytes = 0
             run_levels: list[list[Path]] = [
                 [] for _level in range(_MAX_RUN_LEVELS)
             ]
-            has_runs = False
-            for row in source:
-                _check_cancellation(cancellation_check)
-                key, encoded = _encode_row(
-                    row,
-                    key_indexes,
-                    field_count,
-                    key_types,
-                    cancellation_check,
-                )
-                encoded_bytes = len(encoded)
-                if buffered and buffered_bytes + encoded_bytes > run_byte_limit:
-                    _add_run(
-                        run_levels,
-                        _write_run(directory, buffered, artifacts),
-                        directory,
-                        key_indexes,
-                        key_types,
-                        field_count,
-                        cancellation_check,
-                        merge_fan_in,
-                        artifacts,
-                    )
-                    has_runs = True
-                    buffered = []
-                    buffered_bytes = 0
-                buffered.append((key, encoded))
-                buffered_bytes += encoded_bytes
-                if buffered_bytes >= run_byte_limit:
-                    _add_run(
-                        run_levels,
-                        _write_run(directory, buffered, artifacts),
-                        directory,
-                        key_indexes,
-                        key_types,
-                        field_count,
-                        cancellation_check,
-                        merge_fan_in,
-                        artifacts,
-                    )
-                    has_runs = True
-                    buffered = []
-                    buffered_bytes = 0
 
-            if not has_runs:
-                buffered.sort(key=lambda item: (item[0], item[1]))
-                for _key, encoded in buffered:
-                    _check_cancellation(cancellation_check)
-                    yield encoded
-                return
-
-            if buffered:
+            def spill_buffer() -> None:
+                nonlocal directory, buffered_bytes
+                if directory is None:
+                    directory = Path(resources.enter_context(
+                        OwnedTemporaryDirectory(prefix="repomap-structural-digest-")
+                    ))
                 _add_run(
                     run_levels,
                     _write_run(directory, buffered, artifacts),
@@ -154,6 +109,35 @@ def external_sort_encoded_rows(
                     merge_fan_in,
                     artifacts,
                 )
+                buffered.clear()
+                buffered_bytes = 0
+
+            for row in source:
+                _check_cancellation(cancellation_check)
+                key, encoded = _encode_row(
+                    row,
+                    key_indexes,
+                    field_count,
+                    key_types,
+                    cancellation_check,
+                )
+                encoded_bytes = len(encoded)
+                if buffered and buffered_bytes + encoded_bytes > run_byte_limit:
+                    spill_buffer()
+                buffered.append((key, encoded))
+                buffered_bytes += encoded_bytes
+                if buffered_bytes >= run_byte_limit:
+                    spill_buffer()
+
+            if directory is None:
+                buffered.sort(key=lambda item: (item[0], item[1]))
+                for _key, encoded in buffered:
+                    _check_cancellation(cancellation_check)
+                    yield encoded
+                return
+
+            if buffered:
+                spill_buffer()
             runs = _finalize_run_levels(
                 run_levels,
                 directory,
@@ -161,16 +145,16 @@ def external_sort_encoded_rows(
                 key_types,
                 field_count,
                 cancellation_check,
+                merge_fan_in,
                 artifacts,
             )
-            for encoded in _merge_encoded_runs(
+            yield from _merge_encoded_runs(
                 runs,
                 key_indexes,
                 key_types,
                 field_count,
                 cancellation_check,
-            ):
-                yield encoded
+            )
     finally:
         _close_iterator(source)
         artifacts.clear()
@@ -228,27 +212,25 @@ def _finalize_run_levels(
     key_types: tuple[type, ...] | None,
     field_count: int,
     cancellation_check: Callable[[], None] | None,
+    merge_fan_in: int,
     artifacts: _ArtifactTracker,
 ) -> list[Path]:
-    final: list[Path] = []
-    for group in levels:
-        if not group:
-            continue
-        if len(group) == 1:
-            final.extend(group)
-            continue
+    remaining = [path for group in levels for path in group]
+
+    def compact(inputs: list[Path]) -> Path:
         output = _write_merged_run(
             directory,
-            group,
+            inputs,
             key_indexes,
             key_types,
             field_count,
             cancellation_check,
             artifacts,
         )
-        _remove_runs(group, artifacts)
-        final.append(output)
-    return final
+        _remove_runs(inputs, artifacts)
+        return output
+
+    return consolidate_run_tail(remaining, merge_fan_in, artifacts.size_of, compact)
 
 
 def _remove_runs(runs: Sequence[Path], artifacts: _ArtifactTracker) -> None:

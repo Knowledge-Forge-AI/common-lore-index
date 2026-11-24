@@ -159,6 +159,17 @@ class ConfigExtractorJsonFamilyUnitTests(unittest.TestCase):
         self.assertEqual(errors[0].start_line, 3)
         self.assertIn("file:logs/out.json", {item.target for item in references})
 
+    def test_jsonl_record_indices_ignore_malformed_and_blank_lines(self):
+        for tail, expected in (("", []), ('{"event":"start"}\r{"event":"stop"}', [0, 1])):
+            with self.subTest(record_indices=expected):
+                observations = extract_config_file_observations("events.jsonl", "{\r\n\u2028" + tail)
+                records = [item for item in observations if item.kind == "config.jsonl_record"]
+                errors = [item for item in observations if item.kind == "config.parse_error"]
+                self.assertEqual(observations[0].metadata["record_count"], len(expected))
+                self.assertEqual([item.metadata["record_index"] for item in records], expected)
+                self.assertEqual([item.start_line for item in records], list(range(3, 3 + len(expected))))
+                self.assertEqual([item.start_line for item in errors], [1])
+
     def test_jsonc_comments_and_trailing_commas_are_normalized_conservatively(self):
         observations = extract_config_file_observations(
             "settings.jsonc",

@@ -137,6 +137,48 @@ def test_default_read_failure_is_bounded(defaults, monkeypatch: pytest.MonkeyPat
     assert "private sentinel" not in str(raised.value)
 
 
+def test_recognition_refuses_short_config_read_even_when_the_prefix_is_valid(
+    defaults: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    current, _legacy = defaults
+    populate(current, "sqlite")
+    witness = current / "00-project.cloe.toml"
+    witness.write_text(SQLITE + "# readable but incomplete\n")
+    real_read = os.read
+
+    def read_prefix(descriptor: int, size: int) -> bytes:
+        return real_read(descriptor, size)[:len(SQLITE.encode())]
+
+    with monkeypatch.context() as local:
+        local.setattr(home_selection.os, "read", read_prefix)
+        with pytest.raises(OpsConfigError) as raised:
+            resolve_repo_map_home()
+    assert raised.value.diagnostics[0].code == "default-home-unsafe"
+
+
+def test_recognition_does_not_read_a_replaced_file(
+    defaults: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    current, _legacy = defaults
+    populate(current, "sqlite")
+    witness = current / "00-project.cloe.toml"
+    replacement = current / "alternate.txt"
+    replacement.write_text(SQLITE)
+    real_open = os.open
+
+    def open_after_replace(path, flags, mode=0o777, *, dir_fd=None):
+        if path == witness.name and dir_fd is not None:
+            replacement.replace(witness)
+        return real_open(path, flags, mode, dir_fd=dir_fd)
+
+    with monkeypatch.context() as local:
+        local.setattr(home_selection.os, "open", open_after_replace)
+        local.setattr(home_selection.os, "read", lambda *_: pytest.fail("replacement witness read"))
+        with pytest.raises(OpsConfigError) as raised:
+            resolve_repo_map_home()
+    assert raised.value.diagnostics[0].code == "default-home-unsafe"
+
+
 def test_parser_brand_is_explicit_and_canonical_default_is_selected() -> None:
     from common_lore_index.cli.parser import build_parser
     assert build_parser().prog == "cloe"

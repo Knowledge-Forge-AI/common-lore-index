@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable
 from typing import TypeVar
 
 from common_lore_index.storage._staging_measurement_records import (
@@ -30,7 +30,7 @@ def _nonnegative(value: object) -> int | None:
 
 
 def project_staging_resources(
-    events: Sequence[object], *, measurements_failed: bool
+    events: Iterable[object], *, measurements_failed: bool
 ) -> tuple[ResourceMetric, ...]:
     """Project four caller-selected staging events without invoking a sink or SQL."""
     if measurements_failed:
@@ -43,7 +43,9 @@ def project_staging_resources(
         category = getattr(event, "category", None)
         for _, expected, _ in _STAGING:
             if category == expected or category == expected.value:
-                by_category[expected].append(event)
+                matching = by_category[expected]
+                if len(matching) < 2:
+                    matching.append(event)
                 break
     projected: list[ResourceMetric] = []
     for name, category, basis in _STAGING:

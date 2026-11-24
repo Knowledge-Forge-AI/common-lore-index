@@ -23,10 +23,11 @@ from common_lore_index.storage.readback_driver import execute_json_readback
 from common_lore_index.storage.sqlite_local.navigation_queries import (
     _Admission,
     _direct_location,
+    _direct_location_from_vector,
 )
 from common_lore_index.storage.sqlite_local.node_location_queries import (
     _EVIDENCE_ROLE_SQL,
-    _parse_context_snapshot_vector,
+    _context_vector_reader,
 )
 
 
@@ -48,11 +49,8 @@ def _compact_json_str(value: Any, *, default: str = "{}") -> str:
 
 
 def _evidence_tuple_from_json(
-    raw: Mapping[str, Any], *, context_identity: bool = False
+    raw: Mapping[str, Any], snapshot_vector: Any
 ) -> tuple[Any, ...]:
-    raw_vector = raw.get("snapshot_vector_json")
-    if context_identity:
-        raw_vector = _parse_context_snapshot_vector(raw_vector)
     return (
         raw.get("evidence_key"),
         raw.get("link_kind"),
@@ -72,7 +70,7 @@ def _evidence_tuple_from_json(
         raw.get("snapshot_manifest_id"),
         raw.get("extraction_receipt_id"),
         raw.get("graph_candidate_id"),
-        _compact_json_str(raw_vector, default="[]"),
+        snapshot_vector,
         raw.get("evidence_role") or "direct",
         int(raw["node_id"]),
     )
@@ -144,11 +142,12 @@ def read_postgres_navigation_search_with_executor(
 ) -> dict[str, Any]:
     """Execute single-statement PostgreSQL navigation_search using an injected SQL JSON executor."""
     query.validate()
+    read_context_vector = _context_vector_reader() if context_identity else None
     admission: _Admission | None = None
     if query.source_binding_id is not None:
         if admits_location is None:
             return unavailable("source_scope_predicate_unavailable")
-        admission = _Admission(admits_location, context_identity=context_identity)
+        admission = _Admission(admits_location, read_context_vector=read_context_vector)
 
     sql = build_postgres_navigation_sql(
         query,
@@ -174,11 +173,16 @@ def read_postgres_navigation_search_with_executor(
         for r in (payload.get("candidate_nodes") or ())
         if isinstance(r, Mapping)
     ]
-    raw_evidence = [
-        _evidence_tuple_from_json(r, context_identity=context_identity)
-        for r in (payload.get("direct_evidence") or ())
-        if isinstance(r, Mapping)
-    ]
+    keep_normalized_vector = read_context_vector is not None and admission is None
+    raw_evidence = []
+    for raw in payload.get("direct_evidence") or ():
+        if isinstance(raw, Mapping):
+            vector = raw.get("snapshot_vector_json")
+            if read_context_vector is not None:
+                vector = read_context_vector(vector)
+            if not keep_normalized_vector:
+                vector = _compact_json_str(vector, default="[]")
+            raw_evidence.append(_evidence_tuple_from_json(raw, vector))
 
     if admission is not None:
         rows, evidence = _admit_scoped_candidates(raw_nodes, raw_evidence, admission)
@@ -224,11 +228,14 @@ def read_postgres_navigation_search_with_executor(
         for row in rows
     }
     for ev_row in evidence:
-        vector = admission.vectors.get(ev_row[2]) if admission is not None else None
-        location = _direct_location(
-            ev_row[:20], accepted_run_id, snapshot_vector=vector,
-            context_identity=context_identity,
-        )
+        if keep_normalized_vector:
+            location = _direct_location_from_vector(ev_row[:20], accepted_run_id, ev_row[18])
+        else:
+            vector = admission.vectors.get(ev_row[2]) if admission is not None else None
+            location = _direct_location(
+                ev_row[:20], accepted_run_id, snapshot_vector=vector,
+                read_context_vector=read_context_vector,
+            )
         if ev_row[20] in nodes_map:
             nodes_map[ev_row[20]]["locations"].append(location)
     result["nodes"] = list(nodes_map.values())

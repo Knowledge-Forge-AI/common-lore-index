@@ -19,8 +19,9 @@ from repomap_test_support.canonical_merge_reference import (
     build_reference_edge_evidence_merge_statement, check_temp_tables_analyzed as _check_temp_analyzed,
     copy_canonical_fixture as _copy_canonical_fixture, copy_multi_run_canonical_fixtures as _copy_multi_run,
     copy_diagnostic_fixture as _copy_diag, create_repository_run_stage as _create_repository_run_stage,
-    execute_merge as _merge, insert_raw_fixture as _insert_raw_fixture, inspect_plan_nodes as _inspect_plan,
+    execute_merge as _merge, insert_diagnostic_raw_fixture, insert_raw_fixture as _insert_raw_fixture, inspect_plan_nodes as _inspect_plan,
     measure_fixture_cardinalities as _measure_cardinalities, merge_context as _context,
+    observe_staged_statement, prepare_edge_evidence_insert,
     query_canonical_edge_evidence as _query_edge_ev, extract_plan_triggers as _extract_plan_triggers,
 )
 from repomap_test_support.postgres_harness import (
@@ -337,59 +338,61 @@ def test_canonical_identity_keys_reject_null_and_empty_values() -> None:
                 connection.rollback()
 
 
-def test_canonical_edge_evidence_explain_diagnostics_outbox(tmp_path: Path) -> None:
+@pytest.mark.parametrize("count,work_mem,spill", [(50, "4MB", False), (4096, "64kB", True)], ids=["memory", "spill"])
+def test_canonical_edge_evidence_explain_diagnostics_outbox(tmp_path: Path, count: int, work_mem: str, spill: bool) -> None:
     require_postgres_binaries()
     with temporary_postgres() as postgres:
         apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
         secrets = RoleSecrets("read-secret", "refresh-secret", "control-secret")
         admin_params = _psycopg_connection_params_from_psql_args(postgres.psql_args)
-        with psycopg.connect(psycopg.conninfo.make_conninfo(**admin_params)) as admin_conn:
-            admin_conn.execute(
+        repo, run = _create_repository_run_stage(postgres, "stage-explain")
+        admin_conninfo = psycopg.conninfo.make_conninfo(**admin_params)
+        with psycopg.connect(admin_conninfo) as admin:
+            admin.execute(
                 render_database_role_sql(database=postgres.database, owner_role=postgres.user, database_kind="graph", secrets=secrets)
             )
-            admin_conn.commit()
-        repo, run = _create_repository_run_stage(postgres, "stage-explain")
-        _insert_raw_fixture(postgres, repo, run, tuple(range(50)), diagnostic=True)
-        refresh_conninfo = psycopg.conninfo.make_conninfo(
-            **{**admin_params, "user": REFRESH_PUBLICATION_ROLE, "password": secrets.refresh_publication}
-        )
-        with psycopg.connect(refresh_conninfo) as connection:
-            _copy_diag(connection, "stage-explain", count=50)
+            insert_diagnostic_raw_fixture(admin, repo, run, count)
+        refresh = psycopg.conninfo.make_conninfo(**{**admin_params, "user": REFRESH_PUBLICATION_ROLE, "password": secrets.refresh_publication})
+        with psycopg.connect(refresh) as connection, psycopg.connect(admin_conninfo, autocommit=True) as observer:
+            _copy_diag(connection, "stage-explain", count=count)
             connection.commit()
-            cardinalities = _measure_cardinalities(connection, "stage-explain")
-            statements = build_canonical_merge_statements(_context(repo, run, "stage-explain"))
-            with connection.cursor() as cursor:
-                cursor.execute("BEGIN")
-                for s in statements[:-1]:
-                    cursor.execute(s)
-                pre_insert, insert_and_drop = statements[-1].split("WITH staged_links AS", 1)
-                insert_sql, drop_sql = insert_and_drop.split("DROP TABLE IF EXISTS", 1)
-                insert_stmt = "WITH staged_links AS" + insert_sql.rstrip("; \n")
-                cursor.execute(pre_insert)
-                cursor.execute(f"EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) {insert_stmt}")
-                row = cursor.fetchone()
-                assert row is not None
-                plan_json = row[0]
-                cursor.execute(insert_stmt)
+            with connection.transaction():
+                cardinalities = _measure_cardinalities(connection, "stage-explain")
+                connection.execute("SELECT set_config('work_mem', %s, true)", (work_mem,))
+                connection.execute("SET LOCAL max_parallel_workers_per_gather = 0")
+                insert_stmt, teardown = prepare_edge_evidence_insert(connection, repo, run, "stage-explain")
+                assert _query_edge_ev(connection, repo, run) == []
+                with connection.transaction(force_rollback=True):
+                    plan, measurement = observe_staged_statement(connection, observer, insert_stmt)
+                    diagnostic_rows = _query_edge_ev(connection, repo, run)
+                    assert len(diagnostic_rows) == count
+                assert _query_edge_ev(connection, repo, run) == []
+                connection.execute(insert_stmt)
+                assert _query_edge_ev(connection, repo, run) == diagnostic_rows
                 temp_analyzed = _check_temp_analyzed(connection)
-                cursor.execute("DROP TABLE IF EXISTS" + drop_sql)
-                cursor.execute("COMMIT")
-            node_types, rel_names, temp_written = _inspect_plan(plan_json[0]["Plan"])
-            assert temp_written == 0
+                connection.execute(teardown)
+            assert _query_edge_ev(observer, repo, run) == diagnostic_rows
+            assert sorted(cardinalities.values()) == sorted([count + 1, count, count, count, 2 * count])
+            temp_written = measurement["statement_root"]["Temp Written Blocks"]
+            assert (temp_written > 0) == spill
+            assert measurement["statement_root"]["WAL Bytes"] > 0
+            node_types, rel_names = _inspect_plan(plan["Plan"])
             repeated_probes_absent = "canonical_edges" not in rel_names and "canonical_evidence" not in rel_names
             assert repeated_probes_absent is True
             assert "temp_canonical_edge_map" in rel_names and "temp_canonical_evidence_map" in rel_names and temp_analyzed
-            explain_triggers = _extract_plan_triggers(plan_json[0])
             payload = {
                 "schema_version": 1, "strategy": "Variant F (session-local temporary target maps with ANALYZE)",
                 "role": REFRESH_PUBLICATION_ROLE, "fixture_cardinalities": cardinalities,
                 "analyze_temp_tables_succeeded": temp_analyzed, "repeated_permanent_target_probes_absent_in_plan_nodes": repeated_probes_absent,
-                "explain_triggers": explain_triggers, "join_families": [t for t in node_types if "Join" in t],
-                "temp_written_blocks": temp_written, "relations_scanned": rel_names,
+                "explain_triggers": _extract_plan_triggers(plan), "join_families": [t for t in node_types if "Join" in t],
+                "temp_written_blocks": temp_written, "relations_scanned": rel_names, "query_plan": [plan],
                 "timing_diagnostic_non_gating": {
-                    "planning_time_ms": plan_json[0].get("Planning Time"), "execution_time_ms": plan_json[0].get("Execution Time"),
+                    "planning_time_ms": plan.get("Planning Time"), "execution_time_ms": plan.get("Execution Time"),
                 },
-                "query_plan": plan_json,
             }
-            print(f"DIAGNOSTICS_JSON_START\n{json.dumps(payload)}\nDIAGNOSTICS_JSON_END")
+            measurement.update(case="spill" if spill else "memory", work_mem=work_mem, fixture_cardinalities=cardinalities,
+                               stage_id="stage-explain", repository_id=int(repo), run_id=int(run),
+                               server_version=connection.info.server_version, diagnostic_rolled_back=True, committed_rows=count)
+            print(f"W7_STAGED_SQL_MERGE {json.dumps(measurement, sort_keys=True)}")
+            payload["staged_sql_measurement"] = measurement
             (tmp_path / "scale4_explain_diagnostics.json").write_text(json.dumps(payload, indent=2))

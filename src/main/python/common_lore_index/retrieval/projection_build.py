@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections import Counter
+from dataclasses import dataclass, replace
+from itertools import chain
 from typing import Any
 
+from common_lore_index.artifacts._manifest_records import _artifacts_in_source_order
 from common_lore_index.artifacts._store_common import (
     ArtifactErrorCode,
     ArtifactIntegrityError,
 )
 from common_lore_index.artifacts.manifest import PortableSnapshotManifest
 from common_lore_index.retrieval.projection_chunks import (
+    _framed_digest,
     ProjectedChunk,
-    build_file_chunks,
+    _iter_file_chunks,
     frame_digest,
 )
 from common_lore_index.retrieval.projection_evidence import (
@@ -184,34 +188,28 @@ def build_captured_text_projection(
             "receipt.portable is required for projection build",
         )
     policy_digest = policy.policy_digest()
-    evidence_index = index_bundle_evidence(inputs.bundle)
 
     bindings_by_id = {b.binding_id: b for b in inputs.manifest.bindings}
-    entries_by_binding: dict[str, list[Any]] = {b.binding_id: [] for b in inputs.manifest.bindings}
-    for entry in inputs.manifest.entries:
-        entries_by_binding.setdefault(entry.binding_id, []).append(entry)
-
-    excluded_bindings: list[ExcludedBindingRecord] = []
+    excluded_reasons = []
     for binding in sorted(inputs.manifest.bindings, key=lambda item: item.binding_id):
-        b_reason = evaluate_binding_exclusion(policy, binding)
-        if b_reason is not None:
-            excluded_bindings.append(
-                ExcludedBindingRecord(
-                    binding_id=binding.binding_id,
-                    reason=b_reason,
-                    file_count=len(entries_by_binding.get(binding.binding_id, ())),
-                )
-            )
+        reason = evaluate_binding_exclusion(policy, binding)
+        if reason is not None:
+            excluded_reasons.append((binding.binding_id, reason))
+
+    excluded_ids = {binding_id for binding_id, _ in excluded_reasons}
+    counts = Counter(
+        entry.binding_id for entry in inputs.manifest.entries if entry.binding_id in excluded_ids
+    ) if excluded_ids else Counter()
+    excluded_bindings = [
+        ExcludedBindingRecord(binding_id=binding_id, reason=reason, file_count=counts[binding_id])
+        for binding_id, reason in excluded_reasons
+    ]
 
     projected_files: list[ProjectedFileRecord] = []
     excluded_files: list[ExcludedFileRecord] = []
     aggregate_bytes_read = 0
 
-    sorted_entries = sorted(
-        inputs.manifest.entries,
-        key=lambda item: (item.binding_id, item.source_relative_path),
-    )
-    for entry in sorted_entries:
+    for entry in _artifacts_in_source_order(inputs.manifest.entries):
         binding = bindings_by_id[entry.binding_id]
         art_privacy = entry.reference.privacy.value
         pre_reason, source_format = evaluate_artifact_pre_open(policy, binding, entry)
@@ -304,17 +302,17 @@ def build_captured_text_projection(
                 norm_res.representation_digest,
             ),
         )
-        chunks = build_file_chunks(
+        chunks = tuple(_iter_file_chunks(
             file_projection_id=file_proj_id,
             binding_id=binding.binding_id,
             source_relative_path=entry.source_relative_path,
-            normalized_text=norm_res.normalized_text,
+            normalized_text=norm_res.normalized_bytes,
             artifact_privacy=art_privacy,
             policy_digest=policy_digest,
             publication_bundle_id=inputs.bundle.bundle_id,
             max_chunk_lines=policy.max_chunk_lines,
             max_chunk_bytes=policy.max_chunk_bytes,
-        )
+        ))
         projected_files.append(
             ProjectedFileRecord(
                 file_projection_id=file_proj_id,
@@ -343,10 +341,16 @@ def build_captured_text_projection(
                 had_crlf_or_cr=norm_res.had_crlf_or_cr,
                 artifact_privacy=art_privacy,
                 binding_policy=policy.bindings[binding.binding_id],
-                evidence_links=evidence_index.get((binding.binding_id, entry.source_relative_path), ()),
+                evidence_links=(),
                 chunks=chunks,
             )
         )
+
+    file_keys = {(file.binding_id, file.source_relative_path) for file in projected_files}
+    evidence_index = index_bundle_evidence(inputs.bundle, file_keys=file_keys)
+    for index, file in enumerate(projected_files):
+        if links := evidence_index.get((file.binding_id, file.source_relative_path)):
+            projected_files[index] = replace(file, evidence_links=links)
 
     removed_bindings: tuple[str, ...] = ()
     removed_files: tuple[tuple[str, str], ...] = ()
@@ -364,16 +368,11 @@ def build_captured_text_projection(
             )
         )
 
-    proj_digest = frame_digest(
-        "sha256",
-        (
-            PROJECTION_REFERENCE_VERSION,
-            policy_digest,
-            inputs.bundle.bundle_id,
-            inputs.manifest.manifest_id,
-            *(f.file_projection_id for f in projected_files),
-            *(f"{e.binding_id}:{e.source_relative_path}:{e.reason.value}" for e in excluded_files),
-        ),
+    header = (PROJECTION_REFERENCE_VERSION, policy_digest, inputs.bundle.bundle_id, inputs.manifest.manifest_id)
+    proj_digest = _framed_digest(
+        "sha256", len(header) + len(projected_files) + len(excluded_files),
+        chain(header, (f.file_projection_id for f in projected_files),
+              (f"{e.binding_id}:{e.source_relative_path}:{e.reason.value}" for e in excluded_files)),
     )
     return CapturedTextProjection(
         reference_version=PROJECTION_REFERENCE_VERSION,

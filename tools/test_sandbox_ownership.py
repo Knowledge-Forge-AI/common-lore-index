@@ -11,9 +11,21 @@ import re
 import stat
 from typing import cast, Any
 
+from retrieval_supplement_ownership_wire import (
+    CONTROL_SCHEMA as CONTROL_V2_SCHEMA,
+    MAX_WIRE_BYTES,
+    decode_control as decode_control_v2,
+    encode_receipt as encode_receipt_v2,
+    scope_sha256,
+)
+
 CONTROL_FD_ENV = "CLOE_SANDBOX_ATTEST_CONTROL_FD"
 RECEIPT_FD_ENV = "CLOE_SANDBOX_ATTEST_RECEIPT_FD"
 CHANNEL_ENV = (CONTROL_FD_ENV, RECEIPT_FD_ENV)
+SOURCE_IDENTITY_ENV = "CLOE_SANDBOX_ATTEST_SOURCE_IDENTITY"
+SDK_IMAGE_ID_ENV = "CLOE_SANDBOX_ATTEST_SDK_IMAGE_ID"
+SCOPE_ENV = (SOURCE_IDENTITY_ENV, SDK_IMAGE_ID_ENV)
+CHILD_ENV = CHANNEL_ENV + SCOPE_ENV
 MAX_FRAME_BYTES = 4096
 CONTROL_SCHEMA = "cloe-sandbox-ownership-control-v1"
 RECEIPT_SCHEMA = "cloe-sandbox-ownership-receipt-v1"
@@ -21,6 +33,24 @@ _HEX = re.compile(r"[0-9a-f]{64}\Z")
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 _CONTROL_KEYS = {"schema", "challenge", "pid", "birth", "source_identity", "source_root", "argv", "sdk_image_id"}
 _RECEIPT_KEYS = _CONTROL_KEYS | {"cid", "sdk_image_id", "marker_sha256"}
+
+
+def _study_cohort(argv: list[str]) -> bool:
+    try:
+        from runner_pgvector_study import validate_study_cohort
+        validate_study_cohort(argv)
+    except (RuntimeError, ValueError):
+        return False
+    return True
+
+
+def _body_study_cohort(argv: list[str]) -> bool:
+    try:
+        from runner_body_study import validate_body_cohort
+        validate_body_cohort(argv)
+    except (RuntimeError, ValueError):
+        return False
+    return True
 
 
 def require(condition: bool, code: str) -> None:
@@ -112,6 +142,7 @@ class OwnershipReporter:
     control: dict[str, Any] = field(repr=False)
     fd: int = field(repr=False)
     spent: bool = False
+    compact_scope_sha256: str | None = field(default=None, repr=False)
 
     @property
     def expected_sdk_image_id(self) -> str:
@@ -127,9 +158,14 @@ class OwnershipReporter:
         self.spent = True
         try:
             require(type(marker) is str and _HEX.fullmatch(marker) is not None, "marker")
-            value = dict(self.control, schema=RECEIPT_SCHEMA, cid=cid, sdk_image_id=image_id,
-                         marker_sha256="sha256:" + hashlib.sha256(marker.encode()).hexdigest())
-            raw = encode_frame(value, receipt=True)
+            marker_sha256 = "sha256:" + hashlib.sha256(marker.encode()).hexdigest()
+            if self.compact_scope_sha256 is None:
+                value = dict(self.control, schema=RECEIPT_SCHEMA, cid=cid, sdk_image_id=image_id,
+                             marker_sha256=marker_sha256)
+                raw = encode_frame(value, receipt=True)
+            else:
+                raw = encode_receipt_v2(self.control["challenge"], self.compact_scope_sha256,
+                                        cid, image_id, marker_sha256)
             require(os.write(self.fd, raw) == len(raw), "receipt short write")
         finally:
             self.close()
@@ -137,10 +173,10 @@ class OwnershipReporter:
 
 def prepare_ownership_reporter(argv: list[str], repo_root: Path) -> OwnershipReporter | None:
     """Consume a host-only parent challenge before any child or Docker launch."""
-    configured = [name in os.environ for name in CHANNEL_ENV]
-    if not any(configured):
+    configured = {name: name in os.environ for name in CHILD_ENV}
+    if not any(configured.values()):
         return None
-    values = {name: os.environ.pop(name, None) for name in CHANNEL_ENV}
+    values = {name: os.environ.pop(name, None) for name in CHILD_ENV}
     # Neutralize even a malformed/mis-typed endpoint before refusing. Only
     # validated owned pipe endpoints are closed below; never close stdio.
     for value in values.values():
@@ -149,7 +185,9 @@ def prepare_ownership_reporter(argv: list[str], repo_root: Path) -> OwnershipRep
                 os.set_inheritable(int(value), False)
             except OSError:
                 pass  # A closed descriptor will be refused by validation.
-    require(all(configured), "partial configuration")
+    require(all(configured[name] for name in CHANNEL_ENV), "partial configuration")
+    scope_configured = [configured[name] for name in SCOPE_ENV]
+    require(scope_configured in ([False, False], [True, True]), "partial scope configuration")
     read_fd = write_fd = None
     success = False
     try:
@@ -158,13 +196,36 @@ def prepare_ownership_reporter(argv: list[str], repo_root: Path) -> OwnershipRep
         a, b = os.fstat(read_fd), os.fstat(write_fd)
         require(read_fd != write_fd and (a.st_dev, a.st_ino) != (b.st_dev, b.st_ino),
                 "shared pipe")
-        control = decode_frame(read_frame_fd(read_fd))
+        raw_control = read_frame_fd(read_fd)
+        compact_scope: str | None = None
+        if scope_configured == [True, True]:
+            require(_study_cohort(argv) or _body_study_cohort(argv),
+                    "study cohort required for compact ownership")
+            source_identity = cast(str, values[SOURCE_IDENTITY_ENV])
+            sdk_image_id = cast(str, values[SDK_IMAGE_ID_ENV])
+            require(len(raw_control) <= MAX_WIRE_BYTES, "compact control bounds")
+            compact = decode_control_v2(raw_control)
+            require(compact["schema"] == CONTROL_V2_SCHEMA, "compact control schema")
+            compact_scope = scope_sha256(argv, str(repo_root.resolve()), source_identity, sdk_image_id)
+            require(compact["scope_sha256"] == compact_scope, "scope commitment")
+            control = decode_frame(encode_frame({
+                "schema": CONTROL_SCHEMA, "challenge": compact["challenge"],
+                "pid": compact["pid"], "birth": compact["birth"],
+                "source_identity": source_identity, "source_root": str(repo_root.resolve()),
+                "argv": argv, "sdk_image_id": sdk_image_id,
+            }))
+        else:
+            control = decode_frame(raw_control)
         require(control["pid"] == os.getpid(), "host pid mismatch")
         require(control["source_root"] == str(repo_root.resolve()) == str(Path.cwd().resolve()),
                 "host source mismatch")
         require(control["argv"] == argv, "host argv mismatch")
+        if compact_scope is not None:
+            require(control["source_identity"] == cast(str, values[SOURCE_IDENTITY_ENV])
+                    and control["sdk_image_id"] == cast(str, values[SDK_IMAGE_ID_ENV]),
+                    "compact identity")
         success = True
-        return OwnershipReporter(control, write_fd)
+        return OwnershipReporter(control, write_fd, compact_scope_sha256=compact_scope)
     except (OSError, ValueError) as error:
         raise RuntimeError("sandbox ownership channel unavailable") from error
     finally:

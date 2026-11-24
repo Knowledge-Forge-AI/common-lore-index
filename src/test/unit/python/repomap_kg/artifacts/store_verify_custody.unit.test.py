@@ -1,6 +1,7 @@
 """Verification acquisition failures release the exact descriptor without GC."""
 from __future__ import annotations
 
+import io
 import os
 from pathlib import Path
 from typing import BinaryIO
@@ -121,3 +122,157 @@ def test_verification_acquisition_keeps_descriptor_custody(
     finally:
         case.cleanup()
     assert not leaked
+
+
+def test_read_all_uses_bounded_requests_and_zero_line_reads_are_noops(tmp_path: Path):
+    store = FileSystemArtifactStore(tmp_path / "store")
+    payload = b"x" * 70000 + b"\nsecond"
+    reference = store.put(payload)
+    path = store.object_path(reference)
+    requests = []
+
+    class TrackedReader(io.BufferedReader):
+        def read(self, size=-1):
+            requests.append(size)
+            assert 0 < size <= 64 * 1024
+            return super().read(size)
+
+    with TrackedReader(path.open("rb", buffering=0)) as raw:
+        with streams.VerifyingArtifactStream(
+            raw, reference=reference, bound=reference.size_bytes,
+            before_stat=os.fstat(raw.fileno()), expected_version=reference.store_version,
+        ) as stream:
+            assert stream.readline(0) == b""
+            assert not requests
+            assert stream.read() == payload and stream.verified
+    assert len(requests) >= 3
+
+
+@pytest.mark.parametrize("operation", ("verify", "read", "open_stream", "collision"))
+def test_artifact_reads_refuse_fifo_replacement_without_blocking(tmp_path: Path, monkeypatch, operation):
+    case = _VerificationCase(tmp_path, "fifo", OSError)
+    original = case.path.with_name("preserved")
+    temporary = tmp_path / "collision-input"
+    temporary.write_bytes(b"public verification payload")
+    switched = False
+
+    def switch_at_open(path, flags, *args, **kwargs):
+        nonlocal switched
+        if Path(path) == case.path:
+            assert flags & os.O_NONBLOCK and not switched
+            switched = True
+            case.path.rename(original)
+            os.mkfifo(case.path, 0o400)
+        return case._open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", switch_at_open)
+    try:
+        with pytest.raises(ArtifactIntegrityError, match="artifact changed during read"):
+            if operation == "verify":
+                case.run()
+            elif operation == "read":
+                case.store.read(case.reference)
+            elif operation == "open_stream":
+                with case.store.open_stream(case.reference):
+                    pytest.fail("opened a replacement FIFO")
+            else:
+                streams.compare_and_verify_collision(
+                    case.path, temporary, case.reference.size_bytes, case.reference.content_digest,
+                    case.reference.size_bytes, owner_uid=os.getuid(), private_details_fn=filesystem._private_details,
+                )
+        assert switched and not case.leaked()
+        assert original.read_bytes() == b"public verification payload"
+    finally:
+        case.cleanup()
+        if switched:
+            case.path.unlink(missing_ok=True)
+
+
+def test_direct_artifact_read_releases_fd_on_buffer_wrapper_refusal(tmp_path, monkeypatch):
+    case = _VerificationCase(tmp_path, "fdopen", OSError)
+    case.install(monkeypatch)
+    released = []
+
+    def fail_after_creating_wrapper(fd, *args, **kwargs):
+        assert kwargs["closefd"] is False
+        case.real_fdopen(fd, *args, **kwargs).close()
+        assert case.real_stat(fd)
+        raise case.primary
+
+    def record_close(fd):
+        released.append(fd)
+        case.real_close(fd)
+
+    monkeypatch.setattr(os, "fdopen", fail_after_creating_wrapper)
+    monkeypatch.setattr(os, "close", record_close)
+    try:
+        with pytest.raises(ArtifactIntegrityError, match="artifact read failed"):
+            case.store.read(case.reference)
+        assert released == [case.acquired[0][0]]
+        assert not case.leaked()
+    finally:
+        case.cleanup()
+
+
+def test_buffered_artifact_read_refuses_growth_without_reading_appended_bytes(tmp_path, monkeypatch):
+    store = FileSystemArtifactStore(tmp_path / "store")
+    payload = b"data" * 30_000
+    reference = store.put(payload)
+    path = store.object_path(reference)
+    path.chmod(0o600)
+    original = path.stat()
+    fdopen = os.fdopen
+    requests: list[int] = []
+
+    class ObservedReader(io.FileIO):
+        def read(self, count: int | None = -1, /) -> bytes:
+            assert count is not None
+            if not requests:
+                with path.open("ab") as append:
+                    append.write(b"more")
+            requests.append(count)
+            return super().read(count) or b""
+
+    def track(fd, mode, *args, **kwargs):
+        if os.path.samestat(os.fstat(fd), original):
+            assert kwargs["buffering"] == 0 and kwargs["closefd"] is False
+            return ObservedReader(fd, mode, closefd=False)
+        return fdopen(fd, mode, *args, **kwargs)
+
+    with monkeypatch.context() as stubs:
+        stubs.setattr(os, "fdopen", track)
+        with pytest.raises(ArtifactIntegrityError, match="artifact size does not match reference"):
+            store.read(reference)
+    assert requests and sum(requests) == len(payload)
+    assert path.read_bytes() == payload + b"more"
+
+
+def test_buffered_artifact_read_checks_change_time_after_the_exact_payload(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    store = FileSystemArtifactStore(tmp_path / "store")
+    reference = store.put(b"public payload")
+    path = store.object_path(reference)
+    expected = path.stat()
+    fstat = os.fstat
+    calls = 0
+
+    def change_time_of_opened_artifact(fd):
+        nonlocal calls
+        actual = fstat(fd)
+        if not os.path.samestat(actual, expected):
+            return actual
+        calls += 1
+        if calls == 1:
+            return actual
+        return SimpleNamespace(
+            st_dev=actual.st_dev, st_ino=actual.st_ino, st_uid=actual.st_uid, st_nlink=actual.st_nlink,
+            st_mode=actual.st_mode, st_size=actual.st_size, st_mtime_ns=actual.st_mtime_ns,
+            st_ctime_ns=actual.st_ctime_ns + 1,
+        )
+
+    with monkeypatch.context() as stubs:
+        stubs.setattr(os, "fstat", change_time_of_opened_artifact)
+        with pytest.raises(ArtifactIntegrityError, match="artifact changed during read"):
+            store.read(reference)
+    assert calls == 2

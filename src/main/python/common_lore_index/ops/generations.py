@@ -8,6 +8,7 @@ from pathlib import Path
 from collections.abc import Iterable, Sequence
 
 from common_lore_index import __version__
+from common_lore_index.graph._multi_source_identity import snapshot_vector_generation
 from common_lore_index.observations.raw import RawObservation
 from common_lore_index.ops.config_records import OpsConfig, OpsGraphConfig
 from common_lore_index.ops.resolved_config import resolve_ops_config
@@ -27,28 +28,17 @@ def source_generation_records(
 ) -> str:
     """Hash one deterministic repository-relative source inventory."""
 
-    normalized = [
-        {
-            "path": path,
-            "entry_type": entry_type,
-            "content_digest": content_digest,
-        }
-        for path, entry_type, content_digest in records
-    ]
-    normalized.sort(
-        key=lambda record: (
-            record["path"],
-            record["entry_type"],
-            record["content_digest"],
-        )
-    )
-    payload = {
-        "algorithm": "source-inventory-v1",
-        "records": normalized,
-    }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-    digest = hashlib.sha256(encoded).hexdigest()
-    return f"sg1:{digest}"
+    encoder = json.JSONEncoder(sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(b'{"algorithm":"source-inventory-v1","records":[')
+    separator = b""
+    for path, entry_type, content_digest in sorted(records):
+        digest.update(separator)
+        digest.update(encoder.encode({
+            "content_digest": content_digest, "entry_type": entry_type, "path": path,
+        }).encode("utf-8"))
+        separator = b","
+    digest.update(b"]}")
+    return "sg1:" + digest.hexdigest()
 
 
 def source_generation(observations: Sequence[RawObservation]) -> str:
@@ -81,21 +71,9 @@ def source_generation(observations: Sequence[RawObservation]) -> str:
         and multi_source_files == total_files
         and len(multi_source_graph_ids) == 1
     ):
-        payload = {
-            "algorithm": "multi-source-snapshot-vector-v1",
-            "graph_id": next(iter(multi_source_graph_ids)),
-            "snapshot_vector": [
-                {
-                    "binding_id": binding_id,
-                    "binding_revision": binding_revision,
-                    "snapshot_id": snapshot_id,
-                }
-                for binding_id, binding_revision, snapshot_id
-                in sorted(multi_source_vector)
-            ],
-        }
-        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-        return "sg1:" + hashlib.sha256(encoded).hexdigest()
+        return snapshot_vector_generation(
+            next(iter(multi_source_graph_ids)), sorted(multi_source_vector),
+        )
 
     file_records = []
     for item in observations:
@@ -113,8 +91,13 @@ def source_generation(observations: Sequence[RawObservation]) -> str:
         json.dumps(item.to_dict(), sort_keys=True, separators=(",", ":"))
         for item in observations
     )
-    digest = hashlib.sha256("\n".join(records).encode("utf-8")).hexdigest()
-    return f"sg1:{digest}"
+    digest = hashlib.sha256()
+    separator = b""
+    for record in records:
+        digest.update(separator)
+        digest.update(record.encode("utf-8"))
+        separator = b"\n"
+    return "sg1:" + digest.hexdigest()
 
 
 def config_generation(

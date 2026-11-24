@@ -39,6 +39,14 @@ class OpsConfigValidationUnitTests(unittest.TestCase):
         path.write_text(content, encoding="utf-8")
         return path
 
+    def test_non_utf8_config_has_safe_toml_diagnostic(self):
+        path = self.write_config(VALID_CONFIG)
+        path.write_bytes(b"schema_version = 1\n# synthetic\xff")
+        with self.assertRaises(OpsConfigError) as raised:
+            load_ops_config(path)
+        diagnostic, = raised.exception.diagnostics
+        self.assertEqual((diagnostic.code, diagnostic.message), ("invalid-toml", "invalid UTF-8 TOML"))
+
     def test_unknown_sections_and_fields_are_warnings(self):
         config = load_ops_config(
             self.write_config(

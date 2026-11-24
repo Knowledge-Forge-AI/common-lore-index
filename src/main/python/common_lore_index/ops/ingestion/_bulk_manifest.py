@@ -5,11 +5,13 @@ from __future__ import annotations
 import os
 import stat
 from collections import Counter
+from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
 
 from common_lore_index.ops.ingestion._bulk_helpers import (
     DEFAULT_EXCLUDED_DIRECTORIES,
+    _bulk_output_root,
     classify_bulk_route,
     depth,
     deterministic_run_id,
@@ -21,15 +23,49 @@ from common_lore_index.ops.ingestion._bulk_helpers import (
     root_path_summary,
     route_included,
     safe_size,
-    sha256_file,
     sha256_text,
 )
+from common_lore_index.ops.ingestion._source_archive_scan import _hash_admitted_file
+from common_lore_index.ops.ingestion._source_archive_extraction import _CapturedArchiveFile, _capture_retained_file
 from common_lore_index.ops.ingestion.bulk_records import (
     BulkIncludedFile,
     BulkManifest,
+    BulkPolicyError,
     BulkSkippedFile,
     BulkSourceConfig,
 )
+from common_lore_index.ops.ingestion.source_common import SourcePolicyError
+
+
+def _capture_bulk_files(
+    config: BulkSourceConfig, manifest: BulkManifest, repository_root: Path, snapshot: Path,
+) -> dict[str, _CapturedArchiveFile]:
+    if any(type(record.byte_count) is not int or record.byte_count < 0 for record in manifest.included_files):
+        raise BulkPolicyError("invalid retained bulk file length")
+    if (
+        manifest.file_count_included > config.max_files
+        or sum(record.byte_count for record in manifest.included_files) > config.max_total_bytes
+        or any(record.byte_count > config.max_file_bytes for record in manifest.included_files)
+    ):
+        raise BulkPolicyError("retained bulk files exceed source policy")
+    ensure_contained(config.resolved_root, repository_root, "root_path")
+    source_root = config.resolved_root.relative_to(repository_root)
+    admitted: dict[str, BulkIncludedFile] = {}
+    for record in manifest.included_files:
+        path = Path(record.repository_path)
+        if not path.is_relative_to(source_root):
+            raise BulkPolicyError("retained bulk file escapes source root")
+        previous = admitted.get(record.repository_path)
+        if previous is not None and (previous.byte_count, previous.sha256) != (record.byte_count, record.sha256):
+            raise BulkPolicyError("conflicting retained bulk file references")
+        admitted[record.repository_path] = record
+    try:
+        return {
+            path: _capture_retained_file(repository_root, snapshot, path, record.byte_count, record.sha256, ordinal)
+            for ordinal, (path, record) in enumerate(admitted.items())
+        }
+    except SourcePolicyError:
+        raise BulkPolicyError("retained bulk file differs from its manifest") from None
 
 
 def build_bulk_manifest(
@@ -40,6 +76,14 @@ def build_bulk_manifest(
     source_root = config.resolved_root
     repo_root = Path(repository_root).resolve() if repository_root else source_root
     ensure_contained(source_root, repo_root, "root_path")
+    output_root = _bulk_output_root(repo_root)
+    resolved_output_root = output_root.resolve()
+
+    def is_bulk_output(path: Path, canonical: Path) -> bool:
+        return path.is_relative_to(output_root) or canonical.is_relative_to(resolved_output_root)
+
+    if is_bulk_output(source_root, source_root):
+        raise BulkPolicyError("bulk source root overlaps managed bulk outputs")
     included: list[BulkIncludedFile] = []
     skipped: list[BulkSkippedFile] = []
     total_seen: int = 0
@@ -68,64 +112,91 @@ def build_bulk_manifest(
         if reason.startswith("max_") and reason not in limit_reasons:
             limit_reasons.append(reason)
 
-    def add_skipped_tree(path: Path, reason: str) -> None:
+    def add_skipped_tree(path: Path, canonical: Path, reason: str) -> None:
         nonlocal total_seen
         if path.is_file() or path.is_symlink():
-            add_skipped(path, reason, byte_count=safe_size(path))
-            total_seen += safe_size(path) or 0
+            byte_count = safe_size(path, follow_symlinks=False)
+            add_skipped(path, reason, byte_count=byte_count)
+            total_seen += byte_count or 0
             return
         for directory, dirnames, filenames in os.walk(path, followlinks=False):
-            dirnames[:] = sorted(dirnames)
+            current = Path(directory)
+            canonical_dir = canonical / current.relative_to(path)
+            dirnames[:] = sorted(name for name in dirnames if not is_bulk_output(current / name, canonical_dir / name))
             for filename in sorted(filenames):
-                file_path = Path(directory) / filename
-                byte_count = safe_size(file_path)
+                file_path = current / filename
+                if is_bulk_output(file_path, canonical_dir / filename):
+                    continue
+                byte_count = safe_size(file_path, follow_symlinks=False)
                 total_seen += byte_count or 0
                 add_skipped(file_path, reason, byte_count=byte_count)
 
-    def walk(directory: Path) -> None:
-        nonlocal total_seen
+    def children(directory: Path, canonical: Path) -> Iterator[tuple[Path, Path]]:
         for entry in sorted(directory.iterdir(), key=lambda item: relative_to_root(source_root, item)):
+            yield entry, canonical / entry.name
+
+    def walk() -> None:
+        nonlocal total_seen
+        pending = [(children(source_root, source_root), source_root)]
+        ancestor_dirs = {source_root}
+        while pending:
+            siblings, parent = pending[-1]
+            planned = next(siblings, None)
+            if planned is None:
+                pending.pop()
+                ancestor_dirs.remove(parent)
+                continue
+            entry, canonical = planned
+            if is_bulk_output(entry, canonical):
+                continue
             relative = relative_to_root(source_root, entry)
             if is_excluded_path(relative, config.excluded_paths):
-                add_skipped_tree(entry, "excluded_path")
+                add_skipped_tree(entry, canonical, "excluded_path")
                 continue
             if entry.name.startswith(".") and not config.include_hidden:
-                add_skipped_tree(entry, "hidden_excluded")
+                add_skipped_tree(entry, canonical, "hidden_excluded")
                 continue
             if entry.is_symlink():
                 if not config.follow_symlinks:
-                    add_skipped(entry, "symlink_excluded", byte_count=safe_size(entry))
+                    add_skipped(entry, "symlink_excluded", byte_count=safe_size(entry, follow_symlinks=False))
                     continue
                 target = entry.resolve()
-                if not is_contained(target, source_root):
-                    add_skipped(entry, "symlink_escapes_root", byte_count=safe_size(entry))
+                if is_bulk_output(entry, target):
                     continue
+                if not is_contained(target, source_root):
+                    add_skipped(entry, "symlink_escapes_root", byte_count=safe_size(entry, follow_symlinks=False))
+                    continue
+                canonical = target
             if entry.is_dir():
+                if canonical in ancestor_dirs:
+                    add_skipped(entry, "symlink_excluded", byte_count=safe_size(entry, follow_symlinks=False))
+                    continue
                 if entry.name in excluded_directories:
-                    add_skipped_tree(entry, "excluded_directory")
+                    add_skipped_tree(entry, canonical, "excluded_directory")
                     continue
                 if depth(relative) > config.max_depth:
-                    add_skipped_tree(entry, "max_depth_exceeded")
+                    add_skipped_tree(entry, canonical, "max_depth_exceeded")
                     continue
-                walk(entry)
+                ancestor_dirs.add(canonical)
+                pending.append((children(entry, canonical), canonical))
                 continue
             try:
-                mode = entry.stat().st_mode
+                info = entry.stat()
             except OSError:
                 add_skipped(entry, "special_file")
                 continue
-            if not stat.S_ISREG(mode):
+            if not stat.S_ISREG(info.st_mode):
                 add_skipped(entry, "special_file")
                 continue
-            total_seen += entry.stat().st_size
-            process_file(entry)
+            total_seen += info.st_size
+            process_file(entry, info)
 
-    def process_file(path: Path) -> None:
+    def process_file(path: Path, expected: os.stat_result) -> None:
         nonlocal total_included
+        byte_count = expected.st_size
         relative = relative_to_root(source_root, path)
         file_depth = depth(relative)
         route = classify_bulk_route(path)
-        byte_count = path.stat().st_size
         if file_depth > config.max_depth:
             add_skipped(path, "max_depth_exceeded", byte_count=byte_count, route=route)
             return
@@ -147,8 +218,17 @@ def build_bulk_manifest(
         if len(included) >= config.max_files:
             add_skipped(path, "max_files_exceeded", byte_count=byte_count, route=route)
             return
-        repository_path = path.resolve().relative_to(repo_root).as_posix()
-        digest = sha256_file(path)
+        try:
+            source = path.resolve(strict=True)
+            if is_bulk_output(path, source):
+                raise ValueError("unexpected bulk output alias")
+            ensure_contained(source, source_root, "bulk file")
+            if not config.follow_symlinks and source != path:
+                raise ValueError("unexpected bulk file alias")
+            repository_path = source.relative_to(repo_root).as_posix()
+            digest = _hash_admitted_file(source, expected)
+        except (OSError, RuntimeError, ValueError):
+            raise BulkPolicyError("bulk file changed during manifest scan") from None
         included.append(
             BulkIncludedFile(
                 relative_path=relative,
@@ -160,7 +240,7 @@ def build_bulk_manifest(
         )
         total_included += byte_count
 
-    walk(source_root)
+    walk()
     included.sort(key=lambda item: item.relative_path)
     skipped.sort(key=lambda item: item.relative_path)
     extractor_counts = Counter(item.route for item in included)

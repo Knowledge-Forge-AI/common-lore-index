@@ -1,11 +1,15 @@
+from dataclasses import replace
+import hashlib
 import json
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from repomap_test_support.source_ingestion import (
     SourceIngestionUnitTestCase,
 )
 
+from common_lore_index.ops.ingestion._source_archive_scan import _archive_included_file
 from common_lore_index.ops.ingestion.source import (
     SourcePolicyError,
     archive_observations_from_manifest,
@@ -16,6 +20,111 @@ from common_lore_index.ops.ingestion.source import (
 
 
 class ArchiveSourceIngestionUnitTests(SourceIngestionUnitTestCase):
+    def test_archive_snapshot_isolates_collisions_without_renaming_files(self) -> None:
+        from common_lore_index.ops.ingestion._source_archive_extraction import _open_snapshot_file
+
+        with tempfile.TemporaryDirectory() as directory:
+            relative = Path("docs/fixture.md")
+            with _open_snapshot_file(Path(directory), relative, 0) as (one, original):
+                original.write(b"one")
+            with _open_snapshot_file(Path(directory), relative, 1) as (two, alias):
+                alias.write(b"two")
+            self.assertNotEqual(one, two)
+            self.assertEqual((one / relative).read_bytes(), b"one")
+            self.assertEqual((two / relative).read_bytes(), b"two")
+
+    def test_retained_archive_rejects_stale_bytes_and_reduced_readback_budget(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            archive = root / "reports" / "latest"
+            archive.mkdir(parents=True)
+            item = archive / "fixture.md"
+            item.write_bytes(b"# Old\n")
+            config = load_archive_source_config(self.write_archive_config(root / "source.toml"))
+            manifest = build_archive_manifest(config, root_path=root, clock=self.fixed_clock)
+            with self.assertRaisesRegex(SourcePolicyError, "retained archive files exceed source policy"):
+                archive_observations_from_manifest(replace(config, max_artifact_bytes=1), manifest, root_path=root)
+            item.write_bytes(b"# New\n")
+            with self.assertRaisesRegex(SourcePolicyError, "retained archive file differs from its manifest"):
+                archive_observations_from_manifest(config, manifest, root_path=root)
+
+    def test_archive_scan_refuses_replacement_of_admitted_file_at_same_size(self) -> None:
+        from common_lore_index.ops.ingestion import _source_archive_scan
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            report = root / "reports/latest"
+            report.mkdir(parents=True)
+            item = report / "report.txt"
+            replacement = root / "next.txt"
+            item.write_text("first")
+            replacement.write_text("other")
+            config = load_archive_source_config(self.write_archive_config(root / "source.toml"))
+
+            def replace_then_read(*args, **kwargs):
+                replacement.replace(item)
+                return _archive_included_file(*args, **kwargs)
+
+            with patch.object(_source_archive_scan, "_archive_included_file", side_effect=replace_then_read):
+                with self.assertRaisesRegex(SourcePolicyError, "changed during manifest scan"):
+                    build_archive_manifest(config, root_path=root, clock=self.fixed_clock)
+            self.assertEqual(item.read_text(), "other")
+
+    def test_archive_scan_keeps_an_unavailable_listing_entry_as_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir).resolve()
+            report = root / "reports/latest"
+            report.mkdir(parents=True)
+            item = report / "gone.txt"
+            item.write_text("fixture")
+            config = load_archive_source_config(self.write_archive_config(root / "source.toml"))
+            lstat = Path.lstat
+
+            def remove_then_lstat(path: Path):
+                if path == item:
+                    path.unlink()
+                return lstat(path)
+
+            with patch.object(Path, "lstat", remove_then_lstat):
+                manifest = build_archive_manifest(config, root_path=root, clock=self.fixed_clock)
+        self.assertEqual(manifest.included_files, ())
+        (skipped,) = manifest.skipped_files
+        self.assertEqual((skipped.relative_path, skipped.reason), ("gone.txt", "special-file"))
+
+    def test_archive_hashes_a_multiblock_file_without_a_whole_file_read(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            report = root / "reports/latest"
+            report.mkdir(parents=True)
+            content = b"sample\0" * 110_000
+            (report / "report.bin").write_bytes(content)
+            path = self.write_archive_config(root / "source.toml", max_artifact_bytes=len(content))
+            config = load_archive_source_config(path)
+            with patch.object(Path, "read_bytes", side_effect=AssertionError("whole-file read")):
+                manifest = build_archive_manifest(config, root_path=root, clock=self.fixed_clock)
+        (included,) = manifest.included_files
+        self.assertEqual((included.byte_length, included.sha256), (len(content), hashlib.sha256(content).hexdigest()))
+
+    def test_archive_manifest_never_hashes_a_file_at_a_different_observed_size(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            item = root / "fixture.txt"
+            item.write_text("fixture", encoding="utf-8")
+            for declared_bytes in (1, 8):
+                with self.subTest(declared_bytes=declared_bytes):
+                    with self.assertRaisesRegex(SourcePolicyError, "size changed"):
+                        _archive_included_file(root, root, item, declared_bytes)
+
+    def test_manifest_digest_requires_regular_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "target.txt"
+            target.write_bytes(b"fixture")
+            link = root / "link.txt"
+            link.symlink_to(target.name)
+            with self.assertRaisesRegex(SourcePolicyError, "regular file"):
+                _archive_included_file(root, root, link, len(b"fixture"))
+
     def test_archive_config_policy_rejects_unknown_blocked_and_url_fields(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir) / "repo"

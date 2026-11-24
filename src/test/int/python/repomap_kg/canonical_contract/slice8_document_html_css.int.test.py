@@ -9,11 +9,36 @@ from common_lore_index.extractors.documents.css_html_matching import (
     extract_css_selector_match_observations,
 )
 from common_lore_index.extractors.documents.html import extract_html_file_observations
+from common_lore_index.extractors.documents.markdown import extract_markdown_file_observations
 from common_lore_index.storage.canonical_rows import prepare_canonical_load
 
 
 class Slice8DocumentHtmlCssIntegrationTests(unittest.TestCase):
     """Integration scenarios for document extraction, selector matching, canonical graphs, and typed rows."""
+
+    def test_credentialed_document_urls_stay_out_of_canonical_load(self) -> None:
+        bad = "//user:fixture@concealed.invalid/link"
+        html = extract_html_file_observations("index.html", f'<a href="{bad}">{bad}</a>')
+        css = extract_css_file_observations("style.css", f'body {{ background: url("{bad}"); }}')
+        markdown = extract_markdown_file_observations("guide.md", f"[Fixture]({bad})")
+        rows = (*html, *css, *markdown)
+        load = prepare_canonical_load(rows)
+        self.assertTrue(load.result.ok)
+        references = [row for row in rows if row.kind in ("html.link", "css.reference", "markdown.link")]
+        self.assertEqual(len(references), 3)
+        self.assertTrue(all((row.target or "").startswith("unknown:") for row in references))
+        self.assertNotIn("concealed.invalid", str([row.to_dict() for row in rows]))
+
+    def test_invalid_html_and_css_targets_reach_typed_placeholder_rows(self) -> None:
+        html = extract_html_file_observations("index.html", '<a href="https://unreadable.invalid:not-a-port/item">Fixture</a>')
+        css = extract_css_file_observations("style.css", '.fixture { background: url("https://[unreadable.invalid/item"); }')
+        observations = (*html, *css)
+        load = prepare_canonical_load(observations)
+        self.assertTrue(load.result.ok)
+        references = [row for row in observations if row.kind in ("html.link", "css.reference")]
+        self.assertEqual(len(references), 2)
+        self.assertTrue(all((row.target or "").startswith("unknown:") for row in references))
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in observations]))
 
     def test_s8_c01_html_css_matched_selector_relationship_and_typed_rows(self) -> None:
         """Matched HTML/CSS selectors form styles edges and materialize into typed database storage rows."""

@@ -104,6 +104,25 @@ def test_initialized_unpublished_and_published_are_current(tmp_path: Path) -> No
     assert other.state == "not-initialized", "an uninitialized graph is reported apart from a current one"
 
 
+def test_probe_reuses_the_admitted_schema_in_one_snapshot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _config(tmp_path)
+    initialize_local_graph(config, "one")
+    _publish_one(config)
+    statement_log: list[str] = []
+    original_classify = connection.classify
+
+    def trace_classification(conn: sqlite3.Connection) -> migrations.SchemaState:
+        conn.set_trace_callback(statement_log.append)
+        return original_classify(conn)
+
+    monkeypatch.setattr(connection, "classify", trace_classification)
+    readiness = probe_local_graph(config, config.graphs[0])
+    assert readiness.state == "current" and readiness.accepted_generation == 1
+    assert sum(statement.startswith("PRAGMA application_id") for statement in statement_log) == 1
+
+
 def test_published_probe_changes_only_sidecars(tmp_path: Path) -> None:
     config = _config(tmp_path)
     initialize_local_graph(config, "one")
@@ -146,7 +165,7 @@ def test_busy_or_unavailable_store_is_unavailable(tmp_path: Path, monkeypatch: p
     def busy(*_args: object, **_kwargs: object) -> object:
         raise LocalStoreError(DATABASE_BUSY)
 
-    monkeypatch.setattr(local_readiness, "read_transaction", busy)
+    monkeypatch.setattr(local_readiness, "read_transaction_with_schema", busy)
     readiness = probe_local_graph(config, config.graphs[0])
     assert (readiness.state, readiness.error) == ("unavailable", "graph-database-busy"), readiness
 

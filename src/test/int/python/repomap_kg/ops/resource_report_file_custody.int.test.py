@@ -111,3 +111,99 @@ def test_missing_and_dangling_inputs_do_not_create_or_follow_anything(tmp_path: 
         assert completed.stderr == f"ERROR: resource-report-invalid: {expected}\n"
         assert str(tmp_path) not in completed.stderr
     assert not (tmp_path / "does-not-exist").exists()
+
+
+def test_cli_rejects_an_inconsistent_private_report_read(tmp_path: Path, monkeypatch, capsys) -> None:
+    from common_lore_index.cli.main import main
+    from common_lore_index.ops.resource_reports import _files
+
+    path = private_directory(tmp_path / "reports") / "test.json"
+    data = _data()
+    path.write_bytes(data)
+    path.chmod(0o600)
+    read = os.read
+    identity = (path.stat().st_dev, path.stat().st_ino)
+
+    def shorter_read(descriptor: int, count: int) -> bytes:
+        info = os.fstat(descriptor)
+        chunk = read(descriptor, count)
+        if (info.st_dev, info.st_ino) == identity:
+            return chunk[:-1]
+        return chunk
+
+    with monkeypatch.context() as local:
+        local.setattr(_files.os, "read", shorter_read)
+        status = main(["ops", "resource-report", "check", "--input", str(path)])
+    captured = capsys.readouterr()
+    assert status == 1 and captured.out == ""
+    assert captured.err == "ERROR: resource-report-invalid: unsafe_input\n"
+    assert path.read_bytes() == data
+
+
+def test_cli_refuses_same_size_report_mutation_with_restored_mtime(
+    tmp_path: Path, monkeypatch, capsys,
+) -> None:
+    from common_lore_index.cli.main import main
+    from common_lore_index.ops.resource_reports import _files
+
+    path = private_directory(tmp_path / "reports") / "test.json"
+    data = _data()
+    path.write_bytes(data)
+    path.chmod(0o600)
+    before = path.stat()
+    changed = data[:-1] + b" "
+    assert changed != data
+    read = os.read
+    mutations = 0
+
+    def overwrite_after_read(descriptor: int, count: int) -> bytes:
+        nonlocal mutations
+        info = os.fstat(descriptor)
+        chunk = read(descriptor, count)
+        if chunk and (info.st_dev, info.st_ino) == (before.st_dev, before.st_ino):
+            path.write_bytes(changed)
+            os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+            mutations += 1
+        return chunk
+
+    with monkeypatch.context() as local:
+        local.setattr(_files.os, "read", overwrite_after_read)
+        status = main(["ops", "resource-report", "check", "--input", str(path)])
+    captured = capsys.readouterr()
+    assert mutations == 1
+    assert status == 1 and captured.out == ""
+    assert captured.err == "ERROR: resource-report-invalid: unsafe_input\n"
+    after = path.stat()
+    assert (after.st_ino, after.st_size, after.st_mtime_ns) == (before.st_ino, before.st_size, before.st_mtime_ns)
+    assert after.st_ctime_ns != before.st_ctime_ns and path.read_bytes() == changed
+
+
+def test_cli_refuses_report_that_grows_during_the_admitted_read(tmp_path, monkeypatch, capsys):
+    from common_lore_index.cli.main import main
+    from common_lore_index.ops.resource_reports import _files
+
+    path = private_directory(tmp_path / "reports") / "report.json"
+    data = _data()
+    path.write_bytes(data)
+    path.chmod(0o600)
+    before = path.stat()
+    read = os.read
+    read_sizes: list[int] = []
+
+    def append_before_read(descriptor, count):
+        info = os.fstat(descriptor)
+        if (info.st_dev, info.st_ino) == (before.st_dev, before.st_ino):
+            if not read_sizes:
+                with path.open("ab") as output:
+                    output.write(b" ")
+            read_sizes.append(count)
+        return read(descriptor, count)
+
+    with monkeypatch.context() as local:
+        local.setattr(_files.os, "read", append_before_read)
+        status = main(["ops", "resource-report", "check", "--input", str(path)])
+    captured = capsys.readouterr()
+    assert status == 1 and captured.out == ""
+    assert captured.err == "ERROR: resource-report-invalid: unsafe_input\n"
+    assert read_sizes == [len(data)]
+    assert path.read_bytes() == data + b" "

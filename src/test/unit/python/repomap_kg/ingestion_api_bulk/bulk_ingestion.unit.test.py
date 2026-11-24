@@ -1,18 +1,143 @@
+import hashlib
 import json
 import tempfile
 import unittest
+from collections.abc import Iterator, Mapping
+from dataclasses import replace
 from pathlib import Path
+from unittest.mock import patch
 
+from common_lore_index.graph.discovery import classify_path
 from common_lore_index.ops.ingestion.bulk import (
     BulkPolicyError,
     bulk_observations_from_plan,
     build_bulk_plan,
     import_bulk_source,
     load_bulk_source_config,
+    observations_for_file_info,
+    write_jsonl,
 )
+from common_lore_index.extractors.languages.python import PythonModuleIndex
 
 
 class BulkIngestionUnitTests(unittest.TestCase):
+    def test_bulk_plan_ignores_its_own_outputs_and_contained_directory_aliases(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "corpus"
+            state = corpus / ".repomap"
+            state.mkdir(parents=True)
+            (corpus / "fixture.md").write_text("# Fixture\n", encoding="utf-8")
+            (corpus / "state-alias").symlink_to(state, target_is_directory=True)
+            (corpus / "cycle").symlink_to(corpus, target_is_directory=True)
+            template = load_bulk_source_config(self.write_bulk_config(root / "bulk.toml", corpus))
+            configs = tuple(
+                replace(template, include_hidden=hidden, follow_symlinks=follow)
+                for hidden in (False, True) for follow in (False, True)
+            )
+            before = [build_bulk_plan(config, repository_root=corpus).to_jsonable() for config in configs]
+            generated = state / "bulk-runs" / "source" / "run"
+            generated.mkdir(parents=True)
+            (generated / "manifest.json").write_text('{"plan":"fixture"}\n', encoding="utf-8")
+            (generated / "observations.jsonl").write_text('{"kind":"file"}\n', encoding="utf-8")
+            after = [build_bulk_plan(config, repository_root=corpus).to_jsonable() for config in configs]
+            self.assertEqual(before, after)
+            for manifest in after:
+                self.assertEqual([item["relative_path"] for item in manifest["included_files"]], ["fixture.md"])
+                self.assertIn("cycle", {item["relative_path"] for item in manifest["skipped_files"]
+                                        if item["reason"] == "symlink_excluded"})
+            with self.assertRaisesRegex(BulkPolicyError, "bulk source root overlaps managed bulk outputs"):
+                build_bulk_plan(replace(template, resolved_root=generated.resolve()), repository_root=corpus)
+
+    def test_bulk_jsonl_keeps_the_prior_file_on_a_row_encoding_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "records.jsonl"
+            write_jsonl(path, iter(({"name": "previous"},)))
+            original = path.read_bytes()
+            with self.assertRaises(TypeError):
+                write_jsonl(path, iter(({"name": "replacement"}, {"bad": object()})))
+            self.assertEqual(path.read_bytes(), original)
+            self.assertEqual(tuple(root.iterdir()), (path,))
+
+    def test_bulk_jsonl_refuses_a_destination_symlink_without_touching_its_target(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "original.jsonl"
+            target.write_bytes(b'{"name": "previous"}\n')
+            alias = root / "alias.jsonl"
+            alias.symlink_to(target)
+            with self.assertRaisesRegex(BulkPolicyError, "bulk output file must not be a symlink"):
+                write_jsonl(alias, ({"name": "replacement"},))
+            self.assertTrue(alias.is_symlink())
+            self.assertEqual(target.read_bytes(), b'{"name": "previous"}\n')
+
+    def test_bulk_capture_checks_alias_digests_and_limits_before_opening_files(self) -> None:
+        from common_lore_index.ops.ingestion import _bulk_manifest
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "corpus"
+            corpus.mkdir()
+            (corpus / "fixture.md").write_text("# Example\n", encoding="utf-8")
+            config = load_bulk_source_config(self.write_bulk_config(root / "bulk.toml", corpus))
+            manifest = build_bulk_plan(config, repository_root=corpus)
+            (record,) = manifest.included_files
+            alternate = replace(record, relative_path="alias.md", sha256="0" * 64)
+            conflict = replace(manifest, included_files=(record, alternate))
+            with patch.object(_bulk_manifest, "_capture_retained_file", side_effect=AssertionError("file opened")):
+                with self.assertRaisesRegex(BulkPolicyError, "conflicting retained bulk file references"):
+                    bulk_observations_from_plan(config, conflict, repository_root=corpus)
+                with self.assertRaisesRegex(BulkPolicyError, "retained bulk files exceed source policy"):
+                    bulk_observations_from_plan(replace(config, max_file_bytes=1), manifest, repository_root=corpus)
+
+    def test_bulk_markdown_resolves_links_without_cloning_the_anchor_inventory(self) -> None:
+        class AnchorInventory(Mapping[str, frozenset[str]]):
+            def __getitem__(self, path: str) -> frozenset[str]:
+                if path != "topic.md":
+                    raise KeyError(path)
+                return frozenset({"heading"})
+
+            def __iter__(self) -> Iterator[str]:
+                raise AssertionError("extracting a Markdown file enumerated the entire anchor inventory")
+
+            def __len__(self) -> int:
+                return 1
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            source = root / "index.md"
+            source.write_text("[Topic](topic.md#heading)\n", encoding="utf-8")
+            observations = observations_for_file_info(
+                root, classify_path(root, source), module_index=PythonModuleIndex.empty(),
+                repository_paths=frozenset({"index.md", "topic.md"}), markdown_anchors=AnchorInventory(),
+            )
+        links = [item.target for item in observations if item.kind == "markdown.link"]
+        self.assertEqual(links, ["doc.section:file%3Atopic.md:heading"])
+
+    def test_bulk_hash_rejects_replacement_after_extent_admission(self) -> None:
+        from common_lore_index.ops.ingestion import _bulk_manifest
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "corpus"
+            corpus.mkdir()
+            target = corpus / "note.md"
+            target.write_bytes(b"# Old\n")
+            replacement = root / "replacement.md"
+            replacement.write_bytes(b"# New\n")
+            config = load_bulk_source_config(self.write_bulk_config(root / "bulk.toml", corpus))
+            open_admitted = _bulk_manifest._hash_admitted_file
+
+            def replace_before_hash(path, expected):
+                replacement.replace(path)
+                return open_admitted(path, expected)
+
+            with patch.object(_bulk_manifest, "_hash_admitted_file", side_effect=replace_before_hash):
+                with self.assertRaisesRegex(BulkPolicyError, "bulk file changed during manifest scan") as error:
+                    build_bulk_plan(config, repository_root=corpus)
+            self.assertNotIn(str(corpus), str(error.exception))
+
     def test_bulk_config_requires_explicit_allowed_local_directory_policy(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -84,6 +209,10 @@ class BulkIngestionUnitTests(unittest.TestCase):
         self.assertTrue(first.no_external_fetch)
         self.assertTrue(first.no_source_mutation)
         self.assertTrue(first.no_archive_decompression)
+        canonical = first.to_jsonable()
+        canonical["manifest_sha256"] = ""
+        raw = json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        self.assertEqual(first.manifest_sha256, hashlib.sha256(raw).hexdigest())
 
     def test_bulk_plan_applies_depth_file_and_total_byte_limits(self):
         with tempfile.TemporaryDirectory() as tmpdir:

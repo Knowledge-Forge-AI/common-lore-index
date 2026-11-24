@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
+import pytest
 
 from common_lore_index.retrieval.context_assembly import build_compact_context
 from common_lore_index.retrieval.context_contracts import ContextRequest
@@ -142,10 +143,10 @@ def _counter_rows() -> tuple[tuple[dict[str, Any], ...], tuple[tuple[str, str, s
     return subjects, edges
 
 
+@pytest.mark.parametrize("offset", [0, 1])
 def test_postgres_sqlite_expansion_matches_greedy_global_neighbor_charge_and_kind_filter(
-    tmp_path: Path,
+    tmp_path: Path, offset: int,
 ) -> None:
-    """Existing neighbors do not consume seed-1's node slots, and non-selected kinds stay out."""
     require_postgres_binaries()
     subjects, edges = _counter_rows()
     _, _, _, _, sqlite_adapter = build_sqlite_context_fixture(
@@ -158,7 +159,7 @@ def test_postgres_sqlite_expansion_matches_greedy_global_neighbor_charge_and_kin
         )
         request = _request(
             mode="ranked_discovery", canonical_key=None, query="CounterSeed",
-            kinds=("python.function",), max_items=2, expand_seeds=2,
+            kinds=("python.function",), offset=offset, max_items=2-offset, expand_seeds=2-offset,
             node_limit=2, edge_limit=8, edge_kinds=("calls",),
         )
         with sqlite_adapter:
@@ -170,9 +171,9 @@ def test_postgres_sqlite_expansion_matches_greedy_global_neighbor_charge_and_kin
     assert_valid_context_packet(postgres_packet)
     assert _content(sqlite_packet) == _content(postgres_packet)
     neighbor_keys = {key for key, _ in _content(postgres_packet)[1]}
-    assert neighbor_keys == {"py:counter.A", "py:counter.B", "py:counter.C"}
+    assert neighbor_keys == ({"py:counter.A", "py:counter.B"} if offset else {"py:counter.A", "py:counter.B", "py:counter.C"})
     assert all(row[1] == "calls" for row in _content(postgres_packet)[2])
-    assert postgres_packet["expansion"]["seeds_expanded"] == 2
+    assert (postgres_packet["expansion"]["seeds_expanded"], postgres_packet["items"][0]["canonical_key"]) == (2 - offset, f"py:counter.Seed{offset}")
 
 
 def _bulk_rows() -> tuple[tuple[dict[str, Any], ...], tuple[tuple[str, str, str], ...]]:
@@ -359,7 +360,7 @@ def test_postgres_transport_overflow_returns_closed_empty_expansion(
 
 
 def test_postgres_statement_cap_and_native_empty_node_are_closed_packets(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     require_postgres_binaries()
     with temporary_postgres() as postgres:
@@ -377,6 +378,20 @@ def test_postgres_statement_cap_and_native_empty_node_are_closed_packets(
             empty = build_compact_context(
                 _request(canonical_key="py:pkg.billing.DoesNotExist"), adapter,
             )
+            execute = adapter._run_sql_object
+
+            def mismatched_subject(sql: str, *, label: str) -> dict[str, Any]:
+                result = execute(sql, label=label)
+                if label == "context expansion":
+                    result["evidence"][0]["subject_canonical_key"] = "py:unrelated.fixture"
+                return result
+
+            monkeypatch.setattr(adapter, "_run_sql_object", mismatched_subject)
+            ledger = WorkLedger(backend="postgresql")
+            identity = adapter.read_initial_identity(ledger)["accepted_publication"]
+            refused = adapter.expand_seeds_depth1((SEED,), edge_kinds=("contains",), node_limit=8,
+                                                  edge_limit=16, ledger=ledger, expected_identity=identity)
+    assert refused == {"status": "unavailable", "reason": "accepted_publication_unverified"}
     assert_valid_context_packet(empty)
     assert empty["status"] == "complete"
     assert empty["effective_mode"] == "graph_investigation"

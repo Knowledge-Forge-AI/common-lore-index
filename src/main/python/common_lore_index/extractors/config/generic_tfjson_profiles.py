@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import PurePosixPath
 from typing import Any
 
@@ -184,21 +185,15 @@ def _tfjson_redaction_reason(pointer: str, profile: str) -> str:
     return "secret-prone-config-context"
 
 
-def _json_pointer_values(value: Any) -> tuple[tuple[str, Any], ...]:
-    result: list[tuple[str, Any]] = []
-
-    def walk(current: Any, segments: tuple[str, ...]) -> None:
-        if segments:
-            result.append((json_pointer(segments), current))
-        if isinstance(current, dict):
-            for key, child in current.items():
-                walk(child, (*segments, str(key)))
-        elif isinstance(current, list):
-            for index, child in enumerate(current):
-                walk(child, (*segments, str(index)))
-
-    walk(value, ())
-    return tuple(result)
+def _json_pointer_values(value: Any, segments: tuple[str, ...] = ()) -> Iterator[tuple[str, Any]]:
+    if segments:
+        yield json_pointer(segments), value
+    if isinstance(value, dict):
+        for key, child in value.items():
+            yield from _json_pointer_values(child, (*segments, str(key)))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            yield from _json_pointer_values(child, (*segments, str(index)))
 
 
 def _tfjson_profile_observations(

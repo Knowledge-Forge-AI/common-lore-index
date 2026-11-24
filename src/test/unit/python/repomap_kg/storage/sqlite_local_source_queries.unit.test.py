@@ -14,6 +14,8 @@ Same-input equality with the PostgreSQL owners is the integration claim.
 from __future__ import annotations
 
 import json
+import sqlite3
+from contextlib import closing
 from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
@@ -225,6 +227,8 @@ def test_crafted_corpus_reaches_null_and_default_paths(tmp_path: Path) -> None:
         alpha = source_queries.source_summary(connection, source_id="crafted-alpha")
         assert (alpha.link_references, alpha.enclosure_references) == (3, 1)
         assert alpha.latest_source_run_id is None and alpha.latest_acquired_at == "2026-01-03T00:00:00Z"
+        beta = source_queries.source_summary(connection, source_id="crafted-beta")
+        assert beta.latest_source_run_id is None and beta.latest_acquired_at is None
         assert alpha.source_type == "feed.atom"  # MIN over the group
         beta = source_queries.source_summary(connection, source_id="crafted-beta")
         assert (beta.latest_acquired_at, beta.display_name) == (None, None)
@@ -251,11 +255,12 @@ def test_crafted_corpus_reaches_null_and_default_paths(tmp_path: Path) -> None:
         assert beta_only["source"]["acquired_at"] is None
 
 
-def test_run_casts_refuse_what_postgresql_rejects(tmp_path: Path) -> None:
+@pytest.mark.parametrize("value", ("12x", "+", pytest.param("1" * 5000, id="wide"), str(-(2**63) - 1)))
+def test_run_casts_refuse_what_postgresql_rejects(tmp_path: Path, value: str) -> None:
     observations = list(crafted_feed_observations())
     first = observations[0]
     observations[0] = replace(first, metadata={**first.metadata, "source_run_id": "r1",
-                                               "source_artifact_bytes": "12x"})
+                                               "source_artifact_bytes": value})
     path = _database(tmp_path, "casts")
     _publish(path, 1, tuple(observations), name="casts")
     with _read(path, "casts") as connection:
@@ -284,12 +289,112 @@ def test_unpublished_graph_refuses_every_operation(tmp_path: Path) -> None:
             source_queries.ingested_sources(connection, source_type=None, policy_status=None, limit=0)
 
 
-def test_ordering_and_default_helpers() -> None:
-    rows = [("a", None), ("b", "2"), ("c", "10"), ("d", "2"), ("e", None)]
-    ordered = source_queries.desc_nulls_last(rows, lambda row: row[1])
-    assert [row[0] for row in ordered] == ["b", "d", "c", "a", "e"]  # text DESC, stable ties, NULLs last
+def test_aggregate_and_default_helpers() -> None:
     assert [source_queries.not_fetched(value) for value in (None, "true", "off", "Y", "0")] == [
         True, True, False, True, False]
     with pytest.raises(StorageSchemaError):
         source_queries.not_fetched("maybe")
     assert source_queries.max_of([None, "b", "a"]) == "b" and source_queries.min_of([None, None]) is None
+
+
+def _seed_fanout_topologies(path: Path) -> None:
+    with closing(sqlite3.connect(path)) as db, db:
+        db.execute("PRAGMA foreign_keys = ON")
+        run1, run2 = [row[0] for row in db.execute("SELECT id FROM runs ORDER BY id").fetchall()[:2]]
+        ord0 = int(db.execute("SELECT COALESCE(MAX(ordinal), -1) + 1 FROM raw_observations").fetchone()[0])
+        nid0 = int(db.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM canonical_nodes").fetchone()[0])
+        eid0 = int(db.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM canonical_edges").fetchone()[0])
+        ev0 = int(db.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM canonical_evidence").fetchone()[0])
+        meta_r1 = {"source_id_configured": "w7-main", "source_type": "feed.rss", "source_display_name": "W7 Feed",
+                   "source_policy_status": "allowed", "source_run_id": "w7-r1", "source_artifact_id": "a1",
+                   "source_artifact_path": "f/r1.xml", "source_acquired_at": "2026-08-01T00:00:00Z",
+                   "acquisition_url_summary": "https://w7.invalid/rss"}
+        meta_r2 = {**meta_r1, "source_run_id": "w7-r2", "source_artifact_id": "a2",
+                   "source_artifact_path": "f/r2.xml", "source_acquired_at": "2026-08-02T00:00:00Z"}
+        null_meta = {"source_id_configured": "w7-nulls", "source_type": "feed.atom",
+                     "source_policy_status": "allowed_with_limits"}
+        db.executemany(
+            "INSERT INTO raw_observations (run_id, ordinal, schema_version, kind, source_id, path, payload_json, "
+            "payload_hash) VALUES (?, ?, 1, ?, 'src', 'f.xml', ?, 'h')",
+            [(r, ord0 + i, k, json.dumps({"metadata": m})) for i, (r, k, m) in enumerate((
+                (run1, "feed.rss", meta_r1), (run2, "feed.rss", meta_r2), (run1, "feed.rss", meta_r1),
+                (run2, "feed.parse_error", {**meta_r2, "source_artifact_id": "tied"}), (run1, "feed.parse_error", meta_r1),
+                (run1, "feed.parse_error", null_meta), (run2, "feed.atom", null_meta)))])
+        db.executemany(
+            "INSERT INTO canonical_nodes (id, graph_key_version, canonical_key, kind, display_name, metadata_json, "
+            "confidence, conflict, first_seen_run_id, last_seen_run_id) VALUES (?, ?, ?, ?, ?, '{}', 'high', 0, ?, ?)",
+            [(nid0 + off, ver, key, kind, key, run1, run2) for off, ver, key, kind in (
+                (0, 1, "feed.document:w7:1", "feed.document"), (1, 1, "feed.channel:w7:1", "feed.channel"),
+                (2, 1, "feed.item:w7:1", "feed.item"), (3, 2, "feed.item:w7:1", "feed.item"),
+                (4, 1, "feed.item:w7:2", "feed.item"), (5, 1, "feed.author:w7:1", "feed.author"),
+                (6, 1, "feed.category:w7:1", "feed.category"), (7, 1, "feed.category:w7:2", "feed.category"),
+                (8, 1, "external.url:w7:1", "external.url"))])
+        db.executemany(
+            "INSERT INTO canonical_edges (id, graph_key_version, source_canonical_key, edge_kind, "
+            "target_canonical_key, identity_metadata_json, identity_metadata_hash, metadata_json, confidence, "
+            "conflict, first_seen_run_id, last_seen_run_id) "
+            "VALUES (?, 1, 'feed.item:w7:1', ?, 'external.url:w7:1', '{}', ?, ?, 'high', 0, ?, ?)",
+            [(eid0 + off, kind, f"w7-e-{off}", meta_json, run1, run2) for off, kind, meta_json in (
+                (0, "references", '{"scope":"link"}'), (1, "references", '{"scope":"link"}'),
+                (2, "references", '{"scope":"enclosure"}'), (3, "references", '{"scope":"item"}'),
+                (4, "contains", '{"scope":"link"}'))])
+        db.executemany(
+            "INSERT INTO canonical_evidence (id, run_id, graph_key_version, evidence_key, raw_observation_ordinal, "
+            "raw_schema_version, raw_kind, raw_source_id, path, extractor, extractor_version, confidence, "
+            "metadata_json) VALUES (?, ?, 1, ?, ?, 1, 'rss', 'src', 'f.xml', 'ex', '1', 'high', '{}')",
+            [(ev0 + off, r, f"w7-ev-{off}", ord0 + ro) for off, r, ro in ((0, run1, 0), (1, run1, 0), (2, run2, 1),
+             (3, run2, 3), (4, run2, 3), (5, run2, 3), (6, run2, 3), (7, run2, 6))])
+        db.executemany(
+            "INSERT INTO canonical_node_evidence (canonical_node_id, canonical_evidence_id, link_kind) VALUES (?,?,?)",
+            [(nid0 + n, ev0 + e, k) for n, e, k in ((0, 0, "p"), (1, 0, "p"), (2, 0, "p"), (2, 0, "dup"), (3, 1, "p"),
+             (5, 1, "p"), (8, 1, "p"), (2, 2, "p"), (4, 2, "p"), (6, 2, "p"), (7, 3, "p"), (7, 3, "dup"), (4, 3, "p"),
+             (0, 4, "p"), (5, 4, "p"))])
+        db.executemany(
+            "INSERT INTO canonical_edge_evidence (canonical_edge_id, canonical_evidence_id, link_kind) VALUES (?,?,?)",
+            [(eid0 + d, ev0 + e, k) for d, e, k in ((0, 0, "p"), (0, 0, "dup"), (2, 0, "p"), (0, 2, "p"), (1, 2, "p"),
+             (3, 2, "p"), (2, 3, "p"), (2, 3, "dup"), (1, 3, "p"), (4, 3, "p"), (4, 3, "dup"), (0, 5, "p"),
+             (2, 5, "p"), (4, 5, "p"))])
+
+
+def test_fanout_counts_distinct_keys_multiple_evidence_and_unmatched_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = _database(tmp_path, "fanout-parity")
+    _publish(path, 1, crafted_feed_observations(), name="fanout-parity")
+    _publish(path, 2, crafted_feed_observations(), name="fanout-parity")
+    _seed_fanout_topologies(path)
+    kinds = ("feed.document", "feed.channel", "feed.item", "feed.author", "feed.category")
+    with _read(path, "fanout-parity") as connection:
+        observations, ev = source_queries.source_observations(connection), source_queries.evidence_ids(connection)
+        nl, el = source_queries.node_links(connection), source_queries.edge_links(connection)
+        for source_id in ("crafted-alpha", "crafted-beta", "w7-main", "w7-nulls"):
+            grp = [item for item in observations if item.source_id == source_id]
+            ref_rows = list(source_queries.fanout(grp, ev, nl, el))
+            inv_rows = list(source_queries.fanout(grp, ev, nl))
+            with monkeypatch.context() as patch:
+                patch.setattr(source_queries, "fanout", lambda *_a, **_k: (_ for _ in ()).throw(AssertionError()))
+                summary = source_queries.source_summary(connection, source_id=source_id)
+                by_id = {r.source_id: r for r in source_queries.ingested_sources(
+                    connection, source_type=None, policy_status=None, limit=50)}
+            assert (summary.feed_documents, summary.feed_channels, summary.feed_items,
+                    summary.feed_authors, summary.feed_categories) == tuple(
+                len({n.key for _, n, _ in ref_rows if n is not None and n.kind == kind}) for kind in kinds)
+            assert (summary.link_references, summary.enclosure_references) == tuple(
+                len({e.id for _, _, e in ref_rows if e is not None and e.kind == "references"
+                     and source_queries.raw_payload.text_at(e.metadata, "scope") == scope})
+                for scope in ("link", "enclosure"))
+            assert summary.parse_errors == sum(1 for obs, _, _ in ref_rows if obs.kind == "feed.parse_error")
+            assert (by_id[source_id].feed_observation_count, by_id[source_id].canonical_feed_item_count) == (
+                len(inv_rows), summary.feed_items)
+        main = source_queries.source_summary(connection, source_id="w7-main")
+        assert (main.feed_documents, main.feed_channels, main.feed_items, main.feed_authors, main.feed_categories) == (
+            1, 1, 2, 1, 2)
+        assert (main.link_references, main.enclosure_references, main.parse_errors) == (2, 1, 22)
+        assert (main.latest_artifact_id, main.latest_acquired_at) == ("a2", "2026-08-02T00:00:00Z")
+        nulls = source_queries.source_summary(connection, source_id="w7-nulls")
+        assert (nulls.parse_errors, nulls.feed_items, nulls.link_references, nulls.display_name,
+                nulls.configured_url_summary, nulls.latest_source_run_id, nulls.latest_acquired_at) == (
+            1, 0, 0, None, None, None, None)
+        rss_only = source_queries.ingested_sources(connection, source_type="feed.rss", policy_status="allowed", limit=5)
+        assert [row.source_id for row in rss_only if row.source_id.startswith("w7-")] == ["w7-main"]
+        assert next(row for row in rss_only if row.source_id == "w7-main").feed_observation_count == 19

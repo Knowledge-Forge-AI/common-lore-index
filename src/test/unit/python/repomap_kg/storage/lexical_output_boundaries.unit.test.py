@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from common_lore_index.cli.main import main as cli_main
+from common_lore_index.ops import lexical_output
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.ops.lexical_output import (
@@ -40,6 +42,28 @@ def _assert_json_line_budget(payload: dict[str, object]) -> str:
     text = json.dumps(payload, sort_keys=True)
     assert len((text + "\n").encode("utf-8")) <= MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES
     return text
+
+
+def test_escaped_ascii_budget_does_not_copy_the_serialized_bytes(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = {"detail": 'Å雪😀"\n'}
+    dumps = json.dumps
+    encoded_size = len(dumps(payload, sort_keys=True).encode("utf-8"))
+
+    class JsonText(str):
+        def encode(self, *args: Any, **kwargs: Any) -> bytes:
+            raise AssertionError("the budget check must not allocate a second byte buffer")
+
+    def serialize(*args: Any, **kwargs: Any) -> str:
+        result = dumps(*args, **kwargs)
+        assert result.isascii()
+        return JsonText(result)
+
+    monkeypatch.setattr(lexical_output.json, "dumps", serialize)
+    monkeypatch.setattr(lexical_output, "MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES", encoded_size + 1)
+    assert lexical_output._require_serialized_budget(payload) is payload
+    monkeypatch.setattr(lexical_output, "MAX_SERIALIZED_LEXICAL_OUTPUT_BYTES", encoded_size)
+    with pytest.raises(LexicalStorageError, match="output_budget_exceeded"):
+        lexical_output._require_serialized_budget(payload)
 
 
 def _published(generation_id: str = "lexgen1:" + "a" * 64) -> PublishedLexicalGeneration:

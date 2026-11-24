@@ -1,17 +1,20 @@
-"""API manifest summary records and payload decoders."""
+"""API manifest summaries and shared retained source manifest readback."""
 
 from __future__ import annotations
 
 import json
+import os
+import stat
 from collections import Counter
+from collections.abc import Iterator
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.row_helpers import (
+    iter_manifest_mappings,
     manifest_int,
-    manifest_list,
     optional_manifest_text,
     payload_bool,
     payload_count_map,
@@ -67,7 +70,6 @@ class APISummaryRecord:
 def api_manifest_summary_payload(root_path: Path) -> dict[str, Any]:
     resolved_root = root_path.resolve()
     run_root = resolved_root / ".repomap" / "api-runs"
-    manifests = read_api_manifest_payloads(run_root, root_path=resolved_root)
     source_ids: set[str] = set()
     run_ids: set[str] = set()
     endpoint_names: set[str] = set()
@@ -90,7 +92,7 @@ def api_manifest_summary_payload(root_path: Path) -> dict[str, Any]:
     no_credentials_resolved = True
     no_scheduler = True
 
-    for manifest in manifests:
+    for manifest in iter_run_manifest_payloads(run_root, root_path=resolved_root):
         if manifest.get("_manifest_parse_error"):
             diagnostic_counts["manifest_parse_error"] += 1
             continue
@@ -123,7 +125,7 @@ def api_manifest_summary_payload(root_path: Path) -> dict[str, Any]:
             no_credentials_resolved = False
         if manifest.get("no_scheduler") is False:
             no_scheduler = False
-        for request in manifest_list(manifest.get("requests")):
+        for request in iter_manifest_mappings(manifest.get("requests")):
             request_count += 1
             endpoint_name = optional_manifest_text(request, "endpoint_name")
             method = optional_manifest_text(request, "method")
@@ -137,7 +139,7 @@ def api_manifest_summary_payload(root_path: Path) -> dict[str, Any]:
                 downstream_routes[downstream_route] += 1
             if response_type is not None:
                 response_types[response_type] += 1
-        for response in manifest_list(manifest.get("responses")):
+        for response in iter_manifest_mappings(manifest.get("responses")):
             response_count += 1
             endpoint_name = optional_manifest_text(response, "endpoint_name")
             if endpoint_name is not None:
@@ -180,32 +182,47 @@ def api_manifest_summary_payload(root_path: Path) -> dict[str, Any]:
     }
 
 
-def read_api_manifest_payloads(
-    run_root: Path,
-    *,
-    root_path: Path,
-) -> tuple[dict[str, Any], ...]:
+def _read_regular_manifest(path: Path) -> object:
+    flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOFOLLOW", 0)
+    flags |= getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_BINARY", 0)
+    descriptor = os.open(path, flags)
+    try:
+        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+            raise ValueError("retained manifest is not a regular file")
+        with os.fdopen(descriptor, "r", encoding="utf-8", closefd=False) as handle:
+            return json.load(handle)
+    finally:
+        os.close(descriptor)
+
+
+def iter_run_manifest_payloads(
+    run_root: Path, *, root_path: Path,
+) -> Iterator[dict[str, Any]]:
+    """Read one contained manifest at a time in the established path order."""
     if not run_root.is_dir():
-        return ()
+        return
     resolved_run_root = run_root.resolve()
     try:
         resolved_run_root.relative_to(root_path)
     except ValueError:
-        return ({"_manifest_parse_error": True},)
-    payloads: list[dict[str, Any]] = []
+        yield {"_manifest_parse_error": True}
+        return
+
     for manifest_path in sorted(run_root.glob("*/*/manifest.json")):
         try:
             resolved_manifest = manifest_path.resolve()
             resolved_manifest.relative_to(resolved_run_root)
-            payload = json.loads(resolved_manifest.read_text(encoding="utf-8"))
-        except (OSError, ValueError, json.JSONDecodeError):
-            payloads.append({"_manifest_parse_error": True})
+            payload = _read_regular_manifest(resolved_manifest)
+        except (OSError, ValueError):
+            yield {"_manifest_parse_error": True}
             continue
-        if isinstance(payload, dict):
-            payloads.append(payload)
-        else:
-            payloads.append({"_manifest_parse_error": True})
-    return tuple(payloads)
+        yield payload if isinstance(payload, dict) else {"_manifest_parse_error": True}
+
+
+def read_api_manifest_payloads(
+    run_root: Path, *, root_path: Path,
+) -> tuple[dict[str, Any], ...]:
+    return tuple(iter_run_manifest_payloads(run_root, root_path=root_path))
 
 
 def api_summary_from_storage_payload(payload: Any) -> APISummaryRecord:

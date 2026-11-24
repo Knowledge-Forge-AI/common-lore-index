@@ -42,7 +42,10 @@ from common_lore_index.ops.refresh import query_refresh_status, refresh_status_t
 from common_lore_index.ops.reports import OpsGraphSummary, OpsRefreshError
 from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.authority import RefreshResult
-from common_lore_index.storage.readback_driver import PG_CONNECTOR_ENV, READBACK_DRIVER_ENV
+from common_lore_index.storage.errors import StorageSchemaError
+from common_lore_index.storage.readback_driver import (
+    PG_CONNECTOR_ENV, READBACK_DRIVER_ENV, execute_json_readback_with_driver,
+)
 from common_lore_index.storage.sql_core import sql_literal
 
 
@@ -348,3 +351,20 @@ def test_ops_ingestion_source_common_and_github_api_config_branches() -> None:
             mutation_allowed=False,
             credential_mode="anonymous",
         )
+
+
+def test_native_json_text_depth_refusal_keeps_both_readback_drivers_available() -> None:
+    require_postgres_binaries()
+    with temporary_postgres() as postgres:
+        for driver in ("psql", "psycopg"):
+            with pytest.raises(StorageSchemaError, match=f"{driver} did not return fixture as JSON"):
+                execute_json_readback_with_driver(
+                    "SELECT repeat('[', 12000) || repeat(']', 12000);", driver=driver,
+                    psql_args=postgres.psql_args, psql_command=postgres.psql_command,
+                    password=postgres.password, label="fixture", expected_shape="array",
+                )
+            assert execute_json_readback_with_driver(
+                "SELECT '[1]'::text;", driver=driver, psql_args=postgres.psql_args,
+                psql_command=postgres.psql_command, password=postgres.password,
+                label="fixture", expected_shape="array",
+            ) == [1]

@@ -17,6 +17,10 @@ from common_lore_index.artifacts._store_common import (
 from common_lore_index.artifacts.references import ArtifactReference
 
 
+_READ_FLAGS = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+_READ_BLOCK = 64 * 1024
+
+
 class _PrivateDetails(Protocol):
     def __call__(self, path: Path, *, owner_uid: int) -> os.stat_result: ...
 
@@ -27,10 +31,7 @@ def open_verified_path(
     stream_factory: type[VerifyingArtifactStream],
 ) -> BinaryIO:
     """Retain descriptor custody through verified-wrapper construction."""
-    flags = os.O_RDONLY
-    if hasattr(os, "O_NOFOLLOW"):
-        flags |= os.O_NOFOLLOW
-    descriptor = os.open(path, flags)
+    descriptor = os.open(path, _READ_FLAGS)
     raw: BinaryIO | None = None
     try:
         opened = os.fstat(descriptor)
@@ -151,15 +152,14 @@ class VerifyingArtifactStream(io.RawIOBase, BinaryIO):
             return b""
         remaining_bound = max(0, self._reference.size_bytes - self._bytes_read + 1)
         if size < 0:
-            chunks = []
+            result = io.BytesIO()
             while not self._eof:
                 remaining_bound = max(1, self._reference.size_bytes - self._bytes_read + 1)
-                chunk = self._stream.read(remaining_bound)
+                chunk = self._stream.read(min(remaining_bound, _READ_BLOCK))
+                result.write(self._check_and_update(chunk))
                 if not chunk:
-                    self._check_and_update(b"")
                     break
-                chunks.append(self._check_and_update(chunk))
-            return b"".join(chunks)
+            return result.getvalue()
         else:
             to_read = min(size, remaining_bound)
             chunk = self._stream.read(to_read)
@@ -176,6 +176,8 @@ class VerifyingArtifactStream(io.RawIOBase, BinaryIO):
     def readline(self, size: int = -1) -> bytes:  # type: ignore[override]
         if self._stream.closed:
             raise ValueError("I/O operation on closed file")
+        if size == 0:
+            return b""
         remaining_bound = max(0, self._reference.size_bytes - self._bytes_read + 1)
         to_read = remaining_bound if size < 0 else min(size, remaining_bound)
         chunk = self._stream.readline(to_read)
@@ -241,19 +243,18 @@ def compare_and_verify_collision(
         raise ArtifactIntegrityError(
             "artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS
         )
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     target_fd: int | None = None
     temporary_fd: int | None = None
     try:
         try:
-            target_fd = os.open(target, flags)
+            target_fd = os.open(target, _READ_FLAGS)
         except OSError as error:
             raise ArtifactIntegrityError("artifact is not a regular file") from error
         opened = os.fstat(target_fd)
         if not _same_file_stat(details, opened) or not stat.S_ISREG(opened.st_mode):
             raise ArtifactIntegrityError("artifact changed during read")
         try:
-            temporary_fd = os.open(temporary, flags)
+            temporary_fd = os.open(temporary, _READ_FLAGS)
         except OSError as error:
             raise ArtifactIntegrityError("artifact read failed") from error
         if not stat.S_ISREG(os.fstat(temporary_fd).st_mode):
@@ -349,9 +350,8 @@ def verify_stream_path(
             "artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS
         )
     before = private_details_fn(path, owner_uid=owner_uid)
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     try:
-        descriptor = os.open(path, flags)
+        descriptor = os.open(path, _READ_FLAGS)
     except OSError as error:
         raise ArtifactIntegrityError("artifact is not a regular file") from error
     raw: BinaryIO | None = None

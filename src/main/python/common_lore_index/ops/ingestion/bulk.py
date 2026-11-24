@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Mapping
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from common_lore_index.extractors.documents.css_html_matching import (
     extract_css_selector_match_observations,
@@ -61,7 +63,7 @@ from common_lore_index.ops.ingestion._bulk_helpers import (
     write_json,
     write_jsonl,
 )
-from common_lore_index.ops.ingestion._bulk_manifest import build_bulk_manifest
+from common_lore_index.ops.ingestion._bulk_manifest import _capture_bulk_files, build_bulk_manifest
 from common_lore_index.ops.ingestion._bulk_observations import (
     annotate_observation,
     write_bulk_run_files,
@@ -99,16 +101,15 @@ def observations_for_file_info(
     module_index: PythonModuleIndex,
     repository_paths: frozenset[str],
     markdown_anchors: Mapping[str, set[str] | frozenset[str]],
+    python_context_root: Path | None = None,
+    source_identity_root: Path | None = None,
 ) -> tuple[RawObservation, ...]:
     if file_info.language == "markdown":
-        converted_anchors: dict[str, set[str] | frozenset[str]] = {
-            key: frozenset(val) for key, val in markdown_anchors.items()
-        }
         return extract_markdown_file_observations_from_file(
             repo_root,
             file_info,
             repository_paths=repository_paths,
-            markdown_anchors=converted_anchors,
+            markdown_anchors=markdown_anchors,
         )
     if file_info.language == "shell":
         return extract_shell_file_observations(repo_root, file_info.path)
@@ -127,6 +128,7 @@ def observations_for_file_info(
             repo_root,
             file_info.path,
             module_index=module_index,
+            module_context_root=python_context_root,
         )
     if file_info.language == "ruby":
         return extract_ruby_file_observations_from_file(
@@ -145,7 +147,9 @@ def observations_for_file_info(
     if file_info.language == "mbox":
         return extract_mbox_file_observations_from_file(repo_root, file_info.path)
     if file_info.language == "nix":
-        return extract_nix_file_observations_from_file(repo_root, file_info.path)
+        return extract_nix_file_observations_from_file(
+            repo_root, file_info.path, source_identity_root=source_identity_root,
+        )
     if file_info.language == "powershell":
         return extract_powershell_file_observations_from_file(
             repo_root,
@@ -201,40 +205,48 @@ def bulk_observations_from_plan(
     *,
     repository_root: Path | str,
 ) -> tuple[RawObservation, ...]:
+    if not manifest.included_files:
+        return ()
     repo_root = Path(repository_root).resolve()
-    file_infos = [
-        classify_path(repo_root, repo_root / item.repository_path)
-        for item in manifest.included_files
-    ]
-    module_index = PythonModuleIndex.from_python_paths(
-        (info.path for info in file_infos if info.language == "python"),
-        repository_root=repo_root,
-    )
-    repository_paths = frozenset(info.path for info in file_infos)
-    markdown_anchors = markdown_anchor_index(repo_root, file_infos)
     included_by_repository_path = {item.repository_path: item for item in manifest.included_files}
     observations: list[RawObservation] = []
-    for file_info in file_infos:
-        included = included_by_repository_path[file_info.path]
-        routed = [file_info.to_observation()]
-        routed.extend(
-            observations_for_file_info(
-                repo_root,
-                file_info,
-                module_index=module_index,
-                repository_paths=repository_paths,
-                markdown_anchors=markdown_anchors,
-            )
+    with TemporaryDirectory(prefix="cloe-bulk-readback-") as directory:
+        captured_files = _capture_bulk_files(config, manifest, repo_root, Path(directory).resolve())
+        file_info_by_path: dict[str, FileInfo] = {}
+        by_snapshot_root: dict[Path, list[FileInfo]] = defaultdict(list)
+        for path, record in included_by_repository_path.items():
+            captured = captured_files[path]
+            info = classify_path(captured.root, captured.root / path, captured_content_hash=record.sha256,
+                                 captured_executable=captured.executable)
+            file_info_by_path[path] = info
+            by_snapshot_root[captured.root].append(info)
+        captured_project = captured_files.get("pyproject.toml")
+        module_context_root = repo_root if captured_project is None else captured_project.root
+        module_index = PythonModuleIndex.from_python_paths(
+            (info.path for info in file_info_by_path.values() if info.language == "python"),
+            repository_root=module_context_root,
         )
-        observations.extend(
-            annotate_observation(
-                observation,
-                config=config,
-                manifest=manifest,
-                included=included,
+        repository_paths = frozenset(file_info_by_path)
+        markdown_anchors = {
+            path: anchors
+            for captured_root, infos in by_snapshot_root.items()
+            for path, anchors in markdown_anchor_index(captured_root, infos).items()
+        }
+        for item in manifest.included_files:
+            path = item.repository_path
+            file_info = file_info_by_path[path]
+            routed = [file_info.to_observation()]
+            routed.extend(
+                observations_for_file_info(
+                    captured_files[path].root, file_info, module_index=module_index,
+                    repository_paths=repository_paths, markdown_anchors=markdown_anchors,
+                    python_context_root=module_context_root, source_identity_root=repo_root,
+                )
             )
-            for observation in routed
-        )
+            observations.extend(
+                annotate_observation(observation, config=config, manifest=manifest, included=included_by_repository_path[path])
+                for observation in routed
+            )
     observations.extend(extract_css_selector_match_observations(observations))
     return tuple(observations)
 

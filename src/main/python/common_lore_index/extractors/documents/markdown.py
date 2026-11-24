@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 from common_lore_index import __version__
+from common_lore_index.extractors.shared.redaction import contains_web_url_userinfo
 from common_lore_index.graph.keys import (
     doc_adr_key,
     doc_page_key,
@@ -19,18 +21,20 @@ from common_lore_index.graph.keys import (
     dynamic_key,
     unknown_key,
 )
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.observations.raw import RawObservation
 from common_lore_index.extractors.documents.markdown_structure import (
     FENCE_PATTERN,
     FrontmatterInfo,
     HEADING_PATTERN,
     HeadingInfo,
+    _iter_markdown_headings,
     _nearest_parent_anchor,
     _strip_closing_heading_marks,
     markdown_anchor,
     markdown_anchors_for_content,
     parse_frontmatter,
-    parse_markdown_headings,
+    parse_markdown_headings as parse_markdown_headings,
 )
 
 
@@ -51,24 +55,25 @@ class LinkResolution:
     resolution_reason: str | None = None
 
 
-
 def extract_markdown_file_observations(
     relative_path: str,
     content: str,
     *,
     repository_paths: set[str] | frozenset[str] | None = None,
-    markdown_anchors: dict[str, set[str] | frozenset[str]] | None = None,
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]] | None = None,
     content_hash: str | None = None,
     generated: bool | None = None,
 ) -> tuple[RawObservation, ...]:
-    repository_paths = set(repository_paths or {relative_path})
-    markdown_anchors = {
-        path: set(anchors)
-        for path, anchors in (markdown_anchors or {}).items()
-    }
+    """Extract observations while borrowing the caller's anchor index.
+
+    Keep the supplied index stable for the duration of extraction."""
+    if not repository_paths or type(repository_paths) is not frozenset:
+        repository_paths = set(repository_paths or {relative_path})
+    markdown_anchors = markdown_anchors or {}
     frontmatter = parse_frontmatter(content)
-    headings = parse_markdown_headings(content)
-    title = next((heading.text for heading in headings if heading.level == 1), None)
+    skip_until = frontmatter.end_line if frontmatter is not None else 0
+    title = next((heading.text for heading in _iter_markdown_headings(content, skip_until=skip_until)
+                  if heading.level == 1), None)
     observations: list[RawObservation] = [
         _document_observation(
             relative_path,
@@ -88,10 +93,11 @@ def extract_markdown_file_observations(
             content,
             repository_paths=repository_paths,
             markdown_anchors=markdown_anchors,
+            skip_until=skip_until,
         )
     )
 
-    adr = _adr_metadata_observation(relative_path, content, frontmatter)
+    adr = _adr_metadata_observation(relative_path, content, frontmatter, first_heading=title)
     if adr is not None:
         observations.append(adr)
     skill = _skill_metadata_observation(relative_path, frontmatter)
@@ -104,15 +110,11 @@ def resolve_markdown_link_target(
     raw_target: str,
     *,
     repository_paths: set[str] | frozenset[str],
-    markdown_anchors: dict[str, set[str] | frozenset[str]],
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]],
 ) -> LinkResolution:
     target = _strip_link_title(raw_target.strip())
-    if not target:
-        return LinkResolution(
-            target=unknown_key("external.url", "malformed-markdown-link"),
-            resolved_target_kind="unknown",
-            resolution_reason="empty-target",
-        )
+    if not target or contains_web_url_userinfo(target):
+        return _malformed_markdown_link("credentialed-external-url" if target else "empty-target")
     if "{{" in target or "}}" in target or "${" in target:
         return LinkResolution(
             target=dynamic_key("external.url", "markdown-link-template"),
@@ -120,24 +122,20 @@ def resolve_markdown_link_target(
             resolution_reason="markdown-link-template",
         )
     if _has_malformed_percent_escape(target):
-        return LinkResolution(
-            target=unknown_key("external.url", "malformed-markdown-link"),
-            resolved_target_kind="unknown",
-            resolution_reason="malformed-percent-escape",
-        )
+        return _malformed_markdown_link("malformed-percent-escape")
     if target.startswith(("http://", "https://", "mailto:")):
         normalized = _normalize_external_url(target)
+        if normalized is None:
+            return _malformed_markdown_link("malformed-external-url")
         return LinkResolution(
             target=external_url_key(normalized),
             resolved_target_kind="external.url",
         )
 
     path_part, anchor_part = _split_link_fragment(target)
-    if path_part == "":
-        resolved_path = source_path
-    else:
-        decoded_path = unquote(path_part)
-        resolved_path = _resolve_repo_relative_path(source_path, decoded_path)
+    resolved_path = (
+        _resolve_repo_relative_path(source_path, unquote(path_part)) if path_part else source_path
+    )
     if resolved_path is None:
         return LinkResolution(
             target=unknown_key("file", "repo-escaping-markdown-link"),
@@ -147,9 +145,7 @@ def resolve_markdown_link_target(
 
     if anchor_part is not None:
         anchor = markdown_anchor(unquote(anchor_part))
-        if resolved_path in repository_paths and anchor in set(
-            markdown_anchors.get(resolved_path, ())
-        ):
+        if resolved_path in repository_paths and anchor in markdown_anchors.get(resolved_path, ()):
             return LinkResolution(
                 target=doc_section_key(resolved_path, anchor),
                 resolved_target_kind="doc.section",
@@ -195,11 +191,10 @@ def _line_structural_observations(
     relative_path: str,
     content: str,
     *,
-    repository_paths: set[str],
-    markdown_anchors: dict[str, set[str]],
+    repository_paths: set[str] | frozenset[str],
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]],
+    skip_until: int,
 ) -> tuple[RawObservation, ...]:
-    frontmatter = parse_frontmatter(content)
-    skip_until = frontmatter.end_line if frontmatter is not None else 0
     definitions = _link_definitions(content, skip_until=skip_until)
     observations: list[RawObservation] = []
     anchor_counts: dict[str, int] = {}
@@ -209,7 +204,7 @@ def _line_structural_observations(
     link_ordinal = 0
     fence_ordinal = 0
 
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         if line_number <= skip_until:
             continue
         fence_match = FENCE_PATTERN.match(line)
@@ -287,7 +282,7 @@ def _line_structural_observations(
             _code_fence_observation(
                 relative_path,
                 start_line=in_fence[2],
-                end_line=len(content.splitlines()) or in_fence[2],
+                end_line=line_number,
                 marker=in_fence[0] * in_fence[1],
                 info_string=in_fence[3],
                 section_anchor=in_fence[4],
@@ -432,8 +427,8 @@ def _link_observations_from_line(
     *,
     line_number: int,
     current_anchor: str | None,
-    repository_paths: set[str],
-    markdown_anchors: dict[str, set[str]],
+    repository_paths: set[str] | frozenset[str],
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]],
     definitions: dict[str, str],
     starting_ordinal: int,
 ) -> tuple[tuple[RawObservation, ...], int]:
@@ -517,8 +512,8 @@ def _link_observation(
     raw_target: str,
     syntax: str,
     current_anchor: str | None,
-    repository_paths: set[str],
-    markdown_anchors: dict[str, set[str]],
+    repository_paths: set[str] | frozenset[str],
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]],
     is_image: bool,
     definition_id: str | None = None,
 ) -> RawObservation:
@@ -528,22 +523,26 @@ def _link_observation(
         repository_paths=repository_paths,
         markdown_anchors=markdown_anchors,
     )
+    redacted = resolution.resolution_reason in ("credentialed-external-url", "malformed-external-url") or (
+        resolution.resolution_reason == "malformed-percent-escape"
+        and raw_target.lstrip().startswith(("http://", "https://", "mailto:"))
+    )
+    if redacted or contains_web_url_userinfo(text):
+        text = "malformed external link" if redacted and resolution.resolution_reason != "credentialed-external-url" else "redacted external link"
     metadata: dict[str, Any] = {
         "link_text": text,
-        "raw_target": raw_target,
+        "raw_target": "<redacted-url>" if redacted or contains_web_url_userinfo(raw_target) else raw_target,
         "link_syntax": syntax,
         "resolved_target_kind": resolution.resolved_target_kind,
         "is_image": is_image,
     }
-    if definition_id is not None:
+    if definition_id is not None and not contains_web_url_userinfo(definition_id):
         metadata["definition_id"] = definition_id
     if current_anchor is not None:
-        metadata["source_anchor"] = current_anchor
-        metadata["source_key"] = doc_section_key(relative_path, current_anchor)
-    if resolution.resolved_path is not None:
-        metadata["resolved_path"] = resolution.resolved_path
-    if resolution.resolved_anchor is not None:
-        metadata["resolved_anchor"] = resolution.resolved_anchor
+        metadata.update(source_anchor=current_anchor, source_key=doc_section_key(relative_path, current_anchor))
+    for key, value in (("resolved_path", resolution.resolved_path), ("resolved_anchor", resolution.resolved_anchor)):
+        if value is not None:
+            metadata[key] = value
     if resolution.resolution_reason is not None:
         metadata["resolution_reason"] = resolution.resolution_reason
     return RawObservation(
@@ -565,6 +564,8 @@ def _adr_metadata_observation(
     relative_path: str,
     content: str,
     frontmatter: FrontmatterInfo | None,
+    *,
+    first_heading: str | None,
 ) -> RawObservation | None:
     path = PurePosixPath(relative_path)
     if len(path.parts) < 3 or path.parts[0] != "docs" or path.parts[1] != "adr":
@@ -573,10 +574,6 @@ def _adr_metadata_observation(
     if match is None:
         return None
     number = match.group("number")
-    first_heading = next(
-        (heading.text for heading in parse_markdown_headings(content) if heading.level == 1),
-        None,
-    )
     title = _adr_title_from_heading(first_heading) or match.group("slug").replace("-", " ")
     metadata: dict[str, Any] = {
         "adr_number": number,
@@ -641,7 +638,7 @@ def _skill_metadata_observation(
 def _link_definitions(content: str, *, skip_until: int) -> dict[str, str]:
     definitions: dict[str, str] = {}
     in_fence: tuple[str, int] | None = None
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         if line_number <= skip_until:
             continue
         fence_match = FENCE_PATTERN.match(line)
@@ -686,23 +683,26 @@ def _span_consumed(span: tuple[int, int], consumed_spans: list[tuple[int, int]])
 
 
 def _strip_link_title(target: str) -> str:
-    if " " not in target:
-        return target
     if target.startswith(("http://", "https://", "mailto:")):
-        return target
-    return target.split()[0]
+        return re.sub(r"""\s+(?:(["']).*\1|\([^()]*\))$""", "", target)
+    return target.split()[0] if " " in target else target
+
+
+def _malformed_markdown_link(reason: str) -> LinkResolution:
+    target = unknown_key("external.url", "malformed-markdown-link")
+    return LinkResolution(target=target, resolved_target_kind="unknown", resolution_reason=reason)
 
 
 def _has_malformed_percent_escape(text: str) -> bool:
-    for match in re.finditer("%", text):
-        escape = text[match.start() : match.start() + 3]
-        if len(escape) != 3 or not re.fullmatch(r"%[0-9A-Fa-f]{2}", escape):
-            return True
-    return False
+    return re.search(r"%(?![0-9A-Fa-f]{2})", text) is not None
 
 
-def _normalize_external_url(url: str) -> str:
-    parsed = urlsplit(url)
+def _normalize_external_url(url: str) -> str | None:
+    try:
+        parsed = urlsplit(url)
+        _ = parsed.port
+    except ValueError:
+        return None
     if parsed.scheme in ("http", "https"):
         return urlunsplit(
             (
@@ -750,14 +750,14 @@ def _adr_title_from_heading(heading: str | None) -> str | None:
 
 
 def _section_value(content: str, heading_text: str) -> str | None:
-    lines = content.splitlines()
-    for index, line in enumerate(lines):
+    lines = iter_text_lines(content)
+    for line in lines:
         match = HEADING_PATTERN.match(line)
         if match is None:
             continue
         if _strip_closing_heading_marks(match.group("text")).lower() != heading_text.lower():
             continue
-        for following in lines[index + 1 :]:
+        for following in lines:
             if HEADING_PATTERN.match(following):
                 return None
             stripped = following.strip()

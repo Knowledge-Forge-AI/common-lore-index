@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from itertools import pairwise
 import re
 
 from common_lore_index.artifacts.references import ArtifactReference
@@ -171,6 +172,16 @@ class ManifestArtifact:
             "reference": self.reference.semantic_mapping(),
             "source_relative_path": self.source_relative_path,
         }
+
+
+def _artifacts_in_source_order(entries: Sequence[ManifestArtifact]) -> Sequence[ManifestArtifact]:
+    """Reuse canonical inventory order, sorting only out-of-order inputs."""
+    if any(
+        (left.binding_id, left.source_relative_path) > (right.binding_id, right.source_relative_path)
+        for left, right in pairwise(entries)
+    ):
+        return sorted(entries, key=lambda item: (item.binding_id, item.source_relative_path))
+    return entries
 
 
 def _validate_limits(limits: ArtifactLimits) -> None:

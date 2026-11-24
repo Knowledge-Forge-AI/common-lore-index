@@ -3,7 +3,8 @@ import zipfile
 from io import BytesIO
 from unittest.mock import patch
 
-from common_lore_index.extractors.documents.office import extract_odf_file_observations
+from common_lore_index.extractors.documents.office import extract_document_file_observations, extract_odf_file_observations
+from common_lore_index.extractors.documents.office_common import _column_type_summary
 from common_lore_index.observations.raw import RawObservation
 
 
@@ -117,6 +118,17 @@ def styles_xml():
 
 
 class DocumentsExtractorBoundariesUnitTests(unittest.TestCase):
+    def test_mixed_column_summary_short_circuits_without_counting_blank_values(self):
+        def cells():
+            yield " "
+            yield "23"
+            yield "true"
+            raise AssertionError("mixed types were already established")
+
+        self.assertEqual(_column_type_summary(cells()), "mixed")
+        self.assertEqual(_column_type_summary(iter((" ", "\t"))), "empty")
+        self.assertEqual(_column_type_summary(iter((" ", " 3", "4 "))), "integer")
+
     def test_odt_extracts_headings_tables_and_references_without_body_leakage(self):
         with patch("subprocess.run") as run:
             observations = extract_odf_file_observations(
@@ -217,6 +229,69 @@ class DocumentsExtractorBoundariesUnitTests(unittest.TestCase):
         self.assertEqual(doctype[0].metadata["error_kind"], "dangerous-xml")
         self.assertEqual(limited[0].metadata["error_kind"], "zip-uncompressed-limit")
         self.assertEqual(malformed[0].metadata["error_kind"], "malformed-zip")
+
+    def test_document_prose_retains_safe_links_around_protected_urls(self):
+        observations = extract_document_file_observations(
+            "fixture.txt",
+            "Read https://user:fixture@hidden.invalid/path and "
+            "https://unreadable.invalid:port/path before https://valid.invalid/readme.",
+        )
+        refs = [row for row in observations if row.kind == "document.reference"]
+        self.assertEqual([row.metadata["redacted"] for row in refs], [True, True, False])
+        self.assertEqual(refs[0].metadata["resolution_reason"], "credentialed-url-redacted")
+        self.assertEqual(refs[1].metadata["resolution_reason"], "malformed-url-redacted")
+        self.assertTrue((refs[2].target or "").startswith("external.url:"))
+        self.assertNotIn("hidden.invalid", str([row.to_dict() for row in observations]))
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in observations]))
+
+    def test_latex_hyperlink_authority_is_redacted_but_citation_target_is_available(self):
+        observations = extract_document_file_observations(
+            "fixture.tex",
+            r"\href{https://user:fixture@hidden.invalid/item}{Public} \input{appendix}",
+        )
+        refs = [row for row in observations if row.kind == "document.reference"]
+        self.assertTrue(any(row.metadata["redacted"] for row in refs))
+        self.assertIn("file:appendix.tex", {row.target for row in refs})
+        self.assertNotIn("hidden.invalid", str([row.to_dict() for row in observations]))
+
+    def test_odf_manifest_skips_a_malformed_reference_and_keeps_a_later_part(self):
+        manifest = manifest_xml().replace(
+            '<manifest:file-entry manifest:full-path="Pictures/local-image.png"',
+            '<manifest:file-entry manifest:full-path="https://[invalid.example/item"/>'
+            '<manifest:file-entry manifest:full-path="https://malformed.invalid:port/item"/>'
+            '<manifest:file-entry manifest:full-path="Pictures/local-image.png"',
+        )
+        self.assertIn("https://[invalid.example/item", manifest)
+        package = odf_package({"content.xml": odt_content(), "META-INF/manifest.xml": manifest})
+        observations = extract_odf_file_observations("fixture.odt", package)
+        summaries = [row.metadata["raw_value_summary"] for row in observations if row.kind == "document.reference"]
+        self.assertIn("Pictures/local-image.png", summaries)
+        self.assertNotIn("invalid.example", str(summaries))
+        self.assertNotIn("malformed.invalid", str(summaries))
+
+    def test_odf_unreadable_member_returns_a_path_free_parse_diagnostic(self):
+        package = odf_package({"content.xml": odt_content()})
+        error_types: list[type[Exception]] = [RuntimeError, NotImplementedError, EOFError]
+        try:
+            import zlib
+        except ImportError:
+            pass
+        else:
+            error_types.append(zlib.error)
+        try:
+            import lzma
+        except ImportError:
+            pass
+        else:
+            error_types.append(lzma.LZMAError)
+        for error_type in error_types:
+            with self.subTest(error_type=error_type):
+                with patch.object(zipfile.ZipFile, "read", side_effect=error_type("fixture codec detail")):
+                    (failure,) = extract_odf_file_observations("broken.odt", package)
+                self.assertEqual(failure.kind, "document.parse_error")
+                self.assertEqual(failure.metadata["error_kind"], "malformed-zip")
+                self.assertNotIn("fixture codec detail", str(failure.metadata))
+        self.assertIn("document.odf_document", by_kind(extract_odf_file_observations("good.odt", package)))
 
     def test_odf_unsupported_native_formats_are_not_docs2_observations(self):
         package = odf_package({"content.xml": odt_content()})

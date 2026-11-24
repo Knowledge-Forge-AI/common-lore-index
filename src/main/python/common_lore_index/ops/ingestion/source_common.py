@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import tomllib
 import re
 import urllib.parse
-from collections.abc import Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 
@@ -65,14 +68,83 @@ DISALLOWED_TRUE_FLAGS = (
     "stealth",
 )
 SOURCE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+_STABLE_SOURCE_JSON = json.JSONEncoder(sort_keys=True, separators=(",", ":"))
 
 
 class SourcePolicyError(ValueError):
     """Raised when a source definition is not policy-approved."""
 
 
+
+def _load_source_toml(path: Path) -> Mapping[str, Any]:
+    try:
+        with path.open("rb") as source:
+            return tomllib.load(source)
+    except UnicodeDecodeError as error:
+        raise SourcePolicyError("invalid UTF-8 source config") from error
+
 def json_dumps_stable(payload: Mapping[str, Any]) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return _STABLE_SOURCE_JSON.encode(payload)
+
+
+def _read_bounded_body(read: Callable[[int], bytes], limit: int) -> bytes:
+    """Read up to one byte beyond the configured budget in fixed-size reads."""
+    remaining = limit + 1
+    chunks: list[bytes] = []
+    while remaining > 0:
+        chunk = read(min(remaining, 64 * 1024))
+        if not chunk:
+            break
+        chunks.append(chunk)
+        remaining -= len(chunk)
+    return b"".join(chunks)
+
+
+def _source_manifest_id(
+    payload: Mapping[str, Any],
+    *,
+    records: Mapping[str, Iterable[dict[str, Any]]] | None = None,
+) -> str:
+    return _source_manifest_digest(payload, records=records)[:16]
+
+
+def _source_manifest_digest(
+    payload: Mapping[str, Any],
+    *,
+    records: Mapping[str, Iterable[dict[str, Any]]] | None = None,
+) -> str:
+    """Hash the existing canonical bytes without joining the encoded document."""
+    digest = hashlib.sha256()
+    fragments = (
+        _source_manifest_fragments(payload, records) if records is not None else _STABLE_SOURCE_JSON.iterencode(payload)
+    )
+    for fragment in fragments:
+        digest.update(fragment.encode("utf-8"))
+    return digest.hexdigest()
+
+
+def _source_manifest_fragments(
+    payload: Mapping[str, Any], records: Mapping[str, Iterable[dict[str, Any]]],
+) -> Iterator[str]:
+    """Stream top-level record arrays in the same order as compact, sorted JSON."""
+    if payload.keys() & records.keys():
+        raise ValueError("duplicate source manifest field")
+    yield "{"
+    for index, name in enumerate(sorted(payload.keys() | records.keys())):
+        if index:
+            yield ","
+        yield _STABLE_SOURCE_JSON.encode(name)
+        yield ":"
+        if name in payload:
+            yield _STABLE_SOURCE_JSON.encode(payload[name])
+            continue
+        yield "["
+        for position, row in enumerate(records[name]):
+            if position:
+                yield ","
+            yield _STABLE_SOURCE_JSON.encode(row)
+        yield "]"
+    yield "}"
 
 
 def _mapping(payload: Mapping[str, Any], key: str) -> Mapping[str, Any]:

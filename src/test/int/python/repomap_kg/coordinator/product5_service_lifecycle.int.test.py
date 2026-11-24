@@ -12,7 +12,7 @@ from typing import Callable, TypeVar, cast
 
 from common_lore_index.coordinator.client import LocalCoordinatorClient
 from common_lore_index.coordinator.core import SyntheticCoordinator
-from common_lore_index.coordinator.endpoint import load_endpoint_descriptor
+from common_lore_index.coordinator.endpoint import EndpointDescriptorError, load_endpoint_descriptor
 from common_lore_index.coordinator.limits import DEFAULT_LIMITS
 from common_lore_index.coordinator.service import CoordinatorService, default_transport_factory
 from common_lore_index.coordinator.startup_recovery import StartupRecoveryReport
@@ -167,6 +167,14 @@ class Product5ServiceLifecycleIntegrationTests(unittest.TestCase):
             service.start(lambda: StartupRecoveryReport(0, 0, 0, 0, 0))
             try:
                 self.assertTrue(service.socket_path.exists())
+                copy = cap_dir / "fixture-endpoint.json"
+                try:
+                    copy.write_bytes(b"[" * 1800 + b"]" * 1800)
+                    copy.chmod(0o600)
+                    with self.assertRaisesRegex(EndpointDescriptorError, "descriptor is invalid"):
+                        load_endpoint_descriptor(copy)
+                finally:
+                    copy.unlink()
                 client = LocalCoordinatorClient(service.socket_path, service.token_path)
                 health = client.health()
                 self.assertEqual(health["status"], "ready")

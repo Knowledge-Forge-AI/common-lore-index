@@ -4,10 +4,99 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 import tempfile
 import time
-from collections.abc import Callable, Iterable, Iterator, Mapping
+from collections.abc import Callable, Generator, Iterable, Mapping
 from pathlib import Path
+from typing import BinaryIO
+
+from common_lore_index._utf8 import byte_length
+
+
+_SPOOL_JSON = json.JSONEncoder(ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+_SPOOL_WRITE_CHARACTERS = 64 * 1024
+
+
+def _spool_row_text(row: Mapping[str, object]) -> str:
+    """Serialize one staged row to compact, deterministic JSON text."""
+    if not isinstance(row, Mapping):
+        raise ValueError("staged row is invalid")
+    return _SPOOL_JSON.encode(row if type(row) is dict else dict(row))
+
+
+def _spool_row_byte_count(row: Mapping[str, object]) -> int:
+    """Return the compact JSONL extent without allocating a wide byte string."""
+    return byte_length(_spool_row_text(row)) + 1
+
+
+def _write_spool_chunk(handle: BinaryIO, chunk: bytes) -> None:
+    if handle.write(chunk) != len(chunk):
+        raise OSError("staged row spool write was incomplete")
+
+
+def _write_spool_row(
+    handle: BinaryIO, row: Mapping[str, object], current_bytes: int,
+    observer: Callable[[int], None] | None,
+) -> int:
+    text = _spool_row_text(row)
+    encoded = text.encode("utf-8") if len(text) <= _SPOOL_WRITE_CHARACTERS else None
+    projected_bytes = current_bytes + (len(encoded) if encoded is not None else byte_length(text)) + 1
+    if observer is not None:
+        observer(projected_bytes)
+    if encoded is not None:
+        _write_spool_chunk(handle, encoded)
+    else:
+        for offset in range(0, len(text), _SPOOL_WRITE_CHARACTERS):
+            chunk = text[offset:offset + _SPOOL_WRITE_CHARACTERS].encode("utf-8")
+            _write_spool_chunk(handle, chunk)
+    _write_spool_chunk(handle, b"\n")
+    return projected_bytes
+
+
+def _identity(info: os.stat_result) -> tuple[int, int]:
+    return info.st_dev, info.st_ino
+
+
+def _version(info: os.stat_result) -> tuple[int, ...]:
+    return (*_identity(info), info.st_mode, info.st_nlink, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+
+def _release_unwrapped_descriptor(
+    descriptor: int, owner: tuple[int, int] | None,
+) -> tuple[int, int] | None:
+    if owner is None:
+        try:
+            owner = _identity(os.fstat(descriptor))
+        except BaseException:
+            pass
+    try:
+        os.close(descriptor)
+    except BaseException:
+        pass
+    return owner
+
+
+def _sealed_spool(
+    path: Path, owner: tuple[int, int] | None, byte_count: int,
+) -> os.stat_result:
+    info = path.lstat()
+    if (
+        (owner is not None and _identity(info) != owner) or not stat.S_ISREG(info.st_mode)
+        or info.st_nlink != 1 or info.st_size != byte_count
+    ):
+        raise ValueError("staged row spool identity or extent changed")
+    return info
+
+
+def _discard_owned(path: Path, owner: tuple[int, int] | None) -> None:
+    try:
+        info = os.lstat(path)
+    except FileNotFoundError:
+        return
+    if owner is None or _identity(info) != owner or not stat.S_ISREG(info.st_mode):
+        raise ValueError("staged row spool identity changed")
+    path.unlink(missing_ok=True)
 
 
 class RowSpool:
@@ -19,7 +108,12 @@ class RowSpool:
         count: int,
         byte_count: int,
         allocated_byte_count: int = 0,
+        *,
+        sealed: os.stat_result | None = None,
     ) -> None:
+        info = _sealed_spool(path, None, byte_count) if sealed is None else sealed
+        self._owner = _identity(info)
+        self._version = _version(info)
         self.path = path
         self.count = count
         self.byte_count = byte_count
@@ -45,29 +139,16 @@ class RowSpool:
         byte_count = 0
         elapsed_ns = 0
         descriptor_owned = True
+        owner: tuple[int, int] | None = None
         try:
-            handle = os.fdopen(descriptor, "w", encoding="utf-8", newline="\n")
+            owner = _identity(os.fstat(descriptor))
+            handle = os.fdopen(descriptor, "wb")
             descriptor_owned = False
             try:
                 for row in rows:
-                    if not isinstance(row, Mapping):
-                        raise ValueError("staged row is invalid")
                     started = monotonic_ns() if timing_observer is not None else 0
-                    encoded = json.dumps(
-                        dict(row),
-                        ensure_ascii=False,
-                        separators=(",", ":"),
-                        sort_keys=True,
-                    )
-                    projected_bytes = (
-                        byte_count + len(encoded.encode("utf-8")) + 1
-                    )
-                    if artifact_observer is not None:
-                        artifact_observer(projected_bytes)
-                    handle.write(encoded)
-                    handle.write("\n")
+                    byte_count = _write_spool_row(handle, row, byte_count, artifact_observer)
                     count += 1
-                    byte_count = projected_bytes
                     if timing_observer is not None:
                         elapsed_ns += max(0, monotonic_ns() - started)
             except BaseException:
@@ -80,16 +161,13 @@ class RowSpool:
                 handle.close()
             if timing_observer is not None:
                 timing_observer(elapsed_ns)
-            stat = path.stat()
-            return cls(path, count, byte_count, stat.st_blocks * 512)
+            sealed = _sealed_spool(path, owner, byte_count)
+            return cls(path, count, byte_count, sealed.st_blocks * 512, sealed=sealed)
         except BaseException:
             if descriptor_owned:
-                try:
-                    os.close(descriptor)
-                except BaseException:
-                    pass
+                owner = _release_unwrapped_descriptor(descriptor, owner)
             try:
-                path.unlink(missing_ok=True)
+                _discard_owned(path, owner)
             except BaseException:
                 pass
             raise
@@ -97,30 +175,54 @@ class RowSpool:
     def __len__(self) -> int:
         return self.count
 
-    def __iter__(self) -> Iterator[dict[str, object]]:
+    def __iter__(self) -> Generator[dict[str, object], None, None]:
         if self._closed:
             raise RuntimeError("row spool is closed")
-        with self.path.open(encoding="utf-8") as handle:
-            for line_number, line in enumerate(handle, start=1):
-                try:
-                    row = json.loads(line)
-                except json.JSONDecodeError as error:
-                    raise ValueError("staged row spool is invalid") from error
-                if not isinstance(row, dict):
-                    raise ValueError("staged row spool is invalid")
-                yield row
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        flags |= getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0)
+        descriptor = os.open(self.path, flags)
+        try:
+            if _version(os.fstat(descriptor)) != self._version:
+                raise ValueError("staged row spool identity or extent changed")
+            handle = os.fdopen(descriptor, "rb")
+            descriptor = -1
+            with handle:
+                remaining = self.byte_count
+                for _ in range(self.count):
+                    line = handle.readline(remaining + 1)
+                    if len(line) > remaining or not line.endswith(b"\n"):
+                        raise ValueError("staged row spool is invalid")
+                    remaining -= len(line)
+                    try:
+                        row = json.loads(line.decode("utf-8"))
+                    except (ValueError, RecursionError) as error:
+                        raise ValueError("staged row spool is invalid") from error
+                    if not isinstance(row, dict):
+                        raise ValueError("staged row spool is invalid")
+                    yield row
+                if remaining or handle.read(1) or _version(os.fstat(handle.fileno())) != self._version:
+                    raise ValueError("staged row spool identity or extent changed")
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
 
     def close(self) -> None:
         if self._closed:
             return
-        self.path.unlink(missing_ok=True)
+        _discard_owned(self.path, self._owner)
         self._closed = True
 
     def __enter__(self) -> RowSpool:
         return self
 
-    def __exit__(self, _exc_type: object, _exc: object, _traceback: object) -> None:
-        self.close()
+    def __exit__(self, exc_type: object, _exc: object, _traceback: object) -> None:
+        if exc_type is None:
+            self.close()
+        else:
+            try:
+                self.close()
+            except BaseException:
+                pass
 
 
 class RowSpoolWriter:
@@ -138,19 +240,18 @@ class RowSpoolWriter:
         else:
             descriptor, raw_path = tempfile.mkstemp(prefix="repomap-stage-rows-", suffix=".jsonl")
         self.path = Path(raw_path)
-        self._descriptor = descriptor
+        owner: tuple[int, int] | None = None
         try:
-            self._handle = os.fdopen(descriptor, "w", encoding="utf-8", newline="\n")
+            owner = _identity(os.fstat(descriptor))
+            self._handle = os.fdopen(descriptor, "wb")
         except BaseException:
+            owner = _release_unwrapped_descriptor(descriptor, owner)
             try:
-                os.close(descriptor)
-            except BaseException:
-                pass
-            try:
-                self.path.unlink(missing_ok=True)
+                _discard_owned(self.path, owner)
             except BaseException:
                 pass
             raise
+        self._owner = owner
         self._count = 0
         self._byte_count = 0
         self._artifact_observer = artifact_observer
@@ -161,21 +262,8 @@ class RowSpoolWriter:
     def write_row(self, row: Mapping[str, object]) -> None:
         if self._finished:
             raise RuntimeError("writer already finished")
-        if not isinstance(row, Mapping):
-            raise ValueError("staged row is invalid")
-        encoded = json.dumps(
-            dict(row),
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
-        )
-        projected_bytes = self._byte_count + len(encoded.encode("utf-8")) + 1
-        if self._artifact_observer is not None:
-            self._artifact_observer(projected_bytes)
-        self._handle.write(encoded)
-        self._handle.write("\n")
+        self._byte_count = _write_spool_row(self._handle, row, self._byte_count, self._artifact_observer)
         self._count += 1
-        self._byte_count = projected_bytes
 
     def finish(self) -> RowSpool:
         if self._finished:
@@ -183,8 +271,8 @@ class RowSpoolWriter:
         self._handle.flush()
         self._handle.close()
         self._finished = True
-        stat = self.path.stat()
-        spool = RowSpool(self.path, self._count, self._byte_count, stat.st_blocks * 512)
+        sealed = _sealed_spool(self.path, self._owner, self._byte_count)
+        spool = RowSpool(self.path, self._count, self._byte_count, sealed.st_blocks * 512, sealed=sealed)
         self._transferred = True
         return spool
 
@@ -198,7 +286,7 @@ class RowSpoolWriter:
             error = caught
         self._finished = True
         try:
-            self.path.unlink(missing_ok=True)
+            _discard_owned(self.path, self._owner)
             self._aborted = True
         except BaseException:
             if error is None:

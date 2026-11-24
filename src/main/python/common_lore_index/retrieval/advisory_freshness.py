@@ -209,13 +209,9 @@ def _read_regular_file_anchored(
             if st_file.st_size > remaining_aggregate_bytes:
                 return "not_checked", "byte_limit", None, 0
 
-            max_to_read = min(FRESHNESS_MAX_FILE_BYTES, remaining_aggregate_bytes)
             chunks: list[bytes] = []
-            while True:
-                want = min(16384, max_to_read - bytes_read)
-                if want <= 0:
-                    break
-                chunk = os.read(file_fd, want)
+            while bytes_read < st_file.st_size:
+                chunk = os.read(file_fd, min(16384, st_file.st_size - bytes_read))
                 if not chunk:
                     break
                 bytes_read += len(chunk)
@@ -226,6 +222,9 @@ def _read_regular_file_anchored(
                 return "unavailable", "file_size_limit", None, bytes_read
             if st_after.st_size > remaining_aggregate_bytes:
                 return "not_checked", "byte_limit", None, bytes_read
+            if (bytes_read != st_file.st_size or st_after.st_size != st_file.st_size
+                    or (st_after.st_mtime_ns, st_after.st_ctime_ns) != (st_file.st_mtime_ns, st_file.st_ctime_ns)):
+                return "unavailable", "read_error", None, bytes_read
 
             raw = b"".join(chunks)
             if b"\x00" in raw:

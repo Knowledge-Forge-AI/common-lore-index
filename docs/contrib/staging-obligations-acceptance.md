@@ -14,6 +14,27 @@ This document authorizes neither a hosted attempt nor deployment. QUAL1–QUAL6
 remain consumed historical attempts. A later exact-candidate request must
 explicitly adopt this policy and disposition trusted-consumer compatibility.
 
+## Concurrent public staging
+
+ADR0216 divides public staging into one smoke job, three measured parts,
+one abrupt part and the stable aggregate check. The jobs each keep their
+own disposable sandbox. Measured test files route by a fixed hash, and
+every part seals the same ordered full discovery population. The aggregate
+requires all five same-attempt receipts, exact population coverage, terminal
+cleanup and the original Python and Go coverage floors. Python reports
+combine missing line and arc intersections over the exact common
+denominator. Go reports combine original statement blocks. The abrupt part
+contributes only its execution and settlement records.
+
+The aggregate emits `repomap-staging-gate-report` with the standard
+`staging/latest/staging_contract_report.json` and the same-attempt
+`hosted-staging-closure.json`. This closure records producer receipt hashes
+and measurement session identities. Preserve each part artifact and the
+aggregate from the same run and attempt. The producer artifact names include
+both identifiers. Only the aggregate report can establish the public gate's
+combined coverage. The standalone canonical local and historical trusted
+gate commands retain the monolithic contract below.
+
 ## Trusted executor inspected separately
 
 The reference staging base is

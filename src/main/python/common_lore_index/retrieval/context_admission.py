@@ -10,9 +10,9 @@ from typing import Any
 from common_lore_index.retrieval.advisory_freshness import reserve_freshness_observation
 from common_lore_index.retrieval.context_budget import (
     CANONICAL_KEY_CAP_BYTES, DISPLAY_NAME_CAP_BYTES, SOURCE_RELATIVE_PATH_CAP_BYTES,
-    _withhold_scope_echo, _withhold_target_echo, apply_skeleton_compaction, sanitize_stored_string,
+    apply_skeleton_compaction, sanitize_stored_string,
 )
-from common_lore_index.retrieval.context_budget_reservation import packet_size_with_reservation
+from common_lore_index.retrieval.context_budget_reservation import fits_packet_with_reservation
 from common_lore_index.retrieval.context_contracts import OMISSION_COUNT_KEYS
 from common_lore_index.retrieval.intent_policy import classify_subject_intent_family
 from common_lore_index.server._navigation_groups import (
@@ -64,7 +64,8 @@ def format_and_deduplicate_locations(
     omissions: OmissionCounter,
 ) -> tuple[list[dict[str, Any]], int, bool, bool]:
     """Deduplicate locations by _destination + (start_line, end_line) and cap per item."""
-    deduped: list[dict[str, Any]] = []
+    kept: list[dict[str, Any]] = []
+    omitted = 0
     seen_verified: set[tuple[Any, ...]] = set()
     has_verified = False
     any_withheld = False
@@ -78,15 +79,16 @@ def format_and_deduplicate_locations(
         ):
             any_withheld = True
         dest = _destination(row_dict, markers)
-        if dest is not None:
-            clean_rel, err = sanitize_stored_string(
-                dest["source_relative_path"], field_cap_bytes=SOURCE_RELATIVE_PATH_CAP_BYTES
-            )
-            if err is not None:
-                omissions.increment(err)
-                dest = None
-            else:
-                dest = {**dest, "source_relative_path": clean_rel}
+        raw_source = row_dict.get("source")
+        src = raw_source if isinstance(raw_source, Mapping) else {}
+        raw_rel = dest["source_relative_path"] if dest is not None else src.get("source_relative_path")
+        clean_rel, err = sanitize_stored_string(raw_rel, field_cap_bytes=SOURCE_RELATIVE_PATH_CAP_BYTES)
+        if err is not None:
+            omissions.increment(err)
+            any_withheld = True
+            dest = None
+        elif dest is not None:
+            dest["source_relative_path"] = clean_rel
 
         start_line = row_dict.get("start_line")
         end_line = row_dict.get("end_line")
@@ -101,16 +103,9 @@ def format_and_deduplicate_locations(
             seen_verified.add(dedup_key)
             has_verified = True
 
-        raw_source = row_dict.get("source")
-        src = raw_source if isinstance(raw_source, Mapping) else {}
-        raw_rel = dest["source_relative_path"] if dest else src.get("source_relative_path")
-        if dest is None and raw_rel is not None:
-            raw_rel, err = sanitize_stored_string(
-                raw_rel, field_cap_bytes=SOURCE_RELATIVE_PATH_CAP_BYTES
-            )
-            if err is not None:
-                omissions.increment(err)
-
+        if len(kept) >= locations_per_item:
+            omitted += 1
+            continue
         observation = row_dict.get("raw_observation")
         raw_obs = observation if isinstance(observation, Mapping) else {}
         rev = dest["binding_revision"] if dest else src.get("binding_revision")
@@ -118,7 +113,7 @@ def format_and_deduplicate_locations(
             "source_binding_id": dest["source_binding_id"] if dest else src.get("binding_id"),
             "binding_revision": rev if type(rev) is int else None,
             "snapshot_id": dest["snapshot_id"] if dest else src.get("snapshot_id"),
-            "source_relative_path": raw_rel if dest else None,
+            "source_relative_path": clean_rel if dest else None,
             "run_id": row_dict.get("run_id"),
             "publication_relation": row_dict.get("publication_relation"),
             "path_namespace": dest["path_namespace"] if dest else row_dict.get("path_namespace"),
@@ -132,10 +127,7 @@ def format_and_deduplicate_locations(
         }
         if reserve_freshness:
             loc_obj["freshness"] = reserve_freshness_observation(loc_obj)
-        deduped.append(loc_obj)
-
-    kept = deduped[:locations_per_item]
-    omitted = max(0, len(deduped) - locations_per_item)
+        kept.append(loc_obj)
     return kept, omitted, has_verified, any_withheld
 
 
@@ -260,33 +252,27 @@ def admit_items_and_relations(
     budget_bytes: int,
 ) -> None:
     """Pack seeds, neighbor units, relations, and omissions under seeds_then_neighbors_v1."""
-    def fits_reserved_packet() -> bool:
+    def fits_reserved_packet(records: Sequence[dict[str, Any]] = ()) -> bool:
         packet["omission_counts"] = omissions.to_counts_dict()
-        packet["omissions"] = [dict(record) for record in omissions.records]
-        apply_skeleton_compaction(packet, budget_bytes)
-        size = packet_size_with_reservation(packet)
-        if size > budget_bytes and packet["request"].get("target_echo") is not None:
-            _withhold_target_echo(packet)
-            size = packet_size_with_reservation(packet)
-        if size > budget_bytes and packet["scope"].get("scope_echo_complete") is not False:
-            _withhold_scope_echo(packet)
-            size = packet_size_with_reservation(packet)
-        return size <= budget_bytes
+        # Reserve detail bytes only after ranked items and relations.
+        packet["omissions"] = list(records)
+        return fits_packet_with_reservation(packet, budget_bytes)
     overflow_by_item_limit = max(0, total_post_offset_seeds - len(candidate_seeds))
     if overflow_by_item_limit > 0:
         omissions.increment("item_limit", overflow_by_item_limit)
     if overflow_tied_count > 0:
         omissions.increment("ambiguous_alternative_omitted_by_budget", overflow_tied_count)
     admitted_seeds: list[dict[str, Any]] = []
+    packet["items"] = admitted_seeds
     admitted_keys: set[str] = set()
     for idx, seed in enumerate(candidate_seeds):
         snap = omissions.snapshot()
-        trial = copy.deepcopy(seed)
+        trial = dict(seed)
         if trial["omitted_location_count"] > 0:
             omissions.increment("location_limit", trial["omitted_location_count"])
-        packet["items"] = admitted_seeds + [trial]
+        admitted_seeds.append(trial)
         if fits_reserved_packet():
-            admitted_seeds.append(trial)
+            admitted_seeds[-1] = copy.deepcopy(trial)
             if isinstance(trial.get("canonical_key"), str):
                 admitted_keys.add(trial["canonical_key"])
             continue
@@ -297,37 +283,38 @@ def admit_items_and_relations(
             trial["locations"] = trial["locations"][:1]
             trial["omitted_location_count"] += extra_dropped
             omissions.increment("location_limit", trial["omitted_location_count"])
-            packet["items"] = admitted_seeds + [trial]
             if fits_reserved_packet():
-                admitted_seeds.append(trial)
+                admitted_seeds[-1] = copy.deepcopy(trial)
                 if isinstance(trial.get("canonical_key"), str):
                     admitted_keys.add(trial["canonical_key"])
                 continue
             omissions.restore(snap)
 
+        admitted_seeds.pop()
         remaining_seeds = candidate_seeds[idx:]
         omissions.increment("output_budget", len(remaining_seeds))
         for rem in remaining_seeds:
             if rem.get("canonical_key") in top_tied_keys:
                 omissions.increment("ambiguous_alternative_omitted_by_budget", 1)
         break
-    packet["items"] = admitted_seeds
     admitted_neighbors: list[dict[str, Any]] = []
     admitted_relations: list[dict[str, Any]] = []
     seen_rel_keys: set[tuple[str, str, str, str]] = set()
     def admit_relation_prefix(relations: Sequence[dict[str, Any]]) -> bool:
-        pending = list({
-            _rel_identity(rel): rel for rel in relations
-            if _rel_identity(rel) not in seen_rel_keys
-        }.values())
-        for rel_idx, rel in enumerate(pending):
-            packet["relations"] = admitted_relations + [rel]
-            packet["expansion"]["relations_admitted"] = len(admitted_relations) + 1
-            if fits_reserved_packet():
-                seen_rel_keys.add(_rel_identity(rel))
-                admitted_relations.append(rel)
-                continue
+        pending = {}
+        for rel in relations:
+            identity = _rel_identity(rel)
+            if identity not in seen_rel_keys:
+                pending[identity] = rel
+        for rel_idx, (identity, rel) in enumerate(pending.items()):
+            admitted_relations.append(rel)
             packet["relations"] = admitted_relations
+            packet["expansion"]["relations_admitted"] = len(admitted_relations)
+            if fits_reserved_packet():
+                seen_rel_keys.add(identity)
+                continue
+            admitted_relations.pop()
+            packet["expansion"]["relations_admitted"] = len(admitted_relations)
             omissions.increment("output_budget", len(pending) - rel_idx)
             return False
         return True
@@ -362,19 +349,22 @@ def admit_items_and_relations(
         if nbr_item["omitted_location_count"] > 0:
             omissions.increment("location_limit", nbr_item["omitted_location_count"])
         first_rel = valid_rels[0]
-        packet["neighbors"] = admitted_neighbors + [nbr_item]
-        packet["relations"] = admitted_relations + [first_rel]
-        packet["expansion"]["neighbors_admitted"] = len(admitted_neighbors) + 1
-        packet["expansion"]["relations_admitted"] = len(admitted_relations) + 1
+        admitted_neighbors.append(nbr_item)
+        admitted_relations.append(first_rel)
+        packet["neighbors"] = admitted_neighbors
+        packet["relations"] = admitted_relations
+        packet["expansion"]["neighbors_admitted"] = len(admitted_neighbors)
+        packet["expansion"]["relations_admitted"] = len(admitted_relations)
         if not fits_reserved_packet():
+            admitted_neighbors.pop()
+            admitted_relations.pop()
+            packet["expansion"]["neighbors_admitted"] = len(admitted_neighbors)
+            packet["expansion"]["relations_admitted"] = len(admitted_relations)
             omissions.restore(snap)
             omissions.increment("output_budget", len(neighbor_units) - nbr_idx)
             break
-        admitted_neighbors.append(nbr_item)
         admitted_keys.add(nbr_ck)
-        rel_id = _rel_identity(first_rel)
-        seen_rel_keys.add(rel_id)
-        admitted_relations.append(first_rel)
+        seen_rel_keys.add(_rel_identity(first_rel))
         admit_relation_prefix(valid_rels[1:])
     pending_extra: list[dict[str, Any]] = []
     for rel in extra_relations:
@@ -391,8 +381,7 @@ def admit_items_and_relations(
 
     admitted_omissions: list[dict[str, Any]] = []
     for rec in omissions.records:
-        packet["omissions"] = admitted_omissions + [rec]
-        if fits_reserved_packet():
+        if fits_reserved_packet(admitted_omissions + [rec]):
             admitted_omissions.append(rec)
         else:
             break

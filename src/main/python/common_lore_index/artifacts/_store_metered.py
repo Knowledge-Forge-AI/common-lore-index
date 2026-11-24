@@ -37,12 +37,11 @@ from common_lore_index.artifacts._store_common import (
     _reference,
     _validate_requested_digest,
 )
-from common_lore_index.artifacts._store_stream import _file_version, _same_file_stat
+from common_lore_index.artifacts._store_stream import _READ_FLAGS, _file_version, _same_file_stat
 from common_lore_index.artifacts._store_temporary import open_temporary_stream, remove_temporary
 from common_lore_index.artifacts.references import ArtifactLocator, ArtifactReference
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
 
-_READ_FLAGS = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
 _PrivateDetails = Callable[..., os.stat_result]
 
 

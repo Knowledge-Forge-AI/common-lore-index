@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Generator
+import os
 from pathlib import Path
 import stat
+import tempfile
+from typing import IO
 
 import pytest
 
@@ -31,7 +35,8 @@ def test_external_sort_merges_multiple_bounded_passes() -> None:
     ) == [[value, {"payload": value}] for value in range(13)]
 
 
-def test_external_sort_exposes_the_validated_canonical_row_encoding() -> None:
+def test_external_sort_exposes_the_validated_canonical_row_encoding(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(external_row_sort, "OwnedTemporaryDirectory", lambda **_: pytest.fail("unneeded spill directory"))
     assert list(
         external_sort_encoded_rows(
             ((2, {"z": 1, "a": "café"}), (1, {})),
@@ -158,6 +163,19 @@ def test_external_sort_bounds_live_runs_and_reports_merge_overlap() -> None:
     assert max(run_count for _bytes, run_count in artifacts) <= 17
     assert max(byte_count for byte_count, _runs in artifacts) > 0
     assert artifacts[-1] == (0, 0)
+
+
+def test_external_sort_refuses_short_run_write(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    original = os.fdopen
+
+    def short_open(fd: int, mode: str, *, encoding: str, newline: str) -> IO[str]:
+        handle = original(fd, mode, encoding=encoding, newline=newline)
+        monkeypatch.setattr(handle, "write", lambda _data: 0)
+        return handle
+    monkeypatch.setattr(os, "fdopen", short_open)
+    with pytest.raises(ExternalRowSortError, match="run write was incomplete"):
+        external_row_sort._write_encoded_rows(tmp_path, iter(("[1]",)), external_row_sort._ArtifactTracker(None))
+    assert not tuple(tmp_path.iterdir())
 
 
 def test_run_growth_is_observed_before_bytes_are_written(tmp_path) -> None:
@@ -333,3 +351,50 @@ def test_external_sort_rejects_invalid_sort_key_types() -> None:
                 key_types=(int,),
             )
         )
+
+@pytest.mark.parametrize(
+    ("fan_in", "count", "run_writes"),
+    [(4, 3, 3), (4, 6, 7), (4, 11, 14), (2, 13, 24), (3, 53, 78)],
+)
+def test_final_merge_writes_only_the_runs_needed_for_fan_in(fan_in, count, run_writes):
+    rows = [(i % 3, str(i % 2), "雪" + chr(92) if i % 2 else 'quote"') for i in reversed(range(count))]
+    events: list[tuple[int, int]] = [(0, 0)]
+    ordinary = list(external_sort_encoded_rows(rows, key_indexes=(0, 1), key_types=(int, str), field_count=3))
+    spilled = list(external_sort_encoded_rows(
+        rows, key_indexes=(0, 1), key_types=(int, str), field_count=3, run_byte_limit=1, merge_fan_in=fan_in,
+        artifact_observer=lambda size, n: events.append((size, n)),
+    ))
+    assert spilled == ordinary
+    assert sum(max(after[1] - before[1], 0) for before, after in zip(events, events[1:])) == run_writes
+    assert events[-1] == (0, 0)
+
+
+def test_direct_final_merge_closes_remaining_runs_early(tmp_path, monkeypatch):
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    events: list[tuple[int, int]] = []
+    ordered = external_sort_encoded_rows(
+        ((2, "second"), (1, "first"), (3, "third")),
+        key_indexes=(0,), field_count=2, run_byte_limit=1, merge_fan_in=4,
+        artifact_observer=lambda size, count: events.append((size, count)),
+    )
+    assert isinstance(ordered, Generator)
+    assert next(ordered) == '[1,"first"]'
+    ordered.close()
+    assert events[-1] == (0, 0)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_final_consolidation_rewrites_the_lightest_runs() -> None:
+    rows = [(10 + index, "a") for index in range(4)]
+    rows += [(20 + index, "b") for index in range(4)]
+    rows += [(5, "X" * 300), (4, "Y" * 300), (3, "c")]
+    events: list[tuple[int, int]] = [(0, 0)]
+    ordered = list(external_sort_rows(
+        rows, key_indexes=(0,), field_count=2, run_byte_limit=1, merge_fan_in=4,
+        artifact_observer=lambda size, count: events.append((size, count)),
+    ))
+    assert ordered == [list(row) for row in sorted(rows)]
+    # Initial and carry writes plus one small pair, excluding both 300-byte rows.
+    written = sum(max(after[0] - before[0], 0) for before, after in zip(events, events[1:]))
+    assert written == 810
+    assert events[-1] == (0, 0)

@@ -1,6 +1,8 @@
 """Descriptor-relative POSIX filesystem authority for CLOE configuration migration (ADR 0114)."""
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 import errno
 import os
 import stat
@@ -73,7 +75,10 @@ def ident(info: os.stat_result) -> tuple[int, int]:
 
 def snapshot(info: os.stat_result) -> tuple[int, ...]:
     """Identity tuple compared across a bounded read or a revalidation."""
-    return (info.st_dev, info.st_ino, info.st_size, info.st_mode, info.st_uid, info.st_nlink, info.st_mtime_ns)
+    return (
+        info.st_dev, info.st_ino, info.st_size, info.st_mode, info.st_uid, info.st_nlink,
+        info.st_mtime_ns, info.st_ctime_ns,
+    )
 
 
 def valid_name(name: str) -> bool:
@@ -103,14 +108,20 @@ _CREATE = _flags("O_WRONLY", "O_CREAT", "O_EXCL", "O_NOFOLLOW", "O_CLOEXEC")
 _DIRECTORY = _flags("O_RDONLY", "O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC")
 
 
+
+def _close_directory(fd: int) -> None:
+    try:
+        os.close(fd)
+    except OSError:
+        pass  # Never replace the migration outcome with a read-only handle close error.
+
 class Home:
     """An opened private home; every name operation is relative to its descriptors."""
 
-    def __init__(self, fd: int) -> None:
+    def __init__(self, fd: int, identity: tuple[int, int]) -> None:
         self.fd = fd
         self.op: int | None = None
-        info = os.fstat(fd)
-        self.dev, self.ino = ident(info)
+        self.dev, self.ino = identity
         self.writes = 0
 
     @classmethod
@@ -122,17 +133,26 @@ class Home:
             fd = os.open(path, _DIRECTORY)
         except (OSError, ValueError):  # ValueError: an embedded NUL in the supplied path
             raise MigrationRefusal("repo-map-home-unsafe") from None
-        info = os.fstat(fd)
-        if ident(info) != ident(before) or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) & 0o077:
-            os.close(fd)
-            raise MigrationRefusal("repo-map-home-unsafe")
-        return cls(fd)
+        try:
+            try:
+                info = os.fstat(fd)
+            except OSError:
+                raise MigrationRefusal("repo-map-home-unsafe") from None
+            identity = ident(info)
+            if identity != ident(before) or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) & 0o077:
+                raise MigrationRefusal("repo-map-home-unsafe")
+            return cls(fd, identity)
+        except BaseException:
+            _close_directory(fd)
+            raise
 
     def close(self) -> None:
-        for fd in (self.op, self.fd):
-            if fd is not None:
-                os.close(fd)
-        self.op = None
+        operation, self.op = self.op, None
+        descriptor, self.fd = self.fd, -1
+        if operation is not None:
+            _close_directory(operation)
+        if descriptor != -1:
+            _close_directory(descriptor)
 
     def dir(self, in_op: bool) -> int:
         if not in_op:
@@ -150,6 +170,19 @@ class Home:
     def names(self, *, in_op: bool = False) -> list[str]:
         return sorted(os.listdir(self.dir(in_op)))
 
+    @contextmanager
+    def scan_names(self, *, in_op: bool = False) -> Iterator[Iterator[str]]:
+        """Enumerate names relative to the held directory without retaining them."""
+        if os.scandir not in os.supports_fd:
+            yield iter(self.names(in_op=in_op))
+            return
+        with os.scandir(self.dir(in_op)) as entries:
+            yield (entry.name for entry in entries)
+
+    def operation_directory_listed(self) -> bool:
+        with self.scan_names() as names:
+            return OPERATION_DIRECTORY in names
+
     def open_operation_directory(self) -> None:
         """Bind the existing operation directory after proving private same-device custody."""
         try:
@@ -159,13 +192,19 @@ class Home:
             fd = os.open(OPERATION_DIRECTORY, _DIRECTORY, dir_fd=self.fd)
         except OSError:
             raise MigrationRefusal("config-migration-residue-unsafe") from None
-        info = os.fstat(fd)
-        if (
-            ident(info) != ident(before) or info.st_dev != self.dev or info.st_uid != os.getuid()
-            or stat.S_IMODE(info.st_mode) & 0o077
-        ):
-            os.close(fd)
-            raise MigrationRefusal("config-migration-residue-unsafe")
+        try:
+            try:
+                info = os.fstat(fd)
+            except OSError:
+                raise MigrationRefusal("config-migration-residue-unsafe") from None
+            if (
+                ident(info) != ident(before) or info.st_dev != self.dev or info.st_uid != os.getuid()
+                or stat.S_IMODE(info.st_mode) & 0o077
+            ):
+                raise MigrationRefusal("config-migration-residue-unsafe")
+        except BaseException:
+            _close_directory(fd)
+            raise
         self.op = fd
 
     def read(self, name: str, limit: int, code: str, *, in_op: bool = False) -> tuple[bytes, os.stat_result]:
@@ -184,7 +223,7 @@ class Home:
             chunks: list[bytes] = []
             remaining = before.st_size + 1
             while remaining > 0:
-                chunk = os.read(fd, remaining)
+                chunk = os.read(fd, min(remaining, 65_536))
                 if not chunk:
                     break
                 chunks.append(chunk)
@@ -205,7 +244,10 @@ class Home:
         try:
             view = memoryview(data)
             while view:
-                view = view[os.write(fd, view):]
+                written = os.write(fd, view)
+                if not 0 < written <= len(view):
+                    raise OSError(errno.EIO, "configuration migration write made invalid progress")
+                view = view[written:]
             if mode != 0o600:
                 os.fchmod(fd, mode)
             os.fsync(fd)

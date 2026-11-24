@@ -18,6 +18,7 @@ import test_sandbox
 import repomap_test_support.test_cov5k_r2_fix1_executors as fix1_executors
 from repomap_test_support.test_cov5k_r2_fix1_catalog import build_closed_catalog
 from repomap_test_support import d12_core_image as d12
+from repomap_test_support import retrieval_supplement_study as study
 from repomap_test_support.build_profile_debt import (
     DEFERRED_BUILD_PROFILE_NODE_IDS,
     enforce_build_profile_authority,
@@ -177,6 +178,7 @@ def _conftest(request):
 
 
 def test_safety3_d12_optional_owner_is_visibly_deselected_and_required(request, monkeypatch):
+    from repomap_test_support import retrieval_body_study as body
     conftest, lines = _conftest(request), list[str]()
     reporter = SimpleNamespace(write_line=lines.append)
     config, optional, other = _config(), _Item(d12.NODE_ID, d12.MARKER), _Item("src/test/int/python/x.int.test.py::t")
@@ -189,9 +191,17 @@ def test_safety3_d12_optional_owner_is_visibly_deselected_and_required(request, 
     conftest.pytest_terminal_summary(reporter, 0, config)
     assert lines == [f"D12 optional core-image owners deselected: 1 {d12.NODE_ID} ({d12.DESELECTION_REASON})"]
     for root in ("src/test/int/python", "src/test/int/python/repomap_kg/runtime", d12.NODE_FILE):
-        conftest.pytest_collection_modifyitems(None, _config(root), [_Item(d12.NODE_ID, d12.MARKER)])
+        study_items = [_Item(study.NODE_ID, study.MARKER)] if root == "src/test/int/python" else []
+        body_items = [_Item(body.NODE_ID, body.MARKER)] if study_items else []
+        population = _config(root)
+        conftest.pytest_collection_modifyitems(None, population,
+            [_Item(d12.NODE_ID, d12.MARKER), *study_items, *body_items])
+        if study_items:
+            assert getattr(population, study.POPULATION_ATTR)["count"] == 1
+            assert getattr(population, body.POPULATION_ATTR)["count"] == 1
+            assert [item.nodeid for item in population.deselected] == [d12.NODE_ID, study.NODE_ID, body.NODE_ID]
         with pytest.raises(d12.D12ProfileError, match="must collect exactly its one named node"):
-            conftest.pytest_collection_modifyitems(None, _config(root), [other])
+            conftest.pytest_collection_modifyitems(None, _config(root), [other, *study_items])
     quiet = _config("src/test/unit/python", f"{d12.NODE_FILE}::test_other")
     conftest.pytest_collection_modifyitems(None, quiet, [other])
     conftest.pytest_terminal_summary(reporter, 0, quiet)
@@ -210,7 +220,7 @@ def test_safety3_d12_optional_owner_is_visibly_deselected_and_required(request, 
             conftest.pytest_collection_modifyitems(None, _config(), items)
     monkeypatch.setenv(d12.ENV_PROFILE, "linux/amd64")
     selected = [_Item(d12.NODE_ID, d12.MARKER)]
-    profiled = _config("src/test/int/python")
+    profiled = _config(d12.NODE_FILE)
     conftest.pytest_collection_modifyitems(None, profiled, selected)
     assert len(selected) == 1 and getattr(profiled, d12.POPULATION_ATTR)["excluded"] == []
 

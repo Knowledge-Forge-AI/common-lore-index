@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-import hashlib
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
+import stat
+from tempfile import TemporaryDirectory
 
+from common_lore_index.artifacts._source_sealing_io import open_source_body
 from common_lore_index.extractors.documents.css_html_matching import (
     extract_css_selector_match_observations,
 )
@@ -28,9 +30,10 @@ from common_lore_index.ops.ingestion.source_archive import (
 )
 from common_lore_index.ops.ingestion.source_common import (
     SourcePolicyError,
+    _source_manifest_id,
     _utc_now,
-    json_dumps_stable,
 )
+from common_lore_index.ops.ingestion.source_warc import _warc_payload_extension, _warc_payload_route
 from common_lore_index.ops.ingestion.source_warc_config import (
     _warc_policy_snapshot,
     load_warc_source_config,
@@ -38,10 +41,54 @@ from common_lore_index.ops.ingestion.source_warc_config import (
 from common_lore_index.ops.ingestion.source_warc_records import (
     WarcImportSummary,
     WarcManifest,
+    WarcRecordSummary,
     WarcSourceConfig,
 )
 
 Clock = Callable[[], datetime]
+
+
+def _capture_warc_payloads(
+    root: Path, snapshot: Path, records: Mapping[str, WarcRecordSummary], config: WarcSourceConfig,
+) -> None:
+    if any(
+        type(record.payload_byte_length) is not int or record.payload_byte_length <= 0
+        for record in records.values()
+    ):
+        raise SourcePolicyError("invalid retained WARC payload length")
+    if len(records) > config.max_file_count or sum(
+        record.payload_byte_length for record in records.values()
+    ) > config.max_total_payload_bytes or any(
+        record.payload_byte_length > config.max_record_bytes for record in records.values()
+    ):
+        raise SourcePolicyError("retained WARC payloads exceed source policy")
+    for relative_path, record in sorted(records.items()):
+        path = Path(relative_path)
+        route = _warc_payload_route(record.content_type)
+        if (
+            not path.parts
+            or path.is_absolute()
+            or ".." in path.parts
+            or path.as_posix() != relative_path
+            or record.payload_sha256 is None
+            or route is None
+            or route != record.extractor_route
+            or path.name != f"payload{_warc_payload_extension(route)}"
+        ):
+            raise SourcePolicyError("invalid retained WARC payload reference")
+        try:
+            destination = snapshot / path
+            with open_source_body(
+                root, relative_path, expected_size=record.payload_byte_length,
+                expected_digest=record.payload_sha256, expected_executable=False,
+            ) as body:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                with destination.open("xb") as output:
+                    for chunk in body:
+                        if output.write(chunk) != len(chunk):
+                            raise OSError("incomplete payload copy")
+        except (OSError, ValueError):
+            raise SourcePolicyError("retained WARC payload differs from its manifest") from None
 
 
 def build_warc_manifest(
@@ -52,13 +99,17 @@ def build_warc_manifest(
 ) -> WarcManifest:
     root = Path(root_path).resolve()
     artifact_path = _resolve_archive_artifact_path(root, config.artifact_path)
-    if artifact_path.is_symlink():
+    try:
+        expected_artifact = artifact_path.lstat()
+    except OSError:
+        raise SourcePolicyError("artifact.path must be an existing WARC file") from None
+    if stat.S_ISLNK(expected_artifact.st_mode):
         raise SourcePolicyError("artifact.path must not be a symlink")
-    if not artifact_path.is_file():
+    if not stat.S_ISREG(expected_artifact.st_mode):
         raise SourcePolicyError("artifact.path must be an existing WARC file")
     if artifact_path.suffix != ".warc":
         raise SourcePolicyError("WARC1 supports local .warc files only")
-    artifact_bytes = artifact_path.stat().st_size
+    artifact_bytes = expected_artifact.st_size
     if artifact_bytes > config.max_artifact_bytes:
         raise SourcePolicyError("artifact exceeds policy.max_artifact_bytes")
     now = clock() if clock is not None else _utc_now()
@@ -81,6 +132,7 @@ def build_warc_manifest(
         artifact_path=artifact_path,
         document_key=document_key,
         materialization_root=materialization_root,
+        expected_artifact=expected_artifact,
     )
     policy_snapshot = _warc_policy_snapshot(config)
     manifest_payload = {
@@ -91,14 +143,13 @@ def build_warc_manifest(
         "artifact_profile": config.artifact_profile,
         "artifact_path": config.artifact_path,
         "warc_version": warc_version,
-        "records": [record.to_jsonable() for record in records],
         "policy_snapshot": policy_snapshot,
         "warnings": list(warnings),
         "errors": list(errors),
     }
-    artifact_manifest_id = hashlib.sha256(
-        json_dumps_stable(manifest_payload).encode("utf-8")
-    ).hexdigest()[:16]
+    artifact_manifest_id = _source_manifest_id(
+        manifest_payload, records={"records": (record.to_jsonable() for record in records)},
+    )
     return WarcManifest(
         source_id=config.source_id,
         source_type=config.source_type,
@@ -150,6 +201,8 @@ def warc_observations_from_manifest(
         for record in manifest.records
         if record.materialized_path is not None
     }
+    if len(record_by_materialized_path) != manifest.routed_payload_count:
+        raise SourcePolicyError("duplicate retained WARC payload reference")
     for record in manifest.records:
         observations.extend(_warc_record_observations(manifest, record, document_key))
     for index, message in enumerate(manifest.errors):
@@ -164,28 +217,32 @@ def warc_observations_from_manifest(
                 metadata={"error_kind": "warc-parse", "message": message},
             )
         )
-    routed_infos = [
-        classify_path(root, root / relative_path)
-        for relative_path in sorted(record_by_materialized_path)
-    ]
-    module_index = PythonModuleIndex.from_python_paths((), repository_root=root)
-    repository_paths = frozenset(file_info.path for file_info in routed_infos)
-    markdown_anchors: dict[str, frozenset[str]] = {}
-    routed_observations: list[RawObservation] = []
-    for file_info in routed_infos:
-        routed_observations.extend(
-            _observations_for_archive_file(
-                root,
-                file_info,
-                module_index=module_index,
-                repository_paths=repository_paths,
-                markdown_anchors=markdown_anchors,
-            )
-        )
-    routed_observations.extend(
-        extract_css_selector_match_observations(routed_observations)
-    )
-    observations.extend(routed_observations)
+    if record_by_materialized_path:
+        with TemporaryDirectory(prefix="cloe-warc-readback-") as directory:
+            snapshot = Path(directory).resolve()
+            _capture_warc_payloads(root, snapshot, record_by_materialized_path, config)
+            routed_infos = [
+                classify_path(
+                    snapshot, snapshot / relative_path, captured_content_hash=record.payload_sha256,
+                )
+                for relative_path, record in sorted(record_by_materialized_path.items())
+            ]
+            module_index = PythonModuleIndex.from_python_paths((), repository_root=snapshot)
+            repository_paths = frozenset(file_info.path for file_info in routed_infos)
+            markdown_anchors: dict[str, frozenset[str]] = {}
+            routed_observations: list[RawObservation] = []
+            for file_info in routed_infos:
+                routed_observations.extend(
+                    _observations_for_archive_file(
+                        snapshot,
+                        file_info,
+                        module_index=module_index,
+                        repository_paths=repository_paths,
+                        markdown_anchors=markdown_anchors,
+                    )
+                )
+            routed_observations.extend(extract_css_selector_match_observations(routed_observations))
+            observations.extend(routed_observations)
     return _annotate_warc_observations(
         observations,
         config,

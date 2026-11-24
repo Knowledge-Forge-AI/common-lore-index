@@ -6,7 +6,14 @@ from pathlib import Path
 import shutil
 import sqlite3
 
+import pytest
+
+from common_lore_index.retrieval.context_admission import OmissionCounter, admit_items_and_relations
 from common_lore_index.retrieval.context_assembly import build_compact_context
+from common_lore_index.retrieval.context_budget import (
+    _withhold_scope_echo, _withhold_target_echo, compute_actual_bytes_fixpoint,
+)
+from common_lore_index.retrieval.context_budget_reservation import packet_size_with_reservation
 from common_lore_index.retrieval.context_contracts import ContextRequest
 from common_lore_index.retrieval.context_work import WorkLedger
 from repomap_test_support.context_assertions import (
@@ -215,3 +222,172 @@ def test_budget_validation_before_io_and_sqlite_statement_ceiling(tmp_path: Path
     assert_valid_context_packet(pkt)
     assert pkt["status"] == "partial"
     assert pkt["work_ledger"]["sql_statements_executed"] <= 5
+
+
+@pytest.mark.parametrize("with_seed", [False, True])
+def test_context_admits_ranked_records_before_the_omission_detail_prefix(
+    tmp_path: Path, with_seed: bool,
+) -> None:
+    _, _, _, _, adapter = build_sqlite_context_fixture(tmp_path)
+    budget = 4096
+    packet = build_compact_context(
+        ContextRequest(graph_id=adapter.graph_id, mode="ranked_discovery",
+                       query="InvoiceService" if with_seed else "absent fixture", budget_bytes=budget),
+        adapter,
+    )
+    seeds = packet["items"][:]
+    assert len(seeds) == int(with_seed)
+    assert packet["neighbors"] == [] and packet["relations"] == []
+    _withhold_target_echo(packet)
+    _withhold_scope_echo(packet)
+    omissions = OmissionCounter()
+    for index in range(32):
+        omissions.increment("candidate_scan_incomplete", detail=f"fixture-detail-{index:02d}")
+    packet["omission_counts"] = omissions.to_counts_dict()
+
+    sizes = [
+        packet_size_with_reservation({**packet, "omissions": omissions.records[:count]})
+        for count in range(len(omissions.records) + 1)
+    ]
+    prefix_length = max(count for count, size in enumerate(sizes) if size <= budget)
+    assert 0 < prefix_length < len(omissions.records)
+    packet["items"] = []
+    admit_items_and_relations(
+        packet, candidate_seeds=seeds, total_post_offset_seeds=len(seeds), top_tied_keys=frozenset(),
+        neighbor_units=(), extra_relations=(), omissions=omissions, budget_bytes=budget,
+    )
+    assert packet["items"] == seeds
+    assert packet["omissions"] == omissions.records[:prefix_length]
+    assert packet["omission_counts"]["candidate_scan_incomplete"] == 32
+    raw, size = compute_actual_bytes_fixpoint(packet)
+    assert size == len(raw) <= budget
+
+
+def test_location_cap_retains_late_status_without_materializing_extra_freshness(monkeypatch) -> None:
+    from common_lore_index.retrieval import context_admission
+
+    calls = []
+
+    def reserve(location):
+        calls.append(location["graph_path"])
+        return None
+
+    monkeypatch.setattr(context_admission, "reserve_freshness_observation", reserve)
+    monkeypatch.setattr(context_admission, "_public_navigation_location", lambda row, _markers: row)
+    base = {
+        "path": "docs/a.md", "path_status": "available", "run_id": 9,
+        "publication_relation": "accepted_run", "source_identity_status": "verified_vector",
+        "source": {"binding_id": "binding:public", "binding_revision": 1,
+                   "snapshot_id": "snap1:public", "source_relative_path": "docs/a.md"},
+    }
+    later = {**base, "path": "docs/b.md"}
+    missing = {**base, "path": None, "path_status": "missing_or_withheld"}
+    kept, omitted, verified, withheld = context_admission.format_and_deduplicate_locations(
+        [base, base, later, missing], markers=(), locations_per_item=1,
+        reserve_freshness=True, omissions=context_admission.OmissionCounter(),
+    )
+    assert len(kept) == 1 and omitted == 2
+    assert verified and withheld
+    assert calls == ["docs/a.md"]
+
+
+def test_oversize_location_counts_once_and_marks_the_identity_withheld() -> None:
+    from common_lore_index.retrieval import context_admission
+
+    omitted = context_admission.OmissionCounter()
+    path = "界" * 350 + ".py"
+    row = {
+        "path": "valid.py", "path_status": "available", "run_id": 9,
+        "publication_relation": "accepted_run", "source_identity_status": "verified_vector",
+        "source": {"binding_id": "binding:public", "binding_revision": 1,
+                   "snapshot_id": "snap1:public", "source_relative_path": path},
+    }
+    item = context_admission.format_context_item(
+        item_id="fixture", item_role="seed", canonical_key="py:fixture.symbol", kind="python.function",
+        display_name="symbol", identity_status="available", raw_locations=[row], markers=(),
+        locations_per_item=1, reserve_freshness=False, omissions=omitted,
+    )
+    assert item["identity_state"] == "withheld"
+    assert item["locations"][0]["source_relative_path"] is None
+    assert omitted.counts["oversize_field_withheld"] == 1
+
+
+def test_admission_commits_only_successful_seed_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from types import SimpleNamespace
+    from common_lore_index.retrieval import context_admission, context_budget_reservation
+
+    budget = 4096
+    _, _, _, _, adapter = build_sqlite_context_fixture(tmp_path)
+    initial = build_compact_context(
+        ContextRequest(graph_id=adapter.graph_id, mode="ranked_discovery",
+                       query="InvoiceService", budget_bytes=budget),
+        adapter,
+    )
+    seed, = initial["items"]
+    source = seed["locations"][0]
+    seed = {**seed, "locations": [source, {**source, "graph_path": "other.py"}],
+            "omitted_location_count": 0}
+
+    def measure(packet):
+        items = packet["items"]
+        if not items:
+            return budget - 1
+        return budget - 1 if len(items[0]["locations"]) == 1 and allow_retry else budget + 1
+
+    monkeypatch.setattr(context_budget_reservation, "_measure_projected_packet_bytes", measure)
+    real_copy = context_admission.copy.deepcopy
+    copied: list[int] = []
+
+    def track_copy(item):
+        copied.append(len(item["locations"]))
+        return real_copy(item)
+
+    monkeypatch.setattr(context_admission, "copy", SimpleNamespace(deepcopy=track_copy))
+    for allow_retry in (True, False):
+        packet = {**initial, "items": [], "request": dict(initial["request"]),
+                  "scope": dict(initial["scope"])}
+        omissions = OmissionCounter()
+        admit_items_and_relations(
+            packet, candidate_seeds=[seed], total_post_offset_seeds=1,
+            top_tied_keys=frozenset({seed["canonical_key"]}), neighbor_units=(),
+            extra_relations=(), omissions=omissions, budget_bytes=budget,
+        )
+        assert omissions.counts["location_limit"] == int(allow_retry)
+        assert omissions.counts["output_budget"] == int(not allow_retry)
+        assert omissions.counts["ambiguous_alternative_omitted_by_budget"] == int(not allow_retry)
+        if allow_retry:
+            location, = packet["items"][0]["locations"]
+            assert location == source and location is not source
+        else:
+            assert packet["items"] == []
+    assert copied == [1]
+    assert len(seed["locations"]) == 2
+
+
+def test_echo_retry_uses_one_reservation_projection(monkeypatch: pytest.MonkeyPatch) -> None:
+    from copy import deepcopy
+    from common_lore_index.retrieval import context_budget_reservation as reservation
+
+    payload = {
+        "status": "complete",
+        "request": {"target_echo": "λ" * 40, "target_echo_withheld": False},
+        "scope": {"scope_echo_complete": True, "selected_binding_ids": ["bind1:core"], "path_prefixes": ["src"]},
+        "work_ledger": {"actual_bytes": 0},
+        "items": [{"locations": [{"freshness": {"state": "not_checked"}}]}],
+    }
+    compacted = deepcopy(payload)
+    reservation._withhold_target_echo(compacted)
+    reservation._withhold_scope_echo(compacted)
+    budget = reservation.packet_size_with_reservation(compacted)
+    project = reservation._project_reserved_packet
+    counts: list[int] = []
+
+    def observe(packet, **kwargs):
+        counts.append(len(packet["items"]))
+        return project(packet, **kwargs)
+
+    monkeypatch.setattr(reservation, "_project_reserved_packet", observe)
+    monkeypatch.setattr(reservation, "apply_skeleton_compaction", lambda *_: None)
+    assert reservation.fits_packet_with_reservation(payload, budget)
+    assert counts == [1]
+    assert payload == compacted

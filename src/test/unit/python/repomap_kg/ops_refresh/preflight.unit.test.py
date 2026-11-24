@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -18,6 +19,33 @@ from common_lore_index.ops.refresh import (
 
 
 class OpsRefreshPreflightUnitTests(OpsRefreshUnitTestCase):
+    def test_preflight_skips_nonregular_and_unavailable_paths_without_reading_bodies(self) -> None:
+        from common_lore_index.ops.preflight import _scan_preflight_root
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            (root / "guide.md").write_text("# Fixture\n", encoding="utf-8")
+            (root / "missing.md").symlink_to("absent.md")
+            loop = root / "loop.md"
+            loop.symlink_to(loop.name)
+            (root / "real").mkdir()
+            (root / "alias").symlink_to("real", target_is_directory=True)
+            if hasattr(os, "mkfifo"):
+                os.mkfifo(root / "pipe.md")
+            real_resolve = Path.resolve
+
+            def resolve(path: Path, strict: bool = False) -> Path:
+                if path == loop:
+                    raise RuntimeError("synthetic legacy pathlib loop")
+                return real_resolve(path, strict=strict)
+
+            with patch.object(Path, "resolve", resolve), patch.object(Path, "open", side_effect=AssertionError("read")):
+                result = _scan_preflight_root(root, ())
+        self.assertEqual(result["files_included"], 1)
+        self.assertEqual(result["files_skipped"], 2 + int(hasattr(os, "mkfifo")))
+        self.assertEqual(result["directories_skipped"], 1)
+        self.assertEqual(result["symlink_count"], 3)
+
     def test_refresh_preflight_counts_private_graph_without_content_or_storage_reads(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir) / "repo"
@@ -181,6 +209,46 @@ class OpsRefreshPreflightUnitTests(OpsRefreshUnitTestCase):
         self.assertNotIn("fixture-secret-value", json.dumps(payload, sort_keys=True))
         self.assertIn("nix hazards:", table)
         self.assertIn("path_examples_included=false", table)
+
+    def test_first_exclusion_match_preserves_rule_precedence(self):
+        from common_lore_index.graph._discovery_selection import first_matching_exclude
+
+        pathname = "fixture/.cache/sub/case.json"
+        self.assertEqual(first_matching_exclude(pathname, (".cache", "fixture/*")), ".cache")
+        self.assertEqual(first_matching_exclude(pathname, ("fixture/*", ".cache")), "fixture/*")
+        self.assertEqual(first_matching_exclude(pathname, ("fixture/.cache",)), "fixture/.cache")
+        self.assertIsNone(first_matching_exclude(pathname, ("cache",)))
+
+    def test_preflight_classifies_one_resolution_per_link(self):
+        from common_lore_index.ops.preflight import _scan_preflight_root
+        from collections import Counter
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve() / "fixture"
+            root.mkdir()
+            top = root / "README.md"
+            top.write_text("# Fixture", encoding="utf-8")
+            nested = root / "nested"
+            nested.mkdir()
+            (nested / "doc.md").write_text("# Nested", encoding="utf-8")
+            first = root / "result-subdir"
+            second = root / "result-store"
+            first.symlink_to(root.parent, target_is_directory=True)
+            second.symlink_to("/nix/store/fixture")
+            resolve = Path.resolve
+            calls: Counter[Path] = Counter()
+
+            def counted(path, *args, **kwargs):
+                calls[path] += 1
+                return resolve(path, *args, **kwargs)
+
+            with patch.object(Path, "resolve", counted):
+                report = _scan_preflight_root(root, ("result-*",))
+        self.assertEqual(calls, {first: 1, second: 1})
+        self.assertEqual(report["symlinks_skipped_outside_root"], 2)
+        self.assertEqual(report["symlinks_skipped_nix_store"], 1)
+        self.assertEqual(report["top_level_file_count"], 1)
+        self.assertEqual(report["top_level_directory_count"], 1)
 
     def test_refresh_preflight_rejects_disabled_graph_without_root_read(self):
         with tempfile.TemporaryDirectory() as tmpdir:

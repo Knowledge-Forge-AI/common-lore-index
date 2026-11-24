@@ -1,7 +1,9 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from repomap_test_support.cli_in_process import run_repo_map_in_process
 from repomap_test_support.postgres_harness import (
@@ -28,6 +30,100 @@ from repomap_test_support.source_ingestion_integration import (
 
 
 class StorageSourceWarcReadbackIntegrationTests(unittest.TestCase):
+    def test_warc_payload_extraction_reads_the_admitted_snapshot(self) -> None:
+        from common_lore_index.graph import _discovery_classify
+        from common_lore_index.ops.ingestion import _source_warc_manifest as warc
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = copy_warc_fixture_root(Path(directory)).resolve()
+            config = warc.load_warc_source_config(root / "warc_sources" / "allowed-warc.toml")
+            manifest = warc.build_warc_manifest(config, root_path=root, clock=fixed_source_clock)
+            with patch.object(_discovery_classify, "content_hash", side_effect=AssertionError("payload rehash")):
+                original = warc.warc_observations_from_manifest(config, manifest, root_path=root)
+            records = {
+                record.materialized_path: record
+                for record in manifest.records
+                if record.materialized_path is not None
+            }
+            extract = warc._observations_for_archive_file
+            module_index = warc.PythonModuleIndex.from_python_paths((), repository_root=root)
+            baseline = [
+                observation
+                for path in sorted(records)
+                for observation in extract(
+                    root, warc.classify_path(root, root / path), module_index=module_index,
+                    repository_paths=frozenset(records), markdown_anchors={},
+                )
+            ]
+            self.assertTrue({"html.document", "css.document"} <= {item.kind for item in baseline})
+            baseline.extend(warc.extract_css_selector_match_observations(baseline))
+            expected = warc._annotate_warc_observations(baseline, config, manifest, records)
+            self.assertEqual(original[-len(expected):], expected)
+            snapshots: list[Path] = []
+
+            def revise_original(snapshot, file_info, **kwargs):
+                self.assertNotEqual(snapshot, root)
+                snapshots.append(snapshot)
+                (root / file_info.path).write_bytes(b"fixture file edited after capture")
+                return extract(snapshot, file_info, **kwargs)
+
+            with patch.object(warc, "_observations_for_archive_file", side_effect=revise_original):
+                repeated = warc.warc_observations_from_manifest(config, manifest, root_path=root)
+            self.assertEqual(original, repeated)
+            self.assertTrue(snapshots)
+            self.assertTrue(all(not path.exists() for path in snapshots))
+            with self.assertRaisesRegex(warc.SourcePolicyError, "payload differs from its manifest"):
+                warc.warc_observations_from_manifest(config, manifest, root_path=root)
+
+    def test_warc_import_refuses_archive_changed_during_read_without_metadata_output(self) -> None:
+        from common_lore_index.ops.ingestion import _source_warc_extraction
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = copy_warc_fixture_root(Path(tmpdir))
+            config = root / "warc_sources" / "allowed-warc.toml"
+            artifact = root / "warc_artifacts" / "example.warc"
+            record = (b"WARC/1.1\r\nWARC-Type: resource\r\nContent-Type: text/html\r\n"
+                      b"Content-Length: 8\r\n\r\n<p>A</p>")
+            artifact.write_bytes(record)
+            before = artifact.stat()
+            changed = record.replace(b"<p>A</p>", b"<p>B</p>")
+            read = _source_warc_extraction._read_warc_record
+
+            def mutate_after_read(*args):
+                parsed = read(*args)
+                artifact.write_bytes(changed)
+                os.utime(artifact, ns=(before.st_atime_ns, before.st_mtime_ns))
+                return parsed
+
+            with patch.object(_source_warc_extraction, "_read_warc_record", side_effect=mutate_after_read):
+                status, out, err = run_repo_map_in_process(
+                    "sources", "import-warc", "--config", str(config), "--root-path", str(root), "--json",
+                )
+            self.assertEqual(status, 1)
+            self.assertEqual(out, "")
+            self.assertIn("artifact changed during WARC manifest scan", err)
+            self.assertNotIn(str(root), err)
+            self.assertEqual(artifact.read_bytes(), changed)
+            self.assertFalse((root / ".repomap").exists())
+
+    def test_warc_and_http_header_readback_preserve_start_lines_and_duplicate_order(self):
+        from common_lore_index.ops.ingestion.source_warc import (
+            _http_headers_and_body_offset,
+            _parse_http_message_payload,
+            _parse_warc_header,
+        )
+
+        header = "WARC/1.1\r\nContent-Length: 3\rX-Fixture: first\nX-Fixture: second\u2028\tcontinued".encode()
+        self.assertEqual(_parse_warc_header(header, 0), (
+            "WARC/1.1", {"content-length": "3", "x-fixture": "second continued"}, 3,
+        ))
+        payload = "HTTP/1.1 200 OK\rX-Fixture: first\nX-Fixture: second\u2028 continued\r\n\r\nABC".encode()
+        self.assertEqual(
+            _parse_http_message_payload(payload, response=True), ({"x-fixture": "second continued"}, b"ABC"),
+        )
+        headers, offset = _http_headers_and_body_offset(payload, response=True)
+        self.assertEqual((headers, memoryview(payload)[offset:].tobytes()), ({"x-fixture": "second continued"}, b"ABC"))
+
     def test_sources_import_warc_loads_local_warc_fixture(self):
         require_postgres_binaries()
 

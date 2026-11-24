@@ -9,8 +9,9 @@ limit. Rendering states format validity only, never authenticity.
 from __future__ import annotations
 
 from common_lore_index.ops.resource_view._canonical import render_int
-from common_lore_index.ops.resource_view._contracts import MAX_PAYLOAD_BYTES, ResourceReport
-from common_lore_index.ops.resource_view._contracts_v2 import ResourceReportV2
+from common_lore_index.ops.resource_view._contracts import MAX_PAYLOAD_BYTES
+
+from ._codec import ReportFile
 
 
 def _number(value: int | None) -> str:
@@ -22,7 +23,7 @@ def _flag(value: bool | None) -> str:
     return "unknown" if value is None else "yes" if value else "no"
 
 
-def render_report_text(report: ResourceReport | ResourceReportV2) -> str:
+def render_report_text(report: ReportFile) -> str:
     """Return a line-oriented summary; values come only from closed fields."""
     lines = [
         f"schema: {report.schema}",
@@ -48,7 +49,7 @@ def render_report_text(report: ResourceReport | ResourceReportV2) -> str:
     return "\n".join(lines)
 
 
-def render_check_text(report: ResourceReport | ResourceReportV2) -> str:
+def render_check_text(report: ReportFile) -> str:
     return (
         f"valid {report.schema}: operation {report.operation or 'none'}, "
         f"outcome {report.outcome}, instrumentation {report.instrumentation}"

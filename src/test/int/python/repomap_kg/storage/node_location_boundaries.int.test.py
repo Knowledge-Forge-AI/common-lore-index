@@ -77,6 +77,16 @@ def test_node_locations_multi_binding_and_absent_relative_path(tmp_path: Path) -
     locs_without_rel = [row for row in compact["locations"] if "source_relative_path" not in row]
     assert len(locs_without_rel) >= 1
 
+    statements: list[str] = []
+    with read_transaction(database, local_binding(GRAPH)) as reader:
+        reader.set_trace_callback(statements.append)
+        node_locations(reader, NodeLocationsQuery(canonical_key=SYMBOL, limit=1))
+        windows = [sql for sql in statements if sql.startswith("WITH bounded AS MATERIALIZED")]
+        assert len(windows) == 2
+        for sql in windows:
+            plan = [row[3] for row in reader.execute("EXPLAIN QUERY PLAN " + sql)]
+            assert any("MATERIALIZE bounded" in step for step in plan)
+
     assert hashlib.sha256(database.read_bytes()).hexdigest() == before
     assert harness.forbidden_events() == [] and harness.shim_invocations() == ""
 

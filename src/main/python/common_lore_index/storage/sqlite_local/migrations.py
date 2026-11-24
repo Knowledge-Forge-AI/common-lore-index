@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from typing import Literal
 
@@ -108,13 +109,13 @@ def known_migration(version: int, name: str, checksum: str) -> bool:
 
 def schema_objects_digest(connection: sqlite3.Connection) -> str:
     """Digest the database's own schema objects (tables, indexes, SQL text)."""
-    rows = connection.execute(
+    digest = hashlib.sha256()
+    with closing(connection.execute(
         "SELECT type, name, tbl_name, coalesce(sql, '') FROM sqlite_schema "
         "WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name"
-    ).fetchall()
-    digest = hashlib.sha256()
-    for row in rows:
-        digest.update("\0".join(str(value) for value in row).encode("utf-8") + b"\n")
+    )) as rows:
+        for row in rows:
+            digest.update("\0".join(str(value) for value in row).encode("utf-8") + b"\n")
     return digest.hexdigest()
 
 
@@ -157,7 +158,7 @@ def classify(connection: sqlite3.Connection) -> SchemaState:
     try:
         application_id = connection.execute("PRAGMA application_id").fetchone()[0]
         objects = connection.execute(
-            "SELECT count(*) FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'"
+            "SELECT EXISTS(SELECT 1 FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%')"
         ).fetchone()[0]
     except sqlite3.DatabaseError as error:
         raise LocalStoreError(UNRECOGNIZED) from error
@@ -165,23 +166,26 @@ def classify(connection: sqlite3.Connection) -> SchemaState:
         return SchemaState("empty", 0)
     if application_id != APPLICATION_ID:
         raise LocalStoreError(UNRECOGNIZED)
+    head = current_version()
+    applied = 0
+    catalog_matches = True
+    future = False
     try:
-        rows = connection.execute(
+        with closing(connection.execute(
             "SELECT version, name, checksum FROM local_schema_migrations ORDER BY version"
-        ).fetchall()
+        )) as rows:
+            for applied, (version, name, checksum) in enumerate(rows, start=1):
+                identity = (int(version), str(name), str(checksum))
+                if identity[0] > head:
+                    future = True
+                if applied > head or identity != MIGRATIONS[applied - 1].identity:
+                    catalog_matches = False
         user_version = connection.execute("PRAGMA user_version").fetchone()[0]
     except sqlite3.DatabaseError as error:
         raise LocalStoreError(SCHEMA_DRIFT) from error
-    ledger = tuple((int(v), str(n), str(c)) for v, n, c in rows)
-    head = current_version()
-    if any(version > head for version, _, _ in ledger) or user_version > head:
+    if future or user_version > head:
         raise LocalStoreError(SCHEMA_UNSUPPORTED)
-    applied = len(ledger)
-    if (
-        applied == 0
-        or ledger != tuple(item.identity for item in MIGRATIONS[:applied])
-        or user_version != applied
-    ):
+    if applied == 0 or not catalog_matches or user_version != applied:
         raise LocalStoreError(SCHEMA_DRIFT)
     if schema_objects_digest(connection) != reference_digest(applied):
         raise LocalStoreError(SCHEMA_DRIFT)

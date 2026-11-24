@@ -60,3 +60,46 @@ def test_policy_refusal_preserves_acquired_artifacts_then_recovers(tmp_path: Pat
     assert recovered.requests == recovered.responses == 1
     assert recovered.raw_observations == success.raw_observations
     assert snapshot_directory_state(success.output_path) == before
+
+
+@pytest.mark.parametrize("command", ["api", "github", "bulk"])
+def test_source_plans_report_invalid_utf8_without_publishing(tmp_path, capsys, command):
+    from common_lore_index.cli.main import main
+
+    config = tmp_path / "source.toml"
+    config.write_bytes(b"# fixture\xff")
+    result = main([command, "plan", "--config", str(config), "--json"])
+    captured = capsys.readouterr()
+    assert result == 1 and captured.out == ""
+    assert "invalid UTF-8" in captured.err
+    assert "fixture" not in captured.err
+    assert list(tmp_path.iterdir()) == [config]
+
+
+def test_github_http_transport_accepts_large_configured_budget():
+    from dataclasses import replace
+    from common_lore_index.ops.ingestion.github_api import (
+        PublicGitHubRestTransport, build_github_api_plan_from_config, load_github_api_source_config,
+    )
+    from repomap_test_support.source_ingestion_integration import IntFakeGitHubOpener, github_api_fixture_root
+
+    path = github_api_fixture_root() / "public_real_transport_config" / "github-source.toml"
+    config = replace(load_github_api_source_config(path), max_bytes_per_run=2**63 - 1)
+    request = build_github_api_plan_from_config(path).requests[0]
+    opener = IntFakeGitHubOpener(status=200, headers={"content-type": "application/json"}, body=b"{}")
+    result = PublicGitHubRestTransport(opener=opener).fetch(config, request)
+    assert result.body == b"{}" and result.status_code == 200
+    assert opener.response is not None and opener.response.closed
+
+
+@pytest.mark.parametrize("command", ["ingest-feed", "import-archive", "import-warc"])
+def test_source_acquisition_refuses_invalid_utf8_definition(tmp_path, capsys, command):
+    from common_lore_index.cli.main import main
+
+    config = tmp_path / "source.toml"
+    config.write_bytes(b"# fixture\xff")
+    result = main(["sources", command, "--config", str(config), "--root-path", str(tmp_path), "--json"])
+    output = capsys.readouterr()
+    assert result == 1 and output.out == ""
+    assert "invalid UTF-8 source config" in output.err
+    assert list(tmp_path.iterdir()) == [config]

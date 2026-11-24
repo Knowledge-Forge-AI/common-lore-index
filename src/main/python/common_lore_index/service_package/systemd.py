@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.service_package.contract import (
     ServicePackageSpec,
     _foreground_module_class,
@@ -204,21 +205,15 @@ def decode_systemd_exec_argv(content: bytes) -> tuple[str, ...]:
         text = content.decode("utf-8")
     except UnicodeDecodeError:
         raise ValueError("service_definition_invalid") from None
-    lines = [line[len("ExecStart=") :] for line in text.splitlines() if line.startswith("ExecStart=")]
-    if len(lines) != 1:
-        raise ValueError("service_definition_invalid")
-    encoded = lines[0]
-    matches = list(_QUOTED_TOKEN_RE.finditer(encoded))
-    if not matches:
-        raise ValueError("service_definition_invalid")
+    encoded = _metadata_value(text, "ExecStart")
     cursor = 0
     values: list[str] = []
-    for match in matches:
+    for match in _QUOTED_TOKEN_RE.finditer(encoded):
         if encoded[cursor : match.start()].strip():
             raise ValueError("service_definition_invalid")
         values.append(_decode_systemd_value(match.group()[1:-1]))
         cursor = match.end()
-    if encoded[cursor:].strip():
+    if not values or encoded[cursor:].strip():
         raise ValueError("service_definition_invalid")
     return tuple(values)
 
@@ -293,10 +288,11 @@ def _recognized_foreground_argv(
 
 def _metadata_value(text: str, name: str) -> str:
     prefix = f"{name}="
-    values = [line[len(prefix) :] for line in text.splitlines() if line.startswith(prefix)]
-    if len(values) != 1:
+    matches = (line[len(prefix):] for line in iter_text_lines(text) if line.startswith(prefix))
+    value = next(matches, None)
+    if value is None or next(matches, None) is not None:
         raise ValueError("service_definition_invalid")
-    return values[0]
+    return value
 
 
 __all__ = ["SystemdUserAdapter", "decode_systemd_exec_argv"]

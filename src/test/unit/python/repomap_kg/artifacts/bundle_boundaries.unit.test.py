@@ -100,6 +100,22 @@ class BundleBoundariesUnitTests(unittest.TestCase):
             PublicationBundle.create(**kwargs)
         self.assertIn("publication bundle family inventory is invalid", str(caught.exception))
 
+    def test_reader_rejects_record_count_before_materializing_overflow(self):
+        from unittest.mock import patch
+        from common_lore_index.artifacts import bundle as bundle_module
+        from common_lore_index.artifacts._canonical import canonical_json
+
+        bundle = PublicationBundle.create(**_base_bundle_kwargs())
+        frames = bundle.canonical_bytes().splitlines(keepends=True)
+        record = canonical_json({"frame": "record", "family": "files", "record": {"path": "fixture"}})
+        raw = b"".join((frames[0], record, record, frames[-1]))
+        with patch.object(bundle_module, "MAX_BUNDLE_RECORDS", 1), patch.object(
+            bundle_module, "decode_canonical_json", wraps=bundle_module.decode_canonical_json,
+        ) as decode:
+            with self.assertRaisesRegex(ValueError, "publication bundle record bounds exceeded"):
+                PublicationBundle.from_bytes(raw)
+        self.assertEqual(decode.call_count, 3)
+
     def test_from_bytes_framing_validation(self):
         # Missing trailing newline
         with self.assertRaises(ValueError) as caught:

@@ -1,7 +1,8 @@
-"""W4 SQLite work ceilings and single-snapshot boundary tests."""
+"""W4 readback work ceilings and single-snapshot boundary tests."""
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 import sqlite3
@@ -23,7 +24,11 @@ from common_lore_index.retrieval.context_work import (
 )
 import common_lore_index.server.context_read_sqlite as sqlite_context
 from common_lore_index.server.context_read_sqlite import SqliteContextReadAdapter
+from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
+from common_lore_index.storage.node_locations import NodeLocationsQuery
+from common_lore_index.storage.postgres_navigation_search import read_postgres_navigation_search_with_executor
+from common_lore_index.storage.postgres_node_locations import read_postgres_node_locations_with_executor
 from repomap_test_support.context_fixture import build_sqlite_context_fixture
 
 
@@ -213,3 +218,127 @@ def test_aggregate_relation_cap_reports_every_observed_overflow(
     assert len({edge["edge_key"] for edge in relations}) == 256
     assert result["edge_limit_hit"] == 64
     assert result["seeds_expanded"] == 5
+
+_VECTOR = [{"binding_id": "bind1:public", "revision": 7, "snapshot_id": "snap1:public"}]
+_BINDING = "bind1:public"
+
+
+def _node(node_id: int, key: str) -> dict[str, Any]:
+    return {
+        "id": node_id, "canonical_key": key, "kind": "python.module",
+        "first_seen_run_id": 17, "last_seen_run_id": 17,
+    }
+
+
+def _evidence(node_id: int, path: str, *, run_id: int = 17) -> dict[str, Any]:
+    return {
+        "node_id": node_id, "run_id": run_id, "raw_observation_ordinal": node_id,
+        "path": path, "link_kind": "observed", "snapshot_vector_json": _VECTOR,
+        "metadata_json": {"binding_id": _BINDING, "snapshot_id": "snap1:public"},
+    }
+
+
+def _navigation_payload(nodes: list[dict[str, Any]], evidence: list[dict[str, Any]]) -> dict[str, Any]:
+    return {"has_accepted": True, "accepted": _accepted_context(), "candidate_nodes": nodes, "direct_evidence": evidence}
+
+
+def _location_payload(
+    current_rows: list[dict[str, Any]], *, historical_rows: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    return {
+        "has_accepted": True, "accepted": _accepted_context(), "has_node": True,
+        "node": _node(91, "module:needle"), "selected_run_id": 17,
+        "current_rows": current_rows, "historical_rows": historical_rows or [],
+    }
+
+
+def _accepted_context() -> dict[str, Any]:
+    return {
+        "generation": 4, "run_id": 17, "publication_bundle_id": "bundle:public",
+        "snapshot_manifest_id": "manifest:public",
+        "extraction_receipt_id": "receipt:public",
+        "snapshot_vector_json": _VECTOR,
+    }
+
+
+def test_unscoped_context_navigation_validates_each_rows_persisted_vector() -> None:
+    query = NavigationSearchQuery(query="needle", limit=5)
+    nodes = [_node(91, "module:needle")]
+    current = _evidence(91, "nested/current.py")
+    current["snapshot_vector_json"] = json.dumps(_VECTOR)
+    second = _evidence(91, "nested/other.py")
+    second["snapshot_vector_json"] = [[_BINDING, 8, "snap1:public"]]
+    payload = _navigation_payload(nodes, [current, second])
+    result = read_postgres_navigation_search_with_executor(
+        query, executor=lambda _sql: payload,
+        context_identity=True,
+    )
+    locations = result["nodes"][0]["locations"]
+    assert [location["source"]["binding_revision"] for location in locations] == [7, 8]
+    assert [location["source_identity_status"] for location in locations] == ["verified_vector"] * 2
+
+    second["snapshot_vector_json"] = [[_BINDING, 8, "snap1:public"], [_BINDING, 9, "snap1:public"]]
+    with pytest.raises(StorageSchemaError, match="malformed context snapshot vector"):
+        read_postgres_navigation_search_with_executor(
+            query, executor=lambda _sql: payload,
+            context_identity=True,
+        )
+
+
+def test_context_node_locations_validates_unreturned_sentinel_vector() -> None:
+    query = NodeLocationsQuery(canonical_key="module:needle", evidence_role="direct", limit=1)
+    first = _evidence(91, "nested/current.py")
+    first["snapshot_vector_json"] = json.dumps(_VECTOR)
+    sentinel = _evidence(92, "nested/other.py")
+    payload = _location_payload([first, sentinel])
+    result = read_postgres_node_locations_with_executor(
+        query, executor=lambda _sql: payload, context_identity=True,
+    )
+    assert result["has_more"] is True
+    assert [location["source"]["binding_revision"] for location in result["locations"]] == [7]
+
+    sentinel["snapshot_vector_json"] = "{"
+    with pytest.raises(StorageSchemaError, match="malformed context snapshot vector"):
+        read_postgres_node_locations_with_executor(
+            query, executor=lambda _sql: payload, context_identity=True,
+        )
+
+
+def test_scoped_context_navigation_keeps_normalized_utf8_admission_budget() -> None:
+    query = NavigationSearchQuery(query="needle", source_binding_id=_BINDING, limit=5)
+    row = _evidence(91, "nested/λ.py")
+    row["metadata_json"]["source_relative_path"] = "nested/λ.py"
+    row["snapshot_vector_json"] = json.dumps(_VECTOR, indent=4)
+    payload = _navigation_payload([_node(91, "module:needle")], [row])
+    result = read_postgres_navigation_search_with_executor(
+        query, executor=lambda _sql: payload, admits_location=lambda _location: True,
+        context_identity=True,
+    )
+    vector_bytes = len(b'[["bind1:public",7,"snap1:public"]]')
+    metadata_bytes = len(json.dumps(
+        row["metadata_json"], sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+    ).encode("utf-8"))
+    admission = result["scan"]["admission"]
+    assert admission["checks"] == admission["vector_decodes"] == 1
+    assert admission["vector_bytes"] == vector_bytes
+    assert admission["input_bytes"] == admission["decoded_bytes"] == metadata_bytes + vector_bytes
+
+
+def test_context_node_locations_validates_historical_lookahead() -> None:
+    query = NodeLocationsQuery(canonical_key="module:needle", evidence_role="direct", limit=1)
+    current = _evidence(91, "nested/current.py")
+    historical = _evidence(92, "nested/old.py", run_id=16)
+    historical["snapshot_vector_json"] = [[_BINDING, 6, "snap1:public"]]
+    sentinel = _evidence(93, "nested/older.py", run_id=15)
+    payload = _location_payload([current], historical_rows=[historical, sentinel])
+    result = read_postgres_node_locations_with_executor(
+        query, executor=lambda _sql: payload, context_identity=True,
+    )
+    assert result["historical_has_more"] is True
+    assert result["historical_locations"][0]["source"]["binding_revision"] == 6
+
+    sentinel["snapshot_vector_json"] = "{"
+    with pytest.raises(StorageSchemaError, match="malformed context snapshot vector"):
+        read_postgres_node_locations_with_executor(
+            query, executor=lambda _sql: payload, context_identity=True,
+        )

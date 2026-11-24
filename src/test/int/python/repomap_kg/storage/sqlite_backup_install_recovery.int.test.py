@@ -138,7 +138,10 @@ def test_restore_preserves_a_target_sidecar_instead_of_installing(tmp_path: Path
     assert sidecar.read_bytes() == b"unsettled target content"
 
 
-def test_restore_rechecks_bytes_after_verification_and_before_install(tmp_path: Path) -> None:
+@pytest.mark.parametrize("mutation", ["same-size", "growth-after-open", "short-after-open"])
+def test_restore_rechecks_bytes_after_verification_and_before_install(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mutation: str,
+) -> None:
     source = published_sqlite_database(tmp_path / "live")
     output = tmp_path / "backup"
     with publisher_lock(source):
@@ -146,14 +149,38 @@ def test_restore_rechecks_bytes_after_verification_and_before_install(tmp_path: 
     manifest = restore.verify_backup(output, BINDING)
     database = output / "graph.sqlite3"
     changed = bytearray(database.read_bytes())
-    changed[-1] ^= 1
-    database.write_bytes(changed)
+    if mutation == "same-size":
+        changed[-1] ^= 1
+        database.write_bytes(changed)
+    descriptor_identity = database.stat().st_ino
+    original_read = os.read
+    payload_reads = 0
+    mutated = False
+
+    def mutate_during_copy(descriptor: int, nbytes: int) -> bytes:
+        nonlocal payload_reads, mutated
+        if os.fstat(descriptor).st_ino != descriptor_identity:
+            return original_read(descriptor, nbytes)
+        if not mutated and mutation != "same-size":
+            mutated = True
+            if mutation == "growth-after-open":
+                changed.extend(b"extra" * 4096)
+            else:
+                del changed[-4096:]
+            database.write_bytes(changed)
+        payload = original_read(descriptor, nbytes)
+        payload_reads += len(payload)
+        return payload
+
+    monkeypatch.setattr(os, "read", mutate_during_copy)
     target = tmp_path / "target.sqlite3"
     with publisher_lock(target), pytest.raises(LocalStoreError) as caught:
         restore.install_backup(output, manifest, target, BINDING, durable_ancestors=0)
     assert str(caught.value) == "sqlite-backup-artifact-invalid: database-changed-during-restore"
     assert not target.exists() and not list(tmp_path.glob(".*.restore-*"))
     assert database.read_bytes() == changed
+    assert 0 < payload_reads <= manifest.database_bytes + 1
+    assert mutated == (mutation != "same-size")
 
 
 def test_restore_requires_matching_persisted_readback_after_install(
@@ -179,3 +206,79 @@ def test_restore_requires_matching_persisted_readback_after_install(
         assert reader.execute("SELECT count(*) FROM runs").fetchone() == (1,)
     assert restore.verify_backup(output, BINDING) == manifest
     assert not list(tmp_path.glob(".*.restore-*"))
+
+
+@pytest.mark.parametrize(
+    ("phase", "pattern"),
+    [("backup:snapshot-complete", ".graph.sqlite3.backup-*"),
+     ("backup:before-manifest-link", ".manifest.json.tmp-*")],
+    ids=("snapshot-temporary", "manifest-temporary"),
+)
+def test_backup_refuses_and_keeps_a_foreign_temporary_replacement(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, phase: str, pattern: str,
+) -> None:
+    source = published_sqlite_database(tmp_path / "live")
+    before = sqlite_logical_dump(source)
+    output = tmp_path / "backup"
+    foreign = tmp_path / "foreign"
+    foreign.write_bytes(b"fixture replacement")
+
+    def change(point: str) -> None:
+        if point == phase:
+            temporary, = output.glob(pattern)
+            os.replace(foreign, temporary)
+
+    monkeypatch.setattr(backup, "_fault_point", change)
+    with publisher_lock(source), pytest.raises(LocalStoreError, match="sqlite-backup-output-invalid"):
+        backup.write_backup(source, BINDING, output, created_at=STAMP)
+    leftover, = output.iterdir()
+    assert leftover.match(pattern) and leftover.read_bytes() == b"fixture replacement"
+    assert sqlite_logical_dump(source) == before
+
+
+def test_restore_refuses_and_keeps_foreign_temporary_before_install(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = published_sqlite_database(tmp_path / "live")
+    output = tmp_path / "backup"
+    with publisher_lock(source):
+        manifest = backup.write_backup(source, BINDING, output, created_at=STAMP)
+    target = tmp_path / "target.sqlite3"
+    foreign = tmp_path / "foreign"
+    foreign.write_bytes(b"fixture replacement")
+
+    def change(point: str) -> None:
+        if point == "restore:before-install":
+            temporary, = tmp_path.glob(".target.sqlite3.restore-*")
+            os.replace(foreign, temporary)
+
+    monkeypatch.setattr(restore, "_fault_point", change)
+    with publisher_lock(target), pytest.raises(LocalStoreError, match="database-changed-during-restore"):
+        restore.install_backup(output, manifest, target, BINDING, durable_ancestors=0)
+    assert not target.exists()
+    leftover, = tmp_path.glob(".target.sqlite3.restore-*")
+    assert leftover.read_bytes() == b"fixture replacement"
+    assert restore.verify_backup(output, BINDING) == manifest
+
+
+def test_restore_cleans_verified_temporary_on_preinstall_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = published_sqlite_database(tmp_path / "live")
+    output = tmp_path / "backup"
+    with publisher_lock(source):
+        manifest = backup.write_backup(source, BINDING, output, created_at=STAMP)
+    target = tmp_path / "target.sqlite3"
+
+    def abort(point: str) -> None:
+        if point == "restore:before-install":
+            temporary, = tmp_path.glob(".target.sqlite3.restore-*")
+            assert temporary.is_file()
+            raise OSError("fixture abort after verification")
+
+    monkeypatch.setattr(restore, "_fault_point", abort)
+    with publisher_lock(target), pytest.raises(OSError, match="fixture abort after verification"):
+        restore.install_backup(output, manifest, target, BINDING, durable_ancestors=0)
+    assert not target.exists()
+    assert not list(tmp_path.glob(".target.sqlite3.restore-*"))
+    assert restore.verify_backup(output, BINDING) == manifest

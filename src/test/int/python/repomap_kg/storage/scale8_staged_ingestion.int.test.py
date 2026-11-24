@@ -364,7 +364,7 @@ def test_staged_refresh_replays_an_exact_published_attempt() -> None:
 def test_prepared_corpus_digest_spills_reorders_and_recovers_after_cancellation():
     observations = tuple(replace(
         _observations()[0], path=f"src/module_{i:05}.py", source_id=f"src/module_{i:05}.py",
-        metadata={**_observations()[0].metadata, "description": "module documentation " * 64},
+        metadata={**_observations()[0].metadata, "description": "é楚😀" * 30000 if i == 0 else "module docs " * 100},
     ) for i in range(5000))
     prepared = build_staged_rows(observations, repository_name="digest-corpus", stage_id="digest-stage")
     artifacts: list[tuple[int, int]] = []
@@ -375,7 +375,7 @@ def test_prepared_corpus_digest_spills_reorders_and_recovers_after_cancellation(
                      if total_bytes > 0 and artifact_count >= 3), None)
     try:
         expected = digest_prepared_stage_rows(prepared, artifact_observer=observe)
-        # Count, including a possible empty output, proves two completed runs; positive bytes prove nonempty.
+        assert max(count for _, count in artifacts) == 3  # no intermediate rewrite
         assert spill_milestone() is not None
         assert artifacts[-1] == (0, 0)
         reversed_rows = {family: tuple(reversed(tuple(rows))) for family, rows in prepared.family_rows.items()}

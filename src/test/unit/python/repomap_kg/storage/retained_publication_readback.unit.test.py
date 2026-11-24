@@ -52,7 +52,7 @@ def test_completed_record_query_binds_repository_stage_job_and_all_receipt_field
 
 @pytest.mark.parametrize("case", [
     "extra-envelope", "missing-envelope", "bad-run-id", "boolean-attempt", "boolean-fence",
-    "boolean-revision", "boolean-family-count", "duplicate-family-key", "extra-receipt-key", "wrong-job",
+    "boolean-revision", "boolean-family-count", "duplicate-family-key", "extra-receipt-key", "wrong-job", "wrong-stage", "deep-vector",
 ])
 def test_malformed_or_coerced_proof_cannot_become_an_exact_completed_record(case):
     _expected, row = _publication()
@@ -81,6 +81,13 @@ def test_malformed_or_coerced_proof_cannot_become_an_exact_completed_record(case
         payload["publication"]["unknown"] = "untrusted"
     elif case == "wrong-job":
         payload["publication"]["publication_job_id"] = "other-job"
+    elif case == "wrong-stage":
+        payload["publication"]["portable_stage_id"] = "stage:" + "f" * 64
+        foreign = readback.publication_receipt_from_mapping(payload["publication"])
+        assert foreign is not None and foreign.portable is not None
+        assert foreign.portable.stage_id != _expected.portable.stage_id
+    elif case == "deep-vector":
+        payload["publication"]["snapshot_vector_json"] = "[" * 3000 + "]" * 3000
     with pytest.raises(StorageSchemaError, match="malformed"):
         _read(payload)
 

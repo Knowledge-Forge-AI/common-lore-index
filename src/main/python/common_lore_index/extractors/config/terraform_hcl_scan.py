@@ -6,6 +6,7 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.extractors.config.terraform_hcl_helpers import (
     TERRAFORM_HCL_BLOCK_HEADER_PATTERN,
     _terraform_hcl_brace_delta,
@@ -71,14 +72,11 @@ def _terraform_hcl_scan_blocks(
 ) -> tuple[list[_TerraformHclBlock], list[RawObservation]]:
     blocks: list[_TerraformHclBlock] = []
     diagnostics: list[RawObservation] = []
-    lines = content.splitlines()
-    index = 0
-    while index < len(lines):
-        line = lines[index]
+    lines = enumerate(iter_text_lines(content), start=1)
+    for start_line, line in lines:
         stripped = _terraform_hcl_strip_comment(line).strip()
         match = TERRAFORM_HCL_BLOCK_HEADER_PATTERN.match(stripped)
         if match is None or match.group("block_type") not in TERRAFORM_HCL_BLOCK_TYPES:
-            index += 1
             continue
         if len(blocks) >= TERRAFORM_HCL_MAX_BLOCKS:
             diagnostics.append(
@@ -86,7 +84,7 @@ def _terraform_hcl_scan_blocks(
                     relative_path,
                     error_kind="terraform-block-limit",
                     message="Terraform HCL block limit reached",
-                    start_line=index + 1,
+                    start_line=start_line,
                     recovered=True,
                 )
             )
@@ -94,10 +92,8 @@ def _terraform_hcl_scan_blocks(
 
         block_type = match.group("block_type")
         labels = _terraform_hcl_labels(match.group("labels"))
-        start_line = index + 1
         depth = _terraform_hcl_brace_delta(line)
         body_lines: list[str] = []
-        index += 1
         if depth <= 0:
             blocks.append(
                 _TerraformHclBlock(
@@ -109,12 +105,12 @@ def _terraform_hcl_scan_blocks(
                 )
             )
             continue
-        while index < len(lines) and depth > 0:
-            body_line = lines[index]
+        end_line = start_line
+        for end_line, body_line in lines:
             depth += _terraform_hcl_brace_delta(body_line)
-            if depth > 0:
-                body_lines.append(body_line)
-            index += 1
+            if depth <= 0:
+                break
+            body_lines.append(body_line)
         if depth > 0:
             diagnostics.append(
                 parse_error_observation(
@@ -125,9 +121,6 @@ def _terraform_hcl_scan_blocks(
                     recovered=True,
                 )
             )
-            end_line = len(lines)
-        else:
-            end_line = index
         blocks.append(
             _TerraformHclBlock(
                 block_type=block_type,
@@ -149,20 +142,15 @@ def _terraform_hcl_top_level_attributes(
 ) -> tuple[list[_TerraformHclAttribute], list[RawObservation]]:
     attributes: list[_TerraformHclAttribute] = []
     diagnostics: list[RawObservation] = []
-    lines = content.splitlines()
+    lines = enumerate(iter_text_lines(content), start=base_line)
     nested_block_depth = 0
-    index = 0
-    while index < len(lines):
-        raw_line = lines[index]
+    for line_number, raw_line in lines:
         stripped_line = _terraform_hcl_strip_comment(raw_line).strip()
-        line_number = base_line + index
         if not stripped_line:
-            index += 1
             continue
         if nested_block_depth > 0:
             nested_block_depth += _terraform_hcl_brace_delta(raw_line)
             nested_block_depth = max(nested_block_depth, 0)
-            index += 1
             continue
         match = TERRAFORM_HCL_ATTRIBUTE_PATTERN.match(stripped_line)
         if match is None:
@@ -170,7 +158,6 @@ def _terraform_hcl_top_level_attributes(
             if block_match is not None:
                 nested_block_depth += _terraform_hcl_brace_delta(raw_line)
                 nested_block_depth = max(nested_block_depth, 0)
-            index += 1
             continue
         if len(attributes) >= TERRAFORM_HCL_MAX_ATTRIBUTES_PER_BLOCK:
             diagnostics.append(
@@ -186,12 +173,12 @@ def _terraform_hcl_top_level_attributes(
         name = match.group("name")
         value_lines = [match.group("value")]
         depth = _terraform_hcl_collection_delta(match.group("value"))
-        index += 1
-        while index < len(lines) and depth > 0:
-            continuation = lines[index]
-            value_lines.append(continuation.strip())
-            depth += _terraform_hcl_collection_delta(continuation)
-            index += 1
+        if depth > 0:
+            for _, continuation in lines:
+                value_lines.append(continuation.strip())
+                depth += _terraform_hcl_collection_delta(continuation)
+                if depth <= 0:
+                    break
         attributes.append(
             _TerraformHclAttribute(
                 name=name,

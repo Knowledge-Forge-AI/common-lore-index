@@ -1,6 +1,8 @@
 import json
+from contextlib import nullcontext
 from typing import TypedDict
 import unittest
+from unittest.mock import patch
 
 from repomap_test_support.canonical_contract import (
     DISCOVERY_FIXTURE_ROOT,
@@ -261,33 +263,14 @@ Read https://example.com/docs.
 
     def test_docs2_odf_extraction_and_canonicalization_contract(self):
         fixture = DISCOVERY_FIXTURE_ROOT / "docs_odf_basic"
-        observations = (
-            *extract_odf_file_observations(
-                "notes.odt",
-                (fixture / "notes.odt").read_bytes(),
-            ),
-            *extract_odf_file_observations(
-                "spreadsheet.ods",
-                (fixture / "spreadsheet.ods").read_bytes(),
-            ),
-            *extract_odf_file_observations(
-                "template.ott",
-                (fixture / "template.ott").read_bytes(),
-            ),
-            *extract_odf_file_observations(
-                "sheet-template.ots",
-                (fixture / "sheet-template.ots").read_bytes(),
-            ),
-            *extract_odf_file_observations(
-                "malformed.odt",
-                (fixture / "malformed.odt").read_bytes(),
-            ),
-            *extract_odf_file_observations(
-                "dangerous.odt",
-                (fixture / "dangerous.odt").read_bytes(),
-            ),
+        observations = tuple(
+            observation
+            for name in ("notes.odt", "spreadsheet.ods", "template.ott", "sheet-template.ots", "malformed.odt", "dangerous.odt")
+            for observation in extract_odf_file_observations(name, (fixture / name).read_bytes())
         )
-
+        sheet = next(row for row in observations if row.kind == "document.odf_sheet" and row.path == "spreadsheet.ods")
+        document = next(row for row in observations if row.kind == "document.odf_document" and row.path == sheet.path)
+        self.assertEqual(document.metadata["formula_count"], sheet.metadata["formula_count"])
         result = canonicalize_observations(observations)
         payload = result.to_dict()
 
@@ -342,20 +325,36 @@ Read https://example.com/docs.
             2,
         )
 
+    def test_invalid_manifest_reference_does_not_interrupt_odf_extraction(self):
+        package = _odf_package({
+            "content.xml": b"<content/>",
+            "META-INF/manifest.xml": (
+                b'<m:manifest xmlns:m="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">'
+                b'<m:file-entry m:full-path="https://[invalid.example/path"/>'
+                b'<m:file-entry m:full-path="https://user:fixture@hidden.invalid/picture"/>'
+                b'<m:file-entry m:full-path="https://user:fixture@hidden.invalid/alternate"/>'
+                b'<m:file-entry m:full-path="Pictures/fixture.png"/></m:manifest>'
+            ),
+        })
+        observations = extract_odf_file_observations("manifest.odt", package)
+        protected, second, reference = [row for row in observations if row.kind == "document.reference"]
+        self.assertEqual(reference.metadata["raw_value_summary"], "Pictures/fixture.png")
+        self.assertTrue(protected.metadata["redacted"] and second.metadata["redacted"])
+        self.assertNotEqual(protected.source_id, second.source_id)
+        self.assertNotIn("hidden.invalid", str([row.to_dict() for row in observations]))
+        self.assertTrue(canonicalize_observations(observations).ok)
+
     def test_docs2_odf_package_safety_contracts(self):
-        safe_content = (
-            b'<?xml version="1.0" encoding="UTF-8"?>'
-            b'<office:document-content '
-            b'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
-            b'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">'
-            b"<office:body><office:text><text:p>Fixture</text:p></office:text>"
-            b"</office:body></office:document-content>"
-        )
+        safe_content = (b'<?xml version="1.0" encoding="UTF-8"?><office:document-content '
+                        b'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
+                        b'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">'
+                        b"<office:body><office:text><text:p>Fixture</text:p></office:text></office:body></office:document-content>")
 
         self.assertEqual(extract_odf_file_observations("ignored.docx", b"not-odf"), ())
 
         cases: tuple[tuple[str, bytes, _OdfOptions, str], ...] = (
             ("missing-content.odt", _odf_package({"meta.xml": safe_content}), {}, "missing-content-xml"),
+            ("read-error.odt", _odf_package({"content.xml": safe_content}), {}, "malformed-zip"),
             ("traversal.odt", _odf_package({"content.xml": safe_content, "../outside.xml": b"x"}), {}, "zip-path-traversal"),
             ("absolute.odt", _odf_package({"content.xml": safe_content, "/absolute.xml": b"x"}), {}, "zip-path-traversal"),
             (
@@ -383,7 +382,8 @@ Read https://example.com/docs.
         )
 
         for path, package_bytes, options, error_kind in cases:
-            with self.subTest(path=path):
+            decoder = patch("zipfile.ZipFile.read", side_effect=EOFError("fixture decode"))
+            with self.subTest(path=path), (decoder if path == "read-error.odt" else nullcontext()):
                 observations = extract_odf_file_observations(
                     path,
                     package_bytes,

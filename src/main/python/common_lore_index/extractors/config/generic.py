@@ -15,6 +15,7 @@ from pathlib import PurePosixPath
 from typing import Any
 from urllib.parse import urlsplit
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.config import format_contracts as _format_contracts
 from common_lore_index.extractors.config import generic_contracts as _generic_contracts
@@ -570,8 +571,7 @@ def _extract_jsonl_observations(
     reference_observations: list[RawObservation] = []
     records: list[RawObservation] = []
     errors: list[RawObservation] = []
-    parseable_record_index = 0
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         if not line.strip():
             continue
         try:
@@ -588,6 +588,7 @@ def _extract_jsonl_observations(
                 )
             )
             continue
+        parseable_record_index = len(records)
         records.append(
             _jsonl_record_observation(
                 relative_path,
@@ -608,7 +609,6 @@ def _extract_jsonl_observations(
             )
             path_observations.extend(paths)
             reference_observations.extend(references)
-        parseable_record_index += 1
     document = _document_observation(
         relative_path,
         format_name="jsonl",

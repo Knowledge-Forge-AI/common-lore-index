@@ -50,6 +50,9 @@ def add_runner_arguments(
     parser.add_argument(
         "--report-dir", default=default_report_root, type=Path, help="directory for HTML reports"
     )
+    from hosted_staging_parts import PARTS
+    parser.add_argument("--hosted-staging-part", choices=PARTS, help=argparse.SUPPRESS)
+    parser.add_argument("--hosted-staging-invocation", help=argparse.SUPPRESS)
     parser.add_argument(
         "--pg-container-port",
         default=55433,
@@ -187,6 +190,8 @@ def validate_runner_options(
     from repomap_test_support.d12_core_image import validate_options as validate_d12_options
     from runner_d12_options import validate_d12_system_proof_option
     validate_d12_options(args)
+    from hosted_staging_parts import validate_options as validate_hosted_staging_options
+    validate_hosted_staging_options(args)
     validate_d12_system_proof_option(args)
     if suites == ("smoke",):
         if args.report:

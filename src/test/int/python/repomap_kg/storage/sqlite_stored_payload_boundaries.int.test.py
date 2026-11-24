@@ -46,10 +46,42 @@ def test_observation_search_matches_jsonb_numeric_and_control_character_spelling
             row, = page["results"]
             assert row["metadata"] == {"text": text}
             assert row["payload"] == {"metadata": {"text": text}, "number": 125, "zero": 0}
+        exact = observation_search(reader, query="custom.note", kind="custom.note", path=None,
+                                   limit=1, offset=0, include_raw=True)
+        assert exact["results"][0]["payload"] == {"metadata": {"text": text}, "number": 125, "zero": 0}
         compact = observation_search(reader, query='"number":1.25000e2', kind="custom.note", path=None,
                                      limit=1, offset=0, include_raw=False)
         assert compact == {"results": [], "total": 0, "has_more": False}
     assert sqlite_logical_dump(path) == before
+
+
+def test_observation_search_matches_literal_across_payload_fold_window(tmp_path: Path) -> None:
+    path = published_sqlite_database(tmp_path / "store")
+    body = "x" * (65536 - len('{"body": "') - 3) + "CrOSSing É"
+    _stored_payload(path, "custom.note", json.dumps({"body": body, "metadata": {"kept": True}}, ensure_ascii=False))
+    with read_transaction(path, BINDING) as reader:
+        page = observation_search(reader, query="crossing É", kind="custom.note", path=None,
+                                  limit=1, offset=0, include_raw=False)
+        assert page["total"] == 1
+        assert page["results"][0]["metadata"] == {"kept": True}
+        assert "payload" not in page["results"][0]
+        missing = observation_search(reader, query="crossing é", kind="custom.note", path=None,
+                                     limit=1, offset=0, include_raw=False)
+        assert missing["results"] == []
+
+
+def test_observation_search_streams_cross_value_literals_and_returns_raw_payload(tmp_path: Path) -> None:
+    path = published_sqlite_database(tmp_path / "store")
+    payload = {"body": ["A" * 70000 + "TaIL", "boundary", "end"], "metadata": {"kept": True}}
+    _stored_payload(path, "custom.note", json.dumps(payload))
+    with read_transaction(path, BINDING) as reader:
+        page = observation_search(
+            reader, query='tail", "boundary', kind="custom.note", path=None,
+            limit=1, offset=0, include_raw=True,
+        )
+    row, = page["results"]
+    assert page["total"] == 1 and not page["has_more"]
+    assert row["payload"] == payload and row["metadata"] == {"kept": True}
 
 
 @pytest.mark.parametrize("flag", [" \t\n", "o"], ids=["blank", "ambiguous-prefix"])
@@ -85,3 +117,18 @@ def test_non_object_metadata_retains_jsonb_key_semantics_in_persisted_summary(
     assert summary["programs"]["app_programs_total"] == programs
     assert summary["diagnostics"]["missing_output_identity"] == 1
     assert sqlite_logical_dump(path) == before
+
+def test_observation_search_crosses_wide_json_string_escape_boundary(tmp_path: Path) -> None:
+    path = published_sqlite_database(tmp_path / "store")
+    body = "x" * (16 * 1024 - 2) + 'A"\\' + "É" * 20000
+    numbers = [-(1 << 63), -1, 0, 1, (1 << 63) - 1, 1 << 65]
+    metadata = {"label": "fixture", "numbers": numbers}
+    _stored_payload(path, "custom.note", json.dumps({"body": body, "metadata": metadata}))
+    witness = json.dumps(body[16 * 1024 - 3:16 * 1024 + 3], ensure_ascii=False)[1:-1]
+    with read_transaction(path, BINDING) as reader:
+        page = observation_search(reader, query=witness, kind="custom.note", path=None,
+                                  limit=1, offset=0, include_raw=False)
+    row, = page["results"]
+    assert page["total"] == 1 and not page["has_more"]
+    assert row["metadata"] == metadata and "payload" not in row
+    assert all(type(number) is int for number in row["metadata"]["numbers"])

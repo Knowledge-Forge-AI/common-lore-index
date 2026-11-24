@@ -12,7 +12,7 @@ from common_lore_index.extractors.languages.javascript_observations import (
 from common_lore_index.extractors.languages.javascript_references import (
     _is_secret_prone,
     _safe_summary,
-    _sanitize_url,
+    _sanitize_reference_url,
     _specifier_target,
 )
 from common_lore_index.extractors.languages.javascript_routes import _first_string_literal
@@ -123,7 +123,7 @@ def _jquery_observations(
         )
     for ajax_method, raw_url in _jquery_ajax_calls(line):
         target, reason = _specifier_target(relative_path, raw_url, repository_paths)
-        sanitized_url = _sanitize_url(raw_url)
+        sanitized_url = _sanitize_reference_url(raw_url)
         url_summary = _safe_summary(sanitized_url, max_length=MAX_URL_SUMMARY_LENGTH)
         metadata = {
             "ajax_method": ajax_method,

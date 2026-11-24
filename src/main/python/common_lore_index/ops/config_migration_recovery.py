@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import stat
 from typing import Any
 
 from common_lore_index.ops.config_layout import classify_config_filename, portable_config_name
 from common_lore_index.ops.config_migration_fs import (
     JOURNAL_NAME, JOURNAL_TEMP_NAME, LOCK_NAME, MAX_FILE_BYTES, OPERATION_DIRECTORY, PROBE_NAMES,
-    Home, MigrationRefusal, backup_name, ident, owned_regular, restore_name,
+    Home, MigrationRefusal, backup_name, ident, owned_regular, restore_name, snapshot,
 )
 from common_lore_index.ops.config_migration_journal import effective_sha256, read_journal, write_journal
 
@@ -26,30 +27,40 @@ def _allowed_names(journal: dict[str, Any] | None) -> frozenset[str]:
 def load_operation(home: Home) -> dict[str, Any] | None:
     """Read the bound operation directory's journal and refuse any name it does not own."""
     journal = read_journal(home)
-    unknown = sorted(set(home.names(in_op=True)) - _allowed_names(journal))
-    if unknown:
-        raise MigrationRefusal("config-migration-residue-unsafe")
+    allowed = _allowed_names(journal)
+    with home.scan_names(in_op=True) as names:
+        if any(name not in allowed for name in names):
+            raise MigrationRefusal("config-migration-residue-unsafe")
     return journal
 
 
-def _content(home: Home, name: str, entry: dict[str, Any], *, in_op: bool = False) -> bytes | None:
+def _content(
+    home: Home, name: str, entry: dict[str, Any], admitted: os.stat_result, *, in_op: bool = False,
+) -> bytes | None:
+    if admitted.st_size != entry["size"]:
+        return None
     try:
-        data, _ = home.read(name, MAX_FILE_BYTES, "config-migration-drift", in_op=in_op)
+        data, observed = home.read(name, MAX_FILE_BYTES, "config-migration-drift", in_op=in_op)
     except MigrationRefusal:
         return None
-    if len(data) != entry["size"] or hashlib.sha256(data).hexdigest() != entry["sha256"]:
+    if (
+        snapshot(observed) != snapshot(admitted)
+        or len(data) != entry["size"]
+        or hashlib.sha256(data).hexdigest() != entry["sha256"]
+    ):
         return None
     return data
 
 
 def _proved(
-    home: Home, name: str, info: Any, entry: dict[str, Any], identities: set[Any], *, links: int = 1, in_op: bool = False,
+    home: Home, name: str, info: os.stat_result, entry: dict[str, Any],
+    identities: set[Any], *, links: int = 1, in_op: bool = False,
 ) -> bytes | None:
     if not owned_regular(info, links=links) or ident(info) not in identities:
         return None
     if stat.S_IMODE(info.st_mode) != entry["mode"]:
         return None
-    return _content(home, name, entry, in_op=in_op)
+    return _content(home, name, entry, info, in_op=in_op)
 
 
 def classify_entry(home: Home, entry: dict[str, Any]) -> tuple[str, bytes]:
@@ -79,10 +90,8 @@ def classify_entry(home: Home, entry: dict[str, Any]) -> tuple[str, bytes]:
                 return "restore-staged", data
         if owned_regular(r) and ident(r) != restored:
             backup = backup_name(entry["index"])
-            if (
-                owned_regular(home.lstat(backup, in_op=True))
-                and _content(home, backup, entry, in_op=True) is not None
-            ):
+            info = home.lstat(backup, in_op=True)
+            if info is not None and owned_regular(info) and _content(home, backup, entry, info, in_op=True) is not None:
                 return "restore-scratch", b""
     if s is not None and t is None and r is not None and restored is not None and ident(s) == ident(r):
         data = _proved(home, source, s, entry, {restored}, links=2)
@@ -91,8 +100,8 @@ def classify_entry(home: Home, entry: dict[str, Any]) -> tuple[str, bytes]:
     if s is None and t is None and r is None:
         backup = backup_name(entry["index"])
         info = home.lstat(backup, in_op=True)
-        if owned_regular(info):
-            data = _content(home, backup, entry, in_op=True)
+        if info is not None and owned_regular(info):
+            data = _content(home, backup, entry, info, in_op=True)
             if data is not None:
                 return "both-missing", data
     raise MigrationRefusal("config-migration-drift", source)
@@ -102,11 +111,14 @@ def check_foreign(home: Home, journal: dict[str, Any]) -> None:
     """Refuse configuration-family names, or portable aliases, that the journal does not own."""
     owned = {entry[key] for entry in journal["entries"] for key in ("source", "target")}
     portable = {portable_config_name(name) for name in owned}
-    for name in home.names():
-        if name == OPERATION_DIRECTORY or name in owned:
-            continue
-        if classify_config_filename(name) is not None or portable_config_name(name) in portable:
-            raise MigrationRefusal("config-migration-drift", name)
+    with home.scan_names() as names:
+        foreign = min((
+            name for name in names
+            if name != OPERATION_DIRECTORY and name not in owned
+            and (classify_config_filename(name) is not None or portable_config_name(name) in portable)
+        ), default=None)
+    if foreign is not None:
+        raise MigrationRefusal("config-migration-drift", foreign)
 
 
 def _prove(home: Home, journal: dict[str, Any], expected: str, key: str, order: list[str]) -> None:
@@ -192,9 +204,14 @@ def roll_back(home: Home, journal: dict[str, Any]) -> None:
 
 def teardown(home: Home, journal: dict[str, Any] | None) -> bool:
     """Remove only proved operation-owned names, lock last; return True if the directory was retained."""
-    names = home.names(in_op=True)
-    if set(names) - _allowed_names(journal):
-        raise MigrationRefusal("config-migration-residue-unsafe")
+    allowed = _allowed_names(journal)
+    names = []
+    with home.scan_names(in_op=True) as entries:
+        for name in entries:
+            if name not in allowed:
+                raise MigrationRefusal("config-migration-residue-unsafe")
+            names.append(name)
+    names.sort()
     last = [name for name in (JOURNAL_NAME, LOCK_NAME) if name in names]
     ordered = [name for name in names if name not in last] + last
     infos = {name: home.lstat(name, in_op=True) for name in ordered}

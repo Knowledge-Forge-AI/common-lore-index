@@ -116,6 +116,9 @@ class BulkManifest:
         return len(self.skipped_files)
 
     def to_jsonable(self) -> dict[str, Any]:
+        return self._to_jsonable(include_inventory=True)
+
+    def _to_jsonable(self, *, include_inventory: bool) -> dict[str, Any]:
         payload = {
             "bulk_run_id": self.bulk_run_id,
             "bulk_manifest_id": self.bulk_manifest_id,
@@ -135,8 +138,10 @@ class BulkManifest:
             "diagnostic_counts": dict(sorted(self.diagnostic_counts.items())),
             "redaction_counts": dict(sorted(self.redaction_counts.items())),
             "manifest_sha256": self.manifest_sha256,
-            "included_files": [item.to_jsonable() for item in self.included_files],
-            "skipped_files": [item.to_jsonable() for item in self.skipped_files],
+            **({
+                "included_files": [item.to_jsonable() for item in self.included_files],
+                "skipped_files": [item.to_jsonable() for item in self.skipped_files],
+            } if include_inventory else {}),
             "no_provider_api": self.no_provider_api,
             "no_external_fetch": self.no_external_fetch,
             "no_source_mutation": self.no_source_mutation,

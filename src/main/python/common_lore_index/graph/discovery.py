@@ -83,6 +83,7 @@ from common_lore_index.graph._discovery_classify import (
 )
 # Traversal selection lives in a sibling with same-name re-exports.
 from common_lore_index.graph._discovery_selection import (
+    _distinct_selected_files,
     DEFAULT_DISCOVERY_EXCLUDE_PATHS as DEFAULT_DISCOVERY_EXCLUDE_PATHS,
     IGNORED_DIR_NAMES as IGNORED_DIR_NAMES,
     _is_excluded_relative_path as _is_excluded_relative_path,
@@ -120,12 +121,14 @@ def discover_repository(
     classify_kwargs: dict[str, Any] = {}
     if io_hooks is None:
         walk: Iterable[tuple[str, list[str], list[str]]] = os.walk(repository_root)
+        selected = _distinct_selected_files(repository_root, configured_excludes, walk)
     else:  # explicit caller hooks count (and may govern) every read
         walk = io_hooks.walk(repository_root)
         classify_kwargs["readers"] = io_hooks.readers()
+        selected = selected_files(repository_root, configured_excludes, walk)
     files = [
         classify_path(repository_root, file_path, profile=profile, **classify_kwargs)
-        for file_path in selected_files(repository_root, configured_excludes, walk)
+        for file_path in selected
     ]
     files_by_path = {file_info.path: file_info for file_info in files}
     return sorted(files_by_path.values(), key=lambda file_info: file_info.path)

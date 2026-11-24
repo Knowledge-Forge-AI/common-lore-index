@@ -18,7 +18,7 @@ from common_lore_index.ops.config_migration import (
     apply_cloe_config_migration as apply, finalize_cloe_config_migration as finalize,
     rollback_cloe_config_migration as rollback,
 )
-from common_lore_index.ops.config_migration_fs import OPERATION_DIRECTORY, Home
+from common_lore_index.ops.config_migration_fs import OPERATION_DIRECTORY, Home, snapshot
 
 SERVER = 'schema_version = 1\n[postgres]\nhost = "127.0.0.1"\npassword = "recovery-secret-sentinel"\n'
 OVERLAY = 'schema_version = 1\n[service]\nlog_level = "debug"\n'
@@ -386,3 +386,13 @@ def test_repeated_apply_reports_already_applied_until_finalized_and_after_rollba
     assert final["result"] == "finalized" and not final["rollback_available"]
     assert apply(home, confirmed=True)["result"] == "already-converted"
     assert sorted(p.name for p in home.iterdir()) == sorted(NAMES.values())
+
+
+def test_snapshot_distinguishes_inode_change_time(tmp_path: Path) -> None:
+    home = make_home(tmp_path)
+    before = (home / next(iter(NAMES))).stat()
+    after = os.stat_result(before, {
+        "st_mtime_ns": before.st_mtime_ns, "st_ctime_ns": before.st_ctime_ns + 1,
+    })
+    assert before.st_ino == after.st_ino and before.st_mtime_ns == after.st_mtime_ns
+    assert snapshot(before) != snapshot(after)

@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.config.nix_common import (
     EXTRACTOR_NAME,
@@ -36,7 +37,7 @@ def extract_flake_input_observations(
     inputs_depth = 0
     nested_input_name: str | None = None
 
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         if not in_inputs:
             if INPUTS_ATTRSET_START_PATTERN.search(line) is None:
                 continue

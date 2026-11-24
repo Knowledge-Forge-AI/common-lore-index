@@ -139,12 +139,17 @@ def test_reader_parses_every_real_workflow() -> None:
             "repomap-main-system-gate.yml",
         }
     else:
-        assert names in ({"repomap-release-qualification.yml"}, {"pipeline.yml"})
+        assert names in (
+            {"repomap-release-qualification.yml"},
+            {"repomap-release-qualification.yml", "project-pages.yml"},
+            {"pipeline.yml"},
+        )
     for workflow in workflows:
         assert isinstance(workflow, Workflow)
-        expected_name = {"repomap-release-qualification": "cloe-release-qualification"}.get(
-            workflow.path.stem, workflow.path.stem,
-        )
+        expected_name = {
+            "repomap-release-qualification": "cloe-release-qualification",
+            "project-pages": "Deploy Common Lore Index website",
+        }.get(workflow.path.stem, workflow.path.stem)
         assert workflow.name == expected_name
         assert workflow.triggers
         assert workflow.permissions
@@ -176,7 +181,9 @@ def test_accessors_expose_commands_and_actions() -> None:
     job_steps = workflow.job_steps(job_name)
     assert len(job_steps) > 0
     job_commands = workflow.job_run_commands(job_name)
-    assert any("python3 tools/run_tests.py" in command for command in job_commands)
+    expected = ("tools/ci/hosted_staging.py aggregate" if "staging-integration-parts" in workflow.jobs
+                else "python3 tools/run_tests.py")
+    assert any(expected in command for command in job_commands)
     assert workflow.job_steps("nonexistent_job") == ()
     assert workflow.job_run_commands("nonexistent_job") == ()
     assert workflow.job_action_uses("nonexistent_job") == ()

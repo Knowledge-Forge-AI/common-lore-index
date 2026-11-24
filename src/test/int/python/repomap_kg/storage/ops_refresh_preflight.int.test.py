@@ -2,7 +2,10 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
+from common_lore_index.graph import _discovery_classify
+from common_lore_index.graph.discovery import discover_repository
 from common_lore_index.storage import apply_migrations, default_rdbms_root
 from repomap_test_support.cli_in_process import run_repo_map_in_process
 from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
@@ -33,6 +36,42 @@ def _cfg(host: str, port: int, user: str, graphs: str, db: str = "repomap_test")
 
 
 class StorageOpsRefreshPreflightIntegrationTests(unittest.TestCase):
+    def test_ops_preflight_counts_regular_files_and_handles_broken_and_cyclic_links(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory).resolve()
+            root = base / "graph"
+            nested = root / "nested"
+            nested.mkdir(parents=True)
+            (root / "guide.md").write_text("# Guide\n", encoding="utf-8")
+            (nested / "topic.md").write_text("# Topic\n", encoding="utf-8")
+            (root / "available.md").symlink_to("guide.md")
+            (root / "missing.md").symlink_to("absent.md")
+            (root / "loop.md").symlink_to("loop.md")
+            (root / "directory-alias").symlink_to("nested", target_is_directory=True)
+            (root / "restricted").mkdir()
+            (root / "restricted" / "notes.md").write_text("# Excluded\n", encoding="utf-8")
+            (root / "excluded-alias.md").symlink_to("restricted/notes.md")
+            config = base / "fixture.toml"
+            config.write_text(
+                _cfg("127.0.0.1", 5432, "fixture", _graph("fixture", "Fixture", root, "fixture", exc=["restricted"])),
+                encoding="utf-8",
+            )
+            status, stdout, stderr = run_repo_map_in_process(
+                "ops", "refresh-preflight", "--config", str(config), "--graph", "fixture", "--json",
+            )
+            with patch.object(_discovery_classify, "content_hash", wraps=_discovery_classify.content_hash) as digest:
+                paths = [item.path for item in discover_repository(root, exclude_paths=("restricted",))]
+            self.assertEqual(digest.call_count, 2)
+        self.assertEqual(status, 0, stderr)
+        result = json.loads(stdout)["graph"]
+        self.assertEqual(result["files_considered"], 6)
+        self.assertEqual(result["files_included"], 3)
+        self.assertEqual(result["files_skipped"], 3)
+        self.assertEqual(result["directories_skipped"], 2)
+        self.assertEqual(result["symlink_count"], 5)
+        self.assertEqual(result["configured_exclude_hit_counts"]["restricted"], 2)
+        self.assertEqual(paths, ["guide.md", "nested/topic.md"])
+
     def test_ops_refresh_graph_cli_enforces_configured_exclude_paths(self):
         require_postgres_binaries()
 
@@ -258,7 +297,7 @@ class StorageOpsRefreshPreflightIntegrationTests(unittest.TestCase):
                 self.skipTest(f"symlink creation unavailable: {error}")
             config_path.write_text(_cfg(
                 "127.0.0.1", 5432, "repomap",
-                _graph("flakes", "Flakes", graph_root, "flakes", priv="private-config", prof="private-ops", db="repomap_flakes", exc=["result", "result-*"]),
+                _graph("flakes", "Flakes", graph_root, "flakes", priv="private-config", prof="private-ops", db="repomap_flakes", exc=["result", "result-*", "result-store"]),
                 db="repomap",
             ), encoding="utf-8")
             exit_code, stdout, stderr = run_repo_map_in_process(
@@ -276,6 +315,9 @@ class StorageOpsRefreshPreflightIntegrationTests(unittest.TestCase):
         self.assertEqual(graph["default_exclude_hit_counts"][".direnv"], 1)
         self.assertEqual(graph["configured_exclude_hit_counts"]["result"], 1)
         self.assertEqual(graph["configured_exclude_hit_counts"]["result-*"], 1)
+        self.assertEqual(graph["configured_exclude_hit_counts"]["result-store"], 0)
+        self.assertEqual(graph["top_level_file_count"], 2)
+        self.assertEqual(graph["top_level_directory_count"], 0)
         self.assertGreaterEqual(graph["symlink_count"], 2)
         self.assertGreaterEqual(graph["symlinks_skipped_outside_root"], 2)
         self.assertGreaterEqual(graph["symlinks_skipped_nix_store"], 1)

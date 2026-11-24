@@ -24,7 +24,7 @@ from common_lore_index.extractors.languages.javascript_reference_observations im
 from common_lore_index.extractors.languages.javascript_references import (
     _is_secret_prone,
     _safe_summary,
-    _sanitize_url,
+    _sanitize_reference_url,
     _specifier_target,
 )
 from common_lore_index.observations.raw import RawObservation
@@ -233,7 +233,7 @@ def add_line_reference_observations(
                 module_canonical_key,
                 target=target,
                 metadata={
-                    "specifier": _safe_summary(_sanitize_url(specifier)),
+                    "specifier": _safe_summary(_sanitize_reference_url(specifier)),
                     "target_key": target,
                     "resolution_reason": reason,
                     "module_system": "commonjs",

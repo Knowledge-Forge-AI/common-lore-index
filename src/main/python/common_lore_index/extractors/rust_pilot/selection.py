@@ -9,6 +9,7 @@ legacy ``file`` observation is never changed by selection.
 
 from __future__ import annotations
 
+import codecs
 import hashlib
 import os
 import stat
@@ -60,15 +61,16 @@ def _identity(value: os.stat_result) -> tuple[int, int, int, int, int]:
 
 def _read_no_follow(root_fd: int, relative: str) -> bytes:
     parts = _components(relative)
-    opened: list[int] = []
+    current = root_fd
     try:
-        current = root_fd
         for part in parts[:-1]:
+            parent = current
             try:
-                current = os.open(part, _DIR_FLAGS, dir_fd=current)
+                current = os.open(part, _DIR_FLAGS, dir_fd=parent)
             except OSError:
                 raise _Refused("selection_refused") from None
-            opened.append(current)
+            if parent != root_fd:
+                os.close(parent)
         try:
             fd = os.open(parts[-1], _READ_FLAGS, dir_fd=current)
         except OSError:
@@ -81,15 +83,18 @@ def _read_no_follow(root_fd: int, relative: str) -> bytes:
                 raise _Refused("resource_bound_exceeded")
             chunks: list[bytes] = []
             total = 0
-            while total <= MAX_INPUT_BYTES:
-                chunk = os.read(fd, min(65_536, MAX_INPUT_BYTES + 1 - total))
+            while total < before.st_size:
+                try:
+                    chunk = os.read(fd, min(65_536, before.st_size - total))
+                except OSError:
+                    raise _Refused("selection_refused") from None
                 if not chunk:
                     break
                 chunks.append(chunk)
                 total += len(chunk)
-            if total > MAX_INPUT_BYTES:
-                raise _Refused("resource_bound_exceeded")
             after = os.fstat(fd)
+            if after.st_size > MAX_INPUT_BYTES:
+                raise _Refused("resource_bound_exceeded")
         finally:
             os.close(fd)
         try:
@@ -100,8 +105,17 @@ def _read_no_follow(root_fd: int, relative: str) -> bytes:
             raise _Refused("source_changed")
         return b"".join(chunks)
     finally:
-        for fd in reversed(opened):
-            os.close(fd)
+        if current != root_fd:
+            os.close(current)
+
+
+def _require_utf8(data: bytes) -> None:
+    if data.isascii():
+        return
+    decoder = codecs.getincrementaldecoder("utf-8")()
+    for start in range(0, len(data), 65_536):
+        decoder.decode(data[start:start + 65_536])
+    decoder.decode(b"", final=True)
 
 
 def select_one(root_fd: int, info: FileInfo) -> SelectionRecord:
@@ -110,7 +124,7 @@ def select_one(root_fd: int, info: FileInfo) -> SelectionRecord:
         data = _read_no_follow(root_fd, info.path)
         if hashlib.sha256(data).hexdigest() != info.content_hash:
             raise _Refused("source_changed")
-        data.decode("utf-8")
+        _require_utf8(data)
     except _Refused as refusal:
         return SelectionRecord(info.path, refusal.outcome, info.content_hash, None, build_script)
     except UnicodeDecodeError:

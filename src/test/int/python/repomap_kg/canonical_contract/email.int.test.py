@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 
 from common_lore_index.canonicalization import canonicalize_observations
@@ -24,7 +25,7 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
                     "Message-ID: <reply@example.invalid>\n"
                     "Date: Fri, 02 Jan 2026 03:04:05 +0000\n"
                     "From: Alice Person <alice@example.invalid>\n"
-                    "To: Bob Person <bob@example.invalid>\n"
+                    "To: Bob Person <bob@example.invalid>, Alternate <bob@example.invalid>\n"
                     "Cc: Team Person <team@example.invalid>\n"
                     "Reply-To: Replies Person <replies@example.invalid>\n"
                     "Sender: Sender Person <sender@example.invalid>\n"
@@ -33,7 +34,9 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
                     "In-Reply-To: <root@example.invalid>\n"
                     "References: <root@example.invalid> <prior@example.invalid>\n"
                     "List-Id: <updates.example.invalid>\n"
-                    "List-Unsubscribe: <https://example.invalid/unsub?token=fake-mail-token&ok=1>\n"
+                    "List-Unsubscribe: <https://example.invalid:not-a-port/hidden>\n"
+                    "List-Unsubscribe: <https://example.invalid/unsub?token=fake-mail-token&ok=1>, "
+                    "<https://[2001:db8::1]/list>\n"
                     "MIME-Version: 1.0\n"
                     "Content-Type: text/plain; charset=utf-8\n"
                     "\n"
@@ -173,6 +176,10 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
         self.assertIn("missing-or-invalid-message-id", parse_error_kinds)
         self.assertIn("header-size-limit", parse_error_kinds)
         self.assertIn("mime-part-count-limit", parse_error_kinds)
+        capped_parts = [part for part in observations if part.path == "many-parts.eml" and part.kind == "email.part"]
+        self.assertEqual(len(capped_parts), MAX_MIME_PARTS)
+        self.assertEqual(capped_parts[0].metadata["part_path"], "/parts/1")
+        self.assertEqual(capped_parts[-1].metadata["part_path"], f"/parts/1.{MAX_MIME_PARTS - 1}")
         self.assertIn("parser-defect", parse_error_kinds)
         self.assertIn("file-size-limit", parse_error_kinds)
         self.assertTrue(
@@ -204,6 +211,8 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
         self.assertNotIn("unsubscribe@example.invalid", payload)
         self.assertNotIn("fake-mail-token", payload)
         self.assertNotIn("fake-mail-reset-code", payload)
+        self.assertIn("[2001:db8::1]", payload)
+        self.assertTrue(result.ok and "not-a-port" not in payload)
 
     def test_static_mbox_extraction_and_canonicalization_contract(self):
         observations: list[RawObservation] = []
@@ -250,8 +259,8 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
                 "limited.mbox",
                 (
                     b"From MAILER-DAEMON Tue Jun 30 12:00:00 2026\n"
-                    b"Message-ID: <limited-one@example.invalid>\n\nbody\n"
-                    b"From MAILER-DAEMON Tue Jun 30 12:01:00 2026\n"
+                    b"Message-ID: <limited-one@example.invalid>\r\n\r\nbody\r"
+                    b"From MAILER-DAEMON Tue Jun 30 12:01:00 2026\r\n"
                     b"Message-ID: <limited-two@example.invalid>\n\nbody\n"
                 ),
                 max_messages=1,
@@ -318,6 +327,15 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
         self.assertNotIn("MBOX contract body", serialized)
         self.assertNotIn("contract-secret-note.txt", serialized)
         self.assertNotIn("fake-mail-token", serialized)
+
+    def test_mail_parser_failure_is_safe_to_canonicalize(self):
+        with patch("email.parser.BytesParser.parsebytes", side_effect=ValueError("fixture private detail")):
+            (failure,) = extract_eml_file_observations("diagnostic.eml", b"Subject: Fixture\n\n")
+        self.assertEqual(failure.kind, "email.parse_error")
+        self.assertNotIn("fixture private detail", str(failure.metadata))
+        result = canonicalize_observations((failure,))
+        self.assertTrue(result.ok)
+        self.assertEqual(result.to_dict()["summary"]["nodes"], 0)
 
     def test_email_canonicalization_diagnostic_contracts(self):
         message_hash = "a" * 64

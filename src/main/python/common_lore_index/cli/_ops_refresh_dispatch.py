@@ -258,6 +258,8 @@ def _refresh_graph(
             print(commands.format_coordinator_refresh_table(payload))
         return 0 if payload["result"] == "success" else 1
     try:
+        if getattr(args, "resource_report_schema", None) == 3 and getattr(args, "staging_event_fd", None) is not None:
+            raise ResourceReportRefusal("schema_3_rejects_staging_event_transport")
         backend_telemetry = None
         backend_telemetry_fd = getattr(args, "backend_telemetry_fd", None)
         backend_telemetry_ack_fd = getattr(
@@ -281,6 +283,8 @@ def _refresh_graph(
         ) as staging_measurements:
             config = commands.load_ops_config_from_args(args)
             session = admit_report(args, config)
+            if session is not None and staging_measurements is None:
+                staging_measurements = session.server_staging_measurements()
             admission = (
                 commands.maintenance_activity_for_home(args.repo_map_home)
                 if args.repo_map_home

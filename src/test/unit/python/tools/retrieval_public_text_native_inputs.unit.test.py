@@ -131,10 +131,10 @@ def test_argv_is_the_single_learned_selector_with_the_existing_runtime_override(
 def test_child_environment_is_scoped_and_does_not_mutate_the_parent(tmp_path: Path) -> None:
     paths = create_native_paths(_scratch(tmp_path))
     before = dict(os.environ)
-    base = {"PATH": "/usr/bin", "PYTHONPATH": "/leak", "COVERAGE_PROCESS_START": "x", "CLOE_HOME": "/home"}
+    base = {"PATH": "/usr/bin", "PYTHONPATH": "/leak", "COVERAGE_PROCESS_START": "x", "CLOE_HOME": "/home", "CLOE_PGVECTOR_OFFLINE_PLAN": "/synthetic/plan"}
     child = child_environment(paths, base)
     assert dict(os.environ) == before
-    assert child["PATH"] == "/usr/bin" and not {"PYTHONPATH", "COVERAGE_PROCESS_START", "CLOE_HOME"} & set(child)
+    assert child["PATH"] == "/usr/bin" and not {"PYTHONPATH", "COVERAGE_PROCESS_START", "CLOE_HOME", "CLOE_PGVECTOR_OFFLINE_PLAN"} & set(child)
     assert child["TMPDIR"] == str(paths.run_root / "tmp") and child["PYTHONDONTWRITEBYTECODE"] == "1"
     assert child["REPOMAP_TEST_PHASE"].endswith("PUBLICTEXT-CAL1")
     (paths.run_root / "tmp").chmod(0o755)

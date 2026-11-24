@@ -77,7 +77,7 @@ def test_live_reader_delegation_and_probe_not_reimplemented(tmp_path, monkeypatc
         called.append(path)
         return "live"
 
-    monkeypatch.setattr(classification, "first_line", read)
+    monkeypatch.setattr(classification, "read_shebang_candidate", read)
     monkeypatch.setattr(classification, "is_go_generated_file", lambda _path: True)
     monkeypatch.setattr(classification, "is_zsh_completion_candidate", lambda _path: True)
     monkeypatch.setattr(base.CaptureDiscoveryHooks, "content_hash", lambda _self, _path: "existing-probe")

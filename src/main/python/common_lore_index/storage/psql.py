@@ -5,8 +5,10 @@ from __future__ import annotations
 import json
 import subprocess
 from collections.abc import Sequence
+from itertools import islice
 from typing import Any, Literal as _Literal, TypedDict as _TypedDict
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.storage.errors import StorageSchemaError
 
 __all__ = (
@@ -20,6 +22,7 @@ PSQL_LAUNCH_ERROR = "unable to launch psql command"
 PSQL_INTERRUPTED_ERROR = "psql command interrupted"
 _PSQL_FAILURE_DETAIL_LIMIT = 512
 _PSQL_FAILURE_TRUNCATION_SUFFIX = " ... [truncated]"
+_LINE_ENDINGS = frozenset("\n\r\v\f\x1c\x1d\x1e\x85\u2028\u2029")
 
 
 class _RunOptions(_TypedDict, total=False):
@@ -65,7 +68,7 @@ def psql_failure_message(error: subprocess.CalledProcessError) -> str:
 
 
 def _bounded_psql_failure_details(details: str) -> str:
-    lines = [line.strip() for line in details.splitlines() if line.strip()]
+    lines = list(islice(filter(None, map(str.strip, iter_text_lines(details))), 2))
     first_line = lines[0]
     if len(lines) == 1 and len(first_line) <= _PSQL_FAILURE_DETAIL_LIMIT:
         return first_line
@@ -79,16 +82,26 @@ def _bounded_psql_failure_details(details: str) -> str:
 
 
 def parse_psql_json(stdout: str, label: str) -> Any:
+    selected = last_output_line(stdout, label=label)
     try:
-        return json.loads(last_output_line(stdout, label=label))
-    except json.JSONDecodeError as error:
+        return json.loads(selected)
+    except (ValueError, RecursionError) as error:
         raise StorageSchemaError(f"psql did not return {label} as JSON") from error
 
 
 def last_output_line(stdout: str, *, label: str | None = None) -> str:
-    lines = [line for line in stdout.splitlines() if line.strip()]
-    if not lines:
-        if label is not None:
-            raise StorageSchemaError(f"psql did not return {label} as JSON")
-        raise StorageSchemaError("psql did not return a load summary")
-    return lines[-1]
+    # Find the last nonblank line and keep any whitespace on that line.
+    # A normal LF-delimited response can skip every preceding row.
+    end = len(stdout)
+    index = end - 1
+    while index >= 0 and stdout[index].isspace():
+        if stdout[index] in _LINE_ENDINGS:
+            end = index
+        index -= 1
+    if index >= 0:
+        start = stdout.rfind("\n", 0, index + 1) + 1
+        tail = stdout[start:end]
+        return tail.splitlines()[-1]
+    if label is not None:
+        raise StorageSchemaError(f"psql did not return {label} as JSON")
+    raise StorageSchemaError("psql did not return a load summary")

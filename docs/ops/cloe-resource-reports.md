@@ -3,6 +3,7 @@
 How to request, inspect and interpret bounded `cloe-resource-view-v1` report
 files. The contract is owned by ADR 0165 and the
 [resource report specification](../specs/cloe-resource-reports-v1.md).
+ADR 0217 defines the optional Server staging report.
 
 Reports are descriptive. They add no work limit, enforcement, schema, graph
 vocabulary, MCP field or telemetry service, and nothing is written unless you
@@ -78,6 +79,35 @@ Context reporting projects the returned packet and never injects a ledger or
 starts another query. Owner controls which the packet cannot establish remain
 unknown.
 
+## Sampling a Server refresh
+
+Select schema 3 on a direct PostgreSQL refresh to include the staged writer's
+shared counter samples.
+
+```sh
+cloe ops refresh-graph --repo-map-home ~/.cloe --graph my-graph \
+  --resource-report ~/cloe-reports/server-staging.json --resource-report-schema 3
+```
+
+Schema 3 includes the version 1 Server metrics and two byte values with the
+`shared_sample_delta` basis. `staging_wal_position_delta` measures movement
+in the cluster WAL insert position. `staging_database_temporary_bytes_delta`
+measures movement in the current database's cumulative temporary-byte total
+while its reset identity stays continuous. Samples bracket the staged writer.
+A measured zero records an unchanged sample. A missing, backwards or reset
+counter is unavailable with reason `not_observed`; repeated source events use
+`ambiguous_repeat`. Shared activity and statistics timing can affect a delta.
+Per-statement and physical work require independent evidence.
+
+If optional sampling fails, both staging rows report `observer_failed`.
+The refresh result still reflects what PostgreSQL did. A completed
+publication remains committed even when the final sample fails.
+
+Schema 3 is available on the direct Server command. SQLite, coordinator mode,
+the developer staging event transport, and v2 sealing-budget combinations
+refuse it. The default remains schema 1. Use schema 2 for sealing and worker
+attribution.
+
 ## Inspecting a report offline
 
 ```zsh
@@ -87,7 +117,8 @@ cloe ops resource-report show --input ~/cloe-reports/refresh.json --json
 ```
 
 These commands take no home or config option and open no configuration,
-database, source or worker. They read at most 8193 bytes from a private
+database, source or worker. Schemas 1 and 3 accept files up to 8193 bytes.
+Schema 2 accepts files up to 16385 bytes. Input must be a private
 regular file you own (a second hard link is accepted; symlinks, FIFOs,
 devices and directories are refused unopened). Invalid input prints
 `ERROR: resource-report-invalid: <category>`, for example `not_canonical`,

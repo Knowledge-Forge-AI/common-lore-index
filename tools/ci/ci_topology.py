@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import replace
+import hashlib
 import sys
 from pathlib import Path
 
@@ -82,6 +83,21 @@ from ci.qualification_native_contracts import (
     validate_d12_system_hold_step as _validate_d12_system_hold_step,
 )
 from ci.qualification_rust_contracts import validate_rust_qualification_job
+
+
+# The reviewed Pages deployment runs only on main for the site's own paths.
+# Any change to its permissions, triggers, or steps requires a new review.
+_PROJECT_PAGES_WORKFLOW = "project-pages.yml"
+_PROJECT_PAGES_SHA256 = "b32c7732a63d8383be9dea90891b799e1c6fc6131d4c193acffec125b4a6a5bf"
+
+
+def _approved_project_pages(workflow: Workflow) -> bool:
+    path = workflow.path
+    return (
+        path.name == _PROJECT_PAGES_WORKFLOW
+        and not path.is_symlink()
+        and hashlib.sha256(path.read_bytes()).hexdigest() == _PROJECT_PAGES_SHA256
+    )
 
 
 def _contract_values() -> TopologyContractValues:
@@ -231,7 +247,7 @@ def check_topology(repo_root: Path) -> tuple[str, ...]:
         if (workflow_dir / retired).exists():
             violations.append(f"{retired}: retired workflow must not exist")
 
-    workflows = load_workflows(workflow_dir)
+    workflows = tuple(workflow for workflow in load_workflows(workflow_dir) if not _approved_project_pages(workflow))
     by_name = _by_name(workflows)
 
     for name in by_name:

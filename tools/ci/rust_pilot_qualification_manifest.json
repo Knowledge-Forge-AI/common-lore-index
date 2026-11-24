@@ -30,6 +30,10 @@
         "sha256": "65d9e4be80d5ffb58ad887c1cd60f52fa89e70b05dbdcbab6157e49e080f8114"
       },
       {
+        "path": "src/main/python/common_lore_index/_utf8.py",
+        "sha256": "0957c6190ae6b930b738fafaaf9ea0e86d5fbc449ebe8dbb0f6563a82fcf2f2b"
+      },
+      {
         "path": "src/main/python/common_lore_index/canonicalization/__init__.py",
         "sha256": "bc4db8dac0c789f1c32fa87619ff5b70aad10eb330313c710b213c35e1e365f4"
       },
@@ -263,7 +267,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/generic.py",
-        "sha256": "865c2ff2b562ae8c82a9d3a61b18b98fae6211eebb3ce27dfee08480385ec2d9"
+        "sha256": "d5390ed6ecd001d5e76d1ba0e84956c507a13b046dfe523a5bc9cc399fd1fc30"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/generic_contracts.py",
@@ -275,27 +279,27 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/generic_profile_helpers.py",
-        "sha256": "7cd2b3ebd79cf5f6cfd8dfe2ea65fe7eda63c9db2676d38131079806b0b234e4"
+        "sha256": "03c5a91c1e73673c0bb6904bfde2cff8de42b411359cec72563a9b2dd03f7376"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/generic_reference_contracts.py",
-        "sha256": "768319ade735394f5b5dcfb469731e52d2379c43196672c3eb2dc19f5d630705"
+        "sha256": "5749fd412b3fcd3bbf77d6470fe589058622b763e5aadf938fcbc0ae3308e5ed"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/generic_structure.py",
-        "sha256": "87e4e502f85b07699668c7c8e0ce5ea52b21d034abf700addf551d4e655ea51e"
+        "sha256": "3d0619ec7ff6412ddfafd30c40ea561c2939d4912c82ea16c73fb1172ef7d316"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/generic_tfjson_profiles.py",
-        "sha256": "63cab87c1d79c6f669d016063bdb222905b2b2c4bed28508e71dcff77837c6e0"
+        "sha256": "72b6e8630e9316b1b8ebc0bbae51078bb6dccf52471ad9f4ddd71549b36c4fb0"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/generic_values.py",
-        "sha256": "6f642537255750f16a6715faa6682d193c02f81626776a43bfb4ad2a0dfdc6ac"
+        "sha256": "582be8a3726bfb86173224f502fcbcc40d56b962aa952015bd8ce70f2ca57904"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/infrastructure.py",
-        "sha256": "b8a02ede12ac1ba1c3166fe63ed627b1a2f1ad9d2962ceea149109d9cbe2808a"
+        "sha256": "b8bc7d1493ca07b171bc2bf02d7c2f9f8a198362688beee93703c3006230c286"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/javascript.py",
@@ -307,7 +311,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/nix.py",
-        "sha256": "5029fb36c690115271963c7836d3f5df0cd8456d0aad203924f8ee504e69b10f"
+        "sha256": "c00cae124b9839377a9f4cc7bc3fc728627044aa3dee5e97b3715a0b2b5f7d23"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/nix_common.py",
@@ -315,7 +319,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/nix_inputs.py",
-        "sha256": "a88509ef99e602058985282eb7ecce41b261f4d553b965b14a2769711015f28a"
+        "sha256": "bc6c83150bc429b135270fb1477717f9f018f985d51de9b7d4d9e4325734ab21"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/nix_paths.py",
@@ -323,7 +327,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/nix_portable_refs.py",
-        "sha256": "ea769cde296e06b3cdf8c12917e0a4a2b96d19e0693b10e549141509475e7a31"
+        "sha256": "b187e1af60ea2ea847f6a97f7d50b0d8ee35c89df2373f06c476ac76fd44c20a"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/openapi.py",
@@ -331,7 +335,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/openapi_helpers.py",
-        "sha256": "20368552ef36212730fca18c7cb36679e63ce45430a76a09f71df60eb3550802"
+        "sha256": "ab9bf37da5e4d6db665d06ddbe02634d6cbfa42a0b986a9c85d35e54407b0333"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/paths.py",
@@ -339,7 +343,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/python.py",
-        "sha256": "4fd023bf07aa2650a1a0f0d69db396e87223c564a822f84d418ad35fad68a090"
+        "sha256": "b7676e770ce30b417714dfef9132c8082e612f9c0972fb61c38f57f272316430"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/python_support.py",
@@ -347,15 +351,15 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/terraform.py",
-        "sha256": "9cfddef47f054ca6142c83a18e8bb992e4e0b135915af9c05a48afd09ee9259e"
+        "sha256": "79c888267aa0965803b847aef7acd9b4b9a7d40acb19cae00031a402fcf72623"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/terraform_hcl_helpers.py",
-        "sha256": "202f270b1bdeefe89201878292d5e2c850ee93c786f5a92d836e0cfe6265c2ad"
+        "sha256": "962ce17ec1b82632ab1c45c8d6efb7a19e6b486aae89fa98e756838eea7ce226"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/terraform_hcl_observations.py",
-        "sha256": "1d98533f33d3ae0f1dbbb0b75f5594646cacab67b2a15135b3a1e8cb6ff66dbf"
+        "sha256": "6047b82ee10e3e8bb1d3cd8940b10b9b060d1289d326d85b3d47fade261363f2"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/terraform_hcl_profiles.py",
@@ -363,7 +367,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/terraform_hcl_scan.py",
-        "sha256": "906225c17771bfa3a85775735f3d44c43d472e8ca7b55513a8ec3407c56e9ef1"
+        "sha256": "abf321e06c85759f77fd7930cf5162c028fdc3174f52093c597344faf96343d5"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/terraform_json.py",
@@ -371,11 +375,11 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/toml_lines.py",
-        "sha256": "2c1d950ed0c41b50043ca78d3a00ebf75d1dce615d8229616d48fba9126afec6"
+        "sha256": "23323fd77fc48ef7adef7b69aad0a62b50f523f394fffb7ec37698f8c2e713d1"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/xml.py",
-        "sha256": "fc3d0ac4588ba9138f2c901a222aafd9e418be2346e86c37dad408e86e8cb6a3"
+        "sha256": "78b9e9ccf5eb8602d1971eaf63003abb9ea5779787490a19f54c5e074f0a53df"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/xml_references.py",
@@ -383,7 +387,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/yaml.py",
-        "sha256": "8f9d733bc15e3369da1137f6a6063ce5f26ba0fb047331e3e8f0a489921cd3aa"
+        "sha256": "f993b6cb04b4cc06701468d33860eef131db8fe4fb8eb18727378fc54fce95fe"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/yaml_lexical.py",
@@ -391,7 +395,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/yaml_profiles.py",
-        "sha256": "c024e0e6a02fdbe5253ac3c72efe789644d2f9e43463c324d36283fdcdbfdd8f"
+        "sha256": "8b8f7dbf78a88f1d3196050ee2f09fdf2028052b5da7111d569f63e5f92b9833"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/config/yaml_reference_contracts.py",
@@ -427,51 +431,51 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/css.py",
-        "sha256": "5488886c39fb13f4fc854284f25e42d0c1f9828383df50fe48277f8877017423"
+        "sha256": "abcb2c8363c901932800353a788fceb3d720a6e0ae81da0b5fb12f04ce578f84"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/css_html_matching.py",
-        "sha256": "52d665c0b99a3578a6de24b474cf27c62b385edcf945eb5b040fb4205b71ed9d"
+        "sha256": "0ebfb61a2254ce2a4a155addd74a1c8d8d540ffc1b9d75f74aa42ac36aaa80cb"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/css_support.py",
-        "sha256": "e003b7c696154e488671c7ed732388442becffc4be89701a8c0e913d871e5407"
+        "sha256": "1f1960f707795d073eae76623964e7ffaef945cd5c87be5eb2fba0297e828bdd"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/email.py",
-        "sha256": "410e660fb624c693aa8f0fbd1fc29ef91847c742225ba1717fd34cfdf3b910fe"
+        "sha256": "e6f5fa3dd73faceb87e1bafd1624f461e702680f26526dbd3072399d4c02e085"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/email_common.py",
-        "sha256": "3c9a8897944ef0e3130b472d1fbea2e284d6c2f42bd3ee41582f3fc960f3e8d5"
+        "sha256": "7481dc59fe9f283cd907f72658090d376ee48df241f521a9f4fabfbd66bbbad6"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/email_parts.py",
-        "sha256": "896e9fe30290600ee72f6ef8df91977eab2a72ef4fdda1fe0d7aa578e94b22f3"
+        "sha256": "7d8b1a06358946ae2ba1665660fb7b61f8523f95ebd5f227711dfb6e5c299446"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/feed.py",
-        "sha256": "45d7fc70d5dbb31fe8495ef9bb0733cdf4ec2e1c3f2f96f552afbc0f56e48489"
+        "sha256": "6831e975996c78a3acec17a3b2c0f2b511b6300ab9e521e69f8b4e5439e07fb0"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/feed_data.py",
-        "sha256": "09cd9db6c4378a9c8dfd05ff0e9cda2c0966b86ed3b1d46758c7758e99a34055"
+        "sha256": "1af5ce215e63394daaa2a66a1887668c450d6fb1917eff103251594f17249ad6"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/feed_support.py",
-        "sha256": "7c7c68b9afaaa9620680bc1517b2e0935e5ca58f7c37d585d91ce03bb89409f2"
+        "sha256": "bef35e82becffcfb9b73101140251bc524aa5f3c7005b9c8cfb6f4d3f0b483b0"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/html.py",
-        "sha256": "976290862bad9d47dc22491bc3c8d3109c5498bbf06a04afc4f6b1fb0044bfb4"
+        "sha256": "727a7a4375fda5e028efec2d97808560e6aacb0c491f4be988d2d712a200ea5a"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/markdown.py",
-        "sha256": "30acdfaa6fd377c4603fa666e80a995000171dabd9984c95a40f75c2242e6593"
+        "sha256": "5f73af504005e9b3799fdb78180f1a6c72fdf16c942780274e2ff9fed2147469"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/markdown_structure.py",
-        "sha256": "ea18d341dab5efd42f315002a91ab69b3ee19cf400e4af8b623d2102f283b975"
+        "sha256": "656e131cae57103a0c157ad5379bf4deacae3ee4b5ac5dec2919caf0af89a320"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/office.py",
@@ -479,19 +483,19 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/office_common.py",
-        "sha256": "e126906e16f4f705fe8ee20e3273af7af527298821d2dc4e6e95e20ff0a7fa37"
+        "sha256": "21d329b8c868ccd72b12c067626541a304db101f3a0afc9493806db7b29538ed"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/office_odf.py",
-        "sha256": "a6b8db38fee89ae11a38e46923c37ca2779246bfe5729edfa2918af9fb1eb5d6"
+        "sha256": "8fa3d66f40c0da5f340bd0a05fb2710381433dc7dc3d6042654b1370efed1891"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/office_plain.py",
-        "sha256": "4a952da6dd4e97e03650d15b68dfd8e5a22f075a3296c26ffa59c0093e56f061"
+        "sha256": "11f5fb5ecaa1863163d157d846e6e4fe6951281b1b95542c05addbb69c27ee23"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/documents/office_references.py",
-        "sha256": "0c48a35284b2eed078335ee22f08a732788e69c2b7aa4841f03ea6f08045c29f"
+        "sha256": "0019bdf30138031c7b6b7f84344d8d75aa517ed9062c489b5c6c51ddca6d6137"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/__init__.py",
@@ -503,11 +507,11 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/go_metadata.py",
-        "sha256": "c773d6a8838c1d14b525ab2157f490a03a0da983ae6bf72cefc2a9ddd7685748"
+        "sha256": "84cd2dcec74586c78ba2c06f00c8c72f3c494b4f775916698bbe15f290d0f7db"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/go_metadata_scanner.py",
-        "sha256": "5885b897d7017cf3aa27fdef868eb4fb0f4cb91922a285b62c54a93788e2bc3e"
+        "sha256": "b6333d6cd743161f1ce2f1331ca70b22079aba34233cbbf475051ab9f21875a8"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/go_metadata_support.py",
@@ -531,7 +535,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/javascript.py",
-        "sha256": "28c36d4caa00b0aa0f0350eef96a5f12ce8346e17203b3f7018ee36a0965e08b"
+        "sha256": "ce87dc236b8d9bd56ab284425a777a32d5de5511f5dec2487006041a70f53c7e"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/javascript_detection.py",
@@ -543,23 +547,23 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/javascript_jquery.py",
-        "sha256": "43b1ea8b916ed880e5ea1e5bf2f5ce2fb4b3573a6d7520908ddbd04b95301231"
+        "sha256": "97eea315c43e096f9d0e0cff72369c27e4c396388cba32dfbd50af812b99a133"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/javascript_line_references.py",
-        "sha256": "94c0610422dbd6d8e7bba1c68787591ed5f0bcc61f373f197f6f53e6ac56bacf"
+        "sha256": "b1ac64d7b82aac15058b1497310dbe204eff716d9fdb8211211f709bdc252045"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/javascript_observations.py",
-        "sha256": "3bd2f66e083c977c8840d95c13753d84e4a00730d461404ae036ad36580250c9"
+        "sha256": "4203fe933c26d7a8ed9d5ed46e4b797dc70857123344d2885e320a629dddc5c1"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/javascript_reference_observations.py",
-        "sha256": "8bab6c93bbdebc7ab452750b4e6f36a001e8af452ec61d69a1a0f85ec007af36"
+        "sha256": "ad798906d1cdd1d8cc7727cf965016bec1d740095195bbe46b4116fe3d89cf10"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/javascript_references.py",
-        "sha256": "5ebb0fce641dbf0d8297e8bd48fbef63d9cf8c496df61d72124f2a389cd6a446"
+        "sha256": "76aca2f93d3f9ea0a64a53d471520007b7f7e369ddbf755b2f2b61b0110139fd"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/javascript_routes.py",
@@ -575,7 +579,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/python.py",
-        "sha256": "1e69b812c40f00f808e6df510da4c0bd062d09da9b7c1cd6cf4cb3823117a063"
+        "sha256": "c6f6f3be56c11afc445ef9dc5e4c57cf0a1ffb6adcc205ce66bb5f91fe13c29b"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/python_common.py",
@@ -587,7 +591,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/python_modules.py",
-        "sha256": "2546bec20a9be904c563842451a572e9c0c7d3bbb1eca29949e89d99da4b1c90"
+        "sha256": "44be87a685081b18ddc8e17229e36ae872f53cbf7f7bb2efd3d6241f979b63eb"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/python_symbols.py",
@@ -619,15 +623,15 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/ruby.py",
-        "sha256": "c2ef6ac82988f8fb1de2507d7ec60024f298a20f1b1a6494534c225c293ea552"
+        "sha256": "cdf32805a6c4f26d774ae258b84bfc4293ac04ecca69bdd63823febc6c1e6901"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/ruby_helpers.py",
-        "sha256": "8fa469ae654971294babb4ab639906c55e0d04dbc01ebf404a9c931f041a233f"
+        "sha256": "d7b7099cb1be659af6a47cc930e5eeaf34d8dcd84ba8c64102d321e67e4d0964"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/languages/ruby_profiles.py",
-        "sha256": "efb74bfca68a84f32f3b07f739757bd843a63508368d4976e6ad656d51e38304"
+        "sha256": "94fc40d931671cc59cdc6356f6e6a6189d2f2abb6c5581e6f4869cc721c5964e"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/rust_pilot/__init__.py",
@@ -635,7 +639,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/rust_pilot/archive_verifier.py",
-        "sha256": "9e85c9b23c1cbce4e9ccb85042399668ecc4455f39f1d6d9644b28783d375074"
+        "sha256": "1832d958f436b05713bea50683f48f85c6de42e5e0808e8504062350cc20d1d7"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/rust_pilot/bounded_exec.py",
@@ -695,11 +699,11 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/rust_pilot/helper_protocol.py",
-        "sha256": "1bc1ecb05d74b8052c5ae2cbf8cb065921a1c44e9fc7895ccc8dfdb34a9cc510"
+        "sha256": "faaedad901fe444aabc724e5bca43323a967bba92611767f24f8f8245b8257dd"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/rust_pilot/observations.py",
-        "sha256": "2f8768861f93d2a9e9f1bd343c4a42f79375b4d1bc1838b7fdd2aa1651fc141a"
+        "sha256": "3f4719f4f94201004f65ed1f57ff7f928c64fa15f9826e7a2e2b148928c088e1"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/rust_pilot/prepared_profile.py",
@@ -711,7 +715,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/rust_pilot/readback.py",
-        "sha256": "0f57b479f9b6f0c080b4abdce999e87cecac4d2ab71c26e7be1b5d2ea5e518fb"
+        "sha256": "9aa8569198f401e67d2b4c4e22976c6dbb87d218fe1408681ed8d7f64b7974c8"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/rust_pilot/receipts.py",
@@ -719,7 +723,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/rust_pilot/selection.py",
-        "sha256": "420596bea8c055fe344542a85f6de44ac41772f184807fe0ff68a7f2a613a68f"
+        "sha256": "a41ae047afc278e9b5005e0b2e4872b6f7e6e0ae6c904488d19c8df0b007cd32"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/rust_pilot/witness_state.py",
@@ -735,11 +739,11 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shared/redaction.py",
-        "sha256": "3376be9bd4552cab4ef0ac313761e820587b034636b4fea16869f4e2581957d6"
+        "sha256": "fcd342ff955bfda8552a4b76e846156ee0d7347fca45b6aaffc52829dd742839"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shared/scanner.py",
-        "sha256": "ff23812a83d86c7b2d282c15b79679acdbc1ecec9aa51033979bcba49373b9fe"
+        "sha256": "fddce31c0d88d29ba28b51e3c269a774676f18fa1fe655fbf30b0fcc2b93beb1"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/__init__.py",
@@ -751,7 +755,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/awk.py",
-        "sha256": "33c898628ea6187cf6eeacefbac97fef5188dc319e080433fa8245e6e2c10211"
+        "sha256": "1f36e681c444f634b6ddf721297ffe90b39109a956902c09101faf55d8ff07fa"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/awk_calls.py",
@@ -763,11 +767,11 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/base.py",
-        "sha256": "d59cc4271c33b75071d9bc66be1d7db5fc6c8e9856b45e0d92f1e393bd3fb9a5"
+        "sha256": "c698f1b41364e3e0ef904b22eaba6acf4fc500fbcd46e58e13f706e202b66438"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/bash.py",
-        "sha256": "c08184734633e63f17554c0b758769ed442269378df97f83a336aadb03faadba"
+        "sha256": "2036304ed9bb44f02d43307c3f3a78c4435dfbf12bdb1e9f95a77f5116de71cf"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/bash_arguments.py",
@@ -795,7 +799,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/bash_identity.py",
-        "sha256": "061ebac411b0b3a476789f5b1b17c4f6ad4eca633eecc5a422f8a59929d42c19"
+        "sha256": "553284f21e3a69a35fc9c744f701b023c9f48949476b9b1b150e449ae679fe0e"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/bash_redirects.py",
@@ -811,7 +815,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/bats.py",
-        "sha256": "cba4cc2d1dedd081b967ae373e7b3f1ce8161f1ff5b49457c9b92985de72458a"
+        "sha256": "fbdb202a08fd1c8acb700e45c39e129682b1d1af23b3903edbf974fd26650f60"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/bats_helpers.py",
@@ -835,7 +839,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/powershell_manifest.py",
-        "sha256": "25463bef79c5e95aded48f260fadd0480adbdc88bffbd7aab60916634cc750fc"
+        "sha256": "91e4b6ee83c7dd6f18c4f6d5b2fa67616818fe55b27426b69e68252b8e973b0b"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/powershell_manifest_parser.py",
@@ -851,7 +855,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/powershell_structure.py",
-        "sha256": "09dbcea57f7c5144ca30f4be9810143e49e825cd11f1aafc63be60cedc09ab19"
+        "sha256": "73e31d79bfb942ab452531f842f86ec08dee656b8fd156a1342b54b08a2618ba"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/powershell_tokens.py",
@@ -863,7 +867,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/zsh.py",
-        "sha256": "0843b71eef7b71ad3e9716f03f540dcf0ae5a8d68b2f1030b35f9c3b95cbd2eb"
+        "sha256": "377be102dca64b3ba979323d382d5133aa3c498b475830b7497f41a2d015bf73"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/zsh_advanced.py",
@@ -891,7 +895,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/zsh_identity.py",
-        "sha256": "2d927331526a10e28c2ed459d9207c2e0c87c6867021b02c5e65e798fd0e5256"
+        "sha256": "5af64323e05424989ef0d057effcdb173105d324cd867e20a79f5703c21664c9"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/zsh_side_effects.py",
@@ -899,7 +903,7 @@
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/zunit.py",
-        "sha256": "b11bff0eda6c3eac0ac7325aa786d057e06de4d11a895c0c75c54278fd762b29"
+        "sha256": "f8a90f7db78ca49fc3d3e770461bea617760711bd1f6bf928e3b3b4a3293e40f"
       },
       {
         "path": "src/main/python/common_lore_index/extractors/shell/zunit_helpers.py",
@@ -919,11 +923,11 @@
       },
       {
         "path": "src/main/python/common_lore_index/graph/_discovery_classify.py",
-        "sha256": "a13c9919b1ce9995a6eb8b16c57d30e9ff369183a043c081e0b7f86b851ae86c"
+        "sha256": "709aa840c715c341077d88364fae672c287bc8ed7ff9b3426cdca972a624562d"
       },
       {
         "path": "src/main/python/common_lore_index/graph/_discovery_selection.py",
-        "sha256": "a9fb586354996da8ce46f6690edbbab186da5e9f512e374eeb43546f2658c4da"
+        "sha256": "02081d3b45c64e363f27075f92611c752d696acc6153c2827d3367c7cb590e57"
       },
       {
         "path": "src/main/python/common_lore_index/graph/_key_namespaces.py",
@@ -931,15 +935,15 @@
       },
       {
         "path": "src/main/python/common_lore_index/graph/discovery.py",
-        "sha256": "d14b7aeb7e87a69dbf5c38c3d2ad519251110292fb919908d9e09e136a8b8b45"
+        "sha256": "bb34deef4e81add9d09e3ceb4b31524c8a584a40eeb0792b8b93cb6a33c3ecec"
       },
       {
         "path": "src/main/python/common_lore_index/graph/discovery_extractors.py",
-        "sha256": "dc84e789e82dbba37adb245120dcf001e71d158f8467c8ecefdc72ff8b2ea4d1"
+        "sha256": "937c180f43e529917506d4c3bed9686282dbd5845398d89a27db12978b96b6b5"
       },
       {
         "path": "src/main/python/common_lore_index/graph/discovery_file_metadata.py",
-        "sha256": "c5c782c2005dd5fb44b5c596868d5d4aae6321adf41c78c0025c321fb3adeac6"
+        "sha256": "bd73510c0ce21e9ba301a199704fffd90b19a2bd3236895099ec7f27bbb5cdce"
       },
       {
         "path": "src/main/python/common_lore_index/graph/discovery_records.py",
@@ -983,11 +987,11 @@
       },
       {
         "path": "src/main/python/common_lore_index/runtime/release_dockerfile.py",
-        "sha256": "4e2bc94d4fa8d3243ba15761c91df71b0e5e3906388ff7e3c0d930bac5f42b3b"
+        "sha256": "43c23d2c12de2f9e2427e8fae09e70aa95be2bafc57ccf7fc775892e84bdc558"
       },
       {
         "path": "src/main/python/common_lore_index/runtime/release_manifest.py",
-        "sha256": "550eb3a1bbf8d57519a25e4dae3d6170ee115864ec8529c215396b67fc2bd95d"
+        "sha256": "e2b3bf7fc4f688a5680cdf3df95f6f22ff1475694b47768c4066717d9ef9276a"
       },
       {
         "path": "src/test/support/python/repomap_test_support/__init__.py",
@@ -1018,8 +1022,16 @@
         "sha256": "ce39b766909d0cfe525d6c6eb1d339be9fc7bd99532a1f0bf1e81e08f15a2590"
       },
       {
+        "path": "tools/ci/d12_publication_identity.py",
+        "sha256": "71f91ca016f0043c1f88e970ae8c2e13eb0e212667c41639daa6ed170d72c033"
+      },
+      {
         "path": "tools/ci/d12_system_grant.py",
-        "sha256": "701eea3c25e86093bcfb2643b4ab25d6d169bfd7e6f374d3bdcc91400aa3cf1d"
+        "sha256": "6a39f045774da5585df342db3aa8458f880c0d2873527853793fb6739f2dc2d7"
+      },
+      {
+        "path": "tools/ci/d12_system_grant_history.py",
+        "sha256": "8e905d784c91a952e0dd263bbca56c8f42e0f99c9dc8aa673e376f48db6a4588"
       },
       {
         "path": "tools/ci/d12_system_grant_io.py",
@@ -1027,7 +1039,7 @@
       },
       {
         "path": "tools/ci/d12_system_proof_host.py",
-        "sha256": "c68552f9978589181b13825d85e26088c5e6910b5a8101346a5d1f1e9f9ddc49"
+        "sha256": "69f4da5ad68cc62ed2f5a3bdaa8a48d8c680ab70f265a0bf3955cf16356e428c"
       },
       {
         "path": "tools/ci/qualification_rust_accounting.py",
@@ -1082,8 +1094,24 @@
         "sha256": "df616a151d062b4ade001bbd029007b2f414aa22422de63c520895663b850c5f"
       },
       {
+        "path": "tools/offline_qualification_files.py",
+        "sha256": "7f3effbd7b6e103012f7180cff2ea35cbb7b8d0a2d8a651c3b5d7790d429bd15"
+      },
+      {
+        "path": "tools/offline_qualification_values.py",
+        "sha256": "d6a12540f09bcd13c78e9cdaa02585d70ea4113221b39b89ea8147172245b4e1"
+      },
+      {
+        "path": "tools/runner_pgvector_budget.py",
+        "sha256": "0f5e741b0dbe6ebd9d8ce7dd4564aab9ecf016a9c3aea780c01e85d321071bc8"
+      },
+      {
+        "path": "tools/runner_pgvector_prebuilt.py",
+        "sha256": "66849d89678fe00b07b909fc5514bea6548f7d3a55cd7c01e97a6c20b2b8280a"
+      },
+      {
         "path": "tools/test_sandbox_contract.py",
-        "sha256": "c3fa0fb20b11bd49545b2f49bb81fd33868f7819d7d54e13e66a2b6385d4e313"
+        "sha256": "2499ba56d2bef398c73ef32ad42bf36c2e2a9dc53c944ef3767ee511fabb2714"
       },
       {
         "path": "tools/test_sandbox_images.py",
@@ -1096,6 +1124,7 @@
     ],
     "python_paths": [
       "src/main/python/common_lore_index/__init__.py",
+      "src/main/python/common_lore_index/_utf8.py",
       "src/main/python/common_lore_index/canonicalization/__init__.py",
       "src/main/python/common_lore_index/canonicalization/_document_dispatch.py",
       "src/main/python/common_lore_index/canonicalization/_go_context.py",
@@ -1343,7 +1372,9 @@
       "tools/ci/d12_hosted_evidence.py",
       "tools/ci/d12_hosted_reports.py",
       "tools/ci/d12_hosted_state.py",
+      "tools/ci/d12_publication_identity.py",
       "tools/ci/d12_system_grant.py",
+      "tools/ci/d12_system_grant_history.py",
       "tools/ci/d12_system_grant_io.py",
       "tools/ci/d12_system_proof_host.py",
       "tools/ci/qualification_rust_accounting.py",
@@ -1359,6 +1390,10 @@
       "tools/d12_libpq_runtime_probe.py",
       "tools/d12_python_closure.py",
       "tools/native_apt_prerequisites.py",
+      "tools/offline_qualification_files.py",
+      "tools/offline_qualification_values.py",
+      "tools/runner_pgvector_budget.py",
+      "tools/runner_pgvector_prebuilt.py",
       "tools/test_sandbox_contract.py",
       "tools/test_sandbox_images.py",
       "tools/test_sandbox_report.py"
@@ -1607,8 +1642,8 @@
     "recipe_sha256": "24ddf31d8890922c012559d5cab4b1dffe4b41e5b19e9b3438555aabe22d2862"
   },
   "source_checkpoint": {
-    "sha": "5ad00d162ad8a04430874275246a53227578c533",
-    "tree": "5a6f7a1402d0aa77c86c214bc9419eb6f8c1e8c6"
+    "sha": "ecab3eb9119b3780a5d0add8e4761e83812a3244",
+    "tree": "17b02c5034f33bff44bb949b3cb26fe4609a608c"
   },
   "stopping": "one-command-over-whole-manifest",
   "wheels": [

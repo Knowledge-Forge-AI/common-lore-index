@@ -108,6 +108,7 @@ def test_cli_context_select_and_pack_over_sqlite_and_postgres_homes(
     pkt = json.loads(raw_pack.decode("utf-8"))
     assert_valid_context_packet(pkt)
     assert pkt["status"] == "complete"
+    assert len(raw_pack) == pkt["work_ledger"]["actual_bytes"] <= 16384
 
     # Scoped definition without --kind is partial by design -> exit 3 by default, 0 with --allow-partial
     rc_p3, raw_p3, _ = _invoke_cli(
@@ -206,6 +207,7 @@ def test_cli_context_select_and_pack_over_sqlite_and_postgres_homes(
         pg_pkt = json.loads(raw_pg_pack.decode("utf-8"))
         assert_valid_context_packet(pg_pkt)
         assert pg_pkt["status"] == "complete"
+        assert len(raw_pg_pack) == pg_pkt["work_ledger"]["actual_bytes"] <= 16384
         assert pg_pkt["scope"]["backend"] == "postgresql"
 
         rc_pg_fallback, raw_pg_fallback, err_pg_fallback = _invoke_cli(

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.shell.base import slug
 from common_lore_index.extractors.shell.zunit_helpers import (
@@ -67,8 +68,7 @@ def extract_zunit_file_observations(
     current_test: str | None = None
     current_hook: str | None = None
     fixture_variables: dict[str, str] = {}
-
-    for line_number, raw_line in enumerate(content.splitlines(), start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         stripped = raw_line.strip()
         if pending_heredoc is not None:
             terminator = (

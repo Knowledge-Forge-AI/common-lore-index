@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import pytest
+
+from common_lore_index.retrieval import projection_text
 from common_lore_index.retrieval.projection_policy import ExclusionReason
 from common_lore_index.retrieval.projection_text import (
     REPRESENTATION_VERSION,
@@ -76,3 +79,56 @@ def test_empty_file_normalization() -> None:
     assert res.normalized_line_count == 0
     assert res.projected_line_count == 0
     assert res.truncated is False
+
+
+def test_lf_only_projection_reuses_the_validated_input_bytes() -> None:
+    raw = "café\n🚀\nx".encode("utf-8")
+    result, reason = normalize_and_bound_text(raw, max_projected_bytes=len(raw))
+    assert result is not None and reason is None
+    assert result.normalized_bytes is raw
+    assert result.normalized_text == raw.decode("utf-8")
+    assert result.raw_line_count == result.normalized_line_count == 3
+    assert not result.had_crlf_or_cr and not result.truncated
+
+
+def test_invalid_utf8_after_the_projected_prefix_still_refuses() -> None:
+    raw = b"public\r\n" + bytes([0xFF])
+    result, reason = normalize_and_bound_text(raw, max_projected_bytes=6)
+    assert result is None and reason == ExclusionReason.INVALID_UTF8
+
+@pytest.mark.parametrize("block_size", [1, 2, 3, 4, 5, 8, 8192])
+def test_bounded_normalization_carries_crlf_and_multibyte_across_blocks(monkeypatch, block_size):
+    monkeypatch.setattr(projection_text, "_NORMALIZATION_BLOCK_BYTES", block_size)
+    raw = "é\r\n😀\rletter\r\nend".encode()
+    sample, reason = normalize_and_bound_text(raw, max_projected_bytes=5)
+    assert sample is not None and reason is None
+    assert sample.normalized_bytes == "é\n".encode()
+    assert sample.normalized_line_count == 4
+    assert sample.normalized_byte_length == len("é\n😀\nletter\nend".encode())
+    assert sample.projected_line_count == 1 and sample.truncated
+    exact, reason = normalize_and_bound_text(b"alpha\r\nbeta\r\n", max_projected_bytes=11)
+    assert exact is not None and reason is None
+    assert exact.normalized_bytes == b"alpha\nbeta\n" and not exact.truncated
+
+
+def test_invalid_tail_has_same_precedence_under_bounded_decode(monkeypatch):
+    monkeypatch.setattr(projection_text, "_NORMALIZATION_BLOCK_BYTES", 4)
+    assert normalize_and_bound_text(b"readable\r\n\xf0\x9f", max_projected_bytes=2) == (
+        None, ExclusionReason.INVALID_UTF8,
+    )
+    assert normalize_and_bound_text(b"readable\r\n\xff\x00", max_projected_bytes=2) == (
+        None, ExclusionReason.NUL_BYTE_REJECTED,
+    )
+
+
+def test_already_normalized_ascii_uses_a_prefix_without_normalizing_blocks(monkeypatch) -> None:
+    def unexpected_blocks(_raw):
+        raise AssertionError("ASCII without CR needs no block normalization")
+
+    monkeypatch.setattr(projection_text, "_normalized_blocks", unexpected_blocks)
+    for raw in (b"first\nsecond\nthird", b"first\nsecond\nthird\n"):
+        result, reason = normalize_and_bound_text(raw, max_projected_bytes=6)
+        assert reason is None and result is not None
+        assert result.normalized_bytes == b"first\n"
+        assert (result.normalized_byte_length, result.normalized_line_count) == (len(raw), 3)
+        assert result.projected_line_count == 1 and result.truncated

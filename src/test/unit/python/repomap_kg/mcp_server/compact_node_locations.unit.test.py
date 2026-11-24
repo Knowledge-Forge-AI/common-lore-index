@@ -13,7 +13,7 @@ import pytest
 
 from common_lore_index.runtime.database_role_contract import read_role_secrets
 from common_lore_index.runtime.local import setup_local_runtime
-from common_lore_index.server import mcp
+from common_lore_index.server import _mcp_locations, mcp
 from common_lore_index.server.mcp_core import RepoMapMcpError
 from common_lore_index.storage.sqlite_local import node_location_queries
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
@@ -289,3 +289,19 @@ def test_public_schema_and_jsonrpc_serialization(store: Path) -> None:
     result = response["result"]
     assert json.loads(result["content"][0]["text"]) == result["structuredContent"]
     assert result["structuredContent"]["locations"][0]["path"] == "root/docs/guide.md"
+
+
+def test_compact_indices_preserve_first_seen_facts_and_nested_equality(store: Path) -> None:
+    full = call(DOC, evidence_role="direct", limit=1)
+    row, = full["locations"]
+    original_binding = {key: value for key, value in row["source"].items() if key != "source_relative_path"}
+    first_publication = row["publication"]
+    nested_publication = {**first_publication, "descriptors": ["kept", {"revision": 2}]}
+    revised_binding = {**row["source"], "binding_revision": 2}
+    full["locations"] = [row, {**row, "source": revised_binding, "publication": nested_publication}]
+    full["historical_locations"] = [{**row, "publication": dict(reversed(tuple(nested_publication.items())))}, row]
+    compact = _mcp_locations._compact_locations(full)
+    assert compact["bindings"] == [original_binding, {**original_binding, "binding_revision": 2}]
+    assert compact["publications"] == [first_publication, nested_publication]
+    assert [(item["binding"], item["publication"]) for item in compact["locations"]] == [(0, 0), (1, 1)]
+    assert [(item["binding"], item["publication"]) for item in compact["historical_locations"]] == [(0, 1), (0, 0)]

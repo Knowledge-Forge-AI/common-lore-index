@@ -236,3 +236,28 @@ def test_invalid_retained_framing_or_terminal_state_is_held(case: str) -> None:
         mock.patch.object(artifacts.ExtractionReceipt, "from_bytes", return_value=receipt):
         with pytest.raises(artifacts.RetainedArtifactError):
             _read(record, _Store(bundle, reference))
+
+
+def test_canonical_json_bounds_recursive_encoding_and_decoding(monkeypatch: pytest.MonkeyPatch) -> None:
+    from common_lore_index.artifacts import _canonical
+
+    recursive: dict[str, object] = {}
+    recursive["self"] = recursive
+    with pytest.raises(_canonical.CanonicalEncodingError):
+        canonical_json(recursive)
+
+    def recursion_limit(_data: str, **_options: object) -> object:
+        raise RecursionError("fixture decoder depth limit")
+
+    monkeypatch.setattr(_canonical.json, "loads", recursion_limit)
+    with pytest.raises(_canonical.CanonicalEncodingError, match="canonical JSON is invalid"):
+        _canonical.decode_canonical_json(b'{"deep":[]}\n')
+
+
+def test_prefixed_artifact_hash_matches_exact_concatenated_bytes() -> None:
+    from common_lore_index.artifacts._canonical import prefixed_digest
+
+    domain, payload = b"test-domain", bytes(range(256)) * 512
+    assert prefixed_digest("fixture:", domain, payload) == "fixture:" + hashlib.sha256(
+        domain + b"\0" + payload
+    ).hexdigest()

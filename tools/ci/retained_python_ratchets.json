@@ -78,7 +78,7 @@
         "path": "src/main/python/common_lore_index/extractors/config/generic.py"
       },
       {
-        "line_count": 512,
+        "line_count": 480,
         "path": "src/main/python/common_lore_index/extractors/config/generic_structure.py"
       },
       {
@@ -94,11 +94,11 @@
         "path": "src/main/python/common_lore_index/extractors/config/openapi.py"
       },
       {
-        "line_count": 470,
+        "line_count": 459,
         "path": "src/main/python/common_lore_index/extractors/config/openapi_helpers.py"
       },
       {
-        "line_count": 764,
+        "line_count": 749,
         "path": "src/main/python/common_lore_index/extractors/config/python.py"
       },
       {
@@ -106,15 +106,15 @@
         "path": "src/main/python/common_lore_index/extractors/config/terraform_hcl_profiles.py"
       },
       {
-        "line_count": 746,
+        "line_count": 745,
         "path": "src/main/python/common_lore_index/extractors/config/xml.py"
       },
       {
-        "line_count": 756,
+        "line_count": 753,
         "path": "src/main/python/common_lore_index/extractors/config/yaml.py"
       },
       {
-        "line_count": 556,
+        "line_count": 554,
         "path": "src/main/python/common_lore_index/extractors/documents/css.py"
       },
       {
@@ -122,19 +122,19 @@
         "path": "src/main/python/common_lore_index/extractors/documents/css_html_matching.py"
       },
       {
-        "line_count": 666,
+        "line_count": 654,
         "path": "src/main/python/common_lore_index/extractors/documents/css_support.py"
       },
       {
-        "line_count": 618,
+        "line_count": 589,
         "path": "src/main/python/common_lore_index/extractors/documents/email.py"
       },
       {
-        "line_count": 617,
+        "line_count": 606,
         "path": "src/main/python/common_lore_index/extractors/documents/feed.py"
       },
       {
-        "line_count": 696,
+        "line_count": 679,
         "path": "src/main/python/common_lore_index/extractors/documents/html.py"
       },
       {
@@ -142,11 +142,11 @@
         "path": "src/main/python/common_lore_index/extractors/documents/markdown.py"
       },
       {
-        "line_count": 641,
+        "line_count": 632,
         "path": "src/main/python/common_lore_index/extractors/documents/office_odf.py"
       },
       {
-        "line_count": 450,
+        "line_count": 430,
         "path": "src/main/python/common_lore_index/extractors/documents/office_plain.py"
       },
       {
@@ -158,7 +158,7 @@
         "path": "src/main/python/common_lore_index/extractors/languages/python_tests.py"
       },
       {
-        "line_count": 697,
+        "line_count": 696,
         "path": "src/main/python/common_lore_index/extractors/languages/ruby.py"
       },
       {
@@ -170,7 +170,7 @@
         "path": "src/main/python/common_lore_index/extractors/shell/awk_runtime.py"
       },
       {
-        "line_count": 493,
+        "line_count": 492,
         "path": "src/main/python/common_lore_index/extractors/shell/base.py"
       },
       {
@@ -628,34 +628,6 @@
       {
         "count": 1,
         "error_code": "arg-type",
-        "module": "common_lore_index.extractors.documents.markdown",
-        "normalized_fingerprint": "c26de5b9ce190c72c9b1a6b789e70b290a9a5249ff61e0050cce17e1dfc05c40",
-        "path": "src/main/python/common_lore_index/extractors/documents/markdown.py"
-      },
-      {
-        "count": 1,
-        "error_code": "arg-type",
-        "module": "common_lore_index.extractors.documents.markdown",
-        "normalized_fingerprint": "c992f21eb6c212899bb702b4316592e5f46294a3571b141f113ca491329abd27",
-        "path": "src/main/python/common_lore_index/extractors/documents/markdown.py"
-      },
-      {
-        "count": 1,
-        "error_code": "assignment",
-        "module": "common_lore_index.extractors.documents.markdown",
-        "normalized_fingerprint": "370347e4e35fd3ffc8883782a7c38dda742fb5c842c4c3ea716f1ce24bfe301e",
-        "path": "src/main/python/common_lore_index/extractors/documents/markdown.py"
-      },
-      {
-        "count": 1,
-        "error_code": "unreachable",
-        "module": "common_lore_index.extractors.documents.markdown",
-        "normalized_fingerprint": "b803de7271e25085ec61736e492ae09be61fe7bb9790bc84fde2ea6f26308c34",
-        "path": "src/main/python/common_lore_index/extractors/documents/markdown.py"
-      },
-      {
-        "count": 1,
-        "error_code": "arg-type",
         "module": "common_lore_index.extractors.languages.go_metadata",
         "normalized_fingerprint": "ef6872cb1033cedc30d6b933f3903307594e36b2f865e6b27ed85cdc1abb31f0",
         "path": "src/main/python/common_lore_index/extractors/languages/go_metadata.py"
@@ -769,7 +741,7 @@
   },
   "ownership": {
     "manifest_path": "tools/ci/python_type_ownership.json",
-    "sha256": "935a93401167c5758576dda56d3929e9fd10c05058a8ac2462c177cf861b2efd"
+    "sha256": "fcf53151c8c4e2703f7da60902b60e45b29522d34c922a26c4f689cb5c49391c"
   },
   "ruff": {
     "findings": [
@@ -11325,13 +11297,6 @@
       {
         "code": "F401",
         "count": 1,
-        "fingerprint": "3c7084c42f3a7aa24d4cead89229d78c3d2ab8206b4e75cd57f0630e2d09e16c",
-        "message": "`common_lore_index.extractors.languages.ruby_helpers.REFERENCE_SCHEMES` imported but unused",
-        "path": "src/main/python/common_lore_index/extractors/languages/ruby.py"
-      },
-      {
-        "code": "F401",
-        "count": 1,
         "fingerprint": "3360ae8e90c0518ff8e45cc31cd376749a6e54b57ae5f32664c7e067343f7760",
         "message": "`common_lore_index.extractors.languages.ruby_helpers.SECRET_MARKERS` imported but unused",
         "path": "src/main/python/common_lore_index/extractors/languages/ruby.py"
@@ -11355,13 +11320,6 @@
         "count": 1,
         "fingerprint": "060b8d6525764c44634feeb9bd85c7679dcc5a162bc098984430420970fa4170",
         "message": "`common_lore_index.extractors.languages.ruby_helpers._normalize_relative_path` imported but unused",
-        "path": "src/main/python/common_lore_index/extractors/languages/ruby.py"
-      },
-      {
-        "code": "F401",
-        "count": 1,
-        "fingerprint": "1c0aad2d91b2389902b65bbc7797aaa6b014a73500c219cc54999b6860259b4c",
-        "message": "`common_lore_index.extractors.languages.ruby_helpers._sanitize_url` imported but unused",
         "path": "src/main/python/common_lore_index/extractors/languages/ruby.py"
       },
       {
@@ -14136,6 +14094,12 @@
         "module": "common_lore_index._temporary",
         "ownership_class": "python_retained",
         "path": "src/main/python/common_lore_index/_temporary.py",
+        "tier": "T1-future"
+      },
+      {
+        "module": "common_lore_index._utf8",
+        "ownership_class": "python_retained",
+        "path": "src/main/python/common_lore_index/_utf8.py",
         "tier": "T1-future"
       },
       {
@@ -18888,6 +18852,12 @@
         "module": "common_lore_index.storage.sqlite_local.source_queries",
         "ownership_class": "python_retained",
         "path": "src/main/python/common_lore_index/storage/sqlite_local/source_queries.py",
+        "tier": "T1-future"
+      },
+      {
+        "module": "common_lore_index.storage.sqlite_local.source_run_summary",
+        "ownership_class": "python_retained",
+        "path": "src/main/python/common_lore_index/storage/sqlite_local/source_run_summary.py",
         "tier": "T1-future"
       },
       {

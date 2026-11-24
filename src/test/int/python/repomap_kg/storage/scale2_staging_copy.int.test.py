@@ -80,8 +80,6 @@ VALUES ({repository_id}, 'fixture/root', 'markdown', 'documentation');
                 STAGING_COPY_TABLES["files"],
                 [
                     {
-                        "stage_id": "stage-copy-001",
-                        "family_ordinal": 0,
                         "path": "fixture/naïve\treadme\n.md",
                         "language": "markdown",
                         "role": "documentation",
@@ -94,6 +92,8 @@ VALUES ({repository_id}, 'fixture/root', 'markdown', 'documentation');
                             "slash": "back\\slash",
                             "unicode": "café",
                         },
+                        "family_ordinal": 0,
+                        "stage_id": "stage-copy-001",
                     }
                 ],
                 expected_stage_id="stage-copy-001",

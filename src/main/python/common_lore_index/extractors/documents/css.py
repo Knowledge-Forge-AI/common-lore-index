@@ -375,6 +375,13 @@ def _selector_observations(
     return tuple(observations)
 
 
+def _reference_redaction_reason(targets: list[dict[str, Any]]) -> str | None:
+    reasons = {target["reason"] for target in targets}
+    if "data-url-redacted" in reasons:
+        return "data-url-payload-redacted"
+    return next((reason for reason in ("malformed-url-redacted", "credentialed-url-redacted") if reason in reasons), None)
+
+
 def _declaration_observations(
     relative_path: str, rule: _CssRule
 ) -> tuple[RawObservation, ...]:
@@ -385,12 +392,8 @@ def _declaration_observations(
             _target_for_reference_in_path(relative_path, reference.value)
             for reference in references
         ]
-        redacted_for_data_url = any(
-            target["reason"] == "data-url-redacted" for target in reference_targets
-        )
-        redacted = _is_secret_name(declaration.property_name) or _is_secret_name(
-            declaration.value
-        ) or redacted_for_data_url
+        reference_redaction = _reference_redaction_reason(reference_targets)
+        redacted = bool(reference_redaction) or _is_secret_name(declaration.property_name) or _is_secret_name(declaration.value)
         metadata: dict[str, Any] = {
             "format": "css",
             "parser": PARSER_NAME,
@@ -401,8 +404,8 @@ def _declaration_observations(
             "important": declaration.important,
             "redacted": redacted,
         }
-        if redacted_for_data_url:
-            metadata["redaction_reason"] = "data-url-payload-redacted"
+        if reference_redaction is not None:
+            metadata["redaction_reason"] = reference_redaction
         elif redacted:
             metadata["redaction_reason"] = "secret-prone-css-declaration"
         else:
@@ -442,12 +445,8 @@ def _custom_property_observations(
             _target_for_reference_in_path(relative_path, reference.value)
             for reference in references
         ]
-        redacted_for_data_url = any(
-            target["reason"] == "data-url-redacted" for target in reference_targets
-        )
-        redacted = _is_secret_name(declaration.property_name) or _is_secret_name(
-            declaration.value
-        ) or redacted_for_data_url
+        reference_redaction = _reference_redaction_reason(reference_targets)
+        redacted = bool(reference_redaction) or _is_secret_name(declaration.property_name) or _is_secret_name(declaration.value)
         metadata: dict[str, Any] = {
             "format": "css",
             "parser": PARSER_NAME,
@@ -458,8 +457,8 @@ def _custom_property_observations(
             "value_type": _value_type(declaration.value),
             "redacted": redacted,
         }
-        if redacted_for_data_url:
-            metadata["redaction_reason"] = "data-url-payload-redacted"
+        if reference_redaction is not None:
+            metadata["redaction_reason"] = reference_redaction
         elif redacted:
             metadata["redaction_reason"] = "secret-prone-css-custom-property"
         else:
@@ -494,7 +493,7 @@ def _reference_observations(
     source_key = css_rule_key(relative_path, rule.pointer)
     for index, reference in enumerate(rule.references, start=1):
         target = _target_for_reference_in_path(relative_path, reference.value)
-        redacted = target["kind"] == "unknown" and target["reason"] == "data-url-redacted"
+        reference_redaction = _reference_redaction_reason([target])
         metadata: dict[str, Any] = {
             "format": "css",
             "parser": PARSER_NAME,
@@ -504,13 +503,12 @@ def _reference_observations(
             "rule_pointer": reference.rule_pointer,
             "source_key": source_key,
             "resolution_reason": target["reason"],
-            "redacted": redacted,
+            "redacted": reference_redaction is not None,
         }
         if reference.property_name is not None:
             metadata["property_name"] = reference.property_name
-        if redacted:
-            metadata["redaction_reason"] = "data-url-payload-redacted"
-            metadata["raw_value_summary"] = "data-url-redacted"
+        if reference_redaction is not None:
+            metadata.update(redaction_reason=reference_redaction, raw_value_summary=target["reason"])
         elif target.get("summary") is not None:
             metadata["raw_value_summary"] = target["summary"]
         observations.append(

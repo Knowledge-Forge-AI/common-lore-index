@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 import stat
 import time
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
+from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Lock, RLock, local
 from typing import Protocol, cast
@@ -29,7 +30,13 @@ try:
 except ImportError:
     msvcrt = None
 
-_LOCK_REGISTRY: dict[Path, RLock] = {}
+@dataclass
+class _ProcessLock:
+    mutex: RLock = field(default_factory=RLock)
+    users: int = 0
+
+
+_LOCK_REGISTRY: dict[Path, _ProcessLock] = {}
 _LOCK_REGISTRY_GUARD = Lock()
 _LOCK_STATE = local()
 
@@ -44,8 +51,7 @@ class _Msvcrt(Protocol):
 @contextmanager
 def _mutation_lock(target: Path, owner_uid: int | None):
     lock_path = target.parent / f".{target.name}.lock"
-    process_lock = _process_lock(lock_path)
-    with process_lock:
+    with _process_lock(lock_path):
         held: set[Path] = getattr(_LOCK_STATE, "paths", set())
         if lock_path in held:
             yield
@@ -57,8 +63,7 @@ def _mutation_lock(target: Path, owner_uid: int | None):
         if fcntl is None:
             raise ServiceArtifactError("service_mutation_lock_unavailable")
         flags = os.O_RDWR | os.O_CREAT
-        if hasattr(os, "O_NOFOLLOW"):
-            flags |= os.O_NOFOLLOW
+        flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
         descriptor = -1
         try:
             descriptor = os.open(lock_path, flags, 0o600)
@@ -67,6 +72,15 @@ def _mutation_lock(target: Path, owner_uid: int | None):
             if not _safe_lock_details(details, expected_uid):
                 raise ServiceArtifactError("service_mutation_lock_unsafe")
             fcntl.flock(descriptor, fcntl.LOCK_EX)
+            try:
+                current = os.lstat(lock_path)
+            except FileNotFoundError:
+                raise ServiceArtifactError("service_mutation_lock_unsafe") from None
+            if (
+                not _safe_lock_details(current, expected_uid)
+                or (current.st_dev, current.st_ino) != (details.st_dev, details.st_ino)
+            ):
+                raise ServiceArtifactError("service_mutation_lock_unsafe")
             _LOCK_STATE.paths = {*held, lock_path}
             yield
         except ServiceArtifactError:
@@ -80,12 +94,25 @@ def _mutation_lock(target: Path, owner_uid: int | None):
                     fcntl.flock(descriptor, fcntl.LOCK_UN)
                 except OSError:
                     pass
-                os.close(descriptor)
+                with suppress(OSError):
+                    os.close(descriptor)
 
 
-def _process_lock(path: Path) -> RLock:
+@contextmanager
+def _process_lock(path: Path):
     with _LOCK_REGISTRY_GUARD:
-        return _LOCK_REGISTRY.setdefault(path, RLock())
+        entry = _LOCK_REGISTRY.get(path)
+        if entry is None:
+            entry = _LOCK_REGISTRY[path] = _ProcessLock()
+        entry.users += 1
+    try:
+        with entry.mutex:
+            yield
+    finally:
+        with _LOCK_REGISTRY_GUARD:
+            entry.users -= 1
+            if entry.users == 0:
+                del _LOCK_REGISTRY[path]
 
 
 @contextmanager

@@ -117,3 +117,83 @@ def test_synced_temporary_close_failure_refuses_installation(
         assert owned == set()
     finally:
         destination.close()
+
+
+def test_failed_parent_admission_preserves_the_refusal_when_close_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reports = tmp_path / "shared"
+    reports.mkdir(mode=0o755)
+    reports.chmod(0o755)
+    real_close = os.close
+
+    def close(descriptor: int) -> None:
+        target = os.fstat(descriptor).st_ino == reports.stat().st_ino
+        real_close(descriptor)
+        if target:
+            raise OSError(errno.EIO, "close")
+
+    monkeypatch.setattr(delivery.os, "close", close)
+    with pytest.raises(delivery.DeliveryError, match="parent_not_private"):
+        delivery.admit_destination(str(reports / "report.json"))
+
+
+@pytest.mark.parametrize("changed_field", ["st_mtime_ns", "st_ctime_ns"])
+def test_reader_refuses_inconsistent_metadata_from_the_same_private_descriptor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, changed_field: str,
+) -> None:
+    from types import SimpleNamespace
+    from common_lore_index.ops.resource_reports import _files
+
+    reports = private_directory(tmp_path / "reports")
+    report = reports / "resource.json"
+    report.write_bytes(b"{}".ljust(100))
+    report.chmod(0o600)
+    real_fstat = os.fstat
+    calls = 0
+
+    def inspect(descriptor: int):
+        nonlocal calls
+        info = real_fstat(descriptor)
+        calls += 1
+        if calls == 1:
+            return info
+        fields = ("st_mode", "st_uid", "st_nlink", "st_size", "st_mtime_ns", "st_ctime_ns")
+        details = {name: getattr(info, name) for name in fields}
+        details[changed_field] += 1
+        return SimpleNamespace(**details)
+
+    with monkeypatch.context() as local:
+        local.setattr(_files.os, "fstat", inspect)
+        with pytest.raises(_files.ResourceReportError, match="unsafe_input"):
+            _files.read_report_file(report)
+    assert calls == 2
+
+
+@pytest.mark.parametrize("growth,category", [(1, "unsafe_input"), (32768, "too_large")])
+def test_reader_does_not_read_past_the_admitted_file_extent(tmp_path, monkeypatch, growth, category):
+    from common_lore_index.ops.resource_reports import _files
+
+    path = private_directory(tmp_path / "reports") / "report.json"
+    data = b"{}\n"
+    path.write_bytes(data)
+    path.chmod(0o600)
+    before = path.stat()
+    observed: list[int] = []
+    read = os.read
+
+    def grow_before_read(descriptor, count):
+        details = os.fstat(descriptor)
+        if (details.st_dev, details.st_ino) == (before.st_dev, before.st_ino):
+            if not observed:
+                with path.open("ab") as output:
+                    output.write(b" " * growth)
+            observed.append(count)
+        return read(descriptor, count)
+
+    with monkeypatch.context() as local:
+        local.setattr(_files.os, "read", grow_before_read)
+        with pytest.raises(_files.ResourceReportError, match=category):
+            _files.read_report_file(path)
+    assert observed == [len(data)]
+    assert path.read_bytes() == data + b" " * growth

@@ -41,14 +41,13 @@ import os
 import re
 import sqlite3
 import stat
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from common_lore_index.storage.sqlite_local.backup import inspect_sealed_database, owned_names
-from common_lore_index.storage.sqlite_local.connection import read_transaction
-from common_lore_index.storage.sqlite_local.migrations import classify
+from common_lore_index.storage.sqlite_local.connection import read_transaction_with_schema
 from common_lore_index.storage.sqlite_local.schema import (
     DATABASE_UNAVAILABLE,
     LocalGraphBinding,
@@ -119,6 +118,15 @@ def pinned_store(directory: Path) -> Iterator[int]:
         os.close(descriptor)
 
 
+def _matched_names(database_name: str, names: Iterable[str]) -> list[tuple[str, str, str]]:
+    prefix = f".{database_name}."
+    return sorted(
+        (entry, *matched)
+        for entry in names
+        if entry.startswith(prefix) and (matched := _match(database_name, entry)) is not None
+    )
+
+
 def inventory_orphans(
     store: int, database: Path, binding: LocalGraphBinding
 ) -> OrphanInventory:
@@ -127,11 +135,14 @@ def inventory_orphans(
     The final database is opened (read-only) only when an orphan exists.
     """
     groups: dict[str, OrphanGroup] = {}
-    for entry in sorted(os.listdir(store)):
-        matched = _match(database.name, entry)
-        if matched is not None:
-            group = groups.setdefault(matched[1], OrphanGroup(matched[0], matched[1]))
-            group.members[entry] = os.stat(entry, dir_fd=store, follow_symlinks=False)
+    if os.scandir in os.supports_fd:
+        with os.scandir(store) as entries:
+            matches = _matched_names(database.name, (entry.name for entry in entries))
+    else:
+        matches = _matched_names(database.name, os.listdir(store))
+    for entry, kind, base in matches:
+        group = groups.setdefault(base, OrphanGroup(kind, base))
+        group.members[entry] = os.stat(entry, dir_fd=store, follow_symlinks=False)
     if not groups:
         return OrphanInventory("not-inspected", ())
     final_state, final_identity = _final_state(database, binding)
@@ -151,8 +162,8 @@ def _final_state(
         return "absent", None
     identity = (details.st_dev, details.st_ino) if stat.S_ISREG(details.st_mode) else None
     try:
-        with read_transaction(database, binding, accept_behind=True) as connection:
-            kind = classify(connection).kind
+        with read_transaction_with_schema(database, binding, accept_behind=True) as (_, schema):
+            kind = schema.kind
     except (LocalStoreError, OSError):
         return "not-valid", identity
     return kind, identity

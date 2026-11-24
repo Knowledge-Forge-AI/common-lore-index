@@ -51,7 +51,10 @@ def _profile_observation(
 
 
 def _url_has_credentials(value: str) -> bool:
-    parsed = urlsplit(value)
+    try:
+        parsed = urlsplit(value)
+    except ValueError:
+        return "//" in value
     return parsed.username is not None or parsed.password is not None
 
 

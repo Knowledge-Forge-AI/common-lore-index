@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from contextlib import nullcontext
 import os
 from pathlib import Path
 import sys
@@ -34,6 +35,12 @@ def _collect(request_path: Path, receipt_path: Path) -> int:
     if Path.cwd() != Path(request["cwd"]) or actual_environment != request["environment"]:
         return 2
     sys.path[:] = request["python_paths"]
+    from runner_pgvector_discovery import plan_for_request
+    plan = plan_for_request(request)
+    capture = None
+    if plan is not None:
+        from runner_pgvector_discovery_capture import CollectionCapture
+        capture = CollectionCapture(request, plan)
     from runner_integration_obligations import MAINTAINED_ABRUPT_DECLARATIONS
     # The declaration bytes bind source even though partitioning occurs only
     # after the parent validates this child's ordered collection result.
@@ -74,14 +81,27 @@ def _collect(request_path: Path, receipt_path: Path) -> int:
     collector = ItemCollectorPlugin(suite=request["suite"], full_population=not request["scoped"])
     optional = OptionalPopulation()
     error_name = None
+    code = 2
     try:
-        code = int(pytest.main(["--collect-only", "-q", *request["pytest_args"]],
-                               plugins=[collector, optional]))
+        with capture.streams() if capture is not None else nullcontext():
+            code = int(pytest.main(["--collect-only", "-q", *request["pytest_args"]],
+                                   plugins=[collector, optional]))
     except BaseException as error:
         from runner_failure_evidence import error_record
         record = error_record(error, "child_collection")
         _retain_error(record, receipt_path)
         code, error_name = 2, record["type"]
+    if capture is not None:
+        try:
+            capture.persist(code, error_name)
+        except Exception as error:
+            from runner_failure_evidence import error_record, print_diagnostic
+            if code == 0:
+                record = error_record(error, "child_collection")
+                _retain_error(record, receipt_path)
+                code, error_name = 2, record["type"]
+            else:
+                print_diagnostic(error_record(error, "diagnostic_persistence"), primary=False)
     receipt = {
         "schema": DISCOVERY_RECEIPT_SCHEMA, "request_sha256": digest(request),
         "exit_code": code, "error": error_name,

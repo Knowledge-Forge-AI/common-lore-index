@@ -24,7 +24,10 @@ from __future__ import annotations
 
 import re
 import shutil
+import sqlite3
 import uuid
+from collections.abc import Iterable, Iterator, Mapping
+from contextlib import closing
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -44,7 +47,9 @@ from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.publication import RunPublicationReceipt
 from common_lore_index.storage.sqlite_local import queries
 from common_lore_index.storage.sqlite_local.connection import read_transaction
-from common_lore_index.storage.sqlite_local.publisher import FAMILY_ORDER, LocalPublication, publish_generation
+from common_lore_index.storage.sqlite_local.publisher import FAMILY_ORDER, LocalPublication, _stage, publish_generation
+from common_lore_index.storage.sqlite_local.schema import LocalStoreError
+from common_lore_index.storage.staging_family_rows import StageFamily
 from common_lore_index.storage.staged_ingestion import run_staged_portable_refresh, stage_id_for_authority
 from repomap_test_support.cli_in_process import FIXTURE_ROOT
 from repomap_test_support.host_mcp_publication import RESTORE_LOGIN_SQL, provision_roles, role_secrets
@@ -283,6 +288,14 @@ def _prove(tmp_path: Path, dbs: dict[str, Any], postgres: Any) -> None:
     assert structured(sqlite, 200 + CALLS)["summary"]["nix_observations"] > 0
     for base in (100, 200):
         assert structured(sqlite, base + 20)["results"] and structured(sqlite, base + 25)["result"]["edges"]
+        outgoing = structured(sqlite, base + 10)
+        incoming = structured(sqlite, base + 11)
+        assert outgoing["result"]["center"] and incoming["result"]["center"]
+        assert len(incoming["result"]["nodes"]) <= 1
+    all_files = structured(sqlite, 217)
+    offset_file = structured(sqlite, 218)
+    assert offset_file["results"] == all_files["results"][1:2]
+    assert offset_file["has_more"] and offset_file["total"] == 2
     flakes = [row["path"] for row in structured(sqlite, 222)["results"]]
     assert sorted(flakes) == ["composition/flake.nix"] * 2 + ["entry/flake.nix"] * 2, flakes  # both generations
     assert structured(sqlite, 227)["result"]["center"] is None
@@ -309,3 +322,34 @@ def _prove(tmp_path: Path, dbs: dict[str, Any], postgres: Any) -> None:
     assert multi_status["publication"]["publication_bundle_id"] == gen2[MULTI]
     stored = dbs[MULTI].psql_scalar("SELECT name || '|' || repository_identity || '|' || root_path FROM repositories;")
     assert stored == f"[multi-source]|repo1:{MULTI}|graph:{MULTI}", stored
+
+
+def test_sqlite_staging_consumes_rows_in_order_and_rolls_back_a_late_refusal(tmp_path: Path) -> None:
+    accepted: Mapping[str, object] = {
+        "stage_id": LOCAL_STAGE_ID, "family_ordinal": 0, "path": "accepted.py",
+        "language": "python", "role": "source", "confidence": "extracted",
+        "content_hash": None, "executable": False, "generated": False, "metadata_json": {},
+    }
+    families: dict[StageFamily, Iterable[Mapping[str, object]]] = {
+        family: () for family in FAMILY_ORDER
+    }
+    with closing(sqlite3.connect(tmp_path / "staging.sqlite")) as connection:
+        families["files"] = (accepted,)
+        assert _stage(connection, families)["files"] == 1
+
+        def invalid_replacement() -> Iterator[Mapping[str, object]]:
+            yield {**accepted, "path": "new.py", "metadata_json": {"display": "雪" * 100_000}}
+            assert connection.execute("SELECT path FROM temp.stage_files").fetchall() == [("new.py",)]
+            yield {"path": "malformed.py"}
+
+        families["files"] = invalid_replacement()
+        with pytest.raises(LocalStoreError, match="files row is malformed"):
+            _stage(connection, families)
+        assert not connection.in_transaction
+        assert connection.execute("SELECT path FROM temp.stage_files").fetchall() == [("accepted.py",)]
+
+        families["files"] = ({**accepted, "path": "retry.py", "metadata_json": {"display": "雪"}},)
+        assert _stage(connection, families)["files"] == 1
+        assert connection.execute(
+            "SELECT path, metadata_json FROM temp.stage_files"
+        ).fetchall() == [("retry.py", '{"display":"雪"}')]

@@ -6,10 +6,11 @@ import posixpath
 import re
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import urlsplit
 
+from common_lore_index.extractors.shared.redaction import contains_web_url_userinfo
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.extractors.config.generic_profile_helpers import _stable_text_sha256
-from common_lore_index.extractors.config.generic_values import _is_url
+from common_lore_index.extractors.config.generic_values import _config_url_redaction_reason, _is_url
 from common_lore_index.graph.keys import external_key, file_key, unknown_key
 
 
@@ -96,28 +97,27 @@ def _terraform_hcl_strip_comment(line: str) -> str:
 
 
 def _terraform_hcl_nested_block_body(content: str, block_type: str) -> str | None:
-    lines = content.splitlines()
-    for index, line in enumerate(lines):
+    lines = iter_text_lines(content)
+    for line in lines:
         stripped = _terraform_hcl_strip_comment(line).strip()
         match = TERRAFORM_HCL_BLOCK_HEADER_PATTERN.match(stripped)
         if match is None or match.group("block_type") != block_type:
             continue
         depth = _terraform_hcl_brace_delta(line)
         body_lines: list[str] = []
-        index += 1
-        while index < len(lines) and depth > 0:
-            nested_line = lines[index]
-            depth += _terraform_hcl_brace_delta(nested_line)
-            if depth > 0:
+        if depth > 0:
+            for nested_line in lines:
+                depth += _terraform_hcl_brace_delta(nested_line)
+                if depth <= 0:
+                    break
                 body_lines.append(nested_line)
-            index += 1
         return "\n".join(body_lines)
     return None
 
 
 def _terraform_hcl_nested_block_labels(content: str, block_type: str) -> tuple[str, ...]:
     labels: list[str] = []
-    for line in content.splitlines():
+    for line in iter_text_lines(content):
         stripped = _terraform_hcl_strip_comment(line).strip()
         match = TERRAFORM_HCL_BLOCK_HEADER_PATTERN.match(stripped)
         if match is None or match.group("block_type") != block_type:
@@ -130,7 +130,7 @@ def _terraform_hcl_nested_block_labels(content: str, block_type: str) -> tuple[s
 
 def _terraform_hcl_nested_block_count(content: str, block_type: str) -> int:
     count = 0
-    for line in content.splitlines():
+    for line in iter_text_lines(content):
         stripped = _terraform_hcl_strip_comment(line).strip()
         match = TERRAFORM_HCL_BLOCK_HEADER_PATTERN.match(stripped)
         if match is not None and match.group("block_type") == block_type:
@@ -149,13 +149,14 @@ def _terraform_hcl_module_source(
     relative_path: str,
     source: str,
 ) -> tuple[dict[str, Any], str, str]:
-    if _terraform_hcl_credentialed_url(source):
+    redaction_reason = _terraform_hcl_url_redaction_reason(source)
+    if redaction_reason:
         return (
             {
                 "source_kind": "remote",
                 "not_fetched": True,
                 "redacted": True,
-                "redaction_reason": "credentialed-terraform-module-source",
+                "redaction_reason": f"{redaction_reason}-terraform-module-source",
             },
             external_key("terraform.module", "redacted-module-source"),
             "module_source",
@@ -296,13 +297,15 @@ def _terraform_hcl_text_presence_metadata(key: str, value: str) -> dict[str, Any
 
 
 def _terraform_hcl_credentialed_url(value: str) -> bool:
-    candidate = value.removeprefix("git::")
-    parsed = urlsplit(candidate)
-    if parsed.scheme in ("http", "https", "ssh", "git") and (
-        parsed.username is not None or parsed.password is not None
-    ):
-        return True
-    return bool(re.search(r"://[^/\s:@]+:[^/\s@]+@", candidate))
+    return _terraform_hcl_url_redaction_reason(value) == "credentialed"
+
+
+def _terraform_hcl_url_redaction_reason(value: str) -> str | None:
+    candidate = re.sub(r"^[A-Za-z][A-Za-z0-9+.-]*::", "", value, count=1)
+    reason = _config_url_redaction_reason(candidate)
+    if reason is not None:
+        return reason.removesuffix("-url")
+    return "credentialed" if contains_web_url_userinfo(candidate) else None
 
 
 def _terraform_hcl_bounded_string(value: str) -> str:

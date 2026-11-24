@@ -40,9 +40,10 @@ def query_semantic_candidates(
         )
     except StorageSchemaError:
         raise StorageSchemaError("semantic candidate query failed") from None
-    assert isinstance(payload, dict)
+    if not isinstance(payload, dict):
+        raise StorageSchemaError("malformed candidate readback")
     status = payload.get("status")
-    if status in {"stale_publication", "enrichment_unavailable"}:
+    if isinstance(status, str) and status in {"stale_publication", "enrichment_unavailable"}:
         return unavailable(status)
     rows = payload.get("candidates")
     if status != "ok" or not isinstance(rows, list) or len(rows) > query.limit or any(not isinstance(row, dict) for row in rows):
@@ -63,8 +64,9 @@ def observe_candidate_capability(
         )
     except StorageSchemaError:
         return "observation_failed"
-    assert isinstance(facts, dict)
-    if facts.get("installed_version") is None:
+    if not isinstance(facts, dict) or "installed_version" not in facts:
+        return "observation_failed"
+    if facts["installed_version"] is None:
         return "extension_absent"
     if (facts.get("installed_version"), facts.get("installation_schema")) != (
         PGVECTOR_VERSION, "repomap_vector"
@@ -119,7 +121,7 @@ def query_embedding_profiles(
         return profiles_unavailable("publication_unaccepted")
     try:
         publication = _publication(record, repository_identity)
-    except (KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError, RecursionError):
         return profiles_unavailable("publication_unaccepted")
     payload = _read(build_embedding_profiles_sql(publication, query), psql_args, psql_command, password)
     return _profiles_result(payload, publication, query)

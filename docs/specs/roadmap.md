@@ -2,7 +2,61 @@
 
 ## Current release and CLOE transition
 
-Preview v0.0.3 is public main at `5ad00d1`, qualified by [CI87 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/40779161422), with all nine jobs and same-attempt system/staging evidence accepted. The operator has authorized the [CLOE v0.1.0 transition](cloe-roadmap-transition-v1.md). [ADR 0109](../adr/2026/10/0109-cloe-configuration-compatibility.md) begins W1 with configuration compatibility and a read-only filename planner, and [ADR 0123](../adr/2026/10/0123-coordinated-cloe-package-and-namespace-cutover.md) completes the coordinated W1 package/namespace cutover on staging. [ADR 0127](../adr/2026/10/0127-cloe-retrieval-contracts-and-evaluation.md) (`REPOMAP-CLOE-RETRIEVAL1`, [specification](cloe-retrieval-evaluation-v1.md), [exit](../../tools/ci/cloe-retrieval1-exit.md)) implements the W2 internal retrieval query contracts, publication-bound captured-text projection reference, `mixed-v1` corpus and 36-task catalog, and declared 24-task calibration baseline (held-out unexecuted; exact candidate qualified by [CI101 attempt1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/41204249885), with the82% integration branch target carried into W3). Full live home migration and private-line reintegration remain explicit subsequent work. The historical D12 checkpoint below describes earlier evidence; it is superseded for current core qualification by CI87 and ADR 0105. Optional pgvector and live-deployment claims remain separate.
+Public main is released Common Lore Index v0.0.4 at `39cb2b3`. Public
+staging `c323998e` is the latest qualified milestone. All nine jobs and the
+same-attempt proof passed in [CI158 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/44471257873).
+The [qualification record](../../tools/ci/cloe-ci158-qualification.md) binds
+the source, host evidence and consumed counters. Unit branches reached
+87.06%. Integration branches reached 80.15%, leaving 468 branches to the 82%
+target. Main promotion, release and production admission remain separate.
+
+The operator selected Route A in [ADR0205](../adr/2026/11/0205-proposed-w5-representative-workload-disposition.md).
+Its source foundation is qualified. The operator selected the prospective
+criterion and conditional native body-study class in
+[ADR0206](../adr/2026/11/0206-proposed-w5-captured-text-calibration-protocol.md)
+and the [body calibration protocol](cloe-w5-body-calibration-protocol-v1.md).
+The [captured-text calibration exit](../../tools/ci/cloe-w5-bodystudy1-exit.md)
+records the first complete local observation. Fusion met the prospective descriptive screen.
+PostgreSQL FTS returned no files in the common set, and fusion improved recall@10
+by 0.083 over native tools.
+The disposable lexical diagnostic reproduced zero matches before ranking.
+All 22 expected files were indexed, and both predicate branches matched zero
+chunks for all 12 frozen questions. The next evaluated comparator requires
+a prospective operator disposition under ADR 0206.
+The operator selected
+[ADR 0212](../adr/2026/11/0212-w5-prospective-lexical-comparator.md)
+for a separate prospective comparator. Its scoped source and synthetic
+PostgreSQL competence proof are complete in the
+[comparator exit](../../tools/ci/cloe-w5-lexical1-exit.md).
+[ADR 0213](../adr/2026/11/0213-proposed-w5-lexical-replay.md) selected one
+secondary paired replay on the exposed workload. The
+[replay exit](../../tools/ci/cloe-w5-lexical-replay2-exit.md) accounts for all
+48 slots. Candidate mean recall@10 was 0.9167 on the 12 body positives.
+The primary calibration remains the first admissible observation.
+The operator kept W5 as a v0.1.0 requirement and selected the
+[prospective matched held-out design](cloe-w5-matched-heldout-v1.md) under
+[ADR 0218](../adr/2026/11/0218-w5-prospective-matched-heldout-design.md).
+The design compares native tools, the competent comparator and incumbent
+fusion. Cohort selection and study execution remain separately gated.
+[ADR0207](../adr/2026/11/0207-body-study-retained-runtime-input-custody.md)
+defines read-only reuse of its retained runtime input within unchanged bounds.
+W6-W8 remain advanceable within their own authority; W5 is not accepted or
+deferred by a change in priority. No design-only public CI.
+
+The W5 source milestone has a completed local native supplement
+observation: two workers, 146 model records and 432 validated slots, with
+16 comparable positives and diversity floor
+true. See the [milestone exit](../../tools/ci/cloe-w5-supplement-study1-exit.md)
+and [aggregate observation](../../tools/ci/cloe-w5-supplement-study1-observation.json).
+Its earlier technical failure remains retained. The
+[retained analysis](../../tools/ci/cloe-w5-supplement-analysis1-report.md) reports
+all slots, task-weighted quality, controls and observed cost limits. CI153
+qualified that engineering candidate; scientific criteria, learned usefulness,
+held-outs and production admission remain open. The metadata-only calibration
+does not establish an incremental learned benefit. The separate public captured-text
+class was selected in ADR0205. Its prospective study outcome is recorded above.
+
+Historical preview v0.0.3 was public main at `5ad00d1`, qualified by [CI87 attempt 1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/40779161422), with all nine jobs and same-attempt system/staging evidence accepted. The operator has authorized the [CLOE v0.1.0 transition](cloe-roadmap-transition-v1.md). [ADR 0109](../adr/2026/10/0109-cloe-configuration-compatibility.md) begins W1 with configuration compatibility and a read-only filename planner, and [ADR 0123](../adr/2026/10/0123-coordinated-cloe-package-and-namespace-cutover.md) completes the coordinated W1 package/namespace cutover on staging. [ADR 0127](../adr/2026/10/0127-cloe-retrieval-contracts-and-evaluation.md) (`REPOMAP-CLOE-RETRIEVAL1`, [specification](cloe-retrieval-evaluation-v1.md), [exit](../../tools/ci/cloe-retrieval1-exit.md)) implements the W2 internal retrieval query contracts, publication-bound captured-text projection reference, `mixed-v1` corpus and 36-task catalog, and declared 24-task calibration baseline (held-out unexecuted; exact candidate qualified by [CI101 attempt1](https://github.com/Knowledge-Forge-AI/common-lore-index/actions/runs/41204249885), with the82% integration branch target carried into W3). Full live home migration and private-line reintegration remain explicit subsequent work. The historical D12 checkpoint below describes earlier evidence; it is superseded for current core qualification by CI87 and ADR 0105. Optional pgvector and live-deployment claims remain separate.
 
 ## Post-Promotion Product Program
 

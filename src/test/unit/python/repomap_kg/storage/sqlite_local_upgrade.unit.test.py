@@ -43,6 +43,7 @@ from common_lore_index.storage.sqlite_local.publisher import (
 from common_lore_index.storage.sqlite_local.restore import verify_backup
 from common_lore_index.storage.sqlite_local.schema import LocalGraphBinding, LocalStoreError
 from common_lore_index.storage.sqlite_local.upgrade import UpgradeResult, upgrade_graph_database
+from repomap_test_support.host_read_store_config import fail_if_reached
 from repomap_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
 
 BINDING = local_binding()
@@ -131,9 +132,12 @@ def test_unpublished_v1_upgrades(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert _state(path)[0] == SchemaState("current", 2)
 
 
-def test_exact_current_is_already_current_and_touches_no_output(tmp_path: Path) -> None:
+def test_exact_current_is_already_current_and_touches_no_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     path = _init(tmp_path / "live" / "portable-fixture.sqlite3", 1)
     before = path.read_bytes()
+    monkeypatch.setattr(upgrade, "classify", fail_if_reached)
     result = _upgrade(path, tmp_path / "absent")
     assert (result.result, result.from_version, result.schema_version, result.backup) == ("already-current", 2, 2, None)
     assert not (tmp_path / "absent").exists()
@@ -315,3 +319,43 @@ def test_publisher_lock_is_held_by_the_caller(tmp_path: Path, monkeypatch: pytes
     assert caught.value.code == "graph-publication-in-progress"
     assert not (tmp_path / "out").exists()
     _exact_v1(path, publication)
+
+
+def test_unmanifested_database_digest_obeys_opening_size(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    path = tmp_path / "snapshot"
+    path.write_bytes(b"fixture")
+    read = os.read
+    requests: list[int] = []
+
+    def read_growing_snapshot(descriptor: int, request: int) -> bytes:
+        requests.append(request)
+        if len(requests) == 1:
+            with path.open("ab") as stream:
+                stream.write(b"following-data")
+        return read(descriptor, request)
+
+    with monkeypatch.context() as local:
+        local.setattr(backup.os, "read", read_growing_snapshot)
+        with pytest.raises(LocalStoreError, match="database size changed while hashing"):
+            backup.file_digest(path)
+    assert requests == [len(b"fixture") + 1]
+
+
+def test_manifest_decode_refuses_duplicate_members_inside_valid_manifest() -> None:
+    from common_lore_index.storage.sqlite_local.backup_manifest import BackupManifest, parse_manifest
+
+    manifest = BackupManifest(CREATED_AT, BINDING, None, 100, "a" * 64, migrations.current_version())
+    encoded = manifest.encode()
+    assert parse_manifest(encoded) == manifest
+    assert b'"publication":{' in encoded and b'"accepted":false' in encoded
+    duplicate = encoded.replace(b'"publication":{', b'"publication":{"accepted":true,', 1)
+    with pytest.raises(LocalStoreError, match="manifest-invalid"):
+        parse_manifest(duplicate)
+
+
+def test_manifest_decode_refuses_excessive_nesting_before_shape_validation() -> None:
+    from common_lore_index.storage.sqlite_local.backup_manifest import parse_manifest
+
+    encoded = b'{"field":' + b"[" * 4000 + b"]" * 4000 + b"}"
+    with pytest.raises(LocalStoreError, match="manifest-invalid"):
+        parse_manifest(encoded)

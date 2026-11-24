@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 import json
 import os
@@ -130,62 +130,7 @@ def load_endpoint_descriptor(
 ) -> LoopbackEndpointDescriptor:
     """Load one private descriptor without following unsafe file types."""
 
-    target = Path(path)
-    fd = -1
-    try:
-        reject_reparse_path(target)
-        details = os.lstat(target)
-        if (
-            not stat.S_ISREG(details.st_mode) or details.st_size <= 0
-            or details.st_size > _MAX_DESCRIPTOR_BYTES
-            or getattr(details, "st_nlink", 1) != 1
-        ):
-            raise EndpointDescriptorError("endpoint descriptor is unsafe")
-        if os.name == "nt":  # pragma: no cover - native Windows runner
-            validate_owner_private_acl(target)
-        elif (
-            details.st_uid != os.getuid()
-            or stat.S_IMODE(details.st_mode) != 0o600
-        ):
-            raise EndpointDescriptorError("endpoint descriptor is unsafe")
-        flags = os.O_RDONLY
-        if hasattr(os, "O_NOFOLLOW"):
-            flags |= os.O_NOFOLLOW
-        fd = os.open(target, flags)
-        with os.fdopen(fd, "rb") as stream:
-            fd = -1
-            opened = os.fstat(stream.fileno())
-            if (
-                not stat.S_ISREG(opened.st_mode)
-                or getattr(opened, "st_nlink", 1) != 1
-                or opened.st_size <= 0
-                or opened.st_size > _MAX_DESCRIPTOR_BYTES
-                or opened.st_dev != details.st_dev
-                or opened.st_ino != details.st_ino
-            ):
-                raise EndpointDescriptorError("endpoint descriptor is unsafe")
-            if os.name == "nt":  # pragma: no cover - native Windows runner
-                validate_owner_private_acl(target)
-            elif (
-                opened.st_uid != os.getuid()
-                or stat.S_IMODE(opened.st_mode) != 0o600
-            ):
-                raise EndpointDescriptorError("endpoint descriptor is unsafe")
-            content = stream.read(_MAX_DESCRIPTOR_BYTES + 1)
-        if len(content) > _MAX_DESCRIPTOR_BYTES:
-            raise EndpointDescriptorError("endpoint descriptor is unsafe")
-    except EndpointDescriptorError:
-        raise
-    except (OSError, UnicodeError, WindowsSecurityError):
-        raise EndpointDescriptorError("endpoint descriptor is unsafe") from None
-    finally:
-        if fd >= 0:
-            os.close(fd)
-    try:
-        value = json.loads(content.decode("utf-8"))
-        descriptor = LoopbackEndpointDescriptor.from_mapping(value)
-    except (json.JSONDecodeError, UnicodeError, TypeError, ValueError):
-        raise EndpointDescriptorError("endpoint descriptor is invalid") from None
+    descriptor = _parse_descriptor(_read_descriptor_bytes(Path(path)))
     if expected_instance_id is not None and descriptor.instance_id != expected_instance_id:
         raise EndpointDescriptorError("endpoint descriptor is stale")
     if (
@@ -217,8 +162,8 @@ def _write_endpoint_descriptor_unlocked(
     try:
         reject_reparse_path(target.parent)
         if target.exists() or target.is_symlink():
-            load_endpoint_descriptor(target)
             prior_content = _read_descriptor_bytes(target)
+            _parse_descriptor(prior_content)
         encoded = (
             json.dumps(
                 descriptor.to_mapping(), sort_keys=True, separators=(",", ":")
@@ -325,18 +270,18 @@ def _endpoint_mutation_lock(target: Path):
     descriptor = -1
     try:
         reject_reparse_path(lock_path.parent)
-        flags = os.O_RDWR | os.O_CREAT
-        if hasattr(os, "O_NOFOLLOW"):
-            flags |= os.O_NOFOLLOW
+        flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0)
+        flags |= getattr(os, "O_NONBLOCK", 0)
         descriptor = os.open(lock_path, flags, 0o600)
         details = os.fstat(descriptor)
         if (
-            not stat.S_ISREG(details.st_mode)
-            or details.st_uid != os.getuid()
-            or stat.S_IMODE(details.st_mode) != 0o600
+            not stat.S_ISREG(details.st_mode) or details.st_nlink != 1
+            or details.st_uid != os.getuid() or stat.S_IMODE(details.st_mode) != 0o600
         ):
             raise EndpointDescriptorError("endpoint descriptor lock unsafe")
         fcntl.flock(descriptor, fcntl.LOCK_EX)
+        if _file_version(lock_path.lstat()) != _file_version(details):
+            raise EndpointDescriptorError("endpoint descriptor lock unsafe")
         yield
     except EndpointDescriptorError:
         raise
@@ -344,17 +289,75 @@ def _endpoint_mutation_lock(target: Path):
         raise EndpointDescriptorError("endpoint descriptor lock unavailable") from None
     finally:
         if descriptor >= 0:
-            try:
+            with suppress(OSError):
                 fcntl.flock(descriptor, fcntl.LOCK_UN)
-            finally:
+            with suppress(OSError):
                 os.close(descriptor)
 
 
-def _read_descriptor_bytes(path: Path) -> bytes:
-    content = path.read_bytes()
-    if not 0 < len(content) <= _MAX_DESCRIPTOR_BYTES:
-        raise EndpointDescriptorError("endpoint descriptor is unsafe")
-    return content
+def _file_version(details: os.stat_result) -> tuple[int, ...]:
+    return (details.st_dev, details.st_ino, details.st_mode, details.st_nlink,
+            details.st_uid, details.st_size, details.st_mtime_ns, details.st_ctime_ns)
+
+
+def _read_descriptor_bytes(target: Path) -> bytes:
+    fd = -1
+    try:
+        reject_reparse_path(target)
+        details = os.lstat(target)
+        if (
+            not stat.S_ISREG(details.st_mode) or details.st_size <= 0
+            or details.st_size > _MAX_DESCRIPTOR_BYTES
+            or getattr(details, "st_nlink", 1) != 1
+        ):
+            raise EndpointDescriptorError("endpoint descriptor is unsafe")
+        if os.name == "nt":  # pragma: no cover - native Windows runner
+            validate_owner_private_acl(target)
+        elif (
+            details.st_uid != os.getuid()
+            or stat.S_IMODE(details.st_mode) != 0o600
+        ):
+            raise EndpointDescriptorError("endpoint descriptor is unsafe")
+        flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)
+        flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
+        fd = os.open(target, flags)
+        with os.fdopen(fd, "rb") as stream:
+            fd = -1
+            opened = os.fstat(stream.fileno())
+            if os.name == "nt":  # pragma: no cover - native Windows runner
+                if (
+                    not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1
+                    or not 0 < opened.st_size <= _MAX_DESCRIPTOR_BYTES
+                    or (opened.st_dev, opened.st_ino) != (details.st_dev, details.st_ino)
+                ):
+                    raise EndpointDescriptorError("endpoint descriptor is unsafe")
+                validate_owner_private_acl(target)
+            elif _file_version(opened) != _file_version(details):
+                raise EndpointDescriptorError("endpoint descriptor is unsafe")
+            content = stream.read(opened.st_size + 1)
+            # Cooperating writers replace the inode. Version checks also catch
+            # observable edits made through the same inode.
+            if (
+                len(content) != opened.st_size
+                or _file_version(os.fstat(stream.fileno())) != _file_version(opened)
+            ):
+                raise EndpointDescriptorError("endpoint descriptor is unsafe")
+        return content
+    except EndpointDescriptorError:
+        raise
+    except (OSError, WindowsSecurityError, ValueError):
+        raise EndpointDescriptorError("endpoint descriptor is unsafe") from None
+    finally:
+        if fd >= 0:
+            os.close(fd)
+
+
+def _parse_descriptor(content: bytes) -> LoopbackEndpointDescriptor:
+    try:
+        value = json.loads(content.decode("utf-8"))
+        return LoopbackEndpointDescriptor.from_mapping(value)
+    except (TypeError, ValueError, RecursionError):
+        raise EndpointDescriptorError("endpoint descriptor is invalid") from None
 
 
 def _restore_descriptor(path: Path, content: bytes) -> None:

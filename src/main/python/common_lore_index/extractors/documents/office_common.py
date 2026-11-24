@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import re
-from collections import Counter
+import sys
+import zipfile
+from collections.abc import Iterable, Iterator
+from importlib import import_module
 
 from common_lore_index import __version__
 from common_lore_index.extractors.documents.office_references import EXTRACTOR_NAME, URL_PATTERN
+from common_lore_index.extractors.shared.scanner import iter_text_lines as _text_lines
 from common_lore_index.observations.raw import RawObservation
 
 
@@ -39,18 +43,16 @@ def _parse_error(
         },
     )
 
-def _column_type_summary(values: list[str]) -> str:
-    non_empty = [value.strip() for value in values if value.strip()]
-    if not non_empty:
-        return "empty"
-    counts = Counter(_scalar_type(value) for value in non_empty)
-    if len(counts) == 1:
-        return next(iter(counts))
-    if len(counts) == 2 and "empty" in counts:
-        del counts["empty"]
-        if len(counts) == 1:
-            return next(iter(counts))
-    return "mixed"
+def _column_type_summary(values: Iterable[str]) -> str:
+    observed = "empty"
+    for value in values:
+        scalar = _scalar_type(value)
+        if scalar == "empty":
+            continue
+        if observed != "empty" and scalar != observed:
+            return "mixed"
+        observed = scalar
+    return observed
 
 
 def _scalar_type(value: str) -> str:
@@ -77,3 +79,50 @@ def _pointer_for_slug(prefix: str, slug: str) -> str:
 def _slugify(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9_-]+", "-", value.strip().lower()).strip("-")
     return slug[:64] or "untitled"
+
+
+def _latex_lines(content: str) -> Iterator[str]:
+    """Strip comments per line, dropping the last line if it becomes empty."""
+    pending = None
+    for line in _text_lines(content):
+        if pending is not None:
+            yield pending
+        pending = _strip_latex_comment(line)
+    if pending:
+        yield pending
+
+
+def _strip_latex_comment(line: str) -> str:
+    index = 0
+    comment_at: int | None = None
+    while True:
+        index = line.find("%", index)
+        if index == -1:
+            break
+        backslashes = 0
+        cursor = index - 1
+        while cursor >= 0 and line[cursor] == "\\":
+            backslashes += 1
+            cursor -= 1
+        if backslashes % 2 == 0:
+            comment_at = index
+            break
+        index += 1
+    return line[:comment_at] if comment_at is not None else line
+
+
+def _odf_zip_read_errors() -> tuple[type[Exception], ...]:
+    errors: list[type[Exception]] = [EOFError, OSError, RuntimeError, zipfile.BadZipFile]
+    codecs = [("zlib", "error"), ("lzma", "LZMAError")]
+    if sys.version_info >= (3, 14):
+        codecs.append(("compression.zstd", "ZstdError"))
+    for module_name, error_name in codecs:
+        try:
+            codec = import_module(module_name)
+        except ImportError:
+            continue
+        errors.append(getattr(codec, error_name))
+    return tuple(errors)
+
+
+ODF_ZIP_READ_ERRORS = _odf_zip_read_errors()

@@ -6,7 +6,7 @@ import subprocess
 import threading
 from collections import deque
 from collections.abc import Iterable, Sequence
-from typing import BinaryIO as BinaryIO, IO as _IO
+from typing import BinaryIO as BinaryIO, IO as _IO, cast
 
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.psql import PSQL_LAUNCH_ERROR
@@ -94,11 +94,20 @@ def _write_chunks(
     if batch_size < 1:
         raise ValueError("batch size must be positive")
     count = 0
+    write = cast(BinaryIO, sink).write
     for chunk in chunks:
         if not isinstance(chunk, str):
             raise TypeError("psql stream chunks must be text")
-        encoded = chunk.encode("utf-8", errors="strict")
-        sink.write(encoded)
+        remaining: bytes | memoryview = chunk.encode("utf-8", errors="strict")
+        while remaining:
+            written = write(remaining)
+            if type(written) is not int or not 0 <= written <= len(remaining):
+                raise OSError("psql stream write returned an invalid byte count")
+            if not written:
+                raise OSError("psql stream write made no progress")
+            if written == len(remaining):
+                break
+            remaining = memoryview(remaining)[written:]
         count += 1
         if count % batch_size == 0:
             sink.flush()

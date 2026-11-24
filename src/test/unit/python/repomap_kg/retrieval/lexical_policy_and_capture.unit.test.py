@@ -12,7 +12,9 @@ from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingCo
 from common_lore_index.ops.config_records import OpsGraphConfig
 from common_lore_index.retrieval.lexical_aliases import (
     ALIAS_SPLIT_RULE_VERSION,
+    _prepare_alias_text,
     build_alias_tokens_text,
+    extract_alias_tokens,
     split_identifier_and_path_tokens,
 )
 from common_lore_index.retrieval.lexical_capture import capture_lexical_generation_plan
@@ -170,6 +172,10 @@ def test_lexical_policy_matches_mixed_v1_freeze_digest_and_excludes_private_bind
         == ExclusionReason.RETENTION_NOT_AUTHORIZED.value
     )
 
+    explicit = build_lexical_generation_policy(graph, selected_binding_ids=lex_pol.admitted_binding_ids)
+    assert explicit.policy_digest == lex_pol.policy_digest
+    assert explicit.body_policy.to_dict() == lex_pol.body_policy.to_dict()
+
     # Subset build shares graph policy_digest while scoping admitted_binding_ids (B3)
     sub_pol = build_lexical_generation_policy(
         graph, selected_binding_ids=(binding_id_for_alias("core"),)
@@ -288,3 +294,68 @@ def test_lexical_capture_pre_open_exclusions_and_chunking(tmp_path: Path) -> Non
     assert "cloe-lexical-schema:1" in mig_sql
     assert "CREATE TABLE IF NOT EXISTS cloe_lexical.generations" in mig_sql
     assert "ALTER DEFAULT PRIVILEGES" in mig_sql
+
+
+def test_alias_long_acronyms_and_duplicate_terms_preserve_first_seen_order() -> None:
+    tokens = extract_alias_tokens(
+        source_relative_path="pkg/XMLHttpRequest2.py",
+        chunk_text="A" * 8192 + " " + "B" * 8192 + "ReadValue42 ReadValue42 co-op",
+    )
+    assert tokens == (
+        "pkg", "xmlhttprequest2", "xml", "http", "request2", "request", "py",
+        "pkgxmlhttprequest2py", "read", "value42", "value", "42", "readvalue42",
+        "co", "op", "coop",
+    )
+
+
+def test_prepared_path_aliases_do_not_retain_tokens_from_previous_chunks() -> None:
+    path = "pkg/HTTP2Field.py"
+    prepare = _prepare_alias_text(path)
+    first = "HTTP2Field Value42 HTTP2Field"
+    second = "Other9000 foo_bar"
+    assert prepare(first) == build_alias_tokens_text(source_relative_path=path, chunk_text=first)
+    assert prepare(second) == build_alias_tokens_text(source_relative_path=path, chunk_text=second)
+    assert "value42" not in prepare(second).split()
+    assert prepare(first) == build_alias_tokens_text(source_relative_path=path, chunk_text=first)
+
+
+def test_frequent_alias_candidates_are_cached_only_within_one_document(monkeypatch) -> None:
+    from common_lore_index.retrieval import lexical_aliases
+
+    expand = lexical_aliases._alias_candidates
+    seen = []
+
+    def measure(value):
+        seen.append(value)
+        return expand(value)
+
+    monkeypatch.setattr(lexical_aliases, "_alias_candidates", measure)
+    first = lexical_aliases._prepare_alias_text("")
+    assert first("Field42") == first("Field42")
+    assert seen == ["Field42"]
+    second = lexical_aliases._prepare_alias_text("")
+    assert second("Field42") == first("Field42") and seen.count("Field42") == 2
+    too_long = "Z" * 129
+    assert first(too_long) == first(too_long) == ""
+    assert seen.count(too_long) == 2
+    boundary = "Z" * 128
+    assert first(boundary) == first(boundary) == ""
+    assert seen.count(boundary) == 1
+    for index in range(254):
+        first(f"Field{1000 + index}")
+    first("Field42")
+    assert seen.count("Field42") == 2
+    for index in range(256):
+        first(f"Field{2000 + index}")
+    first("Field42")
+    assert seen.count("Field42") == 3
+
+
+def test_plain_and_delimited_aliases_keep_ascii_length_boundaries() -> None:
+    maximum = "b" * 64
+    too_long = "c" * 65
+    tokens = extract_alias_tokens(
+        source_relative_path="pkg/migrate.py",
+        chunk_text=f"a aa {maximum} {too_long} a-b x_9 υ42 雪",
+    )
+    assert tokens == ("pkg", "migrate", "py", "pkgmigratepy", "aa", maximum, "ab", "x9", "42")

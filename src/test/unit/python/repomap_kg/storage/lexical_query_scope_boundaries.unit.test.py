@@ -18,6 +18,7 @@ from common_lore_index.retrieval.lexical_envelopes import (
 from common_lore_index.retrieval.lexical_policy import (
     LexicalGenerationPolicy, build_lexical_generation_policy,
 )
+from common_lore_index.storage import lexical_query_sql
 from common_lore_index.storage.lexical_fence_sql import LEXICAL_FENCE_CTE_SQL
 from common_lore_index.storage.lexical_literal_sql import LITERAL_CAPTURED_TEXT_QUERY_SQL
 from common_lore_index.storage.lexical_query_sql import (
@@ -320,3 +321,78 @@ def test_sql_fences_preserve_an_unscoped_empty_prefix_array() -> None:
         compact = _compact(sql)
         assert "cardinality(%(path_prefixes)s::text[]) = 0" in compact
         assert "OR EXISTS ( SELECT 1 FROM unnest(%(path_prefixes)s::text[])" in compact
+
+
+def test_ranked_aliases_preserve_acronyms_and_token_order() -> None:
+    query = f"pkg/HTTPServer.XMLParser2 getURLValue HTTPServer {'A' * 8191}ReadConfig"
+    assert lexical_query_sql._build_alias_query_text(query) == (
+        "pkg http server xml parser2 get url value read config"
+    )
+
+
+@pytest.mark.parametrize("style", ["ranked_terms", "normalized_phrase", "literal_captured_text"])
+def test_only_ranked_queries_prepare_alias_parameters(style: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = []
+    sent = []
+
+    def aliases(query: str) -> str:
+        calls.append(query)
+        return "http server"
+
+    def fetch(_connection: Any, _sql: str, params: dict[str, Any], *, operation: str) -> tuple[str]:
+        assert operation == f"lexical_query_{style}"
+        sent.append(params)
+        return ('{"fence_status":"no_generation"}',)
+
+    query = "HTTPServer"
+    monkeypatch.setattr(lexical_query_sql, "_build_alias_query_text", aliases)
+    monkeypatch.setattr(lexical_query_sql, "execute_fetchone", fetch)
+    result = lexical_query_sql.execute_single_statement_lexical_query(
+        object(), query_style=style, query_text=query, repository_identity=None,
+        repository_name=None, root_path=None, expected_policy_digest="example",
+        expected_binding_policy_digests_json="{}", admitted_binding_ids=(), omission_binding_ids=(),
+    )
+    assert result.fence_status == "no_generation"
+    assert calls == ([query] if style == "ranked_terms" else [])
+    assert sent[0]["query_text"] == query
+    assert sent[0]["alias_query_text"] == ("http server" if style == "ranked_terms" else "")
+
+
+def test_ranked_sql_parses_each_query_form_once_and_sorts_before_paging() -> None:
+    compact = _compact(RANKED_TERMS_QUERY_SQL)
+    assert compact.count("websearch_to_tsquery(") == compact.count("plainto_tsquery(") == 1
+    assert "query_inputs AS MATERIALIZED" in compact
+    for sql in (RANKED_TERMS_QUERY_SQL, NORMALIZED_PHRASE_QUERY_SQL):
+        page = _compact(sql).split("paged AS MATERIALIZED (", 1)[1].split("enriched_hits AS", 1)[0]
+        assert 'ORDER BY score DESC, binding_id COLLATE "C" ASC' in page
+        assert page.index("ORDER BY") < page.index("OFFSET")
+
+
+def test_literal_walk_carries_positions_without_duplicating_document_text() -> None:
+    compact = _compact(LITERAL_CAPTURED_TEXT_QUERY_SQL)
+    walk = compact.split("raw_occurrences AS (", 1)[1].split("capped_files AS", 1)[0]
+    assert "ro.normalized_text" not in walk and walk.count("strpos(substr(") == 1
+    assert "ro.occurrence_index <= %(max_occurrences_per_file)s AND ro.match_pos_1 IS NOT NULL" in compact
+    assert "ro.occurrence_index > %(max_occurrences_per_file)s AND ro.match_pos_1 IS NOT NULL" in compact
+
+
+def test_literal_page_precedes_line_and_chunk_lookup_and_budget_precedes_body_read() -> None:
+    compact = _compact(LITERAL_CAPTURED_TEXT_QUERY_SQL)
+    inventory = compact.split("scoped_documents AS MATERIALIZED (", 1)[1].split("literal_scan_budget AS", 1)[0]
+    assert "doc.normalized_text" not in inventory and "LIMIT 4097" in inventory
+    assert "count(*) > 4096" in compact
+    assert "FROM budgeted_documents doc CROSS JOIN LATERAL" in compact
+    page = compact.split("paged_occurrences AS MATERIALIZED (", 1)[1].split("page_locations AS", 1)[0]
+    assert 'ORDER BY binding_id COLLATE "C" ASC, source_relative_path COLLATE "C" ASC, match_pos_1 ASC' in page
+    assert "OFFSET %(offset)s LIMIT %(limit)s" in page
+    assert "FROM paged_occurrences ro" in compact and "FROM page_locations ao LEFT JOIN LATERAL" in compact
+
+
+def test_ranked_candidate_cap_uses_the_same_order_as_raw_admission() -> None:
+    for sql in (RANKED_TERMS_QUERY_SQL, NORMALIZED_PHRASE_QUERY_SQL):
+        compact = _compact(sql)
+        assert (
+            'FROM raw_matched_chunks ORDER BY binding_id COLLATE "C" ASC, '
+            'source_relative_path COLLATE "C" ASC, chunk_ordinal ASC LIMIT 5000'
+        ) in compact
+        assert "LEAST(candidate_count, 5000) FROM candidate_budget" in compact

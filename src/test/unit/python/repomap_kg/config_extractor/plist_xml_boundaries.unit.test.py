@@ -117,6 +117,16 @@ class ConfigExtractorPlistXmlBoundariesUnitTests(unittest.TestCase):
         prop_elem = next(o for o in spring_elements if o.metadata.get("property_name") == "helper")
         self.assertEqual(prop_elem.metadata["bean_ref"], "otherBean")
 
+    def test_nested_xml_columns_preserve_preorder_and_duplicate_sibling_indices(self):
+        depth = 1050
+        content = "<root>" + "<branch>" * depth + "<item/><item/>" + "</branch>" * depth + "</root>"
+        observations = extract_config_file_observations("nested.xml", content)
+        elements = [item for item in observations if item.kind == "xml.element"]
+        deepest = "/root" + "/branch" * depth
+        self.assertEqual(len(elements), depth + 3)
+        self.assertEqual([item.name for item in elements[-2:]], [deepest + "/item", deepest + "/item[2]"])
+        self.assertEqual(elements[-3].metadata["child_count"], 2)
+
     def test_xml_edge_metadata_and_parse_error_lines(self):
         obs = extract_config_file_observations(
             "pom.xml",

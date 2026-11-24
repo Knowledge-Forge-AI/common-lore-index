@@ -101,10 +101,11 @@ def decode_readback(stdout: bytes) -> Readback:
             size = _int(value["size"])
             data = None
             if value["type"] == "f":
-                data = stdout[offset:offset + size]
-                if len(data) != size:
+                end = offset + size
+                if end > len(stdout):
                     raise ReadbackRefused("readback_framing")
-                offset += size
+                data = stdout[offset:end]
+                offset = end
             elif size:
                 raise ReadbackRefused("readback_framing")
             entries.append(ReadEntry(value["path"] if type(value["path"]) is str else "\x00", value["type"],
@@ -134,10 +135,9 @@ def verify_install_tree(readback: Readback, expected: Sequence[ExpectedEntry], *
                         owner: tuple[int, int] = (0, 0)) -> str:
     """Require exact equality with the parent's tree; return the read-back tree digest."""
 
-    paths = [entry.path for entry in readback.entries]
-    if len(paths) != len(set(paths)) or set(paths) != {entry.path for entry in expected}:
-        raise ReadbackRefused("install_path_set")
     actual = {entry.path: entry for entry in readback.entries}
+    if len(actual) != len(readback.entries) or actual.keys() != {entry.path for entry in expected}:
+        raise ReadbackRefused("install_path_set")
     for wanted in expected:
         got = actual[wanted.path]
         if got.kind != wanted.kind or got.mode != wanted.mode:
@@ -150,10 +150,15 @@ def verify_install_tree(readback: Readback, expected: Sequence[ExpectedEntry], *
 
 
 def _mount(lines: Sequence[str], point: str) -> tuple[set[str], str, set[str]]:
-    matches = [line.split(" ") for line in lines if len(line.split(" ")) > 5 and line.split(" ")[4] == point]
-    if len(matches) != 1 or "-" not in matches[0]:
+    fields: list[str] | None = None
+    for line in lines:
+        parts = line.split(" ")
+        if len(parts) > 5 and parts[4] == point:
+            if fields is not None:
+                raise ReadbackRefused("guest_mount_" + point.strip("/").replace("/", "_"))
+            fields = parts
+    if fields is None or "-" not in fields:
         raise ReadbackRefused("guest_mount_" + point.strip("/").replace("/", "_"))
-    fields = matches[0]
     separator = fields.index("-")
     if len(fields) < separator + 4:
         raise ReadbackRefused("guest_mount_shape")

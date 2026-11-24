@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 import hashlib
 import json
+from common_lore_index.graph._multi_source_identity import snapshot_vector_generation
 from common_lore_index.graph.multi_source import SourceSnapshot, multi_source_configuration_id
 from common_lore_index.graph.multi_source_capture import MultiSourceCaptureError
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
@@ -52,20 +53,12 @@ def _multi_source_source_generation(
         raise MultiSourceCaptureError(
             "source binding inventory is invalid", category="source_invalid"
         )
-    vector = []
-    for snapshot in ordered:
-        vector.append({
-            "binding_id": snapshot.binding.binding_id,
-            "binding_revision": snapshot.binding.revision,
-            "snapshot_id": snapshot.snapshot_id,
-        })
-    payload = {
-        "algorithm": "multi-source-snapshot-vector-v1",
-        "graph_id": next(iter(graph_ids)),
-        "snapshot_vector": vector,
-    }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-    return "sg1:" + hashlib.sha256(encoded).hexdigest()
+    return snapshot_vector_generation(
+        next(iter(graph_ids)), (
+            (snapshot.binding.binding_id, snapshot.binding.revision, snapshot.snapshot_id)
+            for snapshot in ordered
+        ),
+    )
 
 def multi_source_config_generation(graph: OpsGraphConfig) -> str:
     """Bind semantic configuration without reading physical source locations."""

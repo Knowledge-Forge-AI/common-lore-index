@@ -280,7 +280,8 @@ class ServicePackagePipelineIntegrationTests(unittest.TestCase):
             privacy=PrivacyClassification.RAW_SOURCE,
         )
 
-        self.assertTrue(store.verify(b_ref))
+        self.assertTrue(store.verify(b_ref, max_bytes=b_ref.size_bytes))
+        self.assertFalse(store.verify(b_ref, max_bytes=b_ref.size_bytes - 1))
         self.assertTrue(store.verify(r_ref))
 
         # Truncate receipt content on disk to trigger length / digest failure

@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from pathlib import Path
 
 from repomap_test_support.cli_in_process import run_repo_map_in_process
 from repomap_test_support.postgres_harness import (
@@ -27,6 +28,19 @@ def _storage_args(fixture_root, postgres):
         "--pg-database", postgres.database,
         "--psql-command", postgres.psql_command,
     )
+
+
+def test_discovery_keeps_plain_document_windows_and_line_identities(tmp_path: Path) -> None:
+    (tmp_path / "table.csv").write_text("name,amount\n\n" + "alpha,1\n" * 2000 + "excluded,2,3\n", encoding="utf-8")
+    (tmp_path / "notes.txt").write_bytes("# First\r\n\r\nBody\u2028# Second\rEnd\n".encode())
+    (tmp_path / "paper.tex").write_bytes((r"\section{One}" + "\r\n" + r"\input{chapter}" + "\u2028% trailing comment\r").encode())
+    code, output, stderr = run_repo_map_in_process("discover", str(tmp_path), "--jsonl")
+    assert code == 0, stderr
+    records = {row["kind"]: row for row in map(json.loads, output.splitlines())}
+    assert "document.parse_error" not in records
+    assert records["document.table_document"]["metadata"]["row_count"] == 1998
+    assert records["document.text_section"]["start_line"] == 4
+    assert records["document.latex_command"]["start_line"] == 2
 
 
 class StorageDocumentReadbackIntegrationTests(unittest.TestCase):

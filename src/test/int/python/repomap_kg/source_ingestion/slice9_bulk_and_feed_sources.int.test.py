@@ -1,11 +1,15 @@
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
+from unittest.mock import patch
 
 from common_lore_index.ops.ingestion.bulk import (
     BulkPolicyError,
     build_bulk_plan,
+    bulk_observations_from_plan,
     classify_bulk_route,
+    import_bulk_source,
     load_bulk_source_config,
 )
 from common_lore_index.ops.ingestion.source_common import SourcePolicyError
@@ -26,6 +30,97 @@ from repomap_test_support.source_ingestion_integration import (
 
 class Slice9BulkAndFeedSourcesIntegrationTests(unittest.TestCase):
     """Integration slice 9 tests covering bulk traversal, feed sources, and WARC parsing."""
+
+    def test_bulk_artifact_replay_keeps_observations_when_a_later_record_cannot_encode(self) -> None:
+        from common_lore_index.ops.ingestion._bulk_observations import write_bulk_run_files
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cfg = root / "bulk.toml"
+            fixture = (bulk_fixture_root() / "mixed_corpus" / "bulk.toml").read_text(encoding="utf-8")
+            cfg.write_text(
+                fixture.replace("include_hidden = false", "include_hidden = true")
+                .replace("follow_symlinks = false", "follow_symlinks = true"), encoding="utf-8",
+            )
+            (root / "notes.md").write_text("# Fixture\n", encoding="utf-8")
+            (root / "cycle").symlink_to(root, target_is_directory=True)
+            first = import_bulk_source(cfg, root_path=root)
+            self.assertEqual({file.relative_path: file.reason for file in first.manifest.skipped_files}
+                             .get("cycle"), "symlink_excluded")
+            output = first.output_path / "observations.jsonl"
+            expected = output.read_bytes()
+            invalid = replace(first.raw_observations[-1], metadata={"invalid": object()})
+            with self.assertRaises(TypeError):
+                write_bulk_run_files(
+                    first.manifest, observations=(*first.raw_observations[:-1], invalid),
+                    repository_root=root.resolve(),
+                )
+            self.assertEqual(output.read_bytes(), expected)
+            self.assertEqual(list(first.output_path.glob(".bulk-output-*")), [])
+            repeated = import_bulk_source(cfg, root_path=root)
+            self.assertEqual(repeated.output_path, first.output_path)
+            self.assertEqual(repeated.manifest.manifest_sha256, first.manifest.manifest_sha256)
+            self.assertEqual(output.read_bytes(), expected)
+
+    def test_bulk_readback_captures_aliased_payload_once_and_keeps_route_order(self) -> None:
+        from common_lore_index.ops.ingestion import bulk
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            cfg = root / "bulk.toml"
+            cfg.write_bytes((bulk_fixture_root() / "mixed_corpus" / "bulk.toml").read_bytes())
+            content = root / "topic.md"
+            content.write_bytes(b"# Captured\n")
+            (root / "alias.md").symlink_to(content.name)
+            config = replace(load_bulk_source_config(cfg), follow_symlinks=True)
+            manifest = build_bulk_plan(config, repository_root=root)
+            self.assertEqual(
+                [record.relative_path for record in manifest.included_files if record.repository_path == "topic.md"],
+                ["alias.md", "topic.md"],
+            )
+            expected = bulk_observations_from_plan(config, manifest, repository_root=root)
+            self.assertEqual(sum(item.kind == "markdown.document" for item in expected), 2)
+            extract = bulk.observations_for_file_info
+
+            def revise_live_file(snapshot, file_info, **kwargs):
+                self.assertNotEqual(snapshot, root)
+                if file_info.path == "topic.md":
+                    content.write_bytes(b"# Modified\n")
+                return extract(snapshot, file_info, **kwargs)
+
+            with patch.object(bulk, "observations_for_file_info", side_effect=revise_live_file):
+                actual = bulk_observations_from_plan(config, manifest, repository_root=root)
+            self.assertEqual(actual, expected)
+            with self.assertRaisesRegex(BulkPolicyError, "retained bulk file differs from its manifest"):
+                bulk_observations_from_plan(config, manifest, repository_root=root)
+
+    def test_bulk_plan_reuses_markdown_inventory_and_refuses_grown_file(self) -> None:
+        from common_lore_index.ops.ingestion import _bulk_manifest
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            cfg = root / "bulk.toml"
+            cfg.write_bytes((bulk_fixture_root() / "mixed_corpus" / "bulk.toml").read_bytes())
+            (root / "index.md").write_text("[Topic](topic.md#heading)\n", encoding="utf-8")
+            topic = root / "topic.md"
+            topic.write_text("# Heading\n", encoding="utf-8")
+            config = load_bulk_source_config(cfg)
+            manifest = build_bulk_plan(config, repository_root=root)
+            observations = bulk_observations_from_plan(config, manifest, repository_root=root)
+            self.assertIn("doc.section:file%3Atopic.md:heading",
+                          {item.target for item in observations if item.kind == "markdown.link"})
+            open_admitted = _bulk_manifest._hash_admitted_file
+
+            def append_before_hash(path, expected):
+                if path == topic:
+                    with topic.open("a", encoding="utf-8") as stream:
+                        stream.write("additional bytes outside the admitted extent\n")
+                return open_admitted(path, expected)
+
+            with patch.object(_bulk_manifest, "_hash_admitted_file", side_effect=append_before_hash):
+                with self.assertRaisesRegex(BulkPolicyError, "bulk file changed during manifest scan"):
+                    import_bulk_source(cfg, root_path=root)
+            self.assertFalse((root / ".repomap").exists())
 
     def test_s9_b08_bulk_route_classification_and_unsupported_skips(self) -> None:
         """Route classification assigns expected routes and skips unsupported extensions."""

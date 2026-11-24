@@ -1,7 +1,7 @@
 """Admission and actual handle witnesses for canonical external sorting."""
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
 import threading
 
@@ -182,4 +182,25 @@ def test_cancellation_on_overflow_row_precedes_admission(
     encoder = encoder_for_rows(tmp_path, rows(), max_sorter_buffer_bytes=1, cancel_event=event)
     with pytest.raises(BundleEncodingCancelled):
         b"".join(encoder.stream_chunks())
+    assert not tuple(tmp_path.iterdir())
+
+
+
+def test_sort_spills_before_combined_buffer_exceeds_byte_limit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = [{"value": f"{value:03d}"} for value in reversed(range(5))]
+    expected = sorted(canonical_json({"family": "files", "frame": "record", "record": row}) for row in rows)
+    limit = 2 * len(expected[0]) - 1
+    writes: list[int] = []
+    original_spill = runs_module.BundleSortRuns.spill
+
+    def observe(runs: runs_module.BundleSortRuns, lines: Sequence[bytes], family: str) -> None:
+        writes.append(sum(map(len, lines)))
+        original_spill(runs, lines, family)
+
+    monkeypatch.setattr(runs_module.BundleSortRuns, "spill", observe)
+    with BoundedExternalRowSorter(max_buffer_bytes=limit, spool_dir=tmp_path) as sorter:
+        assert list(sorter.sort_family_records("files", rows)) == expected
+    assert len(writes) == len(rows) and all(size <= limit for size in writes)
     assert not tuple(tmp_path.iterdir())

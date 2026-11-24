@@ -2,7 +2,7 @@ import subprocess
 import unittest
 import json
 import os
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from common_lore_index.storage import (
     build_ingested_source_query_sql,
@@ -383,3 +383,18 @@ class StorageSourceFeedHelperUnitTests(unittest.TestCase):
             sql = call.kwargs["input"]
             self.assertIn("repository_identity = 'repo1:ident'", sql)
             self.assertIn("DESC NULLS LAST, id LIMIT 1", sql)
+
+
+def test_sqlite_feed_work_keeps_raw_key_and_provenance_only(monkeypatch):
+    from common_lore_index.storage.sqlite_local import source_feed_queries
+    from common_lore_index.storage.sqlite_local.source_run_summary import SourceObservation
+    row = SourceObservation((2, 3), "feed.item", "fixture", "feed.rss", "Title", "allowed",
+                            "run", "artifact", "path", "digest", "2048", "2026-11-01",
+                            "200", "application/rss+xml", "https://example.invalid/feed")
+
+    def source_rows(_connection, source_id, source_run_id):
+        assert (source_id, source_run_id) == ("fixture", "run")
+        yield row
+
+    monkeypatch.setattr(source_feed_queries, "_iter_source_observations", source_rows)
+    assert source_feed_queries._feed_provenance(Mock(), "fixture", "run") == [((2, 3), "run", "artifact", "path")]

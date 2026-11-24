@@ -3,17 +3,21 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
+from itertools import chain
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import urlsplit
 
 from common_lore_index import __version__
+from common_lore_index._utf8 import byte_length
+from common_lore_index.extractors.shared.redaction import (
+    contains_web_url_userinfo, unknown_reference, web_url_reference,
+)
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,
-    external_url_key,
     file_key,
     html_anchor_key,
     html_document_key,
@@ -27,24 +31,10 @@ EXTRACTOR_NAME = "repo-html"
 PARSER_NAME = "stdlib-htmlparser"
 PARSER_MODE = "static-recovering-no-render-no-js"
 MAX_HTML_STRUCTURAL_BYTES = 4 * 1024 * 1024
-VOID_TAGS = frozenset(
-    {
-        "area",
-        "base",
-        "br",
-        "col",
-        "embed",
-        "hr",
-        "img",
-        "input",
-        "link",
-        "meta",
-        "param",
-        "source",
-        "track",
-        "wbr",
-    }
-)
+VOID_TAGS = frozenset({
+    "area", "base", "br", "col", "embed", "hr", "img",
+    "input", "link", "meta", "param", "source", "track", "wbr",
+})
 HEADING_TAGS = frozenset({"h1", "h2", "h3", "h4", "h5", "h6"})
 ASSET_ATTRIBUTES = {
     "img": ("src",),
@@ -265,7 +255,7 @@ def extract_html_file_observations(
 def _content_exceeds_structural_limit(content: str) -> bool:
     if len(content) > MAX_HTML_STRUCTURAL_BYTES:
         return True
-    return len(content.encode("utf-8")) > MAX_HTML_STRUCTURAL_BYTES
+    return byte_length(content) > MAX_HTML_STRUCTURAL_BYTES
 
 
 def _size_limited_observations(relative_path: str) -> tuple[RawObservation, ...]:
@@ -456,7 +446,9 @@ def _reference_observation(
         metadata.update(extra_metadata)
     if not metadata["redacted"] and reference.get("summary") is not None:
         metadata["raw_value_summary"] = reference["summary"]
-    if metadata["redacted"]:
+    if reference["reason"] in ("credentialed-url-redacted", "malformed-url-redacted"):
+        metadata.update(redacted=True, redaction_reason=reference["reason"])
+    elif metadata["redacted"]:
         metadata["redaction_reason"] = "secret-prone-html-attribute"
     return RawObservation(
         kind=kind,
@@ -479,11 +471,7 @@ def _target_for_reference(
     id_counts: dict[str, int],
 ) -> dict[str, Any]:
     if value is None or not value.strip():
-        return {
-            "kind": "unknown",
-            "target": unknown_key("html.reference", "missing-target"),
-            "reason": "missing-reference-target",
-        }
+        return unknown_reference(unknown_key("html.reference", "missing-target"), "missing-reference-target")
     stripped = value.strip()
     lowered = stripped.lower()
     if lowered.startswith("javascript:"):
@@ -501,20 +489,11 @@ def _target_for_reference(
                 "reason": "same-document-fragment",
                 "summary": f"#{fragment}",
             }
-        return {
-            "kind": "unknown",
-            "target": unknown_key("html.anchor", "unresolved-fragment"),
-            "reason": "unresolved-fragment",
-        }
-    parsed = urlsplit(stripped)
-    if parsed.scheme in ("http", "https", "mailto"):
-        return {
-            "kind": "external.url",
-            "target": external_url_key(stripped),
-            "reason": "url-literal",
-            "summary": stripped,
-        }
-    if parsed.scheme:
+        return unknown_reference(unknown_key("html.anchor", "unresolved-fragment"), "unresolved-fragment")
+    reference, has_other_scheme = web_url_reference(stripped)
+    if reference is not None:
+        return reference
+    if has_other_scheme:
         return {
             "kind": "dynamic",
             "target": dynamic_key("url", "unsupported-url-scheme"),
@@ -566,20 +545,20 @@ def _document_title(nodes: list[_HtmlNode]) -> str | None:
 
 
 def _node_text(node: _HtmlNode) -> str:
-    pieces = list(node.text_parts)
-    for child in node.children:
-        if child.tag not in ("script", "style"):
-            pieces.append(_node_text(child))
-    return " ".join(piece.strip() for piece in pieces if piece.strip())
+    descendants = _walk_descendants(node, omit_tags=frozenset(("script", "style")))
+    return " ".join(
+        stripped for current in chain((node,), descendants)
+        for piece in current.text_parts if (stripped := piece.strip())
+    )
 
 
 def _text_length(node: _HtmlNode) -> int:
-    return len("".join(node.text_parts))
+    return sum(map(len, node.text_parts))
 
 
 def _safe_text_summary(value: str) -> str | None:
     summary = " ".join(value.split())
-    if not summary or _is_secret_name(summary):
+    if not summary or _is_secret_name(summary) or contains_web_url_userinfo(summary):
         return None
     if not summary.isprintable():
         return None
@@ -647,12 +626,16 @@ def _form_field_count(node: _HtmlNode) -> int:
     return sum(1 for child in _walk_descendants(node) if child.tag in FORM_FIELD_TAGS)
 
 
-def _walk_descendants(node: _HtmlNode) -> tuple[_HtmlNode, ...]:
-    descendants: list[_HtmlNode] = []
-    for child in node.children:
-        descendants.append(child)
-        descendants.extend(_walk_descendants(child))
-    return tuple(descendants)
+def _walk_descendants(node: _HtmlNode, *, omit_tags: frozenset[str] = frozenset()) -> Iterator[_HtmlNode]:
+    stack = [iter(node.children)]
+    while stack:
+        child = next(stack[-1], None)
+        if child is None:
+            stack.pop()
+        elif child.tag not in omit_tags:
+            yield child
+            if child.children:
+                stack.append(iter(child.children))
 
 
 def _parse_error_observation(

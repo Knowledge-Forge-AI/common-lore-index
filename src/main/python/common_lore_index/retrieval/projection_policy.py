@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import cached_property
+from itertools import chain
 from pathlib import PurePosixPath
 from types import MappingProxyType
 from typing import Any
 
 from common_lore_index.artifacts._manifest_records import ManifestArtifact, ManifestBinding
-from common_lore_index.retrieval.projection_chunks import frame_digest
+from common_lore_index.retrieval.projection_chunks import _framed_digest
 from common_lore_index.retrieval.publication_binding import PROJECTION_REFERENCE_VERSION
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
+
+_BINDING_FRAME_PARTS = 10
 
 ALLOWED_GRAPH_PRIVACY = "public-dev"
 ALLOWED_BINDING_PRIVACY = "public-dev"
@@ -156,13 +160,7 @@ class BodyProjectionPolicy:
             raise ValueError(f"unsupported policy_version: {self.policy_version!r}")
         if not isinstance(self.graph_id, str) or not self.graph_id.strip():
             raise ValueError("graph_id must be a non-empty string")
-        for sid in self.selected_binding_ids:
-            if not isinstance(sid, str) or not sid.strip():
-                raise ValueError("selected_binding_ids entries must be non-empty strings")
-        for key, item in self.bindings.items():
-            item.validate()
-            if key != item.binding_id:
-                raise ValueError(f"binding key {key!r} does not match {item.binding_id!r}")
+        _ = self._ordered_bindings
         for limit_name, limit_val in (
             ("max_chunk_lines", self.max_chunk_lines),
             ("max_chunk_bytes", self.max_chunk_bytes),
@@ -177,9 +175,21 @@ class BodyProjectionPolicy:
             raise ValueError("max_aggregate_input_bytes must be >= max_input_artifact_bytes")
         return self
 
+    @cached_property
+    def _ordered_bindings(self) -> tuple[tuple[str, ResolvedBindingPolicy], ...]:
+        """Validate the frozen selection and return bindings in digest order."""
+        for sid in self.selected_binding_ids:
+            if not isinstance(sid, str) or not sid.strip():
+                raise ValueError("selected_binding_ids entries must be non-empty strings")
+        for key, item in self.bindings.items():
+            item.validate()
+            if key != item.binding_id:
+                raise ValueError(f"binding key {key!r} does not match {item.binding_id!r}")
+        return tuple(sorted(self.bindings.items()))
+
     def policy_digest(self) -> str:
         self.validate()
-        parts: list[str] = [
+        fixed_parts = (
             self.policy_version,
             self.graph_id,
             str(self.max_chunk_lines),
@@ -188,45 +198,48 @@ class BodyProjectionPolicy:
             str(self.max_input_artifact_bytes),
             str(self.max_aggregate_input_bytes),
             ",".join(sorted(self.selected_binding_ids)),
-        ]
-        for binding_id in sorted(self.bindings):
-            bp = self.bindings[binding_id]
-            parts.extend((
-                bp.binding_id,
-                bp.alias,
-                bp.role,
-                bp.source_kind,
-                bp.original_graph_privacy,
-                bp.resolved_graph_privacy,
-                bp.original_binding_privacy,
-                bp.resolved_binding_privacy,
-                bp.original_evidence_retention,
-                bp.resolved_evidence_retention,
-            ))
-        return frame_digest("sha256", parts)
+        )
+
+        def binding_parts() -> Iterator[str]:
+            for _, bp in self._ordered_bindings:
+                yield from (
+                    bp.binding_id,
+                    bp.alias,
+                    bp.role,
+                    bp.source_kind,
+                    bp.original_graph_privacy,
+                    bp.resolved_graph_privacy,
+                    bp.original_binding_privacy,
+                    bp.resolved_binding_privacy,
+                    bp.original_evidence_retention,
+                    bp.resolved_evidence_retention,
+                )
+
+        part_count = len(fixed_parts) + _BINDING_FRAME_PARTS * len(self.bindings)
+        return _framed_digest("sha256", part_count, chain(fixed_parts, binding_parts()))
 
     def to_dict(self) -> dict[str, Any]:
-        self.validate()
+        digest = self.policy_digest()
         return {
             "policy_version": self.policy_version,
             "graph_id": self.graph_id,
             "selected_binding_ids": sorted(self.selected_binding_ids),
-            "bindings": {k: v.to_dict() for k, v in sorted(self.bindings.items())},
+            "bindings": {k: v.to_dict() for k, v in self._ordered_bindings},
             "max_chunk_lines": self.max_chunk_lines,
             "max_chunk_bytes": self.max_chunk_bytes,
             "max_projected_file_bytes": self.max_projected_file_bytes,
             "max_input_artifact_bytes": self.max_input_artifact_bytes,
             "max_aggregate_input_bytes": self.max_aggregate_input_bytes,
-            "policy_digest": self.policy_digest(),
+            "policy_digest": digest,
         }
 
 
-def _is_email_role_or_path(role: str, source_kind: str, alias: str, rel_path: str | None) -> bool:
+def _is_email_role_or_path(role: str, source_kind: str, alias: str, rel_path: str | PurePosixPath | None) -> bool:
     lower_tokens = {role.lower(), source_kind.lower(), alias.lower()}
     if any(tok in {"email", "mailbox", "mail", "imap", "mbox"} for tok in lower_tokens):
         return True
     if rel_path is not None:
-        posix = PurePosixPath(rel_path)
+        posix = rel_path if isinstance(rel_path, PurePosixPath) else PurePosixPath(rel_path)
         if posix.suffix.lower() in EMAIL_EXTENSIONS:
             return True
         if any(seg.lower() in {"mailbox", "email", "emails"} for seg in posix.parts[:-1]):
@@ -234,12 +247,12 @@ def _is_email_role_or_path(role: str, source_kind: str, alias: str, rel_path: st
     return False
 
 
-def _is_feed_role_or_path(role: str, source_kind: str, alias: str, rel_path: str | None) -> bool:
+def _is_feed_role_or_path(role: str, source_kind: str, alias: str, rel_path: str | PurePosixPath | None) -> bool:
     lower_tokens = {role.lower(), source_kind.lower(), alias.lower()}
     if any(tok in {"feed", "feeds", "rss", "atom"} for tok in lower_tokens):
         return True
     if rel_path is not None:
-        posix = PurePosixPath(rel_path)
+        posix = rel_path if isinstance(rel_path, PurePosixPath) else PurePosixPath(rel_path)
         if posix.suffix.lower() in FEED_EXTENSIONS:
             return True
         if any(seg.lower() in {"feed", "feeds", "rss", "atom"} for seg in posix.parts[:-1]):
@@ -298,13 +311,13 @@ def evaluate_artifact_pre_open(
     artifact: ManifestArtifact,
 ) -> tuple[ExclusionReason | None, str | None]:
     """Evaluate per-artifact authorization and size bounds BEFORE opening the blob."""
-    rel_path = artifact.source_relative_path
-    suffix = PurePosixPath(rel_path).suffix.lower()
+    path = PurePosixPath(artifact.source_relative_path)
+    suffix = path.suffix.lower()
     if suffix in EMAIL_EXTENSIONS or _is_email_role_or_path(
         binding.role,
         binding.source_kind,
         binding.alias or "",
-        rel_path,
+        path,
     ):
         return ExclusionReason.EMAIL_BODY_FORBIDDEN, None
 
@@ -312,7 +325,7 @@ def evaluate_artifact_pre_open(
         binding.role,
         binding.source_kind,
         binding.alias or "",
-        rel_path,
+        path,
     ):
         return ExclusionReason.FEED_BODY_FORBIDDEN, None
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from types import MappingProxyType
 
 from common_lore_index.extractors.documents.markdown import (
     extract_markdown_file_observations,
@@ -12,6 +13,28 @@ from common_lore_index.extractors.documents.markdown import (
 
 
 class MarkdownExtractorUnitTests(unittest.TestCase):
+    def test_resolves_links_against_read_only_repository_inventory(self) -> None:
+        mutable = {"topic"}
+        values: dict[str, set[str] | frozenset[str]] = {
+            "docs/one.md": mutable, "docs/two.md": frozenset({"intro"}),
+        }
+        anchors = MappingProxyType(values)
+        paths = frozenset(anchors)
+
+        observations = extract_markdown_file_observations(
+            "docs/one.md",
+            "# Topic\n[Self](#topic) [Next](two.md#intro) [Missing](two.md#other)\n",
+            repository_paths=paths,
+            markdown_anchors=anchors,
+        )
+
+        self.assertEqual([item.target for item in observations if item.kind == "markdown.link"], [
+            "doc.section:file%3Adocs%2Fone.md:topic",
+            "doc.section:file%3Adocs%2Ftwo.md:intro",
+            "unknown:doc.section:missing-anchor",
+        ])
+        self.assertEqual(mutable, {"topic"})
+
     def test_extracts_document_headings_frontmatter_and_code_fences(self):
         observations = extract_markdown_file_observations(
             "README.md",

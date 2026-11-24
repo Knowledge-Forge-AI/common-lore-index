@@ -82,6 +82,7 @@ def test_probe_failure_is_unavailable_but_post_probe_query_failure_is_error():
 
 @pytest.mark.parametrize("record", [None, {}, {"run_id": True}, {"run_id": 1},
                                     {**RECORD, "snapshot_vector_json": "malformed"},
+                                    {**RECORD, "snapshot_vector_json": "[" * 12000 + "]" * 12000},
                                     {**RECORD, "publication_attempt": True}])
 def test_unaccepted_latest_receipt_never_falls_back(record):
     with patch(PROBE, return_value=None), patch(OWNER, return_value={"publication": record}) as io:

@@ -74,9 +74,11 @@ def _specifier_target(
     specifier: str,
     repository_paths: frozenset[str] | None,
 ) -> tuple[str, str]:
-    sanitized = _sanitize_url(specifier)
     if _is_dynamic_literal(specifier):
         return dynamic_key("js.reference", "dynamic-specifier"), "dynamic"
+    sanitized = _sanitize_reference_url(specifier)
+    if sanitized is None:
+        return unknown_key("js.reference", "malformed-external-url"), "malformed-external-url"
     scheme = urlsplit(sanitized).scheme.lower()
     if scheme in REFERENCE_SCHEMES:
         return external_url_key(sanitized), "external-url"
@@ -199,15 +201,24 @@ def _safe_summary(value: str | None, *, max_length: int = 120) -> str | None:
 
 
 def _sanitize_url(raw_url: str) -> str:
+    """Preserve the legacy helper's return shape for direct callers."""
+    sanitized = _sanitize_reference_url(raw_url)
+    return raw_url if sanitized is None else sanitized
+
+
+def _sanitize_reference_url(raw_url: str) -> str | None:
     try:
         parsed = urlsplit(raw_url)
+        if parsed.scheme.lower() not in REFERENCE_SCHEMES:
+            return raw_url
+        port = parsed.port
     except ValueError:
-        return raw_url
-    if parsed.scheme.lower() not in REFERENCE_SCHEMES:
-        return raw_url
+        return None
     netloc = parsed.hostname or ""
-    if parsed.port is not None:
-        netloc = f"{netloc}:{parsed.port}"
+    if ":" in netloc:
+        netloc = f"[{netloc}]"
+    if port is not None:
+        netloc = f"{netloc}:{port}"
     query_parts: list[str] = []
     for part in parsed.query.split("&"):
         if not part:

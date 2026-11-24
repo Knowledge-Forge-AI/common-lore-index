@@ -198,11 +198,12 @@ def _query_graph_lexical_generation(
     snapshot_manifest_id: str | None,
     max_occurrences_per_file: int,
     statement_timeout_ms: int,
+    use_bound_config: bool = False,
 ) -> tuple[QueryEnvelope, bool]:
     if not authorize_body:
         raise ValueError("body-authorization-required: authorize_body=True is required to query cloe_lexical")
     request.validate()
-    live_config = _fresh_ops_config(config)
+    live_config = config if use_bound_config else _fresh_ops_config(config)
     graph = resolve_ops_graph(live_config, graph_id)
     params = lexical_connection_parameters(
         live_config,

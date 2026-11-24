@@ -140,11 +140,10 @@ class _Database:
             return _Cursor(self, self.run_id_row)
         if "pg_try_advisory_xact_lock" in norm:
             return _Cursor(self, (True,))
-        counted = re.fullmatch(r"SELECT count\(\*\) FROM (\w+) WHERE stage_id = %s", norm)
-        if counted is not None:
-            position = _TABLES.index(counted.group(1))
-            rows = len(self.copied[position]) if position < len(self.copied) else 0
-            return _Cursor(self, (rows + self.skew.get(counted.group(1), 0),))
+        counted = re.findall(r"SELECT count\(\*\) FROM (\w+) WHERE stage_id = %s", norm)
+        if norm.startswith(("SELECT count(*)", "SELECT (SELECT count(*)")) and counted:
+            copied = {table: len(rows) for table, rows in zip(_TABLES, self.copied, strict=False)}
+            return _Cursor(self, tuple(copied.get(table, 0) + self.skew.get(table, 0) for table in counted))
         rowcount = next((count for needle, count in self.rowcounts if needle in norm), 1)
         return _Cursor(self, None, rowcount)
 

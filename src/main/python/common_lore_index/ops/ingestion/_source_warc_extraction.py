@@ -5,17 +5,22 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
+from os import fstat, stat_result
 from pathlib import Path
+import stat
 from typing import Any
 
 from common_lore_index.graph.keys import warc_record_key
 from common_lore_index.observations.raw import RawObservation
+from common_lore_index.ops.ingestion._source_archive_scan import _file_version, _open_archive_file
+from common_lore_index.ops.ingestion.source_common import SourcePolicyError
 from common_lore_index.ops.ingestion.source_warc import (
     _http_content_type,
-    _next_warc_record,
+    _read_warc_record,
     _normalise_warc_record_id,
-    _parse_http_message_payload,
+    _http_headers_and_body_offset,
     _safe_warc_headers,
+    _skip_warc_record_padding,
     _warc_payload_extension,
     _warc_payload_route,
     _warc_record_identity,
@@ -38,9 +43,8 @@ def _parse_warc_records(
     artifact_path: Path,
     document_key: str,
     materialization_root: Path,
+    expected_artifact: stat_result | None = None,
 ) -> tuple[list[WarcRecordSummary], str | None, list[str], list[str]]:
-    data = artifact_path.read_bytes()
-    offset = 0
     records: list[WarcRecordSummary] = []
     warnings: list[str] = []
     errors: list[str] = []
@@ -49,55 +53,59 @@ def _parse_warc_records(
     routed_files = 0
     seen_identity_counts: dict[str, int] = {}
 
-    while offset < len(data):
-        while offset < len(data) and data[offset : offset + 1] in (b"\r", b"\n"):
-            offset += 1
-        if offset >= len(data):
-            break
-        if len(records) >= config.max_warc_records:
-            errors.append(f"max_warc_records exceeded: {config.max_warc_records}")
-            break
-
-        parsed = _next_warc_record(data, offset)
-        if isinstance(parsed, str):
-            errors.append(parsed)
-            break
-        (
-            next_offset,
-            version,
-            headers,
-            raw_header_bytes,
-            block,
-        ) = parsed
-        if warc_version is None:
-            warc_version = version
-
-        total_record_bytes = len(raw_header_bytes) + len(block)
-        if total_record_bytes > config.max_record_bytes:
-            errors.append(
-                f"max_record_bytes exceeded at record {len(records) + 1}: "
-                f"{total_record_bytes} > {config.max_record_bytes}"
+    if expected_artifact is None:
+        try:
+            expected_artifact = artifact_path.lstat()
+        except OSError:
+            raise SourcePolicyError("artifact.path must be an existing WARC file") from None
+    if not stat.S_ISREG(expected_artifact.st_mode):
+        raise SourcePolicyError("artifact.path must be an existing WARC file")
+    with open(artifact_path, "rb", opener=_open_archive_file) as source:
+        opened = fstat(source.fileno())
+        admitted_version = _file_version(expected_artifact)
+        if _file_version(opened) != admitted_version:
+            raise SourcePolicyError("artifact changed during WARC manifest scan")
+        artifact_end = opened.st_size
+        if artifact_end > config.max_artifact_bytes:
+            raise SourcePolicyError("artifact exceeds policy.max_artifact_bytes")
+        while _skip_warc_record_padding(source, artifact_end):
+            if len(records) >= config.max_warc_records:
+                errors.append(f"max_warc_records exceeded: {config.max_warc_records}")
+                break
+            parsed = _read_warc_record(source, artifact_end, config.max_record_bytes)
+            if isinstance(parsed, str):
+                errors.append(parsed)
+                break
+            version, headers, total_record_bytes, block = parsed
+            if warc_version is None:
+                warc_version = version
+            if block is None:
+                errors.append(
+                    f"max_record_bytes exceeded at record {len(records) + 1}: "
+                    f"{total_record_bytes} > {config.max_record_bytes}"
+                )
+                continue
+            # Persist only payloads read while the admitted file version held.
+            if _file_version(fstat(source.fileno())) != admitted_version:
+                raise SourcePolicyError("artifact changed during WARC manifest scan")
+            record, payload_bytes = _warc_record_summary(
+                config=config,
+                root=root,
+                document_key=document_key,
+                materialization_root=materialization_root,
+                ordinal=len(records) + 1,
+                headers=headers,
+                block=block,
+                seen_identity_counts=seen_identity_counts,
+                total_payload_bytes=total_payload_bytes,
+                routed_files=routed_files,
             )
-            offset = next_offset
-            continue
-
-        record, payload_bytes = _warc_record_summary(
-            config=config,
-            root=root,
-            document_key=document_key,
-            materialization_root=materialization_root,
-            ordinal=len(records) + 1,
-            headers=headers,
-            block=block,
-            seen_identity_counts=seen_identity_counts,
-            total_payload_bytes=total_payload_bytes,
-            routed_files=routed_files,
-        )
-        if record.materialized_path is not None:
-            routed_files += 1
-            total_payload_bytes += payload_bytes
-        records.append(record)
-        offset = next_offset
+            if record.materialized_path is not None:
+                routed_files += 1
+                total_payload_bytes += payload_bytes
+            records.append(record)
+        if _file_version(fstat(source.fileno())) != admitted_version:
+            raise SourcePolicyError("artifact changed during WARC manifest scan")
 
     return records, warc_version, warnings, errors
 
@@ -133,14 +141,15 @@ def _warc_record_summary(
         record_identity = f"{identity}:{duplicate_disambiguator}"
     record_key = warc_record_key(document_key, record_identity)
     content_type = headers.get("content-type")
-    payload = b""
+    payload: bytes | memoryview = b""
     payload_content_type = content_type
     extractor_route: str | None = None
     materialized_path: str | None = None
     skip_reason: str | None = None
 
     if record_type == "response":
-        http_headers, payload = _parse_http_message_payload(block, response=True)
+        http_headers, body_offset = _http_headers_and_body_offset(block, response=True)
+        payload = memoryview(block)[body_offset:]
         payload_content_type = _http_content_type(http_headers) or content_type
         extractor_route = _warc_payload_route(payload_content_type)
     elif record_type == "resource":
@@ -216,7 +225,7 @@ def _materialize_warc_payload(
     materialization_root: Path,
     ordinal: int,
     extractor_route: str,
-    payload: bytes,
+    payload: bytes | memoryview,
 ) -> str:
     extension = _warc_payload_extension(extractor_route)
     directory = materialization_root / f"record-{ordinal:04d}"

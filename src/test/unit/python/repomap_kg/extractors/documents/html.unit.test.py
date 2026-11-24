@@ -28,7 +28,7 @@ HTML_FIXTURE = """\
       <img src="images/logo.png" alt="Logo">
       <video poster="media/poster.png"></video>
       <form id="login" method="post" action="submit/login">
-        <input name="username" value="alice">
+        <label><span><input name="username" value="alice"></span></label>
         <input name="password" type="password" value="html1-secret">
       </form>
     </main>
@@ -40,6 +40,29 @@ HTML_FIXTURE = """\
 
 
 class HtmlExtractorUnitTests(unittest.TestCase):
+    def test_credentialed_link_with_literal_label_keeps_only_public_data(self):
+        raw_url = "https://valid.invalid/?next=%2F%2Fuser%3Afixture%40concealed.invalid"
+        rows = extract_html_file_observations(
+            "index.html", f'<a href="{raw_url}">{raw_url}</a>'
+            '<a href="https://valid.invalid/">https://user:p?fixture@concealed.invalid/label</a>',
+        )
+        protected, retained = [row for row in rows if row.kind == "html.link"]
+        self.assertTrue(protected.metadata["redacted"])
+        self.assertEqual(protected.metadata["resolution_reason"], "credentialed-url-redacted")
+        self.assertTrue((retained.target or "").startswith("external.url:"))
+        self.assertNotIn("concealed.invalid", str([row.to_dict() for row in rows]))
+
+    def test_malformed_literal_link_preserves_the_next_valid_target(self):
+        observations = extract_html_file_observations(
+            "index.html",
+            '<a href="https://invalid.example:not-a-port/link">Broken</a><a href="https://example.invalid/valid">Good</a>',
+        )
+        first, second = [item for item in observations if item.kind == "html.link"]
+        self.assertTrue((first.target or "").startswith("unknown:"))
+        self.assertEqual(first.metadata["resolution_reason"], "malformed-url-redacted")
+        self.assertNotIn("raw_value_summary", first.metadata)
+        self.assertTrue((second.target or "").startswith("external.url:"))
+
     def test_extracts_document_elements_headings_links_assets_and_forms(self):
         observations = extract_html_file_observations("index.html", HTML_FIXTURE)
         payload = json.dumps(
@@ -118,6 +141,7 @@ class HtmlExtractorUnitTests(unittest.TestCase):
         self.assertIn(("html.asset", "src", "file:assets/app.js"), references)
         self.assertIn(("html.asset", "poster", "file:media/poster.png"), references)
         self.assertIn(("html.form", "action", "file:submit/login"), references)
+        self.assertEqual(by_kind["html.form"][0].metadata["field_count"], 2)
 
         script = next(
             item
@@ -148,6 +172,18 @@ class HtmlExtractorUnitTests(unittest.TestCase):
             ],
         )
         self.assertTrue(all(item.metadata["id_is_unique"] is False for item in headings))
+
+    def test_deep_form_and_heading_walks_preserve_nesting_and_text_policy(self):
+        span_open, span_close = "<span>" * 1050, "</span>" * 1050
+        observations = extract_html_file_observations(
+            "nested.html",
+            f'<h1>left{span_open}middle<script>private-script</script>{span_close}right</h1>'
+            f'<form>{span_open}<input name="field">{span_close}</form>',
+        )
+        forms = [item for item in observations if item.kind == "html.form"]
+        headings = [item for item in observations if item.kind == "html.heading"]
+        self.assertEqual(forms[0].metadata["field_count"], 1)
+        self.assertEqual(headings[0].metadata["text_summary"], "left right middle")
 
     def test_malformed_html_emits_recoverable_parse_warning(self):
         observations = extract_html_file_observations(

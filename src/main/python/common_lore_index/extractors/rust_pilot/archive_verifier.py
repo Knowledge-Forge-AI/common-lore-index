@@ -17,6 +17,7 @@ import stat
 import zipfile
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from itertools import batched
 
 from common_lore_index.extractors.contracts.vocabulary import ContractError
 from common_lore_index.extractors.rust_pilot.component_lock import (
@@ -35,6 +36,7 @@ DIRECTORY_MODE = 0o555
 FILE_MODE = 0o444
 EXTENSION_MODE = 0o555
 ZIP_DIRECTORY_MODE = 0o755
+_TREE_DIGEST_BATCH_ROWS = 256
 
 
 class ArchiveRefused(ContractError):
@@ -89,9 +91,12 @@ def _required_directory_names(names: Iterable[str]) -> set[str]:
     return directories
 
 
+def _record_digest(digest: bytes) -> str:
+    return "sha256=" + base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+
+
 def record_hash(data: bytes) -> str:
-    digest = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).rstrip(b"=")
-    return "sha256=" + digest.decode("ascii")
+    return _record_digest(hashlib.sha256(data).digest())
 
 
 def _classify_unexpected(name: str, dist_info: str, top_level: Sequence[str]) -> str:
@@ -152,10 +157,10 @@ def verify_archive(data: bytes, *, size: int, sha256: str, dist_info: str,
         raise ArchiveRefused("invalid_archive") from None
     with archive:
         infos = archive.infolist()
-        names = [info.filename for info in infos]
-        if len(names) != len(set(names)):
+        if len(infos) != len({info.filename for info in infos}):
             raise ArchiveRefused("duplicate_member")
         regular_infos: list[zipfile.ZipInfo] = []
+        uncompressed_bytes = 0
         for info in infos:
             _check_info(info)
             if info.filename.endswith("/"):
@@ -167,13 +172,16 @@ def verify_archive(data: bytes, *, size: int, sha256: str, dist_info: str,
             if info.filename not in expected:
                 raise ArchiveRefused(_classify_unexpected(info.filename, dist_info, top_level))
             regular_infos.append(info)
-        if {info.filename for info in regular_infos} != set(expected):
+            uncompressed_bytes += info.file_size
+        if len(regular_infos) != len(expected):
             raise ArchiveRefused("member_set_mismatch")
-        if sum(info.file_size for info in infos) > MAX_ARCHIVE_UNCOMPRESSED:
+        if uncompressed_bytes > MAX_ARCHIVE_UNCOMPRESSED:
             raise ArchiveRefused("archive_too_large")
         verified = tuple((info.filename, _read_member(archive, info, expected[info.filename]))
                          for info in regular_infos)
-    _verify_record(dict(verified), f"{dist_info}/RECORD")
+    record_name = f"{dist_info}/RECORD"
+    record = next((content for name, content in verified if name == record_name), None)
+    _verify_record(record, record_name, expected)
     return verified
 
 
@@ -194,31 +202,43 @@ def _read_member(archive: zipfile.ZipFile, info: zipfile.ZipInfo, lock: MemberLo
     return content
 
 
-def _verify_record(contents: dict[str, bytes], record_name: str) -> None:
-    raw = contents.get(record_name)
+def _verify_record(raw: bytes | None, record_name: str, verified_locks: dict[str, MemberLock]) -> None:
+    """Check RECORD against locks whose corresponding bytes already passed _read_member."""
     if raw is None:
         raise ArchiveRefused("record_missing")
+    seen: set[str] = set()
+    first_refusal: str | None = None
     try:
-        rows = list(csv.reader(io.StringIO(raw.decode("utf-8"), newline="")))
+        with io.TextIOWrapper(io.BytesIO(raw), encoding="utf-8", newline="") as stream:
+            for row in csv.reader(stream):
+                # Parse the remaining CSV even after a refusal so malformed
+                # CSV keeps precedence over a RECORD content mismatch.
+                if first_refusal is not None:
+                    continue
+                first_refusal = _record_row_refusal(row, verified_locks, record_name, seen)
     except (UnicodeDecodeError, csv.Error):
         raise ArchiveRefused("record_invalid") from None
-    seen: set[str] = set()
-    for row in rows:
-        if len(row) != 3 or row[0] in seen:
-            raise ArchiveRefused("record_invalid")
-        name, digest, length = row
-        seen.add(name)
-        if name == record_name:
-            if digest or length:
-                raise ArchiveRefused("record_self_entry")
-            continue
-        content = contents.get(name)
-        if content is None:
-            raise ArchiveRefused("record_extra_entry")
-        if digest != record_hash(content) or length != str(len(content)):
-            raise ArchiveRefused("record_mismatch")
-    if seen != set(contents):
+    if first_refusal is not None:
+        raise ArchiveRefused(first_refusal)
+    if seen != verified_locks.keys():
         raise ArchiveRefused("record_incomplete")
+
+
+def _record_row_refusal(
+    row: list[str], verified_locks: dict[str, MemberLock], record_name: str, seen: set[str],
+) -> str | None:
+    if len(row) != 3 or row[0] in seen:
+        return "record_invalid"
+    name, digest, length = row
+    seen.add(name)
+    if name == record_name:
+        return "record_self_entry" if digest or length else None
+    item = verified_locks.get(name)
+    if item is None:
+        return "record_extra_entry"
+    if digest != _record_digest(bytes.fromhex(item.sha256)) or length != str(item.size):
+        return "record_mismatch"
+    return None
 
 
 def verify_wheel(data: bytes, wheel: WheelLock) -> VerifiedWheel:
@@ -273,7 +293,15 @@ def tree_digest(entries: Iterable[tuple[str, str, int, bytes | None]]) -> str:
 
     rows = [[path, kind, mode, None if data is None else hashlib.sha256(data).hexdigest(),
              None if data is None else len(data)] for path, kind, mode, data in entries]
-    return hashlib.sha256(canonical_json(sorted(rows))).hexdigest()
+    rows.sort()
+    digest = hashlib.sha256(b"[")
+    for index, page in enumerate(batched(rows, _TREE_DIGEST_BATCH_ROWS)):
+        if index:
+            digest.update(b",")
+        encoded = canonical_json(page)
+        digest.update(memoryview(encoded)[1:-1])
+    digest.update(b"]")
+    return digest.hexdigest()
 
 
 def expected_tree_digest(entries: Sequence[ExpectedEntry]) -> str:

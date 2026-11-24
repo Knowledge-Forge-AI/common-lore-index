@@ -9,6 +9,21 @@ import tempfile
 from typing import BinaryIO, Literal
 
 from common_lore_index.artifacts._bundle_cancellation import closing_bundle_resource
+from common_lore_index.artifacts.bundle import MAX_BUNDLE_LINE_BYTES
+from common_lore_index.storage._external_row_sort_helpers import consolidate_run_tail
+
+
+def _spill_lines(handle: BinaryIO, expected_bytes: int) -> Iterator[bytes]:
+    remaining = expected_bytes
+    while remaining:
+        limit = min(remaining, MAX_BUNDLE_LINE_BYTES)
+        line = handle.readline(limit + 1)
+        if len(line) > limit or not line.endswith(b"\n"):
+            raise ValueError("publication bundle spill framing is invalid")
+        remaining -= len(line)
+        yield line
+    if handle.read(1):
+        raise ValueError("publication bundle spill extent is invalid")
 
 
 class BundleSortRuns:
@@ -24,7 +39,7 @@ class BundleSortRuns:
         self._checkpoint = checkpoint
         self._opener = opener
         self._fan_in = fan_in
-        self._owned: set[Path] = set()
+        self._owned: dict[Path, int] = {}
         self._levels: list[list[Path]] = []
         self.initial_run_count = 0
         self.initial_bytes = 0
@@ -38,12 +53,16 @@ class BundleSortRuns:
             dir=self._directory(), prefix=prefix, suffix=".tmp", delete=False,
         )
         path = Path(handle.name)
-        self._owned.add(path)
+        self._owned[path] = 0
+        byte_count = 0
         with closing_bundle_resource(handle):
             for line in lines:
                 self._checkpoint()
-                handle.write(line)
+                if handle.write(line) != len(line):
+                    raise OSError("publication bundle spill write was incomplete")
+                byte_count += len(line)
             handle.flush()
+        self._owned[path] = byte_count
         return path
 
     def _remove(self, paths: Sequence[Path], *, preserve_primary: bool = False) -> None:
@@ -55,19 +74,19 @@ class BundleSortRuns:
                 if first is None:
                     first = error
             else:
-                self._owned.discard(path)
+                self._owned.pop(path, None)
         if first is not None and not preserve_primary:
             raise first
 
     def _merged_lines(self, paths: Sequence[Path]) -> Iterator[bytes]:
         stack = ExitStack()
         with closing_bundle_resource(stack):
-            opened: list[BinaryIO] = []
+            opened: list[Iterator[bytes]] = []
             for path in paths:
                 self._checkpoint()
                 handle = self._opener(path, "rb")
                 stack.enter_context(closing_bundle_resource(handle))
-                opened.append(handle)
+                opened.append(_spill_lines(handle, self._owned[path]))
             for line in heapq.merge(*opened):
                 self._checkpoint()
                 yield line
@@ -94,17 +113,16 @@ class BundleSortRuns:
     def spill(self, lines: Sequence[bytes], family: str) -> None:
         path = self._write(iter(lines), f"run_{family}_")
         self.initial_run_count += 1
-        self.initial_bytes += sum(map(len, lines))
+        self.initial_bytes += self._owned[path]
         self._add(path, 0)
 
     def merged(self) -> Iterator[bytes]:
-        while sum(map(len, self._levels)) > self._fan_in:
-            level = next(n for n, paths in enumerate(self._levels) if paths)
-            paths = self._levels[level]
-            self._levels[level] = []
-            output = paths[0] if len(paths) == 1 else self._compact(paths)
-            self._add(output, level + 1)
-        paths = [path for level in self._levels for path in level]
+        paths = consolidate_run_tail(
+            [path for level in self._levels for path in level],
+            self._fan_in,
+            self._owned.__getitem__,
+            self._compact,
+        )
         lines = self._merged_lines(paths)
         with closing_bundle_resource(lines):
             yield from lines

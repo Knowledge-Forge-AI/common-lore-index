@@ -1,5 +1,6 @@
 from email.message import Message
 import io
+from dataclasses import replace
 import json
 import tempfile
 import urllib.error
@@ -149,12 +150,12 @@ class FeedSourceIngestionUnitTests(SourceIngestionUnitTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             config = load_feed_source_config(self.write_config(root / "rss.toml"))
-            opener = FakeOpener(
-                FakeResponse(200, b"<rss />", {"content-type": "text/xml"}),
-            )
+            owner = FakeResponse(200, b"<rss />", {"content-type": "text/xml"})
+            opener = FakeOpener(owner)
 
             response = fetch_feed_source(config, opener=opener)
 
+        self.assertTrue(owner.closed)
         self.assertEqual(response.status, 200)
         self.assertEqual(response.body, b"<rss />")
         self.assertEqual(response.headers["content-type"], "text/xml")
@@ -166,24 +167,43 @@ class FeedSourceIngestionUnitTests(SourceIngestionUnitTestCase):
             "RepoMap feed ingestion test fixture",
         )
 
+    def test_default_fetcher_reads_short_chunks_under_large_limit(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config = load_feed_source_config(self.write_config(Path(tmpdir) / "rss.toml"))
+            config = replace(config, max_artifact_bytes=2**63 - 1)
+            sizes: list[int] = []
+
+            class ShortResponse(FakeResponse):
+                def read(self, size: int) -> bytes:
+                    sizes.append(size)
+                    return super().read(min(size, 2))
+
+            owner = ShortResponse(200, b"abcdef", {})
+            response = fetch_feed_source(config, opener=FakeOpener(owner))
+        self.assertEqual(response.body, b"abcdef")
+        self.assertEqual(sizes, [65536] * 4)
+        self.assertTrue(owner.closed)
+
     def test_default_fetcher_captures_http_error_without_following_redirect(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             config = load_feed_source_config(self.write_config(root / "rss.toml"))
             headers = Message()
             headers["location"] = "https://example.invalid/redirect"
+            body = io.BytesIO(b"redirect")
             opener = FakeOpener(
                 urllib.error.HTTPError(
                     config.url,
                     302,
                     "Found",
                     headers,
-                    io.BytesIO(b"redirect"),
+                    body,
                 ),
             )
 
             response = fetch_feed_source(config, opener=opener)
 
+        self.assertTrue(body.closed)
         self.assertEqual(response.status, 302)
         self.assertEqual(response.body, b"redirect")
         self.assertEqual(

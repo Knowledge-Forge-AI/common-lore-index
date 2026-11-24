@@ -1,9 +1,14 @@
 import unittest
+from email import policy
+from email.parser import BytesParser
+from unittest.mock import patch
 
 from common_lore_index.extractors.documents.email import (
     MAX_MBOX_BYTES,
+    extract_eml_file_observations,
     extract_mbox_file_observations,
 )
+from common_lore_index.extractors.documents.email_parts import _walk_parts
 
 SAMPLE_MBOX = b"""From MAILER-DAEMON Tue Jun 30 12:00:00 2026
 Message-ID: <mbox-one@example.invalid>
@@ -40,6 +45,25 @@ attachment body must not leak.
 
 
 class EmailExtractorBoundariesUnitTests(unittest.TestCase):
+    def test_mime_part_walk_stops_before_later_siblings(self):
+        from email.message import EmailMessage
+
+        root = EmailMessage()
+        root.make_mixed()
+        nested = EmailMessage()
+        nested.make_mixed()
+        leaf = EmailMessage()
+        nested.attach(leaf)
+        root.attach(nested)
+        traversal = _walk_parts(root)
+        self.assertEqual(next(traversal), (root, "1", 0))
+        self.assertEqual(next(traversal), (nested, "1.1", 1))
+        self.assertEqual(next(traversal), (leaf, "1.1.1", 2))
+
+        later = EmailMessage()
+        root.attach(later)
+        self.assertEqual(list(traversal), [(later, "1.2", 1)])
+
     def test_extracts_mbox_mailbox_and_reuses_safe_message_metadata(self):
         observations = extract_mbox_file_observations(
             "mail/sample.mbox",
@@ -75,6 +99,62 @@ class EmailExtractorBoundariesUnitTests(unittest.TestCase):
         self.assertNotIn("attachment body", payload)
         self.assertNotIn("mbox-secret-note.txt", payload)
         self.assertNotIn("fake-mail-token", payload)
+
+    def test_parser_error_summary_does_not_include_parser_payload_text(self):
+        with patch.object(BytesParser, "parsebytes", side_effect=ValueError("fixture-private-detail")):
+            (failure,) = extract_eml_file_observations("message.eml", b"Subject: Fixture\n\n")
+        self.assertEqual(failure.kind, "email.parse_error")
+        self.assertEqual(failure.metadata["error_kind"], "parse-error")
+        self.assertFalse(failure.metadata["recovered"])
+        self.assertNotIn("fixture-private-detail", str(failure.metadata))
+
+    def test_mbox_recovers_when_a_prior_message_header_cannot_decode(self):
+        parse_header = policy.EmailPolicy.header_fetch_parse
+        mailbox = (
+            b"From a@example.invalid Sat Jan  1 00:00:00 2022\n"
+            b"Message-ID: <first@example.invalid>\nSubject: First\n\n"
+            b"From b@example.invalid Sat Jan  1 00:01:00 2022\n"
+            b"Message-ID: <second@example.invalid>\nSubject: Second\n\n"
+        )
+        for error_type in (ValueError, IndexError, TypeError):
+            with self.subTest(error_type=error_type):
+                def read_header(parser, name, value):
+                    if name.lower() == "message-id" and value == "<first@example.invalid>":
+                        raise error_type("fixture-private-detail")
+                    return parse_header(parser, name, value)
+
+                with patch.object(policy.EmailPolicy, "header_fetch_parse", read_header):
+                    observations = extract_mbox_file_observations("fixture.mbox", mailbox)
+                failure, = [item for item in observations if item.kind == "email.parse_error"]
+                self.assertEqual(failure.metadata["error_kind"], "mbox-message-parse-error")
+                self.assertTrue(failure.metadata["recovered"])
+                self.assertNotIn("fixture-private-detail", str(failure.metadata))
+                self.assertEqual(
+                    [item.metadata["mbox_message_ordinal"] for item in observations if item.kind == "email.message"],
+                    [2],
+                )
+
+    def test_mail_parser_and_lazy_decoder_memory_failures_propagate(self):
+        def fail_header(_parser, _name, _value):
+            raise MemoryError("fixture exhausted decoder memory")
+
+        for patch_target in (
+            patch.object(BytesParser, "parsebytes", side_effect=MemoryError("fixture exhausted parser memory")),
+            patch.object(policy.EmailPolicy, "header_fetch_parse", fail_header),
+        ):
+            with patch_target:
+                with self.assertRaisesRegex(MemoryError, "fixture exhausted"):
+                    extract_eml_file_observations("fixture.eml", b"Message-ID: <fixture@example.invalid>\n\n")
+                with self.assertRaisesRegex(MemoryError, "fixture exhausted"):
+                    extract_mbox_file_observations("fixture.mbox", SAMPLE_MBOX)
+
+    def test_application_errors_after_parsing_still_propagate(self):
+        failure = ValueError("fixture internal key failure")
+        with patch("common_lore_index.extractors.documents.email.email_message_key", side_effect=failure):
+            with self.assertRaisesRegex(ValueError, "fixture internal key failure"):
+                extract_eml_file_observations("fixture.eml", b"Subject: Fixture\n\n")
+            with self.assertRaisesRegex(ValueError, "fixture internal key failure"):
+                extract_mbox_file_observations("fixture.mbox", SAMPLE_MBOX)
 
     def test_mbox_reports_limits_and_malformed_archive_diagnostics(self):
         limited = extract_mbox_file_observations(
@@ -159,6 +239,17 @@ class EmailExtractorBoundariesUnitTests(unittest.TestCase):
         self.assertNotIn("unsubscribe-secret@example.invalid", payload)
         self.assertNotIn("fallback private subject", payload)
         self.assertNotIn("fallback body", payload)
+
+    def test_mbox_spans_and_count_cap_handle_mixed_and_empty_records(self):
+        from common_lore_index.extractors.documents.email import _mbox_message_spans
+
+        content = b"preamble\rFrom first\r\nFirst body\rFrom second\nFrom third"
+        spans = list(_mbox_message_spans(content))
+        assert [content[start:end] for start, end in spans] == [b"First body\r", b"", b""]
+        for count in (0, 1, -1):
+            rows = extract_mbox_file_observations("fixture.mbox", content, max_messages=count, max_message_bytes=1)
+            assert rows[0].metadata["mailbox_message_count"] == (2 if count == -1 else count)
+            assert rows[0].metadata["mailbox_limit_reason"] == "message-count-limit"
 
 
 if __name__ == "__main__":

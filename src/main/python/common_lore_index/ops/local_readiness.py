@@ -29,8 +29,7 @@ from common_lore_index.ops.config_local import (
     sqlite_graph_database_path,
 )
 from common_lore_index.ops.config_records import OpsConfigError, OpsGraphConfig
-from common_lore_index.storage.sqlite_local.connection import read_transaction
-from common_lore_index.storage.sqlite_local.migrations import classify
+from common_lore_index.storage.sqlite_local.connection import read_transaction_with_schema
 from common_lore_index.storage.sqlite_local.schema import (
     GRAPH_MISMATCH,
     NOT_INITIALIZED,
@@ -92,8 +91,10 @@ def probe_local_graph(config: LocalSqliteConfig, graph: OpsGraphConfig) -> Local
             graph.id, INVALID_CONFIGURATION_STATE, error=STORE_OVERLAPS_SOURCE
         )
     try:
-        with read_transaction(path, local_graph_binding(graph), accept_behind=True) as connection:
-            behind = classify(connection).kind == "behind"
+        with read_transaction_with_schema(
+            path, local_graph_binding(graph), accept_behind=True
+        ) as (connection, schema):
+            behind = schema.kind == "behind"
             accepted = accepted_identity(connection)
     except LocalStoreError as error:
         return LocalGraphReadiness(graph.id, _state_for(error.code), error=error.code)

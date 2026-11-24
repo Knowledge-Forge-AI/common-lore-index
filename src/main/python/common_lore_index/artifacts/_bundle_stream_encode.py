@@ -289,6 +289,9 @@ class StreamingBundleEncoder:
                 raise ValueError("publication bundle byte bounds exceeded")
             artifact_hasher.update(line)
             bundle_hasher.update(line)
+            if not chunk_buf and len(line) >= chunk_size:
+                yield line
+                return
             chunk_buf.extend(line)
             if len(chunk_buf) >= chunk_size:
                 out = bytes(chunk_buf)

@@ -349,25 +349,46 @@ def run_in_sandbox(
     boundary_prover: BoundaryProver = prove_inner_boundary,
     archive_reader: ReportArchiveReader = _read_container_report_archive,
     ownership_reporter=None,
+    offline_override=None,
 ) -> int:
-    return _execution.run_in_sandbox(
+    from runner_pgvector_context import host_context
+    from runner_pgvector_sandbox import OfflineSandbox
+
+    context = host_context(argv, repo_root)
+    adapter = OfflineSandbox
+    if context is not None and context.plan.get("role") == "body-study":
+        from runner_body_study_sandbox import BodyOfflineSandbox
+        adapter = BodyOfflineSandbox
+    offline: OfflineSandbox | None
+    if offline_override is not None:
+        if context is not None or not isinstance(offline_override, OfflineSandbox) or ownership_reporter is None:
+            raise RuntimeError("explicit offline sandbox requires exclusive ownership")
+        offline = offline_override
+    else:
+        offline = adapter(context, runner, _captured) if context is not None else None
+    result = _execution.run_in_sandbox(
         argv, repo_root=repo_root, image_id=image_id, runner=runner,
         follower_factory=follower_factory, snapshotter=snapshotter,
-        boundary_prover=boundary_prover, archive_reader=archive_reader,
-        captured=_captured, outer_run_command=outer_run_command,
+        boundary_prover=offline.boundary if offline else boundary_prover,
+        archive_reader=offline.read_report_archive if offline else archive_reader,
+        captured=_captured, outer_run_command=offline.outer if offline else outer_run_command,
         install_owner_marker=_install_owner_marker,
         wait_for_inner_daemon=_wait_for_inner_daemon,
         prepare_workspace=_prepare_workspace_and_identity,
-        prepare_images=_prepare_inner_images, bind_capacity=bind_backing_capacity,
-        effective_timeout=_effective_timeout, run_inner_tests=_run_inner_tests,
+        prepare_images=offline.prepare if offline else _prepare_inner_images, bind_capacity=bind_backing_capacity,
+        effective_timeout=_effective_timeout, run_inner_tests=offline.run_tests if offline else _run_inner_tests,
         start_follower=_start_log_follower, drain_follower=_drain_log_follower,
         terminate_follower=_terminate_log_follower, stop_outer=_stop_outer,
         export_report=_export_sandbox_report, cleanup_outer=_cleanup_outer,
         verify_snapshot=lambda before, after: verify_host_snapshot(before, after, runner=runner),
         write_diagnostic=write_sandbox_diagnostic,
         exact_container_id=EXACT_CONTAINER_ID, set_cleanup_phase=_set_cleanup_phase,
-        report_arguments=_sandbox_report_arguments,
+        report_arguments=offline.report_arguments if offline else _sandbox_report_arguments,
         cleanup_error_for=_bounded_cleanup_error,
         transfer_gate=_transfer_gate_request,
         ownership_reporter=ownership_reporter,
     )
+
+    if offline is not None:
+        offline.finished(result)
+    return result

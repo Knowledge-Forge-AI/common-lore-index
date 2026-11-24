@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import pytest
+from common_lore_index.cli.main import main
 from common_lore_index.ops.config import load_ops_config
 from common_lore_index.graph.keys import file_key
 from common_lore_index.ops.graph_files import (
@@ -11,6 +12,16 @@ from common_lore_index.ops.graph_files import (
 from common_lore_index.storage import apply_migrations, default_rdbms_root, run_psql
 from common_lore_index.storage.sql_core import sql_literal
 from repomap_test_support.postgres_harness import temporary_postgres
+
+
+def test_non_utf8_registry_refuses_before_configured_readback(tmp_path, capsys):
+    path = tmp_path / "repomap.rpl.toml"
+    path.write_bytes(b"schema_version = 1\n# synthetic\xff")
+    result = main(["ops", "graph-files", "--config", str(path), "--graph", "fixture", "--json"])
+    captured = capsys.readouterr()
+    assert result == 1 and captured.out == ""
+    assert "invalid UTF-8 TOML" in captured.err
+    assert "synthetic" not in captured.err
 
 
 @pytest.fixture(scope="module")

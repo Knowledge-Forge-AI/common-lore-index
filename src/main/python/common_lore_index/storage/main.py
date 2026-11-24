@@ -369,8 +369,10 @@ def _psql_query(
     if field_separator is not None:
         command.extend(("-F", field_separator))
     command.extend(("-c", sql))
+    from common_lore_index.extractors.shared.scanner import iter_text_lines
+
     result = run_psql(command)
-    return tuple(line for line in result.stdout.splitlines() if line)
+    return tuple(line for line in iter_text_lines(result.stdout) if line)
 
 
 def _applied_migrations(

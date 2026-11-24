@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
+from typing import Any, ClassVar
 
 from ._canonical import CanonicalBoundError, canonical_bytes
-from ._slots import check_operation_pairing
+from ._slots import check_operation_pairing, check_report_domain
 
 
 SCHEMA = "cloe-resource-view-v1"
@@ -284,6 +284,94 @@ class ResourceReport:
         }
 
 
+SCHEMA_V3 = "cloe-resource-view-v3"
+STAGING_NAMES = ("staging_wal_position_delta", "staging_database_temporary_bytes_delta")
+_STAGING_REASONS = frozenset({
+    UnavailableReason.NOT_EMITTED, UnavailableReason.NOT_OBSERVED,
+    UnavailableReason.AMBIGUOUS_REPEAT, UnavailableReason.INVALID_OWNER_VALUE,
+    UnavailableReason.OBSERVER_FAILED,
+})
+
+
+@dataclass(frozen=True, slots=True)
+class StagingDelta:
+    """One shared-counter difference or its closed unavailability reason."""
+
+    name: str
+    value: int | None
+    reason: str | None = None
+    unit: ClassVar[str] = Unit.BYTES
+    basis: ClassVar[str] = "shared_sample_delta"
+
+    def __post_init__(self) -> None:
+        if self.name not in STAGING_NAMES:
+            raise ValueError("invalid staging metric")
+        if self.reason is None:
+            _integer(self.value, "staging metric")
+        elif self.value is not None or self.reason not in _STAGING_REASONS:
+            raise ValueError("invalid staging metric reason")
+
+    @property
+    def availability(self) -> str:
+        return Availability.MEASURED if self.reason is None else Availability.UNAVAILABLE
+
+    def to_payload(self) -> dict[str, object]:
+        return {"name": self.name, "value": self.value, "unit": self.unit,
+                "availability": self.availability, "basis": self.basis, "reason": self.reason}
+
+
+@dataclass(frozen=True, slots=True)
+class ResourceReportV3:
+    base: ResourceReport
+    staging: tuple[StagingDelta, ...]
+    schema: ClassVar[str] = SCHEMA_V3
+
+    def __post_init__(self) -> None:
+        if type(self.base) is not ResourceReport:
+            raise ValueError("schema 3 requires base report records")
+        check_report_domain(self.base)
+        if self.operation not in {None, "server_refresh"}:
+            raise ValueError("schema 3 requires a Server refresh")
+        expected = STAGING_NAMES if self.operation is not None else ()
+        if type(self.staging) is not tuple or any(type(row) is not StagingDelta for row in self.staging):
+            raise ValueError("schema 3 staging metric has wrong type")
+        if tuple(row.name for row in self.staging) != expected:
+            raise ValueError("schema 3 staging slots do not match")
+        if self.instrumentation == "degraded" and any(
+            row.reason != UnavailableReason.OBSERVER_FAILED for row in self.staging
+        ):
+            raise ValueError("degraded schema 3 report requires unavailable staging metrics")
+
+    @property
+    def operation(self) -> str | None:
+        return self.base.operation
+
+    @property
+    def backend(self) -> str | None:
+        return self.base.backend
+
+    @property
+    def outcome(self) -> str:
+        return self.base.outcome
+
+    @property
+    def instrumentation(self) -> str:
+        return self.base.instrumentation
+
+    @property
+    def metrics(self) -> tuple[ResourceMetric | StagingDelta, ...]:
+        return self.base.metrics + self.staging
+
+    @property
+    def limits(self) -> tuple[ResourceLimit, ...]:
+        return self.base.limits
+
+    def to_payload(self) -> dict[str, object]:
+        return self.base.to_payload() | {
+            "schema": self.schema, "metrics": [metric.to_payload() for metric in self.metrics],
+        }
+
+
 def report_payload(report: ResourceReport) -> dict[str, Any]:
     """Typed convenience used by tests without exposing mutable internals."""
     return report.to_payload()
@@ -293,4 +381,5 @@ __all__ = (
     "Availability", "Backend", "Basis", "Enforcement", "Instrumentation", "Operation",
     "ResourceLimit", "ResourceMetric", "ResourceReport", "SCHEMA", "Unit",
     "UnavailableReason", "MAX_LIMITS", "MAX_METRICS", "MAX_PAYLOAD_BYTES", "report_payload",
+    "SCHEMA_V3", "STAGING_NAMES", "ResourceReportV3", "StagingDelta",
 )

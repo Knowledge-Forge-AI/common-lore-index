@@ -137,6 +137,12 @@ cloe ops lexical-revoke --repo-map-home <postgres-home> \
   --graph mixed-v1 --yes --reason first_use_review --json
 ```
 
+A ranked query over a mixed binding can return useful hits alongside
+omissions. The JSON envelope records those hits and the cause of partial
+coverage. The CLI exits with status 1 on a partial result. Use
+`--path-prefix <relative-path>` to scope the query to a file or subtree
+when you already know where to look.
+
 The lexical build is observed in-process through the internal resource view;
 the query and revoke continue to use their existing owner contracts. The
 derived lexical index is never canonical graph authority and never changes

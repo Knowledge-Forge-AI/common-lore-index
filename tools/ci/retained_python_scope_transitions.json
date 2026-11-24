@@ -6216,6 +6216,37 @@
       "source_commit": "472fcfd3bc09a404abc0a1b3dba1628c50ce7bea",
       "source_manifest_sha256": "af2b342d886dbf50de752b254015a2d292421108053352de277d8a828aabf014",
       "status_path": "tools/ci/cloe-resource-governance9-exit.md"
+    },
+    {
+      "changes": [
+        {
+          "new": {
+            "module": "common_lore_index._utf8",
+            "ownership_class": "python_retained",
+            "path": "src/main/python/common_lore_index/_utf8.py",
+            "tier": "T1-future"
+          },
+          "old": null
+        },
+        {
+          "new": {
+            "module": "common_lore_index.storage.sqlite_local.source_run_summary",
+            "ownership_class": "python_retained",
+            "path": "src/main/python/common_lore_index/storage/sqlite_local/source_run_summary.py",
+            "tier": "T1-future"
+          },
+          "old": null
+        }
+      ],
+      "new_ownership_manifest_sha256": "fcf53151c8c4e2703f7da60902b60e45b29522d34c922a26c4f689cb5c49391c",
+      "new_selected_set_sha256": "ab9d36c8d9c0957d555b5282cbff4aa85ab2b3ef42ab6981372a26b0fa30bedc",
+      "old_ownership_manifest_sha256": "935a93401167c5758576dda56d3929e9fd10c05058a8ac2462c177cf861b2efd",
+      "old_selected_set_sha256": "87cb258c71da5ffa10c440acbba8841d1edbebd0d9d1da239dbf9177f1beae7d",
+      "phase": "CLOE-PRODUCT256-READ2",
+      "reason": "Admit two bounded resource accounting modules under their existing quality owners with zero added debt.",
+      "source_commit": "0b0fe598b1f38868754a6ee5c34b54b054bf21d4",
+      "source_manifest_sha256": "935a93401167c5758576dda56d3929e9fd10c05058a8ac2462c177cf861b2efd",
+      "status_path": "tools/ci/cloe-product256-read2-exit.md"
     }
   ],
   "schema": "repomap-retained-python-scope-transitions-v2"

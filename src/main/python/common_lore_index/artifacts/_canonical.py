@@ -15,8 +15,8 @@ class CanonicalEncodingError(ValueError):
 def canonical_json(value: object) -> bytes:
     """Encode the integer-only JSON domain as sorted ASCII plus one LF."""
 
-    _validate_value(value)
     try:
+        _validate_value(value)
         return (
             json.dumps(
                 value,
@@ -27,7 +27,9 @@ def canonical_json(value: object) -> bytes:
             ).encode("ascii")
             + b"\n"
         )
-    except (TypeError, ValueError, UnicodeError) as error:
+    except CanonicalEncodingError:
+        raise
+    except (TypeError, ValueError, RecursionError) as error:
         raise CanonicalEncodingError("value is not canonical JSON") from error
 
 
@@ -38,16 +40,15 @@ def decode_canonical_json(data: bytes) -> dict[str, object]:
         raise CanonicalEncodingError("canonical JSON must end with one LF")
     try:
         value = json.loads(
-            data[:-1].decode("ascii", errors="strict"),
+            data.decode("ascii", errors="strict"),
             object_pairs_hook=_unique_object,
             parse_float=_reject_float,
             parse_constant=_reject_float,
         )
-    except (UnicodeError, json.JSONDecodeError, ValueError) as error:
+    except (ValueError, RecursionError) as error:
         raise CanonicalEncodingError("canonical JSON is invalid") from error
     if not isinstance(value, dict):
         raise CanonicalEncodingError("canonical JSON root must be an object")
-    _validate_value(value)
     if canonical_json(value) != data:
         raise CanonicalEncodingError("JSON bytes are not canonical")
     return value
@@ -56,7 +57,10 @@ def decode_canonical_json(data: bytes) -> dict[str, object]:
 def prefixed_digest(prefix: str, domain: bytes, data: bytes) -> str:
     """Digest an exact byte domain with an explicit non-JSON separator."""
 
-    return prefix + hashlib.sha256(domain + b"\x00" + data).hexdigest()
+    digest = hashlib.sha256(domain)
+    digest.update(b"\x00")
+    digest.update(data)
+    return prefix + digest.hexdigest()
 
 
 def sha256_digest(data: bytes) -> str:

@@ -1,0 +1,39 @@
+{
+  "approval": {
+    "operator_request": "Split public staging integration into concurrent jobs. Approve W7 Server resource report v3 before attempting staging CI again.",
+    "phase": "CLOE-STAGING-SPLIT-W7-REPORT1",
+    "schema": "cloe-ci160-approval-v1",
+    "scope": "One public staging synchronize for the hosted integration split and Server report schema 3 milestone. Use the new staging topology and preserve application, Rust, source, event and coverage gates.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 66,
+    "attempt": 1,
+    "component_runtime_executions": 36,
+    "native_report_sha256": "40b5e723f655d1a466a0dec8bff1168627095af972be036b459089800fe471d5",
+    "preceding_campaign": 159,
+    "previous_rust_downloads": 2,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 38,
+    "rust_report_sha256": "e429af0331c9856e89f3edb230a7a91acc643ea3303718ea798be47749782ed8",
+    "schema": "cloe-ci160-ledger-before-v1",
+    "system_report_sha256": "86991f719e0951c1405391d617810d1ee30f0e61db8152d42361d1ea65a45b40",
+    "wheel_transfers": 74
+  },
+  "reservation": {
+    "application_start": 67,
+    "approval_sha256": "82f2595d2d372dc8588d56938a4e998954bad1c2f8226fef2a529988dc5c1567",
+    "component_runtime_cumulative": 37,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "d39c8620d99943688b37b324b3a59a61d746cba0020edace9fd74618d81c0e0f",
+    "nonce": "cad6d16ef21cb9f19b01e0ba5f9ded92",
+    "pull_request": 27,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 39,
+    "schema": "cloe-ci160-reservation-v1",
+    "wheel_transfers_cumulative": 76,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 160
+  }
+}

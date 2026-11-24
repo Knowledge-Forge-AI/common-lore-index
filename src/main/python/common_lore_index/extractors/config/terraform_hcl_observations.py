@@ -7,7 +7,7 @@ from typing import Any
 from common_lore_index import __version__
 from common_lore_index.extractors.config.terraform_hcl_helpers import (
     _terraform_hcl_bounded_string,
-    _terraform_hcl_credentialed_url,
+    _terraform_hcl_url_redaction_reason,
     _terraform_hcl_literal_string,
     _terraform_hcl_reference_names,
 )
@@ -250,11 +250,11 @@ def _terraform_hcl_attribute_redactions(
                     start_line=attribute.start_line,
                 )
             )
-        elif literal is not None and _terraform_hcl_credentialed_url(literal):
+        elif literal is not None and (reason := _terraform_hcl_url_redaction_reason(literal)):
             observations.append(
                 _terraform_hcl_redaction_observation(
                     relative_path,
-                    redaction_reason="credentialed-terraform-url",
+                    redaction_reason=f"{reason}-terraform-url",
                     field_name=attribute.name,
                     start_line=attribute.start_line,
                 )

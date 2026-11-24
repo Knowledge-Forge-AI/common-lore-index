@@ -70,6 +70,8 @@ def load_github_api_source_config(path: Path | str) -> GitHubApiSourceConfig:
     config_path = Path(path).resolve()
     try:
         payload = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except UnicodeDecodeError as error:
+        raise GitHubApiPolicyError("invalid UTF-8 GitHub API config") from error
     except (OSError, tomllib.TOMLDecodeError) as error:
         raise GitHubApiPolicyError(f"invalid GitHub API config: {error}") from error
 

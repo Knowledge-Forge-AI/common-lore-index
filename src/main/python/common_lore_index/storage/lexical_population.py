@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import Any
 
+from common_lore_index._utf8 import byte_length
 from common_lore_index.retrieval.lexical_capture import LexicalCapturePlan
 from common_lore_index.storage.lexical_build_lease import (
     LEXICAL_BUILD_LEASE_SECONDS,
@@ -190,55 +191,102 @@ def claim_lexical_generation(
         raise sanitize_driver_exception(error, operation="lexical_claim") from None
 
 
+_EXECUTEMANY_MAX_ROWS = 64
+_EXECUTEMANY_MAX_UTF8_BYTES = 1024 * 1024
+
+
+def _document_params(plan: LexicalCapturePlan, doc: Any) -> tuple[Any, ...]:
+    return (
+        plan.repository_id, plan.lexical_generation_id, doc.document_ordinal,
+        doc.binding_id, doc.binding_revision, doc.snapshot_id,
+        doc.source_relative_path, doc.file_content_sha256, doc.normalized_byte_length,
+        doc.line_count, doc.chunk_count, doc.normalized_text,
+        doc.artifact_privacy, doc.evidence_retention,
+    )
+
+
+def _chunk_params(plan: LexicalCapturePlan, chunk: Any) -> tuple[Any, ...]:
+    return (
+        plan.repository_id, plan.lexical_generation_id, chunk.chunk_id,
+        chunk.binding_id, chunk.binding_revision, chunk.snapshot_id,
+        chunk.source_relative_path, chunk.chunk_ordinal, chunk.start_line,
+        chunk.end_line, chunk.byte_length, chunk.chunk_sha256,
+        chunk.chunk_text, chunk.alias_tokens_text, chunk.alias_tokens_text,
+        chunk.chunk_text, chunk.chunk_text, chunk.artifact_privacy,
+    )
+
+
+def _omission_params(plan: LexicalCapturePlan, omission: Any, ordinal: int) -> tuple[Any, ...]:
+    return (
+        plan.repository_id, plan.lexical_generation_id, ordinal,
+        omission.binding_id, omission.source_relative_path, omission.reason_code, omission.detail,
+    )
+
+
+def _utf8_param_bytes(params: Sequence[Any]) -> int:
+    total = 0
+    non_ascii: dict[str, int] | None = None
+    for value in params:
+        if not isinstance(value, str):
+            continue
+        if value.isascii():
+            total += len(value)
+            continue
+        if non_ascii is None:
+            non_ascii = {}
+        size = non_ascii.get(value)
+        if size is None:
+            size = byte_length(value, errors="surrogatepass")
+            non_ascii[value] = size
+        total += size
+    return total
+
+
+def _executemany_bounded(
+    cursor: Any,
+    sql: str,
+    param_rows: Iterable[tuple[Any, ...]],
+) -> None:
+    batch: list[tuple[Any, ...]] = []
+    batch_bytes = 0
+    for params in param_rows:
+        row_bytes = _utf8_param_bytes(params)
+        if batch and batch_bytes + row_bytes > _EXECUTEMANY_MAX_UTF8_BYTES:
+            cursor.executemany(sql, tuple(batch))
+            batch = []
+            batch_bytes = 0
+        batch.append(params)
+        batch_bytes += row_bytes
+        if (
+            len(batch) >= _EXECUTEMANY_MAX_ROWS
+            or batch_bytes > _EXECUTEMANY_MAX_UTF8_BYTES
+        ):
+            cursor.executemany(sql, tuple(batch))
+            batch = []
+            batch_bytes = 0
+    if batch:
+        cursor.executemany(sql, tuple(batch))
+
+
 def _write_document_batch(
     cursor: Any,
     plan: LexicalCapturePlan,
     documents: Sequence[Any],
 ) -> None:
-    for doc in documents:
-        cursor.execute(
-            INSERT_DOCUMENT_SQL,
-            (
-                plan.repository_id,
-                plan.lexical_generation_id,
-                doc.document_ordinal,
-                doc.binding_id,
-                doc.binding_revision,
-                doc.snapshot_id,
-                doc.source_relative_path,
-                doc.file_content_sha256,
-                doc.normalized_byte_length,
-                doc.line_count,
-                doc.chunk_count,
-                doc.normalized_text,
-                doc.artifact_privacy,
-                doc.evidence_retention,
-            ),
-        )
-        for chunk in doc.chunks:
-            cursor.execute(
-                INSERT_CHUNK_SQL,
-                (
-                    plan.repository_id,
-                    plan.lexical_generation_id,
-                    chunk.chunk_id,
-                    chunk.binding_id,
-                    chunk.binding_revision,
-                    chunk.snapshot_id,
-                    chunk.source_relative_path,
-                    chunk.chunk_ordinal,
-                    chunk.start_line,
-                    chunk.end_line,
-                    chunk.byte_length,
-                    chunk.chunk_sha256,
-                    chunk.chunk_text,
-                    chunk.alias_tokens_text,
-                    chunk.alias_tokens_text,
-                    chunk.chunk_text,
-                    chunk.chunk_text,
-                    chunk.artifact_privacy,
-                ),
-            )
+    _executemany_bounded(
+        cursor,
+        INSERT_DOCUMENT_SQL,
+        (_document_params(plan, doc) for doc in documents),
+    )
+    _executemany_bounded(
+        cursor,
+        INSERT_CHUNK_SQL,
+        (
+            _chunk_params(plan, chunk)
+            for doc in documents
+            for chunk in doc.chunks
+        ),
+    )
 
 
 def _write_omission_batch(
@@ -247,19 +295,14 @@ def _write_omission_batch(
     omissions: Sequence[Any],
     start_ordinal: int,
 ) -> None:
-    for offset, omission in enumerate(omissions):
-        cursor.execute(
-            INSERT_OMISSION_SQL,
-            (
-                plan.repository_id,
-                plan.lexical_generation_id,
-                start_ordinal + offset,
-                omission.binding_id,
-                omission.source_relative_path,
-                omission.reason_code,
-                omission.detail,
-            ),
-        )
+    _executemany_bounded(
+        cursor,
+        INSERT_OMISSION_SQL,
+        (
+            _omission_params(plan, omission, start_ordinal + offset)
+            for offset, omission in enumerate(omissions)
+        ),
+    )
 
 
 def populate_lexical_generation_rows(

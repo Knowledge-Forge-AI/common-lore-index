@@ -298,6 +298,8 @@ class CliDiscoverCoreIntegrationTests(CliIntegrationTestCase):
         self.assertEqual(path_metadata["/anonymous"]["array_policy"], "summary-only")
         self.assertIn("/tools/repomap/command", path_metadata)
         self.assertIn("/tools/helper/command", path_metadata)
+        self.assertEqual({o["metadata"]["pointer"]: o["start_line"] for o in references if o["metadata"]["pointer"] in ("/tools/repomap/command", "/tools/helper/command")},
+                         {"/tools/repomap/command": 19, "/tools/helper/command": 24})
         self.assertNotIn("/tools/0/command", path_metadata)
         self.assertNotIn("/anonymous/0/command", path_metadata)
 

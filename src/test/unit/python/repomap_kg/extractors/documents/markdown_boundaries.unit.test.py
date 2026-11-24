@@ -6,6 +6,39 @@ from common_lore_index.extractors.documents.markdown import (
 
 
 class MarkdownExtractorBoundariesUnitTests(unittest.TestCase):
+    def test_redacts_credentialed_labels_and_titles_without_changing_safe_targets(self):
+        rows = extract_markdown_file_observations(
+            "readme.md",
+            '[https://user:p#fixture@concealed.invalid](https://valid.invalid/label) '
+            '[Public](https://valid.invalid/title "https://user:fixture@concealed.invalid")',
+        )
+        links = [row for row in rows if row.kind == "markdown.link"]
+        self.assertEqual(len(links), 2)
+        self.assertTrue(all((row.target or "").startswith("external.url:") for row in links))
+        self.assertNotIn("concealed.invalid", str([row.to_dict() for row in rows]))
+
+    def test_credentialed_markdown_link_with_templated_host_is_redacted(self):
+        rows = extract_markdown_file_observations(
+            "readme.md", "See <https://user:fixture@${HOST}/private> and <https://valid.invalid/>.",
+        )
+        protected, retained = [row for row in rows if row.kind == "markdown.link"]
+        self.assertTrue((protected.target or "").startswith("unknown:"))
+        self.assertEqual(protected.metadata["resolution_reason"], "credentialed-external-url")
+        self.assertTrue((retained.target or "").startswith("external.url:"))
+        self.assertNotIn("user:fixture", str([row.to_dict() for row in rows]))
+
+    def test_unreadable_external_markdown_target_does_not_hide_the_next_link(self):
+        observations = extract_markdown_file_observations(
+            "guide.md",
+            "[Uno](https://invalid.example:not-a-port/item) and [Dos](https://example.invalid/retained)",
+        )
+        links = [row for row in observations if row.kind == "markdown.link"]
+        self.assertEqual(len(links), 2)
+        self.assertEqual(links[0].metadata["resolution_reason"], "malformed-external-url")
+        self.assertTrue((links[0].target or "").startswith("unknown:"))
+        self.assertTrue((links[1].target or "").startswith("external.url:"))
+        self.assertNotIn("invalid.example", str(links[0].to_dict()))
+
     def test_markdown_frontmatter_malformed_and_redacted_text(self):
         observations = extract_markdown_file_observations(
             "docs/malformed.md",
@@ -120,6 +153,29 @@ Here is a link with valid escape: [escaped](file%20name.md).
         # frontmatter list item following scalar key
         fm = parse_frontmatter("---\nkey: scalar\n- item\n---\n")
         self.assertIsNotNone(fm)
+
+    def test_streamed_markdown_preserves_frontmatter_anchors_and_adr_precedence(self):
+        from common_lore_index.extractors.documents.markdown_structure import (
+            markdown_anchors_for_content, parse_frontmatter, parse_markdown_headings,
+        )
+
+        source = (
+            "---\r\nStatus: accepted\n---\u2028# ADR 0001: Example\r"
+            "[ref]: #topic\n## Topic\n[Jump][ref]\n## Date\n2026-11-22\n```\n## Hidden"
+        )
+        frontmatter = parse_frontmatter(source)
+        assert frontmatter is not None and frontmatter.end_line == 3
+        headings = parse_markdown_headings(source)
+        assert [h.line_number for h in headings] == [4, 6, 8]
+        assert markdown_anchors_for_content(source) == {h.anchor for h in headings}
+        rows = extract_markdown_file_observations(
+            "docs/adr/0001-example.md", source, markdown_anchors={"docs/adr/0001-example.md": {"topic"}},
+        )
+        adr, = [row for row in rows if row.kind == "markdown.adr_metadata"]
+        assert adr.metadata["title"] == "Example"
+        assert adr.metadata["date"] == "2026-11-22"
+        fence, = [row for row in rows if row.kind == "markdown.code_fence"]
+        assert fence.end_line == 11 and fence.metadata["closed"] is False
 
 
 if __name__ == "__main__":

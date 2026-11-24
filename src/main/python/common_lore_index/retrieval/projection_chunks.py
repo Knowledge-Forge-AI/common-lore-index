@@ -2,52 +2,133 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 import hashlib
 from typing import Any
+
+from common_lore_index._utf8 import byte_length
+
+
+def _append_frame_parts(update: Callable[[bytes], None], parts: Iterable[str | bytes]) -> None:
+    for part in parts:
+        raw = part.encode("utf-8") if isinstance(part, str) else bytes(part)
+        update(f"{len(raw)}:".encode("ascii"))
+        update(raw)
+        update(b";")
 
 
 def frame_digest(prefix: str, parts: Sequence[str | bytes]) -> str:
     """Compute a length-prefixed SHA-256 digest (`<prefix>:<64hex>`) over ordered parts."""
     if not isinstance(prefix, str) or not prefix.strip():
         raise ValueError("prefix must be a non-empty string")
-    hasher = hashlib.sha256()
-    hasher.update(f"cloe-frame-v1:{len(parts)}:".encode("utf-8"))
-    for part in parts:
-        raw = part.encode("utf-8") if isinstance(part, str) else bytes(part)
-        hasher.update(f"{len(raw)}:".encode("ascii"))
-        hasher.update(raw)
-        hasher.update(b";")
+    return _framed_digest(prefix, len(parts), parts)
+
+
+def _framed_digest(prefix: str, part_count: int, parts: Iterable[str | bytes]) -> str:
+    """Hash an ordered stream with a caller-known exact part count."""
+    hasher = hashlib.sha256(f"cloe-frame-v1:{part_count}:".encode("ascii"))
+    _append_frame_parts(hasher.update, parts)
     return f"{prefix}:{hasher.hexdigest()}"
 
 
-def _split_lf_lines_keepends(text: str) -> list[str]:
-    if not text:
-        return []
-    parts = text.split("\n")
-    lines = [part + "\n" for part in parts[:-1]]
-    if parts[-1]:
-        lines.append(parts[-1])
-    return lines
+def _prepare_frame(
+    prefix: str, initial_parts: Sequence[str | bytes], suffix_count: int,
+) -> Callable[[Sequence[str | bytes]], str]:
+    """Prepare the fixed framing fields shared by a group of related digests."""
+    part_count = len(initial_parts) + suffix_count
+    initial = hashlib.sha256(f"cloe-frame-v1:{part_count}:".encode("ascii"))
+    _append_frame_parts(initial.update, initial_parts)
+
+    def extend(parts: Sequence[str | bytes]) -> str:
+        hasher = initial.copy()
+        _append_frame_parts(hasher.update, parts)
+        return f"{prefix}:{hasher.hexdigest()}"
+
+    return extend
 
 
-def _split_long_utf8_line(line: str, max_chunk_bytes: int) -> list[str]:
-    pieces: list[str] = []
-    current_chars: list[str] = []
-    current_bytes = 0
-    for ch in line:
-        ch_len = len(ch.encode("utf-8"))
-        if current_chars and current_bytes + ch_len > max_chunk_bytes:
-            pieces.append("".join(current_chars))
-            current_chars = [ch]
-            current_bytes = ch_len
+def _iter_lf_lines_keepends(text: str) -> Iterator[str]:
+    start = 0
+    while start < len(text):
+        end = text.find("\n", start)
+        if end == -1:
+            yield text[start:]
+            return
+        yield text[start : end + 1]
+        start = end + 1
+
+
+def _split_long_utf8_line(line: str, max_chunk_bytes: int) -> Iterator[bytes]:
+    pending = b""
+    block_chars = 8192
+    for block_start in range(0, len(line), block_chars):
+        encoded = pending + line[block_start:block_start + block_chars].encode("utf-8")
+        start = 0
+        while len(encoded) - start > max_chunk_bytes:
+            end = start + max_chunk_bytes
+            while (encoded[end] & 0xC0) == 0x80:
+                end -= 1
+            yield encoded[start:end]
+            start = end
+        pending = encoded[start:]
+    if pending:
+        yield pending
+
+
+def _iter_chunk_specs(
+    text: str, max_chunk_lines: int, max_chunk_bytes: int,
+) -> Iterator[tuple[int, int, str | bytes, bool]]:
+    buffer: list[str] = []
+    buffered_bytes = 0
+    start_line = 1
+    for line_no, line in enumerate(_iter_lf_lines_keepends(text), start=1):
+        line_bytes = byte_length(line)
+        if buffer and (len(buffer) >= max_chunk_lines or buffered_bytes + line_bytes > max_chunk_bytes):
+            yield start_line, line_no - 1, "".join(buffer), False
+            buffer.clear()
+            buffered_bytes = 0
+        if line_bytes > max_chunk_bytes:
+            for index, piece in enumerate(_split_long_utf8_line(line, int(max_chunk_bytes))):
+                yield line_no, line_no, piece, index > 0
         else:
-            current_chars.append(ch)
-            current_bytes += ch_len
-    if current_chars:
-        pieces.append("".join(current_chars))
-    return pieces
+            if not buffer:
+                start_line = line_no
+            buffer.append(line)
+            buffered_bytes += line_bytes
+    if buffer:
+        yield start_line, start_line + len(buffer) - 1, "".join(buffer), False
+
+
+def _iter_normalized_byte_specs(
+    data: bytes, max_chunk_lines: int, max_chunk_bytes: int,
+) -> Iterator[tuple[int, int, bytes, bool]]:
+    """Group already validated UTF-8 using byte offsets in the normalized source."""
+    chunk_start = line_start = buffered_lines = 0
+    first_line = line_number = 1
+    while line_start < len(data):
+        newline = data.find(b"\n", line_start)
+        line_end = len(data) if newline < 0 else newline + 1
+        if buffered_lines and (buffered_lines >= max_chunk_lines or line_end - chunk_start > max_chunk_bytes):
+            yield first_line, line_number - 1, data[chunk_start:line_start], False
+            buffered_lines = 0
+        if line_end - line_start > max_chunk_bytes:
+            cursor = line_start
+            while cursor < line_end:
+                end = min(cursor + int(max_chunk_bytes), line_end)
+                if end < line_end:
+                    while (data[end] & 0xC0) == 0x80:
+                        end -= 1
+                yield line_number, line_number, data[cursor:end], cursor != line_start
+                cursor = end
+        else:
+            if not buffered_lines:
+                chunk_start, first_line = line_start, line_number
+            buffered_lines += 1
+        line_start = line_end
+        line_number += 1
+    if buffered_lines:
+        yield first_line, line_number - 1, data[chunk_start:line_start], False
 
 
 @dataclass(frozen=True)
@@ -104,11 +185,33 @@ def build_file_chunks(
     max_chunk_lines: int = 80,
     max_chunk_bytes: int = 8192,
 ) -> tuple[ProjectedChunk, ...]:
+    """Return the established immutable contiguous projection."""
+    return tuple(_iter_file_chunks(
+        file_projection_id=file_projection_id, binding_id=binding_id,
+        source_relative_path=source_relative_path, normalized_text=normalized_text,
+        artifact_privacy=artifact_privacy, policy_digest=policy_digest,
+        publication_bundle_id=publication_bundle_id, max_chunk_lines=max_chunk_lines,
+        max_chunk_bytes=max_chunk_bytes,
+    ))
+
+
+def _iter_file_chunks(
+    *,
+    file_projection_id: str,
+    binding_id: str,
+    source_relative_path: str,
+    normalized_text: str | bytes,
+    artifact_privacy: str,
+    policy_digest: str,
+    publication_bundle_id: str,
+    max_chunk_lines: int = 80,
+    max_chunk_bytes: int = 8192,
+) -> Iterator[ProjectedChunk]:
     """Split normalized text into contiguous chunks bounded by lines and UTF-8 bytes."""
     if max_chunk_lines < 1 or max_chunk_bytes < 4:
         raise ValueError("max_chunk_lines >= 1 and max_chunk_bytes >= 4 are required")
 
-    if normalized_text == "":
+    if not normalized_text:
         content_digest = frame_digest("sha256", (b"",))
         chunk_id = frame_digest(
             "projchunk1",
@@ -126,108 +229,59 @@ def build_file_chunks(
                 content_digest,
             ),
         )
-        return (
-            ProjectedChunk(
-                chunk_id=chunk_id,
-                file_projection_id=file_projection_id,
-                chunk_index=0,
-                binding_id=binding_id,
-                source_relative_path=source_relative_path,
-                start_line=0,
-                end_line=0,
-                normalized_byte_start=0,
-                normalized_byte_end=0,
-                byte_length=0,
-                line_count=0,
-                line_split_continuation=False,
-                is_empty_file_record=True,
-                content_text="",
-                content_digest=content_digest,
-                artifact_privacy=artifact_privacy,
-            ),
+        yield ProjectedChunk(
+            chunk_id=chunk_id,
+            file_projection_id=file_projection_id,
+            chunk_index=0,
+            binding_id=binding_id,
+            source_relative_path=source_relative_path,
+            start_line=0,
+            end_line=0,
+            normalized_byte_start=0,
+            normalized_byte_end=0,
+            byte_length=0,
+            line_count=0,
+            line_split_continuation=False,
+            is_empty_file_record=True,
+            content_text="",
+            content_digest=content_digest,
+            artifact_privacy=artifact_privacy,
         )
+        return
 
-    lines = _split_lf_lines_keepends(normalized_text)
-    raw_specs: list[tuple[int, int, str, bool]] = []
-    buf_lines: list[str] = []
-    buf_bytes = 0
-    buf_start_line = 1
-    buf_end_line = 1
-
-    def _flush() -> None:
-        nonlocal buf_lines, buf_bytes
-        if not buf_lines:
-            return
-        raw_specs.append((buf_start_line, buf_end_line, "".join(buf_lines), False))
-        buf_lines = []
-        buf_bytes = 0
-
-    for line_no, line in enumerate(lines, start=1):
-        line_bytes = len(line.encode("utf-8"))
-        if line_bytes > max_chunk_bytes:
-            _flush()
-            pieces = _split_long_utf8_line(line, max_chunk_bytes)
-            for idx, piece in enumerate(pieces):
-                raw_specs.append((line_no, line_no, piece, idx > 0))
-            continue
-
-        if buf_lines and (
-            len(buf_lines) >= max_chunk_lines or buf_bytes + line_bytes > max_chunk_bytes
-        ):
-            _flush()
-
-        if not buf_lines:
-            buf_start_line = line_no
-        buf_lines.append(line)
-        buf_bytes += line_bytes
-        buf_end_line = line_no
-
-    _flush()
-
-    chunks: list[ProjectedChunk] = []
+    identity_fields = (policy_digest, publication_bundle_id, file_projection_id, binding_id, source_relative_path)
+    digest_chunk = _prepare_frame("projchunk1", identity_fields, 6)
     byte_cursor = 0
-    for chunk_index, (start_line, end_line, text_piece, is_cont) in enumerate(raw_specs):
-        piece_bytes = text_piece.encode("utf-8")
+    specs: Iterable[tuple[int, int, str | bytes, bool]]
+    if isinstance(normalized_text, bytes):
+        specs = _iter_normalized_byte_specs(normalized_text, max_chunk_lines, max_chunk_bytes)
+    else:
+        specs = _iter_chunk_specs(normalized_text, max_chunk_lines, max_chunk_bytes)
+    for chunk_index, (start_line, end_line, piece, is_cont) in enumerate(specs):
+        piece_bytes = piece if isinstance(piece, bytes) else piece.encode("utf-8")
+        text_piece = piece.decode("utf-8") if isinstance(piece, bytes) else piece
         byte_len = len(piece_bytes)
         byte_start = byte_cursor
         byte_end = byte_cursor + byte_len
         byte_cursor = byte_end
         line_cnt = 1 if is_cont else (end_line - start_line + 1)
         c_digest = frame_digest("sha256", (piece_bytes,))
-        c_id = frame_digest(
-            "projchunk1",
-            (
-                policy_digest,
-                publication_bundle_id,
-                file_projection_id,
-                binding_id,
-                source_relative_path,
-                str(chunk_index),
-                str(start_line),
-                str(end_line),
-                str(byte_start),
-                str(byte_end),
-                c_digest,
-            ),
+        c_id = digest_chunk((str(chunk_index), str(start_line), str(end_line), str(byte_start), str(byte_end), c_digest))
+        yield ProjectedChunk(
+            chunk_id=c_id,
+            file_projection_id=file_projection_id,
+            chunk_index=chunk_index,
+            binding_id=binding_id,
+            source_relative_path=source_relative_path,
+            start_line=start_line,
+            end_line=end_line,
+            normalized_byte_start=byte_start,
+            normalized_byte_end=byte_end,
+            byte_length=byte_len,
+            line_count=line_cnt,
+            line_split_continuation=is_cont,
+            is_empty_file_record=False,
+            content_text=text_piece,
+            content_digest=c_digest,
+            artifact_privacy=artifact_privacy,
         )
-        chunks.append(
-            ProjectedChunk(
-                chunk_id=c_id,
-                file_projection_id=file_projection_id,
-                chunk_index=chunk_index,
-                binding_id=binding_id,
-                source_relative_path=source_relative_path,
-                start_line=start_line,
-                end_line=end_line,
-                normalized_byte_start=byte_start,
-                normalized_byte_end=byte_end,
-                byte_length=byte_len,
-                line_count=line_cnt,
-                line_split_continuation=is_cont,
-                is_empty_file_record=False,
-                content_text=text_piece,
-                content_digest=c_digest,
-                artifact_privacy=artifact_privacy,
-            )
-        )
-    return tuple(chunks)

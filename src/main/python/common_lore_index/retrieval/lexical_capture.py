@@ -2,27 +2,31 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 import os
+from itertools import chain
 from pathlib import Path, PurePosixPath
 import stat
 
 from common_lore_index.artifacts import FileSystemArtifactStore, PortableSnapshotManifest
+from common_lore_index.artifacts._manifest_records import _artifacts_in_source_order
 from common_lore_index.artifacts._store_common import ArtifactErrorCode, ArtifactIntegrityError
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
 from common_lore_index.ops.config_records import OpsGraphConfig
-from common_lore_index.retrieval.lexical_aliases import build_alias_tokens_text
+from common_lore_index.retrieval.lexical_aliases import _prepare_alias_text
 from common_lore_index.retrieval.lexical_policy import (
     LEXICAL_ALIAS_SPLIT_VERSION, LEXICAL_NORMALIZATION_FLAGS, LEXICAL_RANKING_FUNCTION,
     LEXICAL_REPRESENTATION_VERSION, LEXICAL_TEXT_CONFIG, LexicalGenerationPolicy, PublicationFence,
 )
-from common_lore_index.retrieval.projection_chunks import build_file_chunks, frame_digest
+from common_lore_index.retrieval.projection_chunks import _framed_digest, _iter_file_chunks, _prepare_frame, frame_digest
 from common_lore_index.retrieval.projection_policy import (
     ExclusionReason, ResolvedBindingPolicy, SUPPORTED_TEXT_FORMATS,
     _is_email_role_or_path, _is_feed_role_or_path, evaluate_artifact_pre_open,
 )
-from common_lore_index.retrieval.projection_text import normalize_and_bound_text
+from common_lore_index.retrieval.projection_text import (
+    _overlaps_any_private_root, _read_bounded_regular_file, normalize_and_bound_text,
+)
 from common_lore_index.retrieval.query_contracts import OmissionRecord
 
 _SKIPPED_VCS_DIRS = frozenset({".git", ".hg", ".svn", "__pycache__"})
@@ -111,56 +115,63 @@ class LexicalCapturePlan:
     def omitted_record_count(self) -> int: return len(self.omissions)
 
 
-def _overlaps_any_private_root(target: Path, private_roots: Sequence[Path]) -> bool:
-    if not private_roots: return False
-    try: resolved = target.resolve(strict=False)
-    except OSError: return True
-    for priv in private_roots:
-        try:
-            priv_res = priv.resolve(strict=False)
-            if resolved == priv_res or priv_res in resolved.parents: return True
-        except OSError: return True
-    return False
-
-
 def _matches_any_prefix(rel_path: str, prefixes: Sequence[str]) -> bool:
     return any((p := raw.strip("/")) and (rel_path == p or rel_path.startswith(p + "/")) for raw in prefixes)
 
 
+def _ordered_children(directory: Path) -> Iterator[tuple[os.DirEntry[str], bool, bool]]:
+    entries: list[tuple[os.DirEntry[str], bool, bool]] = []
+    try:
+        with os.scandir(directory) as children:
+            for entry in children:
+                try:
+                    directory_entry = entry.is_dir()
+                    is_link = directory_entry and entry.is_symlink()
+                except OSError:
+                    directory_entry = is_link = False
+                entries.append((entry, directory_entry, is_link))
+    except OSError:
+        return iter(())
+    # A real directory contributes descendant paths beginning with name + "/".
+    entries.sort(key=lambda child: child[0].name + ("/" if child[1] and not child[2] else ""))
+    return iter(entries)
+
+
 def _discover_binding_files(
     binding: OpsGraphSourceBindingConfig, root_dir: Path, private_roots: Sequence[Path],
-) -> list[LexicalFileCandidate]:
-    if not root_dir.exists() or root_dir.is_symlink() or not root_dir.is_dir(): return []
-    discovered: list[LexicalFileCandidate] = []
-    for cur_root, dirs, files in os.walk(root_dir, topdown=True, followlinks=False):
-        cur_path, kept_dirs = Path(cur_root), []
-        for d in sorted(dirs):
-            if d in _SKIPPED_VCS_DIRS: continue
-            d_path = cur_path / d
-            rel_d = d_path.relative_to(root_dir).as_posix()
-            if binding.exclude_paths and _matches_any_prefix(rel_d, binding.exclude_paths): continue
-            if d_path.is_symlink():
-                discovered.append(LexicalFileCandidate(binding.binding_id, rel_d, d_path, False, True, False, 0))
-            else:
-                kept_dirs.append(d)
-        dirs[:] = kept_dirs
-        for fname in sorted(files):
-            fpath = cur_path / fname
-            rel_f = fpath.relative_to(root_dir).as_posix()
-            if (binding.include_paths and not _matches_any_prefix(rel_f, binding.include_paths)) or (
-                binding.exclude_paths and _matches_any_prefix(rel_f, binding.exclude_paths)
-            ):
+) -> Iterator[LexicalFileCandidate]:
+    if root_dir.is_symlink() or not root_dir.is_dir():
+        return
+    pending = [_ordered_children(root_dir)]
+    while pending:
+        entry = next(pending[-1], None)
+        if entry is None:
+            pending.pop()
+            continue
+        leaf, is_directory, is_link = entry
+        path = Path(leaf.path)
+        relative = path.relative_to(root_dir).as_posix()
+        if _matches_any_prefix(relative, binding.exclude_paths):
+            continue
+        if is_directory:
+            if leaf.name in _SKIPPED_VCS_DIRS:
                 continue
-            try: lstat_res = os.lstat(fpath)
-            except OSError: continue
-            is_sym = stat.S_ISLNK(lstat_res.st_mode)
-            is_reg = stat.S_ISREG(lstat_res.st_mode) and not is_sym
-            discovered.append(LexicalFileCandidate(
-                binding.binding_id, rel_f, fpath, is_reg, is_sym,
-                _overlaps_any_private_root(fpath, private_roots), int(lstat_res.st_size) if is_reg else 0,
-            ))
-    discovered.sort(key=lambda item: item.source_relative_path)
-    return discovered
+            if is_link:
+                yield LexicalFileCandidate(binding.binding_id, relative, path, False, True, False, 0)
+            elif not path.is_symlink():
+                pending.append(_ordered_children(path))
+            continue
+        if binding.include_paths and not _matches_any_prefix(relative, binding.include_paths):
+            continue
+        try:
+            metadata = leaf.stat(follow_symlinks=False)
+        except OSError:
+            continue
+        is_regular = stat.S_ISREG(metadata.st_mode)
+        yield LexicalFileCandidate(
+            binding.binding_id, relative, path, is_regular, stat.S_ISLNK(metadata.st_mode),
+            _overlaps_any_private_root(path, private_roots), metadata.st_size if is_regular else 0,
+        )
 
 
 def _evaluate_candidate_pre_open(
@@ -182,32 +193,12 @@ def _evaluate_candidate_pre_open(
     return None
 
 
-def _read_bounded_regular_file(
-    path: Path, *, max_input_bytes: int, private_roots: Sequence[Path],
-) -> tuple[bytes | None, ExclusionReason | None]:
-    if _overlaps_any_private_root(path, private_roots): return None, ExclusionReason.ARTIFACT_PRIVACY_FORBIDDEN
-    try: fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
-    except OSError: return None, ExclusionReason.UNSUPPORTED_SOURCE_FORMAT
-    try:
-        st = os.fstat(fd)
-        if not stat.S_ISREG(st.st_mode): return None, ExclusionReason.UNSUPPORTED_SOURCE_FORMAT
-        if st.st_size > max_input_bytes: return None, ExclusionReason.ARTIFACT_OVERSIZED
-        chunks, total = [], 0
-        while buf := os.read(fd, 65536):
-            total += len(buf)
-            if total > max_input_bytes: return None, ExclusionReason.ARTIFACT_OVERSIZED
-            chunks.append(buf)
-        return b"".join(chunks), None
-    except OSError: return None, ExclusionReason.ARTIFACT_CORRUPT
-    finally: os.close(fd)
-
-
 def _build_captured_chunks(
     *, file_proj_id: str, binding_id: str, binding_revision: int, snapshot_id: str,
-    source_relative_path: str, normalized_text: str, artifact_privacy: str,
+    source_relative_path: str, normalized_text: str | bytes, artifact_privacy: str,
     policy_digest: str, publication_bundle_id: str, max_chunk_lines: int, max_chunk_bytes: int,
 ) -> tuple[LexicalCapturedChunk, ...]:
-    raw_chunks = build_file_chunks(
+    raw_chunks = _iter_file_chunks(
         file_projection_id=file_proj_id, binding_id=binding_id,
         source_relative_path=source_relative_path, normalized_text=normalized_text,
         artifact_privacy=artifact_privacy, policy_digest=policy_digest,
@@ -215,16 +206,16 @@ def _build_captured_chunks(
         max_chunk_lines=max_chunk_lines, max_chunk_bytes=max_chunk_bytes,
     )
     captured: list[LexicalCapturedChunk] = []
+    identity_fields = (policy_digest, publication_bundle_id, binding_id, str(binding_revision), snapshot_id, source_relative_path)
+    chunk_id = _prepare_frame("pchunk1", identity_fields, 4)
+    alias_text = _prepare_alias_text(source_relative_path)
     for c in raw_chunks:
         start_line, end_line = (0, 0) if c.is_empty_file_record else (max(1, c.start_line), max(1, c.start_line, c.end_line))
-        pchunk_id = frame_digest("pchunk1", (
-            policy_digest, publication_bundle_id, binding_id, str(binding_revision), snapshot_id,
-            source_relative_path, str(c.chunk_index), str(start_line), str(end_line), c.content_digest,
-        ))
+        pchunk_id = chunk_id((str(c.chunk_index), str(start_line), str(end_line), c.content_digest))
         captured.append(LexicalCapturedChunk(
             pchunk_id, binding_id, binding_revision, snapshot_id, source_relative_path,
             c.chunk_index, start_line, end_line, c.byte_length, c.content_digest,
-            c.content_text, build_alias_tokens_text(source_relative_path=source_relative_path, chunk_text=c.content_text), artifact_privacy,
+            c.content_text, alias_text(c.content_text), artifact_privacy,
         ))
     return tuple(captured)
 
@@ -247,7 +238,7 @@ def _append_normalized_document(
     file_proj_id = frame_digest("lexdoc1", (lexical_policy.policy_digest, fence.publication_bundle_id, b_id, str(rev), snap_id, rel_path, content_sha256))
     captured_chunks = _build_captured_chunks(
         file_proj_id=file_proj_id, binding_id=b_id, binding_revision=rev, snapshot_id=snap_id,
-        source_relative_path=rel_path, normalized_text=norm_res.normalized_text,
+        source_relative_path=rel_path, normalized_text=norm_res.normalized_bytes,
         artifact_privacy=art_priv, policy_digest=lexical_policy.policy_digest,
         publication_bundle_id=fence.publication_bundle_id, max_chunk_lines=body_policy.max_chunk_lines,
         max_chunk_bytes=body_policy.max_chunk_bytes,
@@ -278,7 +269,7 @@ def _capture_from_retained_manifest(
             omissions.append(OmissionRecord(b_id, None, r_code, f"binding {b_id} ({resolved_b.alias}) excluded before file open: {r_code}").validate())
         elif b_id not in bindings_by_id:
             omissions.append(OmissionRecord(b_id, None, "binding_absent_from_publication_vector", f"binding {b_id} is not present in accepted snapshot_vector").validate())
-    for entry in sorted(manifest.entries, key=lambda item: (item.binding_id, item.source_relative_path)):
+    for entry in _artifacts_in_source_order(manifest.entries):
         b_id = entry.binding_id
         if b_id in lexical_policy.excluded_binding_reasons or b_id not in resolved_by_id:
             continue
@@ -331,7 +322,7 @@ def capture_lexical_generation_plan(
         raw_by_id = {b.binding_id: b for b in graph.effective_source_bindings}
         resolved_by_id = dict(body_policy.bindings)
         omissions, documents = [], []
-        all_candidates: list[tuple[OpsGraphSourceBindingConfig, LexicalFileCandidate]] = []
+        roots: list[tuple[OpsGraphSourceBindingConfig, Path]] = []
         for b_id in sorted(resolved_by_id):
             resolved_b, raw_b = resolved_by_id[b_id], raw_by_id[b_id]
             if b_id in lexical_policy.excluded_binding_reasons:
@@ -345,9 +336,12 @@ def capture_lexical_generation_plan(
             if not root_str:
                 omissions.append(OmissionRecord(b_id, None, ExclusionReason.ARTIFACT_MISSING.value, f"binding {b_id} has no local filesystem root_path_expanded").validate())
                 continue
-            all_candidates.extend((raw_b, cand) for cand in _discover_binding_files(raw_b, Path(root_str), private_roots))
+            roots.append((raw_b, Path(root_str)))
+        candidates = (
+            (binding, leaf) for binding, root in roots for leaf in _discover_binding_files(binding, root, private_roots)
+        )
         aggregate_input_bytes, aggregate_projected_bytes, projected_files_count = 0, 0, 0
-        for raw_b, cand in all_candidates:
+        for raw_b, cand in candidates:
             b_id, resolved_b, (rev, snap_id) = raw_b.binding_id, resolved_by_id[raw_b.binding_id], vector_by_binding[raw_b.binding_id]
             pre_reason = _evaluate_candidate_pre_open(
                 cand=cand, resolved_b=resolved_b, max_input_bytes=body_policy.max_input_artifact_bytes,
@@ -376,14 +370,16 @@ def capture_lexical_generation_plan(
                 aggregate_input_bytes += appended[0]
                 aggregate_projected_bytes += appended[1]
                 projected_files_count += 1
-    doc_digests = tuple(f"{d.binding_id}:{d.source_relative_path}:{d.file_content_sha256}:{len(d.chunks)}" for d in documents)
-    omission_digests = tuple(f"{o.binding_id}:{o.source_relative_path or ''}:{o.reason_code}" for o in omissions)
-    lexical_generation_id = frame_digest("lexgen1", (
+    doc_digests = (f"{d.binding_id}:{d.source_relative_path}:{d.file_content_sha256}:{len(d.chunks)}" for d in documents)
+    omission_digests = (f"{o.binding_id}:{o.source_relative_path or ''}:{o.reason_code}" for o in omissions)
+    header = (
         LEXICAL_REPRESENTATION_VERSION, LEXICAL_TEXT_CONFIG, LEXICAL_RANKING_FUNCTION, str(LEXICAL_NORMALIZATION_FLAGS),
         LEXICAL_ALIAS_SPLIT_VERSION, lexical_policy.policy_digest, str(repository_id), str(fence.run_id),
         fence.publication_bundle_id, fence.snapshot_manifest_id, extraction_receipt_id, graph_candidate_id,
-        *doc_digests, *omission_digests,
-    ))
+    )
+    lexical_generation_id = _framed_digest(
+        "lexgen1", len(header) + len(documents) + len(omissions), chain(header, doc_digests, omission_digests),
+    )
     return LexicalCapturePlan(
         lexical_generation_id, repository_id, int(fence.run_id), fence.publication_bundle_id,
         fence.snapshot_manifest_id, extraction_receipt_id, graph_candidate_id, fence.snapshot_vector,

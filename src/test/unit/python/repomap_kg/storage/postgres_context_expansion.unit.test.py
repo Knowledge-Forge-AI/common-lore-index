@@ -192,7 +192,7 @@ def _evidence(node_id: int = 101) -> dict[str, Any]:
         "snapshot_vector_json": _VECTOR,
         "evidence_role": "direct",
         "node_id": node_id,
-        "subject_canonical_key": "repo:seed",
+        "subject_canonical_key": "repo:neighbor",
     }
 
 
@@ -320,6 +320,22 @@ def test_parser_rejects_step_bounds_and_duplicate_admission() -> None:
         )
 
 
+
+@pytest.mark.parametrize("change", ["different-id", "duplicate-id"])
+def test_parser_refuses_inconsistent_neighbor_ids(change: str) -> None:
+    first = _edge(action="new", step=1, direction="outgoing", edge_hash="1" * 64,
+                  source="repo:seed", target="repo:n1", neighbor_id=101, neighbor="repo:n1")
+    second = {**first, "step": 2, "edge_key": "2" * 64}
+    if change == "different-id":
+        second.update(action="existing", neighbor_id=102)
+    else:
+        second.update(target_canonical_key="repo:n2", neighbor_canonical_key="repo:n2")
+    with pytest.raises(StorageSchemaError, match="neighbor id"):
+        parse_postgres_context_expansion_payload(
+            _payload([first, second]), seed_keys=("repo:seed",), node_limit=4,
+            edge_limit=3, expected_identity=_EXPECTED,
+        )
+
 def test_parser_formats_admitted_evidence_and_rejects_bad_or_unadmitted_rows() -> None:
     edge = _edge(
         action="new", step=1, direction="outgoing", edge_hash="8" * 64,
@@ -327,20 +343,46 @@ def test_parser_formats_admitted_evidence_and_rejects_bad_or_unadmitted_rows() -
         neighbor="repo:neighbor",
     )
     valid = _payload([edge])
-    valid["evidence"] = [_evidence(101)]
+    valid["evidence"] = [{
+        **_evidence(101),
+        "snapshot_vector_json": [["binding:public", 8, "snapshot:public"]],
+    }]
     result = parse_postgres_context_expansion_payload(
         valid, seed_keys=("repo:seed",), node_limit=4, edge_limit=3,
         expected_identity=_EXPECTED,
     )
-    assert result["neighbor_units"][0]["node"]["locations"][0]["path"] == "src/example.py"
+    location = result["neighbor_units"][0]["node"]["locations"][0]
+    assert location["path"] == "src/example.py"
+    assert location["source_identity_status"] == "verified_vector"
 
     malformed = _payload([edge])
     malformed["evidence"] = [{**_evidence(101), "extra": True}]
     unadmitted = _payload([edge])
     unadmitted["evidence"] = [_evidence(999)]
-    for payload in (malformed, unadmitted):
+    malformed_vector = _payload([edge])
+    malformed_vector["evidence"] = [{**_evidence(101), "snapshot_vector_json": "{"}]
+    wrong_subject = {**valid, "evidence": [{**_evidence(101), "subject_canonical_key": "repo:other"}]}
+    coerced_id = {**valid, "evidence": [{**_evidence(101), "node_id": "101"}]}
+    for payload in (malformed, unadmitted, malformed_vector, wrong_subject, coerced_id):
         with pytest.raises(StorageSchemaError):
             parse_postgres_context_expansion_payload(
                 payload, seed_keys=("repo:seed",), node_limit=4, edge_limit=3,
                 expected_identity=_EXPECTED,
             )
+
+
+def test_expansion_validates_evidence_lookahead_vector(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("common_lore_index.storage.postgres_context_expansion.EVIDENCE_SCAN_LIMIT", 1)
+    edge = _edge(
+        action="new", step=1, direction="outgoing", edge_hash="8" * 64,
+        source="repo:seed", target="repo:neighbor", neighbor_id=101, neighbor="repo:neighbor",
+    )
+    payload = _payload([edge])
+    first = _evidence(101)
+    sentinel = {**first, "snapshot_vector_json": "{"}
+    payload["evidence"] = [first, sentinel]
+    with pytest.raises(StorageSchemaError, match=r"evidence\[1\] is malformed"):
+        parse_postgres_context_expansion_payload(
+            payload, seed_keys=("repo:seed",), node_limit=4, edge_limit=3,
+            expected_identity=_EXPECTED,
+        )

@@ -16,6 +16,7 @@ from runner_abrupt_evidence import AbruptRunnerContext
 from runner_integration_population import LegPartitionPytestPlugin
 from runner_coverage import ChildCoverageSession
 from runner_failure_evidence import FailureEvidence
+from hosted_staging_parts import nodes_for_part
 from staging_report_contract import (
     SCHEMA, POLICY, digest_partition, execution_succeeded, persist_staging_report,
     StagingReportValidationError, validate_report,
@@ -80,6 +81,27 @@ def record_smoke_refusal(args) -> None:
         failure.persist_contract()
 
 
+def _persist_source_read_receipt(args: Any) -> None:
+    """Export sealed-cohort bookkeeping after the last runner source check."""
+    from runner_pgvector_context import source_read_receipt_for_report
+    receipt = source_read_receipt_for_report(collect_only=getattr(args, "collect_only", False))
+    if receipt is None:
+        return
+    if receipt.get("role") == "body-study":
+        # The BODY finalizer already refreshed the combined budget and
+        # exported both final ledgers; do not publish a flat replacement.
+        return
+    from retrieval_supplement_files import publish_member
+    raw = (json.dumps(receipt, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=True, allow_nan=False) + "\n").encode("ascii")
+    if len(raw) > 65536:
+        raise RuntimeError("source read receipt exceeds export bound")
+    _name = ("body-study-source-read-budget.json"
+             if receipt.get("role") == "body-study"
+             else "offline-source-read-budget.json")
+    publish_member(Path(args.report_dir), _name, raw)
+
+
 def execute_staging_decision_b(
     args, suites, forwarded_pytest_args, *, source_root, test_support_root,
     repo_root, pytest_module, pytest_args, pytest_environment_for_fn,
@@ -88,17 +110,20 @@ def execute_staging_decision_b(
     forwarded_selection_args_fn,
     discovery_fn=None,
 ) -> int:
-    invocation = uuid4().hex
+    part = getattr(args, "hosted_staging_part", None)
+    invocation = args.hosted_staging_invocation if part else uuid4().hex
     identity: dict[str, str] | None = None
     enabled = not args.no_coverage
     scoped = bool(forwarded_selection_args_fn(forwarded_pytest_args))
     report: dict[str, Any] = {"schema": SCHEMA, "policy": POLICY, "invocation_id": invocation,
               "candidate": identity, "scoped": scoped, "coverage_enabled": enabled,
-              "smoke": "passed" if args.suite == "staging" else "not_required",
+              "smoke": "passed" if args.suite == "staging" and part is None else "not_required",
               "go_coverage": None,
               "partition": {}, "legs": {"M": _leg_record((), enabled),
                                           "A": _leg_record((), enabled, "A")}, "errors": []}
-    output = Path(args.report_dir) / args.suite / "latest" / "staging_contract_report.json"
+    output = Path(args.report_dir) / args.suite / "latest" / (
+        "staging_part_report.json" if part else "staging_contract_report.json"
+    )
     failure = FailureEvidence(output, report, contract_writer=persist_staging_report)
     stage = "candidate_identity"
     sessions = []
@@ -137,13 +162,18 @@ def execute_staging_decision_b(
         }
         partition_data["sha256"] = digest_partition(partition_data)
         report["partition"] = partition_data
-        report["legs"] = {name: _leg_record(nodes, enabled, name)
-                          for name, nodes in (("M", partition.m_nodes), ("A", partition.a_nodes))}
+        legs: tuple[tuple[str, tuple[str, ...]], ...] = (("M", partition.m_nodes), ("A", partition.a_nodes))
+        if part:
+            nodes = nodes_for_part(part, partition_data["measured"], partition_data["abrupt"])
+            if not nodes or scoped:
+                raise RuntimeError("required hosted staging part is empty or scoped")
+            legs = (("A" if part == "a" else "M", nodes),)
+        report["legs"] = {name: _leg_record(nodes, enabled, name) for name, nodes in legs}
         # The sealed plan is exported before either execution, including refusals.
         if not failure.persist_contract():
             return 1
         safe = True
-        for leg, nodes in (("M", partition.m_nodes), ("A", partition.a_nodes)):
+        for leg, nodes in legs:
             entry = report["legs"][leg]
             if not nodes or not safe:
                 continue
@@ -151,6 +181,8 @@ def execute_staging_decision_b(
             stage = "execute_M" if leg == "M" else "execute_A"
             plugin = LegPartitionPytestPlugin(partition, leg, suite=args.suite,
                                               full_population=not scoped)
+            if part:
+                plugin.target_nodeids = nodes
             abrupt = None
             if leg == "A":
                 abrupt = AbruptRunnerContext(nodeids=nodes, invocation_id=invocation,
@@ -193,18 +225,26 @@ def execute_staging_decision_b(
                             entry["measurement"].update(
                                 state="measured" if leg == "M" else "unavailable", valid=True)
                             if leg == "M":
-                                measured = collect_coverage_summary_fn(
-                                    cov_runner, args.suite, coverage_policy,
-                                    json_report_path=Path(args.report_dir) / args.suite / "coverage.json"
-                                    if args.report else None)
-                                entry["measurement"]["summary"] = _summary(measured, repo_root)
-                                if not report_coverage_fn(measured):
-                                    report["errors"].append("M: coverage floors not met")
+                                if part:
+                                    from hosted_staging_coverage import export_python_part
+                                    export_python_part(cov_runner, source_root, repo_root,
+                                                       Path(args.report_dir) / "python-coverage.json")
+                                else:
+                                    measured = collect_coverage_summary_fn(
+                                        cov_runner, args.suite, coverage_policy,
+                                        json_report_path=Path(args.report_dir) / args.suite / "coverage.json"
+                                        if args.report else None)
+                                    entry["measurement"]["summary"] = _summary(measured, repo_root)
+                                    if not report_coverage_fn(measured):
+                                        report["errors"].append("M: coverage floors not met")
                         diagnostics = coverage_diagnostics(session)
                         if diagnostics and args.report:
                             (output.parent / f"{leg}-measurement-diagnostics.json").write_text(
                                 json.dumps(diagnostics, indent=2) + "\n")
-                if leg == "M":
+                if leg == "M" and part:
+                    from hosted_staging_coverage import export_go_part
+                    export_go_part(Path(args.report_dir) / "go.txt")
+                elif leg == "M":
                     from go_runner_coverage import evaluate_go_integration_gate
                     go_summary, go_ok = evaluate_go_integration_gate(args.suite, args.no_coverage)
                     report["go_coverage"] = asdict(go_summary) if go_summary is not None else None
@@ -241,12 +281,13 @@ def execute_staging_decision_b(
     finally:
         try:
             failure.persist()  # Preserve the first cause before later validation/cleanup.
-            try:
-                validate_report(report)
-            except StagingReportValidationError as error:
-                failure.capture(error, "report_validation")
+            if part is None:
+                try:
+                    validate_report(report)
+                except StagingReportValidationError as error:
+                    failure.capture(error, "report_validation")
             failure.persist_contract()
-            if args.report:
+            if args.report and part is None:
                 state = report["legs"]["M"]["measurement"]["state"]
                 try:
                     write_html_report_fn(report_root=args.report_dir, suite_name=args.suite,
@@ -278,8 +319,19 @@ def execute_staging_decision_b(
                         if entry["measurement"]["session_id"] == session.session_dir.name:
                             entry.update(cleanup="unknown", status="failed")
             try:
+                _persist_source_read_receipt(args)
+            except BaseException as error:
+                failure.capture(error, "report_persistence")
+                if control_signal is None and not isinstance(error, Exception):
+                    control_signal = error
+            try:
                 failure.persist_contract()
             finally:
                 if control_signal is not None:
                     raise control_signal
-    return 0 if failure.primary is None and execution_succeeded(report) else 1
+    if failure.primary is not None:
+        return 1
+    if part:
+        statuses = [entry["status"] for entry in report["legs"].values()]
+        return 0 if statuses == ["passed"] and not report["errors"] else 1
+    return 0 if execution_succeeded(report) else 1

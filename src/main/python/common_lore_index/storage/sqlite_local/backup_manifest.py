@@ -157,19 +157,27 @@ def _text(value: object) -> str:
     return value
 
 
+def _manifest_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    fields: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in fields:
+            raise _invalid("manifest-invalid")
+        fields[key] = value
+    return fields
+
+
 def parse_manifest(encoded: bytes) -> BackupManifest:
     """Strictly parse one manifest; refuse unknown formats and schemas."""
     if len(encoded) > MAX_MANIFEST_BYTES:
         raise _invalid("manifest-invalid")
     try:
-        payload = json.loads(encoded.decode("utf-8"))
-    except (UnicodeDecodeError, ValueError):
+        payload = json.loads(encoded.decode("utf-8"), object_pairs_hook=_manifest_object)
+    except (ValueError, RecursionError):
         raise _invalid("manifest-invalid") from None
     if not isinstance(payload, dict) or set(payload) != _TOP_KEYS:
         raise _invalid("manifest-invalid")
-    if payload["format"] != BACKUP_FORMAT or payload["manifest_version"] != MANIFEST_VERSION or isinstance(
-        payload["manifest_version"], bool
-    ):
+    version = payload["manifest_version"]
+    if payload["format"] != BACKUP_FORMAT or type(version) is not int or version != MANIFEST_VERSION:
         raise _invalid("format-unsupported")
     created_at = _text(payload["created_at"])
     if not _TIMESTAMP.match(created_at):

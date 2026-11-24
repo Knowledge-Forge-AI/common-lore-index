@@ -1,8 +1,10 @@
 from dataclasses import replace
+import hashlib
 import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from repomap_test_support.source_ingestion_integration import (
     archive_source_fixture,
@@ -22,6 +24,79 @@ from common_lore_index.ops.ingestion.source import (
 
 
 class ArchiveSourceIngestionIntegrationTests(unittest.TestCase):
+    def test_archive_snapshot_retains_package_identity_links_and_effective_mode(self) -> None:
+        from common_lore_index.ops.ingestion import source_archive as owner
+
+        config = replace(load_archive_source_config(archive_source_fixture("allowed-test-report.toml")),
+                         artifact_path=".", max_depth=5)
+        with tempfile.TemporaryDirectory(dir=select_scratch_root()) as directory:
+            root = Path(directory).resolve()
+            package = root / "reports" / "lib" / "sample"
+            package.mkdir(parents=True)
+            entry = package / "entry.py"
+            entry.write_text("from . import service\n", encoding="utf-8")
+            entry.chmod(0o700)
+            alias = root / "entry-alias"
+            alias.hardlink_to(entry)
+            (package / "service.py").write_text("def run():\n    return 1\n", encoding="utf-8")
+            (root / "flake.nix").write_text(
+                "{ self }: {\n  packages.aarch64-darwin.default = self.packages.${system}.tool;\n}\n",
+                encoding="utf-8",
+            )
+            (root / "pyproject.toml").write_text(
+                '[tool.setuptools.package-dir]\n"" = "reports/lib"\n', encoding="utf-8",
+            )
+            manifest = build_archive_manifest(config, root_path=root, clock=fixed_clock)
+            baseline = archive_observations_from_manifest(config, manifest, root_path=root)
+            self.assertTrue(any(item.kind == "python.module" and item.name == "sample.entry" for item in baseline))
+            self.assertTrue(any(item.kind == "python.import" and item.target == "python.module:sample.service"
+                                for item in baseline))
+            self.assertTrue(any(item.kind == "file" and item.metadata.get("executable") for item in baseline))
+            self.assertTrue(any(item.kind == "nix.package" and item.target ==
+                                f"nix.package:{root.name}:aarch64-darwin:default" for item in baseline))
+            extract = owner._observations_for_archive_file
+
+            def replace_source(snapshot, file_info, **kwargs):
+                self.assertNotEqual(snapshot, root)
+                if file_info.path.endswith("/entry.py"):
+                    entry.write_text("from . import changed\n", encoding="utf-8")
+                return extract(snapshot, file_info, **kwargs)
+
+            with patch.object(owner, "_observations_for_archive_file", side_effect=replace_source):
+                observations = archive_observations_from_manifest(config, manifest, root_path=root)
+            self.assertEqual(baseline, observations)
+            self.assertEqual(alias.read_text(encoding="utf-8"), "from . import changed\n")
+            with self.assertRaisesRegex(SourcePolicyError, "retained archive file differs from its manifest"):
+                archive_observations_from_manifest(config, manifest, root_path=root)
+
+    def test_nested_archive_markdown_links_use_only_the_included_inventory(self) -> None:
+        config = replace(load_archive_source_config(archive_source_fixture("allowed-test-report.toml")),
+                         artifact_path="reports", max_depth=2)
+        with tempfile.TemporaryDirectory(dir=select_scratch_root()) as tmpdir:
+            root = Path(tmpdir)
+            archive = root / "reports"
+            for directory in ("docs", "docs/more", ".draft"):
+                (archive / directory).mkdir(parents=True)
+            (archive / "docs/topic.md").write_text("# Topic\n", encoding="utf-8")
+            (archive / "docs/more/out.md").write_text("# Out\n", encoding="utf-8")
+            (archive / ".draft/note.md").write_text("# Draft\n", encoding="utf-8")
+            (archive / "index.md").write_text(
+                "[Topic](docs/topic.md#topic) [Out](docs/more/out.md#out) [Draft](.draft/note.md#draft)\n",
+                encoding="utf-8",
+            )
+            (archive / "symlink.md").symlink_to("docs/topic.md")
+            manifest = build_archive_manifest(config, root_path=root, clock=fixed_clock)
+            observations = archive_observations_from_manifest(config, manifest, root_path=root)
+        self.assertEqual([item.relative_path for item in manifest.included_files], ["docs/topic.md", "index.md"])
+        self.assertEqual([(item.relative_path, item.reason) for item in manifest.skipped_files], [
+            (".draft", "hidden"), ("docs/more/out.md", "max_depth"), ("symlink.md", "symlink"),
+        ])
+        self.assertEqual([item.target for item in observations if item.kind == "markdown.link"], [
+            "doc.section:file%3Areports%2Fdocs%2Ftopic.md:topic",
+            "unknown:doc.section:missing-anchor",
+            "unknown:doc.section:missing-anchor",
+        ])
+
     def test_feed_source_fixture_policy_matrix(self):
         allowed = load_feed_source_config(source_fixture("allowed-rss.toml"))
         secret = load_feed_source_config(source_fixture("secret-bearing.toml"))
@@ -83,6 +158,13 @@ class ArchiveSourceIngestionIntegrationTests(unittest.TestCase):
             )
         )
         self.assertEqual(limited.file_count, 1)
+        for archive in (manifest, limited):
+            identity = archive.to_jsonable()
+            for key in ("artifact_manifest_id", "file_count", "total_byte_count",
+                        "skipped_file_count", "warnings", "errors"):
+                del identity[key]
+            canonical = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+            self.assertEqual(archive.artifact_manifest_id, hashlib.sha256(canonical).hexdigest()[:16])
         self.assertTrue(
             any(skipped.reason == "max_file_count" for skipped in limited.skipped_files)
         )

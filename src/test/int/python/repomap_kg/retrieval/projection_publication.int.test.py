@@ -97,6 +97,22 @@ def test_sqlite_real_publication_projection_query_and_stale_advancement_refusal(
     assert projection_gen1.accepted_reference.backend == "sqlite"
     assert projection_gen1.accepted_reference.accepted_generation == 1
     assert len(projection_gen1.projected_files) > 0
+    wide_note, = (record for record in projection_gen1.projected_files
+                  if record.source_relative_path == "generated/long_line_notes.md")
+    expected_note = (wc_gen1 / "companion" / wide_note.source_relative_path).read_bytes()
+    assert b"".join(chunk.content_text.encode("utf-8") for chunk in wide_note.chunks) == expected_note
+    continuations = [chunk for chunk in wide_note.chunks if chunk.line_split_continuation]
+    assert continuations and all(chunk.start_line == chunk.end_line == 2 for chunk in continuations)
+    assert wide_note.chunks[-1].normalized_byte_end == len(expected_note)
+    short_policy = replace(state_gen1.policy, max_projected_file_bytes=16)
+    short = build_captured_text_projection(state_gen1.projection_inputs(), short_policy)
+    assert any(f.truncated and f.normalized_byte_length == len(expected_note) for f in short.projected_files)
+    newline_page = query_captured_text(projection_gen1, CapturedTextQueryRequest(
+        query="\n", source_path_prefix=wide_note.source_relative_path, offset=1, limit=1,
+    ))
+    newline_hit, = newline_page.hits
+    assert newline_hit.locator.start_line == newline_hit.locator.end_line == 2
+    assert newline_page.provenance["total_matches_before_paging"] == expected_note.count(b"\n")
 
     req = CapturedTextQueryRequest(
         query="ERR_CLOE_MANIFEST_SEAL_MISMATCH_409",

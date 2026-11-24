@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import astuple
 from datetime import UTC, datetime, timedelta
+from types import MappingProxyType
 
 import pytest
 
@@ -197,12 +199,57 @@ def test_checksum_is_order_independent_and_type_strict() -> None:
     ).stable_key_digest
 
 
+def test_checksum_v2_preserves_receipt_for_dict_and_mapping_rows() -> None:
+    first = {'stable_key': 'fixture:a', 'nested': {'text': 'é🐦', 'values': [True, None, 1, 1.0]}}
+    second = {'stable_key': 'fixture:b', 'value': -2}
+    expected = (
+        2, 396,
+        '3838bab7e818fd2ba3716f8b82ce8bc6f607580328968e2897f828c22227fdb3',
+        '36e23feea04d7a3843ec2b65c8105d674358e6be5c840682f765458e47988a4a',
+    )
+    assert astuple(checksum_family((first, second), identity_fields=("stable_key",))) == expected
+    assert astuple(checksum_family(
+        (MappingProxyType(second), MappingProxyType(first)), identity_fields=("stable_key",),
+    )) == expected
+
+
+def test_checksum_v2_preserves_canonical_bytes_across_wide_ascii_encoded_rows() -> None:
+    row = {"stable_key": "fixture:wide", "text": '"\\\n\tá😀\x00' * 9000}
+    assert astuple(checksum_family((row,), identity_fields=("stable_key",))) == (
+        1, 288145,
+        "0bf40d115f0ed304e4cca763036f3ba587d03c8d8ed0a7cae78fc40aed9aa8e5",
+        "be29974b03f69fa130de2381957aea989d23e5de9903dbc45820e41d6b7a9d0d",
+    )
+
+
+def test_wide_checksum_handles_deeply_nested_rows_without_encoder_recursion() -> None:
+    value: object = "fixture" * 2500
+    for _ in range(375):
+        value = {"child": value}
+    receipt = checksum_family(({"stable_key": "fixture:deep", "value": value},), identity_fields=("stable_key",))
+    assert receipt.row_count == 1
+    assert receipt.normalized_byte_count > 17500
+
+
 def test_checksum_rejects_missing_identity_field_without_exposing_row_values() -> None:
     with pytest.raises(ValueError) as caught:
         checksum_family(({"payload": "private"},), identity_fields=("stable_key",))
 
     assert str(caught.value) == "checksum identity field is missing"
     assert "private" not in str(caught.value)
+
+
+def test_checksum_v2_framing_preserves_escaped_compound_identity() -> None:
+    row = {
+        "path": 'folder/"naïve🐦.md',
+        "payload": {"line": "a\n\t", "ratio": -0.0, "nested": ({"b": False, "a": None},)},
+        "kind": "text",
+    }
+    assert astuple(checksum_family((row,), identity_fields=("kind", "path"))) == (
+        1, 353,
+        "1048f9f8e760e914c1fd46d384782d094ed695389b03169bed046071cbdd5ae5",
+        "8bf82817df9221d6d54e95b67de2dc0f0a18074053e2ce74ab370e535873e33d",
+    )
 
 
 def test_cleanup_reconciles_before_deleting_stage_rows() -> None:

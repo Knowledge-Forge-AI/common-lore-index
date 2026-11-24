@@ -7,6 +7,9 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+import pytest
+
+from common_lore_index.ops import lexical_publication
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.ops.lexical_publication import resolve_ops_graph
@@ -15,8 +18,14 @@ from common_lore_index.ops.lexical_service import (
     query_graph_lexical_generation,
 )
 from common_lore_index.ops.resource_view import ResourceObserver
+from common_lore_index.retrieval.lexical_aliases import build_alias_tokens_text
+from common_lore_index.retrieval.lexical_capture import LexicalCapturePlan
+from common_lore_index.retrieval.lexical_policy import build_lexical_generation_policy
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
+from common_lore_index.retrieval.projection_chunks import frame_digest
+from common_lore_index.retrieval.projection_build import build_captured_text_projection
 from common_lore_index.retrieval.projection_policy import ExclusionReason
+from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, query_captured_text
 from common_lore_index.retrieval.query_contracts import CapabilityState
 from repomap_test_support.postgres_harness import temporary_postgres
 from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
@@ -25,9 +34,11 @@ from repomap_test_support.retrieval_evaluation_fixture import (
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
+    write_mixed_v1_sqlite_home,
 )
 from repomap_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
+    publish_and_load_sqlite_corpus,
 )
 
 
@@ -72,12 +83,50 @@ def _companion_privacy_edit(text: str) -> str:
 
 
 def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Accepted bytes, strict decoding, and truncation remain queryable after roots vanish."""
+    capture = lexical_publication.capture_lexical_generation_plan
+    captures_checked = 0
+
+    def capture_with_reference_digest(**kwargs: Any) -> LexicalCapturePlan:
+        nonlocal captures_checked
+        plan = capture(**kwargs)
+        assert plan.policy_digest == build_lexical_generation_policy(kwargs["graph"]).policy_digest
+        expected = frame_digest("lexgen1", (
+            plan.representation_version, plan.text_config_regconfig, plan.ranking_function,
+            str(plan.normalization_flags), plan.alias_split_rule_version, plan.policy_digest,
+            str(plan.repository_id), str(plan.run_id), plan.publication_bundle_id, plan.snapshot_manifest_id,
+            plan.extraction_receipt_id, plan.graph_candidate_id,
+            *(f"{d.binding_id}:{d.source_relative_path}:{d.file_content_sha256}:{len(d.chunks)}" for d in plan.documents),
+            *(f"{o.binding_id}:{o.source_relative_path or ''}:{o.reason_code}" for o in plan.omissions),
+        ))
+        assert plan.lexical_generation_id == expected
+        for document in plan.documents:
+            assert "".join(chunk.chunk_text for chunk in document.chunks) == document.normalized_text
+            assert all(len(chunk.chunk_text.encode("utf-8")) == chunk.byte_length for chunk in document.chunks)
+            for chunk in document.chunks:
+                assert chunk.alias_tokens_text == build_alias_tokens_text(
+                    source_relative_path=chunk.source_relative_path, chunk_text=chunk.chunk_text,
+                )
+                assert chunk.chunk_id == frame_digest("pchunk1", (
+                    plan.policy_digest, plan.publication_bundle_id, chunk.binding_id, str(chunk.binding_revision),
+                    chunk.snapshot_id, chunk.source_relative_path, str(chunk.chunk_ordinal), str(chunk.start_line),
+                    str(chunk.end_line), chunk.chunk_sha256,
+                ))
+        captures_checked += 1
+        return plan
+
+    monkeypatch.setattr(lexical_publication, "capture_lexical_generation_plan", capture_with_reference_digest)
     with temporary_postgres() as pg_db:
-        _, config, core_id, companion_id = _public_fixture(tmp_path, pg_db)
-        working_copy = tmp_path / "working-copy"
+        home, working_copy, core_id, companion_id = _write_public_fixture(tmp_path, pg_db)
+        alias_path = "generated/wide_alias.md"
+        (working_copy / "companion" / alias_path).write_text(
+            "Z" * 6000 + " OBSERVERQueueQuota\n", encoding="utf-8",
+        )
+        publish_and_load_postgres_corpus(home, psql_command=pg_db.psql_command)
+        config = load_graph_registry_config_home(home)
+        assert isinstance(config, OpsConfig)
         shutil.rmtree(working_copy / "core")
         shutil.rmtree(working_copy / "companion")
         built = build_graph_lexical_generation(
@@ -88,6 +137,7 @@ def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion
         )
         assert built.result == "published"
         assert built.published is not None
+        assert captures_checked == 1
         assert built.published.projected_document_count > 0
         assert built.published.projected_chunk_count > 0
         omissions = {
@@ -98,6 +148,17 @@ def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion
         assert omissions[(companion_id, "generated/binary_nul.txt")] == ExclusionReason.NUL_BYTE_REJECTED.value
         assert omissions[(companion_id, "generated/oversized_dump.txt")] == ExclusionReason.ARTIFACT_OVERSIZED.value
         assert omissions[(companion_id, "generated/truncatable_prose.md")] == "oversize_projected_file_truncated"
+
+        aliases = query_graph_lexical_generation(
+            config, MIXED_V1_GRAPH_ID,
+            LexicalQueryRequest(
+                query="queue quota", selected_binding_ids=(companion_id,),
+                source_path_prefix=alias_path,
+            ),
+            authorize_body=True,
+        )
+        assert any(hit.locator.source_relative_path == alias_path for hit in aliases.hits)
+        assert aliases.provenance["lexical_generation_id"] == built.published.lexical_generation_id
 
         prefix_env = query_graph_lexical_generation(
             config,
@@ -302,3 +363,36 @@ def test_real_binding_privacy_reclassification_refuses_body_scope(tmp_path: Path
         assert recovered.capability_state == CapabilityState.AVAILABLE
         assert recovered.hits
         assert recovered.provenance["lexical_generation_id"] == built.published.lexical_generation_id
+
+
+def test_literal_projection_paging_reaches_match_across_chunk_continuation(tmp_path: Path) -> None:
+    working_copy = materialize_mixed_v1_working_copy(tmp_path / "working-copy")
+    home = write_mixed_v1_sqlite_home(tmp_path / "sqlite-home", working_copy)
+    state = publish_and_load_sqlite_corpus(home)
+    projection = build_captured_text_projection(state.projection_inputs(), state.policy)
+    assert projection.projection_digest == frame_digest("sha256", (
+        projection.reference_version, projection.policy_digest, projection.publication_bundle_id,
+        projection.snapshot_manifest_id,
+        *(file.file_projection_id for file in projection.projected_files),
+        *(f"{file.binding_id}:{file.source_relative_path}:{file.reason.value}" for file in projection.excluded_files),
+    ))
+    wide_note, = (record for record in projection.projected_files
+                  if record.source_relative_path == "generated/long_line_notes.md")
+    expected_note = (working_copy / "companion" / wide_note.source_relative_path).read_bytes()
+    continuations = [chunk for chunk in wide_note.chunks if chunk.line_split_continuation]
+    assert continuations
+    second = continuations[0]
+    position = wide_note.chunks.index(second)
+    assert position > 0
+    first = wide_note.chunks[position - 1]
+    boundary_query = first.content_text[-7:] + second.content_text[:9]
+    joined = expected_note.decode("utf-8")
+    match_starts = [pos for pos in range(len(joined)) if joined.startswith(boundary_query, pos)]
+    boundary_start = sum(len(chunk.content_text) for chunk in wide_note.chunks[:position]) - 7
+    boundary_page = query_captured_text(projection, CapturedTextQueryRequest(
+        query=boundary_query, source_path_prefix=wide_note.source_relative_path,
+        offset=match_starts.index(boundary_start), limit=1,
+    ))
+    assert boundary_page.provenance["total_matches_before_paging"] == len(match_starts)
+    boundary_hit, = boundary_page.hits
+    assert boundary_hit.locator.start_line == 2 and boundary_hit.chunk_id == first.chunk_id

@@ -288,9 +288,9 @@ def execute_scans_and_pack(
             rc.candidate.canonical_key for rc in ranked
             if (rc.tiers.exactness_tier, rc.tiers.affinity_tier, rc.tiers.match_class_tier) == top_sig
         )
-    post_offset = ranked[request.offset:]
-    window = post_offset[: request.max_items]
-    overflow_tied = sum(1 for rc in post_offset[request.max_items:] if rc.candidate.canonical_key in top_tied_keys)
+    start, stop = request.offset, request.offset + request.max_items
+    window = ranked[start:stop]
+    overflow_tied = sum(rc.candidate.canonical_key in top_tied_keys for rc in ranked[stop:]) if top_tied_keys else 0
     candidate_seeds: list[dict[str, Any]] = []
     for idx, rc in enumerate(window):
         payload = rc.candidate.payload or {}
@@ -368,7 +368,7 @@ def execute_scans_and_pack(
     if required_min_bytes > budget_int:
         return _required_budget_error(budget_int, required_min_bytes)
     admit_items_and_relations(
-        skeleton, candidate_seeds=candidate_seeds, total_post_offset_seeds=len(post_offset),
+        skeleton, candidate_seeds=candidate_seeds, total_post_offset_seeds=max(0, len(ranked) - start),
         top_tied_keys=top_tied_keys, overflow_tied_count=overflow_tied,
         neighbor_units=neighbor_units, extra_relations=extra_relations,
         omissions=omissions, budget_bytes=budget_int,

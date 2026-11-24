@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.shell.bash_common import EXTRACTOR, bash_metadata
 from common_lore_index.observations.raw import RawObservation
@@ -22,7 +23,7 @@ def is_bash_shebang(line: str) -> bool:
 
 
 def shell_script_observation(relative_path: str, content: str) -> RawObservation:
-    first = content.splitlines()[0].strip() if content.splitlines() else ""
+    first = next(iter_text_lines(content), "").strip()
     evidence = classification_evidence(relative_path, first)
     metadata = bash_metadata(
         {

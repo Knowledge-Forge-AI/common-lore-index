@@ -135,6 +135,28 @@ class CssHtmlMatchingUnitTests(unittest.TestCase):
         self.assertLessEqual(traversal_counts[1], traversal_counts[0] * 2.2)
         self.assertLessEqual(traversal_counts[2], traversal_counts[1] * 2.2)
 
+    def test_unlinked_inventories_are_never_indexed_for_style_matching(self) -> None:
+        linked = (
+            extract_html_file_observations("index.html", HTML_FIXTURE)
+            + extract_css_file_observations("static/report.css", CSS_FIXTURE)
+        )
+        unlinked = (
+            extract_html_file_observations("unlinked.html", '<h1 id="heading">Unlinked</h1>')
+            + extract_css_file_observations("static/unlinked.css", "h1 { color: red; }")
+        )
+        original_metadata = css_html_matching._metadata_text
+        unlinked_metadata = {id(item.metadata) for item in unlinked}
+
+        def linked_metadata_only(metadata, key):
+            self.assertNotIn(id(metadata), unlinked_metadata)
+            return original_metadata(metadata, key)
+
+        with patch.object(css_html_matching, "_metadata_text", side_effect=linked_metadata_only):
+            merged = extract_css_selector_match_observations(unlinked + linked)
+
+        self.assertTrue(merged)
+        self.assertEqual(merged, extract_css_selector_match_observations(linked))
+
     def test_matches_only_supported_selectors_for_linked_local_stylesheet(self):
         observations = (
             extract_html_file_observations("index.html", HTML_FIXTURE)

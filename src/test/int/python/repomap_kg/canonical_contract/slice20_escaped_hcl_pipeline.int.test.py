@@ -30,19 +30,21 @@ def test_escaped_delimiters_do_not_swallow_following_blocks_and_rows(tmp_path):
     project = tmp_path / "project"
     project.mkdir()
     path = project / "main.tf"
-    path.write_text(HCL)
+    path.write_bytes(HCL.replace("\n", "\r\n").encode())
     config = create_composition_graph_config(project)
     captured = capture_multi_source_candidate(config)
     observations = captured.observations
     resources = [item for item in observations if item.kind == "terraform.resource"]
     assert [item.name for item in resources] == ["fixture_item.first"]
     assert resources[0].metadata["lifecycle_present"] is True
+    assert resources[0].start_line == 6
     variables = [item for item in observations if item.kind == "terraform.variable"]
     assert [item.name for item in variables] == ["message"]
     assert variables[0].metadata["default_value_type"] == "string"
     outputs = [item for item in observations if item.kind == "terraform.output"]
     assert [item.name for item in outputs] == ["result"]
     assert outputs[0].metadata["sensitive"] is True
+    assert (outputs[0].start_line, outputs[0].end_line) == (12, 15)
     canonical = canonicalize_observations(observations, repository_scope="slice20")
     assert canonical.ok
     rows = build_staged_rows(observations, repository_name="slice20", stage_id="quoted")
@@ -58,7 +60,7 @@ def test_escaped_delimiters_do_not_swallow_following_blocks_and_rows(tmp_path):
     changed = capture_multi_source_candidate(config)
     assert changed.source_generation != captured.source_generation
     assert not any(item.kind == "terraform.output" for item in changed.observations)
-    path.write_text(HCL)
+    path.write_bytes(HCL.replace("\n", "\r\n").encode())
     recovered = capture_multi_source_candidate(config)
     assert recovered.source_generation == captured.source_generation
     assert recovered.observations == observations

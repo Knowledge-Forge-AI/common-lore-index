@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+import codecs
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
+import os
+from pathlib import Path
+import stat
 
 from common_lore_index.retrieval.projection_chunks import frame_digest
 from common_lore_index.retrieval.projection_policy import ExclusionReason
@@ -17,32 +22,49 @@ def _count_lf_lines(text: str) -> int:
     return text.count("\n") if text.endswith("\n") else text.count("\n") + 1
 
 
-def _count_raw_lines(raw_bytes: bytes) -> int:
-    if not raw_bytes:
-        return 0
-    normalized = raw_bytes.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
-    return normalized.count(b"\n") if normalized.endswith(b"\n") else normalized.count(b"\n") + 1
-
-
 def _utf8_safe_prefix(data: bytes, max_bytes: int) -> bytes:
-    if len(data) <= max_bytes:
-        return data
+    """Cut already validated UTF-8 before any incomplete code point."""
     cut = max_bytes
     while cut > 0 and (data[cut] & 0xC0) == 0x80:
         cut -= 1
-    candidate = data[:cut]
-    try:
-        candidate.decode("utf-8", errors="strict")
-        return candidate
-    except UnicodeDecodeError:
-        while cut > 0:
-            cut -= 1
-            try:
-                data[:cut].decode("utf-8", errors="strict")
-                return data[:cut]
-            except UnicodeDecodeError:
-                continue
-        return b""
+    return data[:cut]
+
+
+_NORMALIZATION_BLOCK_BYTES = 64 * 1024
+
+
+def _normalized_blocks(raw: bytes) -> Iterator[bytes]:
+    start = 0
+    while start < len(raw):
+        end = min(start + _NORMALIZATION_BLOCK_BYTES, len(raw))
+        if end < len(raw) and raw[end - 1] == 13 and raw[end] == 10:
+            end += 1
+        yield raw[start:end].replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        start = end
+
+
+def _bounded_normalized_prefix(raw: bytes, limit: int, *, has_cr: bool) -> tuple[bytes, int, int]:
+    ascii_source = raw.isascii()
+    if ascii_source and not has_cr:
+        # ASCII without CR is already valid lf-utf8-v1, including outside the prefix.
+        return raw[:limit], len(raw), raw.count(b"\n") + int(not raw.endswith(b"\n"))
+    decoder = None if ascii_source else codecs.getincrementaldecoder("utf-8")("strict")
+    prefix = bytearray()
+    size = breaks = 0
+    ends_in_lf = False
+    for block in _normalized_blocks(raw):
+        if decoder is not None:
+            decoder.decode(block)
+        size += len(block)
+        breaks += block.count(b"\n")
+        ends_in_lf = block.endswith(b"\n")
+        if len(prefix) <= limit:
+            prefix.extend(block[:limit + 1 - len(prefix)])
+    if decoder is not None:
+        decoder.decode(b"", final=True)
+    if size <= limit:
+        return bytes(prefix), size, breaks + int(size > 0 and not ends_in_lf)
+    return _utf8_safe_prefix(bytes(prefix), limit), size, breaks + int(not ends_in_lf)
 
 
 @dataclass(frozen=True)
@@ -73,30 +95,25 @@ def normalize_and_bound_text(
         raise ValueError("max_projected_bytes must be positive")
     if b"\x00" in raw_bytes:
         return None, ExclusionReason.NUL_BYTE_REJECTED
+    had_crlf_or_cr = b"\r" in raw_bytes
+    raw = bytes(raw_bytes)
     try:
-        decoded = raw_bytes.decode("utf-8", errors="strict")
+        if len(raw) > max_projected_bytes:
+            projected_bytes, normalized_byte_length, normalized_line_count = _bounded_normalized_prefix(
+                raw, max_projected_bytes, has_cr=had_crlf_or_cr,
+            )
+            projected_text = projected_bytes.decode("utf-8", errors="strict")
+        else:
+            projected_bytes = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n") if had_crlf_or_cr else raw
+            projected_text = projected_bytes.decode("utf-8", errors="strict")
+            normalized_byte_length = len(projected_bytes)
+            normalized_line_count = _count_lf_lines(projected_text)
     except UnicodeDecodeError:
         return None, ExclusionReason.INVALID_UTF8
 
-    raw_byte_length = len(raw_bytes)
-    raw_line_count = _count_raw_lines(raw_bytes)
-    had_crlf_or_cr = ("\r" in decoded)
-    full_normalized_text = decoded.replace("\r\n", "\n").replace("\r", "\n")
-    full_normalized_bytes = full_normalized_text.encode("utf-8")
-    normalized_byte_length = len(full_normalized_bytes)
-    normalized_line_count = _count_lf_lines(full_normalized_text)
-
-    if normalized_byte_length > max_projected_bytes:
-        projected_bytes = _utf8_safe_prefix(full_normalized_bytes, max_projected_bytes)
-        projected_text = projected_bytes.decode("utf-8", errors="strict")
-        truncated = True
-    else:
-        projected_bytes = full_normalized_bytes
-        projected_text = full_normalized_text
-        truncated = False
-
+    truncated = normalized_byte_length > max_projected_bytes
     projected_byte_length = len(projected_bytes)
-    projected_line_count = _count_lf_lines(projected_text)
+    projected_line_count = _count_lf_lines(projected_text) if truncated else normalized_line_count
     rep_digest = frame_digest(
         "sha256",
         (REPRESENTATION_VERSION, projected_bytes),
@@ -106,8 +123,8 @@ def normalize_and_bound_text(
             representation_version=REPRESENTATION_VERSION,
             normalized_text=projected_text,
             normalized_bytes=projected_bytes,
-            raw_byte_length=raw_byte_length,
-            raw_line_count=raw_line_count,
+            raw_byte_length=len(raw_bytes),
+            raw_line_count=normalized_line_count,
             normalized_byte_length=normalized_byte_length,
             normalized_line_count=normalized_line_count,
             projected_byte_length=projected_byte_length,
@@ -118,3 +135,53 @@ def normalize_and_bound_text(
         ),
         None,
     )
+
+
+def _overlaps_any_private_root(target: Path, private_roots: Sequence[Path]) -> bool:
+    if not private_roots:
+        return False
+    try:
+        resolved = target.resolve(strict=False)
+        return any(resolved.is_relative_to(root.resolve(strict=False)) for root in private_roots)
+    except (OSError, RuntimeError):
+        return True
+
+
+def _read_bounded_regular_file(
+    path: Path, *, max_input_bytes: int, private_roots: Sequence[Path],
+) -> tuple[bytes | None, ExclusionReason | None]:
+    if _overlaps_any_private_root(path, private_roots):
+        return None, ExclusionReason.ARTIFACT_PRIVACY_FORBIDDEN
+    try:
+        fd = os.open(
+            path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+            | getattr(os, "O_BINARY", 0),
+        )
+    except OSError:
+        return None, ExclusionReason.UNSUPPORTED_SOURCE_FORMAT
+    try:
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode):
+            return None, ExclusionReason.UNSUPPORTED_SOURCE_FORMAT
+        if metadata.st_size > max_input_bytes:
+            return None, ExclusionReason.ARTIFACT_OVERSIZED
+        chunks: list[bytes] = []
+        remaining = metadata.st_size
+        # Even growth within the configured budget must not supply a mixed snapshot.
+        while chunk := os.read(fd, min(65536, remaining + 1)):
+            remaining -= len(chunk)
+            if remaining < 0:
+                break
+            chunks.append(chunk)
+        final = os.fstat(fd)
+        if final.st_size > max_input_bytes:
+            return None, ExclusionReason.ARTIFACT_OVERSIZED
+        if remaining != 0 or (metadata.st_size, metadata.st_mtime_ns, metadata.st_ctime_ns) != (
+            final.st_size, final.st_mtime_ns, final.st_ctime_ns,
+        ):
+            return None, ExclusionReason.ARTIFACT_CORRUPT
+        return b"".join(chunks), None
+    except OSError:
+        return None, ExclusionReason.ARTIFACT_CORRUPT
+    finally:
+        os.close(fd)

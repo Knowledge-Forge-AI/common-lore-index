@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import shlex
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
+
 
 DirectiveRecord = tuple[str, tuple[str, ...], int, str]
 
@@ -12,8 +14,7 @@ def scan_go_directives(content: str) -> tuple[DirectiveRecord, ...]:
     directives: list[DirectiveRecord] = []
     block: str | None = None
     block_line: int | None = None
-    lines = content.splitlines()
-    for line_number, raw_line in enumerate(lines, start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         code, separator, comment = raw_line.partition("//")
         stripped = code.strip()
         comment_text = comment.strip() if separator else ""
@@ -41,7 +42,7 @@ def scan_go_directives(content: str) -> tuple[DirectiveRecord, ...]:
             (
                 "__parse_error__",
                 ("unterminated-block", f"unterminated {block} block"),
-                block_line or max(1, len(lines)),
+                block_line or line_number,
                 "",
             )
         )

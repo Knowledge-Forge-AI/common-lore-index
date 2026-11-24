@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import urlsplit
 
 from common_lore_index import __version__
+from common_lore_index.extractors.config.generic_values import _config_url_redaction_reason, _parse_config_url
 from common_lore_index.extractors.config.paths import _pointer_segments, json_pointer
 from common_lore_index.graph.keys import (
     config_path_key,
@@ -187,23 +188,20 @@ def _openapi_server_count(value: dict[str, Any], spec_family: str) -> int:
     return 1 if value.get("host") is not None or value.get("basePath") is not None else 0
 
 
-def _openapi_ref_values(value: Any) -> tuple[tuple[tuple[str, ...], str], ...]:
-    refs: list[tuple[tuple[str, ...], str]] = []
+def _openapi_ref_values(value: Any) -> Iterator[tuple[tuple[str, ...], str]]:
     for pointer_segments, path_value in _openapi_walk(value):
         if pointer_segments and pointer_segments[-1] == "$ref" and isinstance(path_value, str):
-            refs.append((pointer_segments, path_value))
-    return tuple(refs)
+            yield pointer_segments, path_value
 
 
-def _openapi_walk(value: Any, pointer_segments: tuple[str, ...] = ()) -> tuple[tuple[tuple[str, ...], Any], ...]:
-    items: list[tuple[tuple[str, ...], Any]] = [(pointer_segments, value)]
+def _openapi_walk(value: Any, pointer_segments: tuple[str, ...] = ()) -> Iterator[tuple[tuple[str, ...], Any]]:
+    yield pointer_segments, value
     if isinstance(value, dict):
         for key, item in value.items():
-            items.extend(_openapi_walk(item, (*pointer_segments, str(key))))
+            yield from _openapi_walk(item, (*pointer_segments, str(key)))
     elif isinstance(value, list):
         for index, item in enumerate(value):
-            items.extend(_openapi_walk(item, (*pointer_segments, str(index))))
-    return tuple(items)
+            yield from _openapi_walk(item, (*pointer_segments, str(index)))
 
 
 def _openapi_reference_metadata(
@@ -214,41 +212,32 @@ def _openapi_reference_metadata(
     source_pointer: str,
     reference_scope_override: str | None = None,
 ) -> tuple[dict[str, Any], str]:
-    credentialed = _url_has_credentials(ref_value)
-    scope = reference_scope_override or _openapi_reference_scope(ref_value)
-    target: str
-    if scope == "internal" and ref_value.startswith("#/"):
+    redaction_reason = _config_url_redaction_reason(ref_value)
+    scope = reference_scope_override or ("remote" if redaction_reason else _openapi_reference_scope(ref_value))
+    if redaction_reason == "malformed-url":
+        target = unknown_key("openapi.reference", "unsupported-ref")
+    elif redaction_reason == "credentialed-url":
+        target = external_key("url", "credentialed-openapi-reference")
+    elif scope == "internal" and ref_value.startswith("#/"):
         target = config_path_key(relative_path, ref_value[1:])
     elif scope == "local_file":
-        path_part = ref_value.split("#", 1)[0]
-        target = _file_reference(relative_path, path_part, redacted=False)["target"]
-    elif _is_url(ref_value) and not credentialed:
-        target = external_url_key(ref_value)
+        target = _file_reference(relative_path, ref_value.split("#", 1)[0], redacted=False)["target"]
     elif _is_url(ref_value):
-        target = external_key("url", "credentialed-openapi-reference")
+        target = external_url_key(ref_value)
     else:
         target = unknown_key("openapi.reference", "unsupported-ref")
-    local_ref_outside_root = scope == "local_file" and target.startswith(
-        "unknown:file:"
-    )
+    local_ref_outside_root = scope == "local_file" and target.startswith("unknown:file:")
+    summary = "<redacted-url>" if redaction_reason else _openapi_bounded_string(ref_value)
+    if local_ref_outside_root:
+        summary, redaction_reason = "<redacted-local-ref>", "local-ref-outside-root"
     metadata = {
-        **spec_metadata,
-        "pointer": source_pointer,
-        "reference_scope": scope,
-        "not_fetched": True,
-        "redacted": credentialed or local_ref_outside_root,
-        "target_kind": target.split(":", 1)[0],
-        "ref_summary": "<redacted-url>"
-        if credentialed
-        else "<redacted-local-ref>"
-        if local_ref_outside_root
-        else _openapi_bounded_string(ref_value),
+        **spec_metadata, "pointer": source_pointer, "reference_scope": scope,
+        "not_fetched": True, "redacted": redaction_reason is not None,
+        "target_kind": target.split(":", 1)[0], "ref_summary": summary,
         "ref_sha256": _stable_text_sha256(ref_value),
     }
-    if credentialed:
-        metadata["redaction_reason"] = "credentialed-url"
-    if local_ref_outside_root:
-        metadata["redaction_reason"] = "local-ref-outside-root"
+    if redaction_reason:
+        metadata["redaction_reason"] = redaction_reason
     return metadata, target
 
 
@@ -303,20 +292,20 @@ def _openapi_text_metadata(value: Any, key: str) -> dict[str, Any]:
 def _openapi_url_metadata(value: Any) -> dict[str, Any]:
     if not isinstance(value, str):
         return {"url_present": False}
-    parsed = urlsplit(value)
-    credentialed = _url_has_credentials(value)
+    parsed = _parse_config_url(value)
+    reason = _config_url_redaction_reason(value)
     metadata: dict[str, Any] = {
         "url_present": True,
         "url_length": len(value),
         "url_sha256": _stable_text_sha256(value),
-        "redacted": credentialed,
+        "redacted": reason is not None,
     }
-    if parsed.scheme and len(parsed.scheme) <= 16:
+    if parsed is not None and parsed.scheme and len(parsed.scheme) <= 16:
         metadata["scheme"] = parsed.scheme
-    if parsed.hostname and not credentialed:
+    if parsed is not None and parsed.hostname and not reason:
         metadata["host"] = _openapi_bounded_string(parsed.hostname)
-    if credentialed:
-        metadata["redaction_reason"] = "credentialed-url"
+    if reason:
+        metadata["redaction_reason"] = reason
     return metadata
 
 
@@ -361,14 +350,14 @@ def _openapi_pointer_is_redacted(pointer: str, value: Any) -> bool:
         return True
     if any(segment in OPENAPI_EXAMPLE_KEYS for segment in normalized_segments):
         return True
-    if isinstance(value, str) and _url_has_credentials(value):
+    if isinstance(value, str) and _config_url_redaction_reason(value):
         return True
     return _looks_like_secret_scalar(value)
 
 
 def _openapi_redaction_reason(pointer: str, value: Any) -> str:
-    if isinstance(value, str) and _url_has_credentials(value):
-        return "credentialed-url"
+    if isinstance(value, str) and (reason := _config_url_redaction_reason(value)):
+        return reason
     segments = tuple(_normalized_key(segment) for segment in _pointer_segments(pointer))
     if (
         segments

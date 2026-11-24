@@ -1,3 +1,4 @@
+import io
 import json
 import unittest
 from pathlib import Path
@@ -258,14 +259,16 @@ class FakeGitHubOpener:
         self.headers = headers
         self.body = body
         self.requests = []
+        self.response = None
 
     def open(self, request, timeout):
         self.requests.append(request)
-        return FakeGitHubHttpResponse(
+        self.response = FakeGitHubHttpResponse(
             status=self.status,
             headers=self.headers,
             body=self.body,
         )
+        return self.response
 
 
 class FakeGitHubErrorOpener:
@@ -280,13 +283,18 @@ class FakeGitHubHttpResponse:
     def __init__(self, *, status, headers, body):
         self.status = status
         self.headers = headers
-        self._body = body
+        self._body = io.BytesIO(body)
+
+        self.closed = False
+
+    def close(self):
+        self.closed = True
 
     def getcode(self):
         return self.status
 
     def read(self, _size):
-        return self._body
+        return self._body.read(_size)
 
 
 class FakeErrorBody:

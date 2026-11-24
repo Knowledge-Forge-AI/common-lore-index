@@ -180,12 +180,12 @@ def _preflight(home: Home) -> tuple[list[str], list[_Source], dict[str, Any], st
         if not valid_name(name):
             raise MigrationRefusal("config-filename-unsupported", name)
         info = home.lstat(name)
-        if not owned_regular(info):
+        if info is None or not owned_regular(info):
             raise MigrationRefusal("config-entry-unsafe", name)
-        if info is not None and (info.st_size > MAX_FILE_BYTES or total + info.st_size > MAX_TOTAL_BYTES):
+        if info.st_size > MAX_FILE_BYTES or total + info.st_size > MAX_TOTAL_BYTES:
             raise MigrationRefusal("config-migration-limit-exceeded", name)
         data, read = home.read(name, MAX_FILE_BYTES, "config-entry-unsafe")
-        if not owned_regular(read):
+        if not owned_regular(read) or snapshot(read) != snapshot(info):
             raise MigrationRefusal("config-entry-unsafe", name)
         sources.append(_Source(name, data, read))
         total += len(data)
@@ -210,7 +210,7 @@ def _inspect_existing(home: Home, outcome: _Outcome) -> str:
 
 
 def _apply(home: Home, outcome: _Outcome) -> str:
-    if OPERATION_DIRECTORY in home.names():
+    if home.operation_directory_listed():
         return _inspect_existing(home, outcome)
     prepared = _preflight(home)
     if prepared is None:
@@ -225,13 +225,21 @@ def _apply(home: Home, outcome: _Outcome) -> str:
 
 
 def _revalidate(home: Home, names: list[str], sources: list[_Source]) -> None:
-    if set(home.names()) != set(names) | {OPERATION_DIRECTORY}:
+    expected_names = set(names)
+    expected_names.add(OPERATION_DIRECTORY)
+    with home.scan_names() as observed_names:
+        for name in observed_names:
+            if name not in expected_names:
+                raise MigrationRefusal("config-migration-stale")
+            expected_names.remove(name)
+    if expected_names:
         raise MigrationRefusal("config-migration-stale")
     for source in sources:
         info = home.lstat(source.name)
         if info is None or snapshot(info) != snapshot(source.info):
             raise MigrationRefusal("config-migration-stale", source.name)
-        if home.read(source.name, MAX_FILE_BYTES, "config-migration-stale")[0] != source.data:
+        data, observed = home.read(source.name, MAX_FILE_BYTES, "config-migration-stale")
+        if snapshot(observed) != snapshot(source.info) or data != source.data:
             raise MigrationRefusal("config-migration-stale", source.name)
 
 
@@ -297,7 +305,7 @@ def _recover(home: Home, outcome: _Outcome, journal: dict[str, Any] | None, lock
     if lock is None:
         # Only an empty directory this call created and bound can be removed without the lock.
         removed = home.op is not None and home.remove_operation_directory()
-        outcome.retained = not removed and OPERATION_DIRECTORY in home.names()
+        outcome.retained = not removed and home.operation_directory_listed()
         return "refused"
     try:
         if publishing and journal is not None:
@@ -312,7 +320,7 @@ def _recover(home: Home, outcome: _Outcome, journal: dict[str, Any] | None, lock
 
 
 def _rollback(home: Home, outcome: _Outcome) -> str:
-    if OPERATION_DIRECTORY not in home.names():
+    if not home.operation_directory_listed():
         return "nothing-to-recover"
     journal, lock = _bind_operation(home, outcome, exclusive=not outcome.dry_run)
     try:
@@ -342,7 +350,7 @@ def _rollback(home: Home, outcome: _Outcome) -> str:
 
 
 def _finalize(home: Home, outcome: _Outcome) -> str:
-    if OPERATION_DIRECTORY not in home.names():
+    if not home.operation_directory_listed():
         return "nothing-to-finalize"
     journal, lock = _bind_operation(home, outcome, exclusive=not outcome.dry_run)
     try:

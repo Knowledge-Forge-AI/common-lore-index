@@ -1,0 +1,1155 @@
+{
+  "accepted_store_or_native_qualification": false,
+  "all_positive_gold_files_statically_reachable": true,
+  "combined_record_upper_bound": 180,
+  "corpus_target_execution": false,
+  "file_roles": {
+    "code": 10,
+    "denied": 2,
+    "design": 4,
+    "test_source": 8
+  },
+  "inventory": [
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "file:checks/tests/test_checkout_balance_limit.py",
+      "display_name": "checks/tests/test_checkout_balance_limit.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "tests/test_checkout_balance_limit.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.module:tests.test_checkout_balance_limit",
+      "display_name": "tests.test_checkout_balance_limit",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_checkout_balance_limit.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_checkout_balance_limit.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.function:tests.test_checkout_balance_limit:test_checkout_balance_limit",
+      "display_name": "test_checkout_balance_limit",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_checkout_balance_limit.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_checkout_balance_limit.py",
+          "start": 4
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "file:checks/tests/test_donor_variety_name_normalization.py",
+      "display_name": "checks/tests/test_donor_variety_name_normalization.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "tests/test_donor_variety_name_normalization.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.module:tests.test_donor_variety_name_normalization",
+      "display_name": "tests.test_donor_variety_name_normalization",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_donor_variety_name_normalization.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_donor_variety_name_normalization.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.function:tests.test_donor_variety_name_normalization:test_donor_variety_name_normalization",
+      "display_name": "test_donor_variety_name_normalization",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_donor_variety_name_normalization.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_donor_variety_name_normalization.py",
+          "start": 4
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "file:checks/tests/test_germination_rate_ratio.py",
+      "display_name": "checks/tests/test_germination_rate_ratio.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "tests/test_germination_rate_ratio.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.module:tests.test_germination_rate_ratio",
+      "display_name": "tests.test_germination_rate_ratio",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_germination_rate_ratio.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_germination_rate_ratio.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.function:tests.test_germination_rate_ratio:test_germination_rate_ratio",
+      "display_name": "test_germination_rate_ratio",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_germination_rate_ratio.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_germination_rate_ratio.py",
+          "start": 4
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "file:checks/tests/test_humidity_alert_threshold.py",
+      "display_name": "checks/tests/test_humidity_alert_threshold.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "tests/test_humidity_alert_threshold.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.module:tests.test_humidity_alert_threshold",
+      "display_name": "tests.test_humidity_alert_threshold",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_humidity_alert_threshold.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_humidity_alert_threshold.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.function:tests.test_humidity_alert_threshold:test_humidity_alert_threshold",
+      "display_name": "test_humidity_alert_threshold",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_humidity_alert_threshold.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_humidity_alert_threshold.py",
+          "start": 4
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "file:checks/tests/test_overdue_reminder_days.py",
+      "display_name": "checks/tests/test_overdue_reminder_days.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "tests/test_overdue_reminder_days.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.module:tests.test_overdue_reminder_days",
+      "display_name": "tests.test_overdue_reminder_days",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_overdue_reminder_days.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_overdue_reminder_days.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.function:tests.test_overdue_reminder_days:test_overdue_reminder_days",
+      "display_name": "test_overdue_reminder_days",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_overdue_reminder_days.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_overdue_reminder_days.py",
+          "start": 4
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "file:checks/tests/test_packet_expiry_viability_years.py",
+      "display_name": "checks/tests/test_packet_expiry_viability_years.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "tests/test_packet_expiry_viability_years.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.module:tests.test_packet_expiry_viability_years",
+      "display_name": "tests.test_packet_expiry_viability_years",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_packet_expiry_viability_years.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_packet_expiry_viability_years.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.function:tests.test_packet_expiry_viability_years:test_packet_expiry_viability_years",
+      "display_name": "test_packet_expiry_viability_years",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_packet_expiry_viability_years.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_packet_expiry_viability_years.py",
+          "start": 4
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "file:checks/tests/test_seed_label_format.py",
+      "display_name": "checks/tests/test_seed_label_format.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "tests/test_seed_label_format.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.module:tests.test_seed_label_format",
+      "display_name": "tests.test_seed_label_format",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_seed_label_format.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_seed_label_format.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.function:tests.test_seed_label_format:test_seed_label_format",
+      "display_name": "test_seed_label_format",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_seed_label_format.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "tests/test_seed_label_format.py",
+          "start": 4
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "file:checks/tests/test_swap_credit_balance.py",
+      "display_name": "checks/tests/test_swap_credit_balance.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "tests/test_swap_credit_balance.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.module:tests.test_swap_credit_balance",
+      "display_name": "tests.test_swap_credit_balance",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_swap_credit_balance.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 7,
+          "path": "tests/test_swap_credit_balance.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:3f6d38a3830ffc9f52ebd427f18a3241d99c2d8cd281b41b5fefcb883cacceab",
+      "canonical_key": "python.function:tests.test_swap_credit_balance:test_swap_credit_balance",
+      "display_name": "test_swap_credit_balance",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "tests/test_swap_credit_balance.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 7,
+          "path": "tests/test_swap_credit_balance.py",
+          "start": 4
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "file:code/catalog/germination_rate.py",
+      "display_name": "code/catalog/germination_rate.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "catalog/germination_rate.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.module:catalog.germination_rate",
+      "display_name": "catalog.germination_rate",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "catalog/germination_rate.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "catalog/germination_rate.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.function:catalog.germination_rate:seed_germination_rate",
+      "display_name": "seed_germination_rate",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "catalog/germination_rate.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "catalog/germination_rate.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "file:code/catalog/seed_label.py",
+      "display_name": "code/catalog/seed_label.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "catalog/seed_label.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.module:catalog.seed_label",
+      "display_name": "catalog.seed_label",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "catalog/seed_label.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 4,
+          "path": "catalog/seed_label.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.function:catalog.seed_label:format_seed_label",
+      "display_name": "format_seed_label",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "catalog/seed_label.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 4,
+          "path": "catalog/seed_label.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "file:code/exchange/donation_intake.py",
+      "display_name": "code/exchange/donation_intake.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "exchange/donation_intake.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.module:exchange.donation_intake",
+      "display_name": "exchange.donation_intake",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "exchange/donation_intake.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 4,
+          "path": "exchange/donation_intake.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.function:exchange.donation_intake:normalize_donor_variety_name",
+      "display_name": "normalize_donor_variety_name",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "exchange/donation_intake.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 4,
+          "path": "exchange/donation_intake.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "file:code/exchange/swap_balance.py",
+      "display_name": "code/exchange/swap_balance.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "exchange/swap_balance.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.module:exchange.swap_balance",
+      "display_name": "exchange.swap_balance",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "exchange/swap_balance.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 5,
+          "path": "exchange/swap_balance.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.function:exchange.swap_balance:swap_credit_balance",
+      "display_name": "swap_credit_balance",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "exchange/swap_balance.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 5,
+          "path": "exchange/swap_balance.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "file:code/lending/checkout_limit.py",
+      "display_name": "code/lending/checkout_limit.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "lending/checkout_limit.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.module:lending.checkout_limit",
+      "display_name": "lending.checkout_limit",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "lending/checkout_limit.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 4,
+          "path": "lending/checkout_limit.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.function:lending.checkout_limit:remaining_checkout_balance",
+      "display_name": "remaining_checkout_balance",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "lending/checkout_limit.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 4,
+          "path": "lending/checkout_limit.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "file:code/lending/overdue_reminder.py",
+      "display_name": "code/lending/overdue_reminder.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "lending/overdue_reminder.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.module:lending.overdue_reminder",
+      "display_name": "lending.overdue_reminder",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "lending/overdue_reminder.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 3,
+          "path": "lending/overdue_reminder.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.function:lending.overdue_reminder:days_until_overdue_reminder",
+      "display_name": "days_until_overdue_reminder",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "lending/overdue_reminder.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 3,
+          "path": "lending/overdue_reminder.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "file:code/reports/inventory_summary.py",
+      "display_name": "code/reports/inventory_summary.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "reports/inventory_summary.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.module:reports.inventory_summary",
+      "display_name": "reports.inventory_summary",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "reports/inventory_summary.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "reports/inventory_summary.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.function:reports.inventory_summary:summarize_inventory_by_family",
+      "display_name": "summarize_inventory_by_family",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "reports/inventory_summary.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 6,
+          "path": "reports/inventory_summary.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "file:code/reports/viability_forecast.py",
+      "display_name": "code/reports/viability_forecast.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "reports/viability_forecast.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.module:reports.viability_forecast",
+      "display_name": "reports.viability_forecast",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "reports/viability_forecast.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 3,
+          "path": "reports/viability_forecast.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.function:reports.viability_forecast:forecast_viable_packets",
+      "display_name": "forecast_viable_packets",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "reports/viability_forecast.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 3,
+          "path": "reports/viability_forecast.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "file:code/storage/humidity_alert.py",
+      "display_name": "code/storage/humidity_alert.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "storage/humidity_alert.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.module:storage.humidity_alert",
+      "display_name": "storage.humidity_alert",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "storage/humidity_alert.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 3,
+          "path": "storage/humidity_alert.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.function:storage.humidity_alert:humidity_exceeds_threshold",
+      "display_name": "humidity_exceeds_threshold",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "storage/humidity_alert.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 3,
+          "path": "storage/humidity_alert.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "file:code/storage/packet_expiry.py",
+      "display_name": "code/storage/packet_expiry.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "storage/packet_expiry.py"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.module:storage.packet_expiry",
+      "display_name": "storage.packet_expiry",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "storage/packet_expiry.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 4,
+          "path": "storage/packet_expiry.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:36296a6db72a55688846231c8342552a883640027c07bc211a8e1ba36ec41b14",
+      "canonical_key": "python.function:storage.packet_expiry:packet_is_expired",
+      "display_name": "packet_is_expired",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "storage/packet_expiry.py"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 4,
+          "path": "storage/packet_expiry.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c",
+      "canonical_key": "file:denied/members/contact_roster.py",
+      "display_name": "denied/members/contact_roster.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "members/contact_roster.py"
+      ],
+      "public": false,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c",
+      "canonical_key": "python.module:members.contact_roster",
+      "display_name": "members.contact_roster",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "members/contact_roster.py"
+      ],
+      "public": false,
+      "spans": [
+        {
+          "end": 3,
+          "path": "members/contact_roster.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c",
+      "canonical_key": "python.function:members.contact_roster:member_contact_roster",
+      "display_name": "member_contact_roster",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "members/contact_roster.py"
+      ],
+      "public": false,
+      "spans": [
+        {
+          "end": 3,
+          "path": "members/contact_roster.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c",
+      "canonical_key": "file:denied/members/volunteer_shift_notes.py",
+      "display_name": "denied/members/volunteer_shift_notes.py",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "members/volunteer_shift_notes.py"
+      ],
+      "public": false,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c",
+      "canonical_key": "python.module:members.volunteer_shift_notes",
+      "display_name": "members.volunteer_shift_notes",
+      "kind": "python.module",
+      "observed_span_eligible": true,
+      "paths": [
+        "members/volunteer_shift_notes.py"
+      ],
+      "public": false,
+      "spans": [
+        {
+          "end": 3,
+          "path": "members/volunteer_shift_notes.py",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:22bf462727814323e7a5a12901a25ae4b8f17c1f62701c99d84c382c0aa47f9c",
+      "canonical_key": "python.function:members.volunteer_shift_notes:volunteer_shift_notes",
+      "display_name": "volunteer_shift_notes",
+      "kind": "python.function",
+      "observed_span_eligible": true,
+      "paths": [
+        "members/volunteer_shift_notes.py"
+      ],
+      "public": false,
+      "spans": [
+        {
+          "end": 3,
+          "path": "members/volunteer_shift_notes.py",
+          "start": 2
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "file:docs/design/germination-reporting.md",
+      "display_name": "docs/design/germination-reporting.md",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "design/germination-reporting.md"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "doc.page:file%3Adocs%2Fdesign%2Fgermination-reporting.md",
+      "display_name": "Germination rate reporting",
+      "kind": "doc.page",
+      "observed_span_eligible": false,
+      "paths": [
+        "design/germination-reporting.md"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "doc.section:file%3Adocs%2Fdesign%2Fgermination-reporting.md:germination-rate-reporting",
+      "display_name": "Germination rate reporting",
+      "kind": "doc.section",
+      "observed_span_eligible": true,
+      "paths": [
+        "design/germination-reporting.md"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 1,
+          "path": "design/germination-reporting.md",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "file:docs/design/overdue-reminders.md",
+      "display_name": "docs/design/overdue-reminders.md",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "design/overdue-reminders.md"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "doc.page:file%3Adocs%2Fdesign%2Foverdue-reminders.md",
+      "display_name": "Overdue reminder schedule",
+      "kind": "doc.page",
+      "observed_span_eligible": false,
+      "paths": [
+        "design/overdue-reminders.md"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "doc.section:file%3Adocs%2Fdesign%2Foverdue-reminders.md:overdue-reminder-schedule",
+      "display_name": "Overdue reminder schedule",
+      "kind": "doc.section",
+      "observed_span_eligible": true,
+      "paths": [
+        "design/overdue-reminders.md"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 1,
+          "path": "design/overdue-reminders.md",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "file:docs/design/storage-humidity.md",
+      "display_name": "docs/design/storage-humidity.md",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "design/storage-humidity.md"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "doc.page:file%3Adocs%2Fdesign%2Fstorage-humidity.md",
+      "display_name": "Storage humidity thresholds",
+      "kind": "doc.page",
+      "observed_span_eligible": false,
+      "paths": [
+        "design/storage-humidity.md"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "doc.section:file%3Adocs%2Fdesign%2Fstorage-humidity.md:storage-humidity-thresholds",
+      "display_name": "Storage humidity thresholds",
+      "kind": "doc.section",
+      "observed_span_eligible": true,
+      "paths": [
+        "design/storage-humidity.md"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 1,
+          "path": "design/storage-humidity.md",
+          "start": 1
+        }
+      ]
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "file:docs/design/swap-credits.md",
+      "display_name": "docs/design/swap-credits.md",
+      "kind": "file",
+      "observed_span_eligible": false,
+      "paths": [
+        "design/swap-credits.md"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "doc.page:file%3Adocs%2Fdesign%2Fswap-credits.md",
+      "display_name": "Swap credit rules",
+      "kind": "doc.page",
+      "observed_span_eligible": false,
+      "paths": [
+        "design/swap-credits.md"
+      ],
+      "public": true,
+      "spans": []
+    },
+    {
+      "binding_id": "bind1:f0d59f4ac9f8dc2604c227c07b4d3d378fa5e4944ec441646d01c3d58d710608",
+      "canonical_key": "doc.section:file%3Adocs%2Fdesign%2Fswap-credits.md:swap-credit-rules",
+      "display_name": "Swap credit rules",
+      "kind": "doc.section",
+      "observed_span_eligible": true,
+      "paths": [
+        "design/swap-credits.md"
+      ],
+      "public": true,
+      "spans": [
+        {
+          "end": 1,
+          "path": "design/swap-credits.md",
+          "start": 1
+        }
+      ]
+    }
+  ],
+  "phase": "CLOE-W5-SUPPLEMENT1",
+  "positive_families": {
+    "behavior_without_exact_symbol": 4,
+    "code_plus_design_or_message_context": 4,
+    "exact_symbol_and_partial_name": 4,
+    "relevant_tests_for_behavior": 4
+  },
+  "public_pairs_v1_upper_bound": 66,
+  "public_span_pairs_v2_upper_bound": 40,
+  "query_or_model_execution": false,
+  "static_only": true,
+  "total_nodes": 80,
+  "total_pairs": 72
+}

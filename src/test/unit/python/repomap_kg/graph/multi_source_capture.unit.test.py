@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 from unittest.mock import patch
 
@@ -24,6 +25,7 @@ from common_lore_index.graph.multi_source_capture import (
 )
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
 from common_lore_index.ops.config_records import OpsGraphConfig
+from repomap_test_support.capture_cancellation_fixtures import observe_capture_io
 
 
 def _binding(root: Path, alias: str) -> OpsGraphSourceBindingConfig:
@@ -99,6 +101,31 @@ def test_read_stable_file_adverse_retry_and_recovers(tmp_path):
     with patch("common_lore_index.graph.multi_source_capture._file_signature", side_effect=mutate_after):
         digest, size, exe = _read_stable_file(target, stage_path=stage2)
         assert stage2.exists()
+
+
+def test_read_stable_file_caps_a_growth_attempt_before_retry(tmp_path, monkeypatch):
+    target = tmp_path / "source.txt"
+    staged = tmp_path / "staged.txt"
+    initial = b"public fixture"
+    final = initial + b"!" * 16_384
+    target.write_bytes(initial)
+    grew = False
+
+    def change_after_first_read():
+        nonlocal grew
+        if not grew:
+            with target.open("ab") as writer:
+                writer.write(final[len(initial):])
+            grew = True
+
+    consumed, written, sources = observe_capture_io(monkeypatch, change_after_first_read)
+    digest, size, executable = _read_stable_file(target, stage_path=staged)
+    assert (digest, size, executable) == (hashlib.sha256(final).hexdigest(), len(final), False)
+    assert staged.read_bytes() == final
+    assert [probe.requests for probe in sources] == [[len(initial) + 1, 1], [len(final) + 1, 1]]
+    assert consumed == [len(initial), 1, len(final), 0]
+    assert written == [len(initial), len(final)]
+    assert all(probe.closed for probe in sources)
 
 
 def test_read_stable_file_exhaustion_raises_source_changed(tmp_path):

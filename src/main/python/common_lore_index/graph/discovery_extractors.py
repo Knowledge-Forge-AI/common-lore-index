@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+import hashlib
 from pathlib import Path
 
 from common_lore_index import __version__
@@ -10,6 +11,9 @@ from common_lore_index.extractors.config.generic import extract_config_file_obse
 from common_lore_index.extractors.config.nix import extract_nix_file_observations
 from common_lore_index.extractors.documents.css import extract_css_file_observations
 from common_lore_index.extractors.documents.email import (
+    MAX_EML_BYTES,
+    MAX_MBOX_BYTES,
+    _oversized_mailbox_observations,
     extract_eml_file_observations,
     extract_mbox_file_observations,
 )
@@ -20,6 +24,7 @@ from common_lore_index.extractors.documents.markdown import (
     markdown_anchors_for_content,
 )
 from common_lore_index.extractors.documents.office import (
+    DEFAULT_MAX_PACKAGE_BYTES,
     extract_document_file_observations,
     extract_odf_file_observations,
 )
@@ -113,6 +118,7 @@ def extract_python_file_observations_from_file(
     relative_path: str,
     *,
     module_index: PythonModuleIndex,
+    module_context_root: Path | None = None,
 ) -> tuple[RawObservation, ...]:
     content = _read_utf8(repository_root, relative_path)
     if content is None:
@@ -121,7 +127,7 @@ def extract_python_file_observations_from_file(
         relative_path,
         content,
         module_index=module_index,
-        repository_root=repository_root,
+        repository_root=repository_root if module_context_root is None else module_context_root,
     )
 
 
@@ -131,6 +137,7 @@ def extract_nix_file_observations_from_file(
     *,
     flake_ref: str | None = None,
     include_input_references: bool = False,
+    source_identity_root: Path | None = None,
 ) -> tuple[RawObservation, ...]:
     content = _read_utf8(repository_root, relative_path)
     if content is None:
@@ -138,7 +145,7 @@ def extract_nix_file_observations_from_file(
     return extract_nix_file_observations(
         relative_path,
         content,
-        flake_ref=flake_ref or repository_root.name,
+        flake_ref=flake_ref or (repository_root if source_identity_root is None else source_identity_root).name,
         include_input_references=include_input_references,
     )
 
@@ -184,30 +191,36 @@ def extract_javascript_file_observations_from_file(
     )
 
 
+def _document_read_failure(
+    relative_path: str, format_name: str, *, mail: bool,
+) -> tuple[RawObservation, ...]:
+    family = "email" if mail else "document"
+    return (RawObservation(
+        kind=f"{family}.parse_error",
+        source_id=f"{relative_path}#{family}-parse-error:read",
+        path=relative_path,
+        confidence="unknown",
+        extractor="repo-email" if mail else "repo-documents",
+        extractor_version=__version__,
+        metadata={
+            "format": format_name,
+            "parser": "stdlib-email" if mail else "stdlib-document-conservative",
+            "error_kind": "read-error",
+            "message_summary": "file bytes could not be read",
+            "recovered": False,
+        },
+    ),)
+
+
 def extract_eml_file_observations_from_file(
     repository_root: Path,
     relative_path: str,
 ) -> tuple[RawObservation, ...]:
     try:
-        content = (repository_root / relative_path).read_bytes()
-    except OSError as error:
-        return (
-            RawObservation(
-                kind="email.parse_error",
-                source_id=f"{relative_path}#email-parse-error:read",
-                path=relative_path,
-                confidence="unknown",
-                extractor="repo-email",
-                extractor_version=__version__,
-                metadata={
-                    "format": "eml",
-                    "parser": "stdlib-email",
-                    "error_kind": "read-error",
-                    "message_summary": str(error)[:120],
-                    "recovered": False,
-                },
-            ),
-        )
+        with (repository_root / relative_path).open("rb") as stream:
+            content = stream.read(MAX_EML_BYTES + 1)
+    except OSError:
+        return _document_read_failure(relative_path, "eml", mail=True)
     return extract_eml_file_observations(relative_path, content)
 
 
@@ -216,25 +229,18 @@ def extract_mbox_file_observations_from_file(
     relative_path: str,
 ) -> tuple[RawObservation, ...]:
     try:
-        content = (repository_root / relative_path).read_bytes()
-    except OSError as error:
-        return (
-            RawObservation(
-                kind="email.parse_error",
-                source_id=f"{relative_path}#email-parse-error:read",
-                path=relative_path,
-                confidence="unknown",
-                extractor="repo-email",
-                extractor_version=__version__,
-                metadata={
-                    "format": "mbox",
-                    "parser": "stdlib-email",
-                    "error_kind": "read-error",
-                    "message_summary": str(error)[:120],
-                    "recovered": False,
-                },
-            ),
-        )
+        with (repository_root / relative_path).open("rb") as stream:
+            content = stream.read(MAX_MBOX_BYTES + 1)
+            if len(content) > MAX_MBOX_BYTES:
+                digest = hashlib.sha256(content)
+                byte_count = len(content)
+                del content
+                while chunk := stream.read(131_072):
+                    digest.update(chunk)
+                    byte_count += len(chunk)
+                return _oversized_mailbox_observations(relative_path, byte_count, digest.hexdigest())
+    except OSError:
+        return _document_read_failure(relative_path, "mbox", mail=True)
     return extract_mbox_file_observations(relative_path, content)
 
 
@@ -292,29 +298,15 @@ def extract_document_file_observations_from_file(
     suffix = Path(relative_path).suffix.lower()
     if suffix in (".odt", ".ods", ".ott", ".ots"):
         try:
-            odf_bytes = (repository_root / relative_path).read_bytes()
-        except OSError as error:
-            return (
-                RawObservation(
-                    kind="document.parse_error",
-                    source_id=f"{relative_path}#document-parse-error:read",
-                    path=relative_path,
-                    confidence="unknown",
-                    extractor="repo-documents",
-                    extractor_version=__version__,
-                    metadata={
-                        "format": suffix.lstrip(".") or "unknown",
-                        "parser": "stdlib-document-conservative",
-                        "error_kind": "read-error",
-                        "message_summary": str(error)[:120],
-                        "recovered": False,
-                    },
-                ),
-            )
+            with (repository_root / relative_path).open("rb") as stream:
+                odf_bytes = stream.read(DEFAULT_MAX_PACKAGE_BYTES + 1)
+        except OSError:
+            return _document_read_failure(relative_path, suffix.lstrip("."), mail=False)
         return extract_odf_file_observations(
             relative_path,
             odf_bytes,
             repository_paths=repository_paths,
+            max_package_bytes=DEFAULT_MAX_PACKAGE_BYTES,
         )
     content = _read_utf8(repository_root, relative_path)
     if content is None:
@@ -348,7 +340,7 @@ def extract_markdown_file_observations_from_file(
     file_info: FileInfo,
     *,
     repository_paths: frozenset[str],
-    markdown_anchors: dict[str, set[str] | frozenset[str]],
+    markdown_anchors: Mapping[str, set[str] | frozenset[str]],
 ) -> tuple[RawObservation, ...]:
     content = _read_utf8(repository_root, file_info.path)
     if content is None:

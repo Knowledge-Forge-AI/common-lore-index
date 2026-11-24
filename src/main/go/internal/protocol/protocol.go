@@ -58,14 +58,38 @@ func DecodeRequest(line []byte) (Request, error) {
 		return Request{}, ErrInvalidMessage
 	}
 	decoder := json.NewDecoder(bytes.NewReader(line))
-	decoder.DisallowUnknownFields()
-	var request Request
-	if err := decoder.Decode(&request); err != nil {
+	start, err := decoder.Token()
+	if err != nil || start != json.Delim('{') {
 		return Request{}, ErrInvalidMessage
 	}
-	if err := requireJSONEOF(decoder); err != nil {
+	var version, sequence *int
+	var kind, path *string
+	fields := map[string]any{
+		"protocol_version": &version,
+		"sequence":         &sequence,
+		"type":             &kind,
+		"path":             &path,
+	}
+	for decoder.More() {
+		token, err := decoder.Token()
+		key, ok := token.(string)
+		if err != nil || !ok {
+			return Request{}, ErrInvalidMessage
+		}
+		destination, ok := fields[key]
+		if !ok || decoder.Decode(destination) != nil {
+			return Request{}, ErrInvalidMessage
+		}
+		delete(fields, key)
+	}
+	if end, err := decoder.Token(); err != nil || end != json.Delim('}') {
 		return Request{}, ErrInvalidMessage
 	}
+	if requireJSONEOF(decoder) != nil || len(fields) != 0 ||
+		version == nil || sequence == nil || kind == nil || path == nil {
+		return Request{}, ErrInvalidMessage
+	}
+	request := Request{ProtocolVersion: *version, Type: *kind, Sequence: *sequence, Path: *path}
 	if request.ProtocolVersion != ProtocolVersion || request.Type != "file" {
 		return Request{}, ErrInvalidMessage
 	}
@@ -88,8 +112,12 @@ func WriteResponse(writer io.Writer, response Response) error {
 		return ErrInvalidMessage
 	}
 	encoded = append(encoded, '\n')
-	if _, err := writer.Write(encoded); err != nil {
+	written, err := writer.Write(encoded)
+	if err != nil {
 		return fmt.Errorf("write protocol response: %w", err)
+	}
+	if written != len(encoded) {
+		return fmt.Errorf("write protocol response: %w", io.ErrShortWrite)
 	}
 	return nil
 }

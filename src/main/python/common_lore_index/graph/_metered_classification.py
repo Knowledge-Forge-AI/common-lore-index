@@ -34,15 +34,14 @@ from common_lore_index.artifacts._metered_io import (
 from common_lore_index.artifacts._sealing_meter import SealingMeter
 from common_lore_index.artifacts.sealing_governance import CLASSIFICATION_MAX_RETAINED_CHARS
 from common_lore_index.extractors.languages.go_metadata import detect_go_generated_marker
-from common_lore_index.extractors.shell.zsh_identity import ZSH_COMPLETION_PATH_PARTS
+from common_lore_index.extractors.shell.zsh_identity import (
+    CompletionEvidenceScanner,
+    ZSH_COMPLETION_PATH_PARTS,
+)
 
 _READER = "classification"
 _LINE_PIECE = 4096
 _GO_LINES = 40
-_PREFIXES = ("#compdef", "_arguments")
-_CARRY = max(len(prefix) for prefix in _PREFIXES)
-# str.splitlines boundaries; each one is also str.isspace.
-_LINE_BREAKS = frozenset("\n\r\x0b\x0c\x1c\x1d\x1e\x85  ")
 
 
 def metered_first_line(meter: SealingMeter, path: Path) -> str:
@@ -92,40 +91,6 @@ def metered_is_go_generated(meter: SealingMeter, path: Path) -> bool:
     return detect_go_generated_marker("".join(lines)) is not None
 
 
-class _CompletionScanner:
-    """Incremental ``has_completion_content_evidence`` over decoded chunks.
-
-    Lines are split with ``str.splitlines`` (the same boundaries as the
-    incumbent); a line split across chunks carries at most ten characters of
-    its stripped start, or a "decided, skip to line end" state.
-    """
-
-    def __init__(self) -> None:
-        self.matched = False
-        self._carry: str | None = ""  # "" at a line start, None when decided
-
-    def feed(self, text: str) -> None:
-        for piece in text.splitlines(keepends=True):
-            ended = piece[-1] in _LINE_BREAKS
-            if self._carry is None:
-                self._carry = "" if ended else None
-                continue
-            head = (self._carry + piece) if self._carry else piece.lstrip()
-            core = head.rstrip("".join(_LINE_BREAKS)) if ended else head
-            if not core:
-                self._carry = ""
-            elif ended or len(core) >= _CARRY:
-                self.matched = self.matched or core.startswith(_PREFIXES)
-                self._carry = "" if ended else None
-            else:
-                self._carry = core
-
-    def finish(self) -> bool:
-        if self._carry:
-            self.matched = self.matched or self._carry.startswith(_PREFIXES)
-        return self.matched
-
-
 def metered_completion(meter: SealingMeter, path: Path) -> bool:
     """R4: streaming ``is_zsh_completion_candidate(path)`` with identical results."""
 
@@ -134,7 +99,7 @@ def metered_completion(meter: SealingMeter, path: Path) -> bool:
     ):
         return True
     decoder = codecs.getincrementaldecoder("utf-8")("strict")
-    scanner = _CompletionScanner()
+    scanner = CompletionEvidenceScanner()
     try:
         try:
             size = os.stat(path).st_size

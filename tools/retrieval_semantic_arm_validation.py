@@ -162,17 +162,20 @@ def _strict_envelope_pin_error(
     env: QueryEnvelope,
     pin: VerifiedPublicationPin,
     provenance: Mapping[str, Any],
+    *, allow_missing_identity: bool = False,
 ) -> str | None:
     """Require the real lexical envelope's publication identity before credit."""
     scope = env.scope
-    if not isinstance(scope.publication_bundle_id, str) or not scope.publication_bundle_id:
-        return "envelope_publication_bundle_id_missing"
-    if scope.publication_bundle_id != pin.publication_bundle_id:
-        return "envelope_publication_bundle_id_mismatch"
-    if not isinstance(scope.snapshot_manifest_id, str) or not scope.snapshot_manifest_id:
-        return "envelope_snapshot_manifest_id_missing"
-    if scope.snapshot_manifest_id != pin.snapshot_manifest_id:
-        return "envelope_snapshot_manifest_id_mismatch"
+    for name, actual, expected in (
+        ("publication_bundle_id", scope.publication_bundle_id, pin.publication_bundle_id),
+        ("snapshot_manifest_id", scope.snapshot_manifest_id, pin.snapshot_manifest_id),
+    ):
+        if actual is None and allow_missing_identity:
+            continue
+        if not isinstance(actual, str) or not actual:
+            return f"envelope_{name}_missing"
+        if actual != expected:
+            return f"envelope_{name}_mismatch"
 
     if "backend" in provenance:
         if type(provenance["backend"]) is not str or provenance["backend"] != scope.backend:
@@ -197,7 +200,7 @@ def _strict_envelope_pin_error(
             return "envelope_run_id_invalid"
         run_ids.append(value)
     if not run_ids:
-        return "envelope_run_id_missing"
+        return None if allow_missing_identity else "envelope_run_id_missing"
     if len(set(run_ids)) != 1:
         return "envelope_run_id_conflict"
     if run_ids[0] != pin.run_id:
@@ -206,7 +209,7 @@ def _strict_envelope_pin_error(
 
 
 def _verify_envelope_against_pin(
-    env: Any, pin: VerifiedPublicationPin
+    env: Any, pin: VerifiedPublicationPin, *, allow_missing_identity: bool = False,
 ) -> tuple[str | None, ExecutionState | None, str | None, bool, bool]:
     if env is None:
         return None, None, None, False, False
@@ -233,8 +236,8 @@ def _verify_envelope_against_pin(
         return "invalid_query_envelope", ExecutionState.REFUSED, None, False, False
     prov = raw_provenance
     cap = validated.capability_state
-    if cap in {CapabilityState.AVAILABLE, CapabilityState.PARTIAL}:
-        strict_error = _strict_envelope_pin_error(validated, pin, prov)
+    if allow_missing_identity or cap in {CapabilityState.AVAILABLE, CapabilityState.PARTIAL}:
+        strict_error = _strict_envelope_pin_error(validated, pin, prov, allow_missing_identity=allow_missing_identity)
         if strict_error is not None:
             return strict_error, ExecutionState.REFUSED, None, False, False
     for k, expected, err in (

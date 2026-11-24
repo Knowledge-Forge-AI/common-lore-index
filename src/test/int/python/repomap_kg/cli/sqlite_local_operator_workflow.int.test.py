@@ -198,7 +198,13 @@ def test_sqlite_local_operator_workflow_without_postgres(tmp_path: Path) -> None
     assert (rows["alpha"]["error_category"], rows["alpha"]["error"]) == (
         "refresh-rejected", "graph 'alpha' source root is unavailable",
     ), rows["alpha"]
-    assert _states(_json(harness, home, "ops", "config-check", "--check-db"))["alpha"] == ("current", 1)
+    checked = _states(_json(harness, home, "ops", "config-check", "--check-db"))
+    assert checked["alpha"] == ("current", 1)
+    listed = _json(harness, home, "ops", "graphs", "--check-db")
+    assert {
+        graph["id"]: (graph["storage_status"]["state"], graph["storage_status"]["accepted_generation"])
+        for graph in listed["graphs"]
+    } == checked
     assert _integrity(_database(home, "zulu")) == "ok"
 
     # Every SQLite child: no PostgreSQL, container, service or driver import.

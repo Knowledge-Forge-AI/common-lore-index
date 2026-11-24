@@ -125,7 +125,7 @@ def test_classifier_delegates_to_live_incumbent_readers(tmp_path: Path, monkeypa
         return True
 
     hooks = CaptureDiscoveryHooks()
-    monkeypatch.setattr(_discovery_classify, "first_line", first_line)
+    monkeypatch.setattr(_discovery_classify, "read_shebang_candidate", first_line)
     monkeypatch.setattr(_discovery_classify, "is_go_generated_file", go_marker)
     monkeypatch.setattr(_discovery_classify, "is_zsh_completion_candidate", completion)
     assert hooks.readers() is hooks

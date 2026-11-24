@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.shell.zsh_common import (
     DYNAMIC_TARGET_CHARS,
@@ -182,12 +183,11 @@ def extract_zsh_file_observations(
     if startup is not None:
         observations.append(startup)
     observations.extend(completion_function_observations(relative_path, content))
-
     pending_heredoc: PendingHeredoc | None = None
     current_function: str | None = None
     brace_depth = 0
 
-    for line_number, raw_line in enumerate(content.splitlines(), start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         stripped = raw_line.strip()
         if pending_heredoc is not None:
             terminator = raw_line.lstrip("\t").strip() if pending_heredoc.tab_stripping else stripped

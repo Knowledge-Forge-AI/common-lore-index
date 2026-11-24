@@ -175,7 +175,7 @@ def test_parse_timeout_crash_or_invalid_output_is_a_file_refusal_without_rust_gr
     assert all(item.removed for item in bridge._containers.values())
 
 
-@pytest.mark.parametrize("case", ["hash", "duplicate", "oversize", "symlink", "nonutf8"])
+@pytest.mark.parametrize("case", ["hash", "duplicate", "oversize", "symlink", "nonutf8", "truncated_utf8"])
 def test_selection_mismatch_duplicate_bound_and_path_refusals_never_enter_parser(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, case: str,
 ) -> None:
@@ -200,7 +200,7 @@ def test_selection_mismatch_duplicate_bound_and_path_refusals_never_enter_parser
         info = FileInfo("src/link.rs", "unknown", "source", "0" * 64, False, False)
         infos, expected = (info,), ("selection_refused",)
     else:
-        data = b"pub fn f() {\xff }\n"
+        data = b"pub fn f() {\xff }\n" if case == "nonutf8" else b" " * 65_535 + b"\xe6\xbc"
         root, info = _repo(tmp_path, data=data)
         infos, expected = (info,), ("input_not_utf8",)
     bridge = _FactsBridge(tmp_path / "fake-docker")

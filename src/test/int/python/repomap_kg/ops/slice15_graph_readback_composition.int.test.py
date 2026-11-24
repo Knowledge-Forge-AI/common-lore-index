@@ -303,5 +303,9 @@ def test_baselines_reports_and_source_generation_edge_contracts(tmp_path: Path) 
     assert scan_source_generation(scan_dir, cancel_event=ev).category == "cancelled"
     ticks = iter([0.0, 10.0, 20.0])
     assert scan_source_generation(scan_dir, monotonic=lambda: next(ticks, 20.0), limits=SourceGenerationLimits(timeout_seconds=1.0)).category == "source_timeout"
+    exact_budget = scan_source_generation(scan_dir, limits=SourceGenerationLimits(max_total_bytes=18))
+    assert exact_budget.category == "ready" and exact_budget.total_bytes == 18
+    just_under = scan_source_generation(scan_dir, limits=SourceGenerationLimits(max_total_bytes=17))
+    assert just_under.category == "source_limit_exceeded" and just_under.generation is None
     os.symlink(scan_dir / "a.py", scan_dir / "link.py")
     assert scan_source_generation(scan_dir).category == "source_invalid"

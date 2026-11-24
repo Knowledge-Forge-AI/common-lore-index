@@ -14,7 +14,7 @@ from common_lore_index.ops.config_loading import validate_file_schema
 from common_lore_index.ops.config_loading_records import merge_ops_config_payloads
 from common_lore_index.ops.config_migration_fs import (
     JOURNAL_NAME, JOURNAL_TEMP_NAME, MAX_CONFIG_FILES, MAX_FILE_BYTES, MAX_JOURNAL_BYTES, MAX_TOTAL_BYTES,
-    Home, MigrationRefusal, owned_regular, valid_name,
+    Home, MigrationRefusal, owned_regular, snapshot, valid_name,
 )
 from common_lore_index.ops.config_records import OpsConfigError
 from common_lore_index.ops.config_storage import parse_storage_section
@@ -60,11 +60,15 @@ def effective_sha256(named_bytes: Sequence[tuple[str, bytes]]) -> str:
     errors = sorted({item.code for item in diagnostics if item.severity == "error"})
     if errors:
         raise MigrationRefusal(errors[0], more=tuple({"code": code, "file": ""} for code in errors[1:]))
-    canonical = json.dumps(
-        {"merged": merged, "diagnostics": [[item.severity, item.code] for item in diagnostics]},
-        sort_keys=True, separators=(",", ":"), default=_toml_value,
-    )
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    encoder = json.JSONEncoder(sort_keys=True, separators=(",", ":"), default=_toml_value)
+    canonical_input = {
+        "merged": merged,
+        "diagnostics": [[item.severity, item.code] for item in diagnostics],
+    }
+    digest = hashlib.sha256()
+    for fragment in encoder.iterencode(canonical_input):
+        digest.update(fragment.encode("utf-8"))
+    return digest.hexdigest()
 
 
 def build_journal(home: Home, operation_id: str, plan: dict[str, Any], records: Sequence[Any], digest: str) -> dict[str, Any]:
@@ -139,15 +143,27 @@ def validate_journal(document: Any, home: Home) -> dict[str, Any]:
     return document
 
 
+
+def _journal_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    document: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in document:
+            raise ValueError("duplicate journal key")
+        document[key] = value
+    return document
+
 def read_journal(home: Home) -> dict[str, Any] | None:
-    if home.lstat(JOURNAL_NAME, in_op=True) is None:
+    admitted = home.lstat(JOURNAL_NAME, in_op=True)
+    if admitted is None:
         return None
+    if not owned_regular(admitted):
+        raise MigrationRefusal("config-migration-journal-invalid")
     data, info = home.read(JOURNAL_NAME, MAX_JOURNAL_BYTES, "config-migration-journal-invalid", in_op=True)
-    if not owned_regular(info):
+    if snapshot(info) != snapshot(admitted):
         raise MigrationRefusal("config-migration-journal-invalid")
     try:
-        document = json.loads(data.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
+        document = json.loads(data.decode("utf-8"), object_pairs_hook=_journal_object)
+    except (ValueError, RecursionError):
         raise MigrationRefusal("config-migration-journal-invalid") from None
     return validate_journal(document, home)
 

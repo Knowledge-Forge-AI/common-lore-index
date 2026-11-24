@@ -69,6 +69,7 @@ class CanonicalRubyJavascriptIntegrationTests(unittest.TestCase):
     def test_static_ruby_extractor_edge_contracts(self):
         rb_edge = (
             'require "./local"\nrequire_relative "../outside"\nrequire "#{dynamic_name}"\n'
+            'require "https://user:fixture@unreadable.invalid:port/path"\nrequire "s3://user:fixture@unreadable.invalid/key"\n'
             'load "json"\nmodule Edge\n  FLAG = true\n  COUNT = 42\n  ITEMS = []\n  CONFIG = {}\n'
             '  class Runner\n    def self.build\n    end\n    def Edge.utility\n    end\n  end\nend\n'
         )
@@ -77,6 +78,8 @@ class CanonicalRubyJavascriptIntegrationTests(unittest.TestCase):
             '  config.vm.synced_folder "../outside", "/vagrant/outside"\n'
             '  config.vm.synced_folder "$ROOT", "/vagrant/dynamic"\n'
             '  config.vm.synced_folder "/tmp/source", "/vagrant/absolute"\n'
+            '  config.vm.synced_folder "https://unreadable.invalid:port/path", "/vagrant/bad-port"\n'
+            '  config.vm.synced_folder "https://user:fixture@[2001:db8::1]:8443/private", "/vagrant/ipv6"\n'
             '  config.vm.synced_folder "s3://example", "/vagrant/unsupported"\nend\n'
         )
         observations = list(extract_ruby_file_observations("scripts/edge.rb", rb_edge, repository_paths=frozenset({"scripts/edge.rb", "scripts/local.rb"})))
@@ -94,6 +97,7 @@ class CanonicalRubyJavascriptIntegrationTests(unittest.TestCase):
             "file:scripts/local.rb", "unknown:file:repo-escaping-ruby-reference",
             "dynamic:ruby.reference:interpolated-require", "dynamic:ruby.reference:dynamic-path",
             "external:file:absolute-ruby-reference", "unknown:ruby.reference:unsupported-scheme",
+            "unknown:ruby.reference:malformed-external-url",
         ):
             self.assertIn(t, targets)
         self.assertIn("dynamic-route", parse_error_kinds)
@@ -103,6 +107,9 @@ class CanonicalRubyJavascriptIntegrationTests(unittest.TestCase):
         self.assertEqual(constant_types["ITEMS"], "array")
         self.assertEqual(constant_types["CONFIG"], "hash")
         self.assertNotIn("pass@example", payload)
+        self.assertNotIn("unreadable.invalid", payload)
+        self.assertNotIn("user:fixture", payload)
+        self.assertIn("https://[2001:db8::1]:8443/private", payload)
         self.assertNotIn("token=value", payload)
         self.assertIn("token%3DREDACTED", payload)
         self._assert_reference_pipeline(observations)
@@ -193,6 +200,16 @@ class CanonicalRubyJavascriptIntegrationTests(unittest.TestCase):
         self.assertTrue(ruby_module._opens_block("3.times do"))
         self.assertTrue(ruby_module._looks_like_route_profile("generic_ruby", "Sinatra", "app.rb"))
         self.assertFalse(ruby_module._looks_like_route_profile("generic_ruby", "", "lib/app.rb"))
+
+    def test_invalid_import_url_does_not_interrupt_javascript_canonicalization(self):
+        observations = extract_javascript_file_observations(
+            "fixture.mjs", "import 'https://[not.valid/item';\nimport 'https://[2001:db8::1]:8443/item';",
+        )
+        references = [item for item in observations if item.kind == "js.reference"]
+        self.assertTrue(any((item.target or "").startswith("unknown:") for item in references))
+        self.assertTrue(any((item.target or "").startswith("external.url:") for item in references))
+        self.assertNotIn("not.valid", str([item.to_dict() for item in observations]))
+        self.assertTrue(canonicalize_observations(observations).ok)
 
     def test_static_javascript_extractor_edge_contracts(self):
         js_code = (

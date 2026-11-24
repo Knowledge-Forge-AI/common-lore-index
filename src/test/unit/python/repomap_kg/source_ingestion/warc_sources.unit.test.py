@@ -1,6 +1,7 @@
 import json
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from repomap_test_support.source_ingestion import (
     SourceIngestionUnitTestCase,
@@ -17,6 +18,31 @@ from common_lore_index.ops.ingestion.source import (
 
 
 class WarcSourceIngestionUnitTests(SourceIngestionUnitTestCase):
+    def test_warc_clock_cannot_substitute_a_same_size_archive_after_admission(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            artifact = self.write_warc_fixture(root)
+            replacement = root / "alternate.warc"
+            replacement.write_bytes(artifact.read_bytes())
+            config = load_warc_source_config(self.write_warc_config(root / "source.toml"))
+
+            def replace_after_admission():
+                replacement.replace(artifact)
+                return self.fixed_clock()
+
+            with self.assertRaisesRegex(SourcePolicyError, "artifact changed during WARC manifest scan"):
+                build_warc_manifest(config, root_path=root, clock=replace_after_admission)
+
+    def test_warc_manifest_reads_the_fixture_without_materializing_the_archive(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            self.write_warc_fixture(root)
+            config = load_warc_source_config(self.write_warc_config(root / "source.toml"))
+            expected = build_warc_manifest(config, root_path=root, clock=self.fixed_clock)
+            with patch.object(Path, "read_bytes", side_effect=AssertionError("whole-file read")):
+                actual = build_warc_manifest(config, root_path=root, clock=self.fixed_clock)
+        self.assertEqual(actual.to_jsonable(), expected.to_jsonable())
+
     def test_warc_config_policy_rejects_blocked_url_fields_and_missing_limits(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir) / "repo"

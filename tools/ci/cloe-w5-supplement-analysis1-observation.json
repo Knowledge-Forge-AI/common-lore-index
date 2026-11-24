@@ -1,0 +1,60 @@
+{
+  "acceptance": {
+    "full_w5_acceptance": false,
+    "heldout_acceptance": false,
+    "native_platform_acceptance": false,
+    "production_acceptance": false,
+    "scientific_acceptance": false
+  },
+  "analyzer_source_sha256": "sha256:52fbe5ea446215b11dd3f485c5eb4b53b2f056a4ffd58849880154a53823a2b7",
+  "atomic_archive_sha256": "sha256:d4378bead55fb49dab8747305e878a30627a4595ba7c7825288419718c0267ba",
+  "canonical_json_bytes": 1366529,
+  "counted_worker_tokens_verified": true,
+  "counts": {
+    "arms": 6,
+    "comparable_positive_tasks": 16,
+    "family_counts": {
+      "behavior_without_exact_symbol": 4,
+      "code_plus_design_or_message_context": 4,
+      "exact_symbol_and_partial_name": 4,
+      "relevant_tests_for_behavior": 4
+    },
+    "positive_tasks": 16,
+    "repetitions": 3,
+    "slots": 432,
+    "states": {
+      "completed": 375,
+      "failed": 0,
+      "not_run": 0,
+      "refused": 36,
+      "unavailable": 21
+    },
+    "tasks": 24
+  },
+  "database_queries": 0,
+  "decision": {
+    "criteria_proposal_allowed": true,
+    "evidence_summary": "floor_met",
+    "operator_criteria_decision": "pending",
+    "preferred_arm_selected": false,
+    "threshold_selected": false
+  },
+  "limits": [
+    "Descriptive retained observation; no significance or generalization claim.",
+    "Only query-phase costs are present; no setup/inference total cost claim.",
+    "Query averages include all slot states and are not positive-only SQL latency.",
+    "The pretty public JSON changes whitespace only; physical and logical hashes differ.",
+    "The source closure binds supported flat local imports, not the Python/OS environment.",
+    "Original technical failures remain separate and are not pooled into this result."
+  ],
+  "logical_canonical_json_sha256": "sha256:0937220f1a8073e8c593a4b978f6afa6795ccdf3291cce41102dd7e6040c0f55",
+  "model_workers_started": 0,
+  "original_evaluator_closure_sha256": "sha256:970636aeb4ad332b2d30476e7383dc63d79aac45df30966995384e320412a977",
+  "original_raw_report_sha256": "sha256:3c9b89c50f20b9f0fd5c85ae00a34efedde7ac7a50a8a32c8ff7623de7df26b3",
+  "original_worker_closure_sha256": "sha256:3ef59123fd9281409d42a8e0f4b02471ec3088c54429033d62cbd6b51af01e23",
+  "public_json_value_identical_to_logical_member": true,
+  "public_pretty_json_bytes": 2538379,
+  "public_pretty_json_sha256": "sha256:03ae02fbfcb5abe0dc2dc0837c67664a5459b4e2594fd0d009f9fdee2be99d4a",
+  "report_sha256": "sha256:d8f916f9b4889fb9d3a706652229df4e34137ac0cf528f97c903bdbe27aa3da4",
+  "schema": "cloe-retained-supplement-analysis-observation-v1"
+}

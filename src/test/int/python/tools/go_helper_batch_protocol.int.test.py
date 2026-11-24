@@ -143,6 +143,9 @@ def test_native_batch_preserves_diagnostic_cap_and_settled_recovery(
     assert trunc_diag.metadata["code"] == "go-parse-errors-truncated"
     assert trunc_diag.metadata["bounded_message"] == "additional syntax errors omitted"
     assert trunc_diag.metadata["severity"] == "warning"
+    assert trunc_diag.start_line is not None
+    assert 5 <= trunc_diag.start_line <= 84
+    assert trunc_diag.start_line == trunc_diag.end_line
     assert any(item.name == "BeforeCap" and item.kind == "go.const" for item in overflow_obs)
     assert any(item.kind == "go.package" and item.metadata.get("partial_parse") is True for item in overflow_obs)
 

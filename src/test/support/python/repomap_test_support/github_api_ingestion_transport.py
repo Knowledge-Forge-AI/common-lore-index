@@ -4,8 +4,10 @@ import tempfile
 import urllib.error
 from email.message import Message
 from pathlib import Path
+from unittest.mock import patch
 
 from common_lore_index.ops.ingestion.github_api import (
+    FixtureGitHubApiTransport,
     GitHubApiPolicyError,
     GitHubTransportResponse,
     PublicGitHubRestTransport,
@@ -53,6 +55,9 @@ class GitHubApiIngestionTransportContract(GitHubApiIngestionTestSupport):
 
             response = PublicGitHubRestTransport(opener=opener).fetch(config, request)
 
+        self.assertIsNotNone(opener.response)
+        assert opener.response is not None
+        self.assertTrue(opener.response.closed)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.response_type, "application/json")
         self.assertEqual(response.body, b'{"full_name":"fixture-owner/fixture-repo"}')
@@ -88,12 +93,13 @@ class GitHubApiIngestionTransportContract(GitHubApiIngestionTestSupport):
             error_headers = Message()
             error_headers["content-type"] = "application/json"
             error_headers["x-ratelimit-remaining"] = "0"
+            body = io.BytesIO(b'{"message":"rate limit exceeded"}')
             http_error = urllib.error.HTTPError(
                 "https://api.github.com/repos/fixture-owner/fixture-repo",
                 403,
                 "rate limited",
                 error_headers,
-                io.BytesIO(b'{"message":"rate limit exceeded"}'),
+                body,
             )
             response = PublicGitHubRestTransport(
                 opener=FakeGitHubErrorOpener(http_error)
@@ -118,10 +124,37 @@ class GitHubApiIngestionTransportContract(GitHubApiIngestionTestSupport):
                     request,
                 )
 
+        self.assertTrue(body.closed)
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.response_type, "application/json")
         self.assertEqual(response.rate_limit["x-ratelimit-remaining"], "0")
         self.assertIn(b"rate limit", response.body)
+
+    def test_github_fixture_transport_reads_only_limit_plus_lookahead(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_github_fixture(Path(tmpdir), max_bytes_per_run=10)
+            config = load_github_api_source_config(path)
+            request = build_github_api_plan_from_config(path).requests[0]
+
+            class TrackingBody(io.BytesIO):
+                def read(self, size=-1):
+                    self.last_read = size
+                    return super().read(size)
+
+            body = TrackingBody(b"x" * 40)
+            with patch.object(Path, "open", return_value=body):
+                with self.assertRaisesRegex(GitHubApiPolicyError, "response bytes exceed"):
+                    FixtureGitHubApiTransport().fetch(config, request)
+            self.assertTrue(body.closed)
+            self.assertEqual(body.last_read, config.max_bytes_per_run + 1)
+
+    def test_github_fixture_accepts_small_body_under_large_budget(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_github_fixture(Path(tmpdir), max_bytes_per_run=9223372036854775807)
+            config = load_github_api_source_config(path)
+            request = build_github_api_plan_from_config(path).requests[0]
+            response = FixtureGitHubApiTransport().fetch(config, request)
+            self.assertIsInstance(json.loads(response.body), dict)
 
     def test_github_real_transport_rejects_unsafe_acquisition_settings(self):
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -42,15 +42,16 @@ def _build_fixture_proof(
     cand_sha = hashlib.sha256(cand_path.read_bytes()).hexdigest()
     grant, grant_sha = load_and_validate_system_build_grant(grant_path, expected_candidate=expected_cand)
     event_file = tmp_path / "event.json"
+    transition = ({"before": grant["before"], "after": "d" * 40}
+                  if grant["event_action"] == "synchronize" else {})
     event_file.write_text(
         json.dumps(
             {
-                "action": "synchronize",
-                "before": grant["before"],
-                "after": "d" * 40,
-                "number": 23,
+                "action": grant["event_action"],
+                **transition,
+                "number": grant["pull_request"],
                 "pull_request": {
-                    "number": 23,
+                    "number": grant["pull_request"],
                     "draft": True,
                     "base": {
                         "ref": "main",
@@ -94,7 +95,7 @@ def _build_fixture_proof(
         "GITHUB_REPOSITORY": str(grant["repository"]),
         "GITHUB_BASE_REF": "main",
         "GITHUB_HEAD_REF": "staging",
-        "GITHUB_WORKFLOW_REF": f"{grant['repository']}/{grant['workflow_path']}@refs/pull/23/merge",
+        "GITHUB_WORKFLOW_REF": f"{grant['repository']}/{grant['workflow_path']}@refs/pull/{grant['pull_request']}/merge",
         "GITHUB_RUN_NUMBER": str(grant["workflow_ordinal"]),
         "GITHUB_RUN_ID": "12345678",
         "GITHUB_RUN_ATTEMPT": "1",
@@ -203,14 +204,16 @@ def test_pure_d12_recipe_and_core_wrapper_identity_equivalence(
 
 def test_direct_host_proof_verification_and_facade_equivalence(tmp_path: Path) -> None:
     cand_path, grant_path, proof_file, d12_ctx, env, fake_git = _build_fixture_proof(tmp_path)
+    active_grant = json.loads(grant_path.read_bytes())
+    number = str(active_grant["pull_request"])
     args = SimpleNamespace(
         d12_system_proof_json=str(proof_file),
         candidate_sha="a" * 40,
         candidate_tree="b" * 40,
-        candidate_base_parent=str(json.loads(grant_path.read_text(encoding="utf-8"))["base"]),
+        candidate_base_parent=str(active_grant["base"]),
         candidate_head_parent="d" * 40,
-        approval_id="pr-23",
-        pr_number="23",
+        approval_id=f"pr-{number}",
+        pr_number=number,
         repository="Knowledge-Forge-AI/common-lore-index",
     )
     common_kwargs: dict[str, Any] = {
@@ -230,7 +233,7 @@ def test_direct_host_proof_verification_and_facade_equivalence(tmp_path: Path) -
     )
     verified_dispatch = verify_host_system_proof_for_dispatch(args, **common_kwargs)
     assert verified_lower == verified_hold == verified_dispatch
-    assert verified_lower["pull_request"] == 23
+    assert verified_lower["pull_request"] == active_grant["pull_request"]
     production = {"grant_path": REPO_ROOT / DEFAULT_GRANT_RELPATH,
                   "expected_candidate_path": REPO_ROOT / DEFAULT_CANDIDATE_RELPATH}
     assert verify_host_system_proof_for_dispatch(args, **{**common_kwargs, **production}) == verified_lower
@@ -277,13 +280,16 @@ def test_host_event_and_git_requires_exact_draft_true_and_strict_env_event_facts
                     runner=fake_git,
                 )
 
+    opened = grant["event_action"] == "opened"
+    before_error = "before/after fields" if opened else r"event\.before"
+    after_error = "before/after fields" if opened else r"event\.after"
     for bad_event, match_re in (
         ({k: v for k, v in valid_event.items() if k != "number"}, "number"),
         ({**valid_event, "number": True}, "number"),
         ({**valid_event, "number": 14}, "number"),
-        ({k: v for k, v in valid_event.items() if k != "before"}, "event\\.before"),
-        ({k: v for k, v in valid_event.items() if k != "after"}, "event\\.after"),
-        ({**valid_event, "action": "opened"}, "action"),
+        ({**valid_event, "before": None}, before_error),
+        ({**valid_event, "after": None}, after_error),
+        ({**valid_event, "action": "synchronize" if opened else "opened"}, "action"),
         ({**valid_event, "number": 13}, "number"),
         (
             {
@@ -323,10 +329,7 @@ def test_host_event_and_git_requires_exact_draft_true_and_strict_env_event_facts
         ({"GITHUB_SHA": ""}, "GITHUB_SHA"),
         ({"GITHUB_WORKFLOW_REF": ""}, "GITHUB_WORKFLOW_REF"),
         ({"GITHUB_WORKFLOW_REF": str(grant["workflow_path"])}, "GITHUB_WORKFLOW_REF"),
-        (
-            {"GITHUB_WORKFLOW_REF": f"{grant['workflow_path']}@refs/pull/23/merge"},
-            "GITHUB_WORKFLOW_REF",
-        ),
+        ({"GITHUB_WORKFLOW_REF": f"{grant['workflow_path']}@refs/pull/{grant['pull_request']}/merge"}, "GITHUB_WORKFLOW_REF"),
         (
             {"GITHUB_WORKFLOW_REF": f"{grant['repository']}/{grant['workflow_path']}"},
             "GITHUB_WORKFLOW_REF",
@@ -336,14 +339,13 @@ def test_host_event_and_git_requires_exact_draft_true_and_strict_env_event_facts
             "GITHUB_WORKFLOW_REF",
         ),
         (
-            {"GITHUB_WORKFLOW_REF": f"{grant['workflow_path']}.bak@refs/pull/23/merge"},
+            {"GITHUB_WORKFLOW_REF": f"{grant['workflow_path']}.bak@refs/pull/{grant['pull_request']}/merge"},
             "GITHUB_WORKFLOW_REF",
         ),
         (
-            {"GITHUB_WORKFLOW_REF": f"evil/repo/{grant['workflow_path']}@refs/pull/23/merge"},
+            {"GITHUB_WORKFLOW_REF": f"evil/repo/{grant['workflow_path']}@refs/pull/{grant['pull_request']}/merge"},
             "GITHUB_WORKFLOW_REF",
         ),
-        ({"GITHUB_WORKFLOW_REF": f"{grant['workflow_path']}@"}, "GITHUB_WORKFLOW_REF"),
     ):
         with pytest.raises(D12SystemGrantError, match=match_re):
             d12_system_proof_host.validate_host_system_event_and_git(

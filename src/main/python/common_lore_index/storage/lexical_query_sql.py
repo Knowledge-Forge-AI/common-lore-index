@@ -33,22 +33,26 @@ ALLOWED_LEXICAL_QUERY_STYLES = frozenset(
 _QUERY_CANDIDATE_RE = re.compile(r"[A-Za-z0-9_./:-]+")
 _QUERY_DELIM_RE = re.compile(r"[/_.:-]+")
 _QUERY_CAMEL_1_RE = re.compile(r"([a-z0-9])([A-Z])")
-_QUERY_CAMEL_2_RE = re.compile(r"([A-Z]+)([A-Z][a-z])")
-_QUERY_TOKEN_RE = re.compile(r"^[a-z0-9]{2,64}$")
+_QUERY_ACRONYM_BOUNDARY_RE = re.compile(r"(?<=[A-Z])(?=[A-Z][a-z])")
 
 
 def _build_alias_query_text(query_text: str) -> str:
     seen: set[str] = set()
     tokens: list[str] = []
     for match in _QUERY_CANDIDATE_RE.finditer(query_text):
-        for part in _QUERY_DELIM_RE.split(match.group(0)):
+        candidate = match.group(0)
+        parts = (candidate,) if candidate.isalnum() else _QUERY_DELIM_RE.split(candidate)
+        for part in parts:
             if not part:
                 continue
-            step1 = _QUERY_CAMEL_2_RE.sub(r"\1 \2", part)
-            step2 = _QUERY_CAMEL_1_RE.sub(r"\1 \2", step1)
-            for sub in step2.split(" "):
-                low = sub.lower()
-                if _QUERY_TOKEN_RE.fullmatch(low) is not None and low not in seen:
+            subtokens: Sequence[str]
+            if part.islower() or part.isdigit():
+                subtokens = (part,)
+            else:
+                acronyms = _QUERY_ACRONYM_BOUNDARY_RE.sub(" ", part)
+                subtokens = _QUERY_CAMEL_1_RE.sub(r"\1 \2", acronyms).lower().split(" ")
+            for low in subtokens:
+                if 2 <= len(low) <= 64 and low.isalnum() and low not in seen:
                     seen.add(low)
                     tokens.append(low)
     return " ".join(tokens)
@@ -57,26 +61,29 @@ def _build_alias_query_text(query_text: str) -> str:
 def _build_fts_query_sql(
     *, tsquery_fn: str, vector_col: str, include_alias_query: bool = False
 ) -> str:
+    query_inputs = ""
+    parsed_from = ""
     if include_alias_query:
+        query_inputs = f"""
+query_inputs AS MATERIALIZED (
+    SELECT
+        {tsquery_fn}('pg_catalog.simple'::regconfig, %(query_text)s) AS terms,
+        plainto_tsquery('pg_catalog.simple'::regconfig, %(alias_query_text)s) AS aliases
+),"""
         tsquery_expr = (
-            f"CASE "
-            f"WHEN numnode(plainto_tsquery('pg_catalog.simple'::regconfig, %(alias_query_text)s)) > 0 "
-            f"AND numnode({tsquery_fn}('pg_catalog.simple'::regconfig, %(query_text)s)) > 0 "
-            f"THEN {tsquery_fn}('pg_catalog.simple'::regconfig, %(query_text)s) "
-            f"|| plainto_tsquery('pg_catalog.simple'::regconfig, %(alias_query_text)s) "
-            f"WHEN numnode({tsquery_fn}('pg_catalog.simple'::regconfig, %(query_text)s)) > 0 "
-            f"THEN {tsquery_fn}('pg_catalog.simple'::regconfig, %(query_text)s) "
-            f"ELSE plainto_tsquery('pg_catalog.simple'::regconfig, %(alias_query_text)s) "
-            f"END"
+            "CASE WHEN numnode(aliases) > 0 AND numnode(terms) > 0 THEN terms || aliases "
+            "WHEN numnode(terms) > 0 THEN terms ELSE aliases END"
         )
+        parsed_from = "FROM query_inputs"
     else:
         tsquery_expr = f"{tsquery_fn}('pg_catalog.simple'::regconfig, %(query_text)s)"
     return f"""
 WITH
-{LEXICAL_FENCE_CTE_SQL},
+{LEXICAL_FENCE_CTE_SQL},{query_inputs}
 parsed_tsquery AS MATERIALIZED (
     SELECT
         {tsquery_expr} AS q
+    {parsed_from}
 ),
 raw_matched_chunks AS MATERIALIZED (
     SELECT
@@ -117,14 +124,14 @@ raw_matched_chunks AS MATERIALIZED (
     LIMIT 5001
 ),
 candidate_budget AS MATERIALIZED (
-    SELECT
+    SELECT count(*)::int AS candidate_count,
         (
             count(*) > 5000
             OR count(DISTINCT (rmc.binding_id, rmc.source_relative_path)) > 1000
         ) AS overflowed
     FROM raw_matched_chunks rmc
 ),
-matched_chunks AS MATERIALIZED (
+matched_chunks AS (
     SELECT
         ch.repository_id,
         ch.lexical_generation_id,
@@ -146,19 +153,23 @@ matched_chunks AS MATERIALIZED (
             )::numeric,
             8
         )::double precision AS score
-    FROM (SELECT * FROM raw_matched_chunks LIMIT 5000) ch
+    FROM (
+        SELECT * FROM raw_matched_chunks
+        ORDER BY binding_id COLLATE "C" ASC, source_relative_path COLLATE "C" ASC, chunk_ordinal ASC
+        LIMIT 5000
+    ) ch
     CROSS JOIN parsed_tsquery tq
-    ORDER BY
-        score DESC,
-        ch.binding_id COLLATE "C" ASC,
-        ch.source_relative_path COLLATE "C" ASC,
-        ch.start_line ASC,
-        ch.end_line ASC,
-        ch.chunk_id COLLATE "C" ASC
 ),
 paged AS MATERIALIZED (
     SELECT *
     FROM matched_chunks
+    ORDER BY
+        score DESC,
+        binding_id COLLATE "C" ASC,
+        source_relative_path COLLATE "C" ASC,
+        start_line ASC,
+        end_line ASC,
+        chunk_id COLLATE "C" ASC
     OFFSET %(offset)s
     LIMIT %(limit)s
 ),
@@ -197,7 +208,7 @@ SELECT json_build_object(
     'extraction_receipt_id', (SELECT live_receipt_id FROM fence_state),
     'graph_candidate_id', (SELECT live_candidate_id FROM fence_state),
     'empty_tsquery', (SELECT numnode(q) = 0 FROM parsed_tsquery),
-    'total_matches', (SELECT count(*)::int FROM matched_chunks),
+    'total_matches', (SELECT LEAST(candidate_count, 5000) FROM candidate_budget),
     'candidate_overflow', COALESCE((SELECT overflowed FROM candidate_budget), false),
     'capped_files', '[]'::json,
     'omissions', COALESCE(
@@ -304,7 +315,7 @@ def execute_single_statement_lexical_query(
         "omission_binding_ids": list(omission_binding_ids),
         "path_prefixes": list(dict.fromkeys(normalize_lexical_path_prefix(p) for p in path_prefixes)),
         "query_text": query_text,
-        "alias_query_text": _build_alias_query_text(query_text),
+        "alias_query_text": _build_alias_query_text(query_text) if query_style == "ranked_terms" else "",
         "limit": int(limit),
         "offset": int(offset),
         "max_occurrences_per_file": int(max_occurrences_per_file),

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from hashlib import sha256
 from typing import Any
 
 from common_lore_index.storage.authority import AttemptNumber, OperationId
@@ -9,6 +10,7 @@ from common_lore_index.storage.canonical_staging_merge import build_canonical_me
 from common_lore_index.storage.staging_copy import STAGING_COPY_TABLES, copy_stage_rows
 from common_lore_index.storage.staging_merge import MergeContext
 from common_lore_index.storage.staging_ownership import StageOwner
+from common_lore_index.storage.staging_resource_observability import capture_staging_resources
 
 __all__ = (
     "build_reference_edge_evidence_merge_statement",
@@ -24,6 +26,9 @@ __all__ = (
     "measure_fixture_cardinalities",
     "check_temp_tables_analyzed",
     "extract_plan_triggers",
+    "insert_diagnostic_raw_fixture",
+    "observe_staged_statement",
+    "prepare_edge_evidence_insert",
 )
 
 
@@ -246,19 +251,68 @@ def insert_raw_fixture(
     repository_id: str,
     run_id: str,
     ordinals: tuple[int, ...] = (0,),
-    diagnostic: bool = False,
 ) -> None:
     for ord_idx in ordinals:
-        source_id = f"fixture:{ord_idx}" if diagnostic else "fixture:source"
-        path = f"fixture/r{ord_idx}" if diagnostic else "fixture/root"
         postgres.psql_scalar(
             f"""INSERT INTO raw_observations(
                 repository_id, run_id, ordinal, schema_version, kind, source_id, path, payload_json, payload_hash
             ) VALUES (
-                {repository_id}, {run_id}, {ord_idx}, 1, 'file', '{source_id}', '{path}',
-                '{{"kind":"file","path":"{path}"}}'::jsonb, '{format(ord_idx, "064x")}'
+                {repository_id}, {run_id}, {ord_idx}, 1, 'file', 'fixture:source', 'fixture/root',
+                '{{"kind":"file","path":"fixture/root"}}'::jsonb, '{format(ord_idx, "064x")}'
             ) ON CONFLICT DO NOTHING;"""
         )
+
+
+def insert_diagnostic_raw_fixture(connection: Any, repo: str, run: str, count: int) -> None:
+    connection.execute("""
+INSERT INTO raw_observations(
+    repository_id, run_id, ordinal, schema_version, kind, source_id, path, payload_json, payload_hash
+)
+SELECT %s, %s, i, 1, 'file', 'fixture:' || i, 'fixture/r' || i,
+       jsonb_build_object('kind', 'file', 'path', 'fixture/r' || i), lpad(to_hex(i), 64, '0')
+FROM generate_series(0, %s) AS series(i)
+""", (int(repo), int(run), count - 1))
+
+
+def prepare_edge_evidence_insert(connection: Any, repo: str, run: str, stage_id: str) -> tuple[str, str]:
+    statements = build_canonical_merge_statements(merge_context(repo, run, stage_id))
+    for statement in statements[:-1]:
+        connection.execute(statement)
+    setup, insert = statements[-1].split("WITH staged_links AS", 1)
+    subject, teardown = insert.split("DROP TABLE IF EXISTS", 1)
+    connection.execute(setup)
+    return "WITH staged_links AS" + subject, "DROP TABLE IF EXISTS" + teardown
+
+
+def observe_staged_statement(
+    connection: Any, observer: Any, statement: str, params: tuple[str, ...] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    before = capture_staging_resources(observer)
+    row = connection.execute(f"EXPLAIN (ANALYZE, BUFFERS, WAL, FORMAT JSON) {statement}", params).fetchone()
+    after = capture_staging_resources(observer)
+    assert row is not None
+    plan = row[0][0]
+    root = plan["Plan"]
+    # The root contains inclusive totals. Adding descendants would double-count work.
+    keys = (
+        "Shared Hit Blocks", "Shared Read Blocks", "Shared Dirtied Blocks", "Shared Written Blocks",
+        "Local Hit Blocks", "Local Read Blocks", "Local Dirtied Blocks", "Local Written Blocks",
+        "Temp Read Blocks", "Temp Written Blocks", "WAL Records", "WAL FPI", "WAL Bytes",
+    )
+
+    def delta(start: int | None, end: int | None) -> int | None:
+        return end - start if start is not None and end is not None and end >= start else None
+
+    same_database = (before.temporary_counter_identity is not None
+                     and before.temporary_counter_identity == after.temporary_counter_identity)
+    return plan, {
+        "statement_sha256": sha256(statement.encode()).hexdigest(),
+        "statement_root": {key: root[key] for key in keys},
+        "shared_interval": {
+            "wal_position_bytes_delta": delta(before.wal_position, after.wal_position),
+            "database_temporary_bytes_delta": delta(before.temporary_bytes, after.temporary_bytes) if same_database else None,
+        },
+    }
 
 
 def query_canonical_edge_evidence(connection: Any, repository_id: str, run_id: str | None = None) -> list[tuple[Any, ...]]:
@@ -280,16 +334,14 @@ WHERE e.repository_id = %s
         return cursor.fetchall()
 
 
-def inspect_plan_nodes(plan: dict[str, Any]) -> tuple[list[str], list[str], int]:
+def inspect_plan_nodes(plan: dict[str, Any]) -> tuple[list[str], list[str]]:
     node_types: list[str] = [plan.get("Node Type", "")]
     relations: list[str] = [plan.get("Relation Name", "")] if "Relation Name" in plan else []
-    temp_written = plan.get("Temp Written Blocks", 0)
     for sub in plan.get("Plans", []):
-        sub_types, sub_rels, sub_written = inspect_plan_nodes(sub)
+        sub_types, sub_rels = inspect_plan_nodes(sub)
         node_types.extend(sub_types)
         relations.extend(sub_rels)
-        temp_written += sub_written
-    return node_types, relations, temp_written
+    return node_types, relations
 
 
 def measure_fixture_cardinalities(connection: Any, stage_id: str) -> dict[str, int]:
@@ -300,12 +352,15 @@ def measure_fixture_cardinalities(connection: Any, stage_id: str) -> dict[str, i
         edges = cursor.fetchone()[0]
         cursor.execute("SELECT count(*) FROM stage_canonical_evidence WHERE stage_id = %s", (stage_id,))
         evidence = cursor.fetchone()[0]
+        cursor.execute("SELECT count(*) FROM stage_canonical_node_evidence WHERE stage_id = %s", (stage_id,))
+        node_evidence = cursor.fetchone()[0]
         cursor.execute("SELECT count(*) FROM stage_canonical_edge_evidence WHERE stage_id = %s", (stage_id,))
         edge_evidence = cursor.fetchone()[0]
     return {
         "stage_canonical_nodes": int(nodes),
         "stage_canonical_edges": int(edges),
         "stage_canonical_evidence": int(evidence),
+        "stage_canonical_node_evidence": int(node_evidence),
         "stage_canonical_edge_evidence": int(edge_evidence),
     }
 

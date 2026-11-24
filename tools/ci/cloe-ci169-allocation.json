@@ -1,0 +1,41 @@
+{
+  "approval": {
+    "operator_request": "Remediate the failed CI168 and try again.",
+    "phase": "CLOE-CI168REPAIR1",
+    "schema": "cloe-ci169-approval-v1",
+    "scope": "Publish one fast-forward to staging and one automatic synchronize campaign on draft PR 28.",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 73,
+    "attempt": 1,
+    "component_runtime_executions": 43,
+    "native_report_sha256": "20fff70b1b90706fb9f5a7e115358d6615b735a83955b9e8d23b2d0ba3bac338",
+    "preceding_campaign": 168,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 47,
+    "rust_report_sha256": "f0b43ac1b447fed5382ae0ac3dde69578cf5de29fa1c1051e341e8f566ed5f5d",
+    "schema": "cloe-ci169-ledger-before-v1",
+    "staging_smoke_report_sha256": "4990e45769febd10615bbcd56ac97e569523162b941dcf8b9aaf9b915d24689b",
+    "system_admission_proof_sha256": "b170b691b3fff6623b699be6febd226bfdbad7e892dbe221a03435c3ae63e205",
+    "system_report_sha256": "f523835349400c3c6b6fa5f5f61bb27f652a9536bd1ce9abcb804990d2fdbe7e",
+    "wheel_transfers": 88
+  },
+  "reservation": {
+    "application_start": 74,
+    "approval_sha256": "030d27f1da284773541e19f9f9bdfbe103ac566fbbd766d246e3ee4428ae01eb",
+    "base": "da0a6ba92350da994082574cea70d1fb27542a21",
+    "before": "9cb7eb8892ef21cfd4fe5e3f77cff001ad4d9f20",
+    "component_runtime_cumulative": 44,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "a6000256a2326a9e8de5fa8cc5d11c7d36fe0009748d98d65869909e7cd603ba",
+    "nonce": "120f9c81328704260d716cdaf069b960",
+    "pull_request": 28,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 48,
+    "schema": "cloe-ci169-reservation-v1",
+    "wheel_transfers_cumulative": 90,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 169
+  }
+}

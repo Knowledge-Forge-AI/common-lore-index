@@ -129,9 +129,15 @@ def main(argv: list[str] | None = None) -> int:
                 raise RuntimeError("inner Docker daemon exited before test release")
             time.sleep(0.05)
         inner_env = _test_environment()
-        _materialize_inner_pgvector_if_requested(test_argv, inner_env)
+        command: tuple[str, ...]
+        if test_argv == ["--repomap-lexical-replay"]:
+            command = ("python3", "-B", "/workspace/tools/run_lexical_replay.py", "--inner")
+            inner_env["PYTHONPATH"] += ":/workspace/src/main/python:/workspace/src/test/support/python"
+        else:
+            _materialize_inner_pgvector_if_requested(test_argv, inner_env)
+            command = _test_command(test_argv)
         test_process = subprocess.Popen(
-            _test_command(test_argv),
+            command,
             cwd="/workspace",
             env=inner_env,
         )

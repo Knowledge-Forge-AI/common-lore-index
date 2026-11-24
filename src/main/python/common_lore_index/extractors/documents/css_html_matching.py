@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -18,7 +18,7 @@ SIMPLE_TOKEN_PATTERN = re.compile(
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _HtmlElement:
     path: str
     key: str
@@ -29,7 +29,7 @@ class _HtmlElement:
     id_is_unique: bool
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _CssSelector:
     path: str
     key: str
@@ -40,7 +40,7 @@ class _CssSelector:
     metadata: Mapping[str, Any]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _SelectorComponents:
     tag: str | None
     classes: tuple[str, ...]
@@ -50,13 +50,19 @@ class _SelectorComponents:
 def extract_css_selector_match_observations(
     observations: Sequence[RawObservation],
 ) -> tuple[RawObservation, ...]:
+    """Match supported selectors against the documents that link their stylesheet.
+
+    Preserve stylesheet-link order and document observation order.
+    """
     stylesheet_pairs = _stylesheet_pairs(observations)
     if not stylesheet_pairs:
         return ()
 
-    selectors_by_file = _css_selectors_by_file(observations)
-    elements_by_file = _html_elements_by_file(observations)
-    anchors_by_pointer = _html_anchors_by_pointer(observations)
+    css_files = {css_file for _, css_file, _ in stylesheet_pairs}
+    html_files = {html_file for html_file, _, _ in stylesheet_pairs}
+    selectors_by_file = _css_selectors_by_file(observations, css_files)
+    elements_by_file = _html_elements_by_file(observations, html_files)
+    anchors_by_pointer = _html_anchors_by_pointer(observations, html_files)
     element_lookups_by_file: dict[str, dict[str, _HtmlElement]] = {}
     matches: list[RawObservation] = []
 
@@ -118,12 +124,10 @@ def _stylesheet_pairs(
     return tuple(pairs)
 
 
-def _css_selectors_by_file(
-    observations: Sequence[RawObservation],
-) -> dict[str, tuple[_CssSelector, ...]]:
+def _css_selectors_by_file(rows: Iterable[RawObservation], paths: set[str]) -> dict[str, tuple[_CssSelector, ...]]:
     selectors: dict[str, list[_CssSelector]] = {}
-    for observation in observations:
-        if observation.kind != "css.selector":
+    for observation in rows:
+        if observation.kind != "css.selector" or observation.path not in paths:
             continue
         selector_key = observation.target
         pointer = _metadata_text(observation.metadata, "selector_pointer")
@@ -150,12 +154,10 @@ def _css_selectors_by_file(
     return {path: tuple(items) for path, items in selectors.items()}
 
 
-def _html_elements_by_file(
-    observations: Sequence[RawObservation],
-) -> dict[str, tuple[_HtmlElement, ...]]:
+def _html_elements_by_file(rows: Iterable[RawObservation], paths: set[str]) -> dict[str, tuple[_HtmlElement, ...]]:
     elements: dict[str, list[_HtmlElement]] = {}
-    for observation in observations:
-        if observation.kind != "html.element":
+    for observation in rows:
+        if observation.kind != "html.element" or observation.path not in paths:
             continue
         pointer = _metadata_text(observation.metadata, "pointer")
         tag = _metadata_text(observation.metadata, "tag")
@@ -179,12 +181,10 @@ def _html_elements_by_file(
     return {path: tuple(items) for path, items in elements.items()}
 
 
-def _html_anchors_by_pointer(
-    observations: Sequence[RawObservation],
-) -> dict[str, dict[str, str]]:
+def _html_anchors_by_pointer(rows: Iterable[RawObservation], paths: set[str]) -> dict[str, dict[str, str]]:
     anchors: dict[str, dict[str, str]] = {}
-    for observation in observations:
-        if observation.kind != "html.heading":
+    for observation in rows:
+        if observation.kind != "html.heading" or observation.path not in paths:
             continue
         if observation.metadata.get("id_is_unique") is not True:
             continue

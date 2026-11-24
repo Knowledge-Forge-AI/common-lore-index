@@ -328,6 +328,7 @@ def test_runner_capabilities_isolate_work_and_preserve_terminal_precedence(
     assert result == expected_status
     capabilities.split.assert_called_once_with(["supplied arguments"])
     capabilities.scratch.assert_called_once()
+    assert capabilities.resource_type.start.call_args.kwargs["unit_suite"] is True
     capabilities.finalize.assert_called_once_with(
         layout, "passed" if expected_status == 0 else "failed",
         exit_status=expected_status, live_runtime_residue=residue,

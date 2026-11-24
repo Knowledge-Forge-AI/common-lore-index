@@ -30,6 +30,18 @@ from common_lore_index.observations.raw import RawObservation
 
 
 class CanonicalMarkdownWarcIntegrationTests(unittest.TestCase):
+    def test_markdown_invalid_url_and_percent_escapes_keep_later_links(self):
+        observations = extract_markdown_file_observations(
+            "guide.md", "[malformed](https://[example.invalid/path) [bad escape](https://[secondary.invalid/unsafe%Q) [valid](https://example.invalid/ok%20id)",
+        )
+        links = [row for row in observations if row.kind == "markdown.link"]
+        self.assertEqual(len(links), 3)
+        self.assertEqual(links[0].metadata["resolution_reason"], "malformed-external-url")
+        self.assertEqual(links[1].metadata["resolution_reason"], "malformed-percent-escape")
+        self.assertTrue((links[2].target or "").startswith("external.url:"))
+        self.assertNotIn("secondary.invalid", str([row.to_dict() for row in observations]))
+        self.assertTrue(canonicalize_observations(observations).ok)
+
     def test_markdown_extractor_ambiguity_contracts(self):
         frontmatter = parse_frontmatter(
             "---\n"
@@ -53,7 +65,7 @@ class CanonicalMarkdownWarcIntegrationTests(unittest.TestCase):
             "docs/guide.md",
             (
                 "---\n"
-                "title: Docs\n"
+                "title: Docs\r\n"
                 "---\n"
                 "# Guide\n"
                 "## Usage\n"
@@ -66,7 +78,7 @@ class CanonicalMarkdownWarcIntegrationTests(unittest.TestCase):
                 "\n"
                 "[ref]: #usage-1 \"title\"\n"
                 "```sh\n"
-                "echo not executed\n"
+                "echo not executed\u2028more\n"
             ),
             repository_paths={"docs/guide.md", "assets/logo.png"},
             markdown_anchors={"docs/guide.md": {"guide", "usage", "details", "usage-1"}},
@@ -83,6 +95,7 @@ class CanonicalMarkdownWarcIntegrationTests(unittest.TestCase):
         self.assertEqual(headings[2].metadata["parent_anchor"], "usage")
         self.assertEqual(headings[3].metadata["parent_anchor"], "guide")
         self.assertFalse(fences[0].metadata["closed"])
+        self.assertEqual(fences[0].end_line, 14)
         self.assertEqual(
             {item.target for item in links},
             {

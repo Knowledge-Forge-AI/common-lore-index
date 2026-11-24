@@ -63,6 +63,19 @@ class StorageMigrationUnitTests(unittest.TestCase):
             storage_canonical.query_canonical_node_records,
         )
 
+    def test_migration_checksum_preserves_exact_line_endings(self):
+        import hashlib
+        from common_lore_index.storage._schema_migrations import migration_from_path
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            path = root / "001-fixture.sql"
+            data = b"\r\n--liquibase formatted sql\r\n--changeset fixture:1\rSELECT 1;"
+            path.write_bytes(data)
+            migration = migration_from_path(path, root=root, ordinal=1)
+        self.assertEqual(migration.changeset_id, "fixture:1")
+        self.assertEqual(migration.checksum, hashlib.sha256(data).hexdigest())
+
     def test_default_rdbms_root_points_to_main_resources(self):
         root = default_rdbms_root()
 

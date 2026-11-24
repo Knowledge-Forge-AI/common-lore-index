@@ -15,7 +15,7 @@ from common_lore_index.artifacts._bundle_stream_encode import (
 from common_lore_index.artifacts._bundle_stream_links import DiskFamilyLinkValidator
 from common_lore_index.artifacts._bundle_stream_parse import StreamingBundleParser
 from common_lore_index.artifacts._bundle_stream_sort import BoundedExternalRowSorter
-from common_lore_index.artifacts._canonical import canonical_json, decode_canonical_json
+from common_lore_index.artifacts._canonical import canonical_json, decode_canonical_json, prefixed_digest
 from common_lore_index.artifacts.bundle import (
     MAX_BUNDLE_LINE_BYTES,
     PUBLICATION_FAMILIES,
@@ -113,8 +113,8 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
         store = InMemoryArtifactStore()
         fams = _empty_families()
         fams["files"] = (
-            {"path": "a.py", "stage_id": "stage-unassigned"},
-            {"path": "b.py", "stage_id": "stage-unassigned"},
+            {"path": "a.py", "metadata_json": {"display": '雪 a "quoted"'}, "stage_id": "stage-unassigned"},
+            {"path": "b.py", "metadata_json": {"display": '雪 b 🚲 "quoted"'}, "stage_id": "stage-unassigned"},
         )
         bundle = _make_bundle(row_stage_contract="stage-unassigned-v1", families=fams)
         receipt, _b_ref, _r_ref = _make_receipt(bundle, store)
@@ -123,7 +123,9 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
 
         # Valid parse without stage_id (family_spools is None -> families empty, to_prepared_stage_rows raises)
         parser = StreamingBundleParser()
-        desc_no_stage = parser.parse_and_validate(io.BytesIO(raw), expect, receipt, stage_id=None)
+        desc_no_stage = StreamingBundleParser(max_bundle_bytes=len(raw)).parse_and_validate(
+            io.BytesIO(raw), expect, receipt, stage_id=None,
+        )
         self.assertEqual(desc_no_stage.families["files"], ())
         with self.assertRaisesRegex(ValueError, "stage rows were not prepared"):
             desc_no_stage.to_prepared_stage_rows()
@@ -133,6 +135,7 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
         self.assertEqual(len(desc_staged.families["files"]), 2)
         prepared = desc_staged.to_prepared_stage_rows()
         self.assertEqual(prepared.files, 2)
+        self.assertEqual(desc_staged.canonical_bytes(), raw)
         desc_staged.close()
 
         # Valid parse with legacy-absent-v1 + stage_id -> exercises legacy families property
@@ -176,10 +179,13 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
             parser.parse_and_validate(io.BytesIO(raw), expect, replace(receipt, cancellation="requested"))
 
         # Record bounds, family ordering, intra-family ordering, stage ambiguity, trailer & EOF errors
-        with self.assertRaisesRegex(ValueError, "publication bundle byte bounds exceeded"):
-            StreamingBundleParser(max_bundle_bytes=len(lines[0]) + 5).parse_and_validate(
-                io.BytesIO(raw), expect, receipt, stage_id="stg-err",
-            )
+        for cap in (len(lines[0]) - 2, len(lines[0]) + 5):
+            limited = io.BytesIO(raw)
+            with self.assertRaisesRegex(ValueError, "publication bundle byte bounds exceeded"):
+                StreamingBundleParser(max_bundle_bytes=cap).parse_and_validate(
+                    limited, expect, receipt, stage_id="stg-err",
+                )
+            self.assertEqual(limited.tell(), cap + 1)
         bad_fam = canonical_json({"family": "unknown_fam", "frame": "record", "record": {}})
         with self.assertRaisesRegex(ValueError, "publication bundle family is invalid"):
             parser.parse_and_validate(io.BytesIO(lines[0] + bad_fam + lines[-1]), expect, receipt)
@@ -287,6 +293,51 @@ class Navigation33StreamingBundleValidationIntegrationTests(unittest.TestCase):
                 lv.validate_edge_evidence({"source_canonical_key": "node:1", "edge_kind": "calls", "target_canonical_key": "node:1", "identity_metadata_hash": "h1", "evidence_key": "ev:missing"})
         finally:
             lv.close()
+
+    def test_streaming_parser_keeps_links_to_wide_unicode_keys(self) -> None:
+        keys = ("雪" * 90_000, "雲" * 80_000, "風" * 95_000)
+        families = _empty_families()
+        families["raw_observations"] = ({"source_ordinal": 1, "stage_id": "stage-unassigned"},)
+        families["canonical_nodes"] = tuple(
+            {"canonical_key": key, "stage_id": "stage-unassigned"} for key in keys
+        )
+        families["canonical_evidence"] = (
+            {"evidence_key": "proof", "raw_observation_ordinal": 1, "stage_id": "stage-unassigned"},
+        )
+        families["canonical_node_evidence"] = tuple(
+            {"canonical_key": key, "evidence_key": "proof", "stage_id": "stage-unassigned"} for key in keys
+        )
+        edge: dict[str, object] = {
+            "source_canonical_key": keys[0],
+            "edge_kind": "contains",
+            "target_canonical_key": keys[1],
+            "identity_metadata_hash": "a" * 64,
+            "stage_id": "stage-unassigned",
+        }
+        families["canonical_edges"] = (edge,)
+        families["canonical_edge_evidence"] = ({**edge, "evidence_key": "proof"},)
+        bundle = _make_bundle(families=families)
+        raw = bundle.canonical_bytes()
+        encoder = StreamingBundleEncoder(
+            **_meta(), privacy=PrivacyClassification.PUBLIC,
+            row_stage_contract="stage-unassigned-v1", family_rows=cast(Any, families),
+            max_sorter_buffer_bytes=512 * 1024,
+        )
+        self.assertEqual(b"".join(encoder.stream_chunks(chunk_size=4096)), raw)
+        self.assertGreater(encoder.spill_run_count, 0)
+        self.assertEqual(PublicationBundle.from_bytes(raw), bundle)
+        self.assertEqual(bundle.bundle_id, prefixed_digest("bundle1:", b"repomap-publication-bundle-v1", raw))
+        receipt, _, _ = _make_receipt(bundle, InMemoryArtifactStore())
+        expected = PublicationExpectation.from_bundle(bundle, mutating_owner_count=1)
+        parsed = StreamingBundleParser().parse_and_validate(
+            io.BytesIO(bundle.canonical_bytes()), expected, receipt,
+        )
+        try:
+            self.assertEqual(parsed.bundle_id, bundle.bundle_id)
+            self.assertEqual(parsed.family_counts["canonical_node_evidence"], len(keys))
+            self.assertEqual(parsed.family_counts["canonical_edge_evidence"], 1)
+        finally:
+            parsed.close()
 
     def test_bundle_receipt_and_validator_malformed_and_semantic_refusals(self) -> None:
         """PublicationBundle, ExtractionReceipt, and PublisherBundleValidator enforce canonical and link rules."""

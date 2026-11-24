@@ -6,10 +6,12 @@ from typing import Any
 from xml.etree import ElementTree
 
 from common_lore_index.extractors.documents.feed_support import (
+    FeedItemIdentity,
     _atom_link,
     _child_text,
     _children,
     _element_text,
+    _identity_url,
     _item_identity,
     _parse_date,
     _rss_author,
@@ -28,7 +30,7 @@ def _rss_channel_info(
     channel: ElementTree.Element,
 ) -> dict[str, Any]:
     title = _child_text(channel, "title")
-    link = _child_text(channel, "link")
+    link = _identity_url(_child_text(channel, "link"))
     if link:
         channel_id = f"link:{link}"
         identity_source = "link"
@@ -58,9 +60,9 @@ def _atom_channel_info(
     feed: ElementTree.Element,
 ) -> dict[str, Any]:
     title = _child_text(feed, "title")
-    self_link = _atom_link(feed, "self")
+    self_link = _identity_url(_atom_link(feed, "self"))
     feed_id = _child_text(feed, "id")
-    alternate_link = _atom_link(feed, "alternate")
+    alternate_link = _identity_url(_atom_link(feed, "alternate"))
     if self_link:
         channel_id = f"self:{self_link}"
         identity_source = "self-link"
@@ -99,8 +101,8 @@ def _json_channel_info(
     payload: dict[str, Any],
 ) -> dict[str, Any]:
     title = _text_value(payload.get("title"))
-    feed_url = _text_value(payload.get("feed_url"))
-    home_page_url = _text_value(payload.get("home_page_url"))
+    feed_url = _identity_url(_text_value(payload.get("feed_url")))
+    home_page_url = _identity_url(_text_value(payload.get("home_page_url")))
     if feed_url:
         channel_id = f"self:{feed_url}"
         identity_source = "feed_url"
@@ -151,22 +153,42 @@ def _channel_info(
     }
 
 
+def _rss_item_identity(item: ElementTree.Element, ordinal: int) -> FeedItemIdentity:
+    guid = _child_text(item, "guid")
+    link = None if guid else _identity_url(_child_text(item, "link"))
+    fallback = None if guid or link else _title_date_identity(_child_text(item, "title"), _child_text(item, "pubDate"))
+    return _item_identity(("guid", guid), ("link", link), ("title+pubDate", fallback), ordinal=ordinal)
+
+
+def _atom_item_identity(entry: ElementTree.Element, ordinal: int) -> FeedItemIdentity:
+    entry_id = _child_text(entry, "id")
+    link = None if entry_id else _identity_url(_atom_link(entry, "alternate"))
+    fallback = None if entry_id or link else _title_date_identity(
+        _child_text(entry, "title"), _child_text(entry, "updated") or _child_text(entry, "published"),
+    )
+    return _item_identity(("id", entry_id), ("alternate-link", link), ("title+updated", fallback), ordinal=ordinal)
+
+
+def _json_item_identity(item: dict[str, Any], ordinal: int) -> FeedItemIdentity:
+    item_id = _text_value(item.get("id"))
+    url = None if item_id else _identity_url(_text_value(item.get("url"))) or _identity_url(_text_value(item.get("external_url")))
+    fallback = None if item_id or url else _title_date_identity(
+        _text_value(item.get("title")), _text_value(item.get("date_published")) or _text_value(item.get("date_modified")),
+    )
+    return _item_identity(("id", item_id), ("url", url), ("title+date", fallback), ordinal=ordinal)
+
+
 def _rss_item_data(
     relative_path: str,
     channel_key: str,
     item: ElementTree.Element,
     ordinal: int,
+    identity: FeedItemIdentity,
 ) -> dict[str, Any]:
     title = _child_text(item, "title")
     link = _child_text(item, "link")
-    guid = _child_text(item, "guid")
     pub_date = _child_text(item, "pubDate")
-    base_item_id, identity_source, identity_strength = _item_identity(
-        ("guid", guid),
-        ("link", link),
-        ("title+pubDate", _title_date_identity(title, pub_date)),
-        ordinal=ordinal,
-    )
+    base_item_id, identity_source, identity_strength = identity
     enclosures = []
     for enclosure in _children(item, "enclosure"):
         url = enclosure.attrib.get("url", "").strip()
@@ -210,18 +232,12 @@ def _atom_item_data(
     channel_key: str,
     entry: ElementTree.Element,
     ordinal: int,
+    identity: FeedItemIdentity,
 ) -> dict[str, Any]:
     title = _child_text(entry, "title")
-    entry_id = _child_text(entry, "id")
-    alternate_link = _atom_link(entry, "alternate")
     updated = _child_text(entry, "updated")
     published = _child_text(entry, "published")
-    base_item_id, identity_source, identity_strength = _item_identity(
-        ("id", entry_id),
-        ("alternate-link", alternate_link),
-        ("title+updated", _title_date_identity(title, updated or published)),
-        ordinal=ordinal,
-    )
+    base_item_id, identity_source, identity_strength = identity
     links = []
     for link in _children(entry, "link"):
         href = link.attrib.get("href", "").strip()
@@ -265,29 +281,29 @@ def _atom_item_data(
     }
 
 
+def _json_array(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
 def _json_item_data(
     relative_path: str,
     channel_key: str,
     item: dict[str, Any],
     ordinal: int,
+    identity: FeedItemIdentity,
 ) -> dict[str, Any]:
     title = _text_value(item.get("title"))
     url = _text_value(item.get("url"))
     external_url = _text_value(item.get("external_url"))
     published = _text_value(item.get("date_published"))
     modified = _text_value(item.get("date_modified"))
-    base_item_id, identity_source, identity_strength = _item_identity(
-        ("id", _text_value(item.get("id"))),
-        ("url", url or external_url),
-        ("title+date", _title_date_identity(title, published or modified)),
-        ordinal=ordinal,
-    )
+    base_item_id, identity_source, identity_strength = identity
     links = []
     for field, value in (("url", url), ("external_url", external_url)):
         if value:
             links.append({"value": value, "attribute": field})
     enclosures = []
-    for attachment in item.get("attachments", []):
+    for attachment in _json_array(item.get("attachments")):
         if not isinstance(attachment, dict):
             continue
         attachment_url = _text_value(attachment.get("url"))
@@ -301,12 +317,12 @@ def _json_item_data(
                 }
             )
     authors = []
-    for author in item.get("authors", []):
+    for author in _json_array(item.get("authors")):
         if isinstance(author, dict):
             name = _text_value(author.get("name")) or _text_value(author.get("url"))
             if name:
                 authors.append({"name": _safe_label(name)})
-    categories = [_safe_label(tag) for tag in item.get("tags", []) if isinstance(tag, str)]
+    categories = [_safe_label(tag) for tag in _json_array(item.get("tags")) if isinstance(tag, str)]
     content = (
         _text_value(item.get("summary"))
         or _text_value(item.get("content_text"))

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
 from common_lore_index.ops.config import resolve_repo_map_home
+from common_lore_index.runtime._backup_manifest_records import iter_backup_manifest_paths
 from common_lore_index.runtime._backup_provenance import (
     BACKUP_FORMAT_VERSION,
     CORE_V1_RESTORE_PROTOCOL,
@@ -64,7 +65,7 @@ def list_backups(repo_map_home: str | Path | None) -> BackupListingResult:
     backups: list[dict[str, Any]] = []
     diagnostics: list[LocalRuntimeDiagnostic] = []
     if backups_root.exists():
-        for manifest_path in sorted(backups_root.rglob("manifest.json")):
+        for manifest_path in iter_backup_manifest_paths(backups_root):
             try:
                 manifest = read_manifest_file(manifest_path)
             except LocalDbBackupError as error:

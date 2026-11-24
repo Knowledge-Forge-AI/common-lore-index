@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import posixpath
 import re
+from collections.abc import Iterator
 from typing import Any
 
 from common_lore_index import __version__
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.extractors.shell.powershell_common import (
     EXTRACTOR_NAME,
     _is_secret_like_name,
@@ -96,20 +98,15 @@ def _extract_manifest_fields_legacy(
     content: str,
 ) -> tuple[RawObservation, ...]:
     observations: list[RawObservation] = []
-    lines = content.splitlines()
-    index = 0
-    while index < len(lines):
-        line_number = index + 1
-        line = lines[index]
+    lines = enumerate(iter_text_lines(content), start=1)
+    for line_number, line in lines:
         match = MANIFEST_FIELD_PATTERN.match(line)
         if match is None:
-            index += 1
             continue
         name = match.group("name")
         value = match.group("value").strip()
-        if STRING_LITERAL_PATTERN.match(value):
-            literal = STRING_LITERAL_PATTERN.match(value)
-            assert literal is not None
+        literal = STRING_LITERAL_PATTERN.match(value)
+        if literal is not None:
             observations.append(
                 _manifest_field_observation(
                     relative_path,
@@ -119,20 +116,18 @@ def _extract_manifest_fields_legacy(
                     value=literal.group("value"),
                 )
             )
-            index += 1
             continue
         if ARRAY_START_PATTERN.match(value):
-            values, end_index = _collect_manifest_array(lines, index + 1)
+            values, end_line = _collect_manifest_items(lines, line_number + 1)
             observations.append(
                 _manifest_field_observation(
                     relative_path,
                     line_number,
-                    end_index + 1,
+                    end_line,
                     name,
                     values=values,
                 )
             )
-            index = end_index + 1
             continue
         observations.append(
             _manifest_field_observation(
@@ -143,7 +138,6 @@ def _extract_manifest_fields_legacy(
                 unknown=True,
             )
         )
-        index += 1
     return tuple(observations)
 
 
@@ -736,12 +730,18 @@ def _resolve_manifest_reference(relative_path: str, token: str) -> str | None:
 
 
 def _collect_manifest_array(lines: list[str], start_index: int) -> tuple[tuple[str, ...], int]:
+    indexed = ((index, lines[index]) for index in range(start_index, len(lines)))
+    return _collect_manifest_items(indexed, start_index)
+
+
+def _collect_manifest_items(
+    lines: Iterator[tuple[int, str]], start_index: int,
+) -> tuple[tuple[str, ...], int]:
     values: list[str] = []
-    index = start_index
-    while index < len(lines):
-        line = lines[index]
+    end_index = start_index
+    for index, line in lines:
+        end_index = index
         values.extend(match.group("value") for match in QUOTED_VALUE_PATTERN.finditer(line))
         if ")" in line:
-            return tuple(values), index
-        index += 1
-    return tuple(values), max(start_index, len(lines) - 1)
+            break
+    return tuple(values), end_index

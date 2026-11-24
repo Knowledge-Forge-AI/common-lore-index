@@ -131,6 +131,15 @@ class StagingMeasurements:
         return self._phase_event_count
 
     @contextmanager
+    def sample_resources(self) -> Iterator[None]:
+        """Contain optional sample failures while preserving lifecycle and process control."""
+
+        try:
+            yield
+        except Exception:
+            self._measurement_failed = True
+
+    @contextmanager
     def phase(self, phase_code: str) -> Iterator[None]:
         """Emit one opt-in source-owned pre-final phase lifecycle."""
 

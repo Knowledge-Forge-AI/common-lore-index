@@ -70,6 +70,36 @@ def audit(case):
                                    trusted_genesis_sha256=document_digest(case.before))
 
 
+@pytest.mark.parametrize("defect", [None, "missing-successor", "unmapped-source", "lower-confidence"])
+def test_successor_only_predecessor_keeps_exact_sealed_namespace_evidence(tmp_path, defect):
+    from ci.python_retention_history import validate_path_history
+    from ci.python_retention_history_git import HistoryContext, HistoryValidationError
+    case = namespace_case(tmp_path)
+    inventory = case.repo / "inventory.json"
+    prior: dict[str, Any] = {"files": [{"path": case.new_path, "confidence": 0.95, "maintained_executable": True}],
+             "decompositions": [{"from": MODULE_PATH, "to": [MODULE_PATH],
+                                  "rationale": "Historical living split before namespace projection"}]}
+    write_json(inventory, prior)
+    commit_all(case.repo, "Successor-only public predecessor")
+    current = copy.deepcopy(prior)
+    if defect == "missing-successor":
+        current["files"] = []
+    elif defect == "unmapped-source":
+        current["decompositions"].append({"from": "tools/unmapped.py", "to": [case.new_path],
+                                           "rationale": "Unproved source must remain refused"})
+    elif defect == "lower-confidence":
+        current["files"][0]["confidence"] = 0.1
+    write_json(inventory, current)
+    paths = {row["path"] for row in current["files"]}
+    if defect:
+        with pytest.raises(HistoryValidationError):
+            validate_path_history(case.repo, inventory, paths, current, context=HistoryContext())
+    else:
+        result = validate_path_history(case.repo, inventory, paths, current, context=HistoryContext())
+        assert result.evidence["namespace_source_successors"] == {MODULE_PATH: case.new_path}
+        assert current["decompositions"] == prior["decompositions"]
+
+
 def test_actual_worktree_namespace_edge_and_committed_replay(tmp_path):
     case = namespace_case(tmp_path)
     result = audit(case)

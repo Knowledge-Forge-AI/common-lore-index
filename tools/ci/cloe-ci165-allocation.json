@@ -1,0 +1,42 @@
+{
+  "approval": {
+    "operator_request": "Proceed with the website-base refresh and staging publication.",
+    "phase": "CLOE-CI164-LOCALREAD1",
+    "schema": "cloe-ci165-approval-v1",
+    "scope": "Close draft PR 27, publish the reviewed staging batch, and open one draft PR against the current public main.",
+    "standing_adr_sha256": "fd7bd6c4c22e525d1107b501d0cacdbdc294e94b4bd2c31a0fef327291a6a041",
+    "standing_routine_allocation": "infinite"
+  },
+  "ledger_before": {
+    "application_starts": 70,
+    "attempt": 1,
+    "component_runtime_executions": 40,
+    "native_report_sha256": "2d0d7ed17a093e73dda4ef2649f1cb4517f9042bb1f74ed8bc185421f99804c7",
+    "preceding_campaign": 164,
+    "previous_rust_downloads": 2,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 43,
+    "rust_report_sha256": "003770ab88f876cb67eae236be7397c80c3c9e8c871b3104d09b8f6016645857",
+    "schema": "cloe-ci165-ledger-before-v1",
+    "staging_report_sha256": "d7c82123f0053eb424da94e40e7c7b726c3199b93d69a623cb8498e2c35290c0",
+    "system_intent_report_sha256": "db6020ff00c4a45c636e15216e9c3fbdd2de6247d24e63baa08c35fa85150628",
+    "system_report_sha256": "aaaec44bf9be90e02d81c2c6004948c6fff197959d77464f64e60fd5b350c151",
+    "wheel_transfers": 82
+  },
+  "reservation": {
+    "application_start": 71,
+    "approval_sha256": "15ec47017172275e82346b55c9142570c89ec0e63fd6525a123e7364bac0b326",
+    "base": "da0a6ba92350da994082574cea70d1fb27542a21",
+    "component_runtime_cumulative": 41,
+    "event_action": "opened",
+    "ledger_before_sha256": "2e52bb0656143486621b9b68792bc24386d03faddb00d3139a2a9811016216e5",
+    "nonce": "8eaf6d3dfab414e22a6d3f8891dca89b",
+    "pull_request": 28,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 44,
+    "schema": "cloe-ci165-reservation-v2",
+    "wheel_transfers_cumulative": 84,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 165
+  }
+}

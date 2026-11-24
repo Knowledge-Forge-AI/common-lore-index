@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 import re
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.extractors.config.nix_common import EXTRACTOR_NAME, slug
 from common_lore_index.observations.raw import RawObservation
 
@@ -37,7 +38,7 @@ def extract_input_reference_observations(
     relative_path: str, content: str, *, extractor_version: str
 ) -> tuple[RawObservation, ...]:
     observations: list[RawObservation] = []
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         for ordinal, match in enumerate(
             _INPUT_REFERENCE_PATTERN.finditer(line), start=1
         ):
@@ -85,7 +86,7 @@ def extract_module_export_observations(
 
     observations: list[RawObservation] = []
     attrset_depth = 0
-    for line_number, raw_line in enumerate(content.splitlines(), start=1):
+    for line_number, raw_line in enumerate(iter_text_lines(content), start=1):
         line = _strip_nix_line_comment(raw_line)
         if not line.strip():
             continue

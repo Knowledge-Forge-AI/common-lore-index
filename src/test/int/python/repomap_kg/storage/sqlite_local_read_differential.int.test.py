@@ -20,6 +20,7 @@ rows are compared as exact JSON text, so key order and number spelling count.
 from __future__ import annotations
 
 import json
+import sqlite3
 import uuid
 from collections.abc import Callable
 from dataclasses import asdict, replace
@@ -39,6 +40,11 @@ from common_lore_index.storage import (
     query_openapi_summary,
     query_python_summary,
     query_terraform_summary,
+)
+from common_lore_index.storage.canonical import (
+    query_canonical_edge_explanation,
+    query_canonical_edge_records,
+    query_canonical_node_records,
 )
 from common_lore_index.storage.readback_driver import READBACK_DRIVER_ENV, execute_json_readback
 from common_lore_index.storage.sqlite_local import (
@@ -72,6 +78,7 @@ SUMMARIES: dict[str, tuple[Callable[..., Any], Callable[..., Any]]] = {
 SEARCHES: tuple[tuple[str, str | None, str | None, int, int, bool], ...] = (
     ("#corpus:", None, None, 100, 0, False),
     ("#corpus:", None, None, 7, 7, True),
+    ("API.YAML", "openapi.operation", "api.yaml", 1, 1, True),
     ("CORPUS", None, None, 3, 68, False),
     ("tfvars", "terraform.file", None, 10, 0, True),
     ("corpus", "openapi.operation", "api.yaml", 2, 1, False),
@@ -84,6 +91,8 @@ SEARCHES: tuple[tuple[str, str | None, str | None, int, int, bool], ...] = (
     ('\\"quoted\\"\\ttab', None, None, 5, 0, False),
     ('"quoted"', None, None, 5, 0, False),
     ("ÄRGER", None, None, 5, 0, False),
+    ("ÄRGER", "custom.note", None, 1, 0, True),
+    ("CUSTOM.NOTE", "custom.note", None, 1, 0, False),
     ("ärger", None, None, 5, 0, False),
     ("Ünïcode", None, None, 5, 0, True),
     ('"program": null', None, None, 5, 0, False),
@@ -152,12 +161,36 @@ def test_read_corpus_matches_postgresql_query_owners(tmp_path: Path, monkeypatch
             postgres.psql_scalar(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE);')
 
 
+def _compare_edge_pages(connection: sqlite3.Connection, database: Any, run_id: int) -> None:
+    pg: dict[str, Any] = {"root_path": ROOT, "psql_command": database.psql_command}
+    expected = query_canonical_edge_records(database.psql_args, limit=2, offset=0, **pg)
+    actual = queries.canonical_edges(
+        connection, kind=None, source_key=None, target_key=None, graph_key_version=1, limit=2, offset=0,
+    )
+    assert [asdict(edge) for edge in actual] == [_runs(asdict(edge), run_id) for edge in expected]
+    assert actual
+    first = actual[0]
+    window: dict[str, Any] = {
+        "source_key": first.source_key, "kind": first.edge_kind, "target_key": first.target_key,
+        "identity_metadata_hash": first.identity_metadata_hash, "graph_key_version": 1,
+        "evidence_limit": 1, "evidence_offset": 0,
+    }
+    actual_explanation = queries.canonical_edge_explanation(connection, **window).to_dict()
+    pg_explanation = query_canonical_edge_explanation(database.psql_args, **pg, **window).to_dict()
+    assert actual_explanation == _runs(pg_explanation, run_id) and actual_explanation["evidence"]
+
+
 def _prove(tmp_path: Path, database: Any) -> None:
     collation = database.psql_scalar("SELECT datcollate || '|' || datctype FROM pg_database "
                                      "WHERE datname = current_database();")
     assert set(collation.split("|")) <= C_COLLATIONS, f"comparator is not byte-ordered C: {collation}"
     apply_migrations(default_rdbms_root(), database.psql_args, psql_command=database.psql_command)
-    bundle = read_corpus_bundle(GRAPH)
+    bundle = read_corpus_bundle(GRAPH, extra_rows=(
+        ("python.indexed_probe", "indexed_probe.txt", {}, {}),
+        ("Python.indexed_probe", "upper_case_probe.txt", {}, {}),
+        ("pythone.indexed_probe", "outside_prefix_probe.txt", {}, {}),
+    ))
+    python_count = sum(str(row["kind"]).startswith("python.") for row in bundle.families["raw_observations"])
     loaded = publish_portable_bundle(database.psql_args, bundle, repository_name=GRAPH, root_path=ROOT)
     pg_run = int(loaded.run_id)
     path = tmp_path / f"{GRAPH}.sqlite3"
@@ -172,15 +205,27 @@ def _prove(tmp_path: Path, database: Any) -> None:
             actual = asdict(sqlite_owner(connection, root_path=ROOT))
             assert actual[HEADLINES[family]] > 0, family  # never a zero-vs-zero comparison
             assert actual == expected, (family, actual, expected)
+            if family == "python":
+                assert actual["python_observations"] == python_count
 
         expected_summary = _runs(asdict(query_canonical_storage_summary(
             database.psql_args, root_path=ROOT, **pg)), pg_run)
         actual_summary = asdict(investigation_queries.storage_summary(connection, root_path=ROOT))
         assert actual_summary == expected_summary and actual_summary["raw_observations"] > 0
+        _compare_edge_pages(connection, database, pg_run)
 
         centers = [node.canonical_key for node in queries.canonical_nodes(
             connection, kind=None, canonical_key=None, path_prefix=None, graph_key_version=1,
             limit=None, offset=0)]
+        for prefix, limit, offset in ((".", 3, 1), ("pkg/", 10, 0), ("PKG", 10, 0)):
+            expected_nodes = query_canonical_node_records(
+                database.psql_args, root_path=ROOT, path_prefix=prefix, limit=limit, offset=offset, **pg,
+            )
+            actual_nodes = queries.canonical_nodes(
+                connection, kind=None, canonical_key=None, path_prefix=prefix,
+                graph_key_version=1, limit=limit, offset=offset,
+            )
+            assert [asdict(node) for node in actual_nodes] == [_runs(asdict(node), pg_run) for node in expected_nodes]
         compared_edges = 0
         for center in (*centers, "file:absent.nix"):
             for direction in ("both", "in", "out"):
@@ -193,6 +238,19 @@ def _prove(tmp_path: Path, database: Any) -> None:
                 assert actual_around == expected_around, (center, direction)
                 compared_edges += len(actual_around["edges"])
         assert compared_edges > 0
+
+        for node_query in ("file", "docs", "%"):
+            payload = investigation_queries.search(
+                connection, target="nodes", query=node_query, kind=None, path=None, limit=1, offset=0,
+            )
+            pg_page = execute_json_readback(
+                build_mcp_search_sql(root_path=ROOT, target="nodes", query=node_query, kind=None,
+                                     path=None, limit=1, offset=0, include_raw=False),
+                psql_args=database.psql_args, label="node search differential", expected_shape="array", **pg,
+            )
+            assert isinstance(pg_page, list)
+            assert payload["has_more"] == (len(pg_page) > 1)
+            assert [node["canonical_key"] for node in payload["results"]] == [node["canonical_key"] for node in pg_page[:1]]
 
         nonempty = 0
         for query, kind, file_path, limit, offset, include_raw in SEARCHES:

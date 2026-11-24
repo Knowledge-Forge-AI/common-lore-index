@@ -20,7 +20,7 @@ empty or unrecognized) or leftover ``-wal``/``-shm``/``-journal`` sidecar is
 deletion, quarantine or in-place replacement; replacing an existing or corrupt
 target is a separate destructive recovery decision. Under the caller's
 publisher lock the bytes are copied into a unique sibling temporary file while
-being hashed (the copy must still equal the manifest), revalidated, fsynced,
+being hashed (with the manifest's exact byte bound), revalidated, fsynced,
 hard-linked (never overwriting a race winner) and the store directory fsynced.
 A failure after the link is not success: the installed file is the complete,
 validated database, a rerun refuses as target-exists and readiness classifies
@@ -43,7 +43,16 @@ import stat
 from contextlib import suppress
 from pathlib import Path
 
-from common_lore_index.storage.sqlite_local.backup import file_digest, inspect_sealed_database, owned_names
+from common_lore_index.storage.sqlite_local.backup import (
+    _DatabaseLengthMismatch,
+    _database_chunks,
+    _file_version,
+    _matches_temporary,
+    _remember_temporary,
+    file_digest,
+    inspect_sealed_database,
+    owned_names,
+)
 from common_lore_index.storage.sqlite_local.backup_manifest import (
     BACKUP_ARTIFACT_INVALID,
     BACKUP_INCOMPLETE,
@@ -70,7 +79,6 @@ from common_lore_index.storage.sqlite_local.schema import (
 )
 
 RESTORE_READBACK_MISMATCH = "sqlite-restore-readback-mismatch"
-_CHUNK = 1024 * 1024
 
 
 def _fault_point(name: str) -> None:
@@ -84,39 +92,59 @@ def _invalid(reason: str) -> LocalStoreError:
 
 def _read_manifest(path: Path) -> bytes:
     try:
-        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except OSError:
         raise _invalid("manifest-unreadable") from None
     try:
         details = os.fstat(descriptor)
         if not stat.S_ISREG(details.st_mode) or details.st_size > MAX_MANIFEST_BYTES:
             raise _invalid("manifest-invalid")
-        return os.read(descriptor, MAX_MANIFEST_BYTES + 1)
+        encoded = bytearray()
+        while len(encoded) <= details.st_size:
+            chunk = os.read(descriptor, details.st_size + 1 - len(encoded))
+            if not chunk:
+                break
+            encoded.extend(chunk)
+        if len(encoded) != details.st_size or _file_version(os.fstat(descriptor)) != _file_version(details):
+            raise _invalid("manifest-invalid")
+        return bytes(encoded)
+    except OSError:
+        raise _invalid("manifest-unreadable") from None
     finally:
         os.close(descriptor)
 
 
 def verify_backup(backup: Path, binding: LocalGraphBinding) -> BackupManifest:
     """Fully validate one backup directory for ``binding``; touch nothing else."""
+    manifest_found = database_found = unexpected = False
     try:
         if not stat.S_ISDIR(os.lstat(backup).st_mode):
             raise _invalid("not-a-directory")
-        names = set(os.listdir(backup))
+        with os.scandir(backup) as entries:
+            for entry in entries:
+                if entry.name == MANIFEST_FILE:
+                    manifest_found = True
+                elif entry.name == DATABASE_FILE:
+                    database_found = True
+                else:
+                    unexpected = True
+                if manifest_found and unexpected:
+                    break
     except OSError:
         raise _invalid("unreadable") from None
-    if MANIFEST_FILE not in names:
+    if not manifest_found:
         raise LocalStoreError(BACKUP_INCOMPLETE, "no completed manifest")
-    if names != {DATABASE_FILE, MANIFEST_FILE}:
+    if not database_found or unexpected:
         raise _invalid("unexpected-entry")
     manifest = parse_manifest(_read_manifest(backup / MANIFEST_FILE))
     if manifest.binding != binding:
         raise _invalid("graph-mismatch")
     try:
-        size, digest = file_digest(backup / DATABASE_FILE)
+        _, digest = file_digest(backup / DATABASE_FILE, expected_bytes=manifest.database_bytes)
+    except _DatabaseLengthMismatch:
+        raise _invalid("database-length-mismatch") from None
     except (OSError, LocalStoreError):
         raise _invalid("database-unreadable") from None
-    if size != manifest.database_bytes:
-        raise _invalid("database-length-mismatch")
     if digest != manifest.database_sha256:
         raise _invalid("database-digest-mismatch")
     _require_database(backup / DATABASE_FILE, binding, manifest)
@@ -144,20 +172,21 @@ def require_absent_target(target: Path) -> None:
         raise LocalStoreError(RESTORE_TARGET_EXISTS, "database sidecars present")
 
 
-def _copy(source: Path, temporary: Path) -> tuple[int, str]:
-    reader = os.open(source, os.O_RDONLY | os.O_NOFOLLOW)
+def _copy(
+    source: Path, temporary: Path, expected_bytes: int, owned: dict[Path, tuple[int, int]],
+) -> str:
+    reader = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
         writer = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
         try:
+            _remember_temporary(writer, temporary, owned)
             digest = hashlib.sha256()
-            size = 0
-            while chunk := os.read(reader, _CHUNK):
+            for chunk in _database_chunks(reader, expected_bytes):
                 digest.update(chunk)
-                size += len(chunk)
                 view = memoryview(chunk)
                 while view:
                     written = os.write(writer, view)
-                    if written <= 0:
+                    if not 0 < written <= len(view):
                         raise OSError(errno.EIO, "short write")
                     view = view[written:]
             fsync_descriptor(writer)
@@ -165,7 +194,7 @@ def _copy(source: Path, temporary: Path) -> tuple[int, str]:
             os.close(writer)
     finally:
         os.close(reader)
-    return size, digest.hexdigest()
+    return digest.hexdigest()
 
 
 def install_backup(
@@ -181,11 +210,18 @@ def install_backup(
     fsync_directory_chain(target.parent, durable_ancestors)
     temporary = target.with_name(f".{target.name}.restore-{secrets.token_hex(8)}")
     installed = False
+    owned: dict[Path, tuple[int, int]] = {}
     try:
-        if _copy(backup / DATABASE_FILE, temporary) != (manifest.database_bytes, manifest.database_sha256):
+        try:
+            digest = _copy(backup / DATABASE_FILE, temporary, manifest.database_bytes, owned)
+        except (_DatabaseLengthMismatch, LocalStoreError):
+            raise _invalid("database-changed-during-restore") from None
+        if digest != manifest.database_sha256:
             raise _invalid("database-changed-during-restore")
         _require_database(temporary, binding, manifest)
         _fault_point("restore:before-install")
+        if not _matches_temporary(temporary, owned.get(temporary)):
+            raise _invalid("database-changed-during-restore")
         try:
             os.link(temporary, target)
         except FileExistsError:
@@ -196,16 +232,18 @@ def install_backup(
                     DATABASE_UNAVAILABLE, "graph store does not support atomic no-clobber install"
                 ) from None
             raise
+        if not _matches_temporary(target, owned.get(temporary)):
+            raise _invalid("database-changed-during-restore")
         installed = True
         _fault_point("restore:installed")
         fsync_directory(target.parent)
         _fault_point("restore:after-install")
     finally:
-        # Only this attempt's names; after install the temporary name is a
-        # second link to the installed database, so removing it is best-effort.
-        for owned in owned_names(temporary):
+        # Verification opens the sealed temporary with immutable=1, so it
+        # creates no sidecars. After install this name is a second hard link.
+        if _matches_temporary(temporary, owned.get(temporary)):
             with suppress(OSError):
-                owned.unlink()
+                temporary.unlink()
         if installed:
             with suppress(OSError, LocalStoreError):
                 fsync_directory(target.parent)

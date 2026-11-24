@@ -9,6 +9,28 @@ from common_lore_index.extractors.config.python_support import (
 
 
 class ConfigExtractorPythonBoundariesUnitTests(unittest.TestCase):
+    def test_malformed_index_and_direct_source_preserve_neighbor_requirement(self):
+        bad_url = "https://unreadable.invalid:port/package"
+        rows = extract_config_file_observations(
+            "requirements.txt",
+            f"--extra-index-url {bad_url}\nalpha @ {bad_url}\nidna==3.10\n",
+        )
+        refs = [row for row in rows if row.kind == "python.reference"]
+        self.assertEqual([row.metadata["redaction_reason"] for row in refs], ["malformed-url"] * 2)
+        self.assertEqual([row.name for row in rows if row.kind == "python.requirement"], ["alpha", "idna"])
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in rows]))
+
+    def test_malformed_pyproject_source_keeps_safe_requirement_metadata(self):
+        rows = extract_config_file_observations(
+            "pyproject.toml",
+            '[project]\nname = "fixture"\ndependencies = ['
+            '"alpha @ https://[unreadable.invalid/package", "idna==3.10"]\n',
+        )
+        self.assertEqual([row.name for row in rows if row.kind == "python.requirement"], ["alpha", "idna"])
+        reference, = [row for row in rows if row.kind == "python.reference"]
+        self.assertEqual(reference.metadata["redaction_reason"], "malformed-url")
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in rows]))
+
     def test_pyproject_toml_rich_metadata_and_dependencies(self):
         obs = extract_config_file_observations(
             "pyproject.toml",

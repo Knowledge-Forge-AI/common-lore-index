@@ -54,9 +54,12 @@ def test_node_locations_keep_refresh_history_separate_over_stdio(tmp_path: Path)
         publish_locator_generation(database, generation, start_line=40, alternatives=False)
     before = hashlib.sha256(database.read_bytes()).hexdigest()
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
-    requests = [initialize(1), tool(2, "repomap_node_locations", {
-        "graph_id": GRAPH, "canonical_key": SYMBOL, "limit": 2,
-    })]
+    args = {"graph_id": GRAPH, "canonical_key": SYMBOL}
+    requests = [
+        initialize(1),
+        tool(2, "repomap_node_locations", {**args, "limit": 2}),
+        tool(3, "repomap_node_locations", {**args, "limit": 1}),
+    ]
     response = harness.mcp(home, requests)
     assert response == harness.mcp(home, requests)
     result = structured(response, 2)
@@ -65,6 +68,10 @@ def test_node_locations_keep_refresh_history_separate_over_stdio(tmp_path: Path)
     assert [(row["start_line"], row["end_line"]) for row in result["locations"]] == [(40, 50)]
     assert [row["run_id"] for row in result["historical_locations"]] == [11, 10]
     assert result["historical_has_more"] is True
+    narrow = structured(response, 3)
+    assert narrow["locations"] == result["locations"] and narrow["has_more"] is False
+    assert narrow["historical_locations"] == result["historical_locations"][:1]
+    assert narrow["historical_has_more"] is True
     assert hashlib.sha256(database.read_bytes()).hexdigest() == before
     assert not (tmp_path / "never-created-source").exists()
     assert harness.forbidden_events() == [] and harness.shim_invocations() == ""
@@ -128,6 +135,11 @@ def test_compact_source_locations_over_guarded_sqlite_stdio(tmp_path: Path) -> N
     assert compact["locations"][0]["source_relative_path"] == "docs/guide.md"
     assert compact["has_more"] == full["has_more"] is False
     assert compact["accepted_publication"] == full["accepted_publication"]
+    projected = compact["locations"][0]
+    originals = full["locations"][0]
+    assert compact["publications"][projected["publication"]] == originals["publication"]
+    bound = compact["bindings"][projected["binding"]]
+    assert {**bound, "source_relative_path": projected["source_relative_path"]} == originals["source"]
     assert "detail must be full or compact" in refusal(responses, 5)
     assert responses[4]["result"]["structuredContent"] == json.loads(responses[4]["result"]["content"][0]["text"])
     assert hashlib.sha256(database.read_bytes()).hexdigest() == before

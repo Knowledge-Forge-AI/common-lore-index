@@ -5,7 +5,7 @@ summary builder (``sql_summaries_python`` and ``_sql_summaries_domains``'s
 Terraform builder): the same counters over
 every retained run's raw observations and the current canonical nodes, decoded
 through the same ``*_summary_from_storage_payload`` owner. Row selection is
-case-sensitive SQL (``substr``/``IN``, never SQLite's ASCII-folding ``LIKE``);
+case-sensitive SQL ranges and exact kinds, without SQLite's ASCII-folding ``LIKE``;
 JSON predicates use the PostgreSQL JSONB semantics in
 ``storage.sqlite_local.raw_payload``. No PostgreSQL SQL is reused or translated.
 OpenAPI and JS-framework live in ``storage.sqlite_local.api_summary_queries``
@@ -57,7 +57,12 @@ def raw_rows(
     """``(kind, path, decoded payload)`` for a case-sensitive kind prefix and/or kind set."""
     clauses: list[str] = []
     params: list[object] = []
-    if prefix is not None:
+    if prefix and prefix.isascii() and "\x00" not in prefix:
+        # BINARY ordering makes the next ASCII prefix the exclusive upper
+        # bound. Both bounds can use the existing observation-kind index.
+        clauses.append("(kind >= ? AND kind < ?)")
+        params += [prefix, prefix[:-1] + chr(ord(prefix[-1]) + 1)]
+    elif prefix is not None:
         clauses.append("substr(kind, 1, ?) = ?")
         params += [len(prefix), prefix]
     if kinds:

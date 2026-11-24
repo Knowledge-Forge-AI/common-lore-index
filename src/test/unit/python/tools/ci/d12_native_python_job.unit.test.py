@@ -54,8 +54,15 @@ def test_fragment_and_workflow_select_the_pin_once_in_their_one_unchanged_runner
     runners = [s for s in workflow.job_steps("d12-native-amd64") if "tools/run_tests.py" in str(s.get("run", ""))]
     assert [str(step["run"]) for step in runners] == [script], "the workflow runner is the canonical fragment"
     assert validate_d12_native_amd64_job(workflow) == []
-    text = WORKFLOW.read_text(encoding="utf-8")
-    assert text.count("--smoke-image-reference") == 1 and text.count("python3 tools/run_tests.py") == 4
+    direct_calls = {}
+    pin_uses = 0
+    for job in workflow.jobs:
+        commands = "\n".join(str(step.get("run", "")) for step in workflow.job_steps(job))
+        if count := commands.count("python3 tools/run_tests.py"):
+            direct_calls[job] = count
+        pin_uses += commands.count("--smoke-image-reference")
+    assert direct_calls == {"unit-tests": 1, "d12-native-amd64": 1, "main-system-gate": 1}
+    assert pin_uses == 1
 
 
 @pytest.mark.parametrize("old, new, expected", [

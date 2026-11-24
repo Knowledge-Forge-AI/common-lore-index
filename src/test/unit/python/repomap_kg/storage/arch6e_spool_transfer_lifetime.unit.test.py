@@ -55,9 +55,6 @@ def _measure(size):
         for family, rows in prepared.family_rows.items()
         if isinstance(rows, RowSpool)
     }
-    family_by_rows = {
-        id(rows): family for family, rows in prepared.family_rows.items()
-    }
     live_spools_before_copy = []
     live_spool_bytes_before_copy = []
     copied_rows = 0
@@ -72,10 +69,12 @@ def _measure(size):
             replayed_rows += 1
             yield row
 
-    def copy_rows(_connection, _table, rows, *, expected_stage_id):
+    expected_families = iter(prepared.family_rows)
+
+    def copy_rows(_connection, table, rows, *, expected_stage_id):
         nonlocal copied_rows
         assert expected_stage_id == "stage-alpha"
-        assert id(rows) in family_by_rows
+        assert table.family == next(expected_families)
         live = [spool for spool in spools.values() if spool.path.exists()]
         live_spools_before_copy.append(len(live))
         live_spool_bytes_before_copy.append(

@@ -31,6 +31,11 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+import pytest
+
+from common_lore_index.cli.main import main
+from common_lore_index.storage.sqlite_local import upgrade as sqlite_upgrade
+from common_lore_index.storage.sqlite_local.backup_manifest import BackupManifest
 from common_lore_index.storage.sqlite_local.migrations import schema_objects_digest
 from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
 from repomap_test_support.sqlite_local_harness import (
@@ -230,7 +235,7 @@ def test_v1_backup_upgrade_restore_round_trip(tmp_path: Path) -> None:
     # 8: a rerun is already-current: no backup, no reapply.
     upgraded_sha = _sha(live)
     again = _upgrade(harness, home, backups / "pre-upgrade")
-    assert (again["result"], again["backup_created"]) == ("already-current", False), again
+    assert (again["result"], again["backup_created"], again["accepted_generation"]) == ("already-current", False, 2), again
     assert _files(backups / "pre-upgrade") == artifact and _sha(live) == upgraded_sha
 
     # 9: the v1 backup restores into a second absent home exact-behind, never migrated.
@@ -263,16 +268,22 @@ def _checkpointed(path: Path, statement: str | None = None) -> None:
         path.with_name(path.name + suffix).unlink(missing_ok=True)
 
 
-def test_upgrade_refusals_faults_and_contention(tmp_path: Path) -> None:
+def _published_v1(tmp_path: Path) -> tuple[LocalHarness, Path, str]:
     source = write_shell_source(tmp_path / "sources" / GRAPH)
     home = _home(tmp_path, "home", source)
-    restore_home = _home(tmp_path, "restore-home", source)
     harness = LocalHarness(tmp_path / "scratch", block_psycopg=True)
     v1 = harness.ceiling_env(1)
-    live = _database(home)
     _ok(harness.run("ops", "sqlite-init", "--repo-map-home", str(home), "--graph", GRAPH, extra_env=v1))
     bundle = _json(harness, home, "ops", "refresh-graph", "--graph", GRAPH, env=v1)["publication"]["publication_bundle_id"]
-    _checkpointed(live)
+    _checkpointed(_database(home))
+    return harness, home, str(bundle)
+
+
+def test_upgrade_refusals_faults_and_contention(tmp_path: Path) -> None:
+    harness, home, bundle = _published_v1(tmp_path)
+    restore_home = _home(tmp_path, "restore-home", tmp_path / "sources" / GRAPH)
+    v1 = harness.ceiling_env(1)
+    live = _database(home)
     pristine = live.read_bytes()
 
     # Drift and future: refused before any backup; the live bytes never change.
@@ -336,3 +347,54 @@ def test_upgrade_refusals_faults_and_contention(tmp_path: Path) -> None:
     assert (rerun["result"], rerun["accepted_generation"], rerun["publication_bundle_id"]) == ("upgraded", 1, bundle)
     assert _raw(live) == _v2_raw(1, bundle)
     _assert_guarded(harness)
+
+
+@pytest.mark.parametrize("fault", ("backup_corrupted", "after_commit"))
+def test_upgrade_proves_backup_before_write_and_reconciles_after_commit(
+    fault: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    harness, home, bundle = _published_v1(tmp_path)
+    live = _database(home)
+    output = tmp_path / "pre-upgrade"
+    before = _sha(live)
+    write_backup = sqlite_upgrade.write_backup
+    injected: list[str] = []
+
+    def corrupt_backup(*args: Any, **kwargs: Any) -> BackupManifest:
+        manifest = write_backup(*args, **kwargs)
+        with (output / "graph.sqlite3").open("ab") as stream:
+            stream.write(b"test corruption after backup write")
+        injected.append("backup_corrupted")
+        return manifest
+
+    def raise_after_commit(point: str) -> None:
+        if point == "upgrade:after-commit":
+            injected.append("after_commit")
+            raise OSError("private post-commit sentinel")
+
+    expected_exit = 1 if fault == "backup_corrupted" else 0
+    if fault == "backup_corrupted":
+        monkeypatch.setattr(sqlite_upgrade, "write_backup", corrupt_backup)
+    else:
+        monkeypatch.setattr(sqlite_upgrade, "_fault_point", raise_after_commit)
+    assert main(["ops", "sqlite-upgrade", "--repo-map-home", str(home), "--graph", GRAPH,
+                 "--backup-output", str(output), "--json"]) == expected_exit
+    assert injected == [fault]
+    stream = capsys.readouterr()
+    _no_paths(stream.out + stream.err, tmp_path)
+    assert "private post-commit sentinel" not in stream.out + stream.err
+    retained = _files(output)
+    if fault == "backup_corrupted":
+        assert "sqlite-upgrade-backup-unverified" in stream.err
+        assert _sha(live) == before and _raw(live) == _v1_raw(1, bundle)
+        retried = _upgrade(harness, home, tmp_path / "verified-retry")
+        assert (retried["result"], retried["publication_bundle_id"]) == ("upgraded", bundle)
+    else:
+        outcome = json.loads(stream.out)
+        assert (outcome["result"], outcome["publication_bundle_id"]) == ("upgraded", bundle)
+        assert _raw(output / "graph.sqlite3") == _v1_raw(1, bundle)
+        unused = tmp_path / "unused-after-commit"
+        assert _upgrade(harness, home, unused)["result"] == "already-current"
+        assert not unused.exists()
+    assert _files(output) == retained
+    assert _raw(live) == _v2_raw(1, bundle)

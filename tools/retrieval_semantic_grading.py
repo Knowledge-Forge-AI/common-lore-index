@@ -185,6 +185,7 @@ def grade_w5_task_slot(
     private_markers: Sequence[str] = (),
     grading_granularity: str = "file",
     grading_policy_version: str = W5_FILE_GRADING_POLICY_CURRENT,
+    representation_version: str = CANONICAL_NODE_REPRESENTATION_VERSION,
 ) -> GradedSlotRecord:
     """Grade one calibration task slot with predeclared applicability and dual span/file metrics."""
     _require(isinstance(verified_pin, VerifiedPublicationPin), "unverified_publication_pin", "VerifiedPublicationPin required")
@@ -194,7 +195,10 @@ def grade_w5_task_slot(
     _require(getattr(task, "generation", None) == verified_pin.generation, "generation_mismatch", "task generation mismatch")
     _require(grading_granularity in {"file", "span"}, "invalid_grading_granularity", f"unsupported granularity {grading_granularity!r}")
     _require(not (fusion_result is not None and bool(returned_files)), "conflicting_grading_inputs", "pass either returned_files or fusion_result")
-    applicability = evaluate_arm_task_applicability(arm_id, task)
+    _require(type(representation_version) is str and representation_version in {
+        CANONICAL_NODE_REPRESENTATION_VERSION, "canonical-node-public-text-v2",
+    }, "invalid_representation_version", "unknown file-grading representation")
+    applicability = evaluate_arm_task_applicability(arm_id, task, representation_version=representation_version)
     items: Sequence[Any] = fusion_result.hits if fusion_result is not None else returned_files
     zero_all = {
         m: 0.0

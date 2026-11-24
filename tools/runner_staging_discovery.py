@@ -39,8 +39,10 @@ def filter_child_environment(environ: Mapping[str, str]) -> dict[str, str]:
              "REPOMAP_GO_HELPER", "DOCKER_HOST",
              "DOCKER_CONFIG", "DOCKER_CONTEXT", "PYTEST_DISABLE_PLUGIN_AUTOLOAD",
              "PYTEST_ADDOPTS", "PYTEST_PLUGINS"}
-    return {key: value for key, value in environ.items()
-            if key in exact or key.startswith(("REPOMAP_TEST_", "_REPOMAP_TEST_SANDBOX_"))}
+    projected = {key: value for key, value in environ.items()
+                 if key in exact or key.startswith(("REPOMAP_TEST_", "_REPOMAP_TEST_SANDBOX_"))}
+    from runner_pgvector_discovery import project_environment
+    return project_environment(environ, projected)
 
 
 def _group_exists(group: int) -> bool:
@@ -133,6 +135,8 @@ def discover_staging_population(
         "declarations": [asdict(item) for item in declarations], "environment": environment,
     }
     validate_request(request)
+    from runner_pgvector_discovery import plan_for_request
+    plan_for_request(request)
     script = child_script_path or Path(__file__).with_name("runner_staging_discovery_child.py")
     # An admitted canonical invocation already owns this root. No scratch
     # admission failure is converted into a fallback temporary authority.

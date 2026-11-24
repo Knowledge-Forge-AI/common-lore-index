@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import os
 import re
+import stat
 from collections import Counter
 from pathlib import Path
 from typing import Any, Sequence
 
+from common_lore_index.graph._discovery_selection import _resolve_link_target, first_matching_exclude
 from common_lore_index.graph.discovery import (
     DEFAULT_DISCOVERY_EXCLUDE_PATHS,
     LANGUAGE_BY_EXTENSION,
     RUBY_FILENAMES,
-    _is_excluded_relative_path,
     detect_role,
     is_generated,
     is_python_requirements_file_name,
@@ -31,7 +32,7 @@ def _scan_preflight_root(
     role_counts: Counter[str] = Counter()
     extractor_categories: Counter[str] = Counter()
     top_level_directories: set[str] = set()
-    top_level_files: set[str] = set()
+    top_level_file_count = 0
     files_considered = 0
     files_included = 0
     files_skipped = 0
@@ -50,26 +51,20 @@ def _scan_preflight_root(
             relative_dir = _relative_posix_path(root, dir_path)
             if _is_secret_like_path(relative_dir):
                 secret_like_path_count += 1
-            default_match = _first_matching_exclude(relative_dir, default_excludes)
-            configured_match = _first_matching_exclude(
+            default_match = first_matching_exclude(relative_dir, default_excludes)
+            configured_match = first_matching_exclude(
                 relative_dir,
                 configured_excludes,
             )
-            if dir_path.is_symlink():
+            is_symlink = dir_path.is_symlink()
+            if is_symlink:
                 symlink_count += 1
-                if not _resolved_path_stays_under(root, dir_path):
+                target = _resolve_link_target(dir_path)
+                if target is not None and not target.is_relative_to(root):
                     symlinks_skipped_outside_root += 1
-                    if _resolves_to_nix_store(dir_path):
+                    if target.as_posix().startswith("/nix/store/"):
                         symlinks_skipped_nix_store += 1
-                    directories_skipped += 1
-                    if default_match:
-                        default_hits[default_match] += 1
-                    if configured_match:
-                        configured_hits[configured_match] += 1
-                    if _is_generated_output_skip(relative_dir, default_match, configured_match):
-                        generated_output_skips += 1
-                    continue
-            if default_match or configured_match:
+            if is_symlink or default_match or configured_match:
                 directories_skipped += 1
                 if default_match:
                     default_hits[default_match] += 1
@@ -87,26 +82,29 @@ def _scan_preflight_root(
             files_considered += 1
             if _is_secret_like_path(relative_file):
                 secret_like_path_count += 1
-            default_match = _first_matching_exclude(relative_file, default_excludes)
-            configured_match = _first_matching_exclude(
+            default_match = first_matching_exclude(relative_file, default_excludes)
+            configured_match = first_matching_exclude(
                 relative_file,
                 configured_excludes,
             )
-            if file_path.is_symlink():
+            try:
+                mode = file_path.lstat().st_mode
+            except OSError:
+                mode = 0
+            is_regular = stat.S_ISREG(mode)
+            if stat.S_ISLNK(mode):
                 symlink_count += 1
-                if not _resolved_path_stays_under(root, file_path):
+                target = _resolve_link_target(file_path)
+                if target is not None and not target.is_relative_to(root):
                     symlinks_skipped_outside_root += 1
-                    if _resolves_to_nix_store(file_path):
+                    if target.as_posix().startswith("/nix/store/"):
                         symlinks_skipped_nix_store += 1
-                    files_skipped += 1
-                    if default_match:
-                        default_hits[default_match] += 1
-                    if configured_match:
-                        configured_hits[configured_match] += 1
-                    if _is_generated_output_skip(relative_file, default_match, configured_match):
-                        generated_output_skips += 1
-                    continue
-            if default_match or configured_match:
+                elif target is not None:
+                    target_path = target.relative_to(root).as_posix()
+                    default_match = default_match or first_matching_exclude(target_path, default_excludes)
+                    configured_match = configured_match or first_matching_exclude(target_path, configured_excludes)
+                    is_regular = file_path.is_file()
+            if default_match or configured_match or not is_regular:
                 files_skipped += 1
                 if default_match:
                     default_hits[default_match] += 1
@@ -117,11 +115,11 @@ def _scan_preflight_root(
                 continue
 
             files_included += 1
-            top_part = relative_file.split("/", 1)[0]
-            if "/" in relative_file:
+            top_part, separator, _ = relative_file.partition("/")
+            if separator:
                 top_level_directories.add(top_part)
             else:
-                top_level_files.add(top_part)
+                top_level_file_count += 1
             language = _path_only_language(relative_file)
             executable = os.access(file_path, os.X_OK)
             generated = is_generated(relative_file)
@@ -149,7 +147,7 @@ def _scan_preflight_root(
         "secret_like_path_count": secret_like_path_count,
         "path_examples_included": False,
         "top_level_directory_count": len(top_level_directories),
-        "top_level_file_count": len(top_level_files),
+        "top_level_file_count": top_level_file_count,
         "language_counts": dict(sorted(language_counts.items())),
         "role_counts": dict(sorted(role_counts.items())),
         "extractor_categories": dict(sorted(extractor_categories.items())),
@@ -157,20 +155,6 @@ def _scan_preflight_root(
 
 def _relative_posix_path(root: Path, path: Path) -> str:
     return path.relative_to(root).as_posix()
-
-def _resolved_path_stays_under(root: Path, path: Path) -> bool:
-    try:
-        path.resolve().relative_to(root)
-    except ValueError:
-        return False
-    return True
-
-def _resolves_to_nix_store(path: Path) -> bool:
-    try:
-        resolved = path.resolve(strict=False)
-    except OSError:
-        return False
-    return resolved.as_posix().startswith("/nix/store/")
 
 def _is_generated_output_skip(
     relative_path: str,
@@ -192,15 +176,6 @@ _SECRET_LIKE_PATH_RE = re.compile(
 
 def _is_secret_like_path(relative_path: str) -> bool:
     return bool(_SECRET_LIKE_PATH_RE.search(relative_path))
-
-def _first_matching_exclude(
-    relative_path: str,
-    exclude_paths: Sequence[str],
-) -> str | None:
-    for exclude_path in exclude_paths:
-        if _is_excluded_relative_path(relative_path, (exclude_path,)):
-            return exclude_path
-    return None
 
 def _path_only_language(relative_path: str) -> str:
     name = Path(relative_path).name

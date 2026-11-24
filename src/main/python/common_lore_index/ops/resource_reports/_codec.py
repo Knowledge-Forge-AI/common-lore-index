@@ -16,11 +16,12 @@ from typing import Any, TypedDict, cast
 
 from common_lore_index.ops.resource_view._canonical import CanonicalBoundError, canonical_bytes, parse_digits
 from common_lore_index.ops.resource_view._contracts import (
-    MAX_PAYLOAD_BYTES, ResourceLimit, ResourceMetric, ResourceReport,
+    MAX_PAYLOAD_BYTES, SCHEMA, ResourceLimit, ResourceMetric, ResourceReport,
 )
 from common_lore_index.ops.resource_view._contracts_v2 import (
     MAX_PAYLOAD_BYTES_V2, SCHEMA_V2, ResourceLimitV2, ResourceMetricV2, ResourceReportV2,
 )
+from common_lore_index.ops.resource_view._contracts import SCHEMA_V3, ResourceReportV3, StagingDelta
 from common_lore_index.ops.resource_view._slots import check_report_domain
 from common_lore_index.ops.resource_view._slots_v2 import check_report_domain_v2
 
@@ -36,6 +37,7 @@ _TOP_KEYS = frozenset({
 })
 _METRIC_KEYS = frozenset({"name", "value", "unit", "availability", "basis", "reason"})
 _LIMIT_KEYS = frozenset({"name", "value", "unit", "enforcement", "applies_this_call"})
+ReportFile = ResourceReport | ResourceReportV2 | ResourceReportV3
 
 
 class _MetricPayload(TypedDict):
@@ -65,12 +67,17 @@ class ResourceReportError(ValueError):
         super().__init__(f"resource-report-invalid: {category}")
 
 
-def encode_report(report: ResourceReport | ResourceReportV2) -> bytes:
+def encode_report(report: ReportFile) -> bytes:
     """Return the file bytes for a report after the shared domain checks.
 
     A manually constructed record is validated here too; constructing it is
     not permission to bypass the per-operation slot tables.
     """
+    if type(report) is ResourceReportV3:
+        try:
+            return canonical_bytes(report.to_payload(), MAX_PAYLOAD_BYTES) + b"\n"
+        except CanonicalBoundError:
+            raise ResourceReportError("too_large") from None
     if type(report) is ResourceReportV2:
         check, budget = check_report_domain_v2, MAX_PAYLOAD_BYTES_V2
     elif type(report) is ResourceReport:
@@ -138,11 +145,13 @@ def _record(raw: object, keys: frozenset[str]) -> dict[str, object]:
     return raw
 
 
-def _report_from_payload(payload: object) -> ResourceReport | ResourceReportV2:
+def _report_from_payload(payload: object) -> ReportFile:
     top = _record(payload, _TOP_KEYS)
     metrics, limits = top["metrics"], top["limits"]
     if type(metrics) is not list or type(limits) is not list:
         raise ResourceReportError("invalid_shape")
+    if top["schema"] == SCHEMA_V3:
+        return _report_v3(top, metrics)
     # The version is selected before any record is constructed or validated,
     # so v1 records never admit a v2-only name, reason, basis or enforcement.
     v2 = top["schema"] == SCHEMA_V2
@@ -171,7 +180,28 @@ def _report_from_payload(payload: object) -> ResourceReport | ResourceReportV2:
     return report
 
 
-def decode_report(data: bytes) -> ResourceReport | ResourceReportV2:
+def _report_v3(top: dict[str, object], metrics: list[object]) -> ResourceReportV3:
+    staging = [] if top["operation"] is None else metrics[-2:]
+    ordinary = metrics if top["operation"] is None else metrics[:-2]
+    base = _report_from_payload(top | {"schema": SCHEMA, "metrics": ordinary})
+    if type(base) is not ResourceReport:
+        raise ResourceReportError("invalid_shape")
+    try:
+        rows = []
+        for item in staging:
+            payload = cast(_MetricPayload, _record(item, _METRIC_KEYS))
+            row = StagingDelta(payload["name"], payload["value"], payload["reason"])
+            if row.to_payload() != payload:
+                raise ValueError("invalid staging metric shape")
+            rows.append(row)
+        return ResourceReportV3(base, tuple(rows))
+    except ResourceReportError:
+        raise
+    except (TypeError, ValueError):
+        raise ResourceReportError("invalid_domain") from None
+
+
+def decode_report(data: bytes) -> ReportFile:
     """Decode file bytes, refusing anything but the exact canonical form."""
     if not isinstance(data, bytes):
         raise ResourceReportError("invalid_shape")
@@ -188,7 +218,7 @@ def decode_report(data: bytes) -> ResourceReport | ResourceReportV2:
     return report
 
 
-def _decode_bounded(data: bytes) -> ResourceReport | ResourceReportV2:
+def _decode_bounded(data: bytes) -> ReportFile:
     if not data.endswith(b"\n"):
         raise ResourceReportError("not_canonical")
     body = data[:-1]

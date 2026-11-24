@@ -153,10 +153,16 @@ def ingest_feed_source(
         artifact_dir=Path(artifact_dir) if artifact_dir is not None else None,
         clock=clock or _utc_now,
     )
+    try:
+        text = response.body.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise SourceAcquisitionError("acquired feed artifact is not valid UTF-8") from error
+    # Match the universal newline handling of the retained artifact reader.
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
     feed_observations = tuple(
         extract_feed_file_observations(
             artifact.relative_path,
-            artifact.path.read_text(encoding="utf-8"),
+            text,
         )
     )
     if not feed_observations:

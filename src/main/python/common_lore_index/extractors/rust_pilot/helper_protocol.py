@@ -11,6 +11,7 @@ retried. Helper metadata such as ``hello`` is informational only.
 
 from __future__ import annotations
 
+from array import array
 import hashlib
 import json
 import re
@@ -95,12 +96,16 @@ class DecodedParse:
     helper_abi: int
 
 
+def _is_digest(value: object) -> bool:
+    return isinstance(value, str) and _HEX64.fullmatch(value) is not None
+
+
 def invocation_nonce(run_nonce: bytes, seq: int, input_sha256: str) -> str:
     """Per-file nonce: SHA-256 over the run nonce, the sequence and the input digest."""
 
-    if type(run_nonce) is not bytes or len(run_nonce) != 32 or type(seq) is not int or seq < 0:
+    if type(run_nonce) is not bytes or len(run_nonce) != 32 or type(seq) is not int or not 0 <= seq < 2**64:
         raise ProtocolViolation("invalid_nonce_material")
-    if _HEX64.fullmatch(input_sha256) is None:
+    if not _is_digest(input_sha256):
         raise ProtocolViolation("invalid_nonce_material")
     material = b"rust-pilot-invocation-v1\x00" + run_nonce + seq.to_bytes(8, "big") + bytes.fromhex(input_sha256)
     return hashlib.sha256(material).hexdigest()
@@ -109,7 +114,7 @@ def invocation_nonce(run_nonce: bytes, seq: int, input_sha256: str) -> str:
 def encode_request(data: bytes, nonce: str) -> bytes:
     """Header line followed by exactly the input bytes."""
 
-    if type(data) is not bytes or len(data) > MAX_INPUT or _HEX64.fullmatch(nonce) is None:
+    if type(data) is not bytes or len(data) > MAX_INPUT or not _is_digest(nonce):
         raise ProtocolViolation("invalid_request")
     header = json.dumps({"n": len(data), "nonce": nonce, "sha256": hashlib.sha256(data).hexdigest(),
                          "v": PROTOCOL_VERSION}, sort_keys=True, separators=(",", ":")).encode("ascii")
@@ -119,11 +124,9 @@ def encode_request(data: bytes, nonce: str) -> bytes:
 
 
 def _unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    result: dict[str, Any] = {}
-    for key, value in pairs:
-        if key in result:
-            raise ProtocolViolation("duplicate_key")
-        result[key] = value
+    result = dict(pairs)
+    if len(result) != len(pairs):
+        raise ProtocolViolation("duplicate_key")
     return result
 
 
@@ -137,11 +140,11 @@ def _bounded_int(value: str) -> int:
     return int(value)
 
 
-def _frame(line: bytes) -> dict[str, Any]:
-    if len(line) > MAX_FRAME:
+def _frame(output: bytes, start: int, end: int) -> dict[str, Any]:
+    if end - start > MAX_FRAME:
         raise ProtocolViolation("frame_too_large")
     try:
-        value = json.loads(line.decode("ascii"), object_pairs_hook=_unique, parse_float=_reject,
+        value = json.loads(output[start:end].decode("ascii"), object_pairs_hook=_unique, parse_float=_reject,
                            parse_constant=_reject, parse_int=_bounded_int)
     except ProtocolViolation:
         raise
@@ -149,7 +152,7 @@ def _frame(line: bytes) -> dict[str, Any]:
         raise ProtocolViolation("invalid_frame") from None
     if type(value) is not dict or type(value.get("t")) is not str or value["t"] not in _KEYS:
         raise ProtocolViolation("unknown_frame")
-    if set(value) != _KEYS[value["t"]]:
+    if value.keys() != _KEYS[value["t"]]:
         raise ProtocolViolation("frame_keys")
     return value
 
@@ -248,12 +251,14 @@ def decode_frames(stdout: bytes, *, nonce: str, input_length: int) -> DecodedPar
 
     if type(stdout) is not bytes or len(stdout) > MAX_OUTPUT or not stdout.endswith(b"\n"):
         raise ProtocolViolation("output_shape")
-    if _HEX64.fullmatch(nonce) is None or not 0 <= input_length <= MAX_INPUT:
+    if not _is_digest(nonce) or type(input_length) is not int or not 0 <= input_length <= MAX_INPUT:
         raise ProtocolViolation("invalid_request")
-    lines = stdout[:-1].split(b"\n")
-    if len(lines) < 2 or len(lines) > MAX_FRAMES:
+    frame_count = stdout.count(b"\n")
+    if frame_count < 2 or frame_count > MAX_FRAMES:
         raise ProtocolViolation("frame_count")
-    hello = _frame(lines[0])
+    line_end = stdout.find(b"\n")
+    hello = _frame(stdout, 0, line_end)
+    line_start = line_end + 1
     if hello["t"] != "hello" or _int(hello["v"]) != PROTOCOL_VERSION or hello["nonce"] != nonce:
         raise ProtocolViolation("hello_invalid")
     if type(hello["ts"]) is not str or _VERSION.fullmatch(hello["ts"]) is None:
@@ -262,9 +267,11 @@ def decode_frames(stdout: bytes, *, nonce: str, input_length: int) -> DecodedPar
     items: list[ItemFrame] = []
     unsupported: list[UnsupportedFrame] = []
     last_end: dict[int, int] = {}
-    depths: list[int] = []
-    for line in lines[1:-1]:
-        value = _frame(line)
+    depths = array("H")  # Stored depths are bounded by MAX_SCOPE_DEPTH.
+    for _ in range(frame_count - 2):
+        line_end = stdout.find(b"\n", line_start)
+        value = _frame(stdout, line_start, line_end)
+        line_start = line_end + 1
         if value["t"] == "n":
             item = _item(value, len(items), items, last_end, input_length)
             depth = 1 if item.parent < 0 else depths[item.parent] + 1
@@ -276,7 +283,7 @@ def decode_frames(stdout: bytes, *, nonce: str, input_length: int) -> DecodedPar
             unsupported.append(_unsupported(value, items, input_length))
         else:
             raise ProtocolViolation("frame_order")
-    last = _frame(lines[-1])
+    last = _frame(stdout, line_start, len(stdout) - 1)
     if last["t"] != "end":
         raise ProtocolViolation("frame_order")
     end = _end(last, nonce, len(items), unsupported, items)

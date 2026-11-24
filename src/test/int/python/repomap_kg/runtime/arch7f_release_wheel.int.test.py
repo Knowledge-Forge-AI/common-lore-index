@@ -5,6 +5,7 @@ import shutil
 import sys
 import tomllib
 import zipfile
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -213,3 +214,45 @@ def test_projected_public_wheel_contains_complete_graph_and_control_migration_ca
     assert wheel_build.returncode == 0, wheel_build.stderr[-2_000:]
     wheel = next(wheel_directory.glob("common_lore_index-0.0.4-*.whl"))
     _verify_wheel_contents(wheel, "0.0.4", tmp_path, cap, "public")
+
+def test_source_distribution_rebuilds_an_equivalent_installed_wheel(
+    tmp_path_factory: pytest.TempPathFactory, tmp_path: Path,
+) -> None:
+    from hashlib import sha256
+
+    from installed_experience_pins import CANDIDATE_VERSION
+    from repomap_test_support.installed_candidate import (
+        DIST_INFO, candidate_sdist_wheel, candidate_wheel, expected_inventory, wheel_inventory,
+    )
+    from repomap_test_support.installed_environment import run_child
+    from repomap_test_support.installed_experience_driver import pure_environment
+    from repomap_test_support.installed_origin import closure, observe_origin
+
+    direct = candidate_wheel(tmp_path_factory)
+    archive, rebuilt = candidate_sdist_wheel(direct, tmp_path / "source archive proof")
+    expected = expected_inventory()
+    record = f"{DIST_INFO}/RECORD"
+
+    def members(wheel: Path) -> dict[str, str]:
+        facts = wheel_inventory(wheel)
+        assert facts.record_valid and not (facts.pth_members or facts.forbidden_members)
+        assert expected <= facts.names <= expected | {f"{DIST_INFO}/top_level.txt"}
+        with zipfile.ZipFile(wheel) as reader:
+            names = reader.namelist()
+            assert len(names) == len(facts.names)
+            return {name: sha256(reader.read(name)).hexdigest() for name in names if name != record}
+
+    rebuilt_members = members(rebuilt)
+    assert rebuilt_members == members(direct.wheel)
+    env = pure_environment(tmp_path / "rebuilt Local environment", replace(direct, wheel=rebuilt))
+    normal = observe_origin(env, REPO_ROOT, isolated=False)
+    isolated = observe_origin(env, REPO_ROOT, isolated=True)
+    assert closure("pure-local", normal, isolated)
+    cli = run_child(env, (str(env.wrapper("cloe")), "--version"))
+    assert cli.exit == 0 and cli.stdout == f"cloe {CANDIDATE_VERSION}\n"
+    print(json.dumps({"event": "cloe-source-distribution-roundtrip", "input_count": direct.input_count,
+                      "input_sha256": direct.input_sha256, "wheel_members": len(rebuilt_members),
+                      "sdist_sha256": sha256(archive.read_bytes()).hexdigest(),
+                      "direct_wheel_sha256": direct.sha256,
+                      "rebuilt_wheel_sha256": sha256(rebuilt.read_bytes()).hexdigest(),
+                      "wheel_payload_equivalent": True, "fresh_local_install": True}, sort_keys=True))

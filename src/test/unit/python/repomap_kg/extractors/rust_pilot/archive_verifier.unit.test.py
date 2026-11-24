@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import zipfile
 from dataclasses import replace
@@ -12,14 +13,16 @@ import pytest
 
 from common_lore_index.extractors.rust_pilot.archive_verifier import (
     ArchiveRefused,
+    _verify_record,
     expected_install_tree,
     expected_tree_digest,
     record_hash,
     require_member_name,
+    tree_digest,
     verify_archive,
     verify_wheel,
 )
-from common_lore_index.extractors.rust_pilot.component_lock import MemberLock
+from common_lore_index.extractors.rust_pilot.component_lock import MemberLock, canonical_json
 from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import build_wheel, synthetic_wheel
 
 FILES = {"demo/__init__.py": b"VALUE = 1\n", "demo/_binding.so": b"\x7fELF-not-real",
@@ -69,6 +72,17 @@ def test_explicit_empty_parent_directory_is_admitted_without_record_row() -> Non
     assert dict(verified)["demo/__init__.py"] == FILES["demo/__init__.py"]
 
 
+def test_regular_members_respect_the_total_inflated_size_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    from common_lore_index.extractors.rust_pilot import archive_verifier
+
+    data, contents = _archive_with_directory()
+    total = sum(len(blob) for blob in contents.values())
+    monkeypatch.setattr(archive_verifier, "MAX_ARCHIVE_UNCOMPRESSED", total)
+    assert dict(_verify(data, contents)) == contents
+    monkeypatch.setattr(archive_verifier, "MAX_ARCHIVE_UNCOMPRESSED", total - 1)
+    assert _code(data, contents) == "archive_too_large"
+
+
 @pytest.mark.parametrize(("options", "code"), [
     ({"duplicate": True}, "duplicate_member"),
     ({"name": "demo/unused/"}, "unexpected_directory"),
@@ -94,6 +108,24 @@ def test_locked_synthetic_wheel_is_verified_member_for_member() -> None:
     verified = verify_wheel(wheel.data, wheel.lock)
     assert dict(verified.members)["demo/_binding.so"] == FILES["demo/_binding.so"]
     assert [name for name, _ in verified.members][-1] == f"{DIST}/RECORD"
+
+
+def test_parent_reuses_digests_proved_during_member_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    from common_lore_index.extractors.rust_pilot import archive_verifier
+
+    wheel = synthetic_wheel("demo", FILES)
+    real_hash = hashlib.sha256
+    hashed: list[int] = []
+
+    def count(data: bytes = b""):
+        hashed.append(len(data))
+        return real_hash(data)
+
+    with monkeypatch.context() as local:
+        local.setattr(archive_verifier.hashlib, "sha256", count)
+        verified = verify_wheel(wheel.data, wheel.lock)
+    assert len(hashed) == 1 + len(verified.members)
+    assert dict(verified.members)["demo/_binding.so"] == FILES["demo/_binding.so"]
 
 
 def test_artifact_size_and_digest_are_checked_before_parsing() -> None:
@@ -177,9 +209,36 @@ def test_expected_tree_is_sealed_closed_and_collision_free() -> None:
     assert modes["site/demo/_binding.so"] == ("f", 0o555) and modes["site/demo/__init__.py"] == ("f", 0o444)
     assert modes["helper/parse_helper.py"] == modes["notices/core-notice"] == ("f", 0o444)
     assert [entry.path for entry in tree] == sorted(entry.path for entry in tree)
+    rows = [[entry.path, entry.kind, entry.mode, None if entry.data is None else hashlib.sha256(entry.data).hexdigest(),
+             None if entry.data is None else len(entry.data)] for entry in tree]
+    assert expected_tree_digest(tuple(reversed(tree))) == hashlib.sha256(canonical_json(sorted(rows))).hexdigest()
     assert expected_tree_digest(tree) != expected_tree_digest(expected_install_tree([members], b"other", []))
     with pytest.raises(ArchiveRefused, match="install_path_collision"):
         expected_install_tree([members, members], b"h", [])
     for name in ("", "/abs", "a/../b", "a//b", "dir/"):
         with pytest.raises(ArchiveRefused):
             require_member_name(name)
+
+
+def test_record_csv_read_failure_takes_precedence_over_earlier_bad_row() -> None:
+    first = "demo/__init__.py,sha256=bad,10"
+    unreadable = "x" * (csv.field_size_limit() + 1)
+    data, contents = build_wheel(FILES, DIST, record_rows=[first, unreadable, f"{DIST}/RECORD,,"])
+    assert _code(data, contents) == "record_invalid"
+
+
+@pytest.mark.parametrize("invalid_tail", (b"\xff", b"\xe2\x82"))
+def test_record_invalid_utf8_after_an_earlier_bad_row_is_a_framing_refusal(invalid_tail: bytes) -> None:
+    record_name = f"{DIST}/RECORD"
+    raw = b"unknown,sha256=bad,1\n" + b"other,,\n" * 1500 + invalid_tail
+    with pytest.raises(ArchiveRefused, match="record_invalid"):
+        _verify_record(raw, record_name, {})
+
+
+@pytest.mark.parametrize("count", (0, 1, 255, 256, 257, 513))
+def test_tree_digest_preserves_canonical_array_framing_across_batches(count: int) -> None:
+    entries = [(f"fixture/é-{index:04d}", "d", 0o555, None) if index % 2 else
+               (f"fixture/é-{index:04d}", "f", 0o444, b"bytes") for index in reversed(range(count))]
+    rows = [[path, kind, mode, None if data is None else hashlib.sha256(data).hexdigest(),
+             None if data is None else len(data)] for path, kind, mode, data in entries]
+    assert tree_digest(entries) == hashlib.sha256(canonical_json(sorted(rows))).hexdigest()

@@ -248,3 +248,28 @@ def test_owned_report_write_and_cleanup_faults_never_undo_the_real_publication(
         assert str(tmp_path) not in captured.err
     assert _latest_run(config) == 1
     assert list(reports.iterdir()) == []
+
+
+def test_changed_report_temporary_is_refused_after_a_real_refresh(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    home, reports, config = _local(tmp_path, capsys)
+    install = delivery._install
+
+    def replace_then_install(admitted, directory, temp_name, identity):
+        foreign = tmp_path / "fixture-foreign"
+        foreign.write_bytes(b"foreign")
+        foreign.chmod(0o600)
+        os.replace(foreign, reports / temp_name)
+        install(admitted, directory, temp_name, identity)
+
+    monkeypatch.setattr(delivery, "_install", replace_then_install)
+    target = reports / "r.json"
+    assert main(_refresh(home, target)) == 0
+    captured = capsys.readouterr()
+    assert json.loads(captured.out)["accepted_generation"] == 1
+    assert captured.err.endswith("WARNING: resource-report-not-delivered: install_failed\n")
+    assert not target.exists()
+    leftover, = report_leftovers(reports)
+    assert (reports / leftover).read_bytes() == b"foreign"
+    assert _latest_run(config) == 1

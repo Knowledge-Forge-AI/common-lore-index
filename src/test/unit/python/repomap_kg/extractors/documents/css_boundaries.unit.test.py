@@ -5,6 +5,38 @@ from common_lore_index.graph.keys import file_key, unknown_key
 
 
 class CssExtractorBoundariesUnitTests(unittest.TestCase):
+    def test_credentialed_plain_quoted_value_stays_out_of_summaries(self):
+        rows = extract_css_file_observations(
+            "style.css", 'body { --asset: "//user:fixture@concealed.invalid/asset"; }',
+        )
+        declaration, = [row for row in rows if row.kind == "css.custom_property"]
+        self.assertTrue(declaration.metadata["redacted"])
+        self.assertNotIn("concealed.invalid", str([row.to_dict() for row in rows]))
+
+    def test_credentialed_url_does_not_enter_a_declaration_summary(self):
+        rows = extract_css_file_observations(
+            "style.css",
+            ':root { --asset: url("https://public.invalid/?next=//user:fixture@concealed.invalid/asset"); color: blue; }',
+        )
+        reference, = [row for row in rows if row.kind == "css.reference"]
+        declaration, = [row for row in rows if row.kind == "css.custom_property"]
+        self.assertEqual(reference.metadata["redaction_reason"], "credentialed-url-redacted")
+        self.assertNotIn("value_summary", declaration.metadata)
+        self.assertNotIn("concealed.invalid", str([row.to_dict() for row in rows]))
+
+    def test_malformed_css_url_redacts_reference_and_containing_values(self):
+        observations = extract_css_file_observations(
+            "style.css",
+            ':root { --asset: url("https://invalid.example:not-a-port/item"); color: blue; }',
+        )
+        css_ref, = [item for item in observations if item.kind == "css.reference"]
+        definition, = [item for item in observations if item.kind == "css.custom_property"]
+        self.assertTrue((css_ref.target or "").startswith("unknown:"))
+        self.assertTrue(css_ref.metadata["redacted"])
+        self.assertTrue(definition.metadata["redacted"])
+        self.assertNotIn("value_summary", definition.metadata)
+        self.assertNotIn("invalid.example", str([item.to_dict() for item in observations]))
+
     def test_css_support_boundary_contracts(self):
         observations = extract_css_file_observations(
             "styles/boundaries.css",

@@ -48,11 +48,20 @@ type fileContext struct {
 
 // ParseFile parses one validated Go source file without type checking.
 func ParseFile(path string, relative string) Result {
+	return parseSource(path, relative, nil)
+}
+
+// ParseSource parses the exact bytes acquired by the bounded file reader.
+func ParseSource(path string, relative string, source []byte) Result {
+	return parseSource(path, relative, source)
+}
+
+func parseSource(path string, relative string, source any) Result {
 	fset := token.NewFileSet()
 	parsed, parseErr := parser.ParseFile(
 		fset,
 		path,
-		nil,
+		source,
 		parser.ParseComments|parser.AllErrors|parser.SkipObjectResolution,
 	)
 	result := Result{Diagnostics: parserDiagnostics(parseErr)}
@@ -60,13 +69,14 @@ func ParseFile(path string, relative string) Result {
 	if parsed == nil || parsed.Name == nil {
 		return result
 	}
+	normalizedRelative := filepath.ToSlash(relative)
 	context := fileContext{
 		fset:         fset,
-		relative:     filepath.ToSlash(relative),
+		relative:     normalizedRelative,
 		packageName:  parsed.Name.Name,
 		testFile:     strings.HasSuffix(relative, "_test.go"),
 		generated:    ast.IsGenerated(parsed),
-		vendor:       hasPathPart(filepath.ToSlash(relative), "vendor"),
+		vendor:       hasPathPart(normalizedRelative, "vendor"),
 		partialParse: parseErr != nil,
 		ordinals:     make(map[string]int),
 	}
@@ -120,6 +130,7 @@ func validSpanObservations(observations []protocol.Observation) []protocol.Obser
 		}
 		valid = append(valid, observation)
 	}
+	clear(observations[len(valid):])
 	return valid
 }
 
@@ -291,25 +302,34 @@ func parserDiagnostics(parseErr error) []Diagnostic {
 	if parseErr == nil {
 		return nil
 	}
-	entries := make([]scanner.Error, 0)
 	var list scanner.ErrorList
-	if errors.As(parseErr, &list) {
-		for _, item := range list {
-			if item != nil {
-				entries = append(entries, *item)
-			}
-		}
-	} else {
+	if !errors.As(parseErr, &list) {
 		return []Diagnostic{{Severity: "warning", Code: "go-parse-error", Line: 1, Message: "syntax error"}}
 	}
+	present, truncationLine := 0, 1
+	for _, item := range list {
+		if item == nil {
+			continue
+		}
+		present++
+		if present == MaxDiagnostics {
+			truncationLine = max(item.Pos.Line, 1)
+		}
+		if present > MaxDiagnostics {
+			break
+		}
+	}
 	seen := make(map[string]struct{})
-	truncated := len(entries) > MaxDiagnostics
+	truncated := present > MaxDiagnostics
 	diagnosticLimit := MaxDiagnostics
 	if truncated {
 		diagnosticLimit--
 	}
-	diagnostics := make([]Diagnostic, 0, min(len(entries), MaxDiagnostics))
-	for _, item := range entries {
+	diagnostics := make([]Diagnostic, 0, min(present, MaxDiagnostics))
+	for _, item := range list {
+		if item == nil {
+			continue
+		}
 		line := max(item.Pos.Line, 1)
 		message := boundedParserMessage(item.Msg)
 		key := fmt.Sprintf("%d:%s", line, message)
@@ -331,7 +351,7 @@ func parserDiagnostics(parseErr error) []Diagnostic {
 		diagnostics = append(diagnostics, Diagnostic{
 			Severity: "warning",
 			Code:     "go-parse-errors-truncated",
-			Line:     max(entries[diagnosticLimit].Pos.Line, 1),
+			Line:     truncationLine,
 			Message:  "additional syntax errors omitted",
 		})
 	}
@@ -363,7 +383,7 @@ func boundedParserMessage(message string) string {
 }
 
 func hasPathPart(path string, part string) bool {
-	for _, candidate := range strings.Split(path, "/") {
+	for candidate := range strings.SplitSeq(path, "/") {
 		if candidate == part {
 			return true
 		}

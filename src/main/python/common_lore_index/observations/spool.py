@@ -7,6 +7,7 @@ import tempfile
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
+from common_lore_index._utf8 import byte_length
 from common_lore_index.observations.raw import RawObservation
 
 
@@ -43,7 +44,7 @@ class ObservationSpool:
                     encoded = observation.to_json_line()
                     handle.write(encoded)
                     count += 1
-                    byte_count += len(encoded.encode("utf-8"))
+                    byte_count += byte_length(encoded)
         except BaseException:
             try:
                 os.close(descriptor)

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import bisect
 from collections.abc import Callable
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -11,8 +10,8 @@ from common_lore_index.retrieval.projection_build import (
     CapturedTextProjection,
     ProjectedFileRecord,
 )
-from common_lore_index.retrieval.projection_chunks import frame_digest
-from common_lore_index.retrieval.projection_evidence import links_for_line_span
+from common_lore_index.retrieval.projection_chunks import ProjectedChunk, frame_digest
+from common_lore_index.retrieval.projection_evidence import ProjectedEvidenceLink, first_link_for_line_span
 from common_lore_index.retrieval.publication_binding import AcceptedPublicationReference
 from common_lore_index.retrieval.query_contracts import (
     CapabilityState,
@@ -76,46 +75,120 @@ def _find_file_matches(
     skip_matches: int = 0,
 ) -> tuple[list[tuple[int, int, int, str, str]], int]:
     """Find literal occurrences across contiguous chunks of one file without crossing files."""
-    if not file_rec.chunks or file_rec.chunks[0].is_empty_file_record:
+    chunks = file_rec.chunks
+    if not chunks or chunks[0].is_empty_file_record:
         return [], 0
-    full_text = "".join(c.content_text for c in file_rec.chunks)
-    if needle not in full_text:
-        return [], 0
+    if len(needle) <= _CHUNK_LOOKAHEAD_LIMIT:
+        return _find_chunked_matches(chunks, needle, max_materialize, skip_matches)
+    # For wide needles, joining once avoids repeatedly copying their overlap.
+    full_text = "".join(chunk.content_text for chunk in chunks)
+    snippet_digest: str | None = None
 
-    line_starts: list[int] | None = None
-    chunk_char_ends: list[int] | None = None
-    snippet_digest = frame_digest("sha256", (needle,))
+    needle_len = len(needle)
+    line_span = 0
+    line = 1
+    line_cursor = 0
+    chunk_idx = 0
+    chunk_end = len(chunks[0].content_text)
 
     matches: list[tuple[int, int, int, str, str]] = []
     total_count = 0
     start_pos = 0
-    needle_len = len(needle)
     while True:
+        page_full = max_materialize is not None and len(matches) >= max_materialize
+        if page_full and needle_len == 1:
+            # Single-character occurrences cannot overlap.
+            total_count += full_text.count(needle, start_pos)
+            break
         found = full_text.find(needle, start_pos)
         if found == -1:
             break
         total_count += 1
-        if total_count > skip_matches and (max_materialize is None or len(matches) < max_materialize):
-            if line_starts is None or chunk_char_ends is None:
-                line_starts = [0]
-                for idx, ch in enumerate(full_text):
-                    if ch == "\n" and idx + 1 < len(full_text):
-                        line_starts.append(idx + 1)
-                chunk_char_ends = []
-                running_chars = 0
-                for chunk in file_rec.chunks:
-                    running_chars += len(chunk.content_text)
-                    chunk_char_ends.append(running_chars)
-            end_pos = found + needle_len - 1
-            end_line_pos = end_pos - 1 if (full_text[end_pos] == "\n" and end_pos > found) else end_pos
-            start_line = bisect.bisect_right(line_starts, found)
-            end_line = bisect.bisect_right(line_starts, end_line_pos)
-            chunk_idx = bisect.bisect_right(chunk_char_ends, found)
-            if chunk_idx >= len(file_rec.chunks):
-                chunk_idx = len(file_rec.chunks) - 1
-            covering_chunk = file_rec.chunks[chunk_idx]
-            matches.append((start_line, end_line, found, covering_chunk.chunk_id, snippet_digest))
+        if total_count > skip_matches and not page_full:
+            line += full_text.count("\n", line_cursor, found)
+            line_cursor = found
+            while found >= chunk_end and chunk_idx + 1 < len(chunks):
+                chunk_idx += 1
+                chunk_end += len(chunks[chunk_idx].content_text)
+            if snippet_digest is None:
+                line_span = _matched_line_span(needle)
+                snippet_digest = frame_digest("sha256", (needle,))
+            matches.append((line, line + line_span, found, chunks[chunk_idx].chunk_id, snippet_digest))
         start_pos = found + 1
+    return matches, total_count
+
+
+_CHUNK_LOOKAHEAD_LIMIT = 128
+
+
+def _matched_line_span(needle: str) -> int:
+    # Preserve the reference locator convention, including trailing LF runs.
+    last_character = len(needle) - 1
+    end_line_offset = last_character - int(last_character > 0 and needle.endswith("\n"))
+    return needle.count("\n", 0, end_line_offset)
+
+
+def _match_window(
+    chunks: tuple[ProjectedChunk, ...], index: int, start: int, overlap: int,
+) -> str:
+    parts = [chunks[index].content_text[start:]]
+    for following_index in range(index + 1, len(chunks)):
+        tail = chunks[following_index].content_text[:overlap]
+        parts.append(tail)
+        overlap -= len(tail)
+        if overlap == 0:
+            break
+    return "".join(parts)
+
+
+def _find_chunked_matches(
+    chunks: tuple[ProjectedChunk, ...],
+    needle: str,
+    max_materialize: int | None,
+    skip_matches: int,
+) -> tuple[list[tuple[int, int, int, str, str]], int]:
+    """Count overlapping literal starts in each chunk with a bounded lookahead."""
+    matches: list[tuple[int, int, int, str, str]] = []
+    total_count = 0
+    char_base = 0
+    start_line = 1
+    digest: str | None = None
+    overlap = len(needle) - 1
+    line_span = 0
+    for index, chunk in enumerate(chunks):
+        text = chunk.content_text
+        boundary: str | None = None
+        suffix_start = max(0, len(text) - overlap)
+        pos = 0
+        line = start_line
+        line_cursor = 0
+        while pos < len(text):
+            page_full = max_materialize is not None and len(matches) >= max_materialize
+            if page_full and overlap == 0:
+                total_count += text.count(needle, pos)
+                break
+            found = text.find(needle, pos) if boundary is None else -1
+            if found < 0 and overlap and index + 1 < len(chunks):
+                if boundary is None:
+                    boundary = _match_window(chunks, index, suffix_start, overlap)
+                relative = boundary.find(needle, max(0, pos - suffix_start))
+                if relative >= 0:
+                    found = suffix_start + relative
+            # A start in the lookahead belongs to its own chunk.
+            if found < 0 or found >= len(text):
+                break
+            total_count += 1
+            if total_count > skip_matches and not page_full:
+                line += text.count("\n", line_cursor, found)
+                line_cursor = found
+                if digest is None:
+                    line_span = _matched_line_span(needle)
+                    digest = frame_digest("sha256", (needle,))
+                matches.append((line, line + line_span, char_base + found, chunk.chunk_id, digest))
+            pos = found + 1
+        if max_materialize is None or len(matches) < max_materialize:
+            start_line += text.count("\n")
+        char_base += len(text)
     return matches, total_count
 
 
@@ -218,13 +291,11 @@ def query_captured_text(
     raw_candidates: list[tuple[ProjectedFileRecord, int, int, int, str, str]] = []
     total_matches = 0
     ordered_files = sorted(
-        projection.projected_files, key=lambda file: (file.binding_id, file.source_relative_path)
+        (file for file in projection.projected_files if file.binding_id in req_binding_set
+         and (prefix is None or file.source_relative_path.startswith(prefix))),
+        key=lambda file: (file.binding_id, file.source_relative_path),
     )
     for file_rec in ordered_files:
-        if file_rec.binding_id not in req_binding_set:
-            continue
-        if prefix is not None and not file_rec.source_relative_path.startswith(prefix):
-            continue
         if file_rec.truncated:
             omissions.append(
                 OmissionRecord(
@@ -263,12 +334,18 @@ def query_captured_text(
         )
 
     hits: list[QueryHit] = []
+    previous_file: ProjectedFileRecord | None = None
+    previous_span: tuple[int, int] | None = None
+    primary_link: ProjectedEvidenceLink | None = None
     for rank, (file_rec, start_line, end_line, _pos, chunk_id, snippet_digest) in enumerate(
         paged,
         start=1,
     ):
-        overlapping_links = links_for_line_span(file_rec.evidence_links, start_line, end_line)
-        primary_link = overlapping_links[0] if overlapping_links else None
+        span = (start_line, end_line)
+        if file_rec is not previous_file or span != previous_span:
+            primary_link = first_link_for_line_span(file_rec.evidence_links, start_line, end_line)
+            previous_file = file_rec
+            previous_span = span
         locator = EvaluationLocator(
             binding_id=file_rec.binding_id,
             source_relative_path=file_rec.source_relative_path,

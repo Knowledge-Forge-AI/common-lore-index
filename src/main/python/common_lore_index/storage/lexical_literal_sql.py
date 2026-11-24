@@ -8,6 +8,7 @@ from common_lore_index.storage.lexical_fence_sql import (
 )
 
 DEFAULT_MAX_OCCURRENCES_PER_FILE = 1024
+_LITERAL_DOCUMENT_LIMIT = 4096
 
 LITERAL_CAPTURED_TEXT_QUERY_SQL = f"""
 WITH RECURSIVE
@@ -21,7 +22,6 @@ scoped_documents AS MATERIALIZED (
         doc.binding_id,
         doc.source_relative_path,
         doc.normalized_byte_length,
-        doc.normalized_text,
         doc.artifact_privacy
     FROM cloe_lexical.documents doc
     JOIN admitted_generation ag
@@ -37,14 +37,22 @@ scoped_documents AS MATERIALIZED (
                      left(doc.source_relative_path, length(p.prefix) + 1) = p.prefix || '/'
           )
       )
+    -- One extra scoped row proves overflow without retaining the rest of the inventory.
+    LIMIT {_LITERAL_DOCUMENT_LIMIT + 1}
 ),
 literal_scan_budget AS MATERIALIZED (
     SELECT
         (
-            count(*) > 4096
+            count(*) > {_LITERAL_DOCUMENT_LIMIT}
             OR COALESCE(sum(sd.normalized_byte_length), 0) > 16777216
         ) AS overflowed
     FROM scoped_documents sd
+),
+budgeted_documents AS MATERIALIZED (
+    SELECT sd.*
+    FROM scoped_documents sd
+    CROSS JOIN literal_scan_budget lsb
+    WHERE NOT lsb.overflowed
 ),
 eligible_documents AS MATERIALIZED (
     SELECT
@@ -54,23 +62,26 @@ eligible_documents AS MATERIALIZED (
         doc.representation_version,
         doc.binding_id,
         doc.source_relative_path,
-        doc.normalized_text,
+        body.normalized_text,
         doc.artifact_privacy
-    FROM scoped_documents doc
-    CROSS JOIN literal_scan_budget lsb
-    WHERE NOT lsb.overflowed
-      AND strpos(doc.normalized_text, %(query_text)s) > 0
+    FROM budgeted_documents doc
+    CROSS JOIN LATERAL (
+        SELECT source.normalized_text
+        FROM cloe_lexical.documents source
+        WHERE source.repository_id = doc.repository_id
+          AND source.lexical_generation_id = doc.lexical_generation_id
+          AND source.binding_id = doc.binding_id
+          AND source.source_relative_path = doc.source_relative_path
+        LIMIT 1
+    ) body
+    WHERE strpos(body.normalized_text, %(query_text)s) > 0
 ),
 raw_occurrences AS (
     SELECT
         ed.repository_id,
         ed.lexical_generation_id,
-        ed.run_id,
-        ed.representation_version,
         ed.binding_id,
         ed.source_relative_path,
-        ed.normalized_text,
-        ed.artifact_privacy,
         1 AS occurrence_index,
         strpos(ed.normalized_text, %(query_text)s) AS match_pos_1
     FROM eligible_documents ed
@@ -78,17 +89,13 @@ raw_occurrences AS (
     SELECT
         ro.repository_id,
         ro.lexical_generation_id,
-        ro.run_id,
-        ro.representation_version,
         ro.binding_id,
         ro.source_relative_path,
-        ro.normalized_text,
-        ro.artifact_privacy,
         ro.occurrence_index + 1 AS occurrence_index,
-        ro.match_pos_1 + strpos(substr(ro.normalized_text, ro.match_pos_1 + 1), %(query_text)s) AS match_pos_1
+        ro.match_pos_1 + NULLIF(strpos(substr(ed.normalized_text, ro.match_pos_1 + 1), %(query_text)s), 0) AS match_pos_1
     FROM raw_occurrences ro
-    WHERE ro.occurrence_index <= %(max_occurrences_per_file)s
-      AND strpos(substr(ro.normalized_text, ro.match_pos_1 + 1), %(query_text)s) > 0
+    JOIN eligible_documents ed USING (repository_id, lexical_generation_id, binding_id, source_relative_path)
+    WHERE ro.occurrence_index <= %(max_occurrences_per_file)s AND ro.match_pos_1 IS NOT NULL
 ),
 capped_files AS MATERIALIZED (
     SELECT DISTINCT
@@ -96,20 +103,34 @@ capped_files AS MATERIALIZED (
         ro.source_relative_path
     FROM raw_occurrences ro
     WHERE ro.occurrence_index > %(max_occurrences_per_file)s
+      AND ro.match_pos_1 IS NOT NULL
 ),
 admitted_occurrences AS MATERIALIZED (
+    SELECT ro.*
+    FROM raw_occurrences ro
+    WHERE ro.occurrence_index <= %(max_occurrences_per_file)s AND ro.match_pos_1 IS NOT NULL
+),
+paged_occurrences AS MATERIALIZED (
+    SELECT *
+    FROM admitted_occurrences
+    -- Line endpoints within one document are nondecreasing as match positions advance.
+    ORDER BY binding_id COLLATE "C" ASC, source_relative_path COLLATE "C" ASC, match_pos_1 ASC
+    OFFSET %(offset)s
+    LIMIT %(limit)s
+),
+page_locations AS MATERIALIZED (
     SELECT
         ro.repository_id,
         ro.lexical_generation_id,
-        ro.run_id,
-        ro.representation_version,
+        ed.run_id,
+        ed.representation_version,
         ro.binding_id,
         ro.source_relative_path,
-        ro.artifact_privacy,
+        ed.artifact_privacy,
         ro.occurrence_index,
         ro.match_pos_1,
         1 + (ro.match_pos_1 - 1) - char_length(
-            replace(left(ro.normalized_text, ro.match_pos_1 - 1), chr(10), '')
+            replace(left(ed.normalized_text, ro.match_pos_1 - 1), chr(10), '')
         ) AS start_line,
         1 + (
             CASE
@@ -120,7 +141,7 @@ admitted_occurrences AS MATERIALIZED (
         ) - char_length(
             replace(
                 left(
-                    ro.normalized_text,
+                    ed.normalized_text,
                     CASE
                         WHEN right(%(query_text)s, 1) = chr(10) AND char_length(%(query_text)s) > 1
                             THEN ro.match_pos_1 + char_length(%(query_text)s) - 2
@@ -131,10 +152,10 @@ admitted_occurrences AS MATERIALIZED (
                 ''
             )
         ) AS end_line
-    FROM raw_occurrences ro
-    WHERE ro.occurrence_index <= %(max_occurrences_per_file)s
+    FROM paged_occurrences ro
+    JOIN eligible_documents ed USING (repository_id, lexical_generation_id, binding_id, source_relative_path)
 ),
-ordered_hits AS MATERIALIZED (
+paged AS MATERIALIZED (
     SELECT
         ao.repository_id,
         ao.lexical_generation_id,
@@ -149,7 +170,7 @@ ordered_hits AS MATERIALIZED (
         GREATEST(ao.start_line, ao.end_line) AS end_line,
         ch.chunk_id,
         ch.chunk_sha256
-    FROM admitted_occurrences ao
+    FROM page_locations ao
     LEFT JOIN LATERAL (
         SELECT c.chunk_id, c.chunk_sha256
         FROM cloe_lexical.chunks c
@@ -162,19 +183,6 @@ ordered_hits AS MATERIALIZED (
             c.chunk_ordinal ASC
         LIMIT 1
     ) ch ON true
-    ORDER BY
-        ao.binding_id COLLATE "C" ASC,
-        ao.source_relative_path COLLATE "C" ASC,
-        ao.start_line ASC,
-        GREATEST(ao.start_line, ao.end_line) ASC,
-        ao.match_pos_1 ASC,
-        COALESCE(ch.chunk_id, '') COLLATE "C" ASC
-),
-paged AS MATERIALIZED (
-    SELECT *
-    FROM ordered_hits
-    OFFSET %(offset)s
-    LIMIT %(limit)s
 ),
 enriched_hits AS MATERIALIZED (
     SELECT
@@ -211,7 +219,7 @@ SELECT json_build_object(
     'snapshot_manifest_id', (SELECT live_manifest_id FROM fence_state),
     'extraction_receipt_id', (SELECT live_receipt_id FROM fence_state),
     'graph_candidate_id', (SELECT live_candidate_id FROM fence_state),
-    'total_matches', (SELECT count(*)::int FROM ordered_hits),
+    'total_matches', (SELECT count(*)::int FROM admitted_occurrences),
     'candidate_overflow', COALESCE((SELECT overflowed FROM literal_scan_budget), false),
     'capped_files', COALESCE(
         (

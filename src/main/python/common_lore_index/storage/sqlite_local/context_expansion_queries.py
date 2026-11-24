@@ -5,7 +5,9 @@ from __future__ import annotations
 from common_lore_index.storage.sqlite_local.schema import SqliteReadConnection
 
 from collections.abc import Sequence
+from contextlib import closing
 from dataclasses import dataclass
+from itertools import islice
 import json
 from typing import Any
 
@@ -18,6 +20,7 @@ from common_lore_index.retrieval.context_identity import (
 )
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.navigation_search import EVIDENCE_SCAN_LIMIT
+from common_lore_index.storage.sqlite_local.node_location_queries import _context_vector_reader
 from common_lore_index.storage.sqlite_local.navigation_queries import (
     _direct_location,
     evidence_sql,
@@ -103,7 +106,7 @@ def expand_seed_incident_edges(
 
     kind_placeholders = ", ".join("?" for _ in ordered_kinds)
     fetch_limit = per_seed_limit + 1
-    sql = f"""SELECT * FROM (
+    sql = f"""SELECT * FROM (SELECT * FROM (
         SELECT
             'outgoing' AS direction,
             e.identity_metadata_hash AS edge_key,
@@ -155,47 +158,41 @@ def expand_seed_incident_edges(
           AND e.edge_kind IN ({kind_placeholders})
         ORDER BY e.edge_kind, e.source_canonical_key, e.identity_metadata_hash
         LIMIT ?
-    )"""
+    ))
+    ORDER BY edge_kind COLLATE BINARY,
+             CASE direction WHEN 'outgoing' THEN 0 ELSE 1 END,
+             neighbor_canonical_key COLLATE BINARY, edge_key COLLATE BINARY
+    LIMIT ?"""
     params: tuple[Any, ...] = (
         seed_canonical_key, *ordered_kinds, fetch_limit,
         seed_canonical_key, *ordered_kinds, fetch_limit,
+        fetch_limit,
     )
-    rows = connection.execute(sql, params).fetchall()
     kind_priority = {k: idx for idx, k in enumerate(ordered_kinds)}
 
     parsed: list[dict[str, Any]] = []
-    for row in rows:
-        direction = str(row[0])
-        edge_kind = str(row[2])
-        neighbor_ck = str(row[10])
-        parsed.append(incident_edge_record(
-            {
-                "direction": direction,
-                "direction_rank": 0 if direction == "outgoing" else 1,
-                "edge_key": row[1], "edge_kind": edge_kind,
-                "source_canonical_key": row[3], "target_canonical_key": row[4],
-                "confidence": row[5], "conflict": row[6],
-                "first_seen_run_id": row[7], "last_seen_run_id": row[8],
-                "neighbor_id": row[9], "neighbor_canonical_key": neighbor_ck,
-                "neighbor_kind": row[11], "neighbor_display_name": row[12],
-                "neighbor_first_seen_run_id": row[13],
-                "neighbor_last_seen_run_id": row[14],
-            },
-            edge_kind_priority=kind_priority.get(edge_kind, len(ordered_kinds)),
-        ))
-
-    parsed.sort(
-        key=lambda item: (
-            item["edge_kind_priority"],
-            item["edge_kind"],
-            item["direction_rank"],
-            item["neighbor_canonical_key"].encode("utf-8"),
-            item["edge_key"].encode("utf-8"),
-        )
-    )
-    truncated = len(parsed) > per_seed_limit
-    kept = parsed[:per_seed_limit]
-    return {"edges": kept, "truncated": truncated, "scanned": len(kept)}
+    with closing(connection.execute(sql, params)) as rows:
+        for row in islice(rows, per_seed_limit):
+            direction = str(row[0])
+            edge_kind = str(row[2])
+            neighbor_ck = str(row[10])
+            parsed.append(incident_edge_record(
+                {
+                    "direction": direction,
+                    "direction_rank": 0 if direction == "outgoing" else 1,
+                    "edge_key": row[1], "edge_kind": edge_kind,
+                    "source_canonical_key": row[3], "target_canonical_key": row[4],
+                    "confidence": row[5], "conflict": row[6],
+                    "first_seen_run_id": row[7], "last_seen_run_id": row[8],
+                    "neighbor_id": row[9], "neighbor_canonical_key": neighbor_ck,
+                    "neighbor_kind": row[11], "neighbor_display_name": row[12],
+                    "neighbor_first_seen_run_id": row[13],
+                    "neighbor_last_seen_run_id": row[14],
+                },
+                edge_kind_priority=kind_priority.get(edge_kind, len(ordered_kinds)),
+            ))
+        truncated = rows.fetchone() is not None
+    return {"edges": parsed, "truncated": truncated, "scanned": len(parsed)}
 
 
 def batch_neighbor_direct_locations(
@@ -221,24 +218,23 @@ def batch_neighbor_direct_locations(
 
     predicate = "subject.id IN (" + ",".join(str(nid) for nid in unique_ids) + ")"
     sql = evidence_sql(predicate, role_sql=role_sql)
-    rows = connection.execute(
-        sql,
-        {"accepted": accepted_run_id, "evidence_fetch": EVIDENCE_SCAN_LIMIT + 1},
-    ).fetchall()
-    incomplete = len(rows) > EVIDENCE_SCAN_LIMIT
-    kept_rows = rows[:EVIDENCE_SCAN_LIMIT]
-
     by_node: dict[int, list[dict[str, Any]]] = {nid: [] for nid in unique_ids}
     vec_arg = list(normalized_vector) if normalized_vector is not None else None
-    for row in kept_rows:
-        node_id = int(row[20])
-        loc = _direct_location(
-            row[:20], accepted_run_id, snapshot_vector=vec_arg, context_identity=True
-        )
-        if node_id in by_node:
-            by_node[node_id].append(loc)
+    read_context_vector = _context_vector_reader()
+    scanned = 0
+    with closing(connection.execute(
+        sql, {"accepted": accepted_run_id, "evidence_fetch": EVIDENCE_SCAN_LIMIT + 1},
+    )) as rows:
+        for scanned, row in enumerate(islice(rows, EVIDENCE_SCAN_LIMIT), start=1):
+            node_id = int(row[20])
+            loc = _direct_location(
+                row[:20], accepted_run_id, snapshot_vector=vec_arg, read_context_vector=read_context_vector
+            )
+            if node_id in by_node:
+                by_node[node_id].append(loc)
+        incomplete = rows.fetchone() is not None
     return {
         "locations_by_node_id": by_node,
-        "evidence_scanned": len(kept_rows),
+        "evidence_scanned": scanned,
         "incomplete": incomplete,
     }

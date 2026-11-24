@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import json
 from typing import Any
@@ -253,17 +253,11 @@ def build_lexical_generation_policy(
         max_chunk_lines=max_chunk_lines,
         max_chunk_bytes=max_chunk_bytes,
     ).validate()
-    canonical_body_policy = BodyProjectionPolicy(
-        graph_id=graph.id,
-        selected_binding_ids=frozenset(eligible_admitted),
-        bindings=resolved_map,
-        max_projected_files=max_projected_files,
-        max_aggregate_input_bytes=max_aggregate_input_bytes,
-        max_input_artifact_bytes=max_input_artifact_bytes,
-        max_projected_file_bytes=max_projected_file_bytes,
-        max_chunk_lines=max_chunk_lines,
-        max_chunk_bytes=max_chunk_bytes,
-    ).validate()
+    eligible_binding_ids = frozenset(eligible_admitted)
+    canonical_body_policy = (
+        body_policy if body_policy.selected_binding_ids == eligible_binding_ids
+        else replace(body_policy, selected_binding_ids=eligible_binding_ids)
+    )
 
     full_policy_payload = {
         "policy_version": LEXICAL_POLICY_VERSION,

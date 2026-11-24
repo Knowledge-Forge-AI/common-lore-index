@@ -28,11 +28,15 @@ def _private_regular(details: os.stat_result) -> bool:
     )
 
 
+def _file_extent(details: os.stat_result) -> tuple[int, int, int]:
+    return details.st_size, details.st_mtime_ns, details.st_ctime_ns
+
+
 def read_report_file(path: str | os.PathLike[str]) -> bytes:
     """Return at most the v2 file bound from one private regular report file.
 
     The codec then re-applies the per-schema bound, so an oversized v1 file
-    remains ``too_large``.
+    remains ``too_large``. The admitted file version must persist through the read.
     """
     try:
         before = os.lstat(path)
@@ -53,14 +57,27 @@ def read_report_file(path: str | os.PathLike[str]) -> bytes:
             or (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino)
         ):
             raise ResourceReportError("unsafe_input")
+        if opened.st_size > MAX_FILE_BYTES:
+            raise ResourceReportError("too_large")
+        if _file_extent(opened) != _file_extent(before):
+            raise ResourceReportError("unsafe_input")
         chunks: list[bytes] = []
         total = 0
-        while total <= MAX_FILE_BYTES:
-            chunk = os.read(descriptor, MAX_FILE_BYTES + 1 - total)
+        while total < opened.st_size:
+            chunk = os.read(descriptor, opened.st_size - total)
             if not chunk:
                 break
             chunks.append(chunk)
             total += len(chunk)
+        after = os.fstat(descriptor)
+        if after.st_size > MAX_FILE_BYTES:
+            raise ResourceReportError("too_large")
+        if (
+            not _private_regular(after)
+            or _file_extent(after) != _file_extent(opened)
+            or total != opened.st_size
+        ):
+            raise ResourceReportError("unsafe_input")
     except ResourceReportError:
         raise
     except OSError:
@@ -70,8 +87,6 @@ def read_report_file(path: str | os.PathLike[str]) -> bytes:
             os.close(descriptor)
         except OSError:
             pass  # a read-only descriptor; never replace the primary outcome
-    if total > MAX_FILE_BYTES:
-        raise ResourceReportError("too_large")
     return b"".join(chunks)
 
 

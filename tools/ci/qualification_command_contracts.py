@@ -60,6 +60,14 @@ def _job_runners(workflow: Workflow, job_name: str) -> list[list[str]]:
 
 def _validate_staging_runner_tokens(workflow: Workflow, job_name: str) -> list[str]:
     prefix = f"{workflow.path.name}: "
+    if "staging-integration-parts" in workflow.jobs:
+        from ci.hosted_staging_topology import GATE_JOB, PARTS_JOB, SMOKE_JOB, STAGING_TOOL
+        return [
+            prefix + f"cross-job leakage: staging runner found in {name}"
+            for name in workflow.jobs
+            if any("--suite staging" in script or (STAGING_TOOL in script and name not in {GATE_JOB, PARTS_JOB, SMOKE_JOB})
+                   for script in workflow.job_run_commands(name))
+        ]
     if job_name not in workflow.jobs:
         return [prefix + f"{job_name} job is missing"]
     try:
@@ -93,6 +101,8 @@ def _validate_downstream_dependencies(workflow: Workflow) -> list[str]:
             *[name for name in workflow.jobs if "codeql" in name.lower() or "sbom" in name.lower()])
     violations: list[str] = []
     for name in jobs:
+        if name == "staging-integration-gate" and "staging-integration-parts" in workflow.jobs:
+            continue  # Exact dependencies are checked by the hosted staging topology.
         if name in workflow.jobs:
             needs = workflow.jobs[name].get("needs")
             if needs != ["source-and-export-policy"]:

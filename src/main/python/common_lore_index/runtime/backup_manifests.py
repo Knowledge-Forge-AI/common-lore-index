@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+from bisect import bisect_left
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -289,6 +291,17 @@ def render_restore_doc(manifest: Mapping[str, Any]) -> str:
     )
 
 
+def _retain_toc_name(names: list[str], value: str) -> None:
+    """Keep only the unique lexicographically first names exposed in a summary."""
+    if len(names) == MAX_TOC_TABLE_NAMES and value >= names[-1]:
+        return
+    index = bisect_left(names, value)
+    if index == len(names) or names[index] != value:
+        names.insert(index, value)
+        if len(names) > MAX_TOC_TABLE_NAMES:
+            names.pop()
+
+
 def summarize_pg_restore_toc(
     toc_text: str,
     *,
@@ -296,12 +309,12 @@ def summarize_pg_restore_toc(
     dump_format: str | None,
 ) -> DumpTocSummary:
     toc_entry_count = 0
-    tables: set[str] = set()
-    table_data_tables: set[str] = set()
-    extensions: set[str] = set()
-    schemas: set[str] = set()
-    for raw_line in toc_text.split("\n"):
-        line = raw_line.rstrip("\r\n")
+    tables: list[str] = []
+    table_data_tables: list[str] = []
+    extensions: list[str] = []
+    schemas: list[str] = []
+    for raw_line in re.finditer(r"[^\n]+", toc_text):
+        line = raw_line[0].rstrip("\r")
         if not line.strip() or line.lstrip().startswith(";") or ";" not in line:
             continue
         dump_id_str, after_semi = line.split(";", 1)
@@ -314,29 +327,29 @@ def summarize_pg_restore_toc(
             ext_tail = rest[len("EXTENSION - "):]
             ext = ext_tail[:-1] if ext_tail.endswith(" ") else ext_tail
             if ext:
-                extensions.add(ext)
+                _retain_toc_name(extensions, ext)
         elif rest.startswith("SCHEMA - "):
             sch_tail = rest[len("SCHEMA - "):]
             raw_sch = (sch_tail[:-1] if sch_tail.endswith(" ") else sch_tail.rpartition(" ")[0]).strip()
             sch = sanitize_toc_identifier(raw_sch) or raw_sch
             if sch:
-                schemas.add(sch)
+                _retain_toc_name(schemas, sch)
         elif rest.startswith("TABLE DATA "):
             data_tail = rest[len("TABLE DATA "):]
             ns_and_rel = (data_tail[:-1] if data_tail.endswith(" ") else data_tail.rpartition(" ")[0]).strip()
             raw_tbl = ns_and_rel.split(" ", 1)[1] if " " in ns_and_rel else ""
             table = sanitize_toc_identifier(raw_tbl)
             if table:
-                table_data_tables.add(table)
+                _retain_toc_name(table_data_tables, table)
         elif rest.startswith("TABLE "):
             tbl_tail = rest[len("TABLE "):]
             ns_and_rel = (tbl_tail[:-1] if tbl_tail.endswith(" ") else tbl_tail.rpartition(" ")[0]).strip()
             raw_tbl = ns_and_rel.split(" ", 1)[1] if " " in ns_and_rel else ""
             table = sanitize_toc_identifier(raw_tbl)
             if table:
-                tables.add(table)
-    bounded_tables = tuple(sorted(tables)[:MAX_TOC_TABLE_NAMES])
-    bounded_table_data_tables = tuple(sorted(table_data_tables)[:MAX_TOC_TABLE_NAMES])
+                _retain_toc_name(tables, table)
+    bounded_tables = tuple(tables)
+    bounded_table_data_tables = tuple(table_data_tables)
     return DumpTocSummary(
         dump_file=dump_file,
         dump_format=dump_format,
@@ -346,8 +359,8 @@ def summarize_pg_restore_toc(
         table_data_count=len(bounded_table_data_tables),
         tables=bounded_tables,
         table_data_tables=bounded_table_data_tables,
-        extensions=tuple(sorted(extensions)[:MAX_TOC_TABLE_NAMES]),
-        schemas=tuple(sorted(schemas)[:MAX_TOC_TABLE_NAMES]),
+        extensions=tuple(extensions),
+        schemas=tuple(schemas),
     )
 
 

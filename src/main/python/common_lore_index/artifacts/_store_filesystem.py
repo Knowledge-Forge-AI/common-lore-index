@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from contextlib import suppress
 import hashlib
+import io
 import os
 from pathlib import Path
 import stat
@@ -20,6 +22,8 @@ from common_lore_index.artifacts._store_common import (
     _validate_requested_digest,
 )
 from common_lore_index.artifacts._store_stream import (
+    _READ_BLOCK,
+    _READ_FLAGS,
     VerifyingArtifactStream,
     compare_and_verify_collision,
     open_verified_path,
@@ -156,38 +160,51 @@ class FileSystemArtifactStore:
                 "artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS
             )
         before = _private_details(path, owner_uid=self._owner_uid)
-        flags = os.O_RDONLY
-        if hasattr(os, "O_NOFOLLOW"):
-            flags |= os.O_NOFOLLOW
         try:
-            descriptor = os.open(path, flags)
+            descriptor = os.open(path, _READ_FLAGS)
         except OSError as error:
             raise ArtifactIntegrityError("artifact is not a regular file") from error
         try:
-            with os.fdopen(descriptor, "rb", closefd=True) as stream:
-                opened = os.fstat(stream.fileno())
+            with os.fdopen(descriptor, "rb", buffering=0, closefd=False) as stream:
+                opened = os.fstat(descriptor)
                 if not _same_file(before, opened) or not stat.S_ISREG(opened.st_mode):
                     raise ArtifactIntegrityError("artifact changed during read")
-                data = stream.read(bound + 1)
-                after = os.fstat(stream.fileno())
-                if not _same_file(opened, after):
-                    raise ArtifactIntegrityError("artifact changed during read")
+                if opened.st_size > bound:
+                    raise ArtifactIntegrityError("artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS)
+                if opened.st_size != length:
+                    raise ArtifactIntegrityError("artifact size does not match reference")
+                collected = io.BytesIO()
+                hasher = hashlib.sha256()
+                remaining = length
+                while remaining:
+                    chunk = stream.read(min(remaining, _READ_BLOCK))
+                    if not chunk:
+                        break
+                    collected.write(chunk)
+                    hasher.update(chunk)
+                    remaining -= len(chunk)
+            after = os.fstat(descriptor)
+            if not _same_file(opened, after):
+                raise ArtifactIntegrityError("artifact changed during read")
+            if after.st_size > bound:
+                raise ArtifactIntegrityError("artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS)
+            if remaining or after.st_size != length:
+                raise ArtifactIntegrityError("artifact size does not match reference")
+            if (opened.st_mtime_ns, opened.st_ctime_ns) != (after.st_mtime_ns, after.st_ctime_ns):
+                raise ArtifactIntegrityError("artifact changed during read")
         except ArtifactIntegrityError:
             raise
         except OSError as error:
             raise ArtifactIntegrityError("artifact read failed") from error
-        if len(data) > bound:
-            raise ArtifactIntegrityError(
-                "artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS
-            )
-        if len(data) != length:
-            raise ArtifactIntegrityError("artifact size does not match reference")
-        actual = _DIGEST_PREFIX + hashlib.sha256(data).hexdigest()
+        finally:
+            with suppress(OSError):
+                os.close(descriptor)
+        actual = _DIGEST_PREFIX + hasher.hexdigest()
         if actual != digest:
             raise ArtifactIntegrityError("artifact digest does not match reference")
         if expected_version is not None and _filesystem_version(after) != expected_version:
             raise ArtifactIntegrityError("artifact store version is stale", code="artifact_stale")
-        return data
+        return collected.getvalue()
 
     def put(
         self,
@@ -344,9 +361,12 @@ class FileSystemArtifactStore:
         )
 
     def verify(self, reference: ArtifactReference, max_bytes: int | None = None) -> bool:
+        """Verify the complete object through bounded reads without returning its data."""
         try:
-            self.read(reference, max_bytes)
-        except (ArtifactIntegrityError, ValueError, TypeError):
+            with self.open_stream(reference, max_bytes) as stream:
+                while stream.read(64 * 1024):
+                    pass
+        except (ArtifactIntegrityError, OSError, ValueError, TypeError):
             return False
         return True
 

@@ -1,6 +1,7 @@
 package pathscope
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -98,5 +99,37 @@ func mustWriteFile(t *testing.T, path string, content string) {
 	}
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestReadSourceChecksTheSizeAtTheOpenedFile(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "fixture.go")
+	const original = "package fixture\n"
+	mustWriteFile(t, path, original)
+	resolvedRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolved, err := ResolveFromCanonicalRoot(resolvedRoot, "fixture.go", int64(len(original)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if source, err := ReadSource(resolved, int64(len(original))); err != nil || string(source) != original {
+		t.Fatalf("ReadSource() = %q, %v", source, err)
+	}
+	mustWriteFile(t, path, original+"// growth\n")
+	if _, err := ReadSource(resolved, int64(len(original))); !errors.Is(err, ErrFileTooLarge) {
+		t.Fatalf("grown source error = %v", err)
+	}
+}
+
+func TestReadBoundedSourceProbesPastTheAdmittedPrefix(t *testing.T) {
+	reader := strings.NewReader("abcd")
+	if _, err := readBoundedSource(reader, 3); !errors.Is(err, ErrFileTooLarge) {
+		t.Fatalf("readBoundedSource() error = %v", err)
+	}
+	if reader.Len() != 0 {
+		t.Fatalf("reader retained %d bytes", reader.Len())
 	}
 }

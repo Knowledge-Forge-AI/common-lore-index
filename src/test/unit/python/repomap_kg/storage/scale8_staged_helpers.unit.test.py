@@ -47,13 +47,21 @@ def test_validation_helpers_reject_transition_and_completeness_failures() -> Non
             {family: 0 for family in STAGING_FAMILIES},
         )
 
-    connection.execute.return_value.fetchone.return_value = (1,)
-    with pytest.raises(StorageSchemaError, match="completeness"):
-        validate_stage(
-            connection,
-            "stage-scale8-helper",
-            {family: 0 for family in STAGING_FAMILIES},
-        )
+
+def test_unmeasured_validation_uses_one_query_and_checks_every_typed_count() -> None:
+    connection = Mock()
+    expected: dict[str, int] = {family: index for index, family in enumerate(STAGING_FAMILIES)}
+    counts = tuple(expected.values())
+    connection.execute.return_value.fetchone.return_value = counts
+    validate_stage(connection, "stage-with-counts", expected)
+    connection.execute.assert_called_once()
+    sql, args = connection.execute.call_args.args
+    assert sql.count("SELECT count(*)") == len(counts)
+    assert args == ("stage-with-counts",) * len(counts)
+    for wrong in (counts[:-1], counts + (0,), counts[:-1] + (-1,), (False, *counts[1:])):
+        connection.execute.return_value.fetchone.return_value = wrong
+        with pytest.raises(StorageSchemaError, match="completeness"):
+            validate_stage(connection, "stage-with-counts", expected)
 
 
 def test_publication_lookup_helpers_are_bounded_and_owner_scoped() -> None:

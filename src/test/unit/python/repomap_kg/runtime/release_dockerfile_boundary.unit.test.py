@@ -8,28 +8,25 @@ import subprocess
 import sys
 
 from common_lore_index.runtime import commands, release, release_manifest
-from common_lore_index.runtime.release_dockerfile import render_server_dockerfile
+from common_lore_index.runtime.release_dockerfile import ARCHIVE_APT_PATH, archive_apt_sources, render_server_dockerfile
 
 ROOT = Path(__file__).resolve().parents[6]
 
 
 def test_commands_reexports_pure_leaf_and_preserves_recipe_bytes() -> None:
     assert commands.render_server_dockerfile is render_server_dockerfile
-    # Original a06142b renderer, with only the approved exact four-notice COPY
-    # correction, and the D12 linux-libc-dev 6.12.117-1 manifest refresh.
-    # The former D12 hash is reproduced by restoring only that package row;
-    # an alias calling itself would not detect a renderer regression.
+    # Pin the unresolved recipe and the frozen recipe with its archive sources.
     cases = (
         (release.DYNAMIC_PACKAGE_MANIFEST, release.PSYCOPG_LIBPQ_VERSION,
          "20db9ee3957945882d3a2f1fa83626a6cd37235ed0fdd4665e6d83c99ca37cf2"),
         (release_manifest.D12_CANDIDATE_PACKAGE_MANIFEST, release_manifest.D12_CANDIDATE_LIBPQ_VERSION,
-         "94787a9f46a8c8ca407954bfad1a19ced79fe104c4caa4d47113d3af5fc105a8"),
+         "42efd587afc908a35f1fa7d49e704f9a3edef5904d721c06617e82d7bdbd9404"),
     )
     for manifest, libpq_version, expected in cases:
         assert hashlib.sha256(render_server_dockerfile(manifest, libpq_version).encode()).hexdigest() == expected
 
 
-def test_former_amd64_recipe_is_reproduced_by_only_restoring_the_builder_header_package() -> None:
+def test_older_builder_header_selection_has_a_distinct_recipe_identity() -> None:
     manifest = dict(release_manifest.D12_CANDIDATE_PACKAGE_MANIFEST)
     platform = manifest["amd64"]
     previous = release.DebPackage(
@@ -42,8 +39,25 @@ def test_former_amd64_recipe_is_reproduced_by_only_restoring_the_builder_header_
     ))
     rendered = render_server_dockerfile(manifest, release_manifest.D12_CANDIDATE_LIBPQ_VERSION)
     assert hashlib.sha256(rendered.encode()).hexdigest() == (
-        "03157e09e1b68f731c7869578fdc2f685198817b70e4544dcbdd63e840a350ce"
+        "df921c1e8e7b1e2da45bbe1c2ee29499d82649676d309c9751d88c592a28887e"
     )
+
+
+def test_frozen_builder_archives_use_base_keyrings_before_package_resolution() -> None:
+    manifest = release_manifest.D12_CANDIDATE_PACKAGE_MANIFEST
+    keyring = manifest["amd64"].pgdg_keyring[0]
+    pgdg, debian, security = archive_apt_sources(keyring).strip().split("\n\n")
+    assert f"Signed-By: {keyring}" in pgdg and "Check-Valid-Until" not in pgdg
+    for source in (debian, security):
+        assert "Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp" in source
+        assert "Check-Valid-Until: no" in source
+    assert all("Trusted:" not in source for source in (pgdg, debian, security))
+    recipe = render_server_dockerfile(manifest, release_manifest.D12_CANDIDATE_LIBPQ_VERSION)
+    builder, = (line for line in recipe.splitlines() if "apt-archive.postgresql.org" in line)
+    assert builder.index("sha256sum --check") < builder.index(f"> {ARCHIVE_APT_PATH}")
+    assert builder.index(f"> {ARCHIVE_APT_PATH}") < builder.index("apt-get update")
+    assert builder.index("sha256sum --check --strict --quiet") < builder.index("--no-download")
+    assert builder.index("--no-download") < builder.index(f"rm {ARCHIVE_APT_PATH}")
 
 
 def test_pure_leaf_imports_with_database_modules_blocked() -> None:

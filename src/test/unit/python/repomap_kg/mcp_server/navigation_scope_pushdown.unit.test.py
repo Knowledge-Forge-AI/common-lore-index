@@ -4,18 +4,20 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import tracemalloc
 from contextlib import contextmanager
 from unittest.mock import patch
 
 import pytest
 
-from common_lore_index.server import mcp
+from common_lore_index.server import _navigation_groups, mcp
 from common_lore_index.server._navigation_groups import group_page, location_in_scope
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
 from common_lore_index.storage.sqlite_local import navigation_queries as queries
 from common_lore_index.storage.sqlite_local.connection import read_transaction
 from repomap_test_support.navigation_pushdown_fixtures import add_alternatives, fixture_oracle, pushdown_home
 from repomap_test_support.navigation_search_fixtures import BINDING, GRAPH
+from repomap_test_support.sqlite_local_fixtures import local_binding
 
 
 def call(**options):
@@ -56,6 +58,7 @@ def test_production_cap_same_binding_subtree_and_empty_scope(tmp_path, monkeypat
         overflow = call(offset=offset)
         assert overflow["status"] == "incomplete" and overflow["reason"] == "node_scan_limit"
         assert overflow["results"] == [] and overflow["has_more"]
+        assert overflow["scan"]["nodes"] == overflow["scan"]["node_limit"]
     assert call(source_binding_id=None)["reason"] == "node_scan_limit"
 
 
@@ -152,6 +155,23 @@ def test_admission_exhaustion_cannot_claim_empty_and_unregisters_predicate(tmp_p
     assert call(source_path_prefix="docs/missing")["status"] == "ok"
 
 
+def test_evidence_overflow_transfers_only_a_narrow_sentinel(tmp_path, monkeypatch):
+    _, database = pushdown_home(tmp_path, noise=4)
+    monkeypatch.setattr(queries, "EVIDENCE_SCAN_LIMIT", 2)
+    transferred = []
+
+    def observe(cursor, row):
+        if cursor.description[-1][0] == "overflow":
+            transferred.append(row)
+        return row
+
+    with read_transaction(database, local_binding(GRAPH)) as connection:
+        connection.row_factory = observe
+        scan = queries.navigation_candidates(connection, NavigationSearchQuery("needle"))
+    assert scan["reason"] == "evidence_scan_limit" and scan["scan"]["evidence"] == 2
+    assert scan["nodes"] == [] and transferred == [(None,) * 21 + (1,)]
+
+
 def test_small_pages_group_after_admission_agree_with_independent_oracle(tmp_path, monkeypatch):
     home, database = pushdown_home(tmp_path, noise=9)
     activate(monkeypatch, home)
@@ -226,15 +246,16 @@ def test_many_binding_vector_is_decoded_and_charged_once_per_run(tmp_path, monke
     activate(monkeypatch, home)
     with sqlite3.connect(database) as connection:
         vector = json.loads(connection.execute("SELECT snapshot_vector_json FROM runs WHERE id=2").fetchone()[0])
-        vector += [[f"binding-generic-{i:04d}", 1, f"snapshot-generic-{i:04d}"] for i in range(512)]
-        encoded = json.dumps(vector)
+        vector += [[f"binding-generic-{i:04d}", 1, f"snapshot-generic-{i:04d}-λ"] for i in range(512)]
+        encoded = json.dumps(vector, ensure_ascii=False)
         connection.execute("UPDATE runs SET snapshot_vector_json=? WHERE id=2", (encoded,))
-    with patch.object(queries.json, "loads", wraps=json.loads) as loads:
+    with patch.object(json, "loads", wraps=json.loads) as loads:
         result = call(source_path_prefix="docs/zzz")
     assert sum(item.args[0] == encoded for item in loads.call_args_list) == 1
     assert result["status"] == "ok" and member_keys(result) == list(fixture_oracle(database, BINDING, "docs/zzz"))
     admission = result["scan"]["admission"]
     assert admission["checks"] * len(encoded.encode()) > queries.ADMISSION_BYTE_LIMIT
+    assert len(encoded.encode("utf-8")) > len(encoded)
     assert admission["vector_decodes"] == 1 and admission["vector_bytes"] == len(encoded.encode())
     assert admission["decoded_bytes"] < queries.ADMISSION_BYTE_LIMIT
     assert admission["input_bytes"] > queries.ADMISSION_BYTE_LIMIT
@@ -267,3 +288,107 @@ def test_definitive_scope_reports_residuals_from_conservative_admission(tmp_path
     assert scan["scan"]["nodes"] == 3 and len(member_keys(page)) == 2
     assert page["scope_excluded_count"] is None
     assert page["post_admission_scope_excluded_count"] == 1
+
+
+def test_navigation_group_page_bounds_members_but_keeps_late_duplicate_counts(monkeypatch):
+    def projected(node, _markers):
+        path = node["path"]
+        location = {
+            "path": path, "run_id": 9, "publication_relation": "accepted_run",
+            "source_identity_status": "verified_vector",
+            "source": {"binding_id": BINDING, "binding_revision": 1,
+                       "snapshot_id": "snap1:public", "source_relative_path": path},
+        }
+        return {
+            "canonical_key": node["id"], "identity_status": "available",
+            "display_name": "x" * 4096 + str(node["id"]),
+        }, [location]
+
+    paths = ["docs/a.md", "docs/b.md", "docs/c.md", *(["docs/b.md"] * 650)]
+    nodes = [{"id": number, "path": path, "kind": "doc.section"} for number, path in enumerate(paths)]
+    nodes.extend(
+        {"id": len(paths) + number, "path": "code/functions.py", "kind": "python.function"}
+        for number in range(12_000)
+    )
+    scan = {"status": "ok", "scan": {}, "nodes": nodes}
+    query = NavigationSearchQuery("needle", grouping="source_document", offset=1, limit=1, member_limit=2)
+    monkeypatch.setattr(_navigation_groups, "_member", projected)
+    was_tracing = tracemalloc.is_tracing()
+    tracemalloc.start()
+    tracemalloc.reset_peak()
+    baseline, _ = tracemalloc.get_traced_memory()
+    try:
+        page = group_page(scan, query, ())
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        if not was_tracing:
+            tracemalloc.stop()
+    assert page["has_more"] and page["result_count"] == 1 and page["page_end"] == 2
+    group, = page["results"]
+    assert group["destination"]["source_relative_path"] == "docs/b.md"
+    assert group["matched_member_count"] == 651 and group["member_has_more"]
+    assert member_keys(page) == [1, 3]
+    assert peak - baseline < 1024 * 1024
+
+
+def test_missing_navigation_destination_takes_precedence_over_conflict(monkeypatch):
+    base = {
+        "path": "docs/a.md", "run_id": 9, "publication_relation": "accepted_run",
+        "source_identity_status": "verified_vector",
+        "source": {"binding_id": BINDING, "binding_revision": 1,
+                   "snapshot_id": "snap1:public", "source_relative_path": "docs/a.md"},
+    }
+    conflicting = {**base, "path": "docs/b.md"}
+    missing = {**base, "source_identity_status": "withheld"}
+    query = NavigationSearchQuery("needle", source_binding_id=BINDING, source_path_prefix="docs/")
+    assert _navigation_groups._scope_and_identity([base, conflicting], query, ()) == (
+        True, None, "conflicting_direct_identities",
+    )
+    destination = _navigation_groups._destination
+    calls = []
+
+    def observe(location, markers):
+        calls.append(location)
+        return destination(location, markers)
+
+    monkeypatch.setattr(_navigation_groups, "_destination", observe)
+    assert _navigation_groups._scope_and_identity([base, conflicting, missing], query, ()) == (
+        True, None, "missing_withheld_or_unbound_identity",
+    )
+    assert calls == [base, conflicting, missing]
+
+
+def test_direct_location_infers_revision_only_for_unambiguous_binding():
+    def location(vector, **metadata):
+        row = ("evidence:fixture", "observed", 7, 0, "hash:fixture", "fixture", "core", "notes.md", 1, 2,
+               "fixture", "1", "high", json.dumps(metadata), None, None, None, None, json.dumps(vector), "direct")
+        return queries._direct_location(row, 7)
+
+    metadata = {"binding_id": "fixture-binding", "snapshot_id": "snapshot-a"}
+    matching = ["fixture-binding", 3, "snapshot-a"]
+    unrelated = ["fixture-unrelated", 1, "snapshot-c"]
+    direct = location([unrelated, matching], **metadata)
+    assert direct["source"]["binding_revision"] == 3
+    assert direct["source_identity_status"] == "verified_vector"
+    mapped = [{"binding_id": "fixture-binding", "revision": 3, "snapshot_id": "snapshot-a"}]
+    assert location(mapped, **metadata) == direct
+    assert location([matching], binding_revision=3, **metadata) == direct
+    for value in (4, "3"):
+        preserved = location([matching], binding_revision=value, **metadata)
+        assert preserved["source"]["binding_revision"] == value
+        assert preserved["source_identity_status"] == "unbound_or_conflicting_vector"
+
+    for conflicting in (
+        [matching, ["fixture-binding", 4, "snapshot-a"]],
+        [matching, ["fixture-binding", 4, "snapshot-b"]],
+        [["fixture-binding", True, "snapshot-a"]],
+        [matching, unrelated, ["fixture-unrelated", 2, "snapshot-d"]],
+        [matching, ["", True, None]], [matching, "bad"], None,
+    ):
+        unverified = location(conflicting, **metadata)
+        assert "binding_revision" not in unverified["source"]
+        assert unverified["source_identity_status"] == "unbound_or_conflicting_vector"
+
+    unbound = location([[None, 1, None]])
+    assert unbound["source"] == {}
+    assert unbound["source_identity_status"] == "unbound_or_conflicting_vector"

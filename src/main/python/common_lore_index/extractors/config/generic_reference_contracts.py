@@ -13,6 +13,15 @@ from common_lore_index.extractors.config.generic_values import (
 from common_lore_index.graph.keys import dynamic_key, external_key, file_key, unknown_key
 
 
+def _protected_url_reference(value: str, reason: str) -> dict[str, Any]:
+    target = (
+        external_key("url", "credentialed-config-reference")
+        if reason == "credentialed-url"
+        else unknown_key("external.url", "malformed-config-url")
+    )
+    return _reference(target.partition(":")[0], target, reason, value, redacted=True)
+
+
 def _reference(
     kind: str,
     target: str,

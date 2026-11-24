@@ -179,6 +179,10 @@ class CountingCursor:
     def __init__(self, cursor, record):
         self.cursor, self.record = cursor, record
 
+    def close(self):
+        self.cursor.close()
+        self.record["closed"] = True
+
     def fetchone(self):
         row = self.cursor.fetchone()
         self.record["fetched"] += row is not None
@@ -229,8 +233,7 @@ def synthetic_connection(root, size=2000, *, neighbors=None, direction="out"):
 @pytest.mark.parametrize("direction", ["in", "out", "both"])
 @pytest.mark.parametrize("neighbors", [2, 2000])
 def test_large_neighborhood_bounds_candidates_in_sql_not_presentation(tmp_path, direction, neighbors):
-    with synthetic_connection(tmp_path, neighbors=neighbors, direction=direction) as connection:
-        counter = connection
+    with synthetic_connection(tmp_path, neighbors=neighbors, direction=direction) as counter:
         counter.reads.clear()
         result = neighborhood_queries.configured_neighborhood(counter, node=CENTER,
             direction=direction, depth=1, graph_key_version=1, node_limit=3, edge_limit=5)
@@ -243,8 +246,8 @@ def test_large_neighborhood_bounds_candidates_in_sql_not_presentation(tmp_path, 
         edge_reads = [r for r in counter.reads if "ORDER BY" in r["sql"] and "WITH neighbor_keys" not in r["sql"]]
         assert len(node_reads) == len(edge_reads) == 1
         assert node_reads[0]["fetched"] == min(neighbors, 4) and edge_reads[0]["fetched"] == min(neighbors, 6)
-        assert all("LIMIT" in r["sql"] for r in node_reads + edge_reads)
-        plan = connection.execute("EXPLAIN QUERY PLAN " + node_reads[0]["sql"], node_reads[0]["parameters"])
+        assert all("LIMIT" in r["sql"] and r.get("closed") for r in node_reads + edge_reads)
+        plan = counter.execute("EXPLAIN QUERY PLAN " + node_reads[0]["sql"], node_reads[0]["parameters"])
         details = [row[3] for row in plan]
         assert any("canonical_nodes" in row and "canonical_key=?" in row for row in details), details
         assert not any("CORRELATED" in row for row in details), details

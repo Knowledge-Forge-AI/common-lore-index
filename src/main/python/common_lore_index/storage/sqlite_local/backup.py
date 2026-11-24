@@ -38,7 +38,8 @@ import os
 import secrets
 import sqlite3
 import stat
-from contextlib import suppress
+from collections.abc import Iterator
+from contextlib import closing, suppress
 from pathlib import Path
 
 from common_lore_index.storage.sqlite_local.backup_manifest import (
@@ -84,17 +85,54 @@ def owned_names(path: Path) -> tuple[Path, ...]:
     return (path, *sidecar_paths(path), path.with_name(path.name + "-journal"))
 
 
-def file_digest(path: Path) -> tuple[int, str]:
-    """Byte length and SHA-256 of one regular file, read through one descriptor."""
-    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+class _DatabaseLengthMismatch(ValueError):
+    """A backup database no longer has its declared byte length."""
+
+
+def _file_version(info: os.stat_result) -> tuple[int, int, int, int, int]:
+    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+
+
+def _database_chunks(
+    descriptor: int, expected_bytes: int | None = None
+) -> Iterator[bytes]:
+    details = os.fstat(descriptor)
+    if not stat.S_ISREG(details.st_mode):
+        raise LocalStoreError(UNRECOGNIZED)
+    if expected_bytes is not None and details.st_size != expected_bytes:
+        raise _DatabaseLengthMismatch
+
+    remaining = details.st_size
+    while True:
+        # Even without a manifest, read at most the observed size and a lookahead byte.
+        chunk = os.read(descriptor, min(_CHUNK, remaining + 1))
+        if len(chunk) > remaining or (not chunk and remaining):
+            raise _DatabaseLengthMismatch
+        if not chunk:
+            break
+        remaining -= len(chunk)
+        yield chunk
+    after = os.fstat(descriptor)
+    if after.st_size != details.st_size:
+        raise _DatabaseLengthMismatch
+    if _file_version(after) != _file_version(details):
+        raise LocalStoreError(UNRECOGNIZED, "database file changed while reading")
+
+
+def file_digest(path: Path, *, expected_bytes: int | None = None) -> tuple[int, str]:
+    """Return a regular file's size and hash through one descriptor."""
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            raise LocalStoreError(UNRECOGNIZED)
         digest = hashlib.sha256()
         size = 0
-        while chunk := os.read(descriptor, _CHUNK):
-            digest.update(chunk)
-            size += len(chunk)
+        try:
+            for chunk in _database_chunks(descriptor, expected_bytes):
+                digest.update(chunk)
+                size += len(chunk)
+        except _DatabaseLengthMismatch:
+            if expected_bytes is not None:
+                raise
+            raise LocalStoreError(UNRECOGNIZED, "database size changed while hashing") from None
     finally:
         os.close(descriptor)
     return size, digest.hexdigest()
@@ -111,9 +149,17 @@ def inspect_sealed_database(
     writing (a sealed backup or restore temporary). It creates no sidecars.
     """
     require_runtime_support()
-    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
-        header = os.read(descriptor, 20)
+        details = os.fstat(descriptor)
+        if not stat.S_ISREG(details.st_mode):
+            raise LocalStoreError(UNRECOGNIZED)
+        header = bytearray()
+        while len(header) < 20:
+            part = os.read(descriptor, 20 - len(header))
+            if not part:
+                break
+            header.extend(part)
     finally:
         os.close(descriptor)
     if len(header) < 20 or header[:16] != _HEADER:
@@ -134,14 +180,22 @@ def inspect_sealed_database(
         connection.execute("BEGIN")
         state = require_open_state(classify(connection), accept_behind=True)
         require_binding(connection, binding)
-        if connection.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
-            raise LocalStoreError(UNRECOGNIZED, "integrity check failed")
+        # Verify the same invariants, with only the first failure needed for refusal.
+        with closing(connection.execute("PRAGMA integrity_check(1)")) as integrity:
+            if integrity.fetchone() != ("ok",):
+                raise LocalStoreError(UNRECOGNIZED, "integrity check failed")
         publication = read_publication(connection)
         connection.execute("COMMIT")
     except sqlite3.Error:
         raise LocalStoreError(UNRECOGNIZED) from None
     finally:
         connection.close()
+    try:
+        current = os.lstat(path)
+    except OSError:
+        raise LocalStoreError(UNRECOGNIZED, "sealed database changed while inspecting") from None
+    if not stat.S_ISREG(current.st_mode) or _file_version(current) != _file_version(details):
+        raise LocalStoreError(UNRECOGNIZED, "sealed database changed while inspecting")
     return state.version, publication
 
 
@@ -155,8 +209,9 @@ def check_backup_output(output: Path) -> None:
         return
     if not stat.S_ISDIR(details.st_mode):
         raise LocalStoreError(BACKUP_OUTPUT_INVALID, "output is not a directory")
-    if os.listdir(output):
-        raise LocalStoreError(BACKUP_TARGET_EXISTS, "output directory is not empty")
+    with os.scandir(output) as entries:
+        if next(entries, None) is not None:
+            raise LocalStoreError(BACKUP_TARGET_EXISTS, "output directory is not empty")
 
 
 def _snapshot(
@@ -184,7 +239,24 @@ def _snapshot(
     return version, publication
 
 
-def _link(source: Path, target: Path) -> tuple[int, int]:
+def _remember_temporary(descriptor: int, path: Path, owned: dict[Path, tuple[int, int]]) -> None:
+    details = os.fstat(descriptor)
+    owned[path] = details.st_dev, details.st_ino
+
+
+def _matches_temporary(path: Path, identity: tuple[int, int] | None) -> bool:
+    if identity is None:
+        return False
+    try:
+        details = os.lstat(path)
+    except OSError:
+        return False
+    return stat.S_ISREG(details.st_mode) and (details.st_dev, details.st_ino) == identity
+
+
+def _link(source: Path, target: Path, identity: tuple[int, int]) -> tuple[int, int]:
+    if not _matches_temporary(source, identity):
+        raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup temporary identity changed")
     try:
         os.link(source, target)
     except FileExistsError:
@@ -193,17 +265,19 @@ def _link(source: Path, target: Path) -> tuple[int, int]:
         if error.errno in _NO_ATOMIC_INSTALL:
             raise LocalStoreError(DATABASE_UNAVAILABLE, "backup store does not support atomic no-clobber install") from None
         raise
-    details = os.lstat(target)
-    return details.st_dev, details.st_ino
+    if not _matches_temporary(target, identity):
+        raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup installed identity changed")
+    return identity
 
 
-def _write_new(path: Path, encoded: bytes) -> None:
+def _write_new(path: Path, encoded: bytes, owned: dict[Path, tuple[int, int]]) -> None:
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     try:
+        _remember_temporary(descriptor, path, owned)
         view = memoryview(encoded)
         while view:
             written = os.write(descriptor, view)
-            if written <= 0:
+            if not 0 < written <= len(view):
                 raise OSError(errno.EIO, "short write")
             view = view[written:]
         fsync_descriptor(descriptor)
@@ -229,38 +303,60 @@ def write_backup(
     manifest_temporary = output / f".{MANIFEST_FILE}.tmp-{token}"
     final_database, final_manifest = output / DATABASE_FILE, output / MANIFEST_FILE
     linked: dict[Path, tuple[int, int]] = {}
+    temporaries: dict[Path, tuple[int, int]] = {}
     try:
         if created:
             fsync_directory(output.parent)
-        os.close(os.open(temporary, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600))
+        descriptor = os.open(temporary, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        try:
+            _remember_temporary(descriptor, temporary, temporaries)
+        finally:
+            os.close(descriptor)
         version, publication = _snapshot(source, binding, temporary)
         _fault_point("backup:snapshot-complete")
+        if not _matches_temporary(temporary, temporaries[temporary]):
+            raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup temporary identity changed")
         seal_database_file(temporary, binding, accept_behind=True)
         if inspect_sealed_database(temporary, binding) != (version, publication):
             raise LocalStoreError(GENERATION_ADVANCED, "backup snapshot changed")
         size, digest = file_digest(temporary)
-        linked[final_database] = _link(temporary, final_database)
+        linked[final_database] = _link(temporary, final_database, temporaries[temporary])
         _fault_point("backup:database-linked")
+        if not _matches_temporary(temporary, temporaries[temporary]):
+            raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup temporary identity changed")
         temporary.unlink()
         fsync_directory(output)
-        if sorted(os.listdir(output)) != [DATABASE_FILE]:
-            raise LocalStoreError(BACKUP_OUTPUT_INVALID, "output directory changed during backup")
+        with os.scandir(output) as entries:
+            first = next(entries, None)
+            if first is None or first.name != DATABASE_FILE or next(entries, None) is not None:
+                raise LocalStoreError(BACKUP_OUTPUT_INVALID, "output directory changed during backup")
         manifest = BackupManifest(created_at, binding, publication, size, digest, version)
-        _write_new(manifest_temporary, manifest.encode())
+        _write_new(manifest_temporary, manifest.encode(), temporaries)
         _fault_point("backup:before-manifest-link")
-        linked[final_manifest] = _link(manifest_temporary, final_manifest)
+        if not _matches_temporary(final_database, linked[final_database]):
+            raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup installed identity changed")
+        linked[final_manifest] = _link(manifest_temporary, final_manifest, temporaries[manifest_temporary])
         _fault_point("backup:manifest-linked")
+        if (
+            not _matches_temporary(manifest_temporary, temporaries[manifest_temporary])
+            or not _matches_temporary(final_manifest, linked[final_manifest])
+        ):
+            raise LocalStoreError(BACKUP_OUTPUT_INVALID, "backup manifest identity changed")
         manifest_temporary.unlink()
         fsync_directory(output)
     except BaseException:
-        _discard_attempt(output, (*owned_names(temporary), manifest_temporary), linked, created=created)
+        if _matches_temporary(temporary, temporaries.get(temporary)):
+            for sidecar in owned_names(temporary)[1:]:
+                with suppress(OSError):
+                    sidecar.unlink()
+        _discard_attempt(output, temporaries, linked, created=created)
         raise
     return manifest
 
 
 def _discard_attempt(
     output: Path,
-    temporaries: tuple[Path, ...],
+    temporaries: dict[Path, tuple[int, int]],
     linked: dict[Path, tuple[int, int]],
     *,
     created: bool,
@@ -271,9 +367,10 @@ def _discard_attempt(
             details = os.lstat(final)
             if (details.st_dev, details.st_ino) == linked[final]:
                 final.unlink()
-    for name in temporaries:
-        with suppress(OSError):
-            name.unlink()
+    for name, identity in temporaries.items():
+        if _matches_temporary(name, identity):
+            with suppress(OSError):
+                name.unlink()
     with suppress(OSError, LocalStoreError):
         if created:
             output.rmdir()

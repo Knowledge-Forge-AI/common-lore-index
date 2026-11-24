@@ -16,6 +16,7 @@ import pytest
 from common_lore_index.ops.config_migration import (
     apply_cloe_config_migration, finalize_cloe_config_migration, rollback_cloe_config_migration,
 )
+from common_lore_index.ops.config_migration_fs import Home, MAX_CONFIG_FILES, MAX_FILE_BYTES, MAX_TOTAL_BYTES
 from repomap_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
 from repomap_test_support.cli_in_process import REPO_ROOT, module_process_environment
 from runner_coverage_observer import launch_observed_process
@@ -260,4 +261,140 @@ def test_cli_usage_and_unsafe_home_contracts(tmp_path: Path) -> None:
     before = tree(home)
     refused = cli(home, "apply", "--yes", code=1)
     assert refused["refusals"] == [{"code": "repo-map-home-unsafe", "file": ""}] and refused["writes_performed"] == 0
+    assert tree(home) == before
+
+
+@pytest.mark.parametrize(("case", "expected_file", "refusal_code"), [
+    ("operation_alias", ".CLOE-CONFIG-MIGRATION", "config-migration-alias-collision"),
+    ("mixed_families", "", "config-home-mixed-format"),
+    ("external_hardlink", "50-external.rpl.toml", "config-entry-unsafe"),
+    ("too_many_files", "", "config-migration-limit-exceeded"),
+    ("large_file", "50-large.rpl.toml", "config-migration-limit-exceeded"),
+    ("large_total", "57-budget.rpl.toml", "config-migration-limit-exceeded"),
+])
+def test_apply_refuses_invalid_layouts_without_writes(
+    tmp_path: Path, case: str, expected_file: str, refusal_code: str,
+) -> None:
+    home = make_home(tmp_path, "sqlite")
+    external = tmp_path / "owned external configuration"
+    external.write_text(SECRET, encoding="utf-8")
+    if case == "operation_alias":
+        (home / expected_file).write_text(SECRET, encoding="utf-8")
+    elif case == "mixed_families":
+        (home / "50-new.cloe.toml").write_text(OVERLAY, encoding="utf-8")
+    elif case == "external_hardlink":
+        os.link(external, home / expected_file)
+    elif case == "too_many_files":
+        for index in range(MAX_CONFIG_FILES - 1):
+            (home / f"50-extra-{index:02d}.rpl.toml").write_text(OVERLAY, encoding="utf-8")
+    elif case == "large_file":
+        with (home / expected_file).open("xb") as stream:
+            stream.truncate(MAX_FILE_BYTES + 1)
+    else:
+        for index in range(MAX_TOTAL_BYTES // MAX_FILE_BYTES):
+            with (home / f"{50 + index}-budget.rpl.toml").open("xb") as stream:
+                stream.truncate(MAX_FILE_BYTES)
+
+    before_home = tree(home)
+    before_external = external.stat()
+    for flags in (("--dry-run",), ("--yes",)):
+        outcome = cli(home, "apply", *flags, code=1)
+        assert outcome["result"] == "refused"
+        assert outcome["refusals"] == [{"code": refusal_code, "file": expected_file}]
+        assert outcome["writes_performed"] == 0
+        assert tree(home) == before_home and not (home / OPERATION).exists()
+        assert external.read_text(encoding="utf-8") == SECRET
+        after_external = external.stat()
+        assert (after_external.st_ino, after_external.st_nlink, after_external.st_mtime_ns) == (
+            before_external.st_ino, before_external.st_nlink, before_external.st_mtime_ns,
+        )
+
+
+def test_migration_duplicate_journal_fields_refuse_before_recovery(tmp_path: Path) -> None:
+    home = make_home(tmp_path, "postgresql")
+    assert cli(home, "apply", "--yes")["result"] == "applied"
+    journal = home / OPERATION / "journal.json"
+    data = journal.read_bytes()
+    assert data.startswith(b"{")
+    journal.write_bytes(b'{"state":"preparing",' + data[1:])
+    before = tree(home)
+    for command in ("rollback", "finalize"):
+        refusal = cli(home, command, "--yes", code=1)
+        assert refusal["refusals"] == [{"code": "config-migration-journal-invalid", "file": ""}]
+        assert refusal["writes_performed"] == 0
+        assert tree(home) == before
+
+
+@pytest.mark.parametrize("drift", ("inode", "change-time"))
+def test_recovery_refuses_same_bytes_after_admitted_target_drift(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, drift: str,
+) -> None:
+    home = make_home(tmp_path, "postgresql")
+    assert apply_cloe_config_migration(home, confirmed=True)["result"] == "applied"
+    target = home / "00-project.cloe.toml"
+    replacement = tmp_path / "replacement.toml"
+    admitted = target.stat()
+    identical = target.read_bytes()
+    replacement.write_bytes(identical)
+    replacement.chmod(stat.S_IMODE(admitted.st_mode))
+    actual_read = Home.read
+    journal = home / OPERATION / "journal.json"
+    journal_before = journal.read_bytes()
+
+    def swap(bound: Home, name: str, limit: int, code: str, *, in_op: bool = False) -> tuple[bytes, os.stat_result]:
+        targeted = name == target.name and not in_op
+        if targeted and drift == "inode" and replacement.exists():
+            replacement.replace(target)
+        data, info = actual_read(bound, name, limit, code, in_op=in_op)
+        if targeted and drift == "change-time":
+            info = os.stat_result(info, {
+                "st_mtime_ns": info.st_mtime_ns, "st_ctime_ns": info.st_ctime_ns + 1,
+            })
+        return data, info
+
+    monkeypatch.setattr(Home, "read", swap)
+    outcome = finalize_cloe_config_migration(home, confirmed=True)
+    assert outcome["refusals"] == [{"code": "config-migration-drift", "file": "00-project.rp.toml"}]
+    assert outcome["writes_performed"] == 0
+    assert (target.stat().st_ino != admitted.st_ino) is (drift == "inode")
+    assert target.read_bytes() == identical
+    assert journal.read_bytes() == journal_before
+
+
+def test_recovery_streams_namespace_proofs_and_reports_first_foreign_configuration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    home = make_home(tmp_path, "postgresql")
+    assert apply_cloe_config_migration(home, confirmed=True)["result"] == "applied"
+    for index in range(128):
+        (home / f"unrelated-{index:03d}.txt").touch()
+
+    def refuse_list(_bound: Home, *, in_op: bool = False) -> list[str]:
+        raise AssertionError(f"recovery materialized names (operation directory={in_op})")
+
+    monkeypatch.setattr(Home, "names", refuse_list)
+    unsafe = home / OPERATION / "foreign.tmp"
+    unsafe.touch()
+    result = rollback_cloe_config_migration(home, confirmed=True)
+    assert result["refusals"] == [{"code": "config-migration-residue-unsafe", "file": ""}]
+    assert result["writes_performed"] == 0 and unsafe.exists()
+    unsafe.unlink()
+    for name in ("20-zeta.cloe.toml", "10-alpha.cloe.toml"):
+        (home / name).write_text(OVERLAY)
+    result = finalize_cloe_config_migration(home, confirmed=True)
+    assert result["refusals"] == [{"code": "config-migration-drift", "file": "10-alpha.cloe.toml"}]
+    assert result["writes_performed"] == 0
+    for name in ("20-zeta.cloe.toml", "10-alpha.cloe.toml"):
+        (home / name).unlink()
+    done = rollback_cloe_config_migration(home, confirmed=True)
+    assert done["result"] == "rolled-back" and not (home / OPERATION).exists()
+    assert len(tuple(home.glob("unrelated-*.txt"))) == 128
+
+
+def test_cli_apply_and_rollback_preserve_unrelated_home_entries(tmp_path: Path) -> None:
+    home = make_home(tmp_path, "sqlite")
+    (home / "readme.txt").write_text("fixture")
+    before = tree(home)
+    assert cli(home, "apply", "--yes")["result"] == "applied"
+    assert cli(home, "rollback", "--yes")["result"] == "rolled-back"
     assert tree(home) == before

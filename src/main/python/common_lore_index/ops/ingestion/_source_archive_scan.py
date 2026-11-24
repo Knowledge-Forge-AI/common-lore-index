@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import stat
 from pathlib import Path
 
 from common_lore_index.ops.ingestion._source_archive_records import (
@@ -24,39 +26,49 @@ def _scan_archive_directory(
     skipped: list[ArchiveSkippedFile] = []
     total_bytes = 0
 
-    def scan(directory: Path) -> None:
-        nonlocal total_bytes
-        for child in sorted(directory.iterdir(), key=lambda path: path.name):
-            relative_path = child.relative_to(artifact_root).as_posix()
-            if child.name in ARCHIVE_EXCLUDED_DIR_NAMES and child.is_dir():
-                skipped.append(ArchiveSkippedFile(relative_path, "excluded-directory"))
-                continue
-            if _is_hidden_relative_path(relative_path) and not config.hidden_files:
-                skipped.append(ArchiveSkippedFile(relative_path, "hidden"))
-                continue
-            if child.is_symlink():
-                skipped.append(ArchiveSkippedFile(relative_path, "symlink"))
-                continue
-            if len(Path(relative_path).parts) > config.max_depth:
-                skipped.append(ArchiveSkippedFile(relative_path, "max_depth"))
-                continue
-            if child.is_dir():
-                scan(child)
-                continue
-            if not child.is_file():
-                skipped.append(ArchiveSkippedFile(relative_path, "special-file"))
-                continue
-            if len(included) >= config.max_file_count:
-                skipped.append(ArchiveSkippedFile(relative_path, "max_file_count"))
-                continue
-            byte_length = child.stat().st_size
-            if total_bytes + byte_length > config.max_artifact_bytes:
-                skipped.append(ArchiveSkippedFile(relative_path, "max_artifact_bytes"))
-                continue
-            included.append(_archive_included_file(root, artifact_root, child, byte_length))
-            total_bytes += byte_length
+    pending = [iter(sorted(artifact_root.iterdir(), key=lambda path: path.name))]
+    while pending:
+        child = next(pending[-1], None)
+        if child is None:
+            pending.pop()
+            continue
+        relative = child.relative_to(artifact_root)
+        relative_path = relative.as_posix()
+        if child.name in ARCHIVE_EXCLUDED_DIR_NAMES and child.is_dir():
+            skipped.append(ArchiveSkippedFile(relative_path, "excluded-directory"))
+            continue
+        if child.name.startswith(".") and not config.hidden_files:
+            skipped.append(ArchiveSkippedFile(relative_path, "hidden"))
+            continue
+        try:
+            expected = child.lstat()
+        except OSError:
+            # Keep pathlib's version-specific handling of unavailable entries.
+            if child.exists(follow_symlinks=False):
+                raise
+            expected = None
+        if expected is not None and stat.S_ISLNK(expected.st_mode):
+            skipped.append(ArchiveSkippedFile(relative_path, "symlink"))
+            continue
+        if len(relative.parts) > config.max_depth:
+            skipped.append(ArchiveSkippedFile(relative_path, "max_depth"))
+            continue
+        if expected is not None and stat.S_ISDIR(expected.st_mode):
+            pending.append(iter(sorted(child.iterdir(), key=lambda path: path.name)))
+            continue
+        if expected is None or not stat.S_ISREG(expected.st_mode):
+            skipped.append(ArchiveSkippedFile(relative_path, "special-file"))
+            continue
+        if len(included) >= config.max_file_count:
+            skipped.append(ArchiveSkippedFile(relative_path, "max_file_count"))
+            continue
+        byte_length = expected.st_size
+        if total_bytes + byte_length > config.max_artifact_bytes:
+            skipped.append(ArchiveSkippedFile(relative_path, "max_artifact_bytes"))
+            continue
+        included.append(_archive_included_file(root, artifact_root, child, byte_length, expected=expected))
+        total_bytes += byte_length
 
-    scan(artifact_root)
     return tuple(included), tuple(skipped)
 
 
@@ -65,7 +77,9 @@ def _scan_archive_file(
     root: Path,
     artifact_path: Path,
 ) -> tuple[tuple[ArchiveIncludedFile, ...], tuple[ArchiveSkippedFile, ...]]:
-    if artifact_path.stat().st_size > config.max_artifact_bytes:
+    expected = artifact_path.lstat()
+    byte_length = expected.st_size
+    if byte_length > config.max_artifact_bytes:
         return (), (ArchiveSkippedFile(artifact_path.name, "max_artifact_bytes"),)
     return (
         (
@@ -73,7 +87,8 @@ def _scan_archive_file(
                 root,
                 artifact_path.parent,
                 artifact_path,
-                artifact_path.stat().st_size,
+                byte_length,
+                expected=expected,
             ),
         ),
         (),
@@ -85,15 +100,57 @@ def _archive_included_file(
     artifact_root: Path,
     file_path: Path,
     byte_length: int,
+    *,
+    expected: os.stat_result | None = None,
 ) -> ArchiveIncludedFile:
+    if expected is None:
+        expected = file_path.lstat()
+    if not stat.S_ISREG(expected.st_mode):
+        raise SourcePolicyError("archive manifest input must be a regular file")
+    if expected.st_size != byte_length:
+        raise SourcePolicyError("archive file size changed during manifest scan")
+
+    digest = _hash_admitted_file(file_path, expected)
     return ArchiveIncludedFile(
         relative_path=file_path.relative_to(artifact_root).as_posix(),
         repository_path=file_path.relative_to(root).as_posix(),
         byte_length=byte_length,
-        sha256=hashlib.sha256(file_path.read_bytes()).hexdigest(),
+        sha256=digest,
         extractor_route=_archive_extractor_route(file_path),
         media_type=_archive_media_type(file_path),
     )
+
+
+def _hash_admitted_file(file_path: Path, expected: os.stat_result) -> str:
+    """Read only the extent of a previously admitted regular file."""
+    digest = hashlib.sha256()
+    with open(file_path, "rb", opener=_open_archive_file) as source:
+        initial = os.fstat(source.fileno())
+        if _file_version(initial) != _file_version(expected):
+            raise SourcePolicyError("archive file changed during manifest scan")
+        remaining = expected.st_size
+        while remaining:
+            block = source.read(min(remaining, 256 * 1024))
+            if not block:
+                raise SourcePolicyError("archive file shrank during manifest scan")
+            digest.update(block)
+            remaining -= len(block)
+        final = os.fstat(source.fileno())
+        if _file_version(initial) != _file_version(final):
+            raise SourcePolicyError("archive file changed during manifest scan")
+    return digest.hexdigest()
+
+
+def _open_archive_file(path: str, flags: int) -> int:
+    try:
+        return os.open(path, flags | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
+    except OSError as error:
+        raise SourcePolicyError("archive manifest input could not be opened safely") from error
+
+
+def _file_version(item: os.stat_result) -> tuple[int, ...]:
+    # Path-based and handle-based stat may report different synthesized permission bits.
+    return (item.st_dev, item.st_ino, stat.S_IFMT(item.st_mode), item.st_size, item.st_mtime_ns, item.st_ctime_ns)
 
 
 def _archive_extractor_route(path: Path) -> str:

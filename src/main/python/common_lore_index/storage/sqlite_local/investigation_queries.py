@@ -12,6 +12,8 @@ functions are needed.
 
 from __future__ import annotations
 
+from contextlib import closing
+from itertools import islice
 import json
 import sqlite3
 from typing import Any
@@ -79,10 +81,16 @@ def search(
         if kind is not None:
             filters.append("kind = :kind")
         sql = (
-            "SELECT canonical_key, graph_key_version, kind, display_name, confidence, "
-            "conflict, metadata_json, first_seen_run_id, last_seen_run_id "
-            f"FROM canonical_nodes WHERE {' AND '.join(filters)} "
-            "ORDER BY canonical_key LIMIT :fetch OFFSET :offset"
+            "WITH selected AS MATERIALIZED ("
+            f"SELECT id, canonical_key FROM canonical_nodes WHERE {' AND '.join(filters)} "
+            "ORDER BY canonical_key LIMIT :fetch OFFSET :offset) "
+            "SELECT node.canonical_key, node.graph_key_version, node.kind, node.display_name, "
+            "node.confidence, node.conflict, "
+            "CASE WHEN (SELECT count(*) FROM selected) <> :fetch OR "
+            "selected.canonical_key <> (SELECT max(canonical_key) FROM selected) "
+            "THEN node.metadata_json END AS metadata_json, node.first_seen_run_id, node.last_seen_run_id "
+            "FROM selected CROSS JOIN canonical_nodes node ON node.id = selected.id "
+            "ORDER BY selected.canonical_key"
         )
     elif target == "files":
         filters = [
@@ -97,25 +105,26 @@ def search(
         )
     else:
         raise StorageSchemaError("search target must be nodes or files")
-    rows = connection.execute(
+    with closing(connection.execute(
         sql,
         {"pattern": pattern, "kind": kind, "path": path, "fetch": limit + 1, "offset": offset},
-    ).fetchall()
-    if target == "nodes":
-        payload = [node_payload(row) for row in rows]
-    else:
-        payload = [
-            {
-                "path": row[0],
-                "language": row[1],
-                "role": row[2],
-                "executable": bool(row[3]),
-                "generated": bool(row[4]),
-            }
-            for row in rows
-        ]
-    page = payload[:limit]
-    return {"results": page, "total": offset + len(page), "has_more": len(payload) > limit}
+    )) as rows:
+        visible = islice(rows, limit)
+        if target == "nodes":
+            page = [node_payload(row) for row in visible]
+        else:
+            page = [
+                {
+                    "path": row[0],
+                    "language": row[1],
+                    "role": row[2],
+                    "executable": bool(row[3]),
+                    "generated": bool(row[4]),
+                }
+                for row in visible
+            ]
+        has_more = rows.fetchone() is not None
+    return {"results": page, "total": offset + len(page), "has_more": has_more}
 
 
 def observation_search_sql(*, kind: bool, path: bool) -> str:
@@ -146,23 +155,37 @@ def observation_search(
     """
     require_accepted_publication(connection)
     needle = raw_payload.ascii_lower(query)
-    params = [value for value in (kind, path) if value is not None]
-    rows = connection.execute(
-        observation_search_sql(kind=kind is not None, path=path is not None), params
-    )
+    filters = [value for value in (kind, path) if value is not None]
+    sql = observation_search_sql(kind=kind is not None, path=path is not None)
+    params: list[str | int] = list(filters)
+    guaranteed_match = any(needle in raw_payload.ascii_lower(value) for value in filters)
+    pending_offset = offset
+    if guaranteed_match and 0 <= limit < 2**63 - 1 and 0 <= offset < 2**63:
+        # Exact kind/path equality already proves membership for every SQL row.
+        sql += " LIMIT ? OFFSET ?"
+        params.extend((limit + 1, offset))
+        pending_offset = 0
+    rows = connection.execute(sql, params)
     skipped = 0
     page: list[dict[str, Any]] = []
     try:
         for ordinal, row_kind, source_id, row_path, text in rows:
-            payload = raw_payload.load(text)
-            if not any(
-                needle in raw_payload.ascii_lower(field)
-                for field in (row_kind, source_id, row_path, raw_payload.jsonb_text(payload))
-            ):
-                continue
-            if skipped < offset:
+            payload: Any = None
+            header_matches = guaranteed_match or any(
+                needle in raw_payload.ascii_lower(field) for field in (row_kind, source_id, row_path)
+            )
+            if not header_matches:
+                payload = raw_payload.load(text)
+                if not raw_payload.jsonb_contains_ascii_folded(payload, needle):
+                    continue
+            if skipped < pending_offset:
                 skipped += 1
                 continue
+            if len(page) >= limit:
+                return {"results": page, "total": offset + len(page), "has_more": True}
+            # The header was sufficient to test membership. Decode only for emission.
+            if header_matches:
+                payload = raw_payload.load(text)
             metadata = payload.get("metadata") if isinstance(payload, dict) else None
             row: dict[str, Any] = {
                 "ordinal": ordinal,
@@ -174,12 +197,9 @@ def observation_search(
             if include_raw:
                 row["payload"] = raw_payload.jsonb_value(payload)
             page.append(row)
-            if len(page) > limit:
-                break
     finally:
         rows.close()
-    results = page[:limit]
-    return {"results": results, "total": offset + len(results), "has_more": len(page) > limit}
+    return {"results": page, "total": offset + len(page), "has_more": False}
 
 
 def status_fields(connection: sqlite3.Connection) -> dict[str, Any]:

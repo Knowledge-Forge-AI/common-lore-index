@@ -197,6 +197,7 @@ class ApiGithubBulkSourceIngestionIntegrationTests(unittest.TestCase):
         self.assertEqual(manifest.transport, "github_public_rest")
         self.assertTrue(manifest.network_capable)
         self.assertFalse(manifest.fixture_transport_only)
+        assert opener.response is not None and opener.response.closed
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.response_type, "application/json")
         self.assertEqual(response.rate_limit["x-ratelimit-remaining"], "59")
@@ -368,6 +369,7 @@ class ApiGithubBulkSourceIngestionIntegrationTests(unittest.TestCase):
             ('credential_mode = "none_public_readonly"', 'credential_mode = "token"', 'unsupported credential_mode: token'),
             ('mutation_allowed = false', 'mutation_allowed = true', 'source.mutation_allowed must be false'),
             ('max_requests_per_run = 20', 'max_requests_per_run = 1', 'max_requests_per_run is below endpoint count'),
+            ("max_bytes_per_run = 10485760", "max_bytes_per_run = 10", "response bytes exceed max_bytes_per_run"),
             ('policy = "local_user_controlled"', 'policy = "remote"', 'retention.policy must be local_user_controlled'),
             ('redacted_response_retention = "retain"', 'redacted_response_retention = "drop"', 'retention.redacted_response_retention must be retain'),
             ('path = "/repos/{owner}/{repo}"', 'path = "https://api.github.com/repos/{owner}/{repo}"', 'endpoint path must be a relative API path'),

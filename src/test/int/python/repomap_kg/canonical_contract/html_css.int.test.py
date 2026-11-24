@@ -50,7 +50,7 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
   </head>
   <body>
     <h1 id="welcome">Welcome</h1>
-    <h2>Plain Heading</h2>
+    <h2>Plain <span>Heading</span><script>html-contract-js</script></h2>
     <a href="#welcome">Jump</a>
     <a href="https://example.com/docs">Docs</a>
     <a href="mailto:dev@example.com">Email</a>
@@ -60,7 +60,8 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
     <a href="${ASSET_DIR}/logo.png">Dynamic</a>
     <img src="images/logo.png">
     <form method="post" action="submit/login">
-      <input name="password" value="html-contract-secret">
+      <label><input name="password" value="html-contract-secret"></label>
+      <fieldset><div><textarea name="note"></textarea></div></fieldset>
     </form>
   </body>
 </html>
@@ -74,6 +75,11 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
         payload = result.to_dict()
 
         self.assertNotIn("html-contract-secret", serialized)
+        form = next(item for item in observations if item.kind == "html.form")
+        self.assertEqual(form.metadata["field_count"], 2)
+        self.assertIn("Plain Heading", [
+            item.metadata.get("text_summary") for item in observations if item.kind == "html.heading"
+        ])
         self.assertNotIn("html-contract-js", serialized)
         self.assertTrue({"html.document", "html.element", "html.heading", "html.link", "html.asset", "html.form"}.issubset(kinds))
         self.assertEqual(broken[-1].kind, "html.parse_error")
@@ -196,7 +202,11 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
 .report-header .status-badge, .a > .b, .status-badge:hover, #dup { color: #f8fafc; }
 """,
         )
-        observations = html_observations + css_observations
+        other_html = extract_html_file_observations(
+            "unlinked.html", '<h1 id="heading" class="status-badge">Other heading</h1>',
+        )
+        other_css = extract_css_file_observations("static/unlinked.css", "#heading { color: red; }")
+        observations = html_observations + css_observations + other_html + other_css
         matches = extract_css_selector_match_observations(observations)
         result = canonicalize_observations(observations + matches)
         payload = result.to_dict()
@@ -218,6 +228,7 @@ class CanonicalHtmlCssIntegrationTests(unittest.TestCase):
             style_pairs,
         )
         self.assertIn("html.anchor:file%3Aindex.html:heading", {edge["target_key"] for edge in styles})
+        self.assertTrue(all("unlinked" not in edge["source_key"] + edge["target_key"] for edge in styles))
         self.assertTrue(all(edge["metadata"]["not_runtime_style_observed"] for edge in styles))
 
     def test_css_html_selector_matching_skip_contracts(self):

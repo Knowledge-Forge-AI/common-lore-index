@@ -3,6 +3,15 @@ from common_lore_index.extractors.shell.powershell import extract_powershell_fil
 from common_lore_index.extractors.shell.powershell_manifest_parser import _parse_manifest_document
 
 class ShellPowerShellBoundariesUnitTests(unittest.TestCase):
+    def test_legacy_manifest_array_consumes_only_its_numbered_lines(self):
+        from common_lore_index.extractors.shell.powershell_manifest import _extract_manifest_fields_legacy
+
+        content = "NestedModules = @(\r\n 'one.psm1',\u2028 'two.psm1')\rAuthor = 'Fixture'"
+        values = _extract_manifest_fields_legacy("module.psd1", content)
+        self.assertEqual([(item.start_line, item.end_line) for item in values], [(1, 3), (4, 4)])
+        (empty_tail,) = _extract_manifest_fields_legacy("module.psd1", "NestedModules = @(")
+        self.assertEqual((empty_tail.start_line, empty_tail.end_line), (1, 2))
+
     def test_powershell_manifest_and_script_extraction(self):
         ps1_script = """
 Param(

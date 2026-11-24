@@ -1,3 +1,4 @@
+import csv
 import json
 import unittest
 from unittest.mock import patch
@@ -115,6 +116,41 @@ beta,7,another-secret-value
         self.assertEqual(len(observations), 1)
         self.assertEqual(observations[0].kind, "document.parse_error")
         self.assertEqual(observations[0].metadata["error_kind"], "ragged-row")
+
+    def test_delimited_prefix_counts_blank_rows_and_parses_the_tail(self):
+        path = "prefix.csv"
+        with patch("common_lore_index.extractors.documents.office_plain.MAX_ROWS", 3):
+            rows = extract_document_file_observations(path, "name,amount\r\n\r\nalpha,1\r\nextra,2,3\r\n")
+            self.assertEqual(rows[0].metadata["row_count"], 1)
+            self.assertEqual(rows[0].metadata["column_count"], 2)
+
+            def delayed_error(*_args, **_keywords):
+                yield ["name", "amount"]
+                yield ["alpha", "1"]
+                yield ["beta", "2"]
+                raise csv.Error("fixture parser failure after prefix")
+
+            with patch("common_lore_index.extractors.documents.office_plain.csv.reader", delayed_error):
+                refused = extract_document_file_observations(path, "ignored fixture contents")
+            self.assertEqual(len(refused), 1)
+            self.assertEqual(refused[0].metadata["error_kind"], "csv-parser-error")
+
+    def test_txt_summary_retains_exact_whitespace_prefix_and_scans_for_redaction(self):
+        text = ("a" * 159) + "\u2028    more words"
+        observations = extract_document_file_observations("notes.txt", text)
+        self.assertEqual(observations[0].metadata["text_summary"], ("a" * 159) + " ")
+        self.assertEqual(observations[0].metadata["line_count"], 2)
+        hidden = extract_document_file_observations("notes.txt", text + "\n\npassword: withheld")[0]
+        self.assertEqual(hidden.metadata["paragraph_count"], 2)
+        self.assertTrue(hidden.metadata["summary_redacted"])
+        self.assertNotIn("text_summary", hidden.metadata)
+
+    def test_latex_preserves_mixed_breaks_and_elides_final_comment_line(self):
+        text = r"\section{One}" + "\r\n" + r"\input{chapter}" + "\u2028% trailing comment\r"
+        rows = by_kind(extract_document_file_observations("paper.tex", text))
+        self.assertEqual(rows["document.latex_document"][0].metadata["line_count"], 2)
+        self.assertEqual(rows["document.latex_section"][0].start_line, 1)
+        self.assertEqual(rows["document.latex_command"][0].start_line, 2)
 
     def test_txt_reference_placeholders_for_absolute_repo_escape_and_dynamic_paths(self):
         observations = extract_document_file_observations(

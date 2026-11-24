@@ -224,11 +224,12 @@ class ShellPipelineIntegrationTests(unittest.TestCase):
         # Dynamic variable expansion source
         dynamic_sh = self.tmpdir / "dynamic.sh"
         dynamic_sh.write_text(
-            "#!/usr/bin/env bash\n"
+            "#!/usr/bin/env bash\u2028"
             "source \"$LIB_DIR/helper.sh\"\n",
             encoding="utf-8",
         )
         dyn_obs = extract_bash_file_observations_from_file(self.tmpdir, "dynamic.sh")
+        self.assertEqual([item.start_line for item in dyn_obs if item.kind == "shell.source"], [2])
         res = canonicalize_observations(dyn_obs)
         self.assertTrue(res.ok)
         edge_kinds = {e.kind for e in res.graph.edges}

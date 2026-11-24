@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ElementTree
+from collections.abc import Iterator
 from pathlib import PurePosixPath
 from typing import Any
 
@@ -433,117 +434,116 @@ def _walk_xml_element(
     attributes: list[RawObservation],
     references: list[RawObservation],
 ) -> None:
-    parts = _xml_name_parts(element.tag)
-    local_name = parts["local_name"]
-    redacted = _is_secret_xml_element(element)
-    element_key = xml_element_key(relative_path, pointer)
-    metadata = _xml_element_metadata(
-        element,
-        pointer=pointer,
-        document_role=document_role,
-        redacted=redacted,
-    )
-    elements.append(
-        RawObservation(
-            kind="xml.element",
-            source_id=f"{relative_path}#xml-element:{pointer}",
-            path=relative_path,
-            name=pointer,
-            target=element_key,
-            confidence="extracted",
-            extractor=_extractor_name(),
-            extractor_version=__version__,
-            metadata=metadata,
-        )
-    )
-    text = (element.text or "").strip()
-    if text:
-        references.extend(
-            _xml_reference_observations(
-                relative_path,
-                value=text,
-                key_context=local_name,
-                source_key=element_key,
-                source_kind="xml.element",
-                pointer=pointer,
-                attribute_name=None,
-                redacted=redacted,
-            )
-        )
-    for attr_name, attr_value in sorted(element.attrib.items()):
-        attr_parts = _xml_attribute_parts(attr_name)
-        attr_display_name = attr_parts["display_name"]
-        attr_redacted = redacted or _is_secret_key(attr_display_name)
-        semantic_key = _xml_attribute_semantic_key(
-            attr_display_name,
+    for element, pointer in _xml_preorder(element, pointer):
+        parts = _xml_name_parts(element.tag)
+        local_name = parts["local_name"]
+        redacted = _is_secret_xml_element(element)
+        element_key = xml_element_key(relative_path, pointer)
+        metadata = _xml_element_metadata(
             element,
-            element_local_name=local_name,
-        )
-        attr_key = xml_attribute_key(relative_path, pointer, attr_display_name)
-        attr_metadata = _xml_attribute_metadata(
-            attr_value,
-            attr_parts=attr_parts,
             pointer=pointer,
-            semantic_key=semantic_key,
-            redacted=attr_redacted,
+            document_role=document_role,
+            redacted=redacted,
         )
-        attributes.append(
+        elements.append(
             RawObservation(
-                kind="xml.attribute",
-                source_id=(
-                    f"{relative_path}#xml-attribute:{pointer}:{attr_display_name}"
-                ),
+                kind="xml.element",
+                source_id=f"{relative_path}#xml-element:{pointer}",
                 path=relative_path,
-                name=attr_display_name,
-                target=attr_key,
+                name=pointer,
+                target=element_key,
                 confidence="extracted",
                 extractor=_extractor_name(),
                 extractor_version=__version__,
-                metadata=attr_metadata,
+                metadata=metadata,
             )
         )
-        references.extend(
-            _xml_reference_observations(
-                relative_path,
-                value=attr_value,
-                key_context=semantic_key,
-                source_key=attr_key,
-                source_kind="xml.attribute",
+        text = (element.text or "").strip()
+        if text:
+            references.extend(
+                _xml_reference_observations(
+                    relative_path,
+                    value=text,
+                    key_context=local_name,
+                    source_key=element_key,
+                    source_kind="xml.element",
+                    pointer=pointer,
+                    attribute_name=None,
+                    redacted=redacted,
+                )
+            )
+        for attr_name, attr_value in sorted(element.attrib.items()):
+            attr_parts = _xml_attribute_parts(attr_name)
+            attr_display_name = attr_parts["display_name"]
+            attr_redacted = redacted or _is_secret_key(attr_display_name)
+            semantic_key = _xml_attribute_semantic_key(
+                attr_display_name,
+                element,
+                element_local_name=local_name,
+            )
+            attr_key = xml_attribute_key(relative_path, pointer, attr_display_name)
+            attr_metadata = _xml_attribute_metadata(
+                attr_value,
+                attr_parts=attr_parts,
                 pointer=pointer,
-                attribute_name=attr_display_name,
+                semantic_key=semantic_key,
                 redacted=attr_redacted,
             )
-        )
-    for child, child_pointer in _xml_child_pointers(element, pointer):
-        _walk_xml_element(
-            relative_path,
-            child,
-            pointer=child_pointer,
-            document_role=document_role,
-            content=content,
-            elements=elements,
-            attributes=attributes,
-            references=references,
-        )
+            attributes.append(
+                RawObservation(
+                    kind="xml.attribute",
+                    source_id=(
+                        f"{relative_path}#xml-attribute:{pointer}:{attr_display_name}"
+                    ),
+                    path=relative_path,
+                    name=attr_display_name,
+                    target=attr_key,
+                    confidence="extracted",
+                    extractor=_extractor_name(),
+                    extractor_version=__version__,
+                    metadata=attr_metadata,
+                )
+            )
+            references.extend(
+                _xml_reference_observations(
+                    relative_path,
+                    value=attr_value,
+                    key_context=semantic_key,
+                    source_key=attr_key,
+                    source_kind="xml.attribute",
+                    pointer=pointer,
+                    attribute_name=attr_display_name,
+                    redacted=attr_redacted,
+                )
+            )
 
 
-def _xml_child_pointers(
-    element: ElementTree.Element,
-    parent_pointer: str,
-) -> tuple[tuple[ElementTree.Element, str], ...]:
-    children = list(element)
-    totals: dict[str, int] = {}
-    for child in children:
-        local = _xml_local_name(child.tag)
-        totals[local] = totals.get(local, 0) + 1
+def _xml_preorder(element: ElementTree.Element, pointer: str) -> Iterator[tuple[ElementTree.Element, str]]:
+    yield element, pointer
+    stack = [_iter_xml_children(element, pointer)]
+    while stack:
+        entry = next(stack[-1], None)
+        if entry is None:
+            stack.pop()
+        else:
+            yield entry
+            stack.append(_iter_xml_children(*entry))
+
+
+def _xml_child_pointers(element: ElementTree.Element, parent_pointer: str) -> tuple[tuple[ElementTree.Element, str], ...]:
+    return tuple(_iter_xml_children(element, parent_pointer))
+
+
+def _iter_xml_children(
+    element: ElementTree.Element, parent_pointer: str,
+) -> Iterator[tuple[ElementTree.Element, str]]:
     seen: dict[str, int] = {}
-    result = []
-    for child in children:
+    for child in element:
         local = _xml_local_name(child.tag)
-        seen[local] = seen.get(local, 0) + 1
-        segment = local if seen[local] == 1 else f"{local}[{seen[local]}]"
-        result.append((child, f"{parent_pointer}/{segment}"))
-    return tuple(result)
+        count = seen.get(local, 0) + 1
+        seen[local] = count
+        segment = local if count == 1 else f"{local}[{count}]"
+        yield child, f"{parent_pointer}/{segment}"
 
 
 def _xml_element_metadata(
@@ -554,7 +554,6 @@ def _xml_element_metadata(
     redacted: bool,
 ) -> dict[str, Any]:
     parts = _xml_name_parts(element.tag)
-    children = list(element)
     metadata: dict[str, Any] = {
         "format": _generic_xml_format(),
         "parser": _parser_name(_generic_xml_format()),
@@ -563,7 +562,7 @@ def _xml_element_metadata(
         "local_name": parts["local_name"],
         "xml_pointer": pointer,
         "attribute_count": len(element.attrib),
-        "child_count": len(children),
+        "child_count": len(element),
         "identity_mode": "structural-document",
         "role_hint": _xml_role_hint(element, document_role=document_role),
         "redacted": redacted,

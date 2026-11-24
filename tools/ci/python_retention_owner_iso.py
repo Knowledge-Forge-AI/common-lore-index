@@ -99,6 +99,7 @@ def test_unit_inspection_import_of_integration_conftest_does_not_activate_guard(
     module = importlib.util.module_from_spec(spec)
     with patch('test_sandbox.active_sandbox', return_value=False) as active, patch('repomap_test_support.postgres_harness.postgres_container_session') as postgres:
         spec.loader.exec_module(module)
+    assert module.__name__ == "repomap_int_conftest_inspection"
     active.assert_not_called()
     postgres.assert_not_called()
 

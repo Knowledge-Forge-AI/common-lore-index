@@ -79,8 +79,10 @@ def read_retained_publication(
             raise ValueError
         if receipt.attempt.job_id != JobId(job_id) or receipt.attempt.attempt != AttemptNumber(attempt):
             raise ValueError
+        if receipt.portable is None or receipt.portable.stage_id != portable_stage_id:
+            raise ValueError
         return RunPublicationRecord(GraphRunId(run_id), receipt)
-    except (KeyError, TypeError, ValueError) as error:
+    except (KeyError, TypeError, ValueError, RecursionError) as error:
         raise StorageSchemaError("malformed retained publication proof") from error
 
 

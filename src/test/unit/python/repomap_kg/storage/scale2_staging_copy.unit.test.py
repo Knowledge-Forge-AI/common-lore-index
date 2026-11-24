@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from inspect import GEN_CLOSED, GEN_SUSPENDED, getgeneratorstate
+from pathlib import Path
 
 import pytest
 
+from common_lore_index.storage.errors import StorageSchemaError
+from common_lore_index.storage.row_spool import RowSpool
 from common_lore_index.storage.staging_copy import (
     STAGING_COPY_TABLES,
     CopyContractError,
     CopyTransferResult,
     StagingCopyTable,
+    _prepared_copy_rows,
     copy_stage_rows,
 )
 
@@ -144,12 +149,15 @@ def test_copy_transport_streams_rows_without_owning_transaction() -> None:
     result = copy_stage_rows(
         connection,
         STAGING_COPY_TABLES["files"],
-        (stage_file_row(), stage_file_row(family_ordinal=1)),
+        (stage_file_row(), dict(reversed(tuple(stage_file_row(family_ordinal=1).items())))),
         expected_stage_id="stage-001",
     )
 
     assert result == CopyTransferResult(family="files", row_count=2)
     assert len(connection.cursor_instance.copy_operation.rows) == 2
+    assert connection.cursor_instance.copy_operation.rows[1][:4] == (
+        "stage-001", 1, "fixture/readme.md", "markdown",
+    )
     assert connection.commit_calls == 0
     assert connection.rollback_calls == 0
     assert connection.cursor_instance.copy_operation.exit_exception is None
@@ -226,3 +234,89 @@ def test_copy_rejects_uncatalogued_table_before_acquiring_cursor() -> None:
     assert connection.cursor_instance.statement is None
     assert connection.cursor_instance.copy_operation.rows == []
     assert connection.commit_calls == connection.rollback_calls == 0
+
+
+@pytest.mark.parametrize("spooled", [False, True])
+@pytest.mark.parametrize(("available", "expected", "transferred"), [
+    (0, 0, 0), (2, 2, 2), (1, 2, 1), (3, 1, 1), (1, 0, 0),
+])
+def test_prepared_copy_admits_only_the_declared_prefix(
+    tmp_path: Path, spooled: bool, available: int, expected: int, transferred: int,
+) -> None:
+    files = [stage_file_row(family_ordinal=index) for index in range(available)]
+    spool = RowSpool.from_rows(files, dir=tmp_path) if spooled else None
+    connection = FakeConnection()
+    operation = connection.cursor_instance.copy_operation
+    rows = files if spool is None else spool
+    try:
+        if available == expected:
+            with _prepared_copy_rows(rows, expected) as bounded:
+                assert copy_stage_rows(connection, STAGING_COPY_TABLES["files"], bounded,
+                                       expected_stage_id="stage-001").row_count == transferred
+            assert operation.exit_exception is None
+            assert spool is None or not spool.path.exists()
+        else:
+            with pytest.raises(StorageSchemaError, match="staged family completeness failed") as caught:
+                with _prepared_copy_rows(rows, expected) as bounded:
+                    copy_stage_rows(connection, STAGING_COPY_TABLES["files"], bounded,
+                                    expected_stage_id="stage-001")
+            assert operation.exit_exception is caught.value
+            assert spool is None or spool.path.exists()
+        assert len(operation.rows) == transferred
+        assert connection.commit_calls == connection.rollback_calls == 0
+    finally:
+        if spool is not None:
+            spool.close()
+
+
+def test_prepared_copy_closes_retained_spool_iterator_on_written_prefix_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    spool = RowSpool.from_rows((stage_file_row(), stage_file_row(family_ordinal=1)), dir=tmp_path)
+    reader = spool.__iter__()
+    monkeypatch.setattr(RowSpool, "__iter__", lambda _self: reader)
+    connection = FakeConnection()
+    error = OSError("synthetic COPY output failure")
+
+    def fail_write(_row: object) -> None:
+        assert getgeneratorstate(reader) == GEN_SUSPENDED
+        raise error
+
+    monkeypatch.setattr(connection.cursor_instance.copy_operation, "write_row", fail_write)
+    try:
+        with pytest.raises(OSError) as caught:
+            with _prepared_copy_rows(spool, 2) as bounded:
+                copy_stage_rows(connection, STAGING_COPY_TABLES["files"], bounded,
+                                expected_stage_id="stage-001")
+        assert caught.value is error and caught.value.__traceback__ is not None
+        assert getgeneratorstate(reader) == GEN_CLOSED
+        assert spool.path.exists()
+    finally:
+        reader.close()
+        spool.close()
+
+
+def test_prepared_copy_does_not_close_a_caller_owned_nonspool_iterator() -> None:
+    rows = (stage_file_row(family_ordinal=ordinal) for ordinal in range(3))
+    connection = FakeConnection()
+    try:
+        with pytest.raises(StorageSchemaError, match="staged family completeness failed"):
+            with _prepared_copy_rows(rows, 1) as bounded:
+                copy_stage_rows(connection, STAGING_COPY_TABLES["files"], bounded,
+                                expected_stage_id="stage-001")
+        assert getgeneratorstate(rows) == GEN_SUSPENDED
+        assert next(rows)["family_ordinal"] == 2
+    finally:
+        rows.close()
+
+
+@pytest.mark.parametrize("expected", [None, True, -1, 1.5])
+def test_prepared_copy_rejects_an_invalid_count_without_consuming_rows(expected: int | None) -> None:
+    rows = (stage_file_row() for _ in range(1))
+    try:
+        with pytest.raises(StorageSchemaError, match="staged family completeness failed"):
+            with _prepared_copy_rows(rows, expected):
+                pytest.fail("malformed count admitted")
+        assert next(rows)["family_ordinal"] == 0
+    finally:
+        rows.close()

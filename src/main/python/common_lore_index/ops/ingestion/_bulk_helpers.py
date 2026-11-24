@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Mapping, Sequence
+import stat
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Any
 
 import tomllib
@@ -28,6 +30,7 @@ from common_lore_index.ops.ingestion.bulk_records import (
     BulkPolicyError,
     BulkSourceConfig,
 )
+from common_lore_index.ops.ingestion.source_common import _source_manifest_digest
 
 ALLOWED_SOURCE_TYPES = frozenset({"local.directory"})
 ALLOWED_POLICY_STATUSES = frozenset({"allowed", "allowed_with_limits"})
@@ -167,7 +170,7 @@ def deterministic_run_id(
     config: BulkSourceConfig,
     included: Sequence[BulkIncludedFile],
 ) -> str:
-    inventory = [
+    inventory = (
         {
             "relative_path": item.relative_path,
             "route": item.route,
@@ -175,7 +178,7 @@ def deterministic_run_id(
             "sha256": item.sha256,
         }
         for item in included
-    ]
+    )
     payload = {
         "source_id": config.source_id,
         "source_type": config.source_type,
@@ -193,15 +196,17 @@ def deterministic_run_id(
         "include_extensions": config.include_extensions,
         "excluded_directories": config.excluded_directories,
         "excluded_paths": config.excluded_paths,
-        "inventory": inventory,
     }
-    return "bulk-" + sha256_json(payload)[:24]
+    return "bulk-" + _source_manifest_digest(payload, records={"inventory": inventory})[:24]
 
 
 def manifest_digest(manifest: BulkManifest) -> str:
-    payload = manifest.to_jsonable()
+    payload = manifest._to_jsonable(include_inventory=False)
     payload["manifest_sha256"] = ""
-    return sha256_json(payload)
+    return _source_manifest_digest(payload, records={
+        "included_files": (item.to_jsonable() for item in manifest.included_files),
+        "skipped_files": (item.to_jsonable() for item in manifest.skipped_files),
+    })
 
 
 def root_path_summary(config: BulkSourceConfig) -> str:
@@ -226,9 +231,9 @@ def is_excluded_path(relative_path: str, excluded_paths: Sequence[str]) -> bool:
     )
 
 
-def safe_size(path: Path) -> int | None:
+def safe_size(path: Path, *, follow_symlinks: bool = True) -> int | None:
     try:
-        return path.stat().st_size
+        return path.stat(follow_symlinks=follow_symlinks).st_size
     except OSError:
         return None
 
@@ -254,6 +259,10 @@ def ensure_contained(path: Path, root: Path, name: str) -> None:
         raise BulkPolicyError(f"{name} escapes repository root")
 
 
+def _bulk_output_root(repository_root: Path) -> Path:
+    return repository_root / ".repomap" / "bulk-runs"
+
+
 def is_contained(path: Path, root: Path) -> bool:
     try:
         path.resolve().relative_to(root.resolve())
@@ -263,23 +272,41 @@ def is_contained(path: Path, root: Path) -> bool:
 
 
 def write_json(path: Path, payload: object) -> None:
-    path.write_text(
-        json.dumps(payload, sort_keys=True, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    _write_bulk_lines(path, (json.dumps(payload, sort_keys=True, indent=2) + "\n",))
 
 
-def write_jsonl(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
-    path.write_text(
-        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
-        encoding="utf-8",
-    )
+def write_jsonl(path: Path, rows: Iterable[Mapping[str, Any]]) -> None:
+    _write_bulk_lines(path, (json.dumps(row, sort_keys=True) + "\n" for row in rows))
+
+
+def _write_bulk_lines(path: Path, lines: Iterable[str]) -> None:
+    _validate_bulk_output_file(path)
+    with TemporaryDirectory(prefix=".bulk-output-", dir=path.parent) as directory:
+        with NamedTemporaryFile(mode="w", encoding="utf-8", dir=directory, delete=False) as handle:
+            for line in lines:
+                if handle.write(line) != len(line):
+                    raise OSError("incomplete bulk output write")
+        _validate_bulk_output_file(path)
+        Path(handle.name).replace(path)
+
+
+def _validate_bulk_output_file(path: Path) -> None:
+    try:
+        mode = path.lstat().st_mode
+    except FileNotFoundError:
+        return
+    if stat.S_ISLNK(mode):
+        raise BulkPolicyError("bulk output file must not be a symlink")
+    if not stat.S_ISREG(mode):
+        raise BulkPolicyError("bulk output destination must be a regular file")
 
 
 def load_bulk_source_config(path: Path | str) -> BulkSourceConfig:
     config_path = Path(path).resolve()
     try:
         payload = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except UnicodeDecodeError as error:
+        raise BulkPolicyError("invalid UTF-8 bulk source config") from error
     except (OSError, tomllib.TOMLDecodeError) as error:
         raise BulkPolicyError(f"invalid bulk config: {error}") from error
 

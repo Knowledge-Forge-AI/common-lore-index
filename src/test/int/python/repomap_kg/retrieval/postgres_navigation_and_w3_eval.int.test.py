@@ -142,6 +142,9 @@ def test_postgres_navigation_search_and_node_locations_wire_parity_with_sqlite(
             sq_res = sq_store.navigation_search(MIXED_V1_GRAPH_ID, nav_q)
             pg_res = pg_store.navigation_search(MIXED_V1_GRAPH_ID, nav_q)
             assert pg_res["status"] == sq_res["status"] == "ok"
+            if nav_q.source_binding_id is not None:
+                meter = sq_res["scan"]["admission"]
+                assert meter["input_bytes"] >= meter["decoded_bytes"] >= meter["vector_bytes"]
             pg_clean = _strip_backend_specific_ids(pg_res)
             sq_clean = _strip_backend_specific_ids(sq_res)
             assert pg_clean == sq_clean, f"nav_q={nav_q} pg={pg_clean} sq={sq_clean}"

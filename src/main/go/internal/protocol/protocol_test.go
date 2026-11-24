@@ -3,6 +3,7 @@ package protocol
 import (
 	"bytes"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 )
@@ -23,14 +24,18 @@ func TestDecodeRequestAcceptsProtocolVersionOneFileRequest(t *testing.T) {
 
 func TestDecodeRequestRejectsInvalidContract(t *testing.T) {
 	tests := map[string]string{
-		"malformed":     `{`,
-		"unknown field": `{"protocol_version":1,"type":"file","sequence":0,"path":"a.go","extra":true}`,
-		"wrong version": `{"protocol_version":2,"type":"file","sequence":0,"path":"a.go"}`,
-		"wrong type":    `{"protocol_version":1,"type":"close","sequence":0,"path":"a.go"}`,
-		"negative seq":  `{"protocol_version":1,"type":"file","sequence":-1,"path":"a.go"}`,
-		"empty path":    `{"protocol_version":1,"type":"file","sequence":0,"path":""}`,
-		"trailing JSON": `{"protocol_version":1,"type":"file","sequence":0,"path":"a.go"}{}`,
-		"empty input":   ``,
+		"malformed":        `{`,
+		"unknown field":    `{"protocol_version":1,"type":"file","sequence":0,"path":"a.go","extra":true}`,
+		"duplicate key":    `{"protocol_version":1,"type":"file","sequence":0,"path":"a.go","path":"b.go"}`,
+		"missing sequence": `{"protocol_version":1,"type":"file","path":"a.go"}`,
+		"null sequence":    `{"protocol_version":1,"type":"file","sequence":null,"path":"a.go"}`,
+		"case variant":     `{"Protocol_Version":1,"type":"file","sequence":0,"path":"a.go"}`,
+		"wrong version":    `{"protocol_version":2,"type":"file","sequence":0,"path":"a.go"}`,
+		"wrong type":       `{"protocol_version":1,"type":"close","sequence":0,"path":"a.go"}`,
+		"negative seq":     `{"protocol_version":1,"type":"file","sequence":-1,"path":"a.go"}`,
+		"empty path":       `{"protocol_version":1,"type":"file","sequence":0,"path":""}`,
+		"trailing JSON":    `{"protocol_version":1,"type":"file","sequence":0,"path":"a.go"}{}`,
+		"empty input":      ``,
 	}
 	for name, input := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -153,5 +158,18 @@ func TestWriteResponseRejectsOversizedLine(t *testing.T) {
 
 	if err := WriteResponse(&bytes.Buffer{}, response); err == nil {
 		t.Fatal("WriteResponse() error = nil")
+	}
+}
+
+type shortWriter struct{}
+
+func (shortWriter) Write(encoded []byte) (int, error) {
+	return len(encoded) - 1, nil
+}
+
+func TestWriteResponseReportsMissingFrameBytes(t *testing.T) {
+	response := Response{ProtocolVersion: ProtocolVersion, Type: "file_end", Sequence: 1, Path: "a.go"}
+	if err := WriteResponse(shortWriter{}, response); !errors.Is(err, io.ErrShortWrite) {
+		t.Fatalf("WriteResponse() error = %v, want io.ErrShortWrite", err)
 	}
 }

@@ -10,20 +10,22 @@ from repomap_test_support.composition_extraction_fixtures import create_composit
 
 @pytest.mark.parametrize("reference,scope,redacted,reason,target_prefix", [
     ("https://fixture-user:fixture-password@example.invalid/schema.json", "remote", True, "credentialed-url", "external:url:"),
+    ("https://unreadable.invalid:port/schema.json", "remote", True, "malformed-url", "unknown:openapi.reference:"),
     ("../../../outside.json", "local_file", True, "local-ref-outside-root", "unknown:file:"),
     ("https://example.invalid/schema.json", "remote", False, None, "external.url:"),
     ("#/components/schemas/Pet", "internal", False, None, "config.path:"),
-], ids=["credentialed", "outside-root", "remote", "internal"])
+], ids=["credentialed", "malformed-port", "outside-root", "remote", "internal"])
 def test_reference_privacy_survives_extraction_canonicalization_and_rows(tmp_path: Path, reference, scope, redacted, reason, target_prefix):
     project = tmp_path / "project"
     project.mkdir()
     document = {"openapi": "3.0.3", "info": {"title": "Fixture", "version": "1"},
-                "paths": {}, "components": {"schemas": {"Pet": {"type": "object"}, "Alias": {"$ref": reference}}}}
+                "paths": {}, "components": {"schemas": {"Pet": {"type": "object"}, "Alias/~": {"allOf": [{"$ref": reference}, {"$ref": 123}]}}}}
     (project / "openapi.json").write_text(json.dumps(document))
     candidate = capture_multi_source_candidate(create_composition_graph_config(project))
     references = [item for item in candidate.observations if item.kind == "openapi.reference"]
     assert len(references) == 1
     observation = references[0]
+    assert observation.metadata["pointer"] == "/components/schemas/Alias~1~0/allOf/0/$ref"
     assert observation.metadata["reference_scope"] == scope
     assert observation.metadata["redacted"] is redacted
     assert observation.metadata.get("redaction_reason") == reason
@@ -44,6 +46,7 @@ def test_reference_privacy_survives_extraction_canonicalization_and_rows(tmp_pat
         assert len(raw) == 1 and raw[0]["payload_json"] == observation.to_dict()
         encoded = json.dumps({family: list(items) for family, items in rows.family_rows.items()})
         assert "fixture-password" not in encoded
+        assert "unreadable.invalid" not in encoded
         assert observation.target in encoded
     finally:
         rows.close()

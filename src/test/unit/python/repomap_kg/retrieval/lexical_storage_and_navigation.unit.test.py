@@ -72,6 +72,9 @@ class _FakeCursor:
                 raise nxt
             self._current = nxt
 
+    def executemany(self, sql: str, rows: tuple[tuple[Any, ...], ...]) -> None:
+        self.execute(sql, rows)
+
     def fetchone(self) -> Any:
         return self._current
 
@@ -215,14 +218,11 @@ def test_lexical_probe_lifecycle_revoke_and_query_sql_execution() -> None:
         ("b1",), (), (doc,), (OmissionRecord("b2", None, "binding_privacy_not_authorized", "priv"),),
         4, 4,
     )
-    life_conn = _FakeConnection(
-        [
-            None, None, None, None,
-            (3, "portable-worker-v1", "bundle1:b", "manifest1:m", "receipt1:r", "cand1:c", '[["b1", 1, "s1"]]', True,
-             "{}", True, True, True),
-            None, None, None, None, None, None,
-        ]
+    publish_fence = (
+        3, "portable-worker-v1", "bundle1:b", "manifest1:m", "receipt1:r", "cand1:c", '[["b1", 1, "s1"]]',
+        True, "{}", True, True, True,
     )
+    life_conn = _FakeConnection([None] * 4 + [publish_fence] + [None] * 6)
     summary = publish_lexical_generation(life_conn, plan)
     assert summary.to_dict()["lexical_generation_id"] == "lexgen1:g"
 

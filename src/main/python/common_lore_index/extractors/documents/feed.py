@@ -4,18 +4,24 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterable, Iterator
 from typing import Any
 from xml.etree import ElementTree
 from common_lore_index.extractors.documents.feed_data import (
     _atom_channel_info,
     _atom_item_data,
+    _atom_item_identity,
     _json_channel_info,
     _json_item_data,
+    _json_item_identity,
     _rss_channel_info,
     _rss_item_data,
+    _rss_item_identity,
 )
 
 from common_lore_index.extractors.documents.feed_support import (
+    _unreadable_feed_reference,
+    _project_feed_items,
     DYNAMIC_REFERENCE_PATTERN,
     EMAIL_PATTERN,
     SAFE_SUMMARY_LIMIT,
@@ -66,6 +72,7 @@ UNSAFE_PROCESSING_INSTRUCTION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 FEED_ROOT_PATTERN = re.compile(r"<\s*(?:rss|feed)(?:\s|>|/)", re.IGNORECASE)
+JSON_STRUCTURE_PREFIX = re.compile(r"\s*[\[{]")
 
 
 def extract_feed_file_observations(
@@ -73,7 +80,7 @@ def extract_feed_file_observations(
     content: str,
 ) -> tuple[RawObservation, ...]:
     """Extract feed observations from a local RSS, Atom, or JSON Feed artifact."""
-    if _looks_like_feed_xml(content):
+    if JSON_STRUCTURE_PREFIX.match(content) is None and _looks_like_feed_xml(content):
         return _extract_xml_feed(relative_path, content)
     json_payload = _parse_json_feed_payload(content)
     if json_payload is None:
@@ -158,7 +165,10 @@ def _extract_rss(relative_path: str, root: ElementTree.Element) -> tuple[RawObse
             )
         )
 
-    items = [_rss_item_data(relative_path, channel_info["channel_key"], item, index) for index, item in enumerate(_children(channel, "item"), start=1)]
+    items = _project_feed_items(
+        relative_path, channel_info["channel_key"],
+        enumerate(_children(channel, "item"), start=1), _rss_item_identity, _rss_item_data,
+    )
     observations.extend(_item_observations(relative_path, "rss", channel_info["channel_key"], items))
     return tuple(observations)
 
@@ -198,10 +208,10 @@ def _extract_atom(relative_path: str, root: ElementTree.Element) -> tuple[RawObs
             )
         )
 
-    entries = [
-        _atom_item_data(relative_path, channel_info["channel_key"], entry, index)
-        for index, entry in enumerate(_children(root, "entry"), start=1)
-    ]
+    entries = _project_feed_items(
+        relative_path, channel_info["channel_key"],
+        enumerate(_children(root, "entry"), start=1), _atom_item_identity, _atom_item_data,
+    )
     observations.extend(_item_observations(relative_path, "atom", channel_info["channel_key"], entries))
     return tuple(observations)
 
@@ -243,11 +253,8 @@ def _extract_json_feed(
             )
         )
 
-    items = [
-        _json_item_data(relative_path, channel_info["channel_key"], item, index)
-        for index, item in enumerate(payload.get("items", []), start=1)
-        if isinstance(item, dict)
-    ]
+    entries = ((index, item) for index, item in enumerate(payload.get("items", []), start=1) if isinstance(item, dict))
+    items = _project_feed_items(relative_path, channel_info["channel_key"], entries, _json_item_identity, _json_item_data)
     observations.extend(_item_observations(relative_path, "json-feed", channel_info["channel_key"], items))
     return tuple(observations)
 
@@ -256,21 +263,14 @@ def _item_observations(
     relative_path: str,
     feed_format: str,
     channel_key: str,
-    items: list[dict[str, Any]],
-) -> list[RawObservation]:
-    observations: list[RawObservation] = []
-    counts: dict[str, int] = {}
-    for item in items:
-        counts[item["base_item_id"]] = counts.get(item["base_item_id"], 0) + 1
+    items: Iterable[tuple[dict[str, Any], int]],
+) -> Iterator[RawObservation]:
     seen: dict[str, int] = {}
-    for item in items:
+    for item, identity_count in items:
         base_item_id = item["base_item_id"]
         seen[base_item_id] = seen.get(base_item_id, 0) + 1
-        duplicate_identity = counts[base_item_id] > 1
-        if duplicate_identity:
-            item_id = f"{base_item_id}:duplicate-{seen[base_item_id]}"
-        else:
-            item_id = base_item_id
+        duplicate_identity = identity_count > 1
+        item_id = f"{base_item_id}:duplicate-{seen[base_item_id]}" if duplicate_identity else base_item_id
         item_key = feed_item_key(channel_key, item_id)
         item_metadata = {
             key: value
@@ -283,26 +283,16 @@ def _item_observations(
         if duplicate_identity:
             item_metadata["duplicate_identity"] = True
             item_metadata["duplicate_disambiguator"] = f"duplicate-{seen[base_item_id]}"
-        observations.append(
-            _obs(
-                kind="feed.item",
-                source_id=f"{relative_path}#feed-item:{item['ordinal']}",
-                path=relative_path,
-                target=item_key,
-                name=item.get("title") or item_id,
-                confidence="extracted",
-                metadata=item_metadata,
-            )
+        yield _obs(
+            kind="feed.item",
+            source_id=f"{relative_path}#feed-item:{item['ordinal']}",
+            path=relative_path,
+            target=item_key,
+            name=item.get("title") or item_id,
+            confidence="extracted",
+            metadata=item_metadata,
         )
-        observations.extend(
-            _item_reference_observations(
-                relative_path,
-                feed_format,
-                item_key,
-                item,
-            )
-        )
-    return observations
+        yield from _item_reference_observations(relative_path, feed_format, item_key, item)
 
 
 def _item_reference_observations(
@@ -530,18 +520,17 @@ def _reference_observation(
     name: str,
     metadata: dict[str, Any],
 ) -> RawObservation:
-    safe_metadata = {
-        key: value for key, value in metadata.items() if value is not None
-    }
+    safe_metadata = {key: value for key, value in metadata.items() if value is not None}
     safe_metadata["source_key"] = source_key
-    safe_metadata["raw_target_summary"] = _safe_summary(raw_target)
+    malformed = _unreadable_feed_reference(target, raw_target)
+    safe_metadata["raw_target_summary"] = None if malformed else _safe_summary(raw_target)
     safe_metadata["target_kind"] = target.partition(":")[0]
     return _obs(
         kind=kind,
         source_id=source_id,
         path=relative_path,
         target=target,
-        name=name,
+        name="malformed feed reference" if malformed else name,
         confidence="extracted",
         metadata=safe_metadata,
     )
@@ -592,7 +581,7 @@ def _obs(
 def _parse_json_feed_payload(content: str) -> dict[str, Any] | None:
     try:
         payload = json.loads(content)
-    except json.JSONDecodeError:
+    except (ValueError, RecursionError):
         return None
     if not isinstance(payload, dict):
         return None

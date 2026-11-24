@@ -7,6 +7,45 @@ from common_lore_index.extractors.config.jsonc import (
 )
 
 class ConfigStructureBoundariesUnitTests(unittest.TestCase):
+    def test_protects_invalid_and_credentialed_config_urls(self):
+        rows = extract_config_file_observations(
+            "fixture.json",
+            '{"malformed":"https://broken.invalid:port/path",'
+            '"protected":"https://user:fixture@hidden.invalid/path",'
+            '"retained":"https://valid.invalid/path"}',
+        )
+        refs = [row for row in rows if row.kind == "config.reference"]
+        self.assertEqual(
+            [row.metadata["resolution_reason"] for row in refs],
+            ["malformed-url", "credentialed-url", "url-literal"],
+        )
+        self.assertTrue((refs[0].target or "").startswith("unknown:"))
+        self.assertTrue((refs[1].target or "").startswith("external:url:"))
+        self.assertTrue((refs[2].target or "").startswith("external.url:"))
+        serialized = str([row.to_dict() for row in rows])
+        self.assertNotIn("broken.invalid", serialized)
+        self.assertNotIn("hidden.invalid", serialized)
+
+    def test_protected_url_cannot_become_stable_array_identity(self):
+        rows = extract_config_file_observations(
+            "fixture.toml",
+            '[[endpoints]]\nname = "https://user:fixture@hidden.invalid:broken/path"\n'
+            '[[endpoints]]\nname = "ordinary"\n',
+        )
+        path, = [row for row in rows if row.kind == "config.path"]
+        self.assertEqual(path.name, "/endpoints")
+        self.assertEqual(path.metadata["array_policy"], "summary-only")
+        self.assertNotIn("hidden.invalid", str([row.to_dict() for row in rows]))
+
+    def test_repeated_json_keys_keep_first_matching_line_and_one_location_per_row_pair(self):
+        rows = extract_config_file_observations(
+            "fixture.json",
+            '{\n "first": {"a/b": "./one.txt"},\n "second": {"a/b": "./two.txt"}\n}',
+        )
+        selected = [row for row in rows if row.metadata.get("pointer") in ("/first/a~1b", "/second/a~1b")]
+        self.assertEqual([row.kind for row in selected], ["config.path", "config.path", "config.reference", "config.reference"])
+        self.assertEqual([(row.start_line, row.end_line) for row in selected], [(2, 2)] * 4)
+
     def test_jsonc_strip_comments_and_trailing_commas(self):
         jsonc_text = """// Header comment
 {

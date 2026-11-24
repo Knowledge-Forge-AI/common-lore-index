@@ -19,6 +19,7 @@ from common_lore_index.retrieval.lexical_capture import (
 )
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
 from common_lore_index.retrieval.query_contracts import CapabilityState
+from common_lore_index.storage import lexical_population
 from common_lore_index.storage.lexical_driver import LexicalStorageError
 from common_lore_index.storage.lexical_lifecycle import publish_lexical_generation
 from repomap_test_support.retrieval_evaluation_fixture import (
@@ -54,6 +55,9 @@ class _Cursor:
             self.current = self.connection.responses.pop(0)
             if isinstance(self.current, Exception):
                 raise self.current
+
+    def executemany(self, sql: str, rows: tuple[tuple[Any, ...], ...]) -> None:
+        self.execute(sql, rows)
 
     def fetchone(self) -> Any:
         return self.current
@@ -250,3 +254,22 @@ def test_privacy_refusals_require_body_authorization_and_selected_bindings(
     assert refused_mailbox.capability_state == CapabilityState.REFUSED
     assert refused_mailbox.refusal_code == "email_body_forbidden"
     assert refused_mailbox.omissions[0].reason_code == "email_body_forbidden"
+
+
+def test_lexical_row_byte_count_reuses_repeated_unicode_parameters(monkeypatch: pytest.MonkeyPatch) -> None:
+    body = "aλ🚀" * 30
+    alias = "sí"
+    invalid = "\ud800"
+    rows = (1, None, "ascii", body, alias, body, alias, invalid, body, invalid)
+    byte_length = lexical_population.byte_length
+    compared: list[str] = []
+
+    def count(value: str, *, errors: str) -> int:
+        assert errors == "surrogatepass"
+        compared.append(value)
+        return byte_length(value, errors="surrogatepass")
+
+    monkeypatch.setattr(lexical_population, "byte_length", count)
+    total = sum(len(value.encode("utf-8", errors="surrogatepass")) for value in rows if isinstance(value, str))
+    assert lexical_population._utf8_param_bytes(rows) == total
+    assert compared == [body, alias, invalid]

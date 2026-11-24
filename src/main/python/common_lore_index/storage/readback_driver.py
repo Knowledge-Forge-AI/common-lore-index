@@ -373,7 +373,7 @@ def _json_payload_from_psycopg_row(row: Any, *, label: str) -> Any:
     if isinstance(value, str | bytes | bytearray):
         try:
             return json.loads(value)
-        except json.JSONDecodeError as error:
+        except (ValueError, RecursionError) as error:
             raise StorageSchemaError(f"psycopg did not return {label} as JSON") from error
     return value
 

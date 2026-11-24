@@ -252,3 +252,29 @@ def test_temporary_stream_close_keeps_primary_and_never_reports_false_success(
     finally:
         for stream in streams:
             stream.stream.close()
+
+
+def test_metered_collision_rechecks_fifo_replacement_without_blocking(tmp_path, monkeypatch):
+    target, temporary = tmp_path / "target", tmp_path / "temporary"
+    original = tmp_path / "preserved"
+    target.write_bytes(b"payload")
+    temporary.write_bytes(b"payload")
+    target.chmod(0o600)
+    temporary.chmod(0o600)
+    real_open = metered.metered_open
+
+    def replace_at_open(meter, path, flags, *args, **kwargs):
+        if path == target:
+            assert flags & os.O_NONBLOCK
+            target.rename(original)
+            os.mkfifo(target, 0o600)
+        return real_open(meter, path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(metered, "metered_open", replace_at_open)
+    with pytest.raises(ArtifactIntegrityError, match="artifact changed during read"):
+        metered.metered_compare_and_verify_collision(
+            target, temporary, 7, "sha256:" + hashlib.sha256(b"payload").hexdigest(), 7,
+            owner_uid=os.getuid(), private_details_fn=_private_details,
+            meter=SealingMeter(None, governed=False),
+        )
+    assert original.read_bytes() == temporary.read_bytes() == b"payload"

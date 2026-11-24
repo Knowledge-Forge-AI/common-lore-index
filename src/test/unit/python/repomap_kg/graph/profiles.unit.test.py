@@ -1,12 +1,26 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from common_lore_index.graph import _discovery_classify
 from common_lore_index.graph.discovery import classify_path, discover_repository
 from common_lore_index.graph.profiles import ProfileValidationError, ProjectProfile, load_profile
 
 
 class ProfileUnitTests(unittest.TestCase):
+    def test_classification_reuses_verified_digest_and_preserves_other_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "command"
+            path.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+            path.chmod(0o700)
+            expected = classify_path(root, path)
+            hash_body = patch.object(_discovery_classify, "content_hash", side_effect=AssertionError("body rehash"))
+            with hash_body:
+                actual = classify_path(root, path, captured_content_hash=expected.content_hash)
+            self.assertEqual(actual, expected)
+
     def test_load_profile_parses_directories_and_overrides(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             profile_path = Path(tmpdir) / "repomap-profile.toml"

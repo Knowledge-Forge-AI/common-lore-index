@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -37,7 +37,7 @@ from common_lore_index.storage.file_rows import (
 from common_lore_index.storage.row_spool import RowSpool
 from common_lore_index.storage._preparation_iterators import check_preparation, close_preparation_iterators
 from common_lore_index.storage._staged_spool_preparation import (
-    _PreparedFamilyRows, _SpoolPreparation, prepare_family_rows,
+    _ROW_SPOOL_BYTE_THRESHOLD, _PreparedFamilyRows, _SpoolPreparation, prepare_family_rows,
 )
 from common_lore_index.storage._spool_cleanup import close_spooled_rows
 from common_lore_index.storage.staged_row_measurements import (
@@ -120,6 +120,8 @@ def build_staged_rows(
             raise StorageSchemaError("Rust pilot witness is not live")
         if type(observations) is not tuple or observations is not witnessed.observations:
             raise StorageSchemaError("Rust pilot observation identity mismatch")
+    if isinstance(observations, Iterator) and iter(observations) is observations:
+        raise StorageSchemaError("staged observations must support replay")
     file_rows = file_rows_from_observations(
         _measured_observation_replay(
             observations,
@@ -313,6 +315,7 @@ def _materialize_or_spool(
     options = _SpoolPreparation(
         descriptor, staging_measurements, spool_artifact_observer, spool_dir,
         _ROW_SPOOL_THRESHOLD, RowSpool, _FamilyChecksumAccumulator,
+        _ROW_SPOOL_BYTE_THRESHOLD,
     )
     return prepare_family_rows(rows, options, cancel_check)
 

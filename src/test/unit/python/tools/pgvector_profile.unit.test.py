@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Sequence
-import hashlib
 import json
 import os
 from pathlib import Path
-import subprocess
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
@@ -150,8 +148,12 @@ class PgvectorProfileUnitTests(unittest.TestCase):
 
     def test_sandbox_assets_recipe_and_labels(self) -> None:
         recipe = generate_pgvector_recipe_definition()
-        self.assertIn("build-base", recipe)
-        self.assertIn("PG_CONFIG=/usr/local/bin/pg_config with_llvm=no OPTFLAGS=", recipe)
+        definition = json.loads(recipe)
+        self.assertFalse(definition["compile"])
+        self.assertFalse(definition["package_install"])
+        self.assertEqual(len(definition["files"]), 45)
+        self.assertEqual(definition["base_manifest"],
+                         "sha256:15364b278fab4a982ae09243c788e4df96a31a5b4bed50e6dab2d83420690653")
         recipe_hash = compute_recipe_hash(recipe)
         self.assertEqual(len(recipe_hash), 64)
 
@@ -296,65 +298,11 @@ class PgvectorProfileUnitTests(unittest.TestCase):
                 _materialize_inner_pgvector_if_requested(unscoped_int, inner_env)
             self.assertIn("requires scoped test selector", str(cm.exception))
 
-            executed_commands: list[list[str]] = []
-
-            def fake_docker_runner(cmd: list[str], **kwargs: object):
-                executed_commands.append(cmd)
-                op = " ".join(cmd)
-                if "image inspect" in op and "sha256:e013e" in op:
-                    return subprocess.CompletedProcess(
-                        cmd, 0,
-                        stdout=json.dumps([{
-                            "Id": "sha256:" + "a" * 64,
-                            "RepoDigests": ["postgres@sha256:e013e867e712fec275706a6c51c966f0bb0c93cfa8f51000f85a15f9865a28cb"],
-                            "Os": "linux",
-                            "Architecture": "amd64",
-                        }]),
-                        stderr="",
-                    )
-                if "exec" in op and "postgres --version" in op:
-                    return subprocess.CompletedProcess(cmd, 0, stdout="postgres (PostgreSQL) 16.14\n", stderr="")
-                if "exec" in op and "pg_config --version" in op:
-                    return subprocess.CompletedProcess(cmd, 0, stdout="PostgreSQL 16.14\n", stderr="")
-                if "sha256sum" in op:
-                    return subprocess.CompletedProcess(cmd, 0, stdout=hashlib.sha256(b"dummy").hexdigest(), stderr="")
-                if "wc -c" in op:
-                    return subprocess.CompletedProcess(cmd, 0, stdout="5 /tmp/pgvector.tar.gz", stderr="")
-                if "commit" in op:
-                    return subprocess.CompletedProcess(cmd, 0, stdout="sha256:" + "b" * 64 + "\n", stderr="")
-                if "image inspect" in op and "sha256:" + "b" * 64 in op:
-                    return subprocess.CompletedProcess(cmd, 0, stdout=json.dumps([{
-                        "Id": "sha256:" + "b" * 64, "Os": "linux", "Architecture": "amd64",
-                        "Config": {"Cmd": ["postgres"], "Labels": pgvector_sandbox_labels()},
-                    }]), stderr="")
-                if "psql" in cmd:
-                    return subprocess.CompletedProcess(cmd, 0, stdout="16|0.8.7|0|1\n", stderr="")
-                if "ps -a --filter" in op:
-                    return subprocess.CompletedProcess(cmd, 0, stdout="\n", stderr="")
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-
-            valid_argv = ["--suite", "int", "--no-coverage", "--pg-test-profile", "pgvector", "--", "path/to/test.py"]
-            test_env = dict(inner_env)
-            report = _materialize_inner_pgvector_if_requested(
-                valid_argv,
-                test_env,
-                runner_fn=fake_docker_runner,
-                archive_verifier_fn=lambda path, facts: None,
-            )
-            assert report is not None
-            self.assertEqual(report["observed_platform"], "linux/amd64")
-            self.assertEqual(report["base_engine_id"], "sha256:" + "a" * 64)
-            self.assertEqual(report["resulting_engine_id"], "sha256:" + "b" * 64)
-            self.assertEqual(test_env["REPOMAP_TEST_PG_IMAGE"], "sha256:" + "b" * 64)
-            self.assertEqual(test_env["REPOMAP_TEST_PG_PROFILE"], "pgvector")
-
-            joined_ops = [" ".join(c) for c in executed_commands]
-            self.assertTrue(any("PG_CONFIG=/usr/local/bin/pg_config with_llvm=no OPTFLAGS= clean" in op for op in joined_ops))
-            self.assertTrue(any("PG_CONFIG=/usr/local/bin/pg_config with_llvm=no OPTFLAGS= install" in op for op in joined_ops))
-            self.assertTrue(any("docker commit" in op for op in joined_ops))
-            self.assertTrue(any("docker rm -f -v" in op for op in joined_ops))
-            self.assertTrue(any('CMD ["postgres"]' in op for op in joined_ops))
-            self.assertTrue(any("--tmpfs /var/lib/postgresql/data:rw" in op for op in joined_ops))
+            commands = MagicMock()
+            valid_argv = ["--suite", "int", "--no-coverage", "--pg-test-profile", "pgvector", "--", "test.py"]
+            with self.assertRaisesRegex(RuntimeError, "offline plan missing"):
+                _materialize_inner_pgvector_if_requested(valid_argv, inner_env, runner_fn=commands)
+            commands.assert_not_called()
 
     @patch("repomap_test_support.postgres_container.active_resource_run", return_value=None)
     def test_postgres_container_harness_profile_binding(self, _resource_run) -> None:

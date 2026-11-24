@@ -268,11 +268,11 @@ def test_sqlite_expansion_progress_limit_and_statement_37_interception(tmp_path:
         tmp_path, extra_subjects=extra_subjs, extra_edges=extra_edges
     )
     with sqlite3.connect(sqlite_path) as conn:
-        kinds = ("defines", "links_to", "references")
-        lexical = expand_seed_incident_edges(conn, seed_canonical_key="py:pkg.billing.InvoiceService", edge_kinds=kinds, per_seed_limit=1)
-        reverse = expand_seed_incident_edges(conn, seed_canonical_key="py:pkg.billing.InvoiceService", edge_kinds=tuple(reversed(kinds)), per_seed_limit=1)
-        assert reverse == lexical
-        assert lexical["edges"][0]["edge_kind"] == "defines"
+        seed, kinds = "py:pkg.billing.InvoiceService", ("contains", "calls")
+        full = expand_seed_incident_edges(conn, seed_canonical_key=seed, edge_kinds=kinds, per_seed_limit=64)
+        capped = expand_seed_incident_edges(conn, seed_canonical_key=seed, edge_kinds=kinds, per_seed_limit=4)
+        assert not full["truncated"] and capped == {"edges": full["edges"][:4], "truncated": True, "scanned": 4}
+        assert [e["neighbor_canonical_key"] for e in capped["edges"]] == [f"py:pkg.fanout.Node{i:03d}" for i in range(4)]
 
     with adapter:
         pkt_cap = build_compact_context(

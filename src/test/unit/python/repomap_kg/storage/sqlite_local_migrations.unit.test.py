@@ -17,7 +17,7 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from pathlib import Path
 
 import pytest
@@ -236,6 +236,27 @@ def test_empty_foreign_and_garbage_files(tmp_path: Path) -> None:
     garbage = tmp_path / "garbage.sqlite3"
     garbage.write_bytes(b"not a database, just public-safe bytes" * 200)
     assert _classify(garbage) == "graph-database-unrecognized"
+
+
+def test_schema_admission_streams_ledger_and_fingerprint(tmp_path: Path) -> None:
+    class StreamingCursor(sqlite3.Cursor):
+        def fetchall(self):
+            raise AssertionError("schema admission must not materialize rows")
+
+    class StreamingConnection(sqlite3.Connection):
+        def execute(self, sql, parameters=(), /):
+            return self.cursor(factory=StreamingCursor).execute(sql, parameters)
+
+    with closing(sqlite3.connect(_init(tmp_path), factory=StreamingConnection)) as db:
+        assert schema_objects_digest(db) == V2_PHYSICAL_DIGEST
+        assert classify(db) == SchemaState("current", 2)
+        db.execute("UPDATE local_schema_migrations SET checksum = 'drift' WHERE version = 1")
+        db.executemany(
+            "INSERT INTO local_schema_migrations VALUES (?, 'future', 'checksum', 't')",
+            ((version,) for version in range(3, 1003)),
+        )
+        with pytest.raises(LocalStoreError, match="graph-database-schema-unsupported"):
+            classify(db)
 
 
 def test_open_state_admission() -> None:

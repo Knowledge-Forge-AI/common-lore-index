@@ -91,7 +91,7 @@ def test_config_check_base_form_opens_nothing_and_invents_no_postgres(
     tmp_path: Path, pg_tripwires: None
 ) -> None:
     home = _home(tmp_path)
-    with patch.object(local_readiness, "read_transaction", fail_if_reached):
+    with patch.object(local_readiness, "read_transaction_with_schema", fail_if_reached):
         payload = _json("ops", "config-check", "--repo-map-home", str(home))
     assert payload["valid"] is True and payload["storage"] == {"backend": "sqlite"}, payload
     assert payload["storage_status"] == {"backend": "sqlite", "db_checked": False}, payload
@@ -124,7 +124,7 @@ def test_graphs_projects_redacted_sqlite_rows_in_configuration_order(
     tmp_path: Path, pg_tripwires: None
 ) -> None:
     home = _home(tmp_path)
-    with patch.object(local_readiness, "read_transaction", fail_if_reached):
+    with patch.object(local_readiness, "read_transaction_with_schema", fail_if_reached):
         unchecked = _json("ops", "graphs", "--repo-map-home", str(home))
     assert unchecked["db_checked"] is False and unchecked["storage"] == {"backend": "sqlite"}
     rows = {row["id"]: row for row in unchecked["graphs"]}

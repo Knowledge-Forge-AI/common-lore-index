@@ -28,6 +28,8 @@ def test_graph_mismatch_refuses_before_database_io() -> None:
 
 @pytest.mark.parametrize("facts, reason", [
     ({**FACTS, "installed_version": None}, "extension_absent"),
+    ({}, "observation_failed"),
+    ([], "observation_failed"),
     ({**FACTS, "installed_version": "0.8.2"}, "extension_unsupported"),
     ({**FACTS, "installation_schema": "public"}, "extension_unsupported"),
     ({**FACTS, "schema_version": None}, "enrichment_schema_absent_or_unsupported"),
@@ -76,7 +78,7 @@ def test_success_returns_provenance_and_explicit_limitations() -> None:
     assert read.call_count == 2
 
 
-@pytest.mark.parametrize("payload", [{"status": "other"}, {"status": "ok", "candidates": [None]}])
+@pytest.mark.parametrize("payload", [[], {"status": []}, {"status": "other"}, {"status": "ok", "candidates": [None]}])
 def test_malformed_candidate_readback_is_not_success(payload) -> None:
     with patch(OWNER, side_effect=[FACTS, payload]), pytest.raises(StorageSchemaError):
         query_semantic_candidates((), query=candidate_query())

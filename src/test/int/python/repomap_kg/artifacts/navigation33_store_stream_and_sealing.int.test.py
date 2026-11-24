@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import errno
 import os
 from pathlib import Path
 from typing import Any, cast
@@ -61,6 +62,7 @@ def test_verifying_artifact_stream_and_filesystem_store_contracts(tmp_path: Path
     with store.open_stream(ref) as s1_raw:
         s1: Any = s1_raw
         assert s1.read(0) == b""
+        assert s1.readline(0) == b"" and not s1.verified
         buf = bytearray(6)
         n = s1.readinto(buf)
         assert n == 6 and bytes(buf) == b"line1\n"
@@ -97,6 +99,7 @@ def test_verifying_artifact_stream_and_filesystem_store_contracts(tmp_path: Path
     neutral_loc = ArtifactLocator("object", f"tenant-neutral/{ref.content_digest[7:]}", ref.store_version)
     neutral_ref = replace(ref, locator=neutral_loc)
     assert store.read(neutral_ref) == b"line1\nline2\n"
+    assert store.read(neutral_ref, max_bytes=(1 << 63) - 1) == b"line1\nline2\n"
 
     bad_loc = ArtifactLocator("object", "sha256/" + "0" * 64, ref.store_version)
     with pytest.raises(ArtifactIntegrityError, match="artifact locator does not address"):
@@ -120,6 +123,8 @@ def test_verifying_artifact_stream_and_filesystem_store_contracts(tmp_path: Path
     obj_path.write_bytes(b"abcdeg")
     obj_path.chmod(0o400)
     with pytest.raises(ArtifactIntegrityError, match="artifact digest does not match reference"):
+        store.read(ref2)
+    with pytest.raises(ArtifactIntegrityError, match="artifact digest does not match reference"):
         with store.open_stream(ref2) as s_corrupt:
             _ = s_corrupt.read(-1)
     with pytest.raises(ArtifactIntegrityError, match="artifact digest does not match reference"):
@@ -134,6 +139,8 @@ def test_verifying_artifact_stream_and_filesystem_store_contracts(tmp_path: Path
     obj_path.chmod(0o600)
     obj_path.write_bytes(b"abc")
     obj_path.chmod(0o400)
+    with pytest.raises(ArtifactIntegrityError, match="artifact size does not match reference"):
+        store.read(ref2)
     with pytest.raises(ArtifactIntegrityError, match="artifact size does not match reference"):
         with store.open_stream(ref2) as s_trunc:
             _ = s_trunc.read(-1)
@@ -178,6 +185,36 @@ def test_verifying_artifact_stream_and_filesystem_store_contracts(tmp_path: Path
     unsafe_root.chmod(0o755)
     with pytest.raises(ArtifactIntegrityError, match="store root is unsafe"):
         FileSystemArtifactStore(unsafe_root)
+
+
+def test_stat_failure_after_verified_stream_reads_releases_its_descriptor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = FileSystemArtifactStore(tmp_path / "store")
+    payload = b"accepted payload"
+    reference = store.put(payload)
+    provider_stat = os.fstat
+    failure = OSError(errno.EIO, "owned stream stat witness")
+    stream = store.open_stream(reference)
+    descriptor = stream.fileno()
+
+    def fail_at_eof(fd: int) -> os.stat_result:
+        if fd == descriptor:
+            raise failure
+        return provider_stat(fd)
+
+    with pytest.raises(ArtifactIntegrityError, match="artifact stat failed") as raised:
+        with stream:
+            assert stream.read(len(payload)) == payload
+            with monkeypatch.context() as patch:
+                patch.setattr(os, "fstat", fail_at_eof)
+                stream.read(1)
+    assert raised.value.__cause__ is failure
+    assert stream.closed
+    with pytest.raises(OSError) as closed:
+        provider_stat(descriptor)
+    assert closed.value.errno == errno.EBADF
+    assert store.read(reference) == payload
 
 
 def test_memory_store_common_references_canonical_manifest_and_conformance() -> None:

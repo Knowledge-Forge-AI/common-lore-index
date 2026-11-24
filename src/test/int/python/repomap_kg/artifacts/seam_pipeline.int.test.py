@@ -240,6 +240,7 @@ def test_pipeline_one_source_and_multi_source_parity_against_incumbent(tmp_path)
     for root in (entry, module):
         (root / "modules").mkdir(parents=True)
         (root / "modules/default.nix").write_text("{ ... }: {}\n", encoding="utf-8")
+    (entry / "payload.dat").write_bytes(b"A" * (1024 * 1024 + 17))
     (entry / "flake.nix").write_text(
         "{ inputs, ... }: { imports = [ ./modules/default.nix "
         "inputs.module.nixosModules.default ]; }\n",
@@ -254,7 +255,7 @@ def test_pipeline_one_source_and_multi_source_parity_against_incumbent(tmp_path)
         store_root=tmp_path / "multi" / "store",
         workspace_root=tmp_path / "multi" / "workspace",
     )
-    assert result.equal
+    assert result.equal and result.caller_roots_unchanged and result.artifact_bytes > 1024 * 1024
     assert result.resolution_outcomes.get("exact", 0) >= 1
 
 

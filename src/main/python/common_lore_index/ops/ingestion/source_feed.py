@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import closing
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 import hashlib
 from pathlib import Path
-import tomllib
 from typing import Any
 import urllib.error
 import urllib.request
@@ -16,6 +16,7 @@ from common_lore_index.observations.raw import RawObservation
 from common_lore_index.ops.ingestion.acquisition_contracts import NonPublicationResult
 from common_lore_index.ops.ingestion.source_common import (
     SourcePolicyError,
+    _load_source_toml,
     _artifact_filename,
     _content_type,
     _header_mapping,
@@ -23,6 +24,7 @@ from common_lore_index.ops.ingestion.source_common import (
     _optional_bool,
     _optional_text,
     _positive_int_or_default,
+    _read_bounded_body,
     _required_positive_int,
     _required_text,
     _safe_url_summary,
@@ -123,8 +125,7 @@ Clock = Callable[[], datetime]
 
 def load_feed_source_config(path: Path | str) -> FeedSourceConfig:
     config_path = Path(path)
-    with config_path.open("rb") as handle:
-        payload = tomllib.load(handle)
+    payload = _load_source_toml(config_path)
     if not isinstance(payload, Mapping):
         raise SourcePolicyError("source config must be a TOML object")
     source = _mapping(payload, "source")
@@ -205,22 +206,24 @@ def fetch_feed_source(
     try:
         response = opener.open(request, timeout=config.timeout_seconds)
     except urllib.error.HTTPError as error:
-        body = error.read(config.max_artifact_bytes + 1)
-        return FeedFetchResponse(
-            status=error.code,
-            headers=_header_mapping(error.headers),
-            body=body,
-        )
+        with closing(error):
+            body = _read_bounded_body(error.read, config.max_artifact_bytes)
+            return FeedFetchResponse(
+                status=error.code,
+                headers=_header_mapping(error.headers),
+                body=body,
+            )
     except urllib.error.URLError as error:
         raise SourceAcquisitionError(
             f"feed acquisition failed: {error.reason}"
         ) from error
-    body = response.read(config.max_artifact_bytes + 1)
-    return FeedFetchResponse(
-        status=int(getattr(response, "status", response.getcode())),
-        headers=_header_mapping(getattr(response, "headers", {})),
-        body=body,
-    )
+    with closing(response):
+        body = _read_bounded_body(response.read, config.max_artifact_bytes)
+        return FeedFetchResponse(
+            status=int(getattr(response, "status", response.getcode())),
+            headers=_header_mapping(getattr(response, "headers", {})),
+            body=body,
+        )
 
 
 def retain_feed_artifact(

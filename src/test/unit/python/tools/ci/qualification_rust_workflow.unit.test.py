@@ -40,6 +40,16 @@ def test_actual_public_workflow_has_one_ordered_always_gated_rust_pair() -> None
     assert d12 < run < upload
 
 
+def test_rust_workflow_provides_the_historical_checkpoint_ancestry() -> None:
+    workflow = _workflow()
+    checkout = workflow.jobs["d12-native-amd64"]["steps"][0]
+    assert checkout["with"]["fetch-depth"] == 0
+    for depth in (1, 2, None, False, "0"):
+        def shallow(steps: list[dict[str, Any]], value: object = depth) -> None:
+            steps[0]["with"]["fetch-depth"] = value
+        assert any("history" in error for error in validate_rust_qualification_job(_workflow(shallow)))
+
+
 @pytest.mark.parametrize("mutation", [
     lambda steps: steps.append(copy.deepcopy(next(step for step in steps if step.get("name") == "Run Rust parser component qualification"))),
     lambda steps: steps.append(copy.deepcopy(next(step for step in steps if step.get("name") == "Upload Rust parser component evidence"))),

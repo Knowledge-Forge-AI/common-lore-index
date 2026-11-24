@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass
+from itertools import islice
 from typing import Any
+
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 
 SECRET_PRONE_FRONTMATTER_KEYS = frozenset(
     ("token", "secret", "password", "api_key", "credential")
@@ -35,7 +39,10 @@ class FrontmatterInfo:
     malformed_reason: str | None = None
 
 def markdown_anchors_for_content(content: str) -> set[str]:
-    return {heading.anchor for heading in parse_markdown_headings(content)}
+    frontmatter = parse_frontmatter(content)
+    return {heading.anchor for heading in _iter_markdown_headings(
+        content, skip_until=frontmatter.end_line if frontmatter is not None else 0,
+    )}
 
 
 def markdown_anchor(text: str) -> str:
@@ -51,13 +58,15 @@ def markdown_anchor(text: str) -> str:
 
 def parse_markdown_headings(content: str) -> tuple[HeadingInfo, ...]:
     frontmatter = parse_frontmatter(content)
-    skip_until = frontmatter.end_line if frontmatter is not None else 0
-    headings: list[HeadingInfo] = []
+    return tuple(_iter_markdown_headings(content, skip_until=frontmatter.end_line if frontmatter is not None else 0))
+
+
+def _iter_markdown_headings(content: str, *, skip_until: int) -> Iterator[HeadingInfo]:
     anchor_counts: dict[str, int] = {}
     section_stack: dict[int, str] = {}
     in_fence: tuple[str, int] | None = None
 
-    for line_number, line in enumerate(content.splitlines(), start=1):
+    for line_number, line in enumerate(iter_text_lines(content), start=1):
         if line_number <= skip_until:
             continue
         fence_match = FENCE_PATTERN.match(line)
@@ -83,33 +92,31 @@ def parse_markdown_headings(content: str) -> tuple[HeadingInfo, ...]:
         section_stack[level] = anchor
         for stale_level in [item for item in section_stack if item > level]:
             del section_stack[stale_level]
-        headings.append(
-            HeadingInfo(
-                line_number=line_number,
-                level=level,
-                text=raw_text,
-                anchor=anchor,
-                base_anchor=base_anchor,
-                duplicate_index=duplicate_index,
-                parent_anchor=parent_anchor,
-            )
+        yield HeadingInfo(
+            line_number=line_number,
+            level=level,
+            text=raw_text,
+            anchor=anchor,
+            base_anchor=base_anchor,
+            duplicate_index=duplicate_index,
+            parent_anchor=parent_anchor,
         )
-    return tuple(headings)
 
 
 def parse_frontmatter(content: str) -> FrontmatterInfo | None:
-    lines = content.splitlines()
-    if not lines or lines[0].strip() != "---":
+    lines = iter_text_lines(content)
+    if next(lines, "").strip() != "---":
         return None
     end_line = None
-    for index, line in enumerate(lines[1:], start=2):
+    index = 1
+    for index, line in enumerate(lines, start=2):
         if line.strip() == "---":
             end_line = index
             break
     if end_line is None:
         return FrontmatterInfo(
             start_line=1,
-            end_line=len(lines),
+            end_line=index,
             keys=(),
             values={},
             parse_status="malformed",
@@ -120,7 +127,7 @@ def parse_frontmatter(content: str) -> FrontmatterInfo | None:
     redacted: list[str] = []
     parse_status = "parsed"
     current_list_key: str | None = None
-    for line in lines[1 : end_line - 1]:
+    for line in islice(iter_text_lines(content), 1, end_line - 1):
         stripped = line.strip()
         if not stripped:
             continue

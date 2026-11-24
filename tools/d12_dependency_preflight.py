@@ -1,23 +1,9 @@
 #!/usr/bin/env python3
-"""ADR 0089 D9 non-consuming platform preflight for the D12 candidate profile.
+"""D12 host forecast and non-consuming inner-daemon exploration (ADR 0089).
 
-Runs on the host before admission consumes any budget reservation, using only
-read-only Docker queries: no pull, build, probe image, emulator or builder
-change. The host classification is ``native`` (the daemon's architecture),
-``emulated`` (an existing host builder lists it) or ``non_executable``; it is
-recorded as an observation and forecast only. The candidate is built by the
-fresh inner sandbox daemon, not by the host daemon or builder, so neither a
-native host architecture nor a host BuildKit builder proves execution or
-pinned base availability in that daemon. No inner-daemon platform preflight is
-implemented, so every platform, native included, refuses here before anything
-is reserved, consumed or admitted. The refusal also names a builder without
-BuildKit (``RUN --network=none`` is required) and a platform the frozen
-dynamic package manifest does not yet cover.
-Base acquisition, libpq and closure inspection, package resolution and P3
-classification are separate, sandbox-only preflight steps not performed here.
-
-E1 (``--d12-core-image-preflight``) explores the same profile and node: no ledger, host preflight or build
-admission; in the sandbox ``explore`` reports before the owner's build, then the owner returns (ADR 0089).
+The host observes Docker and refuses admission on every platform. The E1
+sandbox route checks the native builder, pinned bases, dynamic libpq and
+exact package closure without opening the application-build ledger.
 """
 
 from __future__ import annotations
@@ -41,6 +27,8 @@ from common_lore_index.runtime.release import (
     DYNAMIC_PACKAGE_MANIFEST, GO_RELEASE_IMAGE, POSTGRES_RELEASE_IMAGE, PSYCOPG_LIBPQ_VERSION,
     PYTHON_RELEASE_IMAGE, DebPackage, PlatformPackages, validate_package_manifest,
 )
+from common_lore_index.runtime.release_dockerfile import ARCHIVE_APT_PATH, archive_apt_sources
+from common_lore_index.runtime.release_manifest import D12_CANDIDATE_PACKAGE_MANIFEST
 from repomap_test_support import d12_core_image as d12
 from repomap_test_support.d12_core_image import D12Admission, D12ProfileError
 
@@ -55,8 +43,6 @@ LABELS = {"mode": "exploration", "daemon": "disposable inner daemon, destroyed a
           "build_readiness": "NOT ESTABLISHED", "p3": "inputs only", "host_forecast_substituted": False}
 KEYS_SH = ('command -v gpg >/dev/null || exit 127; g=$(mktemp -d) || exit 1; '
            'GNUPGHOME="$g" gpg --batch --show-keys --with-colons "$1"; s=$?; rm -rf "$g"; exit $s')
-# ADR 0091: the Trixie bases' exact TLS runtime and its matching header, nothing broader. Live origins only: no
-# snapshot or older-version archive fallback, so a superseding upload is an expected refusal.
 HEADER = ("libssl3t64", "libssl-dev", "3.5.7-1~deb13u3")
 
 
@@ -137,8 +123,7 @@ def preflight(
 
 def admit_exploration(args: Any, forwarded: Sequence[str], *, repo_root: Path,
                       sandbox_active: Callable[[], bool]) -> D12Admission | None:
-    """E1: a ledger option refuses first; the host preflight, ``admit_profile`` and ``record_budget`` never run. The
-    host returns; the sandbox fills only the separate exploration slot, so ``d12.current_admission()`` refuses."""
+    """Reserve only the inner exploration slot and refuse access to the build ledger."""
     global _EXPLORATION
     if getattr(args, "d12_core_image_budget_ledger", None) is not None:
         raise PreflightRefusal("--d12-core-image-preflight refuses --d12-core-image-budget-ledger (no ledger access)")
@@ -165,7 +150,6 @@ def current_exploration() -> D12Admission | None:
 
 
 def require_zero_builds(budget: Mapping[str, object]) -> dict[str, object]:
-    """Exploration custody: every build and pull count of the run-wide boundary is zero."""
     counts = {field: budget.get(field) for field in COUNTS}
     if any(value != 0 for value in counts.values()):
         raise PreflightRefusal(f"exploration build or pull counts are not all zero: {counts}")
@@ -267,20 +251,30 @@ def builder_request(request: Sequence[str], before: Mapping[str, Any], native: s
 
 
 def resolve(container: Any, platform: str, request: Sequence[str], *, trust: Mapping[str, bytes] | None = None,
-            missing_only: bool = False) -> dict[str, Any]:
+            missing_only: bool = False, frozen: PlatformPackages | None = None) -> dict[str, Any]:
     """E-g/E-h: simulate additions only, every installed row held; bind each to one trusted index identity."""
     run = exec_runner(container)
+    if frozen is not None and (trust is None or any(
+        hashlib.sha256(trust.get(path, b"")).hexdigest() != digest
+        for path, digest in (frozen.pgdg_source, frozen.pgdg_keyring)
+    )):
+        raise PreflightRefusal("archived PGDG source requires the frozen base source and keyring")
     for path, data in sorted((trust or {}).items()):  # the PostgreSQL base's exact bytes, then proved by hash
         apt.command_output(run, ["sh", "-c", 'mkdir -p "${1%/*}" && printf %s "$2" | base64 -d > "$1"', "sh",
                                  path, base64.b64encode(data).decode()])
         if read_bytes(container, path) != data:
             raise PreflightRefusal(f"PGDG trust bytes differ between the PostgreSQL and Python bases: {path}")
+    if frozen is not None:
+        source = archive_apt_sources(frozen.pgdg_keyring[0])
+        apt.command_output(run, ["sh", "-c", 'set -C && printf %s "$2" > "$1"', "sh", ARCHIVE_APT_PATH, source])
     apt.command_output(run, ["apt-get", "update"])
     native = apt.command_output(run, ["dpkg", "--print-architecture"]).strip()
     if native != platform.split("/", 1)[1]:
         raise PreflightRefusal(f"native architecture {native!r} is not {platform}")
     before = apt.installed_packages(run)
     request = builder_request(request, before, native, missing_only=missing_only)
+    if frozen is not None:
+        request = [f"{row.name}={row.version}" for row in frozen.builder]
     held = {row["name"] for row in before.values() if row["status"] == "ii"}
     wanted = [item for item in request if not (missing_only and item.partition("=")[0] in held)]
     packages = apt.plan(apt.command_output(run, ["apt-get", "install", "--simulate", "--no-install-recommends",
@@ -293,6 +287,10 @@ def resolve(container: Any, platform: str, request: Sequence[str], *, trust: Map
     if clash or absent:
         raise PreflightRefusal(f"additions with an existing ii or rc row: {clash}; requests not added: {absent}")
     bound, origins = apt.bind_to_trusted_index(run, packages) if packages else ([], [])
+    if frozen is not None and {
+        (row["name"], row["version"], row["architecture"], row["sha256"]) for row in bound
+    } != set(frozen.builder):
+        raise PreflightRefusal("archive resolution differs from the frozen builder package identities")
     return {"native": native, "preexisting_rows": len(before), "packages": bound, "trusted_targets": origins}
 
 
@@ -358,8 +356,11 @@ def explore(owner: Any, client: Any, admission: D12Admission, *, bases: Mapping[
         observer.cross_check(steps)
         def builder(c: Any) -> None:  # E-g, then the accepted numeric proof in this same owned builder (ADR 0091)
             pkgs = ["gcc", "binutils", "libc6-dev", f"libpq-dev={libpq}", f"libpq5={libpq}"]
+            frozen = D12_CANDIDATE_PACKAGE_MANIFEST.get(platform.split("/", 1)[1])
+            if frozen is not None and frozen.libpq5_version != libpq:
+                raise PreflightRefusal("sealed PostgreSQL libpq differs from the frozen builder archive selection")
             steps["builder"] = resolve(c, platform, pkgs,
-                                       trust=trust)
+                                       trust=trust, frozen=frozen)
             steps["libpq_runtime"] = runtime.observe(c, steps, server_inventory, platform, bindings)
         if not refusals:  # E-g, then E-h, run only after every earlier fact passed
             observe("builder", PYTHON_RELEASE_IMAGE, "bridge", builder)

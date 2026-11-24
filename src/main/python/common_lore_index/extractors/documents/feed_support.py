@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import re
+from collections import Counter
+from collections.abc import Callable, Iterable, Iterator
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import PurePosixPath
-from typing import Any
-from urllib.parse import urlsplit
+from typing import Any, TypeVar
+from urllib.parse import SplitResult, urlsplit
 from xml.etree import ElementTree
 
 from common_lore_index.graph.keys import (
@@ -20,6 +22,7 @@ from common_lore_index.graph.keys import (
 
 
 SAFE_SUMMARY_LIMIT = 160
+_MALFORMED_FEED_REFERENCE = unknown_key("external.url", "malformed-feed-reference")
 
 TAG_PATTERN = re.compile(r"<[^>]+>")
 SCRIPT_STYLE_PATTERN = re.compile(
@@ -46,15 +49,53 @@ SECRET_MARKERS = (
 )
 
 
+def _split_feed_url(value: str) -> SplitResult | None:
+    try:
+        parsed = urlsplit(value)
+        if parsed.scheme in ("http", "https"):
+            _ = parsed.port  # The stdlib validates the port when accessed.
+    except ValueError:
+        return None
+    return parsed
+
+
+def _identity_url(value: str | None) -> str | None:
+    return value if value and _split_feed_url(value) is not None else None
+
+
+def _unreadable_feed_reference(target: str, value: str) -> bool:
+    return target == _MALFORMED_FEED_REFERENCE and _split_feed_url(value.strip()) is None
+
+
 def _item_identity(
     *candidates: tuple[str, str | None],
     ordinal: int,
 ) -> tuple[str, str, str]:
     for source, value in candidates:
+        if source in {"link", "alternate-link", "url"}:
+            value = _identity_url(value)
         if value:
             strength = "weak" if source.startswith("title+") else "strong"
             return f"{source}:{value}", source, strength
     return f"ordinal:{ordinal}", "structural-ordinal", "structural"
+
+
+FeedItemIdentity = tuple[str, str, str]
+_FeedSource = TypeVar("_FeedSource")
+
+
+def _project_feed_items(
+    relative_path: str,
+    channel_key: str,
+    entries: Iterable[tuple[int, _FeedSource]],
+    identify: Callable[[_FeedSource, int], FeedItemIdentity],
+    project: Callable[[str, str, _FeedSource, int, FeedItemIdentity], dict[str, Any]],
+) -> Iterator[tuple[dict[str, Any], int]]:
+    """Count identities up front while retaining details for only the current item."""
+    identified = [(ordinal, entry, identify(entry, ordinal)) for ordinal, entry in entries]
+    counts = Counter(identity[0] for _, _, identity in identified)
+    for ordinal, entry, identity in identified:
+        yield project(relative_path, channel_key, entry, ordinal, identity), counts[identity[0]]
 
 
 def _title_date_identity(title: str | None, date_text: str | None) -> str | None:
@@ -70,13 +111,15 @@ def _reference_target(relative_path: str, raw_target: str) -> str:
         return unknown_key("feed.reference", "missing-target")
     if DYNAMIC_REFERENCE_PATTERN.search(value) or value.startswith("~"):
         return dynamic_key("file", "feed-reference-expanded-from-variable")
-    parsed = urlsplit(value)
+    parsed = _split_feed_url(value)
+    if parsed is None:
+        return _MALFORMED_FEED_REFERENCE
     if parsed.scheme:
         scheme = parsed.scheme.lower()
         if scheme in ("http", "https"):
             if parsed.netloc:
                 return external_url_key(value)
-            return unknown_key("external.url", "malformed-feed-reference")
+            return _MALFORMED_FEED_REFERENCE
         if scheme == "mailto":
             return external_url_key(value)
         return dynamic_key("url", "unsupported-url-scheme")
@@ -201,8 +244,8 @@ def _first_child(parent: ElementTree.Element, name: str) -> ElementTree.Element 
     return None
 
 
-def _children(parent: ElementTree.Element, name: str) -> list[ElementTree.Element]:
-    return [child for child in parent if _local_name(child.tag) == name]
+def _children(parent: ElementTree.Element, name: str) -> Iterator[ElementTree.Element]:
+    return (child for child in parent if _local_name(child.tag) == name)
 
 
 def _child_text(parent: ElementTree.Element, name: str) -> str | None:

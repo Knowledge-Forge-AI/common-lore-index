@@ -70,6 +70,8 @@ def _assert_published_state(state: PublishedCorpusState) -> None:
         item for item in private_projection.excluded_files if item.binding_id == CORE_ID
     ]
     assert private_files
+    refused_binding, = [item for item in private_projection.excluded_bindings if item.binding_id == CORE_ID]
+    assert refused_binding.file_count == len(private_files)
     assert all(item.reason == ExclusionReason.BINDING_PRIVACY_NOT_AUTHORIZED for item in private_files)
     assert all(not item.store_opened for item in private_files)
     assert not any(item.binding_id == CORE_ID for item in private_projection.projected_files)

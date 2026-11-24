@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import io
+import json
 from pathlib import Path
+from unittest.mock import patch
 import pytest
 
 from common_lore_index.artifacts import (
@@ -118,11 +120,12 @@ def _make_expectation(bundle_val):
     )
 
 
-def test_streaming_encoder_byte_for_byte_parity_with_publication_bundle():
+@pytest.mark.parametrize("chunk_size", [1, 512, 2048, 65_536])
+def test_streaming_encoder_byte_for_byte_parity_with_publication_bundle(chunk_size: int) -> None:
     bundle = _make_bundle()
     expected_bytes = bundle.canonical_bytes()
     encoder = _make_encoder()
-    streamed_bytes = b"".join(encoder.stream_chunks())
+    streamed_bytes = b"".join(encoder.stream_chunks(chunk_size=chunk_size))
 
     assert streamed_bytes == expected_bytes
     descriptor = encoder.descriptor()
@@ -152,6 +155,27 @@ def test_streaming_encoder_and_parser_legacy_absent_contract(tmp_path: Path):
     prep = validated.to_prepared_stage_rows()
     assert all("stg-leg" in repr(r) for r in prep.family_rows["files"])
     prep.close()
+
+
+def test_streaming_parser_serializes_each_canonical_frame_once(tmp_path: Path) -> None:
+    bundle = _make_bundle()
+    raw = bundle.canonical_bytes()
+    store = FileSystemArtifactStore(tmp_path / "store")
+    ref = store.put(raw, media_type="application/jsonl", record_format="canonical-jsonl-v1", privacy=bundle.privacy)
+    receipt, expectation = _make_receipt(ref, bundle), _make_expectation(bundle)
+    with patch.object(json, "dumps", wraps=json.dumps) as dumps:
+        parsed = StreamingBundleParser(spool_dir=tmp_path / "spool").parse_and_validate(
+            io.BytesIO(raw), expectation, receipt,
+        )
+    canonical_encodes = [call for call in dumps.call_args_list if call.kwargs.get("sort_keys") is True]
+    assert len(canonical_encodes) == len(raw.splitlines())
+    assert parsed.bundle_id == bundle.bundle_id and parsed.total_bytes == len(raw)
+
+    cap = raw.index(b"\n") + 3
+    limited = io.BytesIO(raw)
+    with pytest.raises(ValueError, match="publication bundle byte bounds exceeded"):
+        StreamingBundleParser(max_bundle_bytes=cap).parse_and_validate(limited, expectation, receipt)
+    assert limited.tell() == cap + 1
 
 
 def test_bounded_external_row_sorter_spill_and_merge(tmp_path: Path):

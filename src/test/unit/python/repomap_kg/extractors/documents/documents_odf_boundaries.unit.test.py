@@ -55,5 +55,40 @@ class DocumentsOdfBoundariesUnitTests(unittest.TestCase):
         obs = extract_odf_file_observations("docs/corrupt.odt", b"not-a-valid-zip-file")
         self.assertEqual(obs[0].kind, "document.parse_error")
 
+    def test_odf_element_context_preserves_order_with_nested_tables(self):
+        from xml.etree import ElementTree
+
+        from common_lore_index.extractors.documents.office_references import _odf_element_context, _q
+
+        table = _q("table", "table")
+        root = ElementTree.Element("root")
+        outer = ElementTree.SubElement(root, table)
+        inner = ElementTree.SubElement(outer, table)
+        paragraph = ElementTree.SubElement(inner, "paragraph")
+        sibling = ElementTree.SubElement(root, "paragraph")
+        assert list(_odf_element_context(root)) == [
+            (root, False), (outer, False), (inner, True), (paragraph, True), (sibling, False),
+        ]
+
+    def test_nested_spreadsheet_formula_counts_match_table_traversal(self):
+        xml = """<office:document-content
+          xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+          xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0">
+          <table:table table:name="outer">
+            <table:table-row><table:table-cell>
+              <table:table table:name="inner">
+                <table:table-row><table:table-cell table:formula="of:=1"/></table:table-row>
+              </table:table>
+            </table:table-cell></table:table-row>
+          </table:table>
+        </office:document-content>"""
+        data = self._create_odf_zip("application/vnd.oasis.opendocument.spreadsheet", "<meta/>", xml)
+        rows = extract_odf_file_observations("nested.ods", data)
+        sheets = [row.metadata for row in rows if row.kind == "document.odf_sheet"]
+        document, = [row.metadata for row in rows if row.kind == "document.odf_document"]
+        self.assertEqual([row["formula_count"] for row in sheets], [1, 1])
+        self.assertEqual((document["sheet_count"], document["formula_count"]), (2, 2))
+
+
 if __name__ == "__main__":
     unittest.main()

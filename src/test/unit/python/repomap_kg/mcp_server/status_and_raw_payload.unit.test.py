@@ -1,8 +1,13 @@
+import json
+from decimal import Decimal
 from pathlib import Path
 import tempfile
 from unittest.mock import patch
 
 from common_lore_index.storage import StorageSchemaError
+from common_lore_index.storage.sqlite_local.raw_payload import (
+    ascii_lower, contains_ascii_folded, jsonb_contains_ascii_folded, jsonb_text, jsonb_value,
+)
 
 from repomap_test_support.mcp_server import McpServerTestSupport
 
@@ -285,3 +290,50 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
         self.assertIn("payload", payload["results"][0])
         self.assert_raw_payload_policy(payload, include_raw=True)
         self.assert_read_only_payload(payload)
+
+    def test_observation_payload_literal_match_crosses_fold_window(self):
+        payload = "x" * (65536 - 3) + "CrOSSing É"
+        for needle, expected in (("", True), ("crossing", True), ("CROSSING É", True), ("crossing é", False),
+                                 ("y" * (len(payload) + 1), False)):
+            with self.subTest(needle=needle[:24]):
+                self.assertEqual(contains_ascii_folded(payload, ascii_lower(needle)), expected)
+
+    def test_sqlite_jsonb_projection_preserves_key_order_and_numeric_types(self):
+        value = {"z": (Decimal("-0.000"), Decimal("12"), "é\t"), "é": [None, True], "a": Decimal("1.20")}
+        actual = jsonb_value(value)
+        expected = json.loads(jsonb_text(value))
+        self.assertEqual(list(actual), ["a", "z", "é"])
+        self.assertEqual(json.dumps(actual, ensure_ascii=False), json.dumps(expected, ensure_ascii=False))
+        self.assertIsInstance(actual["z"][0], float)
+        self.assertIsInstance(actual["z"][1], int)
+
+
+def test_streamed_jsonb_literal_matches_fragment_boundaries_and_numeric_spelling():
+    value = {
+        "a": ["x" * 65542 + "Ab", "", "é"],
+        "β": {"text": "quote\" slash\\", "number": 0.00002},
+        "z": ["", *([["k", True]] * 27000)],
+    }
+    canonical = ascii_lower(jsonb_text(value))
+    needles = ['Ab", "", "é"', ']["different"', ', "β": {', '0.00002', 'ab", "", "É"', ""]
+    for needle in needles:
+        folded = ascii_lower(needle)
+        assert jsonb_contains_ascii_folded(value, folded) is (folded in canonical)
+
+
+def test_jsonb_literal_matches_across_wide_escaped_string_chunks():
+    middle = '先Ab"' + chr(92) + chr(1) + "É"
+    body = "先" * (16 * 1024 - 2) + middle + "É" * (16 * 1024)
+    data = {"key": [body, "end"]}
+    crossing = ascii_lower(json.dumps(middle, ensure_ascii=False)[1:-1])
+    assert jsonb_contains_ascii_folded(data, crossing)
+    assert jsonb_contains_ascii_folded(data, 'É", "end')
+    assert not jsonb_contains_ascii_folded(data, 'é", "end')
+
+
+def test_jsonb_projection_preserves_small_and_wide_integer_values_and_types():
+    positive = (1 << 64) - 1
+    numeric = [True, False, 0, 1, -1, positive, -positive, 1 << 64, -(1 << 128), Decimal("1.50"), 1.2e8]
+    expected = json.loads(jsonb_text(numeric))
+    value = jsonb_value(numeric)
+    assert value == expected and [type(number) for number in value] == [type(number) for number in expected]

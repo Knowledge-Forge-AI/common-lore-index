@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import psycopg
+import pytest
 
 from common_lore_index.observations import RawObservation
 from common_lore_index.observations.spool import ObservationSpool
@@ -10,6 +11,7 @@ from common_lore_index.storage.canonical import (
     query_canonical_node_records,
     query_canonical_storage_summary,
 )
+from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.readback_driver import (
     _psycopg_connection_params_from_psql_args,
 )
@@ -17,6 +19,7 @@ from common_lore_index.storage.staged_ingestion import (
     IngestionAuthority,
     run_staged_full_refresh,
 )
+from common_lore_index.storage.staged_rows import build_staged_rows
 from common_lore_index.storage.staging_observability import (
     StagingMeasurementCategory,
     StagingMeasurementEvent,
@@ -177,3 +180,21 @@ def test_perf_base1_real_spool_copy_publication_query_digest_and_cleanup() -> No
     assert len(node_records) == 1
     assert storage_summary.canonical_nodes > 0
     assert spool.path.exists() is False
+
+
+def test_stage_row_preparation_requires_replay_and_accepts_disk_backed_input() -> None:
+    observations = _observations()
+    one_shot = iter(observations)
+    with pytest.raises(StorageSchemaError, match="staged observations must support replay"):
+        build_staged_rows(one_shot, repository_name="perf-fixture", stage_id="stage-unassigned")
+    assert tuple(one_shot) == observations
+
+    with ObservationSpool.from_observations(observations) as spool:
+        prepared = build_staged_rows(spool, repository_name="perf-fixture", stage_id="stage-unassigned")
+        try:
+            assert prepared.row_counts["raw_observations"] == len(observations)
+            assert prepared.row_counts["canonical_nodes"] > 0
+            assert tuple(spool) == observations
+        finally:
+            prepared.close()
+    assert not spool.path.exists()

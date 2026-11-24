@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePath
 from typing import Any, Iterable, Mapping
 
+from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index import __version__
 from common_lore_index.extractors.languages.python_common import (
     EXTRACTOR_NAME,
@@ -28,7 +29,7 @@ from common_lore_index.extractors.languages.python_imports import (
 )
 from common_lore_index.extractors.languages.python_modules import (
     PythonModuleIndex,
-    importable_module_name,
+    importable_module_name as importable_module_name,
     module_name_from_suffix,
     normalize_root,
     package_roots,
@@ -129,7 +130,7 @@ def extract_python_file_observations(
     module_index: PythonModuleIndex,
     repository_root: Path | str | None = None,
 ) -> tuple[RawObservation, ...]:
-    module = importable_module_name(relative_path, repository_root=repository_root)
+    module = module_index.module_for_path(relative_path, repository_root)
     if module is None:
         return ()
     try:
@@ -171,7 +172,7 @@ def extract_python_file_observations(
 def python_module_observation(
     relative_path: str, module: str, tree: ast.Module, content: str
 ) -> RawObservation:
-    line_count = max(1, len(content.splitlines()))
+    line_count = max(1, sum(1 for _ in iter_text_lines(content)))
     return RawObservation(
         kind="python.module",
         source_id=f"{relative_path}#module:{module}",

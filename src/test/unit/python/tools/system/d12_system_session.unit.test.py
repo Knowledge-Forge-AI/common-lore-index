@@ -25,7 +25,7 @@ from tools.system.d12_system_session import (
 )
 
 from src.test.unit.python.tools.system.d12_system_session_fixtures import (
-    _establish, _matching_preflight_report,
+    _establish, _fake_git, _matching_preflight_report,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[6]
@@ -360,3 +360,14 @@ def test_restore_replay_shim_returns_sql_stage_failure_without_fallthrough(
     assert result.returncode == exit_code
     assert result.stdout == "" and result.stderr == f"{failure_stage}-failure\n"
     assert psql_called.exists() == (failure_stage == "psql")
+
+
+def test_current_grant_fixture_still_refuses_a_mismatched_live_base_parent(tmp_path: Path) -> None:
+    def stale_parent(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        if cmd[-1] == "HEAD^1":
+            return subprocess.CompletedProcess(cmd, 0, "1" * 40 + "\n", "")
+        return _fake_git(cmd, **kwargs)
+
+    with pytest.raises(SystemTestError, match="candidate_base_parent disagrees with live Git HEAD\\^1"):
+        _establish(tmp_path, run_git_fn=stale_parent)
+    assert not (tmp_path / "report" / SYSTEM_BUILD_INTENT_FILENAME).exists()

@@ -49,6 +49,7 @@ from common_lore_index.storage.sqlite_local.connection import (
     classify_write_error,
     open_writer,
     read_transaction,
+    read_transaction_with_schema,
 )
 from common_lore_index.storage.sqlite_local.migrations import (
     SchemaState,
@@ -96,8 +97,7 @@ def upgrade_graph_database(
     applied_at: str,
 ) -> UpgradeResult:
     """Upgrade an exact-behind database to exact-current behind a verified backup."""
-    with read_transaction(path, binding, accept_behind=True) as reader:
-        before = classify(reader)
+    with read_transaction_with_schema(path, binding, accept_behind=True) as (reader, before):
         publication = read_publication(reader)
     if before.kind == "current":
         return UpgradeResult("already-current", before.version, before.version, publication, None)

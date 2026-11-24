@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from functools import partial
 from typing import Mapping, TypeAlias
 
 import psycopg
 from psycopg.conninfo import make_conninfo
 import pytest
 
-from common_lore_index.storage import staged_ingestion, staged_publication
+from common_lore_index.storage import external_row_sort, staged_ingestion, staged_publication, structural_digest
+from common_lore_index.storage.staged_rows import build_staged_rows
 from common_lore_index.storage.publication_fencing import PublicationHandoff
 from common_lore_index.storage.staging_observability import StagingMeasurements
 from common_lore_index.observations import RawObservation
@@ -348,3 +350,34 @@ def test_final_transaction_failure_rolls_back_and_preserves_prior_publication(
                 (prior.repository_id, prior.run_id),
             ).fetchall()
             assert run_states == [("failed",)]
+
+def test_prepared_digest_enforces_final_input_limit_on_uneven_run_levels(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observations = tuple(_observations(f"src/fixture_{index:02d}.py")[0] for index in range(13))
+    prepared = build_staged_rows(observations, repository_name="prepared-digest", stage_id="prepared-fixture")
+    try:
+        with monkeypatch.context() as patch:
+            patch.setattr(external_row_sort, "OwnedTemporaryDirectory", lambda **_: pytest.fail("unneeded spill directory"))
+            expected = structural_digest.digest_prepared_stage_rows(prepared)
+        original = external_row_sort._iter_encoded_run
+        active = peak = 0
+
+        def observe(*args, **kwargs):
+            nonlocal active, peak
+            active += 1
+            peak = max(peak, active)
+            try:
+                yield from original(*args, **kwargs)
+            finally:
+                active -= 1
+
+        monkeypatch.setattr(external_row_sort, "_iter_encoded_run", observe)
+        monkeypatch.setattr(
+            structural_digest, "external_sort_encoded_rows",
+            partial(external_row_sort.external_sort_encoded_rows, run_byte_limit=1, merge_fan_in=2),
+        )
+        assert structural_digest.digest_prepared_stage_rows(prepared) == expected
+        assert (active, peak) == (0, 2)
+    finally:
+        prepared.close()

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Collection, Mapping
+from collections.abc import Collection, Iterator, Mapping
 from decimal import Decimal
 from functools import lru_cache
 from typing import Any
@@ -35,6 +35,7 @@ from common_lore_index.storage.errors import StorageSchemaError
 
 _TRUE = ("true", "yes")
 _FALSE = ("false", "no")
+_JSON_STRING_CHUNK = 16 * 1024
 
 
 def load(text: str) -> Any:
@@ -51,28 +52,7 @@ def _number(value: int | Decimal) -> str:
 
 
 def _string(value: str) -> str:
-    out = ['"']
-    for char in value:
-        if char == '"':
-            out.append('\\"')
-        elif char == "\\":
-            out.append("\\\\")
-        elif char == "\b":
-            out.append("\\b")
-        elif char == "\f":
-            out.append("\\f")
-        elif char == "\n":
-            out.append("\\n")
-        elif char == "\r":
-            out.append("\\r")
-        elif char == "\t":
-            out.append("\\t")
-        elif ord(char) < 0x20:
-            out.append(f"\\u{ord(char):04x}")
-        else:
-            out.append(char)
-    out.append('"')
-    return "".join(out)
+    return json.dumps(value, ensure_ascii=False)
 
 
 def _key_order(key: str) -> tuple[int, bytes]:
@@ -102,8 +82,74 @@ def jsonb_text(value: Any) -> str:
     raise StorageSchemaError("stored raw observation payload is not JSON")
 
 
+def _jsonb_text_fragments(value: Any) -> Iterator[str]:
+    if isinstance(value, Mapping):
+        yield "{"
+        for index, (key, item) in enumerate(sorted(value.items(), key=lambda row: _key_order(row[0]))):
+            if index:
+                yield ", "
+            yield _string(key)
+            yield ": "
+            yield from _jsonb_text_fragments(item)
+        yield "}"
+    elif isinstance(value, (list, tuple)):
+        yield "["
+        for index, item in enumerate(value):
+            if index:
+                yield ", "
+            yield from _jsonb_text_fragments(item)
+        yield "]"
+    elif isinstance(value, str) and len(value) > _JSON_STRING_CHUNK:
+        # JSON escapes one code point at a time. Keep the outside quotes once.
+        yield '"'
+        for start in range(0, len(value), _JSON_STRING_CHUNK):
+            yield _string(value[start:start + _JSON_STRING_CHUNK])[1:-1]
+        yield '"'
+    else:
+        yield jsonb_text(value)
+
+
+def jsonb_contains_ascii_folded(value: Any, folded_needle: str) -> bool:
+    """Match rendered JSONB text without building a complete serialization."""
+    overlap = max(0, len(folded_needle) - 1)
+    target_size = max(64 * 1024, overlap)
+    pending: list[str] = []
+    length = 0
+    tail = ""
+    matched = False
+    for fragment in _jsonb_text_fragments(value):
+        # Keep validating later keys and values even after a hit.
+        if matched:
+            continue
+        if len(fragment) >= target_size:
+            prefix = tail + "".join(pending) + fragment[:overlap]
+            matched = contains_ascii_folded(prefix, folded_needle) or contains_ascii_folded(fragment, folded_needle)
+            tail = fragment[-overlap:] if overlap else ""
+            pending.clear()
+            length = 0
+            continue
+        pending.append(fragment)
+        length += len(fragment)
+        if length >= target_size:
+            window = tail + "".join(pending)
+            matched = contains_ascii_folded(window, folded_needle)
+            tail = window[-overlap:] if overlap else ""
+            pending.clear()
+            length = 0
+    return matched or contains_ascii_folded(tail + "".join(pending), folded_needle)
+
+
 def jsonb_value(value: Any) -> Any:
     """The value a PostgreSQL JSON readback decodes for this ``jsonb`` value."""
+    if isinstance(value, Mapping):
+        return {str(key): jsonb_value(item) for key, item in sorted(value.items(), key=lambda row: _key_order(row[0]))}
+    if isinstance(value, (list, tuple)):
+        return [jsonb_value(item) for item in value]
+    if value is None or type(value) is bool or type(value) is str:
+        return value
+    if type(value) is int and value.bit_length() <= 64:
+        # Small integers already have the exact decoded JSON type and value.
+        return value
     return json.loads(jsonb_text(value))
 
 
@@ -205,6 +251,20 @@ _UPPER = {code: code - 32 for code in range(ord("a"), ord("z") + 1)}
 _LOWER = {code: code + 32 for code in range(ord("A"), ord("Z") + 1)}
 
 
+def contains_ascii_folded(value: str, folded_needle: str) -> bool:
+    """Match a pre-folded literal without duplicating a large payload."""
+    if not folded_needle:
+        return True
+    last_start = len(value) - len(folded_needle)
+    if last_start < 0:
+        return False
+    step = max(64 * 1024, len(folded_needle))
+    return any(
+        folded_needle in ascii_lower(value[start:start + step + len(folded_needle) - 1])
+        for start in range(0, last_start + 1, step)
+    )
+
+
 def basename(path: str) -> str:
     """``regexp_replace(path, '^.*/', '')``."""
     return path.rsplit("/", 1)[-1]
@@ -217,6 +277,7 @@ __all__ = (
     "flag",
     "has_key",
     "is_in",
+    "jsonb_contains_ascii_folded",
     "jsonb_text",
     "jsonb_value",
     "like",

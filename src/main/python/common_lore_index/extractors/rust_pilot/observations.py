@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import bisect
 import re
+from array import array
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import Any
@@ -63,7 +64,12 @@ class LineIndex:
     """LF offsets built once; CRLF counts as one line break."""
 
     def __init__(self, data: bytes) -> None:
-        self.breaks = [index for index, byte in enumerate(data) if byte == 0x0A]
+        # Pilot inputs are capped at one MiB, well within the supported hosts' unsigned int.
+        if data.count(b"\n") > len(data) // 4:
+            offsets = (index for index, byte in enumerate(data) if byte == 0x0A)
+        else:
+            offsets = (match.start() for match in re.finditer(rb"\n", data))
+        self.breaks = array("I", offsets)
         self.count = len(self.breaks) + (1 if data and not data.endswith(b"\n") else 0)
 
     def line(self, offset: int) -> int:
@@ -119,10 +125,10 @@ def _observation(kind: str, path: str, lines: tuple[int, int], metadata: dict[st
 
 def parse_observation(path: str, data: bytes, *, input_sha256: str, outcome: str, completeness: str,
                       item_list: str, build_script_name: bool, counts: dict[str, int]) -> RawObservation:
-    index = LineIndex(data)
-    return _observation("rust.parse", path, (1, max(1, index.count)), {
+    line_count = data.count(b"\n") + int(bool(data) and not data.endswith(b"\n"))
+    return _observation("rust.parse", path, (1, max(1, line_count)), {
         "outcome": outcome, "completeness": completeness, "input_sha256": input_sha256,
-        "input_bytes": len(data), "line_count": index.count, "errors": counts.get("errors", 0),
+        "input_bytes": len(data), "line_count": line_count, "errors": counts.get("errors", 0),
         "missing": counts.get("missing", 0), "items": counts.get("items", 0),
         "unsupported": counts.get("unsupported", 0), "item_list": item_list,
         "build_script_name": build_script_name,
@@ -136,6 +142,12 @@ class _Tree:
         self.items = decoded.items
         self.names: dict[int, tuple[str, bool]] = {}
         self.rejected: dict[int, int] = {}
+        self.usable: dict[int, bool] = {}
+        self.depth: dict[int, int] = {}
+        self.pointers: dict[int, str] = {}
+        self.ambiguity: dict[int, int] = {}
+        self.pointer_bytes = 0
+        children: dict[int, list[ItemFrame]] = defaultdict(list)
         for item in self.items:
             owner = item.parent
             if owner >= 0 and (owner in self.rejected):
@@ -147,15 +159,6 @@ class _Tree:
                 continue
             if named is not None:
                 self.names[item.index] = named
-        self.usable: dict[int, bool] = {}
-        self.depth: dict[int, int] = {}
-        self.pointers: dict[int, str] = {}
-        self.ambiguity: dict[int, int] = {}
-        self.pointer_bytes = 0
-        children: dict[int, list[ItemFrame]] = defaultdict(list)
-        for item in self.items:
-            if item.index in self.rejected:
-                continue
             parent_ok = item.parent < 0 or self.usable[item.parent]
             self.usable[item.index] = parent_ok and not item.flags & FLAG_HAS_ERROR
             self.depth[item.index] = 1 if item.parent < 0 else self.depth[item.parent] + 1
@@ -167,9 +170,10 @@ class _Tree:
 
     def _assign(self, owner: int, members: list[ItemFrame]) -> None:
         base = ROOT_POINTER if owner < 0 else self.pointers[owner] + "/"
-        keys = [(NAMESPACES[ITEM_KINDS[item.tag]], self.names[item.index][0]) for item in members
-                if item.tag != 9]
-        totals = Counter(keys)
+        base_bytes = len(base.encode("utf-8"))
+        totals = Counter(
+            (NAMESPACES[ITEM_KINDS[item.tag]], self.names[item.index][0]) for item in members if item.tag != 9
+        )
         seen: Counter[tuple[str, str]] = Counter()
         impls = 0
         for item in members:
@@ -185,7 +189,7 @@ class _Tree:
                 if totals[key] > 1:
                     step += f"@{seen[key]}"
                 self.ambiguity[item.index] = totals[key] if totals[key] > 1 else 0
-            size = len(base.encode("utf-8")) + len(step.encode("utf-8"))
+            size = base_bytes + len(step.encode("utf-8"))
             if size > MAX_POINTER_BYTES or self.pointer_bytes + size > MAX_SEMANTIC_BYTES:
                 raise ObservationBound("parent_output_bound")
             self.pointer_bytes += size
@@ -251,43 +255,54 @@ def classify(decoded: DecodedParse, usable_items: int, macro_scopes: set[int]) -
     return (*result, item_list)
 
 
+def _count_unsupported(
+    groups: dict[tuple[str, str], tuple[int, Span]], key: tuple[str, str], span: Span,
+) -> None:
+    count, earliest = groups.get(key, (0, span))
+    groups[key] = (count + 1, min(earliest, span))
+
+
 def build_file_observations(path: str, data: bytes, decoded: DecodedParse, *, input_sha256: str,
                             build_script_name: bool) -> FileObservations:
     """Build the file's ``rust.parse``, ``rust.item`` and ``rust.unsupported`` observations."""
 
     tree = _Tree(data, decoded)
-    index = LineIndex(data)
     macro_scopes = {frame.scope for frame in decoded.unsupported if frame.tag == 1}
     accepted = [item for item in decoded.items if item.index not in tree.rejected]
     usable_items = sum(1 for item in accepted if tree.usable[item.index])
     outcome, completeness, achieved, item_list = classify(decoded, usable_items, macro_scopes)
-    groups: dict[tuple[str, str], list[tuple[int, int]]] = defaultdict(list)
+    groups: dict[tuple[str, str], tuple[int, Span]] = {}
     for frame in decoded.unsupported:
-        groups[(tree.scope_pointer(frame.scope), UNSUPPORTED_CONSTRUCTS[frame.tag])].append((frame.start, frame.end))
+        _count_unsupported(groups, (tree.scope_pointer(frame.scope), UNSUPPORTED_CONSTRUCTS[frame.tag]),
+                           (frame.start, frame.end))
     for item in decoded.items:
         if item.index in tree.rejected:
-            groups[(tree.scope_pointer(item.parent), "name_rejected")].append((item.start, item.end))
+            _count_unsupported(groups, (tree.scope_pointer(item.parent), "name_rejected"), (item.start, item.end))
     counts = {"errors": decoded.end.errors, "missing": decoded.end.missing, "items": len(accepted),
-              "unsupported": sum(len(spans) for spans in groups.values())}
+              "unsupported": sum(count for count, _ in groups.values())}
     result: list[RawObservation] = []
     emitted = _append_bounded(result, parse_observation(
         path, data, input_sha256=input_sha256, outcome=outcome, completeness=completeness,
         item_list=item_list, build_script_name=build_script_name, counts=counts), 0)
+    if not accepted and not groups:
+        return FileObservations(outcome, completeness, achieved, item_list, usable_items, tuple(result))
+    index = LineIndex(data)
     for item in accepted:
         name = tree.names.get(item.index, (None, False))[0]
         emitted = _append_bounded(result, _observation(
             "rust.item", path, index.lines(item.start, item.end),
             _item_metadata(tree, data, item, macro_scopes, bool(decoded.end.truncated)), name=name), emitted)
-    for (scope, construct), spans in sorted(groups.items()):
-        first = min(spans)
+    for (scope, construct), (count, first) in sorted(groups.items()):
         emitted = _append_bounded(result, _observation(
             "rust.unsupported", path, index.lines(*first),
-            {"construct": construct, "count": len(spans), "scope_pointer": scope}), emitted)
+            {"construct": construct, "count": count, "scope_pointer": scope}), emitted)
     return FileObservations(outcome, completeness, achieved, item_list, usable_items, tuple(result))
 
 
 def _append_bounded(result: list[RawObservation], observation: RawObservation, emitted: int) -> int:
-    total = emitted + len(observation.to_json_line().encode("utf-8")) + 1
+    line = observation.to_json_line()
+    width = len(line) if line.isascii() else len(line.encode("utf-8"))
+    total = emitted + width + 1
     if total > MAX_SEMANTIC_BYTES:
         raise ObservationBound("parent_output_bound")
     result.append(observation)

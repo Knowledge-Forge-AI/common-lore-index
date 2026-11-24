@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
@@ -11,6 +13,7 @@ import psycopg
 from psycopg.conninfo import make_conninfo
 
 from common_lore_index.retrieval.context_assembly import build_compact_context
+from common_lore_index.retrieval.context_budget_reservation import packet_size_with_reservation
 from common_lore_index.retrieval.context_contracts import ContextRequest
 from common_lore_index.retrieval.context_work import (
     MAX_SQL_STATEMENTS_SQLITE, SQLITE_CONTEXT_PROGRESS_CALLBACK_LIMIT,
@@ -148,3 +151,53 @@ def test_postgres_evidence_limit_and_sqlite_vm_guard_preserve_bounds(tmp_path: P
             assert location["snapshot_id"] == SNAP_CORE
             assert location["evidence_link_kind"] == "observed"
             assert location["evidence_raw_kind"] == "python.class"
+
+
+
+def test_context_budget_keeps_seed_relation_after_neighbor_refusal(tmp_path: Path) -> None:
+    require_postgres_binaries()
+    seeds = ("py:budget.Seed0", "py:budget.Seed1")
+    neighbor = "py:budget.Neighbor" + "N" * 260
+    subjects = tuple(
+        {**SUBJECT, "canonical_key": key, "display_name": name}
+        for key, name in zip((*seeds, neighbor), ("BudgetSeed0", "BudgetSeed1", "Neighbor " + "n" * 400), strict=True)
+    )
+    edges = (("calls", seeds[0], neighbor), ("calls", seeds[0], seeds[1]))
+    _, _, _, _, local = build_sqlite_context_fixture(
+        tmp_path / "sqlite", extra_subjects=subjects, extra_edges=edges,
+    )
+    request = ContextRequest(
+        graph_id=CTX_GRAPH_ID, mode="ranked_discovery", query="BudgetSeed",
+        bindings=(BINDING_CORE,), max_items=2, expand_depth=1, expand_seeds=2,
+        edge_kinds=("calls",), freshness="none", locations_per_item=1,
+    )
+    with temporary_postgres() as postgres:
+        _, server = build_postgres_context_fixture(
+            tmp_path / "postgres", postgres, extra_subjects=subjects, extra_edges=edges,
+        )
+        with server:
+            full = build_compact_context(replace(request, budget_bytes=65536), server)
+        assert [item["canonical_key"] for item in full["neighbors"]] == [neighbor]
+        probe = copy.deepcopy(full)
+        probe["neighbors"] = []
+        probe["relations"] = [
+            rel for rel in probe["relations"] if rel["source_key"] in seeds and rel["target_key"] in seeds
+        ]
+        assert len(probe["relations"]) == 1
+        probe["expansion"]["neighbors_admitted"] = 0
+        probe["expansion"]["relations_admitted"] = 1
+        budget = max(4096, packet_size_with_reservation(probe) + 128)
+        assert budget < packet_size_with_reservation(full)
+        request = replace(request, budget_bytes=budget)
+        with local:
+            local_packet = build_compact_context(request, local)
+        with server:
+            server_packet = build_compact_context(request, server)
+
+    for packet in (local_packet, server_packet):
+        assert_valid_context_packet(packet)
+        assert packet["neighbors"] == [] and packet["relations"] == probe["relations"]
+        assert tuple(item["canonical_key"] for item in packet["items"]) == seeds
+        assert packet["omission_counts"]["output_budget"] == 1
+        assert packet["request"]["target_echo"] == "BudgetSeed"
+        assert packet["scope"]["scope_echo_complete"] is True

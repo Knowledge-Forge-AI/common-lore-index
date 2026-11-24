@@ -25,7 +25,7 @@ from pathlib import Path
 import pytest
 
 from common_lore_index.storage.sqlite_local import connection, orphans, restore
-from common_lore_index.storage.sqlite_local.backup import write_backup
+from common_lore_index.storage.sqlite_local.backup import inspect_sealed_database, write_backup
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, publisher_lock
 from common_lore_index.storage.sqlite_local.restore import install_backup, verify_backup
 from common_lore_index.storage.sqlite_local.schema import LocalGraphBinding, LocalStoreError
@@ -355,13 +355,22 @@ def test_removal_rechecks_identity_and_never_follows_a_swap(tmp_path: Path) -> N
     assert base.read_bytes() == b"replacement"
 
 
-def test_no_orphan_means_the_final_database_is_never_opened(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("streaming", [True, False])
+def test_no_orphan_means_the_final_database_is_never_opened(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, streaming: bool,
+) -> None:
     store, database = _store(tmp_path)
     initialize_graph_database(database, BINDING, applied_at=APPLIED_AT)
-    monkeypatch.setattr(orphans, "read_transaction", fail_if_reached)
+    monkeypatch.setattr(orphans, "read_transaction_with_schema", fail_if_reached)
     monkeypatch.setattr(orphans, "inspect_sealed_database", fail_if_reached)
+    if not streaming:
+        monkeypatch.setattr(os, "supports_fd", os.supports_fd - {os.scandir})
+    for index in range(128):
+        (store / f".foreign-{index:03}.sqlite3.init-{TOKEN}").touch()
     before = _names(store)
-    assert _inventory(store, database) == orphans.OrphanInventory("not-inspected", ())
+    with orphans.pinned_store(store) as descriptor:
+        for _ in range(2):
+            assert orphans.inventory_orphans(descriptor, database, BINDING) == orphans.OrphanInventory("not-inspected", ())
     assert _names(store) == before
 
 
@@ -371,3 +380,18 @@ def test_a_symlinked_store_directory_is_refused(tmp_path: Path) -> None:
     alias.symlink_to(store)
     with pytest.raises(OSError), orphans.pinned_store(alias):
         pass
+
+def test_sealed_database_refuses_pipe_before_reading_header(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "pipe.sqlite3"
+    os.mkfifo(path)
+    original_open = os.open
+
+    def checked_open(name: Path, flags: int) -> int:
+        assert flags & os.O_NONBLOCK
+        return original_open(name, flags)
+
+    monkeypatch.setattr(os, "open", checked_open)
+    with pytest.raises(LocalStoreError, match="graph-database-unrecognized"):
+        inspect_sealed_database(path, BINDING)

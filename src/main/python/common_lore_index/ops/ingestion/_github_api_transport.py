@@ -6,6 +6,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Sequence
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +34,7 @@ from common_lore_index.ops.ingestion.github_api_records import (
     GitHubResponseRecord,
     GitHubTransportResponse,
 )
+from common_lore_index.ops.ingestion.source_common import _read_bounded_body
 
 
 class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -58,7 +60,10 @@ class FixtureGitHubApiTransport:
     ) -> GitHubTransportResponse:
         endpoint = endpoint_by_name(config, request.endpoint_name)
         response_path = resolve_fixture_response_path(config, endpoint)
-        body = response_path.read_bytes()
+        with response_path.open("rb") as stream:
+            body = _read_bounded_body(stream.read, config.max_bytes_per_run)
+        if len(body) > config.max_bytes_per_run:
+            raise GitHubApiPolicyError("response bytes exceed max_bytes_per_run")
         return GitHubTransportResponse(
             status_code=200,
             body=body,
@@ -95,28 +100,30 @@ class PublicGitHubRestTransport:
                 timeout=config.timeout_seconds,
             )
         except urllib.error.HTTPError as error:
-            headers_map = header_mapping(error.headers)
-            body = error.read(config.max_bytes_per_run + 1)
+            with closing(error):
+                headers_map = header_mapping(error.headers)
+                body = _read_bounded_body(error.read, config.max_bytes_per_run)
+                return GitHubTransportResponse(
+                    status_code=error.code,
+                    body=body,
+                    response_type=content_type_from_headers(headers_map),
+                    headers=headers_map,
+                    rate_limit=rate_limit_headers(headers_map),
+                )
+        except urllib.error.URLError as error:
+            raise GitHubApiPolicyError(
+                f"GitHub REST acquisition failed: {error.reason}"
+            ) from error
+        with closing(response):
+            headers_map = header_mapping(getattr(response, "headers", {}))
+            body = _read_bounded_body(response.read, config.max_bytes_per_run)
             return GitHubTransportResponse(
-                status_code=error.code,
+                status_code=int(getattr(response, "status", response.getcode())),
                 body=body,
                 response_type=content_type_from_headers(headers_map),
                 headers=headers_map,
                 rate_limit=rate_limit_headers(headers_map),
             )
-        except urllib.error.URLError as error:
-            raise GitHubApiPolicyError(
-                f"GitHub REST acquisition failed: {error.reason}"
-            ) from error
-        headers_map = header_mapping(getattr(response, "headers", {}))
-        body = response.read(config.max_bytes_per_run + 1)
-        return GitHubTransportResponse(
-            status_code=int(getattr(response, "status", response.getcode())),
-            body=body,
-            response_type=content_type_from_headers(headers_map),
-            headers=headers_map,
-            rate_limit=rate_limit_headers(headers_map),
-        )
 
 
 def write_github_api_run_files(

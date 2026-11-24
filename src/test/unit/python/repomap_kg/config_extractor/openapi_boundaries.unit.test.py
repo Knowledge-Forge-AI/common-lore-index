@@ -8,6 +8,7 @@ from common_lore_index.extractors.config.openapi_helpers import (
     _openapi_bounded_string,
     _openapi_oauth_flow_names,
     _openapi_pointer_is_redacted,
+    _openapi_ref_values,
     _openapi_reference_scope,
     _openapi_safe_string,
     _openapi_scope_names,
@@ -18,6 +19,43 @@ from common_lore_index.extractors.config.openapi_helpers import (
 
 
 class ConfigExtractorOpenApiBoundariesUnitTests(unittest.TestCase):
+    def test_malformed_server_and_reference_preserve_following_server(self):
+        unsafe = "https://unreadable.invalid:port/path"
+        document = {
+            "openapi": "3.0.3",
+            "info": {"title": "Fixture", "version": "1"},
+            "servers": [
+                {"url": unsafe}, {"url": "https://valid.invalid/path"},
+                {"url": "https://template.invalid:{port}/path", "variables": {"port": {"default": "443"}}},
+            ],
+            "paths": {},
+            "components": {"schemas": {"Alias": {"$ref": unsafe}}},
+        }
+        rows = extract_config_file_observations("openapi.json", json.dumps(document))
+        first, second, template = [row for row in rows if row.kind == "openapi.server"]
+        self.assertEqual(first.metadata["redaction_reason"], "malformed-url")
+        self.assertNotIn("host", first.metadata)
+        self.assertEqual(second.metadata["host"], "valid.invalid")
+        self.assertEqual(template.metadata["host"], "template.invalid")
+        self.assertFalse(template.metadata["redacted"])
+        reference, = [row for row in rows if row.kind == "openapi.reference"]
+        self.assertEqual(reference.metadata["reference_scope"], "remote")
+        self.assertTrue((reference.target or "").startswith("unknown:"))
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in rows]))
+
+    def test_nested_reference_walk_is_lazy_and_preserves_preorder(self):
+        class Tail(dict):
+            def items(self):
+                raise AssertionError("the later branch was traversed prematurely")
+
+        first = {"a/b": [{"$ref": "#/one"}, {"$ref": 9}]}
+        values = _openapi_ref_values({"first": first, "last": Tail()})
+        self.assertEqual(next(values), (("first", "a/b", "0", "$ref"), "#/one"))
+        self.assertEqual(
+            list(_openapi_ref_values({"first": first, "last": {"~": {"$ref": "#/two"}}})),
+            [(("first", "a/b", "0", "$ref"), "#/one"), (("last", "~", "$ref"), "#/two")],
+        )
+
     def test_openapi3_components_webhooks_and_security_schemes(self):
         payload = {
             "openapi": "3.1.0",
@@ -101,6 +139,9 @@ class ConfigExtractorOpenApiBoundariesUnitTests(unittest.TestCase):
         self.assertFalse(_is_url("/local/path"))
         self.assertTrue(_url_has_credentials("https://u:p@example.com"))
         self.assertFalse(_url_has_credentials("https://example.com"))
+        self.assertTrue(_url_has_credentials("https://user:fixture@host.invalid:${PORT}/"))
+        self.assertTrue(_url_has_credentials("https://user:fixture@host.invalid:broken/"))
+        self.assertFalse(_url_has_credentials("https://host.invalid:${PORT}/"))
         self.assertEqual(_openapi_string_list(["a", "b"]), ["a", "b"])
         self.assertEqual(_openapi_string_list(None), [])
         self.assertTrue(_openapi_sensitive_key("secret_token"))

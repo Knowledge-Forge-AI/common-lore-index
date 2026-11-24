@@ -1,7 +1,9 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+from common_lore_index.extractors.languages import python_modules
 from common_lore_index.extractors.languages.python import (
     PythonModuleIndex,
     extract_python_file_observations,
@@ -66,6 +68,36 @@ class PythonExtractorUnitTests(unittest.TestCase):
 
             (root / "pyproject.toml").write_text("[tool.setuptools\n")
             self.assertEqual(pyproject_package_roots(root), ())
+
+            for config in (
+                'tool = "unrelated"',
+                "[tool]\nsetuptools = false",
+                "[tool.setuptools]\npackage-dir = ['lib']",
+            ):
+                with self.subTest(config=config):
+                    (root / "pyproject.toml").write_text(config, encoding="utf-8")
+                    self.assertEqual(pyproject_package_roots(root), ())
+
+    def test_module_index_reuses_package_roots_and_keeps_colliding_module_names(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "pyproject.toml").write_text(
+                '[tool.setuptools.package-dir]\n"" = "lib"\n', encoding="utf-8",
+            )
+            paths = ["src/main/python/pkg/entry.py", "lib/pkg/entry.py", "lib/pkg/peer.py"]
+            read_config = python_modules.pyproject_package_roots
+            with patch.object(python_modules, "pyproject_package_roots", wraps=read_config) as probe:
+                index = PythonModuleIndex.from_python_paths(paths, repository_root=root)
+                self.assertNotIn(paths[1], index.path_to_module)
+                (root / "pyproject.toml").unlink()
+                for path in paths[:2]:
+                    observations = extract_python_file_observations(
+                        path, "from . import peer\n", module_index=index, repository_root=root,
+                    )
+                    self.assertEqual(observations[0].name, "pkg.entry")
+                    self.assertEqual(observations[1].target, "python.module:pkg.peer")
+                probe.assert_called_once_with(root)
+                self.assertEqual(index.module_for_path(paths[1], root / "other"), "lib.pkg.entry")
 
     def test_package_roots_include_defaults_pyproject_and_test_layouts(self):
         with tempfile.TemporaryDirectory() as tmpdir:

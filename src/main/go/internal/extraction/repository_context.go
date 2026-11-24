@@ -133,7 +133,7 @@ func cgoDirectiveCount(group *ast.CommentGroup) int {
 	}
 	count := 0
 	for _, comment := range group.List {
-		for _, line := range strings.Split(comment.Text, "\n") {
+		for line := range strings.SplitSeq(comment.Text, "\n") {
 			trimmed := strings.TrimSpace(line)
 			trimmed = strings.TrimSpace(strings.TrimPrefix(trimmed, "/*"))
 			trimmed = strings.TrimSpace(strings.TrimPrefix(trimmed, "//"))
@@ -200,19 +200,21 @@ func constraintTags(expression constraint.Expr) ([]string, int, bool) {
 	unique := make(map[string]struct{})
 	collectConstraintTags(expression, unique)
 	tagCount := len(unique)
-	tags := make([]string, 0, len(unique))
-	truncated := false
+	tags := make([]string, 0, min(tagCount, maxBuildConstraintTags))
+	truncated := tagCount > maxBuildConstraintTags
 	for tag := range unique {
 		if len(tag) > maxBuildTagLength {
 			tag = tag[:maxBuildTagLength]
 			truncated = true
 		}
-		tags = append(tags, tag)
-	}
-	sort.Strings(tags)
-	if len(tags) > maxBuildConstraintTags {
-		tags = tags[:maxBuildConstraintTags]
-		truncated = true
+		position := sort.SearchStrings(tags, tag)
+		if len(tags) < maxBuildConstraintTags {
+			tags = append(tags, "")
+		} else if position == len(tags) {
+			continue
+		}
+		copy(tags[position+1:], tags[position:])
+		tags[position] = tag
 	}
 	return tags, tagCount, truncated
 }
