@@ -129,12 +129,9 @@ class _RecordedConnection:
         self._operations = operations
 
     def execute(self, query, *args, **kwargs):
-        operation = "execute"
-        if isinstance(query, str):
-            normalized = " ".join(query.split())
-            if normalized.startswith(("SELECT (SELECT count(*) FROM stage_", "SELECT count(*) FROM stage_")):
-                operation = normalized
-        self._operations.append(operation)
+        normalized = " ".join(query.split()) if isinstance(query, str) else ""
+        count_prefixes = ("SELECT (SELECT count(*) FROM stage_", "SELECT count(*) FROM stage_")
+        self._operations.append(normalized if normalized.startswith(count_prefixes) else "execute")
         return self._connection.execute(query, *args, **kwargs)
 
     def cursor(self, *args, **kwargs):
