@@ -335,6 +335,7 @@ def test_sqlite_compact_context_tight_budget_preserves_utf8_bytes_and_rank_prefi
     tight_keys = [item["canonical_key"] for item in tight_packet["items"]]
     assert tight_keys == [exact_key]
     assert tiny_tail_key not in tight_keys
+    assert tight_packet["scope"]["selection_fingerprint"] == wide_packet["scope"]["selection_fingerprint"]
     assert tight_packet["items"][0]["display_name"] == "TariffLedger"
     assert tight_packet["items"][0]["locations"][0]["source_relative_path"] == (
         "src/pkg/tariff/ledger_α.py"

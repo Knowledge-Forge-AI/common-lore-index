@@ -227,6 +227,8 @@ def test_crafted_corpus_reaches_null_and_default_paths(tmp_path: Path) -> None:
         alpha = source_queries.source_summary(connection, source_id="crafted-alpha")
         assert (alpha.link_references, alpha.enclosure_references) == (3, 1)
         assert alpha.latest_source_run_id is None and alpha.latest_acquired_at == "2026-01-03T00:00:00Z"
+        beta = source_queries.source_summary(connection, source_id="crafted-beta")
+        assert beta.latest_source_run_id is None and beta.latest_acquired_at is None
         assert alpha.source_type == "feed.atom"  # MIN over the group
         beta = source_queries.source_summary(connection, source_id="crafted-beta")
         assert (beta.latest_acquired_at, beta.display_name) == (None, None)

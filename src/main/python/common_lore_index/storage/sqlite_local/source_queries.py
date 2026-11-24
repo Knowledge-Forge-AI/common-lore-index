@@ -251,8 +251,14 @@ def _reference_counts(evidence_set: Iterable[int], edges: dict[int, list[_Edge]]
         edge.id: edge for evidence_id in evidence_set
         for edge in edges.get(evidence_id, ()) if edge.kind == "references"
     }
-    scopes = [raw_payload.text_at(edge.metadata, "scope") for edge in unique.values()]
-    return scopes.count("link"), scopes.count("enclosure")
+    links = enclosures = 0
+    for edge in unique.values():
+        scope = raw_payload.text_at(edge.metadata, "scope")
+        if scope == "link":
+            links += 1
+        elif scope == "enclosure":
+            enclosures += 1
+    return links, enclosures
 
 
 class _DescendingSourceId(str):
@@ -302,7 +308,7 @@ def ingested_sources(
             "policy_status": min_of(item.policy_status for item in group),
             "latest_source_run_id": latest.source_run_id, "latest_artifact_id": latest.artifact_id,
             "latest_artifact_path": latest.artifact_path,
-            "latest_acquired_at": max_of(item.acquired_at for item in group),
+            "latest_acquired_at": latest.acquired_at,
             "feed_observation_count": sum(_observation_fanout_count(item, evidence, nodes) for item in group),
             "canonical_feed_item_count": node_counts.get("feed.item", 0),
         }))
@@ -335,7 +341,7 @@ def source_summary(connection: sqlite3.Connection, *, source_id: str) -> SourceS
         "configured_url_summary": min_of(item.url_summary for item in group),
         "latest_source_run_id": latest.source_run_id, "latest_artifact_id": latest.artifact_id,
         "latest_artifact_path": latest.artifact_path,
-        "latest_acquired_at": max_of(item.acquired_at for item in group),
+        "latest_acquired_at": latest.acquired_at,
         "feed_documents": node_counts.get("feed.document", 0),
         "feed_channels": node_counts.get("feed.channel", 0), "feed_items": node_counts.get("feed.item", 0),
         "feed_authors": node_counts.get("feed.author", 0),

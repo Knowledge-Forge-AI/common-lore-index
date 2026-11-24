@@ -312,7 +312,7 @@ def test_admission_commits_only_successful_seed_retry(tmp_path: Path, monkeypatc
             return budget - 1
         return budget - 1 if len(items[0]["locations"]) == 1 and allow_retry else budget + 1
 
-    monkeypatch.setattr(context_budget_reservation, "packet_size_with_reservation", measure)
+    monkeypatch.setattr(context_budget_reservation, "_measure_projected_packet_bytes", measure)
     for allow_retry in (True, False):
         packet = {**initial, "items": [], "request": dict(initial["request"]),
                   "scope": dict(initial["scope"])}
@@ -330,3 +330,32 @@ def test_admission_commits_only_successful_seed_retry(tmp_path: Path, monkeypatc
         else:
             assert packet["items"] == []
     assert len(seed["locations"]) == 2
+
+
+def test_echo_retry_uses_one_reservation_projection(monkeypatch: pytest.MonkeyPatch) -> None:
+    from copy import deepcopy
+    from common_lore_index.retrieval import context_budget_reservation as reservation
+
+    payload = {
+        "status": "complete",
+        "request": {"target_echo": "λ" * 40, "target_echo_withheld": False},
+        "scope": {"scope_echo_complete": True, "selected_binding_ids": ["bind1:core"], "path_prefixes": ["src"]},
+        "work_ledger": {"actual_bytes": 0},
+        "items": [{"locations": [{"freshness": {"state": "not_checked"}}]}],
+    }
+    compacted = deepcopy(payload)
+    reservation._withhold_target_echo(compacted)
+    reservation._withhold_scope_echo(compacted)
+    budget = reservation.packet_size_with_reservation(compacted)
+    project = reservation._project_reserved_packet
+    counts: list[int] = []
+
+    def observe(packet, **kwargs):
+        counts.append(len(packet["items"]))
+        return project(packet, **kwargs)
+
+    monkeypatch.setattr(reservation, "_project_reserved_packet", observe)
+    monkeypatch.setattr(reservation, "apply_skeleton_compaction", lambda *_: None)
+    assert reservation.fits_packet_with_reservation(payload, budget)
+    assert counts == [1]
+    assert payload == compacted

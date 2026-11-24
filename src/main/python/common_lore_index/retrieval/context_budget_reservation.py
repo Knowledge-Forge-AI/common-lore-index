@@ -209,13 +209,16 @@ def fits_packet_with_reservation(packet: dict[str, Any], budget_bytes: int) -> b
     accepted = False
     try:
         apply_skeleton_compaction(packet, budget_bytes)
-        size = packet_size_with_reservation(packet)
+        # The reserved projection retains the request and scope dictionaries.
+        # Echo compaction leaves all downstream reservation facts unchanged.
+        reserved = _project_reserved_packet(packet)
+        size = _measure_projected_packet_bytes(reserved)
         if size > budget_bytes and request.get("target_echo") is not None:
             _withhold_target_echo(packet)
-            size = packet_size_with_reservation(packet)
+            size = _measure_projected_packet_bytes(reserved)
         if size > budget_bytes and scope.get("scope_echo_complete") is not False:
             _withhold_scope_echo(packet)
-            size = packet_size_with_reservation(packet)
+            size = _measure_projected_packet_bytes(reserved)
         accepted = size <= budget_bytes
         return accepted
     finally:

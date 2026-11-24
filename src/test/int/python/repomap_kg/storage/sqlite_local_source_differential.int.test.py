@@ -350,6 +350,8 @@ def _prove(tmp_path: Path, database: Any) -> None:
     assert alpha.link_references > 0 and alpha.enclosure_references > 0, alpha
     assert alpha.latest_source_run_id is None and alpha.latest_acquired_at is not None, alpha
     assert alpha.policy_status == "allowed"
+    beta_summary = crafted.store.source_summary(SourceSummaryQuery("crafted-beta"))
+    assert beta_summary.latest_acquired_at is None and beta_summary.latest_source_run_id is None
     alpha_runs = crafted.store.source_runs(SourceRunsQuery("crafted-alpha", 25))
     assert [(run.acquired_at is None, run.artifact_byte_length, run.http_status) for run in alpha_runs] == [
         (False, 1000, 201), (True, None, None)], alpha_runs
