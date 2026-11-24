@@ -32,6 +32,22 @@ def _framed_digest(prefix: str, part_count: int, parts: Iterable[str | bytes]) -
     return f"{prefix}:{hasher.hexdigest()}"
 
 
+def _prepare_frame(
+    prefix: str, initial_parts: Sequence[str | bytes], suffix_count: int,
+) -> Callable[[Sequence[str | bytes]], str]:
+    """Prepare the fixed framing fields shared by a group of related digests."""
+    part_count = len(initial_parts) + suffix_count
+    initial = hashlib.sha256(f"cloe-frame-v1:{part_count}:".encode("ascii"))
+    _append_frame_parts(initial.update, initial_parts)
+
+    def extend(parts: Sequence[str | bytes]) -> str:
+        hasher = initial.copy()
+        _append_frame_parts(hasher.update, parts)
+        return f"{prefix}:{hasher.hexdigest()}"
+
+    return extend
+
+
 def _iter_lf_lines_keepends(text: str) -> Iterator[str]:
     start = 0
     while start < len(text):
@@ -234,8 +250,7 @@ def _iter_file_chunks(
         return
 
     identity_fields = (policy_digest, publication_bundle_id, file_projection_id, binding_id, source_relative_path)
-    id_prefix = hashlib.sha256(f"cloe-frame-v1:{len(identity_fields) + 6}:".encode("ascii"))
-    _append_frame_parts(id_prefix.update, identity_fields)
+    digest_chunk = _prepare_frame("projchunk1", identity_fields, 6)
     byte_cursor = 0
     specs: Iterable[tuple[int, int, str | bytes, bool]]
     if isinstance(normalized_text, bytes):
@@ -251,12 +266,7 @@ def _iter_file_chunks(
         byte_cursor = byte_end
         line_cnt = 1 if is_cont else (end_line - start_line + 1)
         c_digest = frame_digest("sha256", (piece_bytes,))
-        chunk_hasher = id_prefix.copy()
-        _append_frame_parts(
-            chunk_hasher.update,
-            (str(chunk_index), str(start_line), str(end_line), str(byte_start), str(byte_end), c_digest),
-        )
-        c_id = f"projchunk1:{chunk_hasher.hexdigest()}"
+        c_id = digest_chunk((str(chunk_index), str(start_line), str(end_line), str(byte_start), str(byte_end), c_digest))
         yield ProjectedChunk(
             chunk_id=c_id,
             file_projection_id=file_projection_id,

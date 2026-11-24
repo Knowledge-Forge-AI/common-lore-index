@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from common_lore_index.storage import lexical_population
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.ops.lexical_service import (
@@ -56,7 +57,21 @@ def _metric(payload: dict[str, Any], name: str) -> dict[str, Any]:
     return next(item for item in payload["metrics"] if item["name"] == name)
 
 
-def test_published_lexical_report_matches_real_plan_aggregates(tmp_path: Path) -> None:
+def test_published_lexical_report_matches_real_plan_aggregates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    measure = lexical_population._utf8_param_bytes
+    unicode_rows = 0
+
+    def check_bytes(params: tuple[Any, ...]) -> int:
+        nonlocal unicode_rows
+        actual = measure(params)
+        strings = tuple(value for value in params if isinstance(value, str))
+        assert actual == sum(len(value.encode("utf-8", errors="surrogatepass")) for value in strings)
+        unicode_rows += any(not value.isascii() for value in strings)
+        return actual
+
+    monkeypatch.setattr(lexical_population, "_utf8_param_bytes", check_bytes)
     with temporary_postgres() as postgres:
         config, home, password = _setup(tmp_path, postgres, aliases=("core", "companion"))
         observer = ResourceObserver()
@@ -66,6 +81,7 @@ def test_published_lexical_report_matches_real_plan_aggregates(tmp_path: Path) -
             authorize_body=True, resource_observer=observer,
         )
         assert outcome.result == "published" and outcome.plan is not None
+        assert unicode_rows > 0
         payload = observer.report().to_payload()
         assert payload["operation"] == "lexical_build"
         assert payload["backend"] == "postgresql"

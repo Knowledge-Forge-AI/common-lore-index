@@ -194,3 +194,12 @@ def test_validated_bytes_reuse_exact_text_chunk_boundaries_and_digests() -> None
                 )) == build_file_chunks(
                     normalized_text=text, max_chunk_lines=max_lines, max_chunk_bytes=max_bytes, **common,
                 )
+
+
+def test_prepared_frame_keeps_prefix_immutable_across_suffixes() -> None:
+    from common_lore_index.retrieval.projection_chunks import _prepare_frame
+
+    fixed = ("policy", "graph:", b"\x00")
+    finish = _prepare_frame("fixture", fixed, 2)
+    for suffix in (("1", "λ"), ("1", "🚀"), ("1", "λ")):
+        assert finish(suffix) == frame_digest("fixture", (*fixed, *suffix))

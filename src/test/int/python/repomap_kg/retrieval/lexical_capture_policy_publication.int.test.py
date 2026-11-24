@@ -102,6 +102,12 @@ def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion
         for document in plan.documents:
             assert "".join(chunk.chunk_text for chunk in document.chunks) == document.normalized_text
             assert all(len(chunk.chunk_text.encode("utf-8")) == chunk.byte_length for chunk in document.chunks)
+            for chunk in document.chunks:
+                assert chunk.chunk_id == frame_digest("pchunk1", (
+                    plan.policy_digest, plan.publication_bundle_id, chunk.binding_id, str(chunk.binding_revision),
+                    chunk.snapshot_id, chunk.source_relative_path, str(chunk.chunk_ordinal), str(chunk.start_line),
+                    str(chunk.end_line), chunk.chunk_sha256,
+                ))
         captures_checked += 1
         return plan
 

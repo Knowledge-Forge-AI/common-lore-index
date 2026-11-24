@@ -224,7 +224,22 @@ def _omission_params(plan: LexicalCapturePlan, omission: Any, ordinal: int) -> t
 
 
 def _utf8_param_bytes(params: Sequence[Any]) -> int:
-    return sum(byte_length(v, errors="surrogatepass") for v in params if isinstance(v, str))
+    total = 0
+    non_ascii: dict[str, int] | None = None
+    for value in params:
+        if not isinstance(value, str):
+            continue
+        if value.isascii():
+            total += len(value)
+            continue
+        if non_ascii is None:
+            non_ascii = {}
+        size = non_ascii.get(value)
+        if size is None:
+            size = byte_length(value, errors="surrogatepass")
+            non_ascii[value] = size
+        total += size
+    return total
 
 
 def _executemany_bounded(

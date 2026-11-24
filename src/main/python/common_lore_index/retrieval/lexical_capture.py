@@ -18,7 +18,7 @@ from common_lore_index.retrieval.lexical_policy import (
     LEXICAL_ALIAS_SPLIT_VERSION, LEXICAL_NORMALIZATION_FLAGS, LEXICAL_RANKING_FUNCTION,
     LEXICAL_REPRESENTATION_VERSION, LEXICAL_TEXT_CONFIG, LexicalGenerationPolicy, PublicationFence,
 )
-from common_lore_index.retrieval.projection_chunks import _framed_digest, _iter_file_chunks, frame_digest
+from common_lore_index.retrieval.projection_chunks import _framed_digest, _iter_file_chunks, _prepare_frame, frame_digest
 from common_lore_index.retrieval.projection_policy import (
     ExclusionReason, ResolvedBindingPolicy, SUPPORTED_TEXT_FORMATS,
     _is_email_role_or_path, _is_feed_role_or_path, evaluate_artifact_pre_open,
@@ -205,12 +205,11 @@ def _build_captured_chunks(
         max_chunk_lines=max_chunk_lines, max_chunk_bytes=max_chunk_bytes,
     )
     captured: list[LexicalCapturedChunk] = []
+    identity_fields = (policy_digest, publication_bundle_id, binding_id, str(binding_revision), snapshot_id, source_relative_path)
+    chunk_id = _prepare_frame("pchunk1", identity_fields, 4)
     for c in raw_chunks:
         start_line, end_line = (0, 0) if c.is_empty_file_record else (max(1, c.start_line), max(1, c.start_line, c.end_line))
-        pchunk_id = frame_digest("pchunk1", (
-            policy_digest, publication_bundle_id, binding_id, str(binding_revision), snapshot_id,
-            source_relative_path, str(c.chunk_index), str(start_line), str(end_line), c.content_digest,
-        ))
+        pchunk_id = chunk_id((str(c.chunk_index), str(start_line), str(end_line), c.content_digest))
         captured.append(LexicalCapturedChunk(
             pchunk_id, binding_id, binding_revision, snapshot_id, source_relative_path,
             c.chunk_index, start_line, end_line, c.byte_length, c.content_digest,
