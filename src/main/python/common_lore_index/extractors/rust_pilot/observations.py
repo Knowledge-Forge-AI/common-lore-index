@@ -65,7 +65,11 @@ class LineIndex:
 
     def __init__(self, data: bytes) -> None:
         # Pilot inputs are capped at one MiB, well within the supported hosts' unsigned int.
-        self.breaks = array("I", (index for index, byte in enumerate(data) if byte == 0x0A))
+        if data.count(b"\n") > len(data) // 4:
+            offsets = (index for index, byte in enumerate(data) if byte == 0x0A)
+        else:
+            offsets = (match.start() for match in re.finditer(rb"\n", data))
+        self.breaks = array("I", offsets)
         self.count = len(self.breaks) + (1 if data and not data.endswith(b"\n") else 0)
 
     def line(self, offset: int) -> int:
@@ -138,6 +142,12 @@ class _Tree:
         self.items = decoded.items
         self.names: dict[int, tuple[str, bool]] = {}
         self.rejected: dict[int, int] = {}
+        self.usable: dict[int, bool] = {}
+        self.depth: dict[int, int] = {}
+        self.pointers: dict[int, str] = {}
+        self.ambiguity: dict[int, int] = {}
+        self.pointer_bytes = 0
+        children: dict[int, list[ItemFrame]] = defaultdict(list)
         for item in self.items:
             owner = item.parent
             if owner >= 0 and (owner in self.rejected):
@@ -149,15 +159,6 @@ class _Tree:
                 continue
             if named is not None:
                 self.names[item.index] = named
-        self.usable: dict[int, bool] = {}
-        self.depth: dict[int, int] = {}
-        self.pointers: dict[int, str] = {}
-        self.ambiguity: dict[int, int] = {}
-        self.pointer_bytes = 0
-        children: dict[int, list[ItemFrame]] = defaultdict(list)
-        for item in self.items:
-            if item.index in self.rejected:
-                continue
             parent_ok = item.parent < 0 or self.usable[item.parent]
             self.usable[item.index] = parent_ok and not item.flags & FLAG_HAS_ERROR
             self.depth[item.index] = 1 if item.parent < 0 else self.depth[item.parent] + 1
@@ -266,7 +267,6 @@ def build_file_observations(path: str, data: bytes, decoded: DecodedParse, *, in
     """Build the file's ``rust.parse``, ``rust.item`` and ``rust.unsupported`` observations."""
 
     tree = _Tree(data, decoded)
-    index = LineIndex(data)
     macro_scopes = {frame.scope for frame in decoded.unsupported if frame.tag == 1}
     accepted = [item for item in decoded.items if item.index not in tree.rejected]
     usable_items = sum(1 for item in accepted if tree.usable[item.index])
@@ -284,6 +284,9 @@ def build_file_observations(path: str, data: bytes, decoded: DecodedParse, *, in
     emitted = _append_bounded(result, parse_observation(
         path, data, input_sha256=input_sha256, outcome=outcome, completeness=completeness,
         item_list=item_list, build_script_name=build_script_name, counts=counts), 0)
+    if not accepted and not groups:
+        return FileObservations(outcome, completeness, achieved, item_list, usable_items, tuple(result))
+    index = LineIndex(data)
     for item in accepted:
         name = tree.names.get(item.index, (None, False))[0]
         emitted = _append_bounded(result, _observation(

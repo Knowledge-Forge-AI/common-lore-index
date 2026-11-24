@@ -111,6 +111,10 @@ def test_frozen_fixture_round_trips_through_the_installed_helper(runtime: Path, 
     keys = ("namespace", "pointer", "name", "item_kind", "start_line", "end_line", "start_byte", "end_byte",
             "usable_scope")
     assert items == [tuple(item[key] for key in keys) for item in gold["items"]]
+    for item in (row for row in built.observations if row.kind == "rust.item"):
+        first, last = item.metadata["start_byte"], item.metadata["end_byte"]
+        assert item.start_line == 1 + data.count(b"\n", 0, first)
+        assert item.end_line == 1 + data.count(b"\n", 0, max(first, last - 1))
     unsupported = [(u.metadata["scope_pointer"], u.metadata["construct"], u.metadata["count"])
                    for u in built.observations if u.kind == "rust.unsupported"]
     assert unsupported == [(u["scope_pointer"], u["construct"], u["count"]) for u in gold["unsupported"]]
