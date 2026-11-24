@@ -19,11 +19,14 @@ from common_lore_index.retrieval.context_work import WorkLedger
 from common_lore_index.server.context_read_sqlite import SqliteContextReadAdapter
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
+from common_lore_index.storage.node_locations import NodeLocationsQuery
 from common_lore_index.storage.sqlite_local import context_expansion_queries
 from common_lore_index.storage.sqlite_local.context_expansion_queries import (
     batch_neighbor_direct_locations,
     read_sqlite_context_publication,
 )
+from common_lore_index.storage.sqlite_local.navigation_queries import navigation_candidates
+from common_lore_index.storage.sqlite_local.node_location_queries import node_locations
 from repomap_test_support.context_assertions import (
     assert_valid_context_packet,
     build_postgres_context_fixture,
@@ -357,6 +360,7 @@ def test_neighbor_read_rechecks_persisted_vectors_with_a_valid_accepted_override
             snapshot_vector=publication.snapshot_vector,
         )
         assert healthy["evidence_scanned"] > 1
+        assert not healthy["incomplete"]
         with monkeypatch.context() as small_window:
             small_window.setattr(context_expansion_queries, "EVIDENCE_SCAN_LIMIT", 1)
             prefix = batch_neighbor_direct_locations(
@@ -367,6 +371,22 @@ def test_neighbor_read_rechecks_persisted_vectors_with_a_valid_accepted_override
         assert sum(len(rows) for rows in prefix["locations_by_node_id"].values()) == 1
         for node_id, rows in prefix["locations_by_node_id"].items():
             assert rows == healthy["locations_by_node_id"][node_id][:len(rows)]
+        _mutate_sqlite_metadata(db_path, _missing_revision)
+        ambiguous = json.dumps([[BINDING_CORE, 1, SNAP_CORE], [BINDING_CORE, 2, SNAP_CORE]])
+        with connection:
+            connection.execute("UPDATE runs SET snapshot_vector_json = ? WHERE id = ?", (ambiguous, publication.run_id))
+        result = node_locations(connection, NodeLocationsQuery(canonical_key=CANONICAL_KEY))
+        (location,) = result["locations"]
+        assert location["source"]["binding_id"] == BINDING_CORE
+        assert "binding_revision" not in location["source"]
+        query = NavigationSearchQuery(query="InvoiceService", source_binding_id=BINDING_CORE)
+
+        def verified(item: Mapping[str, Any]) -> bool:
+            return item["source_identity_status"] == "verified_vector"
+
+        assert navigation_candidates(connection, query, admits_location=verified)["nodes"] == []
+        with pytest.raises(StorageSchemaError, match="malformed context snapshot vector"):
+            navigation_candidates(connection, query, admits_location=verified, context_identity=True)
         with connection:
             connection.execute("UPDATE runs SET snapshot_vector_json = '[]' WHERE id = ?", (publication.run_id,))
         with pytest.raises(StorageSchemaError, match="malformed context snapshot vector"):

@@ -78,7 +78,8 @@ def node_locations(
     )) as runs:
         selected = runs.fetchone()
     location_run_id = selected[0] if selected else None
-    read_context_vector = _context_vector_reader() if context_identity else _cached_vector_reader(json.loads)
+    read_context_vector = (_context_vector_reader() if context_identity
+                           else _cached_vector_reader(_parse_advisory_snapshot_vector))
     locations, has_more = _evidence_window(
         connection, node[0], location_run_id, query, historical=False, role_sql=role_sql,
         accepted_run_id=accepted.run_id, read_context_vector=read_context_vector,
@@ -190,6 +191,15 @@ def _parse_context_snapshot_vector(raw_vector: Any) -> list[list[Any]]:
     return [list(item) for item in parsed]
 
 
+def _parse_advisory_snapshot_vector(raw_vector: str) -> list[list[Any]]:
+    """Read a legacy vector without inferring identity from invalid persisted fields."""
+    try:
+        parsed = parse_snapshot_vector(json.loads(raw_vector))
+    except ContextIdentityError:
+        return []
+    return [list(item) for item in parsed]
+
+
 ContextVectorReader = Callable[[Any], list[list[Any]]]
 
 
@@ -209,23 +219,24 @@ def _context_vector_reader() -> ContextVectorReader:
 
 def _location(row: sqlite3.Row | tuple[Any, ...], accepted_run_id: int, *,
               read_context_vector: ContextVectorReader | None) -> dict[str, Any]:
-    vector = json.loads(row[18]) if read_context_vector is None else read_context_vector(row[18])
+    vector = (_parse_advisory_snapshot_vector(row[18])
+              if read_context_vector is None else read_context_vector(row[18]))
     return _location_from_vector(row, accepted_run_id, vector)
 
 
 def _location_from_vector(
     row: sqlite3.Row | tuple[Any, ...], accepted_run_id: int, vector: list[Any],
+    *, include_vector_status: bool = False,
 ) -> dict[str, Any]:
     metadata = json.loads(row[13])
     source = {key: metadata[key] for key in (
         "binding_id", "binding_alias", "binding_revision", "snapshot_id", "source_relative_path"
     ) if isinstance(metadata, dict) and type(metadata.get(key)) in {str, int}}
-    # A revision may exist only in the publication vector. Match an explicit
-    # canonical-evidence binding; never attribute an arbitrary vector entry to a node.
-    for binding, revision, snapshot in vector:
-        if binding == source.get("binding_id") and snapshot == source.get("snapshot_id"):
-            source.setdefault("binding_revision", revision)
-            break
+    # Readers normalize and check binding uniqueness before sharing a vector.
+    binding_id, snapshot_id = source.get("binding_id"), source.get("snapshot_id")
+    revision = next((rev for bid, rev, sid in vector if bid == binding_id and sid == snapshot_id), None)
+    if revision is not None:
+        source.setdefault("binding_revision", revision)
     result = {
         "basis": "canonical_node_evidence", "evidence_key": row[0], "link_kind": row[1],
         "run_id": row[2], "publication_relation": _relation(row[2], accepted_run_id),
@@ -241,4 +252,9 @@ def _location_from_vector(
     }
     if len(row) > 19:
         result["evidence_role"] = row[19]
+    if include_vector_status:
+        result["source_identity_status"] = (
+            "verified_vector" if revision is not None and source["binding_revision"] == revision
+            else "unbound_or_conflicting_vector"
+        )
     return result

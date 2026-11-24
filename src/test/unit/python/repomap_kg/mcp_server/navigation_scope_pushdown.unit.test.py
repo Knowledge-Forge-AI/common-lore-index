@@ -249,7 +249,7 @@ def test_many_binding_vector_is_decoded_and_charged_once_per_run(tmp_path, monke
         vector += [[f"binding-generic-{i:04d}", 1, f"snapshot-generic-{i:04d}-λ"] for i in range(512)]
         encoded = json.dumps(vector, ensure_ascii=False)
         connection.execute("UPDATE runs SET snapshot_vector_json=? WHERE id=2", (encoded,))
-    with patch.object(queries.json, "loads", wraps=json.loads) as loads:
+    with patch.object(json, "loads", wraps=json.loads) as loads:
         result = call(source_path_prefix="docs/zzz")
     assert sum(item.args[0] == encoded for item in loads.call_args_list) == 1
     assert result["status"] == "ok" and member_keys(result) == list(fixture_oracle(database, BINDING, "docs/zzz"))
@@ -356,3 +356,39 @@ def test_missing_navigation_destination_takes_precedence_over_conflict(monkeypat
         True, None, "missing_withheld_or_unbound_identity",
     )
     assert calls == [base, conflicting, missing]
+
+
+def test_direct_location_infers_revision_only_for_unambiguous_binding():
+    def location(vector, **metadata):
+        row = ("evidence:fixture", "observed", 7, 0, "hash:fixture", "fixture", "core", "notes.md", 1, 2,
+               "fixture", "1", "high", json.dumps(metadata), None, None, None, None, json.dumps(vector), "direct")
+        return queries._direct_location(row, 7)
+
+    metadata = {"binding_id": "fixture-binding", "snapshot_id": "snapshot-a"}
+    matching = ["fixture-binding", 3, "snapshot-a"]
+    unrelated = ["fixture-unrelated", 1, "snapshot-c"]
+    direct = location([unrelated, matching], **metadata)
+    assert direct["source"]["binding_revision"] == 3
+    assert direct["source_identity_status"] == "verified_vector"
+    mapped = [{"binding_id": "fixture-binding", "revision": 3, "snapshot_id": "snapshot-a"}]
+    assert location(mapped, **metadata) == direct
+    assert location([matching], binding_revision=3, **metadata) == direct
+    for value in (4, "3"):
+        preserved = location([matching], binding_revision=value, **metadata)
+        assert preserved["source"]["binding_revision"] == value
+        assert preserved["source_identity_status"] == "unbound_or_conflicting_vector"
+
+    for conflicting in (
+        [matching, ["fixture-binding", 4, "snapshot-a"]],
+        [matching, ["fixture-binding", 4, "snapshot-b"]],
+        [["fixture-binding", True, "snapshot-a"]],
+        [matching, unrelated, ["fixture-unrelated", 2, "snapshot-d"]],
+        [matching, ["", True, None]], [matching, "bad"], None,
+    ):
+        unverified = location(conflicting, **metadata)
+        assert "binding_revision" not in unverified["source"]
+        assert unverified["source_identity_status"] == "unbound_or_conflicting_vector"
+
+    unbound = location([[None, 1, None]])
+    assert unbound["source"] == {}
+    assert unbound["source_identity_status"] == "unbound_or_conflicting_vector"

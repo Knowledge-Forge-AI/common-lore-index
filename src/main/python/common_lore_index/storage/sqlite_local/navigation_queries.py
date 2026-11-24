@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sqlite3
-import json
 from collections.abc import Callable
 from contextlib import closing
 from dataclasses import dataclass, field
@@ -20,6 +19,7 @@ from common_lore_index.storage.sqlite_local.node_location_queries import (
     _EVIDENCE_ROLE_SQL,
     _context_vector_reader,
     _location_from_vector,
+    _parse_advisory_snapshot_vector,
 )
 from common_lore_index.storage.sqlite_local.schema import SqliteFunctionReadConnection, accepted_identity
 
@@ -105,19 +105,12 @@ def _direct_location(row: Any, accepted_run_id: int, *,
         persisted = read_context_vector(row[18])
         vector = persisted if snapshot_vector is None else snapshot_vector
     else:
-        vector = json.loads(row[18]) if snapshot_vector is None else snapshot_vector
+        vector = _parse_advisory_snapshot_vector(row[18]) if snapshot_vector is None else snapshot_vector
     return _direct_location_from_vector(row, accepted_run_id, vector)
 
 
 def _direct_location_from_vector(row: Any, accepted_run_id: int, vector: list[Any]) -> dict[str, Any]:
-    location = _location_from_vector(row, accepted_run_id, vector)
-    source = location["source"]
-    vector = [item for item in vector if item[0] == source.get("binding_id")]
-    location["source_identity_status"] = (
-        "verified_vector" if len(vector) == 1 and vector[0][1] == source.get("binding_revision")
-        and vector[0][2] == source.get("snapshot_id") else "unbound_or_conflicting_vector"
-    )
-    return location
+    return _location_from_vector(row, accepted_run_id, vector, include_vector_status=True)
 
 
 @dataclass
@@ -143,7 +136,7 @@ class _Admission:
         self.decoded_bytes += size
         try:
             if run_id not in self.vectors:
-                self.vectors[run_id] = (self.read_context_vector or json.loads)(vector)
+                self.vectors[run_id] = (self.read_context_vector or _parse_advisory_snapshot_vector)(vector)
                 self.vector_bytes += vector_size
             # Identity fields only; no payload/source or corpus-sized collection.
             row = (None, "observed", 0, None, None, None, None, path, None, None,
@@ -251,7 +244,7 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
             if row[20] is None:
                 break
             if read_context_vector is None and row[2] not in vectors:
-                vectors[row[2]] = json.loads(row[18])
+                vectors[row[2]] = _parse_advisory_snapshot_vector(row[18])
             location = _direct_location(
                 row[:20], accepted.run_id, snapshot_vector=vectors.get(row[2]),
                 read_context_vector=read_context_vector,
