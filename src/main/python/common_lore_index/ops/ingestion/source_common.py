@@ -105,6 +105,14 @@ def _source_manifest_id(
     *,
     records: Mapping[str, Iterable[dict[str, Any]]] | None = None,
 ) -> str:
+    return _source_manifest_digest(payload, records=records)[:16]
+
+
+def _source_manifest_digest(
+    payload: Mapping[str, Any],
+    *,
+    records: Mapping[str, Iterable[dict[str, Any]]] | None = None,
+) -> str:
     """Hash the existing canonical bytes without joining the encoded document."""
     digest = hashlib.sha256()
     fragments = (
@@ -112,7 +120,7 @@ def _source_manifest_id(
     )
     for fragment in fragments:
         digest.update(fragment.encode("utf-8"))
-    return digest.hexdigest()[:16]
+    return digest.hexdigest()
 
 
 def _source_manifest_fragments(

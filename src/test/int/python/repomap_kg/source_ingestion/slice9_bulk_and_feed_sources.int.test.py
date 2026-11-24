@@ -37,9 +37,16 @@ class Slice9BulkAndFeedSourcesIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             cfg = root / "bulk.toml"
-            cfg.write_bytes((bulk_fixture_root() / "mixed_corpus" / "bulk.toml").read_bytes())
+            fixture = (bulk_fixture_root() / "mixed_corpus" / "bulk.toml").read_text(encoding="utf-8")
+            cfg.write_text(
+                fixture.replace("include_hidden = false", "include_hidden = true")
+                .replace("follow_symlinks = false", "follow_symlinks = true"), encoding="utf-8",
+            )
             (root / "notes.md").write_text("# Fixture\n", encoding="utf-8")
+            (root / "cycle").symlink_to(root, target_is_directory=True)
             first = import_bulk_source(cfg, root_path=root)
+            self.assertEqual({file.relative_path: file.reason for file in first.manifest.skipped_files}
+                             .get("cycle"), "symlink_excluded")
             output = first.output_path / "observations.jsonl"
             expected = output.read_bytes()
             invalid = replace(first.raw_observations[-1], metadata={"invalid": object()})
@@ -52,6 +59,7 @@ class Slice9BulkAndFeedSourcesIntegrationTests(unittest.TestCase):
             self.assertEqual(list(first.output_path.glob(".bulk-output-*")), [])
             repeated = import_bulk_source(cfg, root_path=root)
             self.assertEqual(repeated.output_path, first.output_path)
+            self.assertEqual(repeated.manifest.manifest_sha256, first.manifest.manifest_sha256)
             self.assertEqual(output.read_bytes(), expected)
 
     def test_bulk_readback_captures_aliased_payload_once_and_keeps_route_order(self) -> None:

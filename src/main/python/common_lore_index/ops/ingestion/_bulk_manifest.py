@@ -11,6 +11,7 @@ from pathlib import Path
 
 from common_lore_index.ops.ingestion._bulk_helpers import (
     DEFAULT_EXCLUDED_DIRECTORIES,
+    _bulk_output_root,
     classify_bulk_route,
     depth,
     deterministic_run_id,
@@ -75,6 +76,14 @@ def build_bulk_manifest(
     source_root = config.resolved_root
     repo_root = Path(repository_root).resolve() if repository_root else source_root
     ensure_contained(source_root, repo_root, "root_path")
+    output_root = _bulk_output_root(repo_root)
+    resolved_output_root = output_root.resolve()
+
+    def is_bulk_output(path: Path, canonical: Path) -> bool:
+        return path.is_relative_to(output_root) or canonical.is_relative_to(resolved_output_root)
+
+    if is_bulk_output(source_root, source_root):
+        raise BulkPolicyError("bulk source root overlaps managed bulk outputs")
     included: list[BulkIncludedFile] = []
     skipped: list[BulkSkippedFile] = []
     total_seen: int = 0
@@ -103,55 +112,73 @@ def build_bulk_manifest(
         if reason.startswith("max_") and reason not in limit_reasons:
             limit_reasons.append(reason)
 
-    def add_skipped_tree(path: Path, reason: str) -> None:
+    def add_skipped_tree(path: Path, canonical: Path, reason: str) -> None:
         nonlocal total_seen
         if path.is_file() or path.is_symlink():
-            byte_count = safe_size(path)
+            byte_count = safe_size(path, follow_symlinks=False)
             add_skipped(path, reason, byte_count=byte_count)
             total_seen += byte_count or 0
             return
         for directory, dirnames, filenames in os.walk(path, followlinks=False):
-            dirnames[:] = sorted(dirnames)
+            current = Path(directory)
+            canonical_dir = canonical / current.relative_to(path)
+            dirnames[:] = sorted(name for name in dirnames if not is_bulk_output(current / name, canonical_dir / name))
             for filename in sorted(filenames):
-                file_path = Path(directory) / filename
-                byte_count = safe_size(file_path)
+                file_path = current / filename
+                if is_bulk_output(file_path, canonical_dir / filename):
+                    continue
+                byte_count = safe_size(file_path, follow_symlinks=False)
                 total_seen += byte_count or 0
                 add_skipped(file_path, reason, byte_count=byte_count)
 
-    def children(directory: Path) -> Iterator[Path]:
-        return iter(sorted(directory.iterdir(), key=lambda item: relative_to_root(source_root, item)))
+    def children(directory: Path, canonical: Path) -> Iterator[tuple[Path, Path]]:
+        for entry in sorted(directory.iterdir(), key=lambda item: relative_to_root(source_root, item)):
+            yield entry, canonical / entry.name
 
     def walk() -> None:
         nonlocal total_seen
-        pending = [children(source_root)]
+        pending = [(children(source_root, source_root), source_root)]
+        ancestor_dirs = {source_root}
         while pending:
-            entry = next(pending[-1], None)
-            if entry is None:
+            siblings, parent = pending[-1]
+            planned = next(siblings, None)
+            if planned is None:
                 pending.pop()
+                ancestor_dirs.remove(parent)
+                continue
+            entry, canonical = planned
+            if is_bulk_output(entry, canonical):
                 continue
             relative = relative_to_root(source_root, entry)
             if is_excluded_path(relative, config.excluded_paths):
-                add_skipped_tree(entry, "excluded_path")
+                add_skipped_tree(entry, canonical, "excluded_path")
                 continue
             if entry.name.startswith(".") and not config.include_hidden:
-                add_skipped_tree(entry, "hidden_excluded")
+                add_skipped_tree(entry, canonical, "hidden_excluded")
                 continue
             if entry.is_symlink():
                 if not config.follow_symlinks:
-                    add_skipped(entry, "symlink_excluded", byte_count=safe_size(entry))
+                    add_skipped(entry, "symlink_excluded", byte_count=safe_size(entry, follow_symlinks=False))
                     continue
                 target = entry.resolve()
-                if not is_contained(target, source_root):
-                    add_skipped(entry, "symlink_escapes_root", byte_count=safe_size(entry))
+                if is_bulk_output(entry, target):
                     continue
+                if not is_contained(target, source_root):
+                    add_skipped(entry, "symlink_escapes_root", byte_count=safe_size(entry, follow_symlinks=False))
+                    continue
+                canonical = target
             if entry.is_dir():
+                if canonical in ancestor_dirs:
+                    add_skipped(entry, "symlink_excluded", byte_count=safe_size(entry, follow_symlinks=False))
+                    continue
                 if entry.name in excluded_directories:
-                    add_skipped_tree(entry, "excluded_directory")
+                    add_skipped_tree(entry, canonical, "excluded_directory")
                     continue
                 if depth(relative) > config.max_depth:
-                    add_skipped_tree(entry, "max_depth_exceeded")
+                    add_skipped_tree(entry, canonical, "max_depth_exceeded")
                     continue
-                pending.append(children(entry))
+                ancestor_dirs.add(canonical)
+                pending.append((children(entry, canonical), canonical))
                 continue
             try:
                 info = entry.stat()
@@ -193,6 +220,8 @@ def build_bulk_manifest(
             return
         try:
             source = path.resolve(strict=True)
+            if is_bulk_output(path, source):
+                raise ValueError("unexpected bulk output alias")
             ensure_contained(source, source_root, "bulk file")
             if not config.follow_symlinks and source != path:
                 raise ValueError("unexpected bulk file alias")

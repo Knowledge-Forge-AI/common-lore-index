@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -20,6 +21,34 @@ from common_lore_index.extractors.languages.python import PythonModuleIndex
 
 
 class BulkIngestionUnitTests(unittest.TestCase):
+    def test_bulk_plan_ignores_its_own_outputs_and_contained_directory_aliases(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "corpus"
+            state = corpus / ".repomap"
+            state.mkdir(parents=True)
+            (corpus / "fixture.md").write_text("# Fixture\n", encoding="utf-8")
+            (corpus / "state-alias").symlink_to(state, target_is_directory=True)
+            (corpus / "cycle").symlink_to(corpus, target_is_directory=True)
+            template = load_bulk_source_config(self.write_bulk_config(root / "bulk.toml", corpus))
+            configs = tuple(
+                replace(template, include_hidden=hidden, follow_symlinks=follow)
+                for hidden in (False, True) for follow in (False, True)
+            )
+            before = [build_bulk_plan(config, repository_root=corpus).to_jsonable() for config in configs]
+            generated = state / "bulk-runs" / "source" / "run"
+            generated.mkdir(parents=True)
+            (generated / "manifest.json").write_text('{"plan":"fixture"}\n', encoding="utf-8")
+            (generated / "observations.jsonl").write_text('{"kind":"file"}\n', encoding="utf-8")
+            after = [build_bulk_plan(config, repository_root=corpus).to_jsonable() for config in configs]
+            self.assertEqual(before, after)
+            for manifest in after:
+                self.assertEqual([item["relative_path"] for item in manifest["included_files"]], ["fixture.md"])
+                self.assertIn("cycle", {item["relative_path"] for item in manifest["skipped_files"]
+                                        if item["reason"] == "symlink_excluded"})
+            with self.assertRaisesRegex(BulkPolicyError, "bulk source root overlaps managed bulk outputs"):
+                build_bulk_plan(replace(template, resolved_root=generated.resolve()), repository_root=corpus)
+
     def test_bulk_jsonl_keeps_the_prior_file_on_a_row_encoding_failure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -180,6 +209,10 @@ class BulkIngestionUnitTests(unittest.TestCase):
         self.assertTrue(first.no_external_fetch)
         self.assertTrue(first.no_source_mutation)
         self.assertTrue(first.no_archive_decompression)
+        canonical = first.to_jsonable()
+        canonical["manifest_sha256"] = ""
+        raw = json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        self.assertEqual(first.manifest_sha256, hashlib.sha256(raw).hexdigest())
 
     def test_bulk_plan_applies_depth_file_and_total_byte_limits(self):
         with tempfile.TemporaryDirectory() as tmpdir:

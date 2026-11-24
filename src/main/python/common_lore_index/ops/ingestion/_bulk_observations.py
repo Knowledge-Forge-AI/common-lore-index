@@ -8,6 +8,7 @@ from pathlib import Path
 
 from common_lore_index.observations.raw import RawObservation
 from common_lore_index.ops.ingestion._bulk_helpers import (
+    _bulk_output_root,
     ensure_contained,
     write_json,
     write_jsonl,
@@ -55,9 +56,7 @@ def write_bulk_run_files(
     repository_root: Path,
 ) -> Path:
     output_path = (
-        repository_root
-        / ".repomap"
-        / "bulk-runs"
+        _bulk_output_root(repository_root)
         / manifest.source_id
         / manifest.bulk_run_id
     ).resolve()
