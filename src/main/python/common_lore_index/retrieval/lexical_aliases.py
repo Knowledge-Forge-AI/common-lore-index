@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import re
 
 ALIAS_SPLIT_RULE_VERSION = "identifier-path-split-v1"
@@ -12,6 +13,7 @@ _RAW_CANDIDATE_RE = re.compile(r"[A-Za-z0-9_./:-]+")
 _DELIMITER_SPLIT_RE = re.compile(r"[/_.:-]+")
 _CAMEL_BOUNDARY_1_RE = re.compile(r"([a-z0-9])([A-Z])")
 _ACRONYM_BOUNDARY_RE = re.compile(r"(?<=[A-Z])(?=[A-Z][a-z])")
+_ALNUM_BOUNDARY_RE = re.compile(r"(?<=[a-z])(?=[0-9])|(?<=[0-9])(?=[a-z])")
 _CLEAN_ALNUM_RE = re.compile(r"^[a-z0-9]{2,64}$")
 
 
@@ -24,21 +26,17 @@ def _split_camel_case(segment: str) -> list[str]:
     expanded: list[str] = []
     for part in base:
         expanded.append(part)
-        for sub in re.split(r"(?<=[a-z])(?=[0-9])|(?<=[0-9])(?=[a-z])", part):
+        if part.isalpha() or part.isdigit():
+            continue
+        for sub in _ALNUM_BOUNDARY_RE.split(part):
             if sub and sub != part:
                 expanded.append(sub)
     return expanded
 
 
-def extract_alias_tokens(
-    *,
-    source_relative_path: str,
-    chunk_text: str,
-) -> tuple[str, ...]:
-    """Extract deduplicated lowercase alphanumeric alias tokens under identifier-path-split-v1."""
-    seen: set[str] = set()
-    ordered: list[str] = []
-    seen_candidates: set[str] = set()
+def _append_alias_tokens(
+    text_input: str, seen: set[str], ordered: list[str], seen_candidates: set[str],
+) -> None:
 
     def _add(token: str) -> None:
         lower = token.lower()
@@ -50,22 +48,47 @@ def extract_alias_tokens(
             seen.add(lower)
             ordered.append(lower)
 
-    for text_input in (source_relative_path, chunk_text):
-        for match in _RAW_CANDIDATE_RE.finditer(text_input):
-            raw = match.group(0)
-            if raw in seen_candidates:
-                continue
-            seen_candidates.add(raw)
-            parts = [p for p in _DELIMITER_SPLIT_RE.split(raw) if p]
-            for part in parts:
-                _add(part)
-                for sub in _split_camel_case(part):
-                    _add(sub)
-            if len(parts) > 1:
-                joined = "".join(parts)
-                _add(joined)
+    for match in _RAW_CANDIDATE_RE.finditer(text_input):
+        raw = match.group(0)
+        if raw in seen_candidates:
+            continue
+        seen_candidates.add(raw)
+        parts = [p for p in _DELIMITER_SPLIT_RE.split(raw) if p]
+        for part in parts:
+            _add(part)
+            for sub in _split_camel_case(part):
+                _add(sub)
+        if len(parts) > 1:
+            joined = "".join(parts)
+            _add(joined)
 
+
+def extract_alias_tokens(
+    *,
+    source_relative_path: str,
+    chunk_text: str,
+) -> tuple[str, ...]:
+    """Extract deduplicated lowercase alphanumeric alias tokens under identifier-path-split-v1."""
+    seen: set[str] = set()
+    ordered: list[str] = []
+    candidates: set[str] = set()
+    _append_alias_tokens(source_relative_path, seen, ordered, candidates)
+    _append_alias_tokens(chunk_text, seen, ordered, candidates)
     return tuple(ordered)
+
+
+def _prepare_alias_text(source_relative_path: str) -> Callable[[str], str]:
+    """Reuse the path token prefix for each independent chunk of a file."""
+    ordered: list[str] = []
+    path_candidates: set[str] = set()
+    _append_alias_tokens(source_relative_path, set(), ordered, path_candidates)
+
+    def format_chunk(chunk_text: str) -> str:
+        tokens = list(ordered)
+        _append_alias_tokens(chunk_text, set(ordered), tokens, set(path_candidates))
+        return " ".join(tokens)
+
+    return format_chunk
 
 
 def build_alias_tokens_text(

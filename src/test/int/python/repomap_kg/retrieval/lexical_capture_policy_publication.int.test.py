@@ -18,6 +18,7 @@ from common_lore_index.ops.lexical_service import (
     query_graph_lexical_generation,
 )
 from common_lore_index.ops.resource_view import ResourceObserver
+from common_lore_index.retrieval.lexical_aliases import build_alias_tokens_text
 from common_lore_index.retrieval.lexical_capture import LexicalCapturePlan
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
 from common_lore_index.retrieval.projection_chunks import frame_digest
@@ -103,6 +104,9 @@ def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion
             assert "".join(chunk.chunk_text for chunk in document.chunks) == document.normalized_text
             assert all(len(chunk.chunk_text.encode("utf-8")) == chunk.byte_length for chunk in document.chunks)
             for chunk in document.chunks:
+                assert chunk.alias_tokens_text == build_alias_tokens_text(
+                    source_relative_path=chunk.source_relative_path, chunk_text=chunk.chunk_text,
+                )
                 assert chunk.chunk_id == frame_digest("pchunk1", (
                     plan.policy_digest, plan.publication_bundle_id, chunk.binding_id, str(chunk.binding_revision),
                     chunk.snapshot_id, chunk.source_relative_path, str(chunk.chunk_ordinal), str(chunk.start_line),

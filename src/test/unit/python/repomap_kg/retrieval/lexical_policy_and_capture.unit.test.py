@@ -12,6 +12,7 @@ from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingCo
 from common_lore_index.ops.config_records import OpsGraphConfig
 from common_lore_index.retrieval.lexical_aliases import (
     ALIAS_SPLIT_RULE_VERSION,
+    _prepare_alias_text,
     build_alias_tokens_text,
     extract_alias_tokens,
     split_identifier_and_path_tokens,
@@ -301,3 +302,14 @@ def test_alias_long_acronyms_and_duplicate_terms_preserve_first_seen_order() -> 
         "pkgxmlhttprequest2py", "read", "value42", "value", "42", "readvalue42",
         "co", "op", "coop",
     )
+
+
+def test_prepared_path_aliases_do_not_retain_tokens_from_previous_chunks() -> None:
+    path = "pkg/HTTP2Field.py"
+    prepare = _prepare_alias_text(path)
+    first = "HTTP2Field Value42 HTTP2Field"
+    second = "Other9000 foo_bar"
+    assert prepare(first) == build_alias_tokens_text(source_relative_path=path, chunk_text=first)
+    assert prepare(second) == build_alias_tokens_text(source_relative_path=path, chunk_text=second)
+    assert "value42" not in prepare(second).split()
+    assert prepare(first) == build_alias_tokens_text(source_relative_path=path, chunk_text=first)

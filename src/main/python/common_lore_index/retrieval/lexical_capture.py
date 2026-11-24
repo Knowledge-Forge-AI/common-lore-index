@@ -13,7 +13,7 @@ from common_lore_index.artifacts import FileSystemArtifactStore, ManifestArtifac
 from common_lore_index.artifacts._store_common import ArtifactErrorCode, ArtifactIntegrityError
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
 from common_lore_index.ops.config_records import OpsGraphConfig
-from common_lore_index.retrieval.lexical_aliases import build_alias_tokens_text
+from common_lore_index.retrieval.lexical_aliases import _prepare_alias_text
 from common_lore_index.retrieval.lexical_policy import (
     LEXICAL_ALIAS_SPLIT_VERSION, LEXICAL_NORMALIZATION_FLAGS, LEXICAL_RANKING_FUNCTION,
     LEXICAL_REPRESENTATION_VERSION, LEXICAL_TEXT_CONFIG, LexicalGenerationPolicy, PublicationFence,
@@ -207,13 +207,14 @@ def _build_captured_chunks(
     captured: list[LexicalCapturedChunk] = []
     identity_fields = (policy_digest, publication_bundle_id, binding_id, str(binding_revision), snapshot_id, source_relative_path)
     chunk_id = _prepare_frame("pchunk1", identity_fields, 4)
+    alias_text = _prepare_alias_text(source_relative_path)
     for c in raw_chunks:
         start_line, end_line = (0, 0) if c.is_empty_file_record else (max(1, c.start_line), max(1, c.start_line, c.end_line))
         pchunk_id = chunk_id((str(c.chunk_index), str(start_line), str(end_line), c.content_digest))
         captured.append(LexicalCapturedChunk(
             pchunk_id, binding_id, binding_revision, snapshot_id, source_relative_path,
             c.chunk_index, start_line, end_line, c.byte_length, c.content_digest,
-            c.content_text, build_alias_tokens_text(source_relative_path=source_relative_path, chunk_text=c.content_text), artifact_privacy,
+            c.content_text, alias_text(c.content_text), artifact_privacy,
         ))
     return tuple(captured)
 
