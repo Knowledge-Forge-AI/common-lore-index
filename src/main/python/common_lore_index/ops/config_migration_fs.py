@@ -1,6 +1,8 @@
 """Descriptor-relative POSIX filesystem authority for CLOE configuration migration (ADR 0114)."""
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 import errno
 import os
 import stat
@@ -164,6 +166,19 @@ class Home:
 
     def names(self, *, in_op: bool = False) -> list[str]:
         return sorted(os.listdir(self.dir(in_op)))
+
+    @contextmanager
+    def scan_names(self, *, in_op: bool = False) -> Iterator[Iterator[str]]:
+        """Enumerate names relative to the held directory without retaining them."""
+        if os.scandir not in os.supports_fd:
+            yield iter(self.names(in_op=in_op))
+            return
+        with os.scandir(self.dir(in_op)) as entries:
+            yield (entry.name for entry in entries)
+
+    def operation_directory_listed(self) -> bool:
+        with self.scan_names() as names:
+            return OPERATION_DIRECTORY in names
 
     def open_operation_directory(self) -> None:
         """Bind the existing operation directory after proving private same-device custody."""

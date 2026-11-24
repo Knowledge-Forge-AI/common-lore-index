@@ -210,7 +210,7 @@ def _inspect_existing(home: Home, outcome: _Outcome) -> str:
 
 
 def _apply(home: Home, outcome: _Outcome) -> str:
-    if OPERATION_DIRECTORY in home.names():
+    if home.operation_directory_listed():
         return _inspect_existing(home, outcome)
     prepared = _preflight(home)
     if prepared is None:
@@ -297,7 +297,7 @@ def _recover(home: Home, outcome: _Outcome, journal: dict[str, Any] | None, lock
     if lock is None:
         # Only an empty directory this call created and bound can be removed without the lock.
         removed = home.op is not None and home.remove_operation_directory()
-        outcome.retained = not removed and OPERATION_DIRECTORY in home.names()
+        outcome.retained = not removed and home.operation_directory_listed()
         return "refused"
     try:
         if publishing and journal is not None:
@@ -312,7 +312,7 @@ def _recover(home: Home, outcome: _Outcome, journal: dict[str, Any] | None, lock
 
 
 def _rollback(home: Home, outcome: _Outcome) -> str:
-    if OPERATION_DIRECTORY not in home.names():
+    if not home.operation_directory_listed():
         return "nothing-to-recover"
     journal, lock = _bind_operation(home, outcome, exclusive=not outcome.dry_run)
     try:
@@ -342,7 +342,7 @@ def _rollback(home: Home, outcome: _Outcome) -> str:
 
 
 def _finalize(home: Home, outcome: _Outcome) -> str:
-    if OPERATION_DIRECTORY not in home.names():
+    if not home.operation_directory_listed():
         return "nothing-to-finalize"
     journal, lock = _bind_operation(home, outcome, exclusive=not outcome.dry_run)
     try:

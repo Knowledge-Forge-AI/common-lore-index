@@ -351,3 +351,33 @@ def test_recovery_refuses_same_bytes_from_a_replaced_admitted_target(
     assert outcome["writes_performed"] == 0
     assert target.stat().st_ino != admitted.st_ino and target.read_bytes() == identical
     assert journal.read_bytes() == journal_before
+
+
+def test_recovery_streams_namespace_proofs_and_reports_first_foreign_configuration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    home = make_home(tmp_path, "postgresql")
+    assert apply_cloe_config_migration(home, confirmed=True)["result"] == "applied"
+    for index in range(128):
+        (home / f"unrelated-{index:03d}.txt").touch()
+
+    def refuse_list(_bound: Home, *, in_op: bool = False) -> list[str]:
+        raise AssertionError(f"recovery materialized names (operation directory={in_op})")
+
+    monkeypatch.setattr(Home, "names", refuse_list)
+    unsafe = home / OPERATION / "foreign.tmp"
+    unsafe.touch()
+    result = rollback_cloe_config_migration(home, confirmed=True)
+    assert result["refusals"] == [{"code": "config-migration-residue-unsafe", "file": ""}]
+    assert result["writes_performed"] == 0 and unsafe.exists()
+    unsafe.unlink()
+    for name in ("20-zeta.cloe.toml", "10-alpha.cloe.toml"):
+        (home / name).write_text(OVERLAY)
+    result = finalize_cloe_config_migration(home, confirmed=True)
+    assert result["refusals"] == [{"code": "config-migration-drift", "file": "10-alpha.cloe.toml"}]
+    assert result["writes_performed"] == 0
+    for name in ("20-zeta.cloe.toml", "10-alpha.cloe.toml"):
+        (home / name).unlink()
+    done = rollback_cloe_config_migration(home, confirmed=True)
+    assert done["result"] == "rolled-back" and not (home / OPERATION).exists()
+    assert len(tuple(home.glob("unrelated-*.txt"))) == 128

@@ -27,9 +27,10 @@ def _allowed_names(journal: dict[str, Any] | None) -> frozenset[str]:
 def load_operation(home: Home) -> dict[str, Any] | None:
     """Read the bound operation directory's journal and refuse any name it does not own."""
     journal = read_journal(home)
-    unknown = sorted(set(home.names(in_op=True)) - _allowed_names(journal))
-    if unknown:
-        raise MigrationRefusal("config-migration-residue-unsafe")
+    allowed = _allowed_names(journal)
+    with home.scan_names(in_op=True) as names:
+        if any(name not in allowed for name in names):
+            raise MigrationRefusal("config-migration-residue-unsafe")
     return journal
 
 
@@ -110,11 +111,14 @@ def check_foreign(home: Home, journal: dict[str, Any]) -> None:
     """Refuse configuration-family names, or portable aliases, that the journal does not own."""
     owned = {entry[key] for entry in journal["entries"] for key in ("source", "target")}
     portable = {portable_config_name(name) for name in owned}
-    for name in home.names():
-        if name == OPERATION_DIRECTORY or name in owned:
-            continue
-        if classify_config_filename(name) is not None or portable_config_name(name) in portable:
-            raise MigrationRefusal("config-migration-drift", name)
+    with home.scan_names() as names:
+        foreign = min((
+            name for name in names
+            if name != OPERATION_DIRECTORY and name not in owned
+            and (classify_config_filename(name) is not None or portable_config_name(name) in portable)
+        ), default=None)
+    if foreign is not None:
+        raise MigrationRefusal("config-migration-drift", foreign)
 
 
 def _prove(home: Home, journal: dict[str, Any], expected: str, key: str, order: list[str]) -> None:
@@ -200,9 +204,14 @@ def roll_back(home: Home, journal: dict[str, Any]) -> None:
 
 def teardown(home: Home, journal: dict[str, Any] | None) -> bool:
     """Remove only proved operation-owned names, lock last; return True if the directory was retained."""
-    names = home.names(in_op=True)
-    if set(names) - _allowed_names(journal):
-        raise MigrationRefusal("config-migration-residue-unsafe")
+    allowed = _allowed_names(journal)
+    names = []
+    with home.scan_names(in_op=True) as entries:
+        for name in entries:
+            if name not in allowed:
+                raise MigrationRefusal("config-migration-residue-unsafe")
+            names.append(name)
+    names.sort()
     last = [name for name in (JOURNAL_NAME, LOCK_NAME) if name in names]
     ordered = [name for name in names if name not in last] + last
     infos = {name: home.lstat(name, in_op=True) for name in ordered}

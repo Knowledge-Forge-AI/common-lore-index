@@ -383,6 +383,8 @@ def test_bounded_read_and_write_failure_preserve_owned_configuration(
         return actual_read(fd, count)
 
     try:
+        with home.scan_names() as names:
+            assert set(names) == {"00-project.rp.toml", "90-machine.rpl.toml", "large.txt"}
         with monkeypatch.context() as local:
             local.setattr(config_migration_fs.os, "read", track_read)
             actual, _ = home.read("large.txt", config_migration_fs.MAX_FILE_BYTES, "fixture", in_op=False)
