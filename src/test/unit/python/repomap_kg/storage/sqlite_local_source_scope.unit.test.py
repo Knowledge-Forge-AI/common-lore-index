@@ -198,14 +198,15 @@ def test_latest_source_aggregates_all_rows_of_the_tied_winner(published_feeds: P
         sample = source_queries.source_observations(connection)[0]
     recent = "2026-02-01T00:00:00Z"
     rows = [
-        replace(sample, source_id="z", acquired_at=recent, artifact_path="z"),
-        replace(sample, source_id="a", acquired_at=recent, artifact_path="b"),
-        replace(sample, source_id="a", acquired_at=None, artifact_path="y"),
+        replace(sample, source_id="z", acquired_at=recent, artifact_path="z", source_run_id="r9"),
+        replace(sample, source_id="a", acquired_at=recent, artifact_path="b", source_type=None, source_run_id="r3"),
+        replace(sample, source_id="a", acquired_at=None, artifact_path="y", source_type="feed.rss", source_run_id="r2"),
         replace(sample, source_id="0", acquired_at=None, artifact_path="z"),
     ]
     selected = source_feed_queries._latest_source(rows)
     assert selected is not None
     assert (selected["source_id"], selected["acquired_at"], selected["artifact_path"]) == ("a", recent, "y")
+    assert (selected["source_type"], selected["source_run_id"]) == ("feed.rss", "r3")
     assert source_feed_queries._latest_source(list(reversed(rows))) == selected
 
 

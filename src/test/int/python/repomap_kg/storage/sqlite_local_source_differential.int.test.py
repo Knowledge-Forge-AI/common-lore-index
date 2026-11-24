@@ -228,6 +228,8 @@ def _explanations(pair: _Pair, sources: list[str], item_keys: list[str]) -> int:
                 assert payload["references"] == references
             if source_id == ABSENT_SOURCE:
                 assert payload["item"] is None and payload["source"] is None and payload["evidence"] == []
+            elif source_id is not None:
+                assert payload["source"] is not None and payload["source"]["source_id"] == source_id
             explained += payload["item"] is not None and bool(payload["evidence"])
     return explained
 

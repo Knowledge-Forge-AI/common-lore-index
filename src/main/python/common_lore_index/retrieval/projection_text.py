@@ -43,8 +43,12 @@ def _normalized_blocks(raw: bytes) -> Iterator[bytes]:
         start = end
 
 
-def _bounded_normalized_prefix(raw: bytes, limit: int) -> tuple[bytes, int, int]:
-    decoder = None if raw.isascii() else codecs.getincrementaldecoder("utf-8")("strict")
+def _bounded_normalized_prefix(raw: bytes, limit: int, *, has_cr: bool) -> tuple[bytes, int, int]:
+    ascii_source = raw.isascii()
+    if ascii_source and not has_cr:
+        # ASCII without CR is already valid lf-utf8-v1, including outside the prefix.
+        return raw[:limit], len(raw), raw.count(b"\n") + int(not raw.endswith(b"\n"))
+    decoder = None if ascii_source else codecs.getincrementaldecoder("utf-8")("strict")
     prefix = bytearray()
     size = breaks = 0
     ends_in_lf = False
@@ -96,7 +100,7 @@ def normalize_and_bound_text(
     try:
         if len(raw) > max_projected_bytes:
             projected_bytes, normalized_byte_length, normalized_line_count = _bounded_normalized_prefix(
-                raw, max_projected_bytes,
+                raw, max_projected_bytes, has_cr=had_crlf_or_cr,
             )
             projected_text = projected_bytes.decode("utf-8", errors="strict")
         else:
@@ -109,7 +113,7 @@ def normalize_and_bound_text(
 
     truncated = normalized_byte_length > max_projected_bytes
     projected_byte_length = len(projected_bytes)
-    projected_line_count = _count_lf_lines(projected_text)
+    projected_line_count = _count_lf_lines(projected_text) if truncated else normalized_line_count
     rep_digest = frame_digest(
         "sha256",
         (REPRESENTATION_VERSION, projected_bytes),

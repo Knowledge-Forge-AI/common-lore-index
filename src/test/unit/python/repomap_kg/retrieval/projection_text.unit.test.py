@@ -119,3 +119,16 @@ def test_invalid_tail_has_same_precedence_under_bounded_decode(monkeypatch):
     assert normalize_and_bound_text(b"readable\r\n\xff\x00", max_projected_bytes=2) == (
         None, ExclusionReason.NUL_BYTE_REJECTED,
     )
+
+
+def test_already_normalized_ascii_uses_a_prefix_without_normalizing_blocks(monkeypatch) -> None:
+    def unexpected_blocks(_raw):
+        raise AssertionError("ASCII without CR needs no block normalization")
+
+    monkeypatch.setattr(projection_text, "_normalized_blocks", unexpected_blocks)
+    for raw in (b"first\nsecond\nthird", b"first\nsecond\nthird\n"):
+        result, reason = normalize_and_bound_text(raw, max_projected_bytes=6)
+        assert reason is None and result is not None
+        assert result.normalized_bytes == b"first\n"
+        assert (result.normalized_byte_length, result.normalized_line_count) == (len(raw), 3)
+        assert result.projected_line_count == 1 and result.truncated

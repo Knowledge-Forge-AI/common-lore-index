@@ -145,6 +145,13 @@ def test_published_literal_page_retains_cross_chunk_unicode_start(
     assert projected_evidence
     admitted = {(record.binding_id, record.source_relative_path) for record in projection.projected_files}
     assert projected_evidence == {key: links for key, links in evidence.items() if key in admitted}
+    ascii_file, = (record for record in projection.projected_files
+                   if record.source_relative_path == "generated/truncatable_prose.md")
+    source = (working_copy / "companion" / ascii_file.source_relative_path).read_bytes()
+    assert source.isascii() and b"\r" not in source
+    assert ascii_file.truncated
+    assert (ascii_file.normalized_byte_length, ascii_file.normalized_line_count) == (len(source), source.count(b"\n"))
+    assert b"".join(chunk.content_text.encode("utf-8") for chunk in ascii_file.chunks) == source[:ascii_file.projected_byte_length]
     note, = (item for item in projection.projected_files
              if item.source_relative_path == "generated/long_line_notes.md")
     left, right = note.chunks[1:3]

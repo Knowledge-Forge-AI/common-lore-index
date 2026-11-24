@@ -33,8 +33,6 @@ from common_lore_index.storage.sqlite_local.source_queries import (
     edge_links,
     evidence_ids,
     fanout,
-    max_of,
-    min_of,
     node_links,
     not_fetched,
     source_observations,
@@ -265,14 +263,23 @@ def _latest_source(observations: list[SourceObservation]) -> dict[str, Any] | No
     if best is None:
         return None
     best_id = best.source_id
-    group = [entry for entry in observations if entry.source_id == best_id]
+    source_type, policy_status = best.source_type, best.policy_status
+    provenance = _ItemProvenance()
+    for entry in observations:
+        if entry.source_id != best_id:
+            continue
+        if entry.source_type is not None and (source_type is None or entry.source_type < source_type):
+            source_type = entry.source_type
+        if entry.policy_status is not None and (policy_status is None or entry.policy_status < policy_status):
+            policy_status = entry.policy_status
+        provenance.include(entry)
     return {
         "source_id": best_id,
-        "source_type": min_of(entry.source_type for entry in group),
-        "policy_status": min_of(entry.policy_status for entry in group),
-        "source_run_id": max_of(entry.source_run_id for entry in group),
-        "artifact_id": max_of(entry.artifact_id for entry in group),
-        "artifact_path": max_of(entry.artifact_path for entry in group),
+        "source_type": source_type,
+        "policy_status": policy_status,
+        "source_run_id": provenance.source_run_id,
+        "artifact_id": provenance.artifact_id,
+        "artifact_path": provenance.artifact_path,
         "acquired_at": best.acquired_at,
     }
 
