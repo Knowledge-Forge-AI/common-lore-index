@@ -166,6 +166,7 @@ def run_test_runner(argv: list[str] | None, *, dependencies: RunnerDependencies)
         resource_run: TestResourceRun | None = dependencies.resource_run_type.start(
             layout,
             profile=profile_selection.selected_profile,
+            unit_suite=args.suite == "unit",
             config=hygiene_config,
             operator_attested_exclusive=(
                 profile_selection.operator_attested_exclusive

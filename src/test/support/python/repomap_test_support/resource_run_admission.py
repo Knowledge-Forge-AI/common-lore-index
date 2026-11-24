@@ -29,6 +29,7 @@ def admit_resource_run(
     profile: HygieneProfile = HygieneProfile.ORDINARY,
     config: HygieneConfig | None = None,
     host_signals: HostSignals | None = None,
+    unit_suite: bool = False,
     now_seconds: int | None = None,
     quota_override: tuple[int, int] | None = None,
     operator_attested_exclusive: bool = False,
@@ -58,6 +59,7 @@ def admit_resource_run(
     signals = host_signals or resource_run.collect_host_signals(
         layout.scratch_root,
         profile=profile,
+        unit_suite=unit_suite,
         operator_attested_exclusive=operator_attested_exclusive,
         operator_attested_pressure_degradation=(
             operator_attested_pressure_degradation
@@ -65,7 +67,9 @@ def admit_resource_run(
         campaign_plan_id=campaign_plan_id,
         declared_complete_gates=declared_complete_gates,
     )
-    decision = resource_run.decide_host_admission(profile, effective_config, signals)
+    decision = resource_run.decide_host_admission(
+        profile, effective_config, signals, unit_suite=unit_suite,
+    )
     if not decision.admitted:
         raise resource_run.ResourceRunError(f"{decision.outcome}: {decision.reason}")
     max_active = {
@@ -135,6 +139,7 @@ def admit_resource_run(
             effective_config,
             admission_owner_token,
             quota_override,
+            unit_suite=unit_suite,
         )
         entry = scratch.register_layout()
         stage = "configuration_write"

@@ -28,7 +28,7 @@ python3 tools/run_tests.py \
 ```
 
 `--suite unit` covers source-level behavior, runs directly without Docker, and
-owns hard 85% statement and 85% branch gates (settled in REPOMAP-CI2A-R4D). `--suite int` covers integration and
+owns hard 85% statement and 85% branch gates (settled in REPOMAP-CI2A-R4D). The unit runner skips free-disk reserve checks and still enforces its scratch quotas. `--suite int` covers integration and
 storage behavior only and owns hard 80% statement and branch gates. `--suite
 smoke` is a pass/fail bounded lifecycle. `--suite staging` runs substantial
 smoke first, refusing integration when smoke fails, then both required M/A

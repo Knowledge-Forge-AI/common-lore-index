@@ -1,4 +1,4 @@
-"""Real PostgreSQL lexical pagination and literal-occurrence cap proof."""
+"""Real PostgreSQL lexical and published captured-text pagination proof."""
 
 from __future__ import annotations
 
@@ -13,6 +13,8 @@ from common_lore_index.ops.lexical_service import (
     query_graph_lexical_generation,
 )
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
+from common_lore_index.retrieval.projection_build import build_captured_text_projection
+from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, query_captured_text
 from common_lore_index.retrieval.query_contracts import CapabilityState
 from repomap_test_support.postgres_harness import temporary_postgres
 from repomap_test_support.retrieval_evaluation_fixture import (
@@ -20,9 +22,11 @@ from repomap_test_support.retrieval_evaluation_fixture import (
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
+    write_mixed_v1_sqlite_home,
 )
 from repomap_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
+    publish_and_load_sqlite_corpus,
 )
 
 
@@ -119,3 +123,24 @@ def test_real_literal_pagination_order_and_occurrence_cap(tmp_path: Path) -> Non
         assert capped.hits
         per_file_counts = Counter(hit.locator.source_relative_path for hit in capped.hits)
         assert all(count <= 1 for count in per_file_counts.values())
+
+
+def test_published_literal_page_retains_cross_chunk_unicode_start(tmp_path: Path) -> None:
+    working_copy = materialize_mixed_v1_working_copy(tmp_path / "working-copy")
+    state = publish_and_load_sqlite_corpus(write_mixed_v1_sqlite_home(tmp_path / "home", working_copy))
+    projection = build_captured_text_projection(state.projection_inputs(), state.policy)
+    note, = (item for item in projection.projected_files
+             if item.source_relative_path == "generated/long_line_notes.md")
+    left, right = note.chunks[1:3]
+    needle = left.content_text[-8:] + right.content_text[:8]
+    assert not needle.isascii()
+    text = "".join(chunk.content_text for chunk in note.chunks)
+    start = len(note.chunks[0].content_text) + len(left.content_text) - 8
+    starts = [index for index in range(len(text)) if text.startswith(needle, index)]
+    envelope = query_captured_text(projection, CapturedTextQueryRequest(
+        query=needle, source_path_prefix=note.source_relative_path, offset=starts.index(start), limit=1,
+    ))
+    hit, = envelope.hits
+    assert hit.chunk_id == left.chunk_id
+    assert hit.locator.start_line == left.start_line == 2
+    assert envelope.provenance["total_matches_before_paging"] == len(starts)

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
-from dataclasses import replace
-
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
+from common_lore_index.retrieval.projection_chunks import build_file_chunks
 from common_lore_index.retrieval.projection_policy import ExclusionReason
-from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, query_captured_text
+from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, _find_chunked_matches, query_captured_text
 from common_lore_index.retrieval.query_contracts import CapabilityState
 from repomap_test_support.retrieval_evaluation_query_fixture import (
     build_fixture_projection as _build_fixture_projection,
@@ -118,3 +118,18 @@ def test_direct_projection_rejects_fallback_to_an_unimplemented_mode() -> None:
     ))
     with pytest.raises(ValueError, match="literal_captured_text"):
         request.validate()
+
+
+def test_short_literal_lookahead_keeps_overlapping_starts_across_many_chunks() -> None:
+    text = ("éx\néx\néx") * 18
+    needle = "éx\néx\néx"
+    chunks = build_file_chunks(
+        file_projection_id="fixture", binding_id="binding", source_relative_path="fixture.md",
+        normalized_text=text, artifact_privacy="public-dev", policy_digest="policy",
+        publication_bundle_id="bundle", max_chunk_bytes=4,
+    )
+    expected = [index for index in range(len(text)) if text.startswith(needle, index)]
+    hits, total = _find_chunked_matches(chunks, needle, max_materialize=3, skip_matches=2)
+    assert total == len(expected)
+    assert [hit[2] for hit in hits] == expected[2:5]
+    assert [hit[0] for hit in hits] == [1 + text.count("\n", 0, index) for index in expected[2:5]]

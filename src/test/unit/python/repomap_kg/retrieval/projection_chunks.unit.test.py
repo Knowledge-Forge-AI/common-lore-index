@@ -136,3 +136,28 @@ def test_streaming_chunks_preserve_public_tuple_contents() -> None:
         assert tuple(stream) == build_file_chunks(
             normalized_text=text, max_chunk_lines=3, max_chunk_bytes=16, **options,
         )
+
+
+def test_chunk_identifier_keeps_the_existing_framing_across_byte_splits() -> None:
+    fixed = ("policy", "bundle", "file", "binding", "fixture.md")
+    text = "a\né🚀é\nz"
+    chunks = build_file_chunks(
+        file_projection_id="file", binding_id="binding", source_relative_path="fixture.md",
+        normalized_text=text, artifact_privacy="public-dev", policy_digest="policy",
+        publication_bundle_id="bundle", max_chunk_bytes=4,
+    )
+    assert [chunk.chunk_id for chunk in chunks] == [
+        "projchunk1:83a0f289bab74c149be6c19ee83330d9bad368a83dcb1e4781e7c25402539e57",
+        "projchunk1:0cc80fa30735ba5cc8ccc0907f510fb9a1515031c47deea0674b0cce569f6f3c",
+        "projchunk1:694cc037953fcd53a0aeec0d5675827962631d5ab07506ac1ddbb3941804edb4",
+        "projchunk1:2d989b725c36a81dc5d8a14545b4863e42a670d63408ced3729d37712fc75c22",
+        "projchunk1:e313d8326b39ba0c02bfbe9233d37f16d4949213d8becf6848671d36a8e19b95",
+    ]
+    for chunk in chunks:
+        data = chunk.content_text.encode("utf-8")
+        assert chunk.content_digest == frame_digest("sha256", (data,))
+        coordinates = (
+            str(chunk.chunk_index), str(chunk.start_line), str(chunk.end_line),
+            str(chunk.normalized_byte_start), str(chunk.normalized_byte_end), chunk.content_digest,
+        )
+        assert chunk.chunk_id == frame_digest("projchunk1", (*fixed, *coordinates))

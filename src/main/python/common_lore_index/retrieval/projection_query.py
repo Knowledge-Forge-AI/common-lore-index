@@ -128,11 +128,10 @@ def _matched_line_span(needle: str) -> int:
     return needle.count("\n", 0, end_line_offset)
 
 
-def _match_window(chunks: tuple[ProjectedChunk, ...], index: int, overlap: int) -> str:
-    current = chunks[index].content_text
-    if overlap == 0 or index == len(chunks) - 1:
-        return current
-    parts = [current]
+def _match_window(
+    chunks: tuple[ProjectedChunk, ...], index: int, start: int, overlap: int,
+) -> str:
+    parts = [chunks[index].content_text[start:]]
     for following_index in range(index + 1, len(chunks)):
         tail = chunks[following_index].content_text[:overlap]
         parts.append(tail)
@@ -158,7 +157,8 @@ def _find_chunked_matches(
     line_span = _matched_line_span(needle)
     for index, chunk in enumerate(chunks):
         text = chunk.content_text
-        window = _match_window(chunks, index, overlap)
+        boundary: str | None = None
+        suffix_start = max(0, len(text) - overlap)
         pos = 0
         line = start_line
         line_cursor = 0
@@ -167,9 +167,15 @@ def _find_chunked_matches(
             if page_full and overlap == 0:
                 total_count += text.count(needle, pos)
                 break
+            found = text.find(needle, pos) if boundary is None else -1
+            if found < 0 and overlap and index + 1 < len(chunks):
+                if boundary is None:
+                    boundary = _match_window(chunks, index, suffix_start, overlap)
+                relative = boundary.find(needle, max(0, pos - suffix_start))
+                if relative >= 0:
+                    found = suffix_start + relative
             # A start in the lookahead belongs to its own chunk.
-            found = window.find(needle, pos, len(text) + overlap)
-            if found < 0:
+            if found < 0 or found >= len(text):
                 break
             total_count += 1
             if total_count > skip_matches and not page_full:

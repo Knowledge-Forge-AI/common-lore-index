@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -9,6 +10,7 @@ import pytest
 from repomap_test_support.resource_admission import (
     HostSignals,
     MemoryPressure,
+    collect_host_signals,
     decide_host_admission,
     read_memory_pressure_reading,
 )
@@ -144,3 +146,19 @@ def test_direct_host_admission_enforces_profile_gate_maximum(profile, declared):
 
     assert decision.admitted is False
     assert decision.reason == "complete_gate_count_invalid"
+
+
+def test_unit_suite_admits_without_sampling_free_disk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def refuse_sample(_root: Path) -> None:
+        pytest.fail("unit admission sampled free disk")
+
+    with monkeypatch.context() as patch:
+        patch.setattr("os.statvfs", refuse_sample)
+        signals = collect_host_signals(tmp_path, profile=HygieneProfile.ORDINARY, unit_suite=True)
+    assert signals.free_disk_bytes is None and signals.free_disk_percent is None
+    assert decide_host_admission(
+        HygieneProfile.ORDINARY, HygieneConfig(), signals, unit_suite=True,
+    ).admitted
+    assert decide_host_admission(
+        HygieneProfile.ORDINARY, HygieneConfig(), signals,
+    ).reason == "invalid_host_signals"

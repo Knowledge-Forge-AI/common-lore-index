@@ -76,6 +76,8 @@ class TestResourceRun:
         config: HygieneConfig,
         admission_owner_token: str,
         quota_override: tuple[int, int] | None = None,
+        *,
+        unit_suite: bool = False,
     ) -> None:
         self.layout = layout
         self.ledger = ledger
@@ -83,6 +85,7 @@ class TestResourceRun:
         self.index = index
         self.profile = profile
         self.config = config
+        self._unit_suite = unit_suite
         self.admission_owner_token = admission_owner_token
         self._closed = False
         self._quota_measurement: ScratchMeasurement | None = None
@@ -111,6 +114,7 @@ class TestResourceRun:
         profile: HygieneProfile = HygieneProfile.ORDINARY,
         config: HygieneConfig | None = None,
         host_signals: HostSignals | None = None,
+        unit_suite: bool = False,
         now_seconds: int | None = None,
         quota_override: tuple[int, int] | None = None,
         operator_attested_exclusive: bool = False,
@@ -124,6 +128,7 @@ class TestResourceRun:
             profile=profile,
             config=config,
             host_signals=host_signals,
+            unit_suite=unit_suite,
             now_seconds=now_seconds,
             quota_override=quota_override,
             operator_attested_exclusive=operator_attested_exclusive,
@@ -155,7 +160,7 @@ class TestResourceRun:
         measurement = self._apply_quota(label, measurement)
         from test_sandbox import active_sandbox
 
-        if check_capacity and active_sandbox():
+        if check_capacity and not self._unit_suite and active_sandbox():
             from test_sandbox_capacity import validate_scratch_capacity
 
             validate_scratch_capacity()

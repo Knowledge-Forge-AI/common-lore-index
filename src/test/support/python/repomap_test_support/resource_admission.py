@@ -28,8 +28,8 @@ class MemoryPressure(str, Enum):
 
 @dataclass(frozen=True)
 class HostSignals:
-    free_disk_bytes: int
-    free_disk_percent: int
+    free_disk_bytes: int | None
+    free_disk_percent: int | None
     memory_pressure: MemoryPressure
     docker_responsive: bool | None
     live_mutating_runs: int
@@ -53,6 +53,7 @@ def collect_host_signals(
     scratch_root: Path,
     *,
     profile: HygieneProfile,
+    unit_suite: bool = False,
     live_run_count: Callable[[], int] = lambda: 0,
     operator_attested_exclusive: bool = False,
     operator_attested_pressure_degradation: bool = False,
@@ -61,7 +62,9 @@ def collect_host_signals(
 ) -> HostSignals:
     from test_sandbox import active_sandbox
 
-    if active_sandbox():
+    if unit_suite:
+        free_bytes = free_percent = None
+    elif active_sandbox():
         from test_sandbox_capacity import backing_space, validate_scratch_capacity
 
         free_bytes, free_percent = backing_space()
@@ -157,18 +160,47 @@ def read_docker_responsive() -> bool:
     return result.returncode == 0 and bool(result.stdout.strip())
 
 
+def _disk_refusal(
+    profile: HygieneProfile, config: HygieneConfig, signals: HostSignals,
+) -> AdmissionDecision | None:
+    free_bytes, free_percent = signals.free_disk_bytes, signals.free_disk_percent
+    if (
+        type(free_bytes) is not int
+        or free_bytes < 0
+        or type(free_percent) is not int
+        or not 0 <= free_percent <= 100
+    ):
+        return AdmissionDecision(False, "host_admission_refused", "invalid_host_signals")
+    minimum_free = {
+        HygieneProfile.ORDINARY: config.min_free_disk_bytes,
+        HygieneProfile.INTEGRATION: 40 * GIB,
+        HygieneProfile.BUILD: 60 * GIB,
+        HygieneProfile.EXHAUSTIVE: MIN_FREE_DISK_BYTES,
+        HygieneProfile.HEAVY: 100 * GIB,
+        HygieneProfile.QUALIFICATION: 150 * GIB,
+    }[profile]
+    override = config.profile_free_disk_reserve_bytes
+    if override is not None:
+        if override < MIN_FREE_DISK_BYTES or override < profile.quota[0]:
+            return AdmissionDecision(
+                False, "host_admission_refused", "free_disk_reserve_override_invalid"
+            )
+        minimum_free = override
+    if free_bytes < minimum_free or free_percent < config.min_free_disk_percent:
+        return AdmissionDecision(False, "host_admission_refused", "free_disk_reserve")
+    return None
+
+
 def decide_host_admission(
     profile: HygieneProfile,
     config: HygieneConfig,
     signals: HostSignals,
+    *,
+    unit_suite: bool = False,
 ) -> AdmissionDecision:
     profile = HygieneProfile(profile)
     if (
-        type(signals.free_disk_bytes) is not int
-        or signals.free_disk_bytes < 0
-        or type(signals.free_disk_percent) is not int
-        or not 0 <= signals.free_disk_percent <= 100
-        or not isinstance(signals.memory_pressure, MemoryPressure)
+        not isinstance(signals.memory_pressure, MemoryPressure)
         or not (
             signals.docker_responsive is None
             or type(signals.docker_responsive) is bool
@@ -199,21 +231,9 @@ def decide_host_admission(
         )
     ):
         return AdmissionDecision(False, "host_admission_refused", "invalid_host_signals")
-    minimum_free = {
-        HygieneProfile.ORDINARY: config.min_free_disk_bytes,
-        HygieneProfile.INTEGRATION: 40 * GIB,
-        HygieneProfile.BUILD: 60 * GIB,
-        HygieneProfile.EXHAUSTIVE: MIN_FREE_DISK_BYTES,
-        HygieneProfile.HEAVY: 100 * GIB,
-        HygieneProfile.QUALIFICATION: 150 * GIB,
-    }[profile]
-    override = config.profile_free_disk_reserve_bytes
-    if override is not None:
-        if override < MIN_FREE_DISK_BYTES or override < profile.quota[0]:
-            return AdmissionDecision(
-                False, "host_admission_refused", "free_disk_reserve_override_invalid"
-            )
-        minimum_free = override
+    disk_decision = None if unit_suite else _disk_refusal(profile, config, signals)
+    if disk_decision is not None and disk_decision.reason != "free_disk_reserve":
+        return disk_decision
     maximum_complete_gates = {
         HygieneProfile.ORDINARY: 0,
         HygieneProfile.INTEGRATION: 0,
@@ -226,8 +246,8 @@ def decide_host_admission(
         return AdmissionDecision(
             False, "host_admission_refused", "complete_gate_count_invalid"
         )
-    if signals.free_disk_bytes < minimum_free or signals.free_disk_percent < config.min_free_disk_percent:
-        return AdmissionDecision(False, "host_admission_refused", "free_disk_reserve")
+    if disk_decision is not None:
+        return disk_decision
     degraded: tuple[str, ...] = ()
     if signals.memory_pressure is MemoryPressure.UNAVAILABLE:
         degraded = ("memory_pressure_unavailable",)

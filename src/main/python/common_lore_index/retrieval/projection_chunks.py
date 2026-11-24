@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
 import hashlib
 from typing import Any
@@ -10,17 +10,20 @@ from typing import Any
 from common_lore_index._utf8 import byte_length
 
 
+def _append_frame_parts(update: Callable[[bytes], None], parts: Sequence[str | bytes]) -> None:
+    for part in parts:
+        raw = part.encode("utf-8") if isinstance(part, str) else bytes(part)
+        update(f"{len(raw)}:".encode("ascii"))
+        update(raw)
+        update(b";")
+
+
 def frame_digest(prefix: str, parts: Sequence[str | bytes]) -> str:
     """Compute a length-prefixed SHA-256 digest (`<prefix>:<64hex>`) over ordered parts."""
     if not isinstance(prefix, str) or not prefix.strip():
         raise ValueError("prefix must be a non-empty string")
-    hasher = hashlib.sha256()
-    hasher.update(f"cloe-frame-v1:{len(parts)}:".encode("utf-8"))
-    for part in parts:
-        raw = part.encode("utf-8") if isinstance(part, str) else bytes(part)
-        hasher.update(f"{len(raw)}:".encode("ascii"))
-        hasher.update(raw)
-        hasher.update(b";")
+    hasher = hashlib.sha256(f"cloe-frame-v1:{len(parts)}:".encode("ascii"))
+    _append_frame_parts(hasher.update, parts)
     return f"{prefix}:{hasher.hexdigest()}"
 
 
@@ -35,7 +38,7 @@ def _iter_lf_lines_keepends(text: str) -> Iterator[str]:
         start = end + 1
 
 
-def _split_long_utf8_line(line: str, max_chunk_bytes: int) -> Iterator[str]:
+def _split_long_utf8_line(line: str, max_chunk_bytes: int) -> Iterator[bytes]:
     pending = b""
     block_chars = 8192
     for block_start in range(0, len(line), block_chars):
@@ -45,16 +48,16 @@ def _split_long_utf8_line(line: str, max_chunk_bytes: int) -> Iterator[str]:
             end = start + max_chunk_bytes
             while (encoded[end] & 0xC0) == 0x80:
                 end -= 1
-            yield encoded[start:end].decode("utf-8")
+            yield encoded[start:end]
             start = end
         pending = encoded[start:]
     if pending:
-        yield pending.decode("utf-8")
+        yield pending
 
 
 def _iter_chunk_specs(
     text: str, max_chunk_lines: int, max_chunk_bytes: int,
-) -> Iterator[tuple[int, int, str, bool]]:
+) -> Iterator[tuple[int, int, str | bytes, bool]]:
     buffer: list[str] = []
     buffered_bytes = 0
     start_line = 1
@@ -194,32 +197,26 @@ def _iter_file_chunks(
         )
         return
 
+    identity_fields = (policy_digest, publication_bundle_id, file_projection_id, binding_id, source_relative_path)
+    id_prefix = hashlib.sha256(f"cloe-frame-v1:{len(identity_fields) + 6}:".encode("ascii"))
+    _append_frame_parts(id_prefix.update, identity_fields)
     byte_cursor = 0
     specs = _iter_chunk_specs(normalized_text, max_chunk_lines, max_chunk_bytes)
-    for chunk_index, (start_line, end_line, text_piece, is_cont) in enumerate(specs):
-        piece_bytes = text_piece.encode("utf-8")
+    for chunk_index, (start_line, end_line, piece, is_cont) in enumerate(specs):
+        piece_bytes = piece if isinstance(piece, bytes) else piece.encode("utf-8")
+        text_piece = piece.decode("utf-8") if isinstance(piece, bytes) else piece
         byte_len = len(piece_bytes)
         byte_start = byte_cursor
         byte_end = byte_cursor + byte_len
         byte_cursor = byte_end
         line_cnt = 1 if is_cont else (end_line - start_line + 1)
         c_digest = frame_digest("sha256", (piece_bytes,))
-        c_id = frame_digest(
-            "projchunk1",
-            (
-                policy_digest,
-                publication_bundle_id,
-                file_projection_id,
-                binding_id,
-                source_relative_path,
-                str(chunk_index),
-                str(start_line),
-                str(end_line),
-                str(byte_start),
-                str(byte_end),
-                c_digest,
-            ),
+        chunk_hasher = id_prefix.copy()
+        _append_frame_parts(
+            chunk_hasher.update,
+            (str(chunk_index), str(start_line), str(end_line), str(byte_start), str(byte_end), c_digest),
         )
+        c_id = f"projchunk1:{chunk_hasher.hexdigest()}"
         yield ProjectedChunk(
             chunk_id=c_id,
             file_projection_id=file_projection_id,
