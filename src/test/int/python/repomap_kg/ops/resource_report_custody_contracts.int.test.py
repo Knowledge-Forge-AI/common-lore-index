@@ -130,3 +130,40 @@ def test_session_uses_canonical_config_and_binding_roots_before_private_delivery
         accepted.close()
     assert decode_report(read_report_file(target)) == unfinished_compact_context()
     assert not report_leftovers(reports)
+
+
+def test_session_distinguishes_unresolved_root_from_resolved_missing_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reports = private_directory(tmp_path / "reports")
+    source = tmp_path / "future-source"
+    config = SimpleNamespace(config_home=None, config_path=None, graphs=(
+        SimpleNamespace(root_path_expanded=str(source), effective_source_bindings=()),
+    ))
+    real_resolve = Path.resolve
+
+    def resolve(path: Path, strict: bool = False) -> Path:
+        if path == source:
+            raise FileNotFoundError("synthetic resolution failure")
+        return real_resolve(path, strict=strict)
+
+    target = reports / "report.json"
+    rejected = ResourceReportSession(str(target))
+    try:
+        with monkeypatch.context() as scoped:
+            scoped.setattr(Path, "resolve", resolve)
+            with pytest.raises(ResourceReportRefusal, match="protected_root_unresolvable"):
+                rejected.admit(config)
+        assert not rejected.admitted and not target.exists()
+        assert report_leftovers(reports) == []
+    finally:
+        rejected.close()
+
+    accepted = ResourceReportSession(str(target))
+    try:
+        accepted.admit(config)
+        assert accepted.admitted
+        accepted.deliver(unfinished_compact_context)
+    finally:
+        accepted.close()
+    assert decode_report(read_report_file(target)) == unfinished_compact_context()

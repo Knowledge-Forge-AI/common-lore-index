@@ -31,13 +31,15 @@ from repomap_test_support.source_ingestion_integration import (
 
 class StorageSourceWarcReadbackIntegrationTests(unittest.TestCase):
     def test_warc_payload_extraction_reads_the_admitted_snapshot(self) -> None:
+        from common_lore_index.graph import _discovery_classify
         from common_lore_index.ops.ingestion import _source_warc_manifest as warc
 
         with tempfile.TemporaryDirectory() as directory:
             root = copy_warc_fixture_root(Path(directory)).resolve()
             config = warc.load_warc_source_config(root / "warc_sources" / "allowed-warc.toml")
             manifest = warc.build_warc_manifest(config, root_path=root, clock=fixed_source_clock)
-            original = warc.warc_observations_from_manifest(config, manifest, root_path=root)
+            with patch.object(_discovery_classify, "content_hash", side_effect=AssertionError("payload rehash")):
+                original = warc.warc_observations_from_manifest(config, manifest, root_path=root)
             records = {
                 record.materialized_path: record
                 for record in manifest.records

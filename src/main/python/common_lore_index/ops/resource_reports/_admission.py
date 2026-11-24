@@ -80,18 +80,11 @@ def _forms(path: str | Path) -> tuple[Path, Path]:
     normalized = Path(os.path.abspath(os.path.expanduser(str(path))))
     try:
         canonical = normalized.resolve(strict=False)
-        # Non-strict resolution tolerates loops on newer interpreters; one
-        # metadata-only stat distinguishes a missing root from a looped or
-        # permission-denied one. No directory is listed and no body is read.
-        os.stat(canonical)
-    except FileNotFoundError:
-        return normalized, canonical
-    except OSError as error:
-        if error.errno in _MISSING_ERRNOS:
-            return normalized, canonical
+    except (OSError, RuntimeError, ValueError):
         raise ResourceReportRefusal("protected_root_unresolvable") from None
-    except (RuntimeError, ValueError):
-        raise ResourceReportRefusal("protected_root_unresolvable") from None
+    # A resolved spelling may describe a missing root. The metadata probe
+    # tolerates that absence and still refuses loops or inaccessible roots.
+    _identity(canonical)
     return normalized, canonical
 
 

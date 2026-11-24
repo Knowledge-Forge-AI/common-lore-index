@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -78,3 +79,22 @@ def test_config_file_alias_protects_its_resolved_control_directory(tmp_path: Pat
     reports = private_directory(control / "reports")
     config = SimpleNamespace(config_home=None, config_path=str(alias), graphs=())
     _refused(reports / "report.json", admission.configured_roots(config))
+
+
+@pytest.mark.parametrize("failure", (errno.ENOENT, errno.ENOTDIR, errno.EACCES))
+def test_protected_root_resolution_failures_are_reported_as_refusals(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: int,
+) -> None:
+    root = tmp_path / "configured-root"
+    real_resolve = Path.resolve
+
+    def resolve(path: Path, strict: bool = False) -> Path:
+        if path == root:
+            raise OSError(failure, "synthetic metadata failure")
+        return real_resolve(path, strict=strict)
+
+    monkeypatch.setattr(Path, "resolve", resolve)
+    with pytest.raises(admission.ResourceReportRefusal) as raised:
+        admission.configured_roots(SimpleNamespace(config_home=None, config_path=str(root)))
+    assert raised.value.category == "protected_root_unresolvable"
+    assert str(root) not in str(raised.value)

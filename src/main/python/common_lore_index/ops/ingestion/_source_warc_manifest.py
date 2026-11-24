@@ -222,8 +222,10 @@ def warc_observations_from_manifest(
             snapshot = Path(directory).resolve()
             _capture_warc_payloads(root, snapshot, record_by_materialized_path, config)
             routed_infos = [
-                classify_path(snapshot, snapshot / relative_path)
-                for relative_path in sorted(record_by_materialized_path)
+                classify_path(
+                    snapshot, snapshot / relative_path, captured_content_hash=record.payload_sha256,
+                )
+                for relative_path, record in sorted(record_by_materialized_path.items())
             ]
             module_index = PythonModuleIndex.from_python_paths((), repository_root=snapshot)
             repository_paths = frozenset(file_info.path for file_info in routed_infos)

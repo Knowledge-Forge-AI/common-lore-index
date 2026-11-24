@@ -124,7 +124,9 @@ def classify_path(
     *,
     profile: ProjectProfile | None = None,
     readers: ClassificationReaderHooks | None = None,
+    captured_content_hash: str | None = None,
 ) -> FileInfo:
+    """Classify a path, reusing a digest already verified for a private captured file."""
     repository_root = Path(root).resolve()
     file_path = Path(path).resolve()
     relative_path = file_path.relative_to(repository_root).as_posix()
@@ -150,13 +152,14 @@ def classify_path(
         role = profile.role_for_path(relative_path, role)
         confidence = profile.confidence_for_path(relative_path, confidence)
 
+    digest = captured_content_hash
+    if digest is None:
+        digest = content_hash(file_path) if readers is None else readers.content_hash(file_path)
     return FileInfo(
         path=relative_path,
         language=language,
         role=role,
-        content_hash=(
-            content_hash(file_path) if readers is None else readers.content_hash(file_path)
-        ),
+        content_hash=digest,
         executable=executable,
         generated=generated,
         confidence=confidence,
