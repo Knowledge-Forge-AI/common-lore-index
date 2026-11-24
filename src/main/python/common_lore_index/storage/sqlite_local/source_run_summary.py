@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import TypeVar
+from typing import NamedTuple, TypeVar
 
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.source_rows import SourceRunRecord, source_run_record_from_storage_payload
@@ -35,6 +35,15 @@ class SourceObservation:
     content_type: str | None
     url_summary: str | None
 
+
+
+class SourceFeedProvenance(NamedTuple):
+    """Raw identity and provenance retained while joining feed readback rows."""
+
+    key: tuple[int, int]
+    source_run_id: str | None
+    artifact_id: str | None
+    artifact_path: str | None
 
 
 def _integer(value: str | None, bound: int) -> int | None:

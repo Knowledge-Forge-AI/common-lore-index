@@ -269,11 +269,11 @@ def _check_feed_page_reference_read(pair: _Pair, source_id: str) -> None:
     fetched: set[str] = set()
     hydrated: set[int] = set()
     transferred: set[tuple[int, int]] = set()
-    columns = ("source_canonical_key", "target_canonical_key", "metadata_json", "kind", "display_name")
+    columns = ("id", "source_canonical_key", "target_canonical_key", "metadata_json", "kind", "display_name")
 
     def observe(cursor: sqlite3.Cursor, row: tuple[Any, ...]) -> tuple[Any, ...]:
         if cursor.description and tuple(column[0] for column in cursor.description) == columns:
-            fetched.add(row[0])
+            fetched.add(row[1])
         if cursor.description and cursor.description[0][0] == "canonical_evidence_id":
             hydrated.add(int(row[0]))
         if cursor.description and tuple(column[0] for column in cursor.description) == (

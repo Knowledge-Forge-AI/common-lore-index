@@ -26,12 +26,14 @@ from common_lore_index.storage.sql_core import positive_limit
 from common_lore_index.storage.sqlite_local import raw_payload
 from common_lore_index.storage.sqlite_local.queries import require_accepted_publication
 from common_lore_index.storage.sqlite_local.source_run_summary import (
+    SourceFeedProvenance,
     SourceObservation,
     SourceProfile,
     SourceRunSummary,
 )
 
 Ordered = TypeVar("Ordered", str, int)
+FeedObservation = TypeVar("FeedObservation", SourceObservation, SourceFeedProvenance)
 RawKey = tuple[int, int]
 
 _MARKER = {"marker": '"source_id_configured"'}
@@ -184,11 +186,11 @@ def edge_links(connection: sqlite3.Connection, ids: Iterable[int] | None = None,
 
 
 def fanout(
-    observations: Iterable[SourceObservation],
+    observations: Iterable[FeedObservation],
     evidence: dict[RawKey, list[int]],
     nodes: dict[int, list[_Node]],
     edges: dict[int, list[_Edge]] | None = None,
-) -> Iterator[tuple[SourceObservation, _Node | None, _Edge | None]]:
+) -> Iterator[tuple[FeedObservation, _Node | None, _Edge | None]]:
     """The LEFT JOIN rows: an unmatched observation or evidence row still counts once."""
     for observation in observations:
         evidence_rows: Sequence[int | None] = evidence.get(observation.key) or (None,)

@@ -36,9 +36,8 @@ from common_lore_index.storage.sqlite_local.source_queries import (
     fanout,
     node_links,
     not_fetched,
-    source_observations,
 )
-from common_lore_index.storage.sqlite_local.source_run_summary import _max_present, _min_text
+from common_lore_index.storage.sqlite_local.source_run_summary import SourceFeedProvenance, _max_present, _min_text
 
 CONTENT_POLICY = "full feed bodies are not exposed"
 _REFERENCE_KEY_BATCH = 500
@@ -80,16 +79,20 @@ def _item_references(
     for (version,) in versions:
         for page in batched(ordered_keys, _REFERENCE_KEY_BATCH):
             placeholders = ", ".join("?" for _ in page)
-            for source, target, metadata, target_kind, name in connection.execute(
-                "SELECT edge.source_canonical_key, edge.target_canonical_key, edge.metadata_json, "
+            scope_allowed: dict[int, bool] = {}
+            for edge_id, source, target, metadata, target_kind, name in connection.execute(
+                "SELECT edge.id, edge.source_canonical_key, edge.target_canonical_key, edge.metadata_json, "
                 "target.kind, target.display_name FROM canonical_edges edge "
                 "LEFT JOIN canonical_nodes target ON target.canonical_key = edge.target_canonical_key "
                 "WHERE edge.graph_key_version = ? AND edge.edge_kind = 'references' "
                 f"AND edge.source_canonical_key IN ({placeholders})",
                 (version, *page),
             ):
+                if edge_id not in scope_allowed:
+                    scope = raw_payload.text_at(raw_payload.load(metadata), "scope")
+                    scope_allowed[edge_id] = scope in ("link", "enclosure")
                 links, authors, categories = found.setdefault(source, (set(), set(), set()))
-                if raw_payload.text_at(raw_payload.load(metadata), "scope") in ("link", "enclosure"):
+                if scope_allowed[edge_id]:
                     links.add(target)
                 if target_kind == "feed.author":
                     authors.add(name)
@@ -104,7 +107,7 @@ class _ItemProvenance:
     artifact_id: str | None = None
     artifact_path: str | None = None
 
-    def include(self, observation: SourceObservation) -> None:
+    def include(self, observation: SourceObservation | SourceFeedProvenance) -> None:
         """Apply three independent non-null SQL MAX reductions."""
         self.source_run_id = _max_present(self.source_run_id, observation.source_run_id)
         self.artifact_id = _max_present(self.artifact_id, observation.artifact_id)
@@ -126,12 +129,21 @@ def _feed_item_nodes(
             yield key, raw_payload.load(metadata), linked[(key, node_id)]
 
 
+def _feed_provenance(
+    connection: sqlite3.Connection, source_id: str, source_run_id: str | None,
+) -> list[SourceFeedProvenance]:
+    return [
+        SourceFeedProvenance(row.key, row.source_run_id, row.artifact_id, row.artifact_path)
+        for row in _iter_source_observations(connection, source_id, source_run_id)
+    ]
+
+
 def source_feed_items(
     connection: sqlite3.Connection, *, source_id: str, source_run_id: str | None, limit: int
 ) -> tuple[SourceFeedItemRecord, ...]:
     safe_limit = positive_limit(limit)
     require_accepted_publication(connection)
-    group = source_observations(connection, source_id=source_id, source_run_id=source_run_id)
+    group = _feed_provenance(connection, source_id, source_run_id)
     if not group:
         return ()
     evidence = evidence_ids(connection, (item.key for item in group))
@@ -187,13 +199,13 @@ def source_references(
 ) -> tuple[SourceReferenceRecord, ...]:
     safe_limit = positive_limit(limit)
     require_accepted_publication(connection)
-    group = source_observations(connection, source_id=source_id, source_run_id=source_run_id)
+    group = _feed_provenance(connection, source_id, source_run_id)
     if not group:
         return ()
     evidence = evidence_ids(connection, (item.key for item in group))
     edges = edge_links(connection, (eid for ids in evidence.values() for eid in ids), include_metadata=False)
 
-    def candidates() -> Iterator[tuple[tuple[str, str, str, RawKey, str], SourceObservation, _Edge]]:
+    def candidates() -> Iterator[tuple[tuple[str, str, str, RawKey, str], SourceFeedProvenance, _Edge]]:
         for observation in group:
             for evidence_id in evidence.get(observation.key, []):
                 for edge in edges.get(evidence_id, []):
