@@ -1,6 +1,4 @@
-import lzma
 import unittest
-import zlib
 import zipfile
 from io import BytesIO
 from unittest.mock import patch
@@ -234,7 +232,20 @@ class DocumentsExtractorBoundariesUnitTests(unittest.TestCase):
 
     def test_odf_unreadable_member_returns_a_path_free_parse_diagnostic(self):
         package = odf_package({"content.xml": odt_content()})
-        for error_type in (RuntimeError, NotImplementedError, EOFError, zlib.error, lzma.LZMAError):
+        error_types: list[type[Exception]] = [RuntimeError, NotImplementedError, EOFError]
+        try:
+            import zlib
+        except ImportError:
+            pass
+        else:
+            error_types.append(zlib.error)
+        try:
+            import lzma
+        except ImportError:
+            pass
+        else:
+            error_types.append(lzma.LZMAError)
+        for error_type in error_types:
             with self.subTest(error_type=error_type):
                 with patch.object(zipfile.ZipFile, "read", side_effect=error_type("fixture codec detail")):
                     (failure,) = extract_odf_file_observations("broken.odt", package)

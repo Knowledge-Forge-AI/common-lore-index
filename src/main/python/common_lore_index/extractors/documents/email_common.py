@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass
+from email import policy
 from email.utils import parsedate_to_datetime
 from pathlib import PurePosixPath
 from typing import Any
@@ -71,6 +72,24 @@ class _MessageContext:
     message_parent_key: str | None = None
     mailbox_file_key: str | None = None
     mbox_message_ordinal: int | None = None
+
+
+class _UnreadableMessageHeader(Exception):
+    """A structured mail header could not be decoded."""
+
+
+class _HeaderReadPolicy(policy.EmailPolicy):
+    def header_fetch_parse(self, name: str, value: str) -> str:
+        try:
+            return super().header_fetch_parse(name, value)
+        except MemoryError:
+            raise
+        except Exception:
+            # No product code runs inside the default policy's header decoder.
+            raise _UnreadableMessageHeader from None
+
+
+_HEADER_READ_POLICY = _HeaderReadPolicy()
 
 
 def _urls_in_header(value: str) -> list[str]:

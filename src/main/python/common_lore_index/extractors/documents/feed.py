@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, Iterator
 from xml.etree import ElementTree
 from common_lore_index.extractors.documents.feed_data import (
     _atom_channel_info,
@@ -66,6 +66,7 @@ UNSAFE_PROCESSING_INSTRUCTION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 FEED_ROOT_PATTERN = re.compile(r"<\s*(?:rss|feed)(?:\s|>|/)", re.IGNORECASE)
+JSON_STRUCTURE_PREFIX = re.compile(r"\s*[\[{]")
 
 
 def extract_feed_file_observations(
@@ -73,7 +74,7 @@ def extract_feed_file_observations(
     content: str,
 ) -> tuple[RawObservation, ...]:
     """Extract feed observations from a local RSS, Atom, or JSON Feed artifact."""
-    if _looks_like_feed_xml(content):
+    if JSON_STRUCTURE_PREFIX.match(content) is None and _looks_like_feed_xml(content):
         return _extract_xml_feed(relative_path, content)
     json_payload = _parse_json_feed_payload(content)
     if json_payload is None:
@@ -257,8 +258,7 @@ def _item_observations(
     feed_format: str,
     channel_key: str,
     items: list[dict[str, Any]],
-) -> list[RawObservation]:
-    observations: list[RawObservation] = []
+) -> Iterator[RawObservation]:
     counts: dict[str, int] = {}
     for item in items:
         counts[item["base_item_id"]] = counts.get(item["base_item_id"], 0) + 1
@@ -283,26 +283,16 @@ def _item_observations(
         if duplicate_identity:
             item_metadata["duplicate_identity"] = True
             item_metadata["duplicate_disambiguator"] = f"duplicate-{seen[base_item_id]}"
-        observations.append(
-            _obs(
-                kind="feed.item",
-                source_id=f"{relative_path}#feed-item:{item['ordinal']}",
-                path=relative_path,
-                target=item_key,
-                name=item.get("title") or item_id,
-                confidence="extracted",
-                metadata=item_metadata,
-            )
+        yield _obs(
+            kind="feed.item",
+            source_id=f"{relative_path}#feed-item:{item['ordinal']}",
+            path=relative_path,
+            target=item_key,
+            name=item.get("title") or item_id,
+            confidence="extracted",
+            metadata=item_metadata,
         )
-        observations.extend(
-            _item_reference_observations(
-                relative_path,
-                feed_format,
-                item_key,
-                item,
-            )
-        )
-    return observations
+        yield from _item_reference_observations(relative_path, feed_format, item_key, item)
 
 
 def _item_reference_observations(
@@ -592,7 +582,7 @@ def _obs(
 def _parse_json_feed_payload(content: str) -> dict[str, Any] | None:
     try:
         payload = json.loads(content)
-    except json.JSONDecodeError:
+    except (ValueError, RecursionError):
         return None
     if not isinstance(payload, dict):
         return None

@@ -265,6 +265,10 @@ def _atom_item_data(
     }
 
 
+def _json_array(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
 def _json_item_data(
     relative_path: str,
     channel_key: str,
@@ -287,7 +291,7 @@ def _json_item_data(
         if value:
             links.append({"value": value, "attribute": field})
     enclosures = []
-    for attachment in item.get("attachments", []):
+    for attachment in _json_array(item.get("attachments")):
         if not isinstance(attachment, dict):
             continue
         attachment_url = _text_value(attachment.get("url"))
@@ -301,12 +305,12 @@ def _json_item_data(
                 }
             )
     authors = []
-    for author in item.get("authors", []):
+    for author in _json_array(item.get("authors")):
         if isinstance(author, dict):
             name = _text_value(author.get("name")) or _text_value(author.get("url"))
             if name:
                 authors.append({"name": _safe_label(name)})
-    categories = [_safe_label(tag) for tag in item.get("tags", []) if isinstance(tag, str)]
+    categories = [_safe_label(tag) for tag in _json_array(item.get("tags")) if isinstance(tag, str)]
     content = (
         _text_value(item.get("summary"))
         or _text_value(item.get("content_text"))

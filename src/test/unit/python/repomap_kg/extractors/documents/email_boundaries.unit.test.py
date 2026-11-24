@@ -1,7 +1,11 @@
 import unittest
+from email import policy
+from email.parser import BytesParser
+from unittest.mock import patch
 
 from common_lore_index.extractors.documents.email import (
     MAX_MBOX_BYTES,
+    extract_eml_file_observations,
     extract_mbox_file_observations,
 )
 from common_lore_index.extractors.documents.email_parts import _walk_parts
@@ -95,6 +99,62 @@ class EmailExtractorBoundariesUnitTests(unittest.TestCase):
         self.assertNotIn("attachment body", payload)
         self.assertNotIn("mbox-secret-note.txt", payload)
         self.assertNotIn("fake-mail-token", payload)
+
+    def test_parser_error_summary_does_not_include_parser_payload_text(self):
+        with patch.object(BytesParser, "parsebytes", side_effect=ValueError("fixture-private-detail")):
+            (failure,) = extract_eml_file_observations("message.eml", b"Subject: Fixture\n\n")
+        self.assertEqual(failure.kind, "email.parse_error")
+        self.assertEqual(failure.metadata["error_kind"], "parse-error")
+        self.assertFalse(failure.metadata["recovered"])
+        self.assertNotIn("fixture-private-detail", str(failure.metadata))
+
+    def test_mbox_recovers_when_a_prior_message_header_cannot_decode(self):
+        parse_header = policy.EmailPolicy.header_fetch_parse
+        mailbox = (
+            b"From a@example.invalid Sat Jan  1 00:00:00 2022\n"
+            b"Message-ID: <first@example.invalid>\nSubject: First\n\n"
+            b"From b@example.invalid Sat Jan  1 00:01:00 2022\n"
+            b"Message-ID: <second@example.invalid>\nSubject: Second\n\n"
+        )
+        for error_type in (ValueError, IndexError, TypeError):
+            with self.subTest(error_type=error_type):
+                def read_header(parser, name, value):
+                    if name.lower() == "message-id" and value == "<first@example.invalid>":
+                        raise error_type("fixture-private-detail")
+                    return parse_header(parser, name, value)
+
+                with patch.object(policy.EmailPolicy, "header_fetch_parse", read_header):
+                    observations = extract_mbox_file_observations("fixture.mbox", mailbox)
+                failure, = [item for item in observations if item.kind == "email.parse_error"]
+                self.assertEqual(failure.metadata["error_kind"], "mbox-message-parse-error")
+                self.assertTrue(failure.metadata["recovered"])
+                self.assertNotIn("fixture-private-detail", str(failure.metadata))
+                self.assertEqual(
+                    [item.metadata["mbox_message_ordinal"] for item in observations if item.kind == "email.message"],
+                    [2],
+                )
+
+    def test_mail_parser_and_lazy_decoder_memory_failures_propagate(self):
+        def fail_header(_parser, _name, _value):
+            raise MemoryError("fixture exhausted decoder memory")
+
+        for patch_target in (
+            patch.object(BytesParser, "parsebytes", side_effect=MemoryError("fixture exhausted parser memory")),
+            patch.object(policy.EmailPolicy, "header_fetch_parse", fail_header),
+        ):
+            with patch_target:
+                with self.assertRaisesRegex(MemoryError, "fixture exhausted"):
+                    extract_eml_file_observations("fixture.eml", b"Message-ID: <fixture@example.invalid>\n\n")
+                with self.assertRaisesRegex(MemoryError, "fixture exhausted"):
+                    extract_mbox_file_observations("fixture.mbox", SAMPLE_MBOX)
+
+    def test_application_errors_after_parsing_still_propagate(self):
+        failure = ValueError("fixture internal key failure")
+        with patch("common_lore_index.extractors.documents.email.email_message_key", side_effect=failure):
+            with self.assertRaisesRegex(ValueError, "fixture internal key failure"):
+                extract_eml_file_observations("fixture.eml", b"Subject: Fixture\n\n")
+            with self.assertRaisesRegex(ValueError, "fixture internal key failure"):
+                extract_mbox_file_observations("fixture.mbox", SAMPLE_MBOX)
 
     def test_mbox_reports_limits_and_malformed_archive_diagnostics(self):
         limited = extract_mbox_file_observations(

@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from collections.abc import Iterator
 from itertools import islice
-from email import policy
 from email.parser import BytesParser
 from email.utils import getaddresses
 from typing import Any
@@ -16,6 +15,8 @@ from common_lore_index.extractors.documents.email_common import (
     MAX_MIME_PARTS,
     PARSER,
     SECRET_MARKERS,
+    _HEADER_READ_POLICY,
+    _UnreadableMessageHeader,
     _hash_bytes,
     _hash_text,
     _header_slug,
@@ -101,19 +102,7 @@ def extract_eml_file_observations(
             ),
         )
 
-    try:
-        message = BytesParser(policy=policy.default).parsebytes(content)
-    except Exception as error:  # pragma: no cover - stdlib parser is permissive.
-        return (
-            _parse_error(
-                context,
-                "parse-error",
-                str(error)[:120],
-                recovered=False,
-            ),
-        )
-
-    return _extract_message_observations(context, message)
+    return _parse_message_observations(context, content, "parse-error", recovered=False)
 
 
 def extract_mbox_file_observations(
@@ -219,20 +208,29 @@ def extract_mbox_file_observations(
                 )
             )
             continue
-        try:
-            message = BytesParser(policy=policy.default).parsebytes(content[start:end])
-        except Exception as error:  # pragma: no cover - stdlib parser is permissive.
-            observations.append(
-                _parse_error(
-                    message_context,
-                    "mbox-message-parse-error",
-                    str(error)[:120],
-                    recovered=True,
-                )
-            )
-            continue
-        observations.extend(_extract_message_observations(message_context, message))
+        observations.extend(_parse_message_observations(
+            message_context, content[start:end], "mbox-message-parse-error", recovered=True,
+        ))
     return tuple(observations)
+
+
+def _parse_message_observations(
+    context: _MessageContext, content: bytes, error_kind: str, *, recovered: bool,
+) -> tuple[RawObservation, ...]:
+    try:
+        message = BytesParser(policy=_HEADER_READ_POLICY).parsebytes(content)
+    except MemoryError:
+        raise
+    except Exception:  # Preserve the parser's existing refusal boundary.
+        pass
+    else:
+        try:
+            return _extract_message_observations(context, message)
+        except _UnreadableMessageHeader:
+            pass
+    return (_parse_error(
+        context, error_kind, "Mail parser could not read the message", recovered=recovered,
+    ),)
 
 
 def _extract_message_observations(

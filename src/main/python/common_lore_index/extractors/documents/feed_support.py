@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import PurePosixPath
@@ -201,8 +202,8 @@ def _first_child(parent: ElementTree.Element, name: str) -> ElementTree.Element 
     return None
 
 
-def _children(parent: ElementTree.Element, name: str) -> list[ElementTree.Element]:
-    return [child for child in parent if _local_name(child.tag) == name]
+def _children(parent: ElementTree.Element, name: str) -> Iterator[ElementTree.Element]:
+    return (child for child in parent if _local_name(child.tag) == name)
 
 
 def _child_text(parent: ElementTree.Element, name: str) -> str | None:

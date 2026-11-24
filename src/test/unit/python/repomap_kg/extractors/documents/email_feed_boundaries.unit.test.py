@@ -1,3 +1,4 @@
+import json
 import unittest
 from unittest.mock import patch
 
@@ -109,6 +110,39 @@ class EmailFeedExtractorBoundariesUnitTests(unittest.TestCase):
         # neither
         ch_none = _json_channel_info("feeds/j.json", doc_key, {})
         self.assertEqual(ch_none["identity_source"], "document")
+
+    def test_json_feed_markup_in_items_stays_in_the_json_decoder(self):
+        payload = {
+            "version": "https://jsonfeed.org/version/1.1",
+            "title": "Fixture",
+            "items": [{"id": "one", "content_html": "See <feed /> document"}],
+        }
+        observations = extract_feed_file_observations("fixture.json", json.dumps(payload))
+        self.assertIn("feed.item", {item.kind for item in observations})
+        self.assertTrue(all(item.kind != "feed.parse_error" for item in observations))
+        self.assertEqual(extract_feed_file_observations("ordinary.json", '{"name":"<rss />"}'), ())
+
+    def test_json_feed_decoding_limits_do_not_abort_other_document_routes(self):
+        for error in (ValueError("fixture numeric decoding limit"), RecursionError("fixture depth limit")):
+            with self.subTest(error=type(error)):
+                with patch("common_lore_index.extractors.documents.feed.json.loads", side_effect=error):
+                    self.assertEqual(extract_feed_file_observations("fixture.json", "{}"), ())
+
+    def test_json_feed_ignores_wrong_shapes_in_optional_item_arrays(self):
+        payload = {
+            "version": "https://jsonfeed.org/version/1.1",
+            "title": "Fixture",
+            "items": [
+                {"id": "same", "title": "One", "attachments": None, "authors": 3, "tags": "phantom"},
+                {"id": "same", "title": "Two", "tags": ["retained"], "authors": [{"name": "Ada"}]},
+            ],
+        }
+        observations = extract_feed_file_observations("fixture.json", json.dumps(payload))
+        items = [item for item in observations if item.kind == "feed.item"]
+        self.assertEqual([item.name for item in items], ["One", "Two"])
+        self.assertEqual([item.metadata["duplicate_disambiguator"] for item in items], ["duplicate-1", "duplicate-2"])
+        self.assertEqual([item.name for item in observations if item.kind == "feed.category"], ["retained"])
+        self.assertEqual([item.name for item in observations if item.kind == "feed.author"], ["Ada"])
 
     def test_feed_support_reference_and_summary_boundaries(self):
         self.assertIn("missing-target", _reference_target("feeds/feed.xml", "  "))

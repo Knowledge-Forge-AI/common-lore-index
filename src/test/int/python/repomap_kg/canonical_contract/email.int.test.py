@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 
 from common_lore_index.canonicalization import canonicalize_observations
@@ -322,6 +323,15 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
         self.assertNotIn("MBOX contract body", serialized)
         self.assertNotIn("contract-secret-note.txt", serialized)
         self.assertNotIn("fake-mail-token", serialized)
+
+    def test_mail_parser_failure_is_safe_to_canonicalize(self):
+        with patch("email.parser.BytesParser.parsebytes", side_effect=ValueError("fixture private detail")):
+            (failure,) = extract_eml_file_observations("diagnostic.eml", b"Subject: Fixture\n\n")
+        self.assertEqual(failure.kind, "email.parse_error")
+        self.assertNotIn("fixture private detail", str(failure.metadata))
+        result = canonicalize_observations((failure,))
+        self.assertTrue(result.ok)
+        self.assertEqual(result.to_dict()["summary"]["nodes"], 0)
 
     def test_email_canonicalization_diagnostic_contracts(self):
         message_hash = "a" * 64

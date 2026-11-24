@@ -126,11 +126,11 @@
         "path": "src/main/python/common_lore_index/extractors/documents/css_support.py"
       },
       {
-        "line_count": 617,
+        "line_count": 615,
         "path": "src/main/python/common_lore_index/extractors/documents/email.py"
       },
       {
-        "line_count": 617,
+        "line_count": 607,
         "path": "src/main/python/common_lore_index/extractors/documents/feed.py"
       },
       {
