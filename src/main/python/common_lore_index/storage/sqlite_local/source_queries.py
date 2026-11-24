@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections import Counter
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from contextlib import closing
 from heapq import heappush, heapreplace, nlargest
 from itertools import batched
@@ -68,17 +68,18 @@ def _iter_source_observations(connection: sqlite3.Connection, source_id: str | N
     )) as rows:
         for run_id, ordinal, kind, text in rows:
             payload = raw_payload.load(text)
-            configured_id = raw_payload.meta(payload, "source_id_configured")
+            metadata = payload.get("metadata") if isinstance(payload, Mapping) else None
+            configured_id = raw_payload.text_at(metadata, "source_id_configured")
             if configured_id is None or (source_id is not None and configured_id != source_id):
                 continue
-            observed_run_id = raw_payload.meta(payload, "source_run_id")
+            observed_run_id = raw_payload.text_at(metadata, "source_run_id")
             if source_run_id is not None and observed_run_id != source_run_id:
                 continue
             yield SourceObservation(
                 (int(run_id), int(ordinal)), kind, configured_id,
-                raw_payload.meta(payload, "source_type"), raw_payload.meta(payload, "source_display_name"),
-                raw_payload.meta(payload, "source_policy_status"), observed_run_id,
-                *(raw_payload.meta(payload, name) for name in (
+                raw_payload.text_at(metadata, "source_type"), raw_payload.text_at(metadata, "source_display_name"),
+                raw_payload.text_at(metadata, "source_policy_status"), observed_run_id,
+                *(raw_payload.text_at(metadata, name) for name in (
                     "source_artifact_id", "source_artifact_path", "source_artifact_sha256",
                     "source_artifact_bytes", "source_acquired_at", "acquisition_http_status",
                     "acquisition_content_type", "acquisition_url_summary",

@@ -91,15 +91,15 @@ def test_source_and_run_filters_precede_metadata_projection(published_feeds: Pat
         run_id = next(row.source_run_id for row in all_rows if row.source_id == RSS and row.source_run_id)
         selected = [row for row in all_rows if row.source_id == RSS and row.source_run_id == run_id]
         assert 0 < len(selected) < len(all_rows)
-        meta = source_queries.raw_payload.meta
+        text_at = source_queries.raw_payload.text_at
         projected = []
 
-        def observe(payload, field):
-            if field == "source_display_name":
-                projected.append((meta(payload, "source_id_configured"), meta(payload, "source_run_id")))
-            return meta(payload, field)
+        def observe(metadata, *fields):
+            if fields == ("source_display_name",):
+                projected.append((text_at(metadata, "source_id_configured"), text_at(metadata, "source_run_id")))
+            return text_at(metadata, *fields)
 
-        monkeypatch.setattr(source_queries.raw_payload, "meta", observe)
+        monkeypatch.setattr(source_queries.raw_payload, "text_at", observe)
         assert source_queries.source_observations(connection, source_id=RSS, source_run_id=run_id) == selected
         assert projected == [(RSS, run_id)] * len(selected)
 
