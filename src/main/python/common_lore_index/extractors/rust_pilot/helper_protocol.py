@@ -96,12 +96,16 @@ class DecodedParse:
     helper_abi: int
 
 
+def _is_digest(value: object) -> bool:
+    return isinstance(value, str) and _HEX64.fullmatch(value) is not None
+
+
 def invocation_nonce(run_nonce: bytes, seq: int, input_sha256: str) -> str:
     """Per-file nonce: SHA-256 over the run nonce, the sequence and the input digest."""
 
-    if type(run_nonce) is not bytes or len(run_nonce) != 32 or type(seq) is not int or seq < 0:
+    if type(run_nonce) is not bytes or len(run_nonce) != 32 or type(seq) is not int or not 0 <= seq < 2**64:
         raise ProtocolViolation("invalid_nonce_material")
-    if _HEX64.fullmatch(input_sha256) is None:
+    if not _is_digest(input_sha256):
         raise ProtocolViolation("invalid_nonce_material")
     material = b"rust-pilot-invocation-v1\x00" + run_nonce + seq.to_bytes(8, "big") + bytes.fromhex(input_sha256)
     return hashlib.sha256(material).hexdigest()
@@ -110,7 +114,7 @@ def invocation_nonce(run_nonce: bytes, seq: int, input_sha256: str) -> str:
 def encode_request(data: bytes, nonce: str) -> bytes:
     """Header line followed by exactly the input bytes."""
 
-    if type(data) is not bytes or len(data) > MAX_INPUT or _HEX64.fullmatch(nonce) is None:
+    if type(data) is not bytes or len(data) > MAX_INPUT or not _is_digest(nonce):
         raise ProtocolViolation("invalid_request")
     header = json.dumps({"n": len(data), "nonce": nonce, "sha256": hashlib.sha256(data).hexdigest(),
                          "v": PROTOCOL_VERSION}, sort_keys=True, separators=(",", ":")).encode("ascii")
@@ -247,7 +251,7 @@ def decode_frames(stdout: bytes, *, nonce: str, input_length: int) -> DecodedPar
 
     if type(stdout) is not bytes or len(stdout) > MAX_OUTPUT or not stdout.endswith(b"\n"):
         raise ProtocolViolation("output_shape")
-    if _HEX64.fullmatch(nonce) is None or not 0 <= input_length <= MAX_INPUT:
+    if not _is_digest(nonce) or type(input_length) is not int or not 0 <= input_length <= MAX_INPUT:
         raise ProtocolViolation("invalid_request")
     frame_count = stdout.count(b"\n")
     if frame_count < 2 or frame_count > MAX_FRAMES:

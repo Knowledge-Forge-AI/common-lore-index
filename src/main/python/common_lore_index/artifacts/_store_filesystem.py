@@ -165,22 +165,33 @@ class FileSystemArtifactStore:
         except OSError as error:
             raise ArtifactIntegrityError("artifact is not a regular file") from error
         try:
-            with os.fdopen(descriptor, "rb", closefd=False) as stream:
-                opened = os.fstat(stream.fileno())
+            with os.fdopen(descriptor, "rb", buffering=0, closefd=False) as stream:
+                opened = os.fstat(descriptor)
                 if not _same_file(before, opened) or not stat.S_ISREG(opened.st_mode):
                     raise ArtifactIntegrityError("artifact changed during read")
+                if opened.st_size > bound:
+                    raise ArtifactIntegrityError("artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS)
+                if opened.st_size != length:
+                    raise ArtifactIntegrityError("artifact size does not match reference")
                 collected = io.BytesIO()
-                remaining = bound + 1
+                hasher = hashlib.sha256()
+                remaining = length
                 while remaining:
                     chunk = stream.read(min(remaining, _READ_BLOCK))
                     if not chunk:
                         break
                     collected.write(chunk)
+                    hasher.update(chunk)
                     remaining -= len(chunk)
-                data = collected.getvalue()
-                after = os.fstat(stream.fileno())
-                if not _same_file(opened, after):
-                    raise ArtifactIntegrityError("artifact changed during read")
+            after = os.fstat(descriptor)
+            if not _same_file(opened, after):
+                raise ArtifactIntegrityError("artifact changed during read")
+            if after.st_size > bound:
+                raise ArtifactIntegrityError("artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS)
+            if remaining or after.st_size != length:
+                raise ArtifactIntegrityError("artifact size does not match reference")
+            if (opened.st_mtime_ns, opened.st_ctime_ns) != (after.st_mtime_ns, after.st_ctime_ns):
+                raise ArtifactIntegrityError("artifact changed during read")
         except ArtifactIntegrityError:
             raise
         except OSError as error:
@@ -188,18 +199,12 @@ class FileSystemArtifactStore:
         finally:
             with suppress(OSError):
                 os.close(descriptor)
-        if len(data) > bound:
-            raise ArtifactIntegrityError(
-                "artifact bounds exceeded", code=ArtifactErrorCode.ARTIFACT_BOUNDS
-            )
-        if len(data) != length:
-            raise ArtifactIntegrityError("artifact size does not match reference")
-        actual = _DIGEST_PREFIX + hashlib.sha256(data).hexdigest()
+        actual = _DIGEST_PREFIX + hasher.hexdigest()
         if actual != digest:
             raise ArtifactIntegrityError("artifact digest does not match reference")
         if expected_version is not None and _filesystem_version(after) != expected_version:
             raise ArtifactIntegrityError("artifact store version is stale", code="artifact_stale")
-        return data
+        return collected.getvalue()
 
     def put(
         self,

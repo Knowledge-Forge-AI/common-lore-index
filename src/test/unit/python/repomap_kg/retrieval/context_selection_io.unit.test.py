@@ -144,3 +144,40 @@ def test_selection_read_error_reports_a_bounded_refusal(tmp_path: Path, monkeypa
             source_selection.read_selection_file(path)
     assert caught.value.refusal_reason == "invalid_selection_record"
     assert "fixture-diagnostic-canary" not in str(caught.value)
+
+
+def test_selection_file_admits_no_bytes_beyond_the_opened_size(tmp_path, monkeypatch):
+    path = tmp_path / "selection.json"
+    data = source_selection.write_selection_file(_record(), path)
+    read = source_selection.os.read
+    reads: list[int] = []
+
+    def grow(fd, count):
+        if not reads:
+            with path.open("ab") as stream:
+                stream.write(b" ")
+        reads.append(count)
+        return read(fd, count)
+
+    with monkeypatch.context() as stubs:
+        stubs.setattr(source_selection.os, "read", grow)
+        with pytest.raises(ContextRequestError, match="selection file changed while reading"):
+            source_selection.read_selection_file(path)
+    assert reads == [len(data)]
+
+
+@pytest.mark.parametrize("kind", ("duplicate", "deep", "oversized_integer"))
+def test_decoder_limits_are_reported_as_closed_selection_refusals(tmp_path, kind):
+    path = tmp_path / "selection.json"
+    if kind == "duplicate":
+        data = source_selection.write_selection_file(_record(), path)
+        data = data.replace(b'"backend":"sqlite"', b'"backend":"untrusted","backend":"sqlite"', 1)
+        assert b'"backend":"untrusted"' in data
+    elif kind == "deep":
+        data = b"[" * 5000 + b"]" * 5000
+    else:
+        data = b"9" * 20_000
+    path.write_bytes(data)
+    with pytest.raises(ContextRequestError) as caught:
+        source_selection.read_selection_file(path)
+    assert caught.value.refusal_reason == "invalid_selection_record"

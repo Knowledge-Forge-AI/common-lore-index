@@ -212,3 +212,67 @@ def test_direct_artifact_read_releases_fd_on_buffer_wrapper_refusal(tmp_path, mo
         assert not case.leaked()
     finally:
         case.cleanup()
+
+
+def test_buffered_artifact_read_refuses_growth_without_reading_appended_bytes(tmp_path, monkeypatch):
+    store = FileSystemArtifactStore(tmp_path / "store")
+    payload = b"data" * 30_000
+    reference = store.put(payload)
+    path = store.object_path(reference)
+    path.chmod(0o600)
+    original = path.stat()
+    fdopen = os.fdopen
+    requests: list[int] = []
+
+    class ObservedReader(io.FileIO):
+        def read(self, count: int | None = -1, /) -> bytes:
+            assert count is not None
+            if not requests:
+                with path.open("ab") as append:
+                    append.write(b"more")
+            requests.append(count)
+            return super().read(count) or b""
+
+    def track(fd, mode, *args, **kwargs):
+        if os.path.samestat(os.fstat(fd), original):
+            assert kwargs["buffering"] == 0 and kwargs["closefd"] is False
+            return ObservedReader(fd, mode, closefd=False)
+        return fdopen(fd, mode, *args, **kwargs)
+
+    with monkeypatch.context() as stubs:
+        stubs.setattr(os, "fdopen", track)
+        with pytest.raises(ArtifactIntegrityError, match="artifact size does not match reference"):
+            store.read(reference)
+    assert requests and sum(requests) == len(payload)
+    assert path.read_bytes() == payload + b"more"
+
+
+def test_buffered_artifact_read_checks_change_time_after_the_exact_payload(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    store = FileSystemArtifactStore(tmp_path / "store")
+    reference = store.put(b"public payload")
+    path = store.object_path(reference)
+    expected = path.stat()
+    fstat = os.fstat
+    calls = 0
+
+    def change_time_of_opened_artifact(fd):
+        nonlocal calls
+        actual = fstat(fd)
+        if not os.path.samestat(actual, expected):
+            return actual
+        calls += 1
+        if calls == 1:
+            return actual
+        return SimpleNamespace(
+            st_dev=actual.st_dev, st_ino=actual.st_ino, st_uid=actual.st_uid, st_nlink=actual.st_nlink,
+            st_mode=actual.st_mode, st_size=actual.st_size, st_mtime_ns=actual.st_mtime_ns,
+            st_ctime_ns=actual.st_ctime_ns + 1,
+        )
+
+    with monkeypatch.context() as stubs:
+        stubs.setattr(os, "fstat", change_time_of_opened_artifact)
+        with pytest.raises(ArtifactIntegrityError, match="artifact changed during read"):
+            store.read(reference)
+    assert calls == 2

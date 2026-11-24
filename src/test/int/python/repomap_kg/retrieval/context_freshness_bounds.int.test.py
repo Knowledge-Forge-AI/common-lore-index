@@ -335,7 +335,7 @@ def test_freshness_file_limit_reports_unchecked_locations(tmp_path: Path) -> Non
     assert packet["freshness"]["counts"]["not_checked"] >= 1
 
 
-@pytest.mark.parametrize("condition", ("changed_metadata", "read_error"))
+@pytest.mark.parametrize("condition", ("changed_metadata", "read_error", "duplicate"))
 def test_context_pack_refuses_an_unstable_selection_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsysbinary: pytest.CaptureFixture[bytes], condition: str,
 ) -> None:
@@ -347,6 +347,11 @@ def test_context_pack_refuses_an_unstable_selection_file(
     assert main(["ops", "context-select", *cli_scope, "--binding", BINDING_CORE, "--output", str(path)]) == 0
     capsysbinary.readouterr()
 
+    if condition == "duplicate":
+        data = path.read_bytes()
+        duplicate = data.replace(b'"backend":"sqlite"', b'"backend":"untrusted","backend":"sqlite"', 1)
+        assert duplicate != data
+        path.write_bytes(duplicate)
     admitted = path.stat()
     original_fstat = source_selection.os.fstat
     calls = 0
@@ -357,7 +362,7 @@ def test_context_pack_refuses_an_unstable_selection_file(
         if not source_selection.os.path.samestat(current, admitted):
             return current
         calls += 1
-        if calls == 1:
+        if calls == 1 or condition == "duplicate":
             return current
         if condition == "read_error":
             raise OSError(errno.EIO, "selection-fixture-diagnostic")

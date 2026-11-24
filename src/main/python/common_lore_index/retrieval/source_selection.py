@@ -250,6 +250,13 @@ def write_selection_file(record: SourceSelectionRecord, output_path: Path) -> by
         os.close(fd)
     return raw
 
+def _unique_selection_members(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    record = dict(pairs)
+    if len(record) != len(pairs):
+        raise ValueError("duplicate selection JSON member")
+    return record
+
+
 def read_selection_file(path: Path) -> SourceSelectionRecord:
     """Read and validate cloe-source-selection-v1 (O_NOFOLLOW | O_NONBLOCK, regular <= 64 KiB)."""
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
@@ -257,7 +264,7 @@ def read_selection_file(path: Path) -> SourceSelectionRecord:
         fd = os.open(str(path), flags)
     except OSError as exc:
         raise ContextRequestError(
-            f"cannot open selection file: {exc.strerror or errno.errorcode.get(exc.errno or 0, 'io_error')}",
+            f"cannot open selection file: {errno.errorcode.get(exc.errno or 0, 'io_error')}",
             refusal_reason="invalid_selection_record",
         ) from exc
     try:
@@ -267,7 +274,7 @@ def read_selection_file(path: Path) -> SourceSelectionRecord:
         admitted = (st.st_size, st.st_mtime_ns, st.st_ctime_ns)
         chunks: list[bytes] = []
         total = 0
-        while True:
+        while total < admitted[0]:
             current = os.fstat(fd)
             if (not stat.S_ISREG(current.st_mode)
                     or (current.st_size, current.st_mtime_ns, current.st_ctime_ns) != admitted):
@@ -275,30 +282,22 @@ def read_selection_file(path: Path) -> SourceSelectionRecord:
                     "selection file changed while reading",
                     refusal_reason="invalid_selection_record",
                 )
-            if total >= MAX_SELECTION_FILE_BYTES:
-                break
-            remaining = MAX_SELECTION_FILE_BYTES - total
-            chunk = os.read(fd, min(16384, remaining))
+            chunk = os.read(fd, min(16384, admitted[0] - total))
             if not chunk:
                 break
             total += len(chunk)
-            if total > MAX_SELECTION_FILE_BYTES:
-                raise ContextRequestError("oversize selection file", refusal_reason="invalid_selection_record")
             chunks.append(chunk)
         final = os.fstat(fd)
         if (total, final.st_mtime_ns, final.st_ctime_ns) != admitted or final.st_size != total:
-            raise ContextRequestError(
-                "selection file changed while reading", refusal_reason="invalid_selection_record"
-            )
-        raw = b"".join(chunks)
+            raise ContextRequestError("selection file changed while reading", refusal_reason="invalid_selection_record")
     except OSError as exc:
         reason = errno.errorcode.get(exc.errno or 0, "io_error")
         raise ContextRequestError(f"cannot read selection file: {reason}", refusal_reason="invalid_selection_record") from exc
     finally:
         os.close(fd)
     try:
-        payload = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        payload = json.loads(b"".join(chunks).decode("utf-8"), object_pairs_hook=_unique_selection_members)
+    except (ValueError, RecursionError) as exc:
         raise ContextRequestError("malformed selection JSON", refusal_reason="invalid_selection_record") from exc
     if not isinstance(payload, dict) or set(payload.keys()) != set(SELECTION_TOP_LEVEL_KEYS):
         raise ContextRequestError("closed schema violation in selection file", refusal_reason="invalid_selection_record")

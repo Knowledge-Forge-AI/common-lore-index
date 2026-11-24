@@ -331,12 +331,17 @@ Read https://example.com/docs.
             "META-INF/manifest.xml": (
                 b'<m:manifest xmlns:m="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">'
                 b'<m:file-entry m:full-path="https://[invalid.example/path"/>'
+                b'<m:file-entry m:full-path="https://user:fixture@hidden.invalid/picture"/>'
+                b'<m:file-entry m:full-path="https://user:fixture@hidden.invalid/alternate"/>'
                 b'<m:file-entry m:full-path="Pictures/fixture.png"/></m:manifest>'
             ),
         })
         observations = extract_odf_file_observations("manifest.odt", package)
-        (reference,) = [row for row in observations if row.kind == "document.reference"]
+        protected, second, reference = [row for row in observations if row.kind == "document.reference"]
         self.assertEqual(reference.metadata["raw_value_summary"], "Pictures/fixture.png")
+        self.assertTrue(protected.metadata["redacted"] and second.metadata["redacted"])
+        self.assertNotEqual(protected.source_id, second.source_id)
+        self.assertNotIn("hidden.invalid", str([row.to_dict() for row in observations]))
         self.assertTrue(canonicalize_observations(observations).ok)
 
     def test_docs2_odf_package_safety_contracts(self):

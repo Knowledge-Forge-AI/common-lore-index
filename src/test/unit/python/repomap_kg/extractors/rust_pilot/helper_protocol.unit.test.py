@@ -132,6 +132,14 @@ def test_invocation_nonce_binds_run_sequence_and_input() -> None:
     assert base == NONCE and len(base) == 64
     assert len({base, invocation_nonce(b"\x02" * 32, 3, digest), invocation_nonce(b"\x01" * 32, 4, digest),
                 invocation_nonce(b"\x01" * 32, 3, "0" * 64)}) == 4
-    for args in ((b"\x01" * 31, 3, digest), (b"\x01" * 32, -1, digest), (b"\x01" * 32, 3, "xyz")):
+    assert len(invocation_nonce(b"\x01" * 32, 2**64 - 1, digest)) == 64
+    for args in ((b"\x01" * 31, 3, digest), (b"\x01" * 32, -1, digest),
+                 (b"\x01" * 32, 2**64, digest), (b"\x01" * 32, 3, "xyz")):
         with pytest.raises(ProtocolViolation):
             invocation_nonce(*args)
+
+
+@pytest.mark.parametrize("nonce,length", [(None, 4), (NONCE, False), (NONCE, 1.0)])
+def test_decode_refuses_invalid_request_fields_with_protocol_code(nonce, length):
+    with pytest.raises(ProtocolViolation, match="invalid_request"):
+        decode_frames(b"x\n", nonce=nonce, input_length=length)

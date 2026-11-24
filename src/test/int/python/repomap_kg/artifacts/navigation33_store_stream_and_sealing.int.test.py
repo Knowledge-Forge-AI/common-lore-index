@@ -123,6 +123,8 @@ def test_verifying_artifact_stream_and_filesystem_store_contracts(tmp_path: Path
     obj_path.write_bytes(b"abcdeg")
     obj_path.chmod(0o400)
     with pytest.raises(ArtifactIntegrityError, match="artifact digest does not match reference"):
+        store.read(ref2)
+    with pytest.raises(ArtifactIntegrityError, match="artifact digest does not match reference"):
         with store.open_stream(ref2) as s_corrupt:
             _ = s_corrupt.read(-1)
     with pytest.raises(ArtifactIntegrityError, match="artifact digest does not match reference"):
@@ -137,6 +139,8 @@ def test_verifying_artifact_stream_and_filesystem_store_contracts(tmp_path: Path
     obj_path.chmod(0o600)
     obj_path.write_bytes(b"abc")
     obj_path.chmod(0o400)
+    with pytest.raises(ArtifactIntegrityError, match="artifact size does not match reference"):
+        store.read(ref2)
     with pytest.raises(ArtifactIntegrityError, match="artifact size does not match reference"):
         with store.open_stream(ref2) as s_trunc:
             _ = s_trunc.read(-1)

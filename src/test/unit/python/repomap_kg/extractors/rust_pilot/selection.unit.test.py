@@ -99,3 +99,58 @@ def test_nested_selection_keeps_constant_number_of_directory_descriptors(tmp_pat
         selected, = select_inputs(tmp_path, [info])
     assert selected.outcome == "selected" and selected.input_sha256 == info.content_hash
     assert peak == 3 and not directories
+
+
+def test_selection_does_not_read_past_admitted_extent(tmp_path, monkeypatch):
+    from common_lore_index.extractors.rust_pilot import selection
+
+    data = b"fn fixture() {}\n"
+    info = _write(tmp_path, "lib.rs", data)
+    path = tmp_path / "lib.rs"
+    before = path.stat()
+    read = os.read
+    used: list[int] = []
+
+    def grow_before_read(descriptor, length):
+        stat = os.fstat(descriptor)
+        if (stat.st_dev, stat.st_ino) == (before.st_dev, before.st_ino):
+            if not used:
+                with path.open("ab") as f:
+                    f.write(b"// appended\n")
+            used.append(length)
+        return read(descriptor, length)
+
+    with monkeypatch.context() as local:
+        local.setattr(selection.os, "read", grow_before_read)
+        record, = select_inputs(tmp_path, [info])
+    assert record.outcome == "source_changed" and record.data is None
+    assert used == [len(data)]
+
+
+def test_read_fault_is_closed_and_does_not_discard_the_next_selection(tmp_path, monkeypatch):
+    from common_lore_index.extractors.rust_pilot import selection
+
+    first = _write(tmp_path, "first.rs", b"fn first() {}\n")
+    second = _write(tmp_path, "second.rs", b"fn second() {}\n")
+    inode = (tmp_path / "first.rs").stat().st_ino
+    read = os.read
+
+    def refuse_first(descriptor, count):
+        if os.fstat(descriptor).st_ino == inode:
+            raise OSError("fixture read")
+        return read(descriptor, count)
+
+    with monkeypatch.context() as local:
+        local.setattr(selection.os, "read", refuse_first)
+        refused, selected = select_inputs(tmp_path, [first, second])
+    assert refused.outcome == "selection_refused" and refused.data is None
+    assert selected.outcome == "selected" and selected.input_sha256 == second.content_hash
+
+
+def test_utf8_validation_preserves_chunk_boundary_and_requires_complete_final_character(tmp_path):
+    text = b" " * 65_535 + "漢".encode()
+    valid = _write(tmp_path, "valid.rs", text)
+    truncated = _write(tmp_path, "truncated.rs", text[:-1])
+    passed, rejected = select_inputs(tmp_path, [valid, truncated])
+    assert passed.outcome == "selected" and passed.data == text
+    assert rejected.outcome == "input_not_utf8" and rejected.data is None
