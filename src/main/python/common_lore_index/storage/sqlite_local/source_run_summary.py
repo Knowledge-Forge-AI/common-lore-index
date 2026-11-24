@@ -1,9 +1,9 @@
-"""Streaming aggregate for one retained source run."""
+"""Streaming aggregates for source profiles and retained source runs."""
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TypeVar
 
 from common_lore_index.storage.errors import StorageSchemaError
@@ -94,3 +94,37 @@ class SourceRunSummary:
             "observation_count": self.observation_count,
             "status_summary": "parse_errors" if self.has_errors else "ok",
         })
+
+
+@dataclass
+class SourceProfile:
+    """Retain source metrics, the latest observation, and keys needed for joins."""
+
+    keys: list[tuple[int, int]] = field(default_factory=list)
+    parse_error_keys: list[tuple[int, int]] = field(default_factory=list)
+    latest: SourceObservation | None = None
+    source_type: str | None = None
+    display_name: str | None = None
+    policy_status: str | None = None
+    url_summary: str | None = None
+
+    def add(self, item: SourceObservation) -> None:
+        self.keys.append(item.key)
+        if item.kind == "feed.parse_error":
+            self.parse_error_keys.append(item.key)
+        latest = self.latest
+        if latest is None or (item.acquired_at is not None
+                              and (latest.acquired_at is None or item.acquired_at > latest.acquired_at)):
+            self.latest = item
+        self.source_type = _min_text(self.source_type, item.source_type)
+        self.display_name = _min_text(self.display_name, item.display_name)
+        self.policy_status = _min_text(self.policy_status, item.policy_status)
+        self.url_summary = _min_text(self.url_summary, item.url_summary)
+
+
+def _min_text(left: str | None, right: str | None) -> str | None:
+    if left is None:
+        return right
+    if right is None:
+        return left
+    return min(left, right)

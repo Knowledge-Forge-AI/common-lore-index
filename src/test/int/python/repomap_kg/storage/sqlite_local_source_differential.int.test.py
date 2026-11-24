@@ -335,6 +335,7 @@ def _prove(tmp_path: Path, database: Any) -> None:
         assert _explanations(feeds, sources, keys) >= len(keys), generation
     rss = feeds.store.source_summary(SourceSummaryQuery(RSS))
     assert rss.latest_source_run_id == runs["rss2"].source_run_id and rss.parse_errors == 1, rss
+    assert rss.latest_artifact_path == runs["rss2"].artifact_path, rss
     statuses = [run.status_summary for run in feeds.store.source_runs(SourceRunsQuery(RSS, 25))]
     assert statuses == ["parse_errors", "ok"], statuses
 

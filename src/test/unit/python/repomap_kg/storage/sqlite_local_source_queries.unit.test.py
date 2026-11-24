@@ -318,7 +318,7 @@ def _seed_fanout_topologies(path: Path) -> None:
             "payload_hash) VALUES (?, ?, 1, ?, 'src', 'f.xml', ?, 'h')",
             [(r, ord0 + i, k, json.dumps({"metadata": m})) for i, (r, k, m) in enumerate((
                 (run1, "feed.rss", meta_r1), (run2, "feed.rss", meta_r2), (run1, "feed.rss", meta_r1),
-                (run2, "feed.parse_error", meta_r2), (run1, "feed.parse_error", meta_r1),
+                (run2, "feed.parse_error", {**meta_r2, "source_artifact_id": "tied"}), (run1, "feed.parse_error", meta_r1),
                 (run1, "feed.parse_error", null_meta), (run2, "feed.atom", null_meta)))])
         db.executemany(
             "INSERT INTO canonical_nodes (id, graph_key_version, canonical_key, kind, display_name, metadata_json, "
@@ -390,7 +390,7 @@ def test_fanout_counts_distinct_keys_multiple_evidence_and_unmatched_rows(
         assert (main.feed_documents, main.feed_channels, main.feed_items, main.feed_authors, main.feed_categories) == (
             1, 1, 2, 1, 2)
         assert (main.link_references, main.enclosure_references, main.parse_errors) == (2, 1, 22)
-        assert (main.latest_source_run_id, main.latest_acquired_at) == ("w7-r2", "2026-08-02T00:00:00Z")
+        assert (main.latest_artifact_id, main.latest_acquired_at) == ("a2", "2026-08-02T00:00:00Z")
         nulls = source_queries.source_summary(connection, source_id="w7-nulls")
         assert (nulls.parse_errors, nulls.feed_items, nulls.link_references, nulls.display_name,
                 nulls.configured_url_summary, nulls.latest_source_run_id, nulls.latest_acquired_at) == (

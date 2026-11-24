@@ -25,7 +25,11 @@ from common_lore_index.storage.source_rows import (
 from common_lore_index.storage.sql_core import positive_limit
 from common_lore_index.storage.sqlite_local import raw_payload
 from common_lore_index.storage.sqlite_local.queries import require_accepted_publication
-from common_lore_index.storage.sqlite_local.source_run_summary import SourceObservation, SourceRunSummary
+from common_lore_index.storage.sqlite_local.source_run_summary import (
+    SourceObservation,
+    SourceProfile,
+    SourceRunSummary,
+)
 
 Ordered = TypeVar("Ordered", str, int)
 RawKey = tuple[int, int]
@@ -208,22 +212,17 @@ def not_fetched(value: str | None) -> bool:
     return True if value is None else raw_payload.flag(value)
 
 
-def _latest(group: list[SourceObservation]) -> SourceObservation:
-    """First element of ``ARRAY_AGG(... ORDER BY source_acquired_at DESC NULLS LAST)``."""
-    return max(group, key=lambda item: (item.acquired_at is not None, item.acquired_at or ""))
-
-
 def by_source(observations: Iterable[SourceObservation]) -> dict[str, list[SourceObservation]]:
     return group_by((observation.source_id, observation) for observation in observations)
 
 
 def _observation_fanout_count(
-    observation: SourceObservation,
+    key: RawKey,
     evidence: dict[RawKey, list[int]],
     nodes: dict[int, list[_Node]],
     edges: dict[int, list[_Edge]] | None = None,
 ) -> int:
-    matched = evidence.get(observation.key)
+    matched = evidence.get(key)
     if not matched:
         return 1
     if edges is None:
@@ -234,8 +233,8 @@ def _observation_fanout_count(
     )
 
 
-def _matched_evidence(group: Iterable[SourceObservation], evidence: dict[RawKey, list[int]]) -> set[int]:
-    return {evidence_id for item in group for evidence_id in evidence.get(item.key, ())}
+def _matched_evidence(keys: Iterable[RawKey], evidence: dict[RawKey, list[int]]) -> set[int]:
+    return {evidence_id for key in keys for evidence_id in evidence.get(key, ())}
 
 
 def _node_counts(evidence_set: Iterable[int], nodes: dict[int, list[_Node]]) -> dict[str, int]:
@@ -273,43 +272,44 @@ def ingested_sources(
 ) -> tuple[IngestedSourceRecord, ...]:
     safe_limit = positive_limit(limit)
     require_accepted_publication(connection)
-    groups: dict[str, list[SourceObservation]] = {}
+    profiles: dict[str, SourceProfile] = {}
     selected: list[_DescendingSourceId] = []
     for observation in _iter_source_observations(connection):
         if ((source_type is not None and observation.source_type != source_type)
                 or (policy_status is not None and observation.policy_status != policy_status)):
             continue
         source_id = observation.source_id
-        if source_id in groups:
-            groups[source_id].append(observation)
-            continue
-        if len(selected) == safe_limit:
-            if source_id >= selected[0]:
-                continue
-            del groups[heapreplace(selected, _DescendingSourceId(source_id))]
-        else:
-            heappush(selected, _DescendingSourceId(source_id))
-        groups[source_id] = [observation]
-    selected_ids = sorted(groups)
+        profile = profiles.get(source_id)
+        if profile is None:
+            if len(selected) == safe_limit:
+                if source_id >= selected[0]:
+                    continue
+                del profiles[heapreplace(selected, _DescendingSourceId(source_id))]
+            else:
+                heappush(selected, _DescendingSourceId(source_id))
+            profile = SourceProfile()
+            profiles[source_id] = profile
+        profile.add(observation)
+    selected_ids = sorted(profiles)
     if not selected_ids:
         return ()
     evidence = evidence_ids(
-        connection, (item.key for source_id in selected_ids for item in groups[source_id])
+        connection, (key for source_id in selected_ids for key in profiles[source_id].keys)
     )
     nodes = node_links(connection, (eid for ids in evidence.values() for eid in ids))
     records = []
     for source_id in selected_ids:
-        group = groups[source_id]
-        latest = _latest(group)
-        node_counts = _node_counts(_matched_evidence(group, evidence), nodes)
+        profile = profiles[source_id]
+        latest = profile.latest
+        assert latest is not None
+        node_counts = _node_counts(_matched_evidence(profile.keys, evidence), nodes)
         records.append(ingested_source_record_from_storage_payload({
-            "source_id": source_id, "source_type": min_of(item.source_type for item in group),
-            "display_name": min_of(item.display_name for item in group),
-            "policy_status": min_of(item.policy_status for item in group),
+            "source_id": source_id, "source_type": profile.source_type,
+            "display_name": profile.display_name, "policy_status": profile.policy_status,
             "latest_source_run_id": latest.source_run_id, "latest_artifact_id": latest.artifact_id,
             "latest_artifact_path": latest.artifact_path,
             "latest_acquired_at": latest.acquired_at,
-            "feed_observation_count": sum(_observation_fanout_count(item, evidence, nodes) for item in group),
+            "feed_observation_count": sum(_observation_fanout_count(key, evidence, nodes) for key in profile.keys),
             "canonical_feed_item_count": node_counts.get("feed.item", 0),
         }))
     return tuple(records)
@@ -317,8 +317,11 @@ def ingested_sources(
 
 def source_summary(connection: sqlite3.Connection, *, source_id: str) -> SourceSummaryRecord:
     require_accepted_publication(connection)
-    group = source_observations(connection, source_id=source_id)
-    if not group:
+    profile = SourceProfile()
+    for item in _iter_source_observations(connection, source_id):
+        profile.add(item)
+    latest = profile.latest
+    if latest is None:
         return source_summary_from_storage_payload({
             "source_id": source_id, "source_type": None, "display_name": None,
             "policy_status": "unknown", "configured_url_summary": None,
@@ -328,17 +331,15 @@ def source_summary(connection: sqlite3.Connection, *, source_id: str) -> SourceS
             "enclosure_references": 0, "parse_errors": 0,
             "known_limitations": ["source metadata unavailable"],
         })
-    evidence = evidence_ids(connection, (item.key for item in group))
-    matched = _matched_evidence(group, evidence)
+    evidence = evidence_ids(connection, profile.keys)
+    matched = {evidence_id for ids in evidence.values() for evidence_id in ids}
     nodes, edges = node_links(connection, matched), edge_links(connection, matched)
     node_counts = _node_counts(matched, nodes)
     references = _reference_counts(matched, edges)
-    latest = _latest(group)
     return source_summary_from_storage_payload({
-        "source_id": source_id, "source_type": min_of(item.source_type for item in group),
-        "display_name": min_of(item.display_name for item in group),
-        "policy_status": min_of(item.policy_status for item in group),
-        "configured_url_summary": min_of(item.url_summary for item in group),
+        "source_id": source_id, "source_type": profile.source_type,
+        "display_name": profile.display_name, "policy_status": profile.policy_status,
+        "configured_url_summary": profile.url_summary,
         "latest_source_run_id": latest.source_run_id, "latest_artifact_id": latest.artifact_id,
         "latest_artifact_path": latest.artifact_path,
         "latest_acquired_at": latest.acquired_at,
@@ -348,8 +349,7 @@ def source_summary(connection: sqlite3.Connection, *, source_id: str) -> SourceS
         "feed_categories": node_counts.get("feed.category", 0),
         "link_references": references[0], "enclosure_references": references[1],
         "parse_errors": sum(
-            _observation_fanout_count(item, evidence, nodes, edges)
-            for item in group if item.kind == "feed.parse_error"
+            _observation_fanout_count(key, evidence, nodes, edges) for key in profile.parse_error_keys
         ),
         "known_limitations": ["source metadata is inferred from RSS2 evidence"],
     })
