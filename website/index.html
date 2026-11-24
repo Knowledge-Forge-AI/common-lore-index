@@ -2,48 +2,128 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Common Lore Index maps software repositories as deterministic knowledge graphs linked to source evidence.">
-  <meta name="theme-color" content="#273d2c">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Common Lore Index helps you trace how a software repository works, from startup scripts to configuration and tests, with links back to source.">
+  <meta name="theme-color" content="#24392d">
   <link rel="canonical" href="https://cloe.knowledge-forge.ai/">
   <link rel="stylesheet" href="site.css">
-  <title>Common Lore Index · Knowledge Forge AI</title>
+  <title>Common Lore Index · Find your way through a codebase</title>
 </head>
 <body>
-<a class="skip" href="#content">Skip to content</a>
-<header class="shell masthead">
-  <a class="wordmark" href="/">Common Lore Index</a>
-  <nav aria-label="Main navigation"><a href="#graph">Example</a><a href="#preview">Preview</a><a href="https://github.com/Knowledge-Forge-AI/common-lore-index">GitHub ↗</a></nav>
-</header>
-<main id="content" class="shell">
-  <section class="hero" aria-labelledby="title">
-    <div class="intro">
-      <p class="eyebrow">Repository intelligence</p>
-      <h1 id="title">Read the connections.</h1>
-      <p class="lede">Common Lore Index turns software repositories into deterministic knowledge graphs. Trace entry points, imports, configuration and tests back to the files and lines that explain each connection.</p>
-      <div class="actions"><a class="button" href="https://github.com/Knowledge-Forge-AI/common-lore-index/releases/tag/v0.0.4">View the source preview ↗</a><a href="#graph">Explore an example ↓</a></div>
-    </div>
-    <figure class="portrait">
-      <img src="assets/cloe-research-studio.webp" width="1024" height="1536" alt="Cloe, a silver-haired data scientist in a green cardigan, holds a tablet displaying a knowledge graph in her research studio." fetchpriority="high">
-      <figcaption><strong>Cloe</strong><span>Knowledge graph researcher</span></figcaption>
-    </figure>
-  </section>
-  <section id="graph" class="example" aria-labelledby="graph-title">
-    <div><p class="eyebrow">Illustrative example</p><h2 id="graph-title">Follow an entry point.</h2><p>A launch script can connect several languages and files. Choose a relationship to see what source evidence might support it.</p></div>
-    <div class="graph">
-      <p class="root"><code>scripts/start.sh</code></p>
-      <details open><summary><span>sources</span> <code>config/runtime.env</code></summary><p><code>scripts/start.sh:4</code> loads runtime configuration before launch.</p></details>
-      <details><summary><span>invokes</span> <code>src/main.py</code></summary><p><code>scripts/start.sh:8</code> invokes the Python entry point.</p></details>
-      <details><summary><span>tested by</span> <code>tests/test_start.py</code></summary><p><code>tests/test_start.py:16</code> exercises the launch script.</p></details>
-    </div>
-  </section>
-  <section id="preview" class="preview" aria-labelledby="preview-title">
-    <p class="eyebrow">Project status</p>
-    <h2 id="preview-title">Start with the source.</h2>
-    <p>Formerly RepoMap, CLOE uses the <code>cloe</code> command. The v0.0.4 release is a source prerelease. The repository documents the containerized PostgreSQL reference setup, alongside work on SQLite Local and the read-only MCP interface. Managed Cloud is part of the product direction.</p>
-    <a href="https://github.com/Knowledge-Forge-AI/common-lore-index#common-lore-index-cloe">Read project documentation ↗</a>
-  </section>
-</main>
-<footer class="shell footer"><a href="https://www.knowledge-forge.ai/">Knowledge Forge AI</a><a href="https://www.knowledge-forge.ai/gallery/">Mascot gallery</a><a href="https://github.com/orgs/Knowledge-Forge-AI/discussions">Community</a><a href="https://github.com/Knowledge-Forge-AI/common-lore-index/blob/main/LICENSE">License</a></footer>
+  <a class="skip" href="#content">Skip to content</a>
+  <header class="shell masthead">
+    <a class="wordmark" href="/" aria-label="Common Lore Index home">Common Lore Index</a>
+    <nav aria-label="Main navigation">
+      <a href="#example">Example</a>
+      <a href="#get-started">Get started</a>
+      <a href="#preview">Preview</a>
+      <a href="https://github.com/Knowledge-Forge-AI/common-lore-index">GitHub</a>
+    </nav>
+  </header>
+
+  <main id="content" class="shell" tabindex="-1">
+    <section class="hero" aria-labelledby="title">
+      <div class="hero-copy">
+        <h1 id="title">Find your way through a codebase.</h1>
+        <p class="lede">Common Lore Index, or CLOE, maps how source files, scripts, configuration, and tests fit together. Follow a connection back to the file and line that explains it.</p>
+        <div class="actions">
+          <a class="button" href="#example">Explore a source trail</a>
+          <a class="text-link" href="https://github.com/Knowledge-Forge-AI/common-lore-index/releases/tag/v0.0.5">View the v0.0.5 source preview</a>
+        </div>
+      </div>
+      <figure class="portrait">
+        <img src="assets/cloe-research-studio.webp" width="1024" height="1536" alt="Cloe holds a tablet showing a network of connected points in her research studio." fetchpriority="high">
+        <figcaption><strong>Meet Cloe</strong><span>Common Lore Index’s mascot</span></figcaption>
+      </figure>
+    </section>
+
+    <section class="questions" aria-labelledby="questions-title">
+      <h2 id="questions-title">Find answers in the source</h2>
+      <ul class="question-grid">
+        <li>
+          <h3>Where does it start?</h3>
+          <p>Trace a startup script to the program it launches and the configuration it loads along the way.</p>
+        </li>
+        <li>
+          <h3>What else uses this?</h3>
+          <p>Follow imports and references across files so you know where to look before making a change.</p>
+        </li>
+        <li>
+          <h3>What supports that connection?</h3>
+          <p>Inspect the source citation and use the confidence label to tell direct evidence from a heuristic.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section id="example" class="example" aria-labelledby="example-title">
+      <div class="example-intro">
+        <p class="annotation">Illustrative example</p>
+        <h2 id="example-title">What happens when the service starts?</h2>
+        <p>Begin at <code>scripts/start.sh</code> and open each relationship to see the source that supports it.</p>
+        <p>CLOE builds the index by reading files. Static indexing leaves the launch script and the tests unexecuted.</p>
+      </div>
+      <div class="trail">
+        <p class="trail-root"><code>scripts/start.sh</code></p>
+        <details open>
+          <summary><span>Loads configuration</span><code>config/runtime.env</code></summary>
+          <div class="evidence">
+            <p><strong>scripts/start.sh, line 4</strong><br>The shell reads the runtime configuration before launching the service.</p>
+            <pre><code>. ./config/runtime.env</code></pre>
+          </div>
+        </details>
+        <details>
+          <summary><span>Launches</span><code>src/main.py</code></summary>
+          <div class="evidence">
+            <p><strong>scripts/start.sh, line 8</strong><br>The wrapper hands control to the Python entry point.</p>
+            <pre><code>exec python3 src/main.py "$@"</code></pre>
+          </div>
+        </details>
+        <details>
+          <summary><span>Is exercised by</span><code>tests/test_start.py</code></summary>
+          <div class="evidence">
+            <p><strong>tests/test_start.py, line 16</strong><br>The test references the same launch script. Read the surrounding assertions to see what it verifies.</p>
+            <pre><code>result = run_script("scripts/start.sh")</code></pre>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="get-started" class="start" aria-labelledby="start-title">
+      <h2 id="start-title">Choose how to run CLOE</h2>
+      <div class="setup-grid">
+        <article>
+          <h3>SQLite Local</h3>
+          <p>Start here to index a folder or repository on your own machine. SQLite stores the graph locally, and the base install needs no PostgreSQL server or Docker daemon.</p>
+          <a class="text-link" href="https://github.com/Knowledge-Forge-AI/common-lore-index/blob/v0.0.5/docs/ops/sqlite-local.md">Follow the SQLite Local guide</a>
+        </article>
+        <article>
+          <h3>PostgreSQL Server Engine</h3>
+          <p>Choose the self-hosted reference setup if you want to work with PostgreSQL. The project documents a containerized setup and its operating requirements.</p>
+          <a class="text-link" href="https://github.com/Knowledge-Forge-AI/common-lore-index/blob/v0.0.5/README.md#local-runtime">Read the Server Engine setup</a>
+        </article>
+      </div>
+      <p class="assistant-note">Working from an MCP client? The project includes a <a href="https://github.com/Knowledge-Forge-AI/common-lore-index/blob/v0.0.5/docs/ops/skills/repomap-mcp-configuration/SKILL.md">read-only MCP setup guide</a> for querying a configured graph.</p>
+    </section>
+
+    <section id="preview" class="preview" aria-labelledby="preview-title">
+      <div>
+        <h2 id="preview-title">What’s in the preview</h2>
+        <p>v0.0.5 includes more consistent handling of source references and more efficient source lookup, search, and PostgreSQL validation.</p>
+        <a class="button" href="https://github.com/Knowledge-Forge-AI/common-lore-index/releases/tag/v0.0.5">Read the release notes</a>
+      </div>
+      <dl class="release-facts">
+        <div><dt>Download</dt><dd>GitHub source archives</dd></div>
+        <div><dt>Command</dt><dd><code>cloe</code> <span>Formerly RepoMap</span></dd></div>
+        <div><dt>Version shown by the CLI</dt><dd><code>0.0.4</code> in the v0.0.5 source preview</dd></div>
+      </dl>
+    </section>
+  </main>
+
+  <footer class="shell footer">
+    <a href="https://www.knowledge-forge.ai/">Knowledge Forge AI</a>
+    <a href="https://www.knowledge-forge.ai/gallery/">Mascot gallery</a>
+    <a href="https://github.com/orgs/Knowledge-Forge-AI/discussions">Community</a>
+    <a href="https://github.com/Knowledge-Forge-AI/common-lore-index/blob/v0.0.5/LICENSE">License</a>
+  </footer>
 </body>
 </html>
