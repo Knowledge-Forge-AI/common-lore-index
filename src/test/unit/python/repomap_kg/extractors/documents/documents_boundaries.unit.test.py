@@ -230,6 +230,19 @@ class DocumentsExtractorBoundariesUnitTests(unittest.TestCase):
         self.assertEqual(limited[0].metadata["error_kind"], "zip-uncompressed-limit")
         self.assertEqual(malformed[0].metadata["error_kind"], "malformed-zip")
 
+    def test_odf_manifest_skips_a_malformed_reference_and_keeps_a_later_part(self):
+        manifest = manifest_xml().replace(
+            '<manifest:file-entry manifest:full-path="Pictures/local-image.png"',
+            '<manifest:file-entry manifest:full-path="https://[invalid.example/item"/>'
+            '<manifest:file-entry manifest:full-path="Pictures/local-image.png"',
+        )
+        self.assertIn("https://[invalid.example/item", manifest)
+        package = odf_package({"content.xml": odt_content(), "META-INF/manifest.xml": manifest})
+        observations = extract_odf_file_observations("fixture.odt", package)
+        summaries = [row.metadata["raw_value_summary"] for row in observations if row.kind == "document.reference"]
+        self.assertIn("Pictures/local-image.png", summaries)
+        self.assertNotIn("invalid.example", str(summaries))
+
     def test_odf_unreadable_member_returns_a_path_free_parse_diagnostic(self):
         package = odf_package({"content.xml": odt_content()})
         error_types: list[type[Exception]] = [RuntimeError, NotImplementedError, EOFError]

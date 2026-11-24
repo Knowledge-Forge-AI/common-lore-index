@@ -103,8 +103,15 @@ def _redact_url_text(value: str) -> str:
     return result
 
 
+_MALFORMED_URL_SUMMARY = "<redacted-url>"
+
+
 def _redact_url(url: str) -> str:
-    parsed = urlsplit(url)
+    try:
+        parsed = urlsplit(url)
+        port = parsed.port
+    except ValueError:
+        return _MALFORMED_URL_SUMMARY
     query = _redacted_query(parsed.query)
     if parsed.scheme.lower() == "mailto":
         domain = "example.invalid"
@@ -114,8 +121,10 @@ def _redact_url(url: str) -> str:
                 domain = candidate
         return urlunsplit((parsed.scheme, "", f"redacted@{domain}", query, ""))
     netloc = parsed.hostname or ""
-    if parsed.port is not None:
-        netloc = f"{netloc}:{parsed.port}"
+    if ":" in netloc:
+        netloc = f"[{netloc}]"
+    if port is not None:
+        netloc = f"{netloc}:{port}"
     return urlunsplit((parsed.scheme, netloc, parsed.path, query, ""))
 
 

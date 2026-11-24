@@ -34,7 +34,9 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
                     "In-Reply-To: <root@example.invalid>\n"
                     "References: <root@example.invalid> <prior@example.invalid>\n"
                     "List-Id: <updates.example.invalid>\n"
+                    "List-Unsubscribe: <https://example.invalid:not-a-port/hidden>\n"
                     "List-Unsubscribe: <https://example.invalid/unsub?token=fake-mail-token&ok=1>\n"
+                    "List-Unsubscribe: <https://[2001:db8::1]/list>\n"
                     "MIME-Version: 1.0\n"
                     "Content-Type: text/plain; charset=utf-8\n"
                     "\n"
@@ -209,6 +211,8 @@ class CanonicalEmailIntegrationTests(unittest.TestCase):
         self.assertNotIn("unsubscribe@example.invalid", payload)
         self.assertNotIn("fake-mail-token", payload)
         self.assertNotIn("fake-mail-reset-code", payload)
+        self.assertIn("[2001:db8::1]", payload)
+        self.assertNotIn("not-a-port", payload)
 
     def test_static_mbox_extraction_and_canonicalization_contract(self):
         observations: list[RawObservation] = []

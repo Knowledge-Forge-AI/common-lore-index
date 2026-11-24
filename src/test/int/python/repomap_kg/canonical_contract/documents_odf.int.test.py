@@ -263,31 +263,10 @@ Read https://example.com/docs.
 
     def test_docs2_odf_extraction_and_canonicalization_contract(self):
         fixture = DISCOVERY_FIXTURE_ROOT / "docs_odf_basic"
-        observations = (
-            *extract_odf_file_observations(
-                "notes.odt",
-                (fixture / "notes.odt").read_bytes(),
-            ),
-            *extract_odf_file_observations(
-                "spreadsheet.ods",
-                (fixture / "spreadsheet.ods").read_bytes(),
-            ),
-            *extract_odf_file_observations(
-                "template.ott",
-                (fixture / "template.ott").read_bytes(),
-            ),
-            *extract_odf_file_observations(
-                "sheet-template.ots",
-                (fixture / "sheet-template.ots").read_bytes(),
-            ),
-            *extract_odf_file_observations(
-                "malformed.odt",
-                (fixture / "malformed.odt").read_bytes(),
-            ),
-            *extract_odf_file_observations(
-                "dangerous.odt",
-                (fixture / "dangerous.odt").read_bytes(),
-            ),
+        observations = tuple(
+            observation
+            for name in ("notes.odt", "spreadsheet.ods", "template.ott", "sheet-template.ots", "malformed.odt", "dangerous.odt")
+            for observation in extract_odf_file_observations(name, (fixture / name).read_bytes())
         )
         sheet = next(row for row in observations if row.kind == "document.odf_sheet" and row.path == "spreadsheet.ods")
         document = next(row for row in observations if row.kind == "document.odf_document" and row.path == sheet.path)
@@ -345,6 +324,20 @@ Read https://example.com/docs.
             ),
             2,
         )
+
+    def test_invalid_manifest_reference_does_not_interrupt_odf_extraction(self):
+        package = _odf_package({
+            "content.xml": b"<content/>",
+            "META-INF/manifest.xml": (
+                b'<m:manifest xmlns:m="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0">'
+                b'<m:file-entry m:full-path="https://[invalid.example/path"/>'
+                b'<m:file-entry m:full-path="Pictures/fixture.png"/></m:manifest>'
+            ),
+        })
+        observations = extract_odf_file_observations("manifest.odt", package)
+        (reference,) = [row for row in observations if row.kind == "document.reference"]
+        self.assertEqual(reference.metadata["raw_value_summary"], "Pictures/fixture.png")
+        self.assertTrue(canonicalize_observations(observations).ok)
 
     def test_docs2_odf_package_safety_contracts(self):
         safe_content = (b'<?xml version="1.0" encoding="UTF-8"?><office:document-content '

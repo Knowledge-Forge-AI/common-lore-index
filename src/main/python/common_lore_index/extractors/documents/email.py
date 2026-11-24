@@ -21,6 +21,7 @@ from common_lore_index.extractors.documents.email_common import (
     _hash_text,
     _header_slug,
     _is_secret_prone,
+    _MALFORMED_URL_SUMMARY,
     _MessageContext,
     _observation,
     _parse_error,
@@ -585,31 +586,30 @@ def _list_unsubscribe_references(
     context: _MessageContext,
     message: Any,
     message_key: str,
-) -> list[RawObservation]:
-    observations: list[RawObservation] = []
+) -> Iterator[RawObservation]:
+    """Yield usable List-Unsubscribe references with redacted URLs."""
     for index, value in enumerate(message.get_all("List-Unsubscribe", []), start=1):
         for url in _urls_in_header(value):
             redacted_url = _redact_url(url)
-            observations.append(
-                _observation(
-                    kind="email.reference",
-                    relative_path=context.relative_path,
-                    source_id=(
-                        f"{context.source_id_prefix}#email-reference:"
-                        f"list-unsubscribe:{index}"
-                    ),
-                    name="list-unsubscribe",
-                    target=external_url_key(redacted_url),
-                    metadata={
-                        "format": context.metadata_format,
-                        "parser": PARSER,
-                        "source_key": message_key,
-                        "reference_kind": "list_unsubscribe",
-                        "raw_value_summary": redacted_url,
-                        "not_fetched": True,
-                        "redacted": True,
-                        "redaction_reason": "header-url-redacted",
-                    },
-                )
+            if redacted_url == _MALFORMED_URL_SUMMARY:
+                continue
+            yield _observation(
+                kind="email.reference",
+                relative_path=context.relative_path,
+                source_id=(
+                    f"{context.source_id_prefix}#email-reference:"
+                    f"list-unsubscribe:{index}"
+                ),
+                name="list-unsubscribe",
+                target=external_url_key(redacted_url),
+                metadata={
+                    "format": context.metadata_format,
+                    "parser": PARSER,
+                    "source_key": message_key,
+                    "reference_kind": "list_unsubscribe",
+                    "raw_value_summary": redacted_url,
+                    "not_fetched": True,
+                    "redacted": True,
+                    "redaction_reason": "header-url-redacted",
+                },
             )
-    return observations

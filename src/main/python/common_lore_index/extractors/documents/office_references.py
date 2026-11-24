@@ -308,7 +308,10 @@ def _odf_manifest_references(
             continue
         if _contains_secret_marker(full_path):
             continue
-        split = urlsplit(full_path)
+        try:
+            split = urlsplit(full_path)
+        except ValueError:
+            continue
         target_key = (
             _target_key_for_reference(relative_path, full_path, repository_paths)
             if split.scheme in ("http", "https", "mailto")

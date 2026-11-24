@@ -111,6 +111,54 @@ class EmailFeedExtractorBoundariesUnitTests(unittest.TestCase):
         ch_none = _json_channel_info("feeds/j.json", doc_key, {})
         self.assertEqual(ch_none["identity_source"], "document")
 
+    def test_invalid_url_keeps_feed_item_and_hides_the_original_spelling(self):
+        payload = {"version": "https://jsonfeed.org/version/1.1", "title": "Fixture",
+                   "feed_url": "https://invalid.example:not-a-port/feed", "home_page_url": "https://example.invalid/home",
+                   "items": [
+                       {"url": "https://[invalid.example/path"},
+                       {"url": "https://[invalid.example/next", "external_url": "https://example.invalid/retained"},
+                   ]}
+        observations = extract_feed_file_observations("fixture.json", json.dumps(payload))
+        items = [row for row in observations if row.kind == "feed.item"]
+        self.assertEqual([row.metadata["identity_source"] for row in items], ["structural-ordinal", "url"])
+        channel, = [row for row in observations if row.kind == "feed.channel"]
+        self.assertEqual(channel.metadata["identity_source"], "home_page_url")
+        first, second, third = [
+            row for row in observations if row.kind == "feed.link" and row.metadata.get("scope") == "item"
+        ]
+        self.assertEqual(first.name, "malformed feed reference")
+        self.assertNotIn("raw_target_summary", first.metadata)
+        self.assertTrue((first.target or "").startswith("unknown:"))
+        self.assertTrue((second.target or "").startswith("unknown:"))
+        self.assertTrue((third.target or "").startswith("external.url:"))
+        self.assertNotIn("invalid.example", str([row.to_dict() for row in observations]))
+
+    def test_parseable_feed_url_without_authority_keeps_existing_unknown_summary(self):
+        payload = {"version": "https://jsonfeed.org/version/1.1", "title": "Fixture",
+                   "items": [{"id": "fixture", "url": "https:relative"}]}
+        observations = extract_feed_file_observations("fixture.json", json.dumps(payload))
+        (reference,) = [row for row in observations if row.kind == "feed.link"]
+        self.assertTrue((reference.target or "").startswith("unknown:"))
+        self.assertEqual(reference.name, "https:relative")
+        self.assertEqual(reference.metadata["raw_target_summary"], "https:relative")
+
+    def test_rss_and_atom_channel_identities_fall_through_unreadable_links(self):
+        rss = '<rss><channel><title>Fixture</title><link>https://[invalid.example/item</link><item /></channel></rss>'
+        atom = ('<feed xmlns="http://www.w3.org/2005/Atom"><title>Fixture</title>'
+                '<link rel="self" href="https://invalid.example:not-a-port/feed"/>'
+                '<id>tag:fixture</id><entry><link href="https://[invalid.example/item"/></entry></feed>')
+        for content, source in ((rss, "title+document"), (atom, "id")):
+            with self.subTest(source=source):
+                observations = extract_feed_file_observations("fixture.xml", content)
+                channel, = [item for item in observations if item.kind == "feed.channel"]
+                self.assertEqual(channel.metadata["identity_source"], source)
+                self.assertNotIn("invalid.example", str([item.to_dict() for item in observations]))
+
+    def test_malformed_mail_url_redacts_and_ipv6_authority_keeps_its_delimiters(self):
+        self.assertEqual(_redact_url("https://example.invalid:not-a-port/path"), "<redacted-url>")
+        redacted = _redact_url("https://user:fixture@[2001:db8::1]:8443/list?token=fixture")
+        self.assertEqual(redacted, "https://[2001:db8::1]:8443/list?token=REDACTED")
+
     def test_json_feed_markup_in_items_stays_in_the_json_decoder(self):
         payload = {
             "version": "https://jsonfeed.org/version/1.1",

@@ -10,6 +10,7 @@ from common_lore_index.extractors.documents.feed_support import (
     _child_text,
     _children,
     _element_text,
+    _identity_url,
     _item_identity,
     _parse_date,
     _rss_author,
@@ -28,7 +29,7 @@ def _rss_channel_info(
     channel: ElementTree.Element,
 ) -> dict[str, Any]:
     title = _child_text(channel, "title")
-    link = _child_text(channel, "link")
+    link = _identity_url(_child_text(channel, "link"))
     if link:
         channel_id = f"link:{link}"
         identity_source = "link"
@@ -58,9 +59,9 @@ def _atom_channel_info(
     feed: ElementTree.Element,
 ) -> dict[str, Any]:
     title = _child_text(feed, "title")
-    self_link = _atom_link(feed, "self")
+    self_link = _identity_url(_atom_link(feed, "self"))
     feed_id = _child_text(feed, "id")
-    alternate_link = _atom_link(feed, "alternate")
+    alternate_link = _identity_url(_atom_link(feed, "alternate"))
     if self_link:
         channel_id = f"self:{self_link}"
         identity_source = "self-link"
@@ -99,8 +100,8 @@ def _json_channel_info(
     payload: dict[str, Any],
 ) -> dict[str, Any]:
     title = _text_value(payload.get("title"))
-    feed_url = _text_value(payload.get("feed_url"))
-    home_page_url = _text_value(payload.get("home_page_url"))
+    feed_url = _identity_url(_text_value(payload.get("feed_url")))
+    home_page_url = _identity_url(_text_value(payload.get("home_page_url")))
     if feed_url:
         channel_id = f"self:{feed_url}"
         identity_source = "feed_url"
@@ -282,7 +283,8 @@ def _json_item_data(
     modified = _text_value(item.get("date_modified"))
     base_item_id, identity_source, identity_strength = _item_identity(
         ("id", _text_value(item.get("id"))),
-        ("url", url or external_url),
+        ("url", url),
+        ("url", external_url),
         ("title+date", _title_date_identity(title, published or modified)),
         ordinal=ordinal,
     )

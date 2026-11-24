@@ -16,6 +16,7 @@ from common_lore_index.extractors.documents.feed_data import (
 )
 
 from common_lore_index.extractors.documents.feed_support import (
+    _unreadable_feed_reference,
     DYNAMIC_REFERENCE_PATTERN,
     EMAIL_PATTERN,
     SAFE_SUMMARY_LIMIT,
@@ -520,18 +521,17 @@ def _reference_observation(
     name: str,
     metadata: dict[str, Any],
 ) -> RawObservation:
-    safe_metadata = {
-        key: value for key, value in metadata.items() if value is not None
-    }
+    safe_metadata = {key: value for key, value in metadata.items() if value is not None}
     safe_metadata["source_key"] = source_key
-    safe_metadata["raw_target_summary"] = _safe_summary(raw_target)
+    malformed = _unreadable_feed_reference(target, raw_target)
+    safe_metadata["raw_target_summary"] = None if malformed else _safe_summary(raw_target)
     safe_metadata["target_kind"] = target.partition(":")[0]
     return _obs(
         kind=kind,
         source_id=source_id,
         path=relative_path,
         target=target,
-        name=name,
+        name="malformed feed reference" if malformed else name,
         confidence="extracted",
         metadata=safe_metadata,
     )

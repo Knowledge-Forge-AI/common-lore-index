@@ -378,7 +378,7 @@ class CanonicalFeedIntegrationTests(unittest.TestCase):
 
     def test_malformed_optional_feed_arrays_preserve_later_items_and_references(self):
         payload = {"version": "https://jsonfeed.org/version/1.1", "title": "Fixture", "items": [
-            {"id": "a", "attachments": None, "tags": {"phantom": "value"}, "content_html": "See <feed />"},
+            {"id": "a", "attachments": None, "tags": {"phantom": "value"}, "content_html": "See <feed />", "url": "https://[invalid.example/path"},
             {"id": "b", "tags": ["retained"], "authors": [{"name": "Ada"}]},
         ]}
         observations = extract_feed_file_observations("fixture.json", json.dumps(payload))
@@ -386,6 +386,8 @@ class CanonicalFeedIntegrationTests(unittest.TestCase):
         self.assertEqual(kinds.count("feed.item"), 2)
         self.assertEqual(kinds.count("feed.category"), 1)
         self.assertEqual(kinds.count("feed.author"), 1)
+        (reference,) = [row for row in observations if row.kind == "feed.link"]
+        self.assertEqual(reference.name, "malformed feed reference")
         self.assertTrue(canonicalize_observations(observations).ok)
 
     def test_feed_file_extraction_skips_non_utf8_local_artifacts(self):

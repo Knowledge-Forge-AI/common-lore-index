@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import SplitResult, urlsplit
 from xml.etree import ElementTree
 
 from common_lore_index.graph.keys import (
@@ -21,6 +21,7 @@ from common_lore_index.graph.keys import (
 
 
 SAFE_SUMMARY_LIMIT = 160
+_MALFORMED_FEED_REFERENCE = unknown_key("external.url", "malformed-feed-reference")
 
 TAG_PATTERN = re.compile(r"<[^>]+>")
 SCRIPT_STYLE_PATTERN = re.compile(
@@ -47,11 +48,31 @@ SECRET_MARKERS = (
 )
 
 
+def _split_feed_url(value: str) -> SplitResult | None:
+    try:
+        parsed = urlsplit(value)
+        if parsed.scheme in ("http", "https"):
+            _ = parsed.port  # The stdlib validates the port when accessed.
+    except ValueError:
+        return None
+    return parsed
+
+
+def _identity_url(value: str | None) -> str | None:
+    return value if value and _split_feed_url(value) is not None else None
+
+
+def _unreadable_feed_reference(target: str, value: str) -> bool:
+    return target == _MALFORMED_FEED_REFERENCE and _split_feed_url(value.strip()) is None
+
+
 def _item_identity(
     *candidates: tuple[str, str | None],
     ordinal: int,
 ) -> tuple[str, str, str]:
     for source, value in candidates:
+        if source in {"link", "alternate-link", "url"}:
+            value = _identity_url(value)
         if value:
             strength = "weak" if source.startswith("title+") else "strong"
             return f"{source}:{value}", source, strength
@@ -71,13 +92,15 @@ def _reference_target(relative_path: str, raw_target: str) -> str:
         return unknown_key("feed.reference", "missing-target")
     if DYNAMIC_REFERENCE_PATTERN.search(value) or value.startswith("~"):
         return dynamic_key("file", "feed-reference-expanded-from-variable")
-    parsed = urlsplit(value)
+    parsed = _split_feed_url(value)
+    if parsed is None:
+        return _MALFORMED_FEED_REFERENCE
     if parsed.scheme:
         scheme = parsed.scheme.lower()
         if scheme in ("http", "https"):
             if parsed.netloc:
                 return external_url_key(value)
-            return unknown_key("external.url", "malformed-feed-reference")
+            return _MALFORMED_FEED_REFERENCE
         if scheme == "mailto":
             return external_url_key(value)
         return dynamic_key("url", "unsupported-url-scheme")
