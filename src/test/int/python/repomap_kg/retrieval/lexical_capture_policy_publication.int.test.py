@@ -20,6 +20,7 @@ from common_lore_index.ops.lexical_service import (
 from common_lore_index.ops.resource_view import ResourceObserver
 from common_lore_index.retrieval.lexical_aliases import build_alias_tokens_text
 from common_lore_index.retrieval.lexical_capture import LexicalCapturePlan
+from common_lore_index.retrieval.lexical_policy import build_lexical_generation_policy
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
 from common_lore_index.retrieval.projection_chunks import frame_digest
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
@@ -91,6 +92,7 @@ def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion
     def capture_with_reference_digest(**kwargs: Any) -> LexicalCapturePlan:
         nonlocal captures_checked
         plan = capture(**kwargs)
+        assert plan.policy_digest == build_lexical_generation_policy(kwargs["graph"]).policy_digest
         expected = frame_digest("lexgen1", (
             plan.representation_version, plan.text_config_regconfig, plan.ranking_function,
             str(plan.normalization_flags), plan.alias_split_rule_version, plan.policy_digest,

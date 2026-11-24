@@ -172,6 +172,10 @@ def test_lexical_policy_matches_mixed_v1_freeze_digest_and_excludes_private_bind
         == ExclusionReason.RETENTION_NOT_AUTHORIZED.value
     )
 
+    explicit = build_lexical_generation_policy(graph, selected_binding_ids=lex_pol.admitted_binding_ids)
+    assert explicit.policy_digest == lex_pol.policy_digest
+    assert explicit.body_policy.to_dict() == lex_pol.body_policy.to_dict()
+
     # Subset build shares graph policy_digest while scoping admitted_binding_ids (B3)
     sub_pol = build_lexical_generation_policy(
         graph, selected_binding_ids=(binding_id_for_alias("core"),)

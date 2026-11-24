@@ -6,6 +6,7 @@ from typing import Any, cast
 
 from common_lore_index.artifacts._manifest_records import ManifestArtifact, ManifestBinding
 from common_lore_index.artifacts.references import ArtifactLocator, ArtifactReference
+from common_lore_index.retrieval.projection_chunks import frame_digest
 from common_lore_index.retrieval.projection_policy import (
     BodyProjectionPolicy,
     ExclusionReason,
@@ -196,7 +197,7 @@ def test_unselected_email_feed_unsupported_and_oversized_refused_pre_open() -> N
     assert evaluate_binding_exclusion(unselected, b) == ExclusionReason.BINDING_NOT_SELECTED
 
     policy = _policy_for(resolved)
-    for email_path in ("mailbox/thread.eml", "mailbox/archive.mbox", "mailbox/note.msg"):
+    for email_path in ("mailbox/thread.eml", "mailbox/archive.mbox", "mailbox/note.msg", "emails/feed.rss"):
         reason, fmt = evaluate_artifact_pre_open(policy, b, _artifact(path=email_path))
         assert reason == ExclusionReason.EMAIL_BODY_FORBIDDEN and fmt is None
 
@@ -217,6 +218,11 @@ def test_unselected_email_feed_unsupported_and_oversized_refused_pre_open() -> N
         bindings=mutable_bindings,
     ).validate()
     digest_before = frozen_pol.policy_digest()
+    assert digest_before == frame_digest("sha256", (
+        frozen_pol.policy_version, "mixed-v1", "80", "8192", "262144", "1048576", "8388608",
+        "bind1:core", *resolved.to_dict().values(),
+    ))
+    assert frozen_pol.to_dict()["policy_digest"] == digest_before
     mutable_bindings.clear()
     mutable_selected.clear()
     assert frozen_pol.policy_digest() == digest_before
