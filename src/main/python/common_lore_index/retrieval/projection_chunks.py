@@ -84,6 +84,37 @@ def _iter_chunk_specs(
         yield start_line, start_line + len(buffer) - 1, "".join(buffer), False
 
 
+def _iter_normalized_byte_specs(
+    data: bytes, max_chunk_lines: int, max_chunk_bytes: int,
+) -> Iterator[tuple[int, int, bytes, bool]]:
+    """Group already validated UTF-8 using byte offsets in the normalized source."""
+    chunk_start = line_start = buffered_lines = 0
+    first_line = line_number = 1
+    while line_start < len(data):
+        newline = data.find(b"\n", line_start)
+        line_end = len(data) if newline < 0 else newline + 1
+        if buffered_lines and (buffered_lines >= max_chunk_lines or line_end - chunk_start > max_chunk_bytes):
+            yield first_line, line_number - 1, data[chunk_start:line_start], False
+            buffered_lines = 0
+        if line_end - line_start > max_chunk_bytes:
+            cursor = line_start
+            while cursor < line_end:
+                end = min(cursor + int(max_chunk_bytes), line_end)
+                if end < line_end:
+                    while (data[end] & 0xC0) == 0x80:
+                        end -= 1
+                yield line_number, line_number, data[cursor:end], cursor != line_start
+                cursor = end
+        else:
+            if not buffered_lines:
+                chunk_start, first_line = line_start, line_number
+            buffered_lines += 1
+        line_start = line_end
+        line_number += 1
+    if buffered_lines:
+        yield first_line, line_number - 1, data[chunk_start:line_start], False
+
+
 @dataclass(frozen=True)
 class ProjectedChunk:
     """One contiguous, non-overlapping chunk of projected file text."""
@@ -153,7 +184,7 @@ def _iter_file_chunks(
     file_projection_id: str,
     binding_id: str,
     source_relative_path: str,
-    normalized_text: str,
+    normalized_text: str | bytes,
     artifact_privacy: str,
     policy_digest: str,
     publication_bundle_id: str,
@@ -164,7 +195,7 @@ def _iter_file_chunks(
     if max_chunk_lines < 1 or max_chunk_bytes < 4:
         raise ValueError("max_chunk_lines >= 1 and max_chunk_bytes >= 4 are required")
 
-    if normalized_text == "":
+    if not normalized_text:
         content_digest = frame_digest("sha256", (b"",))
         chunk_id = frame_digest(
             "projchunk1",
@@ -206,7 +237,11 @@ def _iter_file_chunks(
     id_prefix = hashlib.sha256(f"cloe-frame-v1:{len(identity_fields) + 6}:".encode("ascii"))
     _append_frame_parts(id_prefix.update, identity_fields)
     byte_cursor = 0
-    specs = _iter_chunk_specs(normalized_text, max_chunk_lines, max_chunk_bytes)
+    specs: Iterable[tuple[int, int, str | bytes, bool]]
+    if isinstance(normalized_text, bytes):
+        specs = _iter_normalized_byte_specs(normalized_text, max_chunk_lines, max_chunk_bytes)
+    else:
+        specs = _iter_chunk_specs(normalized_text, max_chunk_lines, max_chunk_bytes)
     for chunk_index, (start_line, end_line, piece, is_cont) in enumerate(specs):
         piece_bytes = piece if isinstance(piece, bytes) else piece.encode("utf-8")
         text_piece = piece.decode("utf-8") if isinstance(piece, bytes) else piece

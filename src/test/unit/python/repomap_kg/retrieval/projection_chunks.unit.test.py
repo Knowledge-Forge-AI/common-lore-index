@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from common_lore_index.retrieval.projection_chunks import (
     _framed_digest,
     build_file_chunks,
@@ -168,3 +170,27 @@ def test_streaming_frames_keep_exact_sequence_framing() -> None:
     parts = ("", b"", "a:\x00", "β:🚀", b"\xff\n")
     assert _framed_digest("fixture", len(parts), iter(parts)) == frame_digest("fixture", parts)
     assert _framed_digest("fixture", 0, iter(())) == frame_digest("fixture", ())
+
+
+def test_validated_bytes_reuse_exact_text_chunk_boundaries_and_digests() -> None:
+    from common_lore_index.retrieval.projection_chunks import _iter_file_chunks
+    from common_lore_index.retrieval.projection_text import normalize_and_bound_text
+
+    words = "🚀🚀🚀\nab🚀c🚀\nλ\nα\nβ\n\n"
+    normalized, reason = normalize_and_bound_text((words * 40).encode("utf-8"), max_projected_bytes=27)
+    assert reason is None and normalized is not None and normalized.truncated
+    assert isinstance(normalized.normalized_bytes, bytes)
+    assert normalized.normalized_bytes == normalized.normalized_text.encode("utf-8")
+    assert len(normalized.normalized_bytes) <= 27 < normalized.normalized_byte_length
+    common: dict[str, Any] = dict(
+        file_projection_id="fixture", binding_id="binding", source_relative_path="notes.md", artifact_privacy="public-dev",
+        policy_digest="policy", publication_bundle_id="bundle",
+    )
+    for text in ("", words, normalized.normalized_text):
+        for max_lines in (1, 2, 3):
+            for max_bytes in range(4, 16):
+                assert tuple(_iter_file_chunks(
+                    normalized_text=text.encode("utf-8"), max_chunk_lines=max_lines, max_chunk_bytes=max_bytes, **common,
+                )) == build_file_chunks(
+                    normalized_text=text, max_chunk_lines=max_lines, max_chunk_bytes=max_bytes, **common,
+                )

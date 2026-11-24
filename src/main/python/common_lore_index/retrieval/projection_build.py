@@ -14,7 +14,7 @@ from common_lore_index.artifacts.manifest import PortableSnapshotManifest
 from common_lore_index.retrieval.projection_chunks import (
     _framed_digest,
     ProjectedChunk,
-    build_file_chunks,
+    _iter_file_chunks,
     frame_digest,
 )
 from common_lore_index.retrieval.projection_evidence import (
@@ -305,17 +305,17 @@ def build_captured_text_projection(
                 norm_res.representation_digest,
             ),
         )
-        chunks = build_file_chunks(
+        chunks = tuple(_iter_file_chunks(
             file_projection_id=file_proj_id,
             binding_id=binding.binding_id,
             source_relative_path=entry.source_relative_path,
-            normalized_text=norm_res.normalized_text,
+            normalized_text=norm_res.normalized_bytes,
             artifact_privacy=art_privacy,
             policy_digest=policy_digest,
             publication_bundle_id=inputs.bundle.bundle_id,
             max_chunk_lines=policy.max_chunk_lines,
             max_chunk_bytes=policy.max_chunk_bytes,
-        )
+        ))
         projected_files.append(
             ProjectedFileRecord(
                 file_projection_id=file_proj_id,

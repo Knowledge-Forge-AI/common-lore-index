@@ -99,6 +99,9 @@ def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion
             *(f"{o.binding_id}:{o.source_relative_path or ''}:{o.reason_code}" for o in plan.omissions),
         ))
         assert plan.lexical_generation_id == expected
+        for document in plan.documents:
+            assert "".join(chunk.chunk_text for chunk in document.chunks) == document.normalized_text
+            assert all(len(chunk.chunk_text.encode("utf-8")) == chunk.byte_length for chunk in document.chunks)
         captures_checked += 1
         return plan
 

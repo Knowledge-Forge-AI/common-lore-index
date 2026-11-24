@@ -194,7 +194,7 @@ def _evaluate_candidate_pre_open(
 
 def _build_captured_chunks(
     *, file_proj_id: str, binding_id: str, binding_revision: int, snapshot_id: str,
-    source_relative_path: str, normalized_text: str, artifact_privacy: str,
+    source_relative_path: str, normalized_text: str | bytes, artifact_privacy: str,
     policy_digest: str, publication_bundle_id: str, max_chunk_lines: int, max_chunk_bytes: int,
 ) -> tuple[LexicalCapturedChunk, ...]:
     raw_chunks = _iter_file_chunks(
@@ -237,7 +237,7 @@ def _append_normalized_document(
     file_proj_id = frame_digest("lexdoc1", (lexical_policy.policy_digest, fence.publication_bundle_id, b_id, str(rev), snap_id, rel_path, content_sha256))
     captured_chunks = _build_captured_chunks(
         file_proj_id=file_proj_id, binding_id=b_id, binding_revision=rev, snapshot_id=snap_id,
-        source_relative_path=rel_path, normalized_text=norm_res.normalized_text,
+        source_relative_path=rel_path, normalized_text=norm_res.normalized_bytes,
         artifact_privacy=art_priv, policy_digest=lexical_policy.policy_digest,
         publication_bundle_id=fence.publication_bundle_id, max_chunk_lines=body_policy.max_chunk_lines,
         max_chunk_bytes=body_policy.max_chunk_bytes,
