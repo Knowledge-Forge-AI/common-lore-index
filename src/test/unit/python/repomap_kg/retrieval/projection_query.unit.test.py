@@ -222,7 +222,9 @@ def test_evidence_index_limits_records_and_links_to_admitted_files(
         "metadata_json": {"binding_id": binding_id, "source_relative_path": "pkg/excluded.py"},
     }
     families["canonical_evidence"] = (evidence_row, excluded_row)
-    families["canonical_node_evidence"] = (link_row, {**link_row, "evidence_key": excluded_key})
+    families["canonical_node_evidence"] = (
+        {**link_row, "canonical_key": "zz:later"}, link_row, {**link_row, "evidence_key": excluded_key},
+    )
     bundle = replace(inputs.bundle, families=families)
     key = (binding_id, "pkg/alpha.py")
     expected = index_bundle_evidence(bundle)
@@ -237,5 +239,24 @@ def test_evidence_index_limits_records_and_links_to_admitted_files(
     monkeypatch.setattr(projection_evidence, "ProjectedEvidenceLink", make_link)
     assert index_bundle_evidence(bundle, file_keys={key}) == {key: expected[key]}
     assert not index_bundle_evidence(bundle, file_keys=set())
-    expected_count = 2 if excluded_key == evidence_row["evidence_key"] else 1
+    expected_count = 3 if excluded_key == evidence_row["evidence_key"] else 2
+    assert expected[key][-1].canonical_node_key == "zz:later"
     assert seen == ["ev1:alpha80"] * expected_count
+
+
+def test_match_count_only_does_not_compute_locator_lines(monkeypatch: pytest.MonkeyPatch) -> None:
+    def unexpected_lines(_needle: str) -> int:
+        raise AssertionError("count-only matching needs no locator line-span geometry")
+
+    class CountOnlyText(str):
+        def count(self, *args: Any, **kwargs: Any) -> int:
+            raise AssertionError("count-only matching needs no source line numbers")
+
+    monkeypatch.setattr(projection_query, "_matched_line_span", unexpected_lines)
+    chunks = build_file_chunks(
+        file_projection_id="fixture", binding_id="binding", source_relative_path="fixture.md",
+        normalized_text="éx\néx\néx", artifact_privacy="public-dev", policy_digest="policy",
+        publication_bundle_id="bundle", max_chunk_bytes=4,
+    )
+    checked = tuple(replace(chunk, content_text=CountOnlyText(chunk.content_text)) for chunk in chunks)
+    assert _find_chunked_matches(checked, "éx\néx", max_materialize=0, skip_matches=0) == ([], 2)

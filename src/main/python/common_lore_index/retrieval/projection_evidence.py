@@ -119,7 +119,7 @@ def index_bundle_evidence(
                 )
             )
         else:
-            for node_key, link_kind in sorted(joined):
+            for node_key, link_kind in joined:
                 target_list.append(
                     ProjectedEvidenceLink(
                         evidence_key=ev_key,

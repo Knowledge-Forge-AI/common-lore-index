@@ -154,7 +154,7 @@ def _find_chunked_matches(
     start_line = 1
     digest: str | None = None
     overlap = len(needle) - 1
-    line_span = _matched_line_span(needle)
+    line_span = 0
     for index, chunk in enumerate(chunks):
         text = chunk.content_text
         boundary: str | None = None
@@ -182,10 +182,12 @@ def _find_chunked_matches(
                 line += text.count("\n", line_cursor, found)
                 line_cursor = found
                 if digest is None:
+                    line_span = _matched_line_span(needle)
                     digest = frame_digest("sha256", (needle,))
                 matches.append((line, line + line_span, char_base + found, chunk.chunk_id, digest))
             pos = found + 1
-        start_line += text.count("\n")
+        if max_materialize is None or len(matches) < max_materialize:
+            start_line += text.count("\n")
         char_base += len(text)
     return matches, total_count
 

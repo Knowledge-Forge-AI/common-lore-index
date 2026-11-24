@@ -181,6 +181,7 @@ def test_published_literal_page_retains_cross_chunk_unicode_start(
     monkeypatch.setattr(projection_query, "first_link_for_line_span", observe)
     repeated = query_captured_text(projection, request)
     assert repeated.hits == expected.hits
+    assert repeated.provenance["total_matches_before_paging"] == len(starts)
+    assert [item.locator.start_line for item in repeated.hits] == [2] * 8
     assert len(repeated.hits) == 8
-    assert {item.locator.start_line for item in repeated.hits} == {2}
     assert lookups == 1
