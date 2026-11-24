@@ -10,9 +10,9 @@ from typing import Any
 from common_lore_index.retrieval.advisory_freshness import reserve_freshness_observation
 from common_lore_index.retrieval.context_budget import (
     CANONICAL_KEY_CAP_BYTES, DISPLAY_NAME_CAP_BYTES, SOURCE_RELATIVE_PATH_CAP_BYTES,
-    _withhold_scope_echo, _withhold_target_echo, apply_skeleton_compaction, sanitize_stored_string,
+    apply_skeleton_compaction, sanitize_stored_string,
 )
-from common_lore_index.retrieval.context_budget_reservation import packet_size_with_reservation
+from common_lore_index.retrieval.context_budget_reservation import fits_packet_with_reservation
 from common_lore_index.retrieval.context_contracts import OMISSION_COUNT_KEYS
 from common_lore_index.retrieval.intent_policy import classify_subject_intent_family
 from common_lore_index.server._navigation_groups import (
@@ -265,15 +265,7 @@ def admit_items_and_relations(
         packet["omission_counts"] = omissions.to_counts_dict()
         # Reserve detail bytes only after ranked items and relations.
         packet["omissions"] = [dict(record) for record in records]
-        apply_skeleton_compaction(packet, budget_bytes)
-        size = packet_size_with_reservation(packet)
-        if size > budget_bytes and packet["request"].get("target_echo") is not None:
-            _withhold_target_echo(packet)
-            size = packet_size_with_reservation(packet)
-        if size > budget_bytes and packet["scope"].get("scope_echo_complete") is not False:
-            _withhold_scope_echo(packet)
-            size = packet_size_with_reservation(packet)
-        return size <= budget_bytes
+        return fits_packet_with_reservation(packet, budget_bytes)
     overflow_by_item_limit = max(0, total_post_offset_seeds - len(candidate_seeds))
     if overflow_by_item_limit > 0:
         omissions.increment("item_limit", overflow_by_item_limit)
@@ -316,18 +308,20 @@ def admit_items_and_relations(
     admitted_relations: list[dict[str, Any]] = []
     seen_rel_keys: set[tuple[str, str, str, str]] = set()
     def admit_relation_prefix(relations: Sequence[dict[str, Any]]) -> bool:
-        pending = list({
-            _rel_identity(rel): rel for rel in relations
-            if _rel_identity(rel) not in seen_rel_keys
-        }.values())
-        for rel_idx, rel in enumerate(pending):
-            packet["relations"] = admitted_relations + [rel]
-            packet["expansion"]["relations_admitted"] = len(admitted_relations) + 1
-            if fits_reserved_packet():
-                seen_rel_keys.add(_rel_identity(rel))
-                admitted_relations.append(rel)
-                continue
+        pending = {}
+        for rel in relations:
+            identity = _rel_identity(rel)
+            if identity not in seen_rel_keys:
+                pending[identity] = rel
+        for rel_idx, (identity, rel) in enumerate(pending.items()):
+            admitted_relations.append(rel)
             packet["relations"] = admitted_relations
+            packet["expansion"]["relations_admitted"] = len(admitted_relations)
+            if fits_reserved_packet():
+                seen_rel_keys.add(identity)
+                continue
+            admitted_relations.pop()
+            packet["expansion"]["relations_admitted"] = len(admitted_relations)
             omissions.increment("output_budget", len(pending) - rel_idx)
             return False
         return True
@@ -362,19 +356,22 @@ def admit_items_and_relations(
         if nbr_item["omitted_location_count"] > 0:
             omissions.increment("location_limit", nbr_item["omitted_location_count"])
         first_rel = valid_rels[0]
-        packet["neighbors"] = admitted_neighbors + [nbr_item]
-        packet["relations"] = admitted_relations + [first_rel]
-        packet["expansion"]["neighbors_admitted"] = len(admitted_neighbors) + 1
-        packet["expansion"]["relations_admitted"] = len(admitted_relations) + 1
+        admitted_neighbors.append(nbr_item)
+        admitted_relations.append(first_rel)
+        packet["neighbors"] = admitted_neighbors
+        packet["relations"] = admitted_relations
+        packet["expansion"]["neighbors_admitted"] = len(admitted_neighbors)
+        packet["expansion"]["relations_admitted"] = len(admitted_relations)
         if not fits_reserved_packet():
+            admitted_neighbors.pop()
+            admitted_relations.pop()
+            packet["expansion"]["neighbors_admitted"] = len(admitted_neighbors)
+            packet["expansion"]["relations_admitted"] = len(admitted_relations)
             omissions.restore(snap)
             omissions.increment("output_budget", len(neighbor_units) - nbr_idx)
             break
-        admitted_neighbors.append(nbr_item)
         admitted_keys.add(nbr_ck)
-        rel_id = _rel_identity(first_rel)
-        seen_rel_keys.add(rel_id)
-        admitted_relations.append(first_rel)
+        seen_rel_keys.add(_rel_identity(first_rel))
         admit_relation_prefix(valid_rels[1:])
     pending_extra: list[dict[str, Any]] = []
     for rel in extra_relations:

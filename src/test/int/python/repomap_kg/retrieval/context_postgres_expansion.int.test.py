@@ -143,10 +143,10 @@ def _counter_rows() -> tuple[tuple[dict[str, Any], ...], tuple[tuple[str, str, s
     return subjects, edges
 
 
+@pytest.mark.parametrize("offset", [0, 1])
 def test_postgres_sqlite_expansion_matches_greedy_global_neighbor_charge_and_kind_filter(
-    tmp_path: Path,
+    tmp_path: Path, offset: int,
 ) -> None:
-    """Existing neighbors do not consume seed-1's node slots, and non-selected kinds stay out."""
     require_postgres_binaries()
     subjects, edges = _counter_rows()
     _, _, _, _, sqlite_adapter = build_sqlite_context_fixture(
@@ -159,7 +159,7 @@ def test_postgres_sqlite_expansion_matches_greedy_global_neighbor_charge_and_kin
         )
         request = _request(
             mode="ranked_discovery", canonical_key=None, query="CounterSeed",
-            kinds=("python.function",), max_items=2, expand_seeds=2,
+            kinds=("python.function",), offset=offset, max_items=2-offset, expand_seeds=2-offset,
             node_limit=2, edge_limit=8, edge_kinds=("calls",),
         )
         with sqlite_adapter:
@@ -171,9 +171,9 @@ def test_postgres_sqlite_expansion_matches_greedy_global_neighbor_charge_and_kin
     assert_valid_context_packet(postgres_packet)
     assert _content(sqlite_packet) == _content(postgres_packet)
     neighbor_keys = {key for key, _ in _content(postgres_packet)[1]}
-    assert neighbor_keys == {"py:counter.A", "py:counter.B", "py:counter.C"}
+    assert neighbor_keys == ({"py:counter.A", "py:counter.B"} if offset else {"py:counter.A", "py:counter.B", "py:counter.C"})
     assert all(row[1] == "calls" for row in _content(postgres_packet)[2])
-    assert postgres_packet["expansion"]["seeds_expanded"] == 2
+    assert (postgres_packet["expansion"]["seeds_expanded"], postgres_packet["items"][0]["canonical_key"]) == (2 - offset, f"py:counter.Seed{offset}")
 
 
 def _bulk_rows() -> tuple[tuple[dict[str, Any], ...], tuple[tuple[str, str, str], ...]]:

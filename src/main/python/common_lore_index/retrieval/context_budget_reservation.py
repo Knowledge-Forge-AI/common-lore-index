@@ -6,6 +6,9 @@ from collections.abc import Mapping
 from typing import Any
 
 from common_lore_index.retrieval.context_budget import (
+    _withhold_scope_echo,
+    _withhold_target_echo,
+    apply_skeleton_compaction,
     compact_json_byte_length,
     converge_actual_bytes_from_zero_length,
 )
@@ -197,6 +200,29 @@ def _measure_projected_packet_bytes(projected: dict[str, Any]) -> int:
 def packet_size_with_reservation(packet: dict[str, Any]) -> int:
     """Measure a packet after reserving all bounded post-admission fields."""
     return _measure_projected_packet_bytes(_project_reserved_packet(packet))
+
+
+def fits_packet_with_reservation(packet: dict[str, Any], budget_bytes: int) -> bool:
+    """Keep compaction only for trials that fit the reserved budget."""
+    request, scope, work = packet["request"], packet["scope"], packet["work_ledger"]
+    saved_request, saved_scope, saved_work = dict(request), dict(scope), dict(work)
+    accepted = False
+    try:
+        apply_skeleton_compaction(packet, budget_bytes)
+        size = packet_size_with_reservation(packet)
+        if size > budget_bytes and request.get("target_echo") is not None:
+            _withhold_target_echo(packet)
+            size = packet_size_with_reservation(packet)
+        if size > budget_bytes and scope.get("scope_echo_complete") is not False:
+            _withhold_scope_echo(packet)
+            size = packet_size_with_reservation(packet)
+        accepted = size <= budget_bytes
+        return accepted
+    finally:
+        if not accepted:
+            for fields, saved in ((request, saved_request), (scope, saved_scope), (work, saved_work)):
+                fields.clear()
+                fields.update(saved)
 
 
 def empty_packet_size_with_reservation(packet: dict[str, Any]) -> int:

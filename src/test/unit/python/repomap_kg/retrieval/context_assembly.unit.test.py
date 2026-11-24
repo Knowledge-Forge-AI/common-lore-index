@@ -292,7 +292,7 @@ def test_location_cap_retains_late_status_without_materializing_extra_freshness(
 
 
 def test_admission_commits_only_successful_seed_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from common_lore_index.retrieval import context_admission
+    from common_lore_index.retrieval import context_budget_reservation
 
     budget = 4096
     _, _, _, _, adapter = build_sqlite_context_fixture(tmp_path)
@@ -312,7 +312,7 @@ def test_admission_commits_only_successful_seed_retry(tmp_path: Path, monkeypatc
             return budget - 1
         return budget - 1 if len(items[0]["locations"]) == 1 and allow_retry else budget + 1
 
-    monkeypatch.setattr(context_admission, "packet_size_with_reservation", measure)
+    monkeypatch.setattr(context_budget_reservation, "packet_size_with_reservation", measure)
     for allow_retry in (True, False):
         packet = {**initial, "items": [], "request": dict(initial["request"]),
                   "scope": dict(initial["scope"])}

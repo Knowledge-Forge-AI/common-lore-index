@@ -285,23 +285,26 @@ def test_admission_counts_orphan_neighbor_and_keeps_later_admissible_unit() -> N
 
 
 def test_admission_counts_remaining_neighbors_after_first_budget_failure() -> None:
-    packet = _skeleton(4096)
+    packet = _skeleton(8192)
+    echoes = (dict(packet["request"]), dict(packet["scope"]))
     omissions = OmissionCounter()
-    seed = _item("py:budget.A")
+    seeds = [_item("py:budget.A"), _item("py:budget.B")]
+    retained = _relation("py:budget.A", "py:budget.B")
     units = []
     for idx in range(3):
         key = f"py:budget.G{idx}"
         neighbor = _item(key, "neighbor")
-        neighbor["display_name"] = "g" * 6000
+        neighbor["display_name"] = "g" * 20_000
         units.append((neighbor, [_relation("py:budget.A", key)]))
     admit_items_and_relations(
-        packet, candidate_seeds=[seed], total_post_offset_seeds=1,
-        top_tied_keys=frozenset(), neighbor_units=units, extra_relations=(),
-        omissions=omissions, budget_bytes=4096,
+        packet, candidate_seeds=seeds, total_post_offset_seeds=2,
+        top_tied_keys=frozenset(), neighbor_units=units, extra_relations=[retained],
+        omissions=omissions, budget_bytes=8192,
     )
     assert packet["neighbors"] == []
-    assert packet["relations"] == []
+    assert packet["relations"] == [retained]
     assert omissions.counts["output_budget"] == 3
+    assert (packet["request"], packet["scope"]) == echoes
 
 
 def test_admission_counts_remaining_relations_after_first_budget_failure() -> None:
