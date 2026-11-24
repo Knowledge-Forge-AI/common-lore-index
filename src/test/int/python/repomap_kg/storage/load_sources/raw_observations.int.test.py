@@ -1,3 +1,4 @@
+import hashlib
 import unittest
 from dataclasses import replace
 import json
@@ -106,6 +107,7 @@ SELECT count(*) FROM raw_observations WHERE run_id = :run_id;
 
     def test_raw_observation_transactional_batch_unicode_escaping_replay_and_schema_rollback(self):
         require_postgres_binaries()
+        wide_note = "é😀\n" * 9000
         batch = [
             RawObservation(
                 kind="file",
@@ -125,6 +127,7 @@ SELECT count(*) FROM raw_observations WHERE run_id = :run_id;
                 extractor_version="0.1.0",
                 metadata={
                     "note": "quote ' test \\ and \n and 🚀 emoji",
+                    "wide_note": wide_note,
                     "tags": ["日本語", "utf8"],
                 },
             ),
@@ -176,6 +179,15 @@ SELECT count(*) FROM raw_observations WHERE run_id = :run_id;
                 "SELECT (payload_json->'metadata'->'note')::text FROM raw_observations WHERE ordinal = 1;"
             )
             self.assertEqual(json.loads(readback_note), "quote ' test \\ and \n and 🚀 emoji")
+            wide_length = postgres.psql_scalar(
+                "SELECT length(payload_json->'metadata'->>'wide_note') FROM raw_observations WHERE ordinal = 1;"
+            )
+            self.assertEqual(int(wide_length), len(wide_note))
+            canonical = json.dumps(rows[1].payload_json, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            self.assertEqual(
+                postgres.psql_scalar("SELECT payload_hash FROM raw_observations WHERE ordinal = 1;"),
+                hashlib.sha256(canonical).hexdigest(),
+            )
 
             # Each psql call starts a fresh session: bind the committed identities again.
             # 3. Batch replay idempotency

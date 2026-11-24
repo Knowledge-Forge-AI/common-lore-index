@@ -10,8 +10,9 @@ from common_lore_index.canonicalization.main import canonicalize_observations
 from common_lore_index.canonicalization.records import CanonicalizationResult
 from common_lore_index.observations.raw import RawObservation
 from common_lore_index.storage.row_helpers import (
+    _storage_payload_hash,
     identity_metadata_hash,
-    raw_observation_payload_hash,
+    raw_observation_payload_hash as raw_observation_payload_hash,
 )
 
 __all__ = (
@@ -126,14 +127,15 @@ def _iter_raw_observation_rows(
     observations: Iterable[RawObservation],
 ) -> Iterator[RawObservationRow]:
     for ordinal, observation in enumerate(observations):
+        payload = observation.to_dict()
         yield RawObservationRow(
             ordinal=ordinal,
             schema_version=observation.schema_version,
             kind=observation.kind,
             source_id=observation.source_id,
             path=observation.path,
-            payload_json=observation.to_dict(),
-            payload_hash=raw_observation_payload_hash(observation),
+            payload_json=payload,
+            payload_hash=_storage_payload_hash(payload),
         )
 
 
@@ -169,14 +171,15 @@ def _iter_canonical_edge_rows(
     result: CanonicalizationResult,
 ) -> Iterator[CanonicalEdgeRow]:
     for edge in result.graph.edges:
+        identity_metadata = dict(edge.identity_metadata)
         yield CanonicalEdgeRow(
             edge_key=edge.edge_key,
             graph_key_version=edge.graph_key_version,
             source_key=edge.source_key,
             edge_kind=edge.kind,
             target_key=edge.target_key,
-            identity_metadata_json=dict(edge.identity_metadata),
-            identity_metadata_hash=identity_metadata_hash(edge.identity_metadata),
+            identity_metadata_json=identity_metadata,
+            identity_metadata_hash=identity_metadata_hash(identity_metadata),
             metadata_json=dict(edge.metadata),
             confidence=edge.confidence,
             conflict=edge.conflict,

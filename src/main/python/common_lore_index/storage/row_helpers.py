@@ -11,6 +11,9 @@ from typing import Any
 from common_lore_index.observations.raw import RawObservation
 from common_lore_index.storage.errors import StorageSchemaError
 
+_EMPTY_OBJECT_SHA256 = hashlib.sha256(b"{}").hexdigest()
+_JSON_HASH_CHARACTERS = 64 * 1024
+
 __all__ = (
     "raw_observation_payload_hash",
     "identity_metadata_hash",
@@ -41,11 +44,23 @@ __all__ = (
 
 
 def raw_observation_payload_hash(observation: RawObservation) -> str:
-    return sha256_text(canonical_json_text(observation.to_dict()))
+    return _storage_payload_hash(observation.to_dict())
 
 
 def identity_metadata_hash(metadata: Mapping[str, Any]) -> str:
-    return sha256_text(canonical_json_text(metadata))
+    if not metadata:
+        return _EMPTY_OBJECT_SHA256
+    return _storage_payload_hash(metadata)
+
+
+def _storage_payload_hash(payload: Mapping[str, Any]) -> str:
+    text = canonical_json_text(payload)
+    if len(text) <= _JSON_HASH_CHARACTERS:
+        return sha256_text(text)
+    digest = hashlib.sha256()
+    for offset in range(0, len(text), _JSON_HASH_CHARACTERS):
+        digest.update(text[offset:offset + _JSON_HASH_CHARACTERS].encode("utf-8"))
+    return digest.hexdigest()
 
 
 def optional_manifest_text(payload: Mapping[str, Any], key: str) -> str | None:

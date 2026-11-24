@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Iterator, Mapping
 from dataclasses import FrozenInstanceError, fields, is_dataclass
+import hashlib
+import json
 
 import pytest
 
@@ -16,6 +19,34 @@ from common_lore_index.observations.raw import RawObservation
 from common_lore_index.storage import rows
 from common_lore_index.graph.discovery import classify_path
 from common_lore_index.storage.staged_rows import build_staged_rows
+
+
+def test_raw_row_hash_is_derived_from_the_single_retained_projection() -> None:
+    class ChangingMetadata(Mapping[str, str]):
+        reads = 0
+
+        def __getitem__(self, key: str) -> str:
+            if key != "message":
+                raise KeyError(key)
+            self.reads += 1
+            return f"fixture {self.reads}"
+
+        def __iter__(self) -> Iterator[str]:
+            return iter(("message",))
+
+        def __len__(self) -> int:
+            return 1
+
+    metadata = ChangingMetadata()
+    observation = RawObservation(
+        kind="file", source_id="README.md", path="README.md", confidence="manual",
+        extractor="fixture", extractor_version="0.1.0", metadata=metadata,
+    )
+    (row,) = rows.raw_observation_rows_from_observations((observation,))
+    expected = json.dumps(row.payload_json, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    assert metadata.reads == 1
+    assert row.payload_json["metadata"] == {"message": "fixture 1"}
+    assert row.payload_hash == hashlib.sha256(expected).hexdigest()
 
 
 def test_discovery_files_supply_seven_durable_rows_and_preserve_source_relative_paths(tmp_path):
