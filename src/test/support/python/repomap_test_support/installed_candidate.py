@@ -36,7 +36,8 @@ from runner_coverage_execution import launch_observed_process, prepare_child_cov
 
 from installed_experience_pins import (
     CANDIDATE_INPUT_FILES, CANDIDATE_INPUT_TREES, CANDIDATE_VERSION, CANDIDATE_WHEEL_PREFIX,
-    INCUMBENT_COMMIT, INCUMBENT_WHEEL_PREFIX, LEGACY_FACADE, RELEASED_CLOE_COMMIT, RELEASED_CLOE_INPUT_PATHS,
+    INCUMBENT_COMMIT, INCUMBENT_WHEEL_PREFIX, LEGACY_FACADE, PREVIEW005_PACKAGE_INPUTS,
+    PREVIEW005_SOURCE_COMMIT, RELEASED_CLOE_COMMIT, RELEASED_CLOE_INPUT_PATHS,
     RELEASED_CLOE_WHEEL_PREFIX, SETUPTOOLS_DEFAULT_LICENSE_PATTERNS,
 )
 from repomap_test_support.installed_sdist import SDIST_FILENAME, source_hashes, verify_sdist
@@ -47,7 +48,7 @@ DATA_PREFIX = f"common_lore_index-{CANDIDATE_VERSION}.data/data/"
 OPTIONAL_DIST_INFO = frozenset({f"{DIST_INFO}/top_level.txt"})
 FORBIDDEN_PREFIXES = ("src/", "tools/", "test/", "resources/")
 _MEMO: dict[tuple[str, str], BuiltWheel] = {}
-_ARCHIVE_MEMO: dict[tuple[str, str, str, tuple[str, ...]], BuiltWheel] = {}
+_ARCHIVE_MEMO: dict[tuple[str, str, str, tuple[str, ...], tuple[str, int] | None], BuiltWheel] = {}
 
 
 @dataclass(frozen=True)
@@ -162,8 +163,9 @@ def candidate_sdist_wheel(reference: BuiltWheel, scratch: Path, root: Path = ROO
 
 def _archived_wheel(
     factory: Any, root: Path, commit: str, prefix: str, paths: Sequence[str],
+    *, expected_inputs: tuple[str, int] | None = None,
 ) -> BuiltWheel:
-    key = (str(root.resolve()), commit, prefix, tuple(paths))
+    key = (str(root.resolve()), commit, prefix, tuple(paths), expected_inputs)
     memo = _ARCHIVE_MEMO.get(key)
     if memo is not None and memo.wheel.is_file():
         return memo
@@ -179,6 +181,8 @@ def _archived_wheel(
         members.extractall(source, filter="data")
     names = sorted(path.relative_to(source).as_posix() for path in source.rglob("*") if path.is_file())
     digest, count = input_digest(source, names)
+    if expected_inputs is not None and (digest, count) != expected_inputs:
+        raise AssertionError("installed-candidate archive differs from pinned package inputs")
     built = BuiltWheel(_build(source, scratch / "wheel", prefix), source, digest, count)
     _ARCHIVE_MEMO[key] = built
     return built
@@ -195,6 +199,14 @@ def released_cloe_wheel(factory: Any, root: Path = ROOT) -> BuiltWheel:
     """Rebuild the exact v0.0.4 release inputs without downloading a wheel."""
     return _archived_wheel(factory, root, RELEASED_CLOE_COMMIT, RELEASED_CLOE_WHEEL_PREFIX,
                            RELEASED_CLOE_INPUT_PATHS)
+
+
+def preview005_predecessor_wheel(factory: Any, root: Path = ROOT) -> BuiltWheel:
+    """Rebuild the exact v0.0.5 preview as a separately identified predecessor."""
+    return _archived_wheel(
+        factory, root, PREVIEW005_SOURCE_COMMIT, RELEASED_CLOE_WHEEL_PREFIX,
+        RELEASED_CLOE_INPUT_PATHS, expected_inputs=PREVIEW005_PACKAGE_INPUTS,
+    )
 
 
 def installed_graph_parser_digest(wheel: BuiltWheel, purelib: Path) -> str:
@@ -333,5 +345,5 @@ __all__ = [
     "BuiltWheel", "DIST_INFO", "ROOT", "WheelInventory", "candidate_sdist_wheel", "candidate_wheel", "expected_entry_points",
     "expected_inventory", "expected_requires", "incumbent_wheel", "input_digest", "input_names",
     "installed_graph_parser_digest", "inventory_sha256", "license_bytes_match", "license_members",
-    "listed_inputs", "released_cloe_wheel", "rows_sha256", "wheel_inventory",
+    "listed_inputs", "preview005_predecessor_wheel", "released_cloe_wheel", "rows_sha256", "wheel_inventory",
 ]

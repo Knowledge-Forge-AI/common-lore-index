@@ -3,10 +3,19 @@
 The distribution is `common-lore-index`, its canonical import namespace is
 `common_lore_index`, and installed resources live at `share/common-lore-index`.
 The preferred command is `cloe`; `common-lore-index` names the same implementation.
-The transitional `repomap-kg` command remains through v0.1.x and prints a bounded
-notice on stderr. Version and help use the explicitly selected command name;
-identity keeps six keys, with the current distribution/package/CLI values.
-MCP wire names and schemas remain unchanged.
+The v0.0.5 preview also shipped the transitional `repomap-kg` command.
+That compatibility applies to the published preview. The approved
+[v0.1.0 source cutover](../adr/2026/11/0222-v010-canonical-only-cutover.md)
+replaces the promise for later versions. During the cutover, the implicit
+default is `~/.cloe`; automatic selection no longer searches `~/.repo-map`.
+Select the predecessor home explicitly when preparing a conversion. An
+ordinary setup with no explicit selector can initialize a separate canonical
+home. Confirm the expected graph and recovery point before changing either
+home.
+
+Version and help identify the command selected by the executable.
+Identity keeps its six-key record. MCP wire names and schemas continue to
+follow the current staged contract until their coordinated cutover.
 
 ## Distribution metadata ownership
 

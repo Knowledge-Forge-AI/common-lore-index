@@ -217,7 +217,10 @@ def test_archive_memo_distinguishes_wheel_prefix_and_input_paths(
                 members.add(root / name, arcname=name)
         return ""
 
+    build_sources: list[Path] = []
+
     def build(source: Path, output: Path, prefix: str) -> Path:
+        build_sources.append(source)
         output.mkdir()
         wheel = output / f"{prefix}py3-none-any.whl"
         wheel.write_text(sorted(path.name for path in source.iterdir())[0], encoding="utf-8")
@@ -234,6 +237,29 @@ def test_archive_memo_distinguishes_wheel_prefix_and_input_paths(
     assert renamed.input_sha256 == first.input_sha256
     assert different.input_sha256 != first.input_sha256
     assert different.wheel.read_text(encoding="utf-8") == "LICENSE"
+
+    for mismatch in (
+        (different.input_sha256, first.input_count),
+        (first.input_sha256, first.input_count + 1),
+    ):
+        with pytest.raises(AssertionError, match="archive differs from pinned package inputs"):
+            installed._archived_wheel(
+                tmp_path_factory, root, "commit", "first-", ("NOTICE",),
+                expected_inputs=mismatch,
+            )
+    assert len(build_sources) == 3
+
+    def checked_archive() -> BuiltWheel:
+        return installed._archived_wheel(
+            tmp_path_factory, root, "commit", "first-", ("NOTICE",),
+            expected_inputs=(first.input_sha256, first.input_count),
+        )
+
+    checked = checked_archive()
+    assert checked.wheel != first.wheel
+    assert checked.input_sha256 == first.input_sha256
+    assert checked_archive() is checked
+    assert len(build_sources) == 4
 
 
 @pytest.mark.parametrize("drift", ("none", "source", "installation", "version", "metadata"))

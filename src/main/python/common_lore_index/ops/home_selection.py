@@ -19,7 +19,6 @@ PayloadRecognizer = Callable[[Sequence[tuple[str, bytes]]], bool]
 class HomeSelection:
     path: Path
     source: str
-    notices: tuple[str, ...] = ()
 
 
 def _refuse(code: str) -> NoReturn:
@@ -113,27 +112,19 @@ def _classify(path: Path, recognize: PayloadRecognizer) -> str:
 
 
 def select_home(value: str | Path | None, *, recognize: PayloadRecognizer) -> HomeSelection:
-    """Inspect default candidates without creating, moving or opening a database."""
+    """Inspect the canonical default without creating files or opening a database."""
     if value is not None:
         return HomeSelection(Path(value).expanduser(), "explicit")
     for variable in ("CLOE_HOME", "REPOMAP_HOME"):
         selected = os.environ.get(variable)
         if selected:
             return HomeSelection(Path(selected).expanduser(), variable)
-    current, legacy = Path("~/.cloe").expanduser(), Path("~/.repo-map").expanduser()
+    current = Path("~/.cloe").expanduser()
     current_state = _classify(current, recognize)
     if current_state == "recognized":
         return HomeSelection(current, "cloe-default")
     if current_state == "unsafe":
         _refuse("default-home-unsafe")
-    legacy_state = _classify(legacy, recognize)
-    if legacy_state == "recognized":
-        notice = "using the recognizable legacy default home; set CLOE_HOME to select explicitly"
-        if current_state == "foreign":
-            notice = "unrecognized new default left untouched; " + notice
-        return HomeSelection(legacy, "legacy-default", (notice,))
-    if legacy_state != "absent":
-        _refuse("legacy-default-home-unrecognized")
     if current_state in ("absent", "empty"):
         return HomeSelection(current, "fresh-default")
     _refuse("default-home-unrecognized")

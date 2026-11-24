@@ -284,7 +284,7 @@ def __dir__() -> list[str]:
     return sorted(set(globals()) | POSTGRES_FACADE_NAMES)
 
 
-def _home_selection_notice(args: argparse.Namespace) -> None:
+def _preflight_cli_home(args: argparse.Namespace) -> None:
     if args.version or not hasattr(args, "repo_map_home") or getattr(args, "config", None) is not None:
         return
     if args.command == "mcp" and getattr(args, "mcp_command", None) == "serve" and os.environ.get("REPOMAP_OPS_CONFIG"):
@@ -293,9 +293,7 @@ def _home_selection_notice(args: argparse.Namespace) -> None:
         "config-migration-apply", "config-migration-rollback", "config-migration-finalize",
     ):
         return  # Their explicit-home requirement is independent authority.
-    selection = _resolve_home_selection(args.repo_map_home)
-    for notice in selection.notices:
-        print(f"warning: legacy-default-home: {notice}", file=sys.stderr)
+    _resolve_home_selection(args.repo_map_home)
 
 
 def main(argv: list[str] | None = None, *, prog: str | None = None) -> int:
@@ -320,7 +318,7 @@ def main(argv: list[str] | None = None, *, prog: str | None = None) -> int:
 
 def _dispatch_main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
     try:
-        _home_selection_notice(args)
+        _preflight_cli_home(args)
     except OpsConfigError as error:
         for diagnostic in error.diagnostics:
             print(f"{diagnostic.code}: {diagnostic.message}", file=sys.stderr)

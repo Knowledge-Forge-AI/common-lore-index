@@ -10,9 +10,13 @@ from typing import Any
 import pytest
 
 from common_lore_index.server._mcp_dispatch import MCP_PROTOCOL_VERSION
-from installed_experience_pins import CODE_KIND, GRAPH_ID, RELEASED_CLOE_COMMIT
+from installed_experience_pins import (
+    CODE_KIND, GRAPH_ID, PREVIEW005_BASE_CONFIG, PREVIEW005_GRAPH_PARSER_SHA256,
+    PREVIEW005_PACKAGE_INPUTS, RELEASED_CLOE_COMMIT,
+)
 from repomap_test_support.installed_candidate import (
-    ROOT, BuiltWheel, candidate_wheel, installed_graph_parser_digest, released_cloe_wheel, wheel_inventory,
+    ROOT, BuiltWheel, candidate_wheel, installed_graph_parser_digest, preview005_predecessor_wheel,
+    released_cloe_wheel, wheel_inventory,
 )
 from repomap_test_support.installed_environment import InstalledEnvironment, run_child
 from repomap_test_support.installed_experience_driver import json_object, pure_environment
@@ -114,3 +118,27 @@ def test_released_local_home_upgrade_and_backup_recovery(
                       "baseline_generation": first, "candidate_generation": next_generation,
                       "candidate_source_blind_readback": True, "candidate_restored_old_backup": True,
                       "released_restored_old_backup": True}, sort_keys=True))
+
+
+def test_preview005_predecessor_preserves_source_blind_local_recovery(
+    tmp_path_factory: pytest.TempPathFactory, tmp_path: Path,
+) -> None:
+    preview = preview005_predecessor_wheel(tmp_path_factory)
+    assert (preview.input_sha256, preview.input_count) == PREVIEW005_PACKAGE_INPUTS
+    assert wheel_inventory(preview.wheel).record_valid
+    installed = pure_environment(tmp_path / "preview005 environment", preview)
+    assert _installed_digest(installed, preview) == PREVIEW005_GRAPH_PARSER_SHA256
+
+    material = write_tiny_material(tmp_path / "public material")
+    home = tiny_home(tmp_path / "preview005 home", material, config_name=PREVIEW005_BASE_CONFIG)
+    recovered = tiny_home(tmp_path / "preview005 recovery", material, config_name=PREVIEW005_BASE_CONFIG)
+    backup = tmp_path / "preview005 backup"
+    _cli(installed, home, "sqlite-init")
+    assert _cli(installed, home, "refresh-graph")["accepted_generation"] == 1
+    before = _answer(installed, home)
+    assert _cli(installed, home, "sqlite-backup", "--output", str(backup))["result"] == "created"
+    frozen = _files_digest((backup / "graph.sqlite3", backup / "manifest.json"))
+    material.rename(material.with_name("hidden public material"))
+    assert _cli(installed, recovered, "sqlite-restore", "--backup", str(backup))["result"] == "restored"
+    assert _answer(installed, recovered) == before
+    assert _files_digest((backup / "graph.sqlite3", backup / "manifest.json")) == frozen
