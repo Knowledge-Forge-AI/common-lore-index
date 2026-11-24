@@ -156,6 +156,7 @@ def test_real_retained_capture_records_edge_omissions_and_survives_root_deletion
             authorize_body=True,
         )
         assert any(hit.locator.source_relative_path == alias_path for hit in aliases.hits)
+        assert aliases.provenance["lexical_generation_id"] == built.published.lexical_generation_id
 
         prefix_env = query_graph_lexical_generation(
             config,

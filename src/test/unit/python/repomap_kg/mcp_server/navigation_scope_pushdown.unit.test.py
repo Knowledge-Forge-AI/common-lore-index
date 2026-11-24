@@ -246,8 +246,8 @@ def test_many_binding_vector_is_decoded_and_charged_once_per_run(tmp_path, monke
     activate(monkeypatch, home)
     with sqlite3.connect(database) as connection:
         vector = json.loads(connection.execute("SELECT snapshot_vector_json FROM runs WHERE id=2").fetchone()[0])
-        vector += [[f"binding-generic-{i:04d}", 1, f"snapshot-generic-{i:04d}"] for i in range(512)]
-        encoded = json.dumps(vector)
+        vector += [[f"binding-generic-{i:04d}", 1, f"snapshot-generic-{i:04d}-λ"] for i in range(512)]
+        encoded = json.dumps(vector, ensure_ascii=False)
         connection.execute("UPDATE runs SET snapshot_vector_json=? WHERE id=2", (encoded,))
     with patch.object(queries.json, "loads", wraps=json.loads) as loads:
         result = call(source_path_prefix="docs/zzz")
@@ -255,6 +255,7 @@ def test_many_binding_vector_is_decoded_and_charged_once_per_run(tmp_path, monke
     assert result["status"] == "ok" and member_keys(result) == list(fixture_oracle(database, BINDING, "docs/zzz"))
     admission = result["scan"]["admission"]
     assert admission["checks"] * len(encoded.encode()) > queries.ADMISSION_BYTE_LIMIT
+    assert len(encoded.encode("utf-8")) > len(encoded)
     assert admission["vector_decodes"] == 1 and admission["vector_bytes"] == len(encoded.encode())
     assert admission["decoded_bytes"] < queries.ADMISSION_BYTE_LIMIT
     assert admission["input_bytes"] > queries.ADMISSION_BYTE_LIMIT

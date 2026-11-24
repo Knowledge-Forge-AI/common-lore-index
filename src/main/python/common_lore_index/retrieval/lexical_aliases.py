@@ -15,7 +15,6 @@ _DELIMITER_SPLIT_RE = re.compile(r"[/_.:-]+")
 _CAMEL_BOUNDARY_1_RE = re.compile(r"([a-z0-9])([A-Z])")
 _ACRONYM_BOUNDARY_RE = re.compile(r"(?<=[A-Z])(?=[A-Z][a-z])")
 _ALNUM_BOUNDARY_RE = re.compile(r"(?<=[a-z])(?=[0-9])|(?<=[0-9])(?=[a-z])")
-_CLEAN_ALNUM_RE = re.compile(r"^[a-z0-9]{2,64}$")
 
 
 def _split_camel_case(segment: str) -> list[str]:
@@ -39,7 +38,7 @@ def _split_camel_case(segment: str) -> list[str]:
 
 
 def _alias_candidates(raw: str) -> Iterator[str]:
-    parts = [part for part in _DELIMITER_SPLIT_RE.split(raw) if part]
+    parts = [raw] if raw.isalnum() else [part for part in _DELIMITER_SPLIT_RE.split(raw) if part]
     for part in parts:
         yield part
         yield from _split_camel_case(part)
@@ -56,7 +55,7 @@ def _append_alias_tokens(
         lower = token.lower()
         if (
             MIN_ALIAS_TOKEN_LEN <= len(lower) <= MAX_ALIAS_TOKEN_LEN
-            and _CLEAN_ALNUM_RE.fullmatch(lower) is not None
+            and lower.isascii() and lower.isalnum()
             and lower not in seen
         ):
             seen.add(lower)

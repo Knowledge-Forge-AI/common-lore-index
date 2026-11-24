@@ -9,6 +9,7 @@ from contextlib import closing
 from dataclasses import dataclass, field
 from typing import Any
 
+from common_lore_index._utf8 import byte_length
 from common_lore_index.storage.navigation_search import (
     ADMISSION_BYTE_LIMIT, ADMISSION_CHECK_LIMIT, CODE_KINDS, DOC_KINDS,
     EVIDENCE_SCAN_LIMIT, NODE_SCAN_LIMIT, NavigationSearchQuery, unavailable,
@@ -132,7 +133,7 @@ class _Admission:
     error: Exception | None = None
 
     def matches(self, run_id: int, path: str | None, metadata: str, vector: str) -> bool:
-        metadata_size, vector_size = len(metadata.encode("utf-8")), len(vector.encode("utf-8"))
+        metadata_size, vector_size = byte_length(metadata), byte_length(vector)
         self.input_bytes += metadata_size + vector_size
         size = metadata_size + (vector_size if run_id not in self.vectors else 0)
         if self.checks >= ADMISSION_CHECK_LIMIT or self.decoded_bytes + size > ADMISSION_BYTE_LIMIT:
@@ -238,7 +239,7 @@ def navigation_candidates(connection: SqliteFunctionReadConnection, query: Navig
     # The trusted integer ID set is at most NODE_SCAN_LIMIT, independent of
     # SQLite's bound-variable ceiling. Admit subjects, never prune alternatives.
     evidence_predicate = "subject.id IN (" + ",".join(str(int(node_id)) for node_id in nodes) + ")" if nodes else "0"
-    vectors = dict(admission.vectors) if admission is not None else {}
+    vectors = admission.vectors if admission is not None else {}
     sql = evidence_sql(evidence_predicate, role_sql=role_sql, refuse_overflow=True)
     with closing(connection.execute(sql, {
         **params, "accepted": accepted.run_id, "evidence_fetch": EVIDENCE_SCAN_LIMIT + 1,

@@ -345,3 +345,13 @@ def test_frequent_alias_candidates_are_cached_only_within_one_document(monkeypat
         first(f"Field{2000 + index}")
     first("Field42")
     assert seen.count("Field42") == 3
+
+
+def test_plain_and_delimited_aliases_keep_ascii_length_boundaries() -> None:
+    maximum = "b" * 64
+    too_long = "c" * 65
+    tokens = extract_alias_tokens(
+        source_relative_path="pkg/migrate.py",
+        chunk_text=f"a aa {maximum} {too_long} a-b x_9 υ42 雪",
+    )
+    assert tokens == ("pkg", "migrate", "py", "pkgmigratepy", "aa", maximum, "ab", "x9", "42")
