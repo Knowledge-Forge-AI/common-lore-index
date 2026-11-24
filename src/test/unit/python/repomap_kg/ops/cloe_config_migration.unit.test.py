@@ -293,7 +293,7 @@ def test_cli_usage_requires_explicit_home_and_one_mode(argv: list[str], monkeypa
 @pytest.mark.parametrize("backup_change", ["missing", "corrupt"])
 @pytest.mark.parametrize("confirmed", [False, True])
 def test_restore_scratch_is_preserved_when_backup_drift_prevents_recovery(
-    tmp_path: Path, backup_change: str, confirmed: bool,
+    tmp_path: Path, backup_change: str, confirmed: bool, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     home = make_home(tmp_path)
     assert apply_cloe_config_migration(home, confirmed=True)["result"] == "applied"
@@ -305,6 +305,13 @@ def test_restore_scratch_is_preserved_when_backup_drift_prevents_recovery(
         backup.unlink()
     else:
         backup.write_bytes(b"changed-backup")
+    read = Home.read
+
+    def observe(bound: Home, name: str, limit: int, code: str, *, in_op: bool = False) -> tuple[bytes, os.stat_result]:
+        assert not (in_op and name == backup.name), "recovery opened a known wrong-size backup"
+        return read(bound, name, limit, code, in_op=in_op)
+
+    monkeypatch.setattr(Home, "read", observe)
     before = tree(home)
     result = rollback_cloe_config_migration(home, confirmed=confirmed, dry_run=not confirmed)
     assert result["result"] == "refused"

@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import stat
 from typing import Any
 
 from common_lore_index.ops.config_layout import classify_config_filename, portable_config_name
 from common_lore_index.ops.config_migration_fs import (
     JOURNAL_NAME, JOURNAL_TEMP_NAME, LOCK_NAME, MAX_FILE_BYTES, OPERATION_DIRECTORY, PROBE_NAMES,
-    Home, MigrationRefusal, backup_name, ident, owned_regular, restore_name,
+    Home, MigrationRefusal, backup_name, ident, owned_regular, restore_name, snapshot,
 )
 from common_lore_index.ops.config_migration_journal import effective_sha256, read_journal, write_journal
 
@@ -32,24 +33,33 @@ def load_operation(home: Home) -> dict[str, Any] | None:
     return journal
 
 
-def _content(home: Home, name: str, entry: dict[str, Any], *, in_op: bool = False) -> bytes | None:
+def _content(
+    home: Home, name: str, entry: dict[str, Any], admitted: os.stat_result, *, in_op: bool = False,
+) -> bytes | None:
+    if admitted.st_size != entry["size"]:
+        return None
     try:
-        data, _ = home.read(name, MAX_FILE_BYTES, "config-migration-drift", in_op=in_op)
+        data, observed = home.read(name, MAX_FILE_BYTES, "config-migration-drift", in_op=in_op)
     except MigrationRefusal:
         return None
-    if len(data) != entry["size"] or hashlib.sha256(data).hexdigest() != entry["sha256"]:
+    if (
+        snapshot(observed) != snapshot(admitted)
+        or len(data) != entry["size"]
+        or hashlib.sha256(data).hexdigest() != entry["sha256"]
+    ):
         return None
     return data
 
 
 def _proved(
-    home: Home, name: str, info: Any, entry: dict[str, Any], identities: set[Any], *, links: int = 1, in_op: bool = False,
+    home: Home, name: str, info: os.stat_result, entry: dict[str, Any],
+    identities: set[Any], *, links: int = 1, in_op: bool = False,
 ) -> bytes | None:
     if not owned_regular(info, links=links) or ident(info) not in identities:
         return None
     if stat.S_IMODE(info.st_mode) != entry["mode"]:
         return None
-    return _content(home, name, entry, in_op=in_op)
+    return _content(home, name, entry, info, in_op=in_op)
 
 
 def classify_entry(home: Home, entry: dict[str, Any]) -> tuple[str, bytes]:
@@ -79,10 +89,8 @@ def classify_entry(home: Home, entry: dict[str, Any]) -> tuple[str, bytes]:
                 return "restore-staged", data
         if owned_regular(r) and ident(r) != restored:
             backup = backup_name(entry["index"])
-            if (
-                owned_regular(home.lstat(backup, in_op=True))
-                and _content(home, backup, entry, in_op=True) is not None
-            ):
+            info = home.lstat(backup, in_op=True)
+            if info is not None and owned_regular(info) and _content(home, backup, entry, info, in_op=True) is not None:
                 return "restore-scratch", b""
     if s is not None and t is None and r is not None and restored is not None and ident(s) == ident(r):
         data = _proved(home, source, s, entry, {restored}, links=2)
@@ -91,8 +99,8 @@ def classify_entry(home: Home, entry: dict[str, Any]) -> tuple[str, bytes]:
     if s is None and t is None and r is None:
         backup = backup_name(entry["index"])
         info = home.lstat(backup, in_op=True)
-        if owned_regular(info):
-            data = _content(home, backup, entry, in_op=True)
+        if info is not None and owned_regular(info):
+            data = _content(home, backup, entry, info, in_op=True)
             if data is not None:
                 return "both-missing", data
     raise MigrationRefusal("config-migration-drift", source)

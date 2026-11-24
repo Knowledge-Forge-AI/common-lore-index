@@ -16,7 +16,7 @@ import pytest
 from common_lore_index.ops.config_migration import (
     apply_cloe_config_migration, finalize_cloe_config_migration, rollback_cloe_config_migration,
 )
-from common_lore_index.ops.config_migration_fs import MAX_CONFIG_FILES, MAX_FILE_BYTES, MAX_TOTAL_BYTES
+from common_lore_index.ops.config_migration_fs import Home, MAX_CONFIG_FILES, MAX_FILE_BYTES, MAX_TOTAL_BYTES
 from repomap_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
 from repomap_test_support.cli_in_process import REPO_ROOT, module_process_environment
 from runner_coverage_observer import launch_observed_process
@@ -323,3 +323,31 @@ def test_migration_duplicate_journal_fields_refuse_before_recovery(tmp_path: Pat
         assert refusal["refusals"] == [{"code": "config-migration-journal-invalid", "file": ""}]
         assert refusal["writes_performed"] == 0
         assert tree(home) == before
+
+
+def test_recovery_refuses_same_bytes_from_a_replaced_admitted_target(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    home = make_home(tmp_path, "postgresql")
+    assert apply_cloe_config_migration(home, confirmed=True)["result"] == "applied"
+    target = home / "00-project.cloe.toml"
+    replacement = tmp_path / "replacement.toml"
+    admitted = target.stat()
+    identical = target.read_bytes()
+    replacement.write_bytes(identical)
+    replacement.chmod(stat.S_IMODE(admitted.st_mode))
+    actual_read = Home.read
+    journal = home / OPERATION / "journal.json"
+    journal_before = journal.read_bytes()
+
+    def swap(bound: Home, name: str, limit: int, code: str, *, in_op: bool = False) -> tuple[bytes, os.stat_result]:
+        if name == target.name and not in_op and replacement.exists():
+            replacement.replace(target)
+        return actual_read(bound, name, limit, code, in_op=in_op)
+
+    monkeypatch.setattr(Home, "read", swap)
+    outcome = finalize_cloe_config_migration(home, confirmed=True)
+    assert outcome["refusals"] == [{"code": "config-migration-drift", "file": "00-project.rp.toml"}]
+    assert outcome["writes_performed"] == 0
+    assert target.stat().st_ino != admitted.st_ino and target.read_bytes() == identical
+    assert journal.read_bytes() == journal_before
