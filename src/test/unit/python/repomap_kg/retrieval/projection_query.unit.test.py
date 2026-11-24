@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
 
+import pytest
+
+from common_lore_index.retrieval import projection_query
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
 from common_lore_index.retrieval.projection_chunks import build_file_chunks
+from common_lore_index.retrieval.projection_evidence import (
+    ProjectedEvidenceLink,
+    first_link_for_line_span,
+    links_for_line_span,
+)
 from common_lore_index.retrieval.projection_policy import ExclusionReason
 from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, _find_chunked_matches, query_captured_text
 from common_lore_index.retrieval.query_contracts import CapabilityState
@@ -133,3 +142,64 @@ def test_short_literal_lookahead_keeps_overlapping_starts_across_many_chunks() -
     assert total == len(expected)
     assert [hit[2] for hit in hits] == expected[2:5]
     assert [hit[0] for hit in hits] == [1 + text.count("\n", 0, index) for index in expected[2:5]]
+
+
+def test_first_evidence_link_stops_at_the_first_in_order() -> None:
+    selected = ProjectedEvidenceLink(
+        "evidence:expected", "node:fixture", "supports", "document",
+        "binding:fixture", "notes.md", 5, 7, "extracted",
+    )
+
+    def links() -> Iterator[ProjectedEvidenceLink]:
+        yield replace(selected, start_line=None)
+        yield replace(selected, start_line=1, end_line=2)
+        yield selected
+        raise AssertionError("the query read beyond its first matching evidence")
+
+    assert first_link_for_line_span(links(), 6, 8) is selected
+    single_line = replace(selected, start_line=8, end_line=None)
+    candidates = (selected, single_line)
+    for start, end, expected in ((4, 5, selected), (7, 8, selected), (8, 8, single_line), (9, 9, None)):
+        assert first_link_for_line_span(candidates, start, end) is expected
+        assert next(iter(links_for_line_span(candidates, start, end)), None) is expected
+
+
+def test_query_reuses_evidence_only_within_the_same_file_and_span(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    inputs, policy = _build_fixture_projection(spool_dir=tmp_path / "spool")
+    projection = build_captured_text_projection(inputs, policy)
+    first, second = projection.projected_files
+    a = ProjectedEvidenceLink(
+        "evidence:a", "node:a", "supports", "document", first.binding_id, first.source_relative_path, 1, None,
+        "extracted",
+    )
+    b = replace(a, evidence_key="evidence:b", canonical_node_key="node:b", start_line=2)
+    c = replace(b, evidence_key="evidence:c", canonical_node_key="node:c", source_relative_path=second.source_relative_path)
+    files = []
+    for record, body, links in ((first, "marker marker\nmarker", (a, b)), (second, "\nmarker", (c,))):
+        chunk = record.chunks[0]
+        chunks = build_file_chunks(
+            file_projection_id=chunk.file_projection_id, binding_id=record.binding_id,
+            source_relative_path=record.source_relative_path, normalized_text=body,
+            artifact_privacy=chunk.artifact_privacy, policy_digest=projection.policy_digest,
+            publication_bundle_id=record.publication_bundle_id, max_chunk_bytes=100,
+        )
+        files.append(replace(record, chunks=chunks, evidence_links=links))
+    observed: list[tuple[str, int, int]] = []
+
+    def lookup(
+        links: tuple[ProjectedEvidenceLink, ...], start: int, end: int,
+    ) -> ProjectedEvidenceLink | None:
+        observed.append((links[0].source_relative_path, start, end))
+        return first_link_for_line_span(links, start, end)
+
+    monkeypatch.setattr(projection_query, "first_link_for_line_span", lookup)
+    result = query_captured_text(
+        replace(projection, projected_files=tuple(files)), CapturedTextQueryRequest(query="marker"),
+    )
+    assert [(hit.locator.evidence_key, hit.locator.canonical_key) for hit in result.hits] == [
+        ("evidence:a", "node:a"), ("evidence:a", "node:a"), ("evidence:b", "node:b"), ("evidence:c", "node:c"),
+    ]
+    assert observed == [(first.source_relative_path, 1, 1), (first.source_relative_path, 2, 2),
+                        (second.source_relative_path, 2, 2)]

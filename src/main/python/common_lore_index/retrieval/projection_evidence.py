@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -131,17 +131,32 @@ def index_bundle_evidence(
     }
 
 
+def _iter_links_for_line_span(
+    file_links: Iterable[ProjectedEvidenceLink],
+    start_line: int,
+    end_line: int,
+) -> Iterator[ProjectedEvidenceLink]:
+    for link in file_links:
+        if link.start_line is None:
+            continue
+        link_end = link.end_line if link.end_line is not None else link.start_line
+        if link.start_line <= end_line and link_end >= start_line:
+            yield link
+
+
 def links_for_line_span(
     file_links: Sequence[ProjectedEvidenceLink],
     start_line: int,
     end_line: int,
 ) -> tuple[ProjectedEvidenceLink, ...]:
     """Return evidence links whose line span overlaps [start_line, end_line]."""
-    matched: list[ProjectedEvidenceLink] = []
-    for link in file_links:
-        if link.start_line is None:
-            continue
-        link_end = link.end_line if link.end_line is not None else link.start_line
-        if link.start_line <= end_line and link_end >= start_line:
-            matched.append(link)
-    return tuple(matched)
+    return tuple(_iter_links_for_line_span(file_links, start_line, end_line))
+
+
+def first_link_for_line_span(
+    file_links: Iterable[ProjectedEvidenceLink],
+    start_line: int,
+    end_line: int,
+) -> ProjectedEvidenceLink | None:
+    """Return the first overlapping link in the supplied order."""
+    return next(_iter_links_for_line_span(file_links, start_line, end_line), None)

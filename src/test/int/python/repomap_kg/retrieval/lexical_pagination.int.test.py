@@ -6,6 +6,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.ops.lexical_service import (
@@ -13,6 +15,7 @@ from common_lore_index.ops.lexical_service import (
     query_graph_lexical_generation,
 )
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
+from common_lore_index.retrieval import projection_query
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
 from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, query_captured_text
 from common_lore_index.retrieval.query_contracts import CapabilityState
@@ -125,7 +128,9 @@ def test_real_literal_pagination_order_and_occurrence_cap(tmp_path: Path) -> Non
         assert all(count <= 1 for count in per_file_counts.values())
 
 
-def test_published_literal_page_retains_cross_chunk_unicode_start(tmp_path: Path) -> None:
+def test_published_literal_page_retains_cross_chunk_unicode_start(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     working_copy = materialize_mixed_v1_working_copy(tmp_path / "working-copy")
     state = publish_and_load_sqlite_corpus(write_mixed_v1_sqlite_home(tmp_path / "home", working_copy))
     projection = build_captured_text_projection(state.projection_inputs(), state.policy)
@@ -144,3 +149,20 @@ def test_published_literal_page_retains_cross_chunk_unicode_start(tmp_path: Path
     assert hit.chunk_id == left.chunk_id
     assert hit.locator.start_line == left.start_line == 2
     assert envelope.provenance["total_matches_before_paging"] == len(starts)
+
+    lookups = 0
+    first_link = projection_query.first_link_for_line_span
+    request = CapturedTextQueryRequest(query=needle, source_path_prefix=note.source_relative_path, limit=8)
+    expected = query_captured_text(projection, request)
+
+    def observe(*args: Any) -> Any:
+        nonlocal lookups
+        lookups += 1
+        return first_link(*args)
+
+    monkeypatch.setattr(projection_query, "first_link_for_line_span", observe)
+    repeated = query_captured_text(projection, request)
+    assert repeated.hits == expected.hits
+    assert len(repeated.hits) == 8
+    assert {item.locator.start_line for item in repeated.hits} == {2}
+    assert lookups == 1

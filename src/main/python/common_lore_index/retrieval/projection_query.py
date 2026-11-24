@@ -11,7 +11,7 @@ from common_lore_index.retrieval.projection_build import (
     ProjectedFileRecord,
 )
 from common_lore_index.retrieval.projection_chunks import ProjectedChunk, frame_digest
-from common_lore_index.retrieval.projection_evidence import links_for_line_span
+from common_lore_index.retrieval.projection_evidence import ProjectedEvidenceLink, first_link_for_line_span
 from common_lore_index.retrieval.publication_binding import AcceptedPublicationReference
 from common_lore_index.retrieval.query_contracts import (
     CapabilityState,
@@ -334,12 +334,18 @@ def query_captured_text(
         )
 
     hits: list[QueryHit] = []
+    previous_file: ProjectedFileRecord | None = None
+    previous_span: tuple[int, int] | None = None
+    primary_link: ProjectedEvidenceLink | None = None
     for rank, (file_rec, start_line, end_line, _pos, chunk_id, snippet_digest) in enumerate(
         paged,
         start=1,
     ):
-        overlapping_links = links_for_line_span(file_rec.evidence_links, start_line, end_line)
-        primary_link = overlapping_links[0] if overlapping_links else None
+        span = (start_line, end_line)
+        if file_rec is not previous_file or span != previous_span:
+            primary_link = first_link_for_line_span(file_rec.evidence_links, start_line, end_line)
+            previous_file = file_rec
+            previous_span = span
         locator = EvaluationLocator(
             binding_id=file_rec.binding_id,
             source_relative_path=file_rec.source_relative_path,
