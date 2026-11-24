@@ -11,7 +11,7 @@ from typing import Any
 from xml.etree import ElementTree
 
 from common_lore_index import __version__
-from common_lore_index.extractors.shared.observations import contains_web_url_userinfo, web_url_reference
+from common_lore_index.extractors.shared.web_references import contains_web_url_userinfo, web_url_reference
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,

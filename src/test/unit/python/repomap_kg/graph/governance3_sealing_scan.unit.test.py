@@ -96,7 +96,6 @@ def test_capture_only_matches_incumbent_across_real_selection_matrix(
     assert _paths(capture_only) == (
         ".profile",
         "empty",
-        "excluded/secret.txt",
         "invalid.utf8",
         "main.go",
         "script.sh",
@@ -131,8 +130,10 @@ def test_capture_only_scan_respects_excluded_alias_target_and_canonical_paths(
     (root / "private" / "secret.txt").write_text("private\n", encoding="utf-8")
     os.symlink(root / "private" / "secret.txt", root / "alias.txt")
     graph = _graph(root, ("private",))
+    (root / "public.txt").write_text("public\n", encoding="utf-8")
     scan = scan_sealing_generations(graph)
-    assert _paths(scan) == ("private/secret.txt",)
+    assert scan.snapshots == scan_multi_source_generations(graph).snapshots
+    assert _paths(scan) == ("public.txt",)
     assert canonical_relative_path(
         root.resolve(), root / "private" / "secret.txt"
     ) == "private/secret.txt"

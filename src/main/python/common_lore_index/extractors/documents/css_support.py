@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import PurePosixPath
 from typing import Any
 
-from common_lore_index.extractors.shared.observations import contains_web_url_userinfo, unknown_reference, web_url_reference
+from common_lore_index.extractors.shared.web_references import contains_web_url_userinfo, unknown_reference, web_url_reference
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,

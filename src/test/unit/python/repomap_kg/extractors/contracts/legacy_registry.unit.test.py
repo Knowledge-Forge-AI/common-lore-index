@@ -52,6 +52,17 @@ def test_splat_and_attribute_extractor_values_are_reported_not_skipped() -> None
     )
 
 
+def test_conditional_extractor_names_resolve_both_branches() -> None:
+    module = "common_lore_index.example"
+    trees = {module: ast.parse(
+        "def extract(mail):\n"
+        "    return RawObservation(extractor='repo-email' if mail else 'repo-documents')\n"
+    )}
+    owners, unresolved = legacy_source.resolve_extractor_owners(trees)
+    assert unresolved == ()
+    assert owners == {"repo-email": frozenset({module}), "repo-documents": frozenset({module})}
+
+
 def test_caller_parameter_and_getattr_aliases_are_resolved_not_exempted() -> None:
     shared = "common_lore_index.extractors.shared.observations"
     assert {name for name, owners in LEGACY_EXTRACTOR_OWNERS.items() if shared in owners} == {

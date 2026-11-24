@@ -7,7 +7,7 @@ import re
 from pathlib import PurePosixPath
 from typing import Any
 
-from common_lore_index.extractors.shared.observations import contains_web_url_userinfo
+from common_lore_index.extractors.shared.web_references import contains_web_url_userinfo
 from common_lore_index.extractors.shared.scanner import iter_text_lines
 from common_lore_index.extractors.config.generic_profile_helpers import _stable_text_sha256
 from common_lore_index.extractors.config.generic_values import _config_url_redaction_reason, _is_url

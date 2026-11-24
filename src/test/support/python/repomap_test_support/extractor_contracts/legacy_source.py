@@ -130,6 +130,10 @@ class _Resolver:
                    depth: int = 0) -> set[str]:
         if isinstance(value, ast.Constant) and isinstance(value.value, str):
             return {value.value}
+        if isinstance(value, ast.IfExp):
+            return self.expression(module, value.body, function, depth + 1) | self.expression(
+                module, value.orelse, function, depth + 1
+            )
         if isinstance(value, ast.Name):
             parameters = set() if function is None else {
                 arg.arg for arg in (*function.args.args, *function.args.kwonlyargs)

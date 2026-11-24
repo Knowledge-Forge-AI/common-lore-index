@@ -133,9 +133,18 @@ class _Database:
             return _Cursor(self, (self.lock_ok,))
         counted = re.fullmatch(r"SELECT count\(\*\) FROM (\w+) WHERE stage_id = %s", norm)
         if counted is not None:
-            position = _TABLES.index(counted.group(1))
-            return _Cursor(self, (len(self.copied[position]) if position < len(self.copied) else 0,))
+            return _Cursor(self, (self._copied_count(counted.group(1)),))
+        if norm.startswith("SELECT (SELECT count(*) FROM stage_"):
+            tables = re.findall(r"\(SELECT count\(\*\) FROM (\w+) WHERE stage_id = %s\)", norm)
+            assert tables == _TABLES
+            assert len(params) == len(tables) and len(set(params)) == 1
+            return _Cursor(self, tuple(self._copied_count(table) for table in tables))
         return _Cursor(self)
+
+
+    def _copied_count(self, table: str) -> int:
+        position = _TABLES.index(table)
+        return len(self.copied[position]) if position < len(self.copied) else 0
 
 
 class _Factory:

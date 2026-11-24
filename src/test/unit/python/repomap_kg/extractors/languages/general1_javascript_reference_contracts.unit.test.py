@@ -85,10 +85,11 @@ class JavaScriptSpecifierTargetContractTests(unittest.TestCase):
         malformed = self.assert_reference(
             10, "dynamic:js.reference:dynamic-specifier", "dynamic"
         )
-        self.assertEqual(malformed.metadata["raw_value_summary"], "http://[broken*")
+        self.assertNotIn("raw_value_summary", malformed.metadata)
         imported = at(self.observations, "js.import", 10)[0]
-        self.assertEqual(imported.name, "http://[broken*")
-        self.assertEqual(imported.metadata["import_specifier"], "http://[broken*")
+        self.assertIsNone(imported.name)
+        self.assertNotIn("import_specifier", imported.metadata)
+        self.assertEqual(imported.metadata["target_key"], malformed.target)
         self.assertTrue(imported.metadata["not_loaded"])
 
     def test_absolute_escaping_and_bare_file_specifiers_stay_repo_bounded(self):

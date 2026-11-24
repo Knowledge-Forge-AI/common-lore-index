@@ -10,7 +10,7 @@ from typing import Any
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 from common_lore_index import __version__
-from common_lore_index.extractors.shared.observations import contains_web_url_userinfo
+from common_lore_index.extractors.shared.web_references import contains_web_url_userinfo
 from common_lore_index.graph.keys import (
     doc_adr_key,
     doc_page_key,

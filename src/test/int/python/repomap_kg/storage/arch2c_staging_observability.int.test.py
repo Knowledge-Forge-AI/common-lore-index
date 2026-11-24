@@ -128,9 +128,14 @@ class _RecordedConnection:
         self._connection = connection
         self._operations = operations
 
-    def execute(self, *args, **kwargs):
-        self._operations.append("execute")
-        return self._connection.execute(*args, **kwargs)
+    def execute(self, query, *args, **kwargs):
+        operation = "execute"
+        if isinstance(query, str):
+            normalized = " ".join(query.split())
+            if normalized.startswith(("SELECT (SELECT count(*) FROM stage_", "SELECT count(*) FROM stage_")):
+                operation = normalized
+        self._operations.append(operation)
+        return self._connection.execute(query, *args, **kwargs)
 
     def cursor(self, *args, **kwargs):
         return _RecordedCursor(self._connection.cursor(*args, **kwargs), self._operations)
@@ -191,7 +196,14 @@ def test_arch2c_measurements_are_public_safe_bounded_and_result_neutral() -> Non
 
     assert measured_summary == baseline_summary
     assert measured_state == baseline_state
-    assert len(measured_operations) == len(baseline_operations) + 4
+    family_counts = [
+        f"SELECT count(*) FROM {descriptor.stage_table} WHERE stage_id = %s"
+        for descriptor in STAGING_FAMILY_DESCRIPTORS.values()
+    ]
+    batched_counts = "SELECT " + ", ".join(f"({sql})" for sql in family_counts)
+    assert [op for op in baseline_operations if op.startswith("SELECT ")] == [batched_counts]
+    assert [op for op in measured_operations if op.startswith("SELECT ")] == family_counts
+    assert len(measured_operations) - len(family_counts) == len(baseline_operations) - 1 + 4
     assert len(events) <= 96
 
     family_categories = {
