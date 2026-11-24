@@ -145,6 +145,9 @@ def test_instrumentation_preserves_seven_family_semantics() -> None:
     assert tuple(instrumented_checksums[family].row_count for family in FAMILIES) == tuple(
         family.row_count for family in instrumented.families
     )
+    assert tuple(instrumented_checksums[family].normalized_byte_count for family in FAMILIES) == tuple(
+        family.normalized_bytes for family in instrumented.families
+    )
     assert instrumented.structural_digest == plain.structural_digest
     assert tuple(family.row_count for family in instrumented.families) == tuple(
         family.row_count for family in plain.families

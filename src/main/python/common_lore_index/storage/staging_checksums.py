@@ -17,11 +17,16 @@ _DIGEST_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
 _ROW_KEY_PREFIX = b"repomap-staging-checksum-v2\x00key\x00"
 _ROW_PAYLOAD_PREFIX = b"repomap-staging-checksum-v2\x00payload\x00"
 _SUM_MODULUS = 1 << 256
+# Canonical JSON sorts the two envelope members in this order.
+_PAYLOAD_HEAD = b'{"identity":'
+_PAYLOAD_MIDDLE = b',"payload":'
+_PAYLOAD_END = b"}"
 
 
-def _row_digest_value(prefix: bytes, encoded: bytes) -> int:
+def _row_digest_value(prefix: bytes, *parts: bytes) -> int:
     digest = hashlib.sha256(prefix)
-    digest.update(encoded)
+    for part in parts:
+        digest.update(part)
     return int.from_bytes(digest.digest(), "big")
 
 
@@ -75,22 +80,19 @@ class _FamilyChecksumAccumulator:
         if any(name not in row for name in self._identity_names):
             raise ValueError("checksum identity field is missing")
         identity = {name: row[name] for name in self._identity_names}
-        typed_identity = _typed_value(identity)
-        encoded_identity = _canonical_json(typed_identity)
-        encoded_payload = _canonical_json(
-            {
-                "identity": typed_identity,
-                "payload": _typed_value(row if type(row) is dict else dict(row)),
-            }
+        encoded_identity = _canonical_json(_typed_value(identity))
+        encoded_row = _canonical_json(_typed_value(row if type(row) is dict else dict(row)))
+        payload_parts = (
+            _PAYLOAD_HEAD, encoded_identity, _PAYLOAD_MIDDLE, encoded_row, _PAYLOAD_END,
         )
         self._key_sum = (
             self._key_sum + _row_digest_value(_ROW_KEY_PREFIX, encoded_identity)
         ) % _SUM_MODULUS
         self._payload_sum = (
-            self._payload_sum + _row_digest_value(_ROW_PAYLOAD_PREFIX, encoded_payload)
+            self._payload_sum + _row_digest_value(_ROW_PAYLOAD_PREFIX, *payload_parts)
         ) % _SUM_MODULUS
         self._row_count += 1
-        self._normalized_byte_count += len(encoded_payload) + 1
+        self._normalized_byte_count += sum(map(len, payload_parts)) + 1
 
     def finish(self) -> FamilyChecksum:
         """Finalize the checksum state without changing its contents."""

@@ -138,8 +138,9 @@ def test_failed_parent_admission_preserves_the_refusal_when_close_fails(
         delivery.admit_destination(str(reports / "report.json"))
 
 
+@pytest.mark.parametrize("changed_field", ["st_mtime_ns", "st_ctime_ns"])
 def test_reader_refuses_inconsistent_metadata_from_the_same_private_descriptor(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, changed_field: str,
 ) -> None:
     from types import SimpleNamespace
     from common_lore_index.ops.resource_reports import _files
@@ -157,10 +158,10 @@ def test_reader_refuses_inconsistent_metadata_from_the_same_private_descriptor(
         calls += 1
         if calls == 1:
             return info
-        return SimpleNamespace(
-            **{name: getattr(info, name) for name in ("st_mode", "st_uid", "st_nlink", "st_size")},
-            st_mtime_ns=info.st_mtime_ns + 1,
-        )
+        fields = ("st_mode", "st_uid", "st_nlink", "st_size", "st_mtime_ns", "st_ctime_ns")
+        details = {name: getattr(info, name) for name in fields}
+        details[changed_field] += 1
+        return SimpleNamespace(**details)
 
     with monkeypatch.context() as local:
         local.setattr(_files.os, "fstat", inspect)

@@ -221,6 +221,19 @@ def test_checksum_rejects_missing_identity_field_without_exposing_row_values() -
     assert "private" not in str(caught.value)
 
 
+def test_checksum_v2_framing_preserves_escaped_compound_identity() -> None:
+    row = {
+        "path": 'folder/"naïve🐦.md',
+        "payload": {"line": "a\n\t", "ratio": -0.0, "nested": ({"b": False, "a": None},)},
+        "kind": "text",
+    }
+    assert astuple(checksum_family((row,), identity_fields=("kind", "path"))) == (
+        1, 353,
+        "1048f9f8e760e914c1fd46d384782d094ed695389b03169bed046071cbdd5ae5",
+        "8bf82817df9221d6d54e95b67de2dc0f0a18074053e2ce74ab370e535873e33d",
+    )
+
+
 def test_cleanup_reconciles_before_deleting_stage_rows() -> None:
     now = datetime(2026, 7, 14, 12, 0, tzinfo=UTC)
     expired = now - timedelta(minutes=1)

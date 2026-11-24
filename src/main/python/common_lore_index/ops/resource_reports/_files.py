@@ -28,11 +28,15 @@ def _private_regular(details: os.stat_result) -> bool:
     )
 
 
+def _file_extent(details: os.stat_result) -> tuple[int, int, int]:
+    return details.st_size, details.st_mtime_ns, details.st_ctime_ns
+
+
 def read_report_file(path: str | os.PathLike[str]) -> bytes:
     """Return at most the v2 file bound from one private regular report file.
 
     The codec then re-applies the per-schema bound, so an oversized v1 file
-    remains ``too_large``.
+    remains ``too_large``. The admitted file version must persist through the read.
     """
     try:
         before = os.lstat(path)
@@ -55,6 +59,8 @@ def read_report_file(path: str | os.PathLike[str]) -> bytes:
             raise ResourceReportError("unsafe_input")
         if opened.st_size > MAX_FILE_BYTES:
             raise ResourceReportError("too_large")
+        if _file_extent(opened) != _file_extent(before):
+            raise ResourceReportError("unsafe_input")
         chunks: list[bytes] = []
         total = 0
         while total <= MAX_FILE_BYTES:
@@ -68,7 +74,7 @@ def read_report_file(path: str | os.PathLike[str]) -> bytes:
         after = os.fstat(descriptor)
         if (
             not _private_regular(after)
-            or (after.st_size, after.st_mtime_ns) != (opened.st_size, opened.st_mtime_ns)
+            or _file_extent(after) != _file_extent(opened)
             or total != opened.st_size
         ):
             raise ResourceReportError("unsafe_input")

@@ -99,21 +99,28 @@ class StagingCopyTable:
         """Validate and adapt one mapping to the closed Psycopg row order."""
 
         _require_stage_id(expected_stage_id)
+        return self._adapt_row(row, expected_stage_id, frozenset(self.columns))
+
+    def _adapt_row(
+        self,
+        row: Mapping[str, object],
+        expected_stage_id: str,
+        expected_columns: frozenset[str],
+    ) -> tuple[object, ...]:
         if not isinstance(row, Mapping):
             raise CopyContractError("staging COPY row is not a mapping")
         try:
             keys = set(row)
         except TypeError as error:
             raise CopyContractError("staging COPY row columns are invalid") from error
-        if keys != set(self.columns) or any(not isinstance(key, str) for key in keys):
+        if keys != expected_columns or any(not isinstance(key, str) for key in keys):
             raise CopyContractError("staging COPY row columns are invalid")
         if row["stage_id"] != expected_stage_id:
             raise CopyContractError("staging COPY stage ownership mismatch")
 
         adapted: list[object] = []
-        for column in self.columns:
-            value = row[column]
-            adapted.append(_adapt_value(self.column_types[column], value))
+        for column, column_type in self.column_types.items():
+            adapted.append(_adapt_value(column_type, row[column]))
         ordinal = row[self.ordinal_column]
         if isinstance(ordinal, bool) or not isinstance(ordinal, int) or ordinal < 0:
             raise CopyContractError("staging COPY ordinal is invalid")
@@ -143,13 +150,12 @@ def copy_stage_rows(
     if not _is_catalog_table(table):
         raise CopyContractError("staging COPY table is invalid")
     _require_stage_id(expected_stage_id)
+    expected_columns = frozenset(table.columns)
     row_count = 0
     with connection.cursor() as cursor:
         with cursor.copy(copy_statement(table)) as copy:
             for row in rows:
-                copy.write_row(
-                    table.adapt_row(row, expected_stage_id=expected_stage_id)
-                )
+                copy.write_row(table._adapt_row(row, expected_stage_id, expected_columns))
                 row_count += 1
     return CopyTransferResult(table.family, row_count)
 

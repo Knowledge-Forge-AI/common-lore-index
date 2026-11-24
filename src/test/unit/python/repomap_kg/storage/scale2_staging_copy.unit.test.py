@@ -149,12 +149,15 @@ def test_copy_transport_streams_rows_without_owning_transaction() -> None:
     result = copy_stage_rows(
         connection,
         STAGING_COPY_TABLES["files"],
-        (stage_file_row(), stage_file_row(family_ordinal=1)),
+        (stage_file_row(), dict(reversed(tuple(stage_file_row(family_ordinal=1).items())))),
         expected_stage_id="stage-001",
     )
 
     assert result == CopyTransferResult(family="files", row_count=2)
     assert len(connection.cursor_instance.copy_operation.rows) == 2
+    assert connection.cursor_instance.copy_operation.rows[1][:4] == (
+        "stage-001", 1, "fixture/readme.md", "markdown",
+    )
     assert connection.commit_calls == 0
     assert connection.rollback_calls == 0
     assert connection.cursor_instance.copy_operation.exit_exception is None
