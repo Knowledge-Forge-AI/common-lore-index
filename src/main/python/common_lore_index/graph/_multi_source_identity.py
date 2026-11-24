@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 from collections.abc import Iterable, Mapping
+from itertools import batched
 from typing import Any
 
 
@@ -77,3 +78,25 @@ def digest_manifest_entries(entries: Iterable[tuple[str, str, int, bool]]) -> st
         separator = b","
     hasher.update(b"]}}")
     return hasher.hexdigest()
+
+
+def snapshot_vector_generation(
+    graph_id: str, records: Iterable[tuple[str, int, str]],
+) -> str:
+    """Hash the existing ordered snapshot vector in bounded record batches."""
+    encoder = json.JSONEncoder(sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    hasher = hashlib.sha256(b'{"algorithm":"multi-source-snapshot-vector-v1","graph_id":')
+    hasher.update(encoder.encode(graph_id).encode("ascii"))
+    hasher.update(b',"snapshot_vector":[')
+    separator = b""
+    for group in batched(records, 256):
+        # The batch encoder supplies an array; retain only its comma-joined entries.
+        encoded = encoder.encode([
+            {"binding_id": binding_id, "binding_revision": binding_revision, "snapshot_id": snapshot_id}
+            for binding_id, binding_revision, snapshot_id in group
+        ])
+        hasher.update(separator)
+        hasher.update(encoded[1:-1].encode("ascii"))
+        separator = b","
+    hasher.update(b"]}")
+    return "sg1:" + hasher.hexdigest()

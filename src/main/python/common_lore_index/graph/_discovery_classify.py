@@ -11,9 +11,8 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Callable, Protocol
+from typing import Callable, Iterator, Protocol, TextIO
 
-from common_lore_index.extractors.languages.go_metadata import detect_go_generated_marker
 from common_lore_index.extractors.shell.awk import is_awk_shebang
 from common_lore_index.extractors.shell.bash import (
     BASH_PROFILE_FILENAMES,
@@ -265,13 +264,82 @@ def is_generated(relative_path: str) -> bool:
     return any(part in GENERATED_DIR_NAMES for part in parts)
 
 
+_GO_HEADER_LINES = 40
+_GO_LINE_READ_SIZE = 4096
+_GO_GENERATED_PREFIX = "// Code generated "
+_GO_GENERATED_SUFFIX = " DO NOT EDIT."
+_GO_PACKAGE_PREFIX = "package "
+_GO_SPLITLINE_ENDINGS = "\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029"
+
+
+class _GoHeaderLine:
+    def __init__(self) -> None:
+        self.head = ""
+        self.stripped_head = ""
+        self.tail = ""
+        self.trailing_space = ""
+
+    def feed(self, piece: str) -> None:
+        prefix_size = len(_GO_GENERATED_PREFIX)
+        package_size = len(_GO_PACKAGE_PREFIX)
+        suffix_size = len(_GO_GENERATED_SUFFIX)
+        if len(self.head) < prefix_size:
+            self.head = (self.head + piece)[:prefix_size]
+        if len(self.stripped_head) < package_size:
+            head = piece if self.stripped_head else piece.lstrip()
+            self.stripped_head = (self.stripped_head + head)[:package_size]
+        body = piece.rstrip()
+        if body:
+            self.tail = (self.tail + self.trailing_space + body)[-suffix_size:]
+            self.trailing_space = piece[max(len(body), len(piece) - suffix_size):]
+        else:
+            self.trailing_space = (self.trailing_space + piece)[-suffix_size:]
+
+    def decision(self) -> bool | None:
+        if self.head == _GO_GENERATED_PREFIX and self.tail == _GO_GENERATED_SUFFIX:
+            return True
+        if self.stripped_head == _GO_PACKAGE_PREFIX:
+            return False
+        return None
+
+
+def _go_header_pieces(handle: TextIO) -> Iterator[str]:
+    for _ in range(_GO_HEADER_LINES):
+        while piece := handle.readline(_GO_LINE_READ_SIZE):
+            yield piece
+            if piece.endswith("\n"):
+                break
+        else:
+            return
+
+
+def _scan_go_header(handle: TextIO) -> bool:
+    line = _GoHeaderLine()
+    remaining = _GO_HEADER_LINES
+    decision = None
+    for chunk in _go_header_pieces(handle):
+        # Finish the physical read after a marker to preserve decoder failures.
+        if decision is not None or remaining == 0:
+            continue
+        for piece in chunk.splitlines(keepends=True):
+            if piece[-1] not in _GO_SPLITLINE_ENDINGS:
+                line.feed(piece)
+                continue
+            line.feed(piece[:-1])
+            decision = line.decision()
+            remaining -= 1
+            if decision is not None or remaining == 0:
+                break
+            line = _GoHeaderLine()
+    return (line.decision() if decision is None else decision) is True
+
+
 def is_go_generated_file(path: Path) -> bool:
     try:
         with path.open(encoding="utf-8") as handle:
-            content = "".join(handle.readline() for _ in range(40))
+            return _scan_go_header(handle)
     except UnicodeDecodeError:
         return False
-    return detect_go_generated_marker(content) is not None
 
 
 __all__ = (

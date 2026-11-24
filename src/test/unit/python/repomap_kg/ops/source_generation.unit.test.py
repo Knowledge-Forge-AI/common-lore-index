@@ -6,6 +6,7 @@ import os
 import threading
 
 from common_lore_index.ops import source_generation
+from common_lore_index.graph._multi_source_identity import snapshot_vector_generation
 from common_lore_index.graph.discovery import discover_observations
 from common_lore_index.ops.generations import source_generation as observation_generation
 from common_lore_index.ops.generations import source_generation_records
@@ -309,3 +310,21 @@ def test_source_inventory_digest_preserves_exact_framing_for_order_and_escapes()
             ],
         }, sort_keys=True, separators=(",", ":")).encode()
         assert source_generation_records(iter(entries)) == "sg1:" + hashlib.sha256(expected_bytes).hexdigest()
+
+def test_snapshot_vector_generation_preserves_order_multiplicity_and_exact_json_bytes() -> None:
+    graph_id = "fixture-先"
+    first = ("binding-ä", 8, "snapshot-first")
+    duplicate = ("binding-ä", 5, "snapshot-second")
+    other = ('quoted-"binding', 1, "snapshot-other")
+    vectors = ((), (first,), (first, duplicate, first, other), (other, first, duplicate, first) * 67)
+    for ordered in vectors:
+        payload = {
+            "algorithm": "multi-source-snapshot-vector-v1",
+            "graph_id": graph_id,
+            "snapshot_vector": [
+                {"binding_id": binding_id, "binding_revision": revision, "snapshot_id": snapshot}
+                for binding_id, revision, snapshot in ordered
+            ],
+        }
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("ascii")
+        assert snapshot_vector_generation(graph_id, iter(ordered)) == "sg1:" + hashlib.sha256(encoded).hexdigest()

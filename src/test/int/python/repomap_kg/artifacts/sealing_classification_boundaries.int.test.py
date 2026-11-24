@@ -36,6 +36,8 @@ CASES = (
     ("script", b" " * 4095 + b"#!/bin/zsh\n", "zsh", False),
     ("completion", b"x" * (64 * 1024 - 5) + b"\n   #compdef fixture", "zsh", False),
     ("completion", b"#compdef fixture\n" + b"a" * (2**20) + b"\xff", "unknown", False),
+    ("wide.go", b"// Code generated " + b"x" * 4070 + b" DO NOT EDIT." + b" " * 5000, "go", True),
+    ("wide.go", b"// Code generated " + b"x" * 4070 + b" DO NOT EDIT.\n" + b"x" * 9000 + b"\xff", "go", False),
 )
 
 

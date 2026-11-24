@@ -8,6 +8,7 @@ from pathlib import Path
 from collections.abc import Iterable, Sequence
 
 from common_lore_index import __version__
+from common_lore_index.graph._multi_source_identity import snapshot_vector_generation
 from common_lore_index.observations.raw import RawObservation
 from common_lore_index.ops.config_records import OpsConfig, OpsGraphConfig
 from common_lore_index.ops.resolved_config import resolve_ops_config
@@ -70,21 +71,9 @@ def source_generation(observations: Sequence[RawObservation]) -> str:
         and multi_source_files == total_files
         and len(multi_source_graph_ids) == 1
     ):
-        payload = {
-            "algorithm": "multi-source-snapshot-vector-v1",
-            "graph_id": next(iter(multi_source_graph_ids)),
-            "snapshot_vector": [
-                {
-                    "binding_id": binding_id,
-                    "binding_revision": binding_revision,
-                    "snapshot_id": snapshot_id,
-                }
-                for binding_id, binding_revision, snapshot_id
-                in sorted(multi_source_vector)
-            ],
-        }
-        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-        return "sg1:" + hashlib.sha256(encoded).hexdigest()
+        return snapshot_vector_generation(
+            next(iter(multi_source_graph_ids)), sorted(multi_source_vector),
+        )
 
     file_records = []
     for item in observations:

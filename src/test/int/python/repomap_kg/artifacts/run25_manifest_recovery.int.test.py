@@ -41,6 +41,7 @@ from common_lore_index.graph.multi_source_records import (
 from common_lore_index.graph.multi_source_pipeline import capture_multi_source_candidate
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
 from common_lore_index.ops.config_records import OpsGraphConfig
+from common_lore_index.ops.generations import source_generation
 from common_lore_index.storage.staged_rows import build_staged_rows
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
 
@@ -191,6 +192,7 @@ def test_sealed_binding_inventory_refusal_does_not_replace_valid_snapshot(
 def _captured_bundle(tmp_path: Path):
     graph, store, manifest, _reference, candidate = _sealed(tmp_path)
     captured = capture_multi_source_candidate(graph)
+    assert source_generation(captured.observations) == captured.source_generation == manifest.source_generation
     prepared = build_staged_rows(
         captured.observations, repository_name=graph.repository_name,
         stage_id="stage-unassigned",
