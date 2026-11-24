@@ -79,15 +79,16 @@ def format_and_deduplicate_locations(
         ):
             any_withheld = True
         dest = _destination(row_dict, markers)
-        if dest is not None:
-            clean_rel, err = sanitize_stored_string(
-                dest["source_relative_path"], field_cap_bytes=SOURCE_RELATIVE_PATH_CAP_BYTES
-            )
-            if err is not None:
-                omissions.increment(err)
-                dest = None
-            else:
-                dest = {**dest, "source_relative_path": clean_rel}
+        raw_source = row_dict.get("source")
+        src = raw_source if isinstance(raw_source, Mapping) else {}
+        raw_rel = dest["source_relative_path"] if dest is not None else src.get("source_relative_path")
+        clean_rel, err = sanitize_stored_string(raw_rel, field_cap_bytes=SOURCE_RELATIVE_PATH_CAP_BYTES)
+        if err is not None:
+            omissions.increment(err)
+            any_withheld = True
+            dest = None
+        elif dest is not None:
+            dest["source_relative_path"] = clean_rel
 
         start_line = row_dict.get("start_line")
         end_line = row_dict.get("end_line")
@@ -102,16 +103,6 @@ def format_and_deduplicate_locations(
             seen_verified.add(dedup_key)
             has_verified = True
 
-        raw_source = row_dict.get("source")
-        src = raw_source if isinstance(raw_source, Mapping) else {}
-        raw_rel = dest["source_relative_path"] if dest else src.get("source_relative_path")
-        if dest is None and raw_rel is not None:
-            raw_rel, err = sanitize_stored_string(
-                raw_rel, field_cap_bytes=SOURCE_RELATIVE_PATH_CAP_BYTES
-            )
-            if err is not None:
-                omissions.increment(err)
-
         if len(kept) >= locations_per_item:
             omitted += 1
             continue
@@ -122,7 +113,7 @@ def format_and_deduplicate_locations(
             "source_binding_id": dest["source_binding_id"] if dest else src.get("binding_id"),
             "binding_revision": rev if type(rev) is int else None,
             "snapshot_id": dest["snapshot_id"] if dest else src.get("snapshot_id"),
-            "source_relative_path": raw_rel if dest else None,
+            "source_relative_path": clean_rel if dest else None,
             "run_id": row_dict.get("run_id"),
             "publication_relation": row_dict.get("publication_relation"),
             "path_namespace": dest["path_namespace"] if dest else row_dict.get("path_namespace"),

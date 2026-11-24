@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import stat
+import time
 from typing import Any
 
 from common_lore_index.retrieval import advisory_freshness as advisory_freshness_module
@@ -159,6 +160,34 @@ def test_concurrent_growth_never_reads_past_file_or_request_byte_caps(
     assert packet["items"][0]["locations"][4]["freshness"]["state"] == "not_checked"
     assert packet["items"][0]["locations"][4]["freshness"]["reason"] == "byte_limit"
     assert not file_for_fd
+
+
+def test_freshness_refuses_same_extent_rewrite_even_with_restored_mtime(tmp_path: Path, monkeypatch: Any) -> None:
+    packet, root = _current_packet_for_paths(tmp_path, ("fixture.py",))
+    fixture = root / "fixture.py"
+    fixture.write_bytes(b"x" * 20000)
+    # Separate ctime ticks on Linux filesystems with coarse update granularity.
+    time.sleep(0.05)
+    before = fixture.stat()
+    real_read = os.read
+    changed = False
+
+    def rewrite(fd: int, count: int) -> bytes:
+        nonlocal changed
+        result = real_read(fd, count)
+        actual = os.fstat(fd)
+        if not changed and (actual.st_dev, actual.st_ino) == (before.st_dev, before.st_ino):
+            fixture.write_bytes(b"y" * before.st_size)
+            os.utime(fixture, ns=(before.st_atime_ns, before.st_mtime_ns))
+            changed = True
+        return result
+
+    monkeypatch.setattr(os, "read", rewrite)
+    evaluate_packet_freshness(packet, FreshnessCheckConfig(enabled=True, source_roots={BINDING_CORE: root}))
+    assert changed
+    location = packet["items"][0]["locations"][0]
+    assert (location["freshness"]["state"], location["freshness"]["reason"]) == ("unavailable", "read_error")
+    assert packet["freshness"]["bytes_read"] == before.st_size
 
 
 def test_owned_descriptors_close_for_regular_and_nonregular_results(

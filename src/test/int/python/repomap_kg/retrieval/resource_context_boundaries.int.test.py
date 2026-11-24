@@ -153,3 +153,59 @@ def test_budget_compaction_projects_delivered_bytes_and_opens_only_admitted_sour
     view = _project(packet, ledger)
     assert view["outcome"] == "partial"
     assert _publication(database) == accepted
+
+
+def test_context_withholds_a_wide_unicode_location_once(tmp_path: Path) -> None:
+    subject = {
+        "canonical_key": "py:wide.WideLocationFixture", "kind": "python.function",
+        "display_name": "WideLocationFixture", "raw_kind": "python.function",
+        "binding_id": BINDING_CORE, "snapshot_id": SNAP_CORE,
+        "path": "src/" + "界" * 350 + ".py", "start_line": 1, "end_line": 2,
+    }
+    database, _config, _graph, _binding, adapter = build_sqlite_context_fixture(
+        tmp_path / "fixture", extra_subjects=(subject,),
+    )
+    accepted = _publication(database)
+    with adapter:
+        packet = build_compact_context(ContextRequest(
+            graph_id=CTX_GRAPH_ID, query="WideLocationFixture", budget_bytes=16384,
+        ), adapter, work_ledger=WorkLedger(backend="sqlite"))
+    assert_valid_context_packet(packet)
+    (item,) = packet["items"]
+    assert item["identity_state"] == "withheld"
+    assert item["locations"][0]["source_relative_path"] is None
+    assert packet["omission_counts"]["oversize_field_withheld"] == 1
+    assert _publication(database) == accepted
+
+
+def test_context_reports_no_freshness_for_a_file_grown_inside_the_read_cap(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    subject = {
+        "canonical_key": "py:fixture.AnchorGrowth", "kind": "python.function",
+        "display_name": "AnchorGrowth", "raw_kind": "python.function",
+        "binding_id": BINDING_CORE, "snapshot_id": SNAP_CORE,
+        "path": "src/a.py", "start_line": 1, "end_line": 2,
+    }
+    _, _, _, _, adapter = build_sqlite_context_fixture(tmp_path / "fixture", extra_subjects=(subject,))
+    selected = tmp_path / "selected"
+    (selected / "src").mkdir(parents=True)
+    source = selected / "src" / "a.py"
+    source.write_bytes(b"a\n" * 10000)
+    inode = source.stat().st_ino
+    real_read = os.read
+    grew = False
+
+    def append_after_read(fd: int, count: int) -> bytes:
+        nonlocal grew
+        result = real_read(fd, count)
+        if not grew and os.fstat(fd).st_ino == inode:
+            with source.open("ab") as stream:
+                stream.write(b"late line\n")
+            grew = True
+        return result
+
+    monkeypatch.setattr(os, "read", append_after_read)
+    with adapter:
+        packet = build_compact_context(ContextRequest(graph_id=CTX_GRAPH_ID, query="AnchorGrowth", freshness="check",
+            source_roots={BINDING_CORE: selected}, budget_bytes=16384), adapter)
+    assert grew and packet["freshness"]["bytes_read"] == 20000
+    assert packet["items"][0]["locations"][0]["freshness"]["reason"] == "read_error"

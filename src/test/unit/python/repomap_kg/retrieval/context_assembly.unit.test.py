@@ -291,6 +291,27 @@ def test_location_cap_retains_late_status_without_materializing_extra_freshness(
     assert calls == ["docs/a.md"]
 
 
+def test_oversize_location_counts_once_and_marks_the_identity_withheld() -> None:
+    from common_lore_index.retrieval import context_admission
+
+    omitted = context_admission.OmissionCounter()
+    path = "界" * 350 + ".py"
+    row = {
+        "path": "valid.py", "path_status": "available", "run_id": 9,
+        "publication_relation": "accepted_run", "source_identity_status": "verified_vector",
+        "source": {"binding_id": "binding:public", "binding_revision": 1,
+                   "snapshot_id": "snap1:public", "source_relative_path": path},
+    }
+    item = context_admission.format_context_item(
+        item_id="fixture", item_role="seed", canonical_key="py:fixture.symbol", kind="python.function",
+        display_name="symbol", identity_status="available", raw_locations=[row], markers=(),
+        locations_per_item=1, reserve_freshness=False, omissions=omitted,
+    )
+    assert item["identity_state"] == "withheld"
+    assert item["locations"][0]["source_relative_path"] is None
+    assert omitted.counts["oversize_field_withheld"] == 1
+
+
 def test_admission_commits_only_successful_seed_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from types import SimpleNamespace
     from common_lore_index.retrieval import context_admission, context_budget_reservation
