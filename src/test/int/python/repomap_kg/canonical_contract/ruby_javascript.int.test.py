@@ -194,6 +194,16 @@ class CanonicalRubyJavascriptIntegrationTests(unittest.TestCase):
         self.assertTrue(ruby_module._looks_like_route_profile("generic_ruby", "Sinatra", "app.rb"))
         self.assertFalse(ruby_module._looks_like_route_profile("generic_ruby", "", "lib/app.rb"))
 
+    def test_invalid_import_url_does_not_interrupt_javascript_canonicalization(self):
+        observations = extract_javascript_file_observations(
+            "fixture.mjs", "import 'https://[not.valid/item';\nimport 'https://[2001:db8::1]:8443/item';",
+        )
+        references = [item for item in observations if item.kind == "js.reference"]
+        self.assertTrue(any((item.target or "").startswith("unknown:") for item in references))
+        self.assertTrue(any((item.target or "").startswith("external.url:") for item in references))
+        self.assertNotIn("not.valid", str([item.to_dict() for item in observations]))
+        self.assertTrue(canonicalize_observations(observations).ok)
+
     def test_static_javascript_extractor_edge_contracts(self):
         js_code = (
             'import React from "react";\nimport local from "./local";\nexport { local } from "./local";\n'

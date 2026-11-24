@@ -13,6 +13,7 @@ from urllib.parse import urlsplit
 
 from common_lore_index import __version__
 from common_lore_index._utf8 import byte_length
+from common_lore_index.extractors.shared.observations import unknown_reference
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,
@@ -468,11 +469,7 @@ def _target_for_reference(
     id_counts: dict[str, int],
 ) -> dict[str, Any]:
     if value is None or not value.strip():
-        return {
-            "kind": "unknown",
-            "target": unknown_key("html.reference", "missing-target"),
-            "reason": "missing-reference-target",
-        }
+        return unknown_reference(unknown_key("html.reference", "missing-target"), "missing-reference-target")
     stripped = value.strip()
     lowered = stripped.lower()
     if lowered.startswith("javascript:"):
@@ -490,12 +487,12 @@ def _target_for_reference(
                 "reason": "same-document-fragment",
                 "summary": f"#{fragment}",
             }
-        return {
-            "kind": "unknown",
-            "target": unknown_key("html.anchor", "unresolved-fragment"),
-            "reason": "unresolved-fragment",
-        }
-    parsed = urlsplit(stripped)
+        return unknown_reference(unknown_key("html.anchor", "unresolved-fragment"), "unresolved-fragment")
+    try:
+        parsed = urlsplit(stripped)
+        _ = parsed.port
+    except ValueError:
+        return unknown_reference(unknown_key("external.url", "malformed-external-url"), "malformed-url-redacted")
     if parsed.scheme in ("http", "https", "mailto"):
         return {
             "kind": "external.url",

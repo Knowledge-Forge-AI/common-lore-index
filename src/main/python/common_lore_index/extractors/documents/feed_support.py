@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator
+from collections import Counter
+from collections.abc import Callable, Iterable, Iterator
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import PurePosixPath
-from typing import Any
+from typing import Any, TypeVar
 from urllib.parse import SplitResult, urlsplit
 from xml.etree import ElementTree
 
@@ -77,6 +78,24 @@ def _item_identity(
             strength = "weak" if source.startswith("title+") else "strong"
             return f"{source}:{value}", source, strength
     return f"ordinal:{ordinal}", "structural-ordinal", "structural"
+
+
+FeedItemIdentity = tuple[str, str, str]
+_FeedSource = TypeVar("_FeedSource")
+
+
+def _project_feed_items(
+    relative_path: str,
+    channel_key: str,
+    entries: Iterable[tuple[int, _FeedSource]],
+    identify: Callable[[_FeedSource, int], FeedItemIdentity],
+    project: Callable[[str, str, _FeedSource, int, FeedItemIdentity], dict[str, Any]],
+) -> Iterator[tuple[dict[str, Any], int]]:
+    """Count identities up front while retaining details for only the current item."""
+    identified = [(ordinal, entry, identify(entry, ordinal)) for ordinal, entry in entries]
+    counts = Counter(identity[0] for _, _, identity in identified)
+    for ordinal, entry, identity in identified:
+        yield project(relative_path, channel_key, entry, ordinal, identity), counts[identity[0]]
 
 
 def _title_date_identity(title: str | None, date_text: str | None) -> str | None:

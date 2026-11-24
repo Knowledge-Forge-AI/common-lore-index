@@ -6,6 +6,7 @@ from typing import Any
 from xml.etree import ElementTree
 
 from common_lore_index.extractors.documents.feed_support import (
+    FeedItemIdentity,
     _atom_link,
     _child_text,
     _children,
@@ -152,22 +153,42 @@ def _channel_info(
     }
 
 
+def _rss_item_identity(item: ElementTree.Element, ordinal: int) -> FeedItemIdentity:
+    guid = _child_text(item, "guid")
+    link = None if guid else _identity_url(_child_text(item, "link"))
+    fallback = None if guid or link else _title_date_identity(_child_text(item, "title"), _child_text(item, "pubDate"))
+    return _item_identity(("guid", guid), ("link", link), ("title+pubDate", fallback), ordinal=ordinal)
+
+
+def _atom_item_identity(entry: ElementTree.Element, ordinal: int) -> FeedItemIdentity:
+    entry_id = _child_text(entry, "id")
+    link = None if entry_id else _identity_url(_atom_link(entry, "alternate"))
+    fallback = None if entry_id or link else _title_date_identity(
+        _child_text(entry, "title"), _child_text(entry, "updated") or _child_text(entry, "published"),
+    )
+    return _item_identity(("id", entry_id), ("alternate-link", link), ("title+updated", fallback), ordinal=ordinal)
+
+
+def _json_item_identity(item: dict[str, Any], ordinal: int) -> FeedItemIdentity:
+    item_id = _text_value(item.get("id"))
+    url = None if item_id else _identity_url(_text_value(item.get("url"))) or _identity_url(_text_value(item.get("external_url")))
+    fallback = None if item_id or url else _title_date_identity(
+        _text_value(item.get("title")), _text_value(item.get("date_published")) or _text_value(item.get("date_modified")),
+    )
+    return _item_identity(("id", item_id), ("url", url), ("title+date", fallback), ordinal=ordinal)
+
+
 def _rss_item_data(
     relative_path: str,
     channel_key: str,
     item: ElementTree.Element,
     ordinal: int,
+    identity: FeedItemIdentity,
 ) -> dict[str, Any]:
     title = _child_text(item, "title")
     link = _child_text(item, "link")
-    guid = _child_text(item, "guid")
     pub_date = _child_text(item, "pubDate")
-    base_item_id, identity_source, identity_strength = _item_identity(
-        ("guid", guid),
-        ("link", link),
-        ("title+pubDate", _title_date_identity(title, pub_date)),
-        ordinal=ordinal,
-    )
+    base_item_id, identity_source, identity_strength = identity
     enclosures = []
     for enclosure in _children(item, "enclosure"):
         url = enclosure.attrib.get("url", "").strip()
@@ -211,18 +232,12 @@ def _atom_item_data(
     channel_key: str,
     entry: ElementTree.Element,
     ordinal: int,
+    identity: FeedItemIdentity,
 ) -> dict[str, Any]:
     title = _child_text(entry, "title")
-    entry_id = _child_text(entry, "id")
-    alternate_link = _atom_link(entry, "alternate")
     updated = _child_text(entry, "updated")
     published = _child_text(entry, "published")
-    base_item_id, identity_source, identity_strength = _item_identity(
-        ("id", entry_id),
-        ("alternate-link", alternate_link),
-        ("title+updated", _title_date_identity(title, updated or published)),
-        ordinal=ordinal,
-    )
+    base_item_id, identity_source, identity_strength = identity
     links = []
     for link in _children(entry, "link"):
         href = link.attrib.get("href", "").strip()
@@ -275,19 +290,14 @@ def _json_item_data(
     channel_key: str,
     item: dict[str, Any],
     ordinal: int,
+    identity: FeedItemIdentity,
 ) -> dict[str, Any]:
     title = _text_value(item.get("title"))
     url = _text_value(item.get("url"))
     external_url = _text_value(item.get("external_url"))
     published = _text_value(item.get("date_published"))
     modified = _text_value(item.get("date_modified"))
-    base_item_id, identity_source, identity_strength = _item_identity(
-        ("id", _text_value(item.get("id"))),
-        ("url", url),
-        ("url", external_url),
-        ("title+date", _title_date_identity(title, published or modified)),
-        ordinal=ordinal,
-    )
+    base_item_id, identity_source, identity_strength = identity
     links = []
     for field, value in (("url", url), ("external_url", external_url)):
         if value:

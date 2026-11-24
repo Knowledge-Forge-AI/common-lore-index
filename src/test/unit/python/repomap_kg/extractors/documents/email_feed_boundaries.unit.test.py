@@ -14,10 +14,13 @@ from common_lore_index.extractors.documents.feed import (
     extract_feed_file_observations,
 )
 from common_lore_index.extractors.documents.feed_support import (
+    _project_feed_items,
     _parse_date,
     _reference_target,
     _safe_summary,
 )
+
+from common_lore_index.graph.keys import feed_item_key
 
 
 class EmailFeedExtractorBoundariesUnitTests(unittest.TestCase):
@@ -110,6 +113,62 @@ class EmailFeedExtractorBoundariesUnitTests(unittest.TestCase):
         # neither
         ch_none = _json_channel_info("feeds/j.json", doc_key, {})
         self.assertEqual(ch_none["identity_source"], "document")
+
+    def test_feed_projection_preserves_duplicate_and_fallback_identities_in_all_formats(self):
+        rss = (
+            "<rss><channel><title>Fixture</title><item><guid>same</guid></item><item><guid>same</guid></item>"
+            "<item><link>https://example.invalid/item</link></item>"
+            "<item><title>Fallback</title><pubDate>Fri, 02 Jan 2026 03:04:05 +0000</pubDate></item></channel></rss>"
+        )
+        atom = (
+            '<feed xmlns="http://www.w3.org/2005/Atom"><title>Fixture</title><entry><id>same</id></entry>'
+            '<entry><id>same</id></entry><entry><link href="https://example.invalid/item"/></entry>'
+            '<entry><title>Fallback</title><published>2026-01-02T03:04:05Z</published></entry></feed>'
+        )
+        feed = json.dumps({"version": "https://jsonfeed.org/version/1.1", "title": "Fixture", "items": [
+            {"id": "same"}, {"id": "same"}, {"external_url": "https://example.invalid/item"},
+            {"url": "https://[invalid.example/item", "title": "Fallback", "date_modified": "2026-01-02T03:04:05Z"},
+        ]})
+        for text, (strong_id, link_id, date_id) in (
+            (rss, ("guid", "link", "title+pubDate")),
+            (atom, ("id", "alternate-link", "title+updated")),
+            (feed, ("id", "url", "title+date")),
+        ):
+            with self.subTest(source=link_id):
+                observations = extract_feed_file_observations("fixture", text)
+                items = [row for row in observations if row.kind == "feed.item"]
+                channel, = [row for row in observations if row.kind == "feed.channel"]
+                self.assertEqual([item.metadata["identity_source"] for item in items], [strong_id, strong_id, link_id, date_id])
+                self.assertEqual([item.metadata["identity_strength"] for item in items], ["strong", "strong", "strong", "weak"])
+                self.assertEqual(
+                    [item.metadata.get("duplicate_disambiguator") for item in items],
+                    ["duplicate-1", "duplicate-2", None, None],
+                )
+                self.assertEqual([item.target for item in items], [
+                    feed_item_key(channel.target or "", f"{strong_id}:same:duplicate-1"),
+                    feed_item_key(channel.target or "", f"{strong_id}:same:duplicate-2"),
+                    feed_item_key(channel.target or "", f"{link_id}:https://example.invalid/item"),
+                    feed_item_key(channel.target or "", f"{date_id}:fallback:2026-01-02T03:04:05Z"),
+                ])
+
+    def test_duplicate_counts_are_ready_before_projecting_only_current_feed_item(self):
+        events: list[tuple[str, int]] = []
+
+        def identify(entry: str, ordinal: int) -> tuple[str, str, str]:
+            events.append(("identity", ordinal))
+            return entry, "id", "strong"
+
+        def project(path, channel, entry, ordinal, identity):
+            events.append(("project", ordinal))
+            return {"entry": entry, "ordinal": ordinal, "identity": identity}
+
+        rows = _project_feed_items(
+            "fixture.json", "channel", enumerate(("same", "other", "same"), 1), identify, project,
+        )
+        item, count = next(rows)
+        self.assertEqual((item["entry"], count), ("same", 2))
+        self.assertEqual(events, [("identity", 1), ("identity", 2), ("identity", 3), ("project", 1)])
+        self.assertEqual([(row["ordinal"], copies) for row, copies in rows], [(2, 1), (3, 2)])
 
     def test_invalid_url_keeps_feed_item_and_hides_the_original_spelling(self):
         payload = {"version": "https://jsonfeed.org/version/1.1", "title": "Fixture",

@@ -30,6 +30,18 @@ from common_lore_index.observations.raw import RawObservation
 
 
 class CanonicalMarkdownWarcIntegrationTests(unittest.TestCase):
+    def test_markdown_invalid_url_and_percent_escapes_keep_later_links(self):
+        observations = extract_markdown_file_observations(
+            "guide.md", "[malformed](https://[example.invalid/path) [bad escape](https://[secondary.invalid/unsafe%Q) [valid](https://example.invalid/ok%20id)",
+        )
+        links = [row for row in observations if row.kind == "markdown.link"]
+        self.assertEqual(len(links), 3)
+        self.assertEqual(links[0].metadata["resolution_reason"], "malformed-external-url")
+        self.assertEqual(links[1].metadata["resolution_reason"], "malformed-percent-escape")
+        self.assertTrue((links[2].target or "").startswith("external.url:"))
+        self.assertNotIn("secondary.invalid", str([row.to_dict() for row in observations]))
+        self.assertTrue(canonicalize_observations(observations).ok)
+
     def test_markdown_extractor_ambiguity_contracts(self):
         frontmatter = parse_frontmatter(
             "---\n"

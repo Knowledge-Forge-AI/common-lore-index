@@ -15,6 +15,17 @@ from common_lore_index.storage.canonical_rows import prepare_canonical_load
 class Slice8DocumentHtmlCssIntegrationTests(unittest.TestCase):
     """Integration scenarios for document extraction, selector matching, canonical graphs, and typed rows."""
 
+    def test_invalid_html_and_css_targets_reach_typed_placeholder_rows(self) -> None:
+        html = extract_html_file_observations("index.html", '<a href="https://unreadable.invalid:not-a-port/item">Fixture</a>')
+        css = extract_css_file_observations("style.css", '.fixture { background: url("https://[unreadable.invalid/item"); }')
+        observations = (*html, *css)
+        load = prepare_canonical_load(observations)
+        self.assertTrue(load.result.ok)
+        references = [row for row in observations if row.kind in ("html.link", "css.reference")]
+        self.assertEqual(len(references), 2)
+        self.assertTrue(all((row.target or "").startswith("unknown:") for row in references))
+        self.assertNotIn("unreadable.invalid", str([row.to_dict() for row in observations]))
+
     def test_s8_c01_html_css_matched_selector_relationship_and_typed_rows(self) -> None:
         """Matched HTML/CSS selectors form styles edges and materialize into typed database storage rows."""
         html_content = """<!doctype html>

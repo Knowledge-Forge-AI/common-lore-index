@@ -114,7 +114,7 @@
         "path": "src/main/python/common_lore_index/extractors/config/yaml.py"
       },
       {
-        "line_count": 556,
+        "line_count": 554,
         "path": "src/main/python/common_lore_index/extractors/documents/css.py"
       },
       {
@@ -122,7 +122,7 @@
         "path": "src/main/python/common_lore_index/extractors/documents/css_html_matching.py"
       },
       {
-        "line_count": 666,
+        "line_count": 665,
         "path": "src/main/python/common_lore_index/extractors/documents/css_support.py"
       },
       {
@@ -130,11 +130,11 @@
         "path": "src/main/python/common_lore_index/extractors/documents/email.py"
       },
       {
-        "line_count": 607,
+        "line_count": 606,
         "path": "src/main/python/common_lore_index/extractors/documents/feed.py"
       },
       {
-        "line_count": 689,
+        "line_count": 686,
         "path": "src/main/python/common_lore_index/extractors/documents/html.py"
       },
       {
@@ -624,20 +624,6 @@
         "module": "common_lore_index.extractors.documents.html",
         "normalized_fingerprint": "fecacf7080ae29b55652f9ae0d2bf34b38f07644f5f0921774d71769b83c35ed",
         "path": "src/main/python/common_lore_index/extractors/documents/html.py"
-      },
-      {
-        "count": 1,
-        "error_code": "assignment",
-        "module": "common_lore_index.extractors.documents.markdown",
-        "normalized_fingerprint": "370347e4e35fd3ffc8883782a7c38dda742fb5c842c4c3ea716f1ce24bfe301e",
-        "path": "src/main/python/common_lore_index/extractors/documents/markdown.py"
-      },
-      {
-        "count": 1,
-        "error_code": "unreachable",
-        "module": "common_lore_index.extractors.documents.markdown",
-        "normalized_fingerprint": "b803de7271e25085ec61736e492ae09be61fe7bb9790bc84fde2ea6f26308c34",
-        "path": "src/main/python/common_lore_index/extractors/documents/markdown.py"
       },
       {
         "count": 1,

@@ -8,6 +8,7 @@ from pathlib import PurePosixPath
 from typing import Any
 from urllib.parse import urlsplit
 
+from common_lore_index.extractors.shared.observations import unknown_reference
 from common_lore_index.graph.keys import (
     dynamic_key,
     external_key,
@@ -222,19 +223,17 @@ def _extract_url_values(value: str) -> list[str]:
 def _target_for_reference(value: str) -> dict[str, Any]:
     stripped = value.strip()
     if not stripped:
-        return {
-            "kind": "unknown",
-            "target": unknown_key("css.reference", "missing-target"),
-            "reason": "missing-reference-target",
-        }
+        return unknown_reference(unknown_key("css.reference", "missing-target"), "missing-reference-target")
     lowered = stripped.lower()
     if lowered.startswith("data:"):
-        return {
-            "kind": "unknown",
-            "target": unknown_key("external.url", "data-url-payload-redacted"),
-            "reason": "data-url-redacted",
-        }
-    parsed = urlsplit(stripped)
+        return unknown_reference(
+            unknown_key("external.url", "data-url-payload-redacted"), "data-url-redacted",
+        )
+    try:
+        parsed = urlsplit(stripped)
+        _ = parsed.port
+    except ValueError:
+        return unknown_reference(unknown_key("external.url", "malformed-external-url"), "malformed-url-redacted")
     if parsed.scheme in ("http", "https", "mailto"):
         return {
             "kind": "external.url",

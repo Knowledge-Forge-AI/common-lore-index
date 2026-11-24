@@ -44,3 +44,7 @@ def secret_like_observation(
             }
         ),
     )
+
+
+def unknown_reference(target: str, reason: str) -> dict[str, str]:
+    return {"kind": "unknown", "target": target, "reason": reason}

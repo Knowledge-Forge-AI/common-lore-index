@@ -6,6 +6,18 @@ from common_lore_index.extractors.documents.markdown import (
 
 
 class MarkdownExtractorBoundariesUnitTests(unittest.TestCase):
+    def test_unreadable_external_markdown_target_does_not_hide_the_next_link(self):
+        observations = extract_markdown_file_observations(
+            "guide.md",
+            "[Uno](https://invalid.example:not-a-port/item) and [Dos](https://example.invalid/retained)",
+        )
+        links = [row for row in observations if row.kind == "markdown.link"]
+        self.assertEqual(len(links), 2)
+        self.assertEqual(links[0].metadata["resolution_reason"], "malformed-external-url")
+        self.assertTrue((links[0].target or "").startswith("unknown:"))
+        self.assertTrue((links[1].target or "").startswith("external.url:"))
+        self.assertNotIn("invalid.example", str(links[0].to_dict()))
+
     def test_markdown_frontmatter_malformed_and_redacted_text(self):
         observations = extract_markdown_file_observations(
             "docs/malformed.md",

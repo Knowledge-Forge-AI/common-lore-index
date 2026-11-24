@@ -113,11 +113,7 @@ def resolve_markdown_link_target(
 ) -> LinkResolution:
     target = _strip_link_title(raw_target.strip())
     if not target:
-        return LinkResolution(
-            target=unknown_key("external.url", "malformed-markdown-link"),
-            resolved_target_kind="unknown",
-            resolution_reason="empty-target",
-        )
+        return _malformed_markdown_link("empty-target")
     if "{{" in target or "}}" in target or "${" in target:
         return LinkResolution(
             target=dynamic_key("external.url", "markdown-link-template"),
@@ -125,24 +121,20 @@ def resolve_markdown_link_target(
             resolution_reason="markdown-link-template",
         )
     if _has_malformed_percent_escape(target):
-        return LinkResolution(
-            target=unknown_key("external.url", "malformed-markdown-link"),
-            resolved_target_kind="unknown",
-            resolution_reason="malformed-percent-escape",
-        )
+        return _malformed_markdown_link("malformed-percent-escape")
     if target.startswith(("http://", "https://", "mailto:")):
         normalized = _normalize_external_url(target)
+        if normalized is None:
+            return _malformed_markdown_link("malformed-external-url")
         return LinkResolution(
             target=external_url_key(normalized),
             resolved_target_kind="external.url",
         )
 
     path_part, anchor_part = _split_link_fragment(target)
-    if path_part == "":
-        resolved_path = source_path
-    else:
-        decoded_path = unquote(path_part)
-        resolved_path = _resolve_repo_relative_path(source_path, decoded_path)
+    resolved_path = (
+        _resolve_repo_relative_path(source_path, unquote(path_part)) if path_part else source_path
+    )
     if resolved_path is None:
         return LinkResolution(
             target=unknown_key("file", "repo-escaping-markdown-link"),
@@ -530,9 +522,14 @@ def _link_observation(
         repository_paths=repository_paths,
         markdown_anchors=markdown_anchors,
     )
+    malformed = resolution.resolution_reason == "malformed-external-url" or (
+        resolution.resolution_reason == "malformed-percent-escape"
+        and raw_target.lstrip().startswith(("http://", "https://", "mailto:"))
+    )
+    text = "malformed external link" if malformed else text
     metadata: dict[str, Any] = {
         "link_text": text,
-        "raw_target": raw_target,
+        "raw_target": "<redacted-url>" if malformed else raw_target,
         "link_syntax": syntax,
         "resolved_target_kind": resolution.resolved_target_kind,
         "is_image": is_image,
@@ -686,23 +683,26 @@ def _span_consumed(span: tuple[int, int], consumed_spans: list[tuple[int, int]])
 
 
 def _strip_link_title(target: str) -> str:
-    if " " not in target:
-        return target
-    if target.startswith(("http://", "https://", "mailto:")):
+    if " " not in target or target.startswith(("http://", "https://", "mailto:")):
         return target
     return target.split()[0]
 
 
+def _malformed_markdown_link(reason: str) -> LinkResolution:
+    target = unknown_key("external.url", "malformed-markdown-link")
+    return LinkResolution(target=target, resolved_target_kind="unknown", resolution_reason=reason)
+
+
 def _has_malformed_percent_escape(text: str) -> bool:
-    for match in re.finditer("%", text):
-        escape = text[match.start() : match.start() + 3]
-        if len(escape) != 3 or not re.fullmatch(r"%[0-9A-Fa-f]{2}", escape):
-            return True
-    return False
+    return re.search(r"%(?![0-9A-Fa-f]{2})", text) is not None
 
 
-def _normalize_external_url(url: str) -> str:
-    parsed = urlsplit(url)
+def _normalize_external_url(url: str) -> str | None:
+    try:
+        parsed = urlsplit(url)
+        _ = parsed.port
+    except ValueError:
+        return None
     if parsed.scheme in ("http", "https"):
         return urlunsplit(
             (

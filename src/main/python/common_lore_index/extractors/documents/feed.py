@@ -4,19 +4,24 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Iterator
+from collections.abc import Iterable, Iterator
+from typing import Any
 from xml.etree import ElementTree
 from common_lore_index.extractors.documents.feed_data import (
     _atom_channel_info,
     _atom_item_data,
+    _atom_item_identity,
     _json_channel_info,
     _json_item_data,
+    _json_item_identity,
     _rss_channel_info,
     _rss_item_data,
+    _rss_item_identity,
 )
 
 from common_lore_index.extractors.documents.feed_support import (
     _unreadable_feed_reference,
+    _project_feed_items,
     DYNAMIC_REFERENCE_PATTERN,
     EMAIL_PATTERN,
     SAFE_SUMMARY_LIMIT,
@@ -160,7 +165,10 @@ def _extract_rss(relative_path: str, root: ElementTree.Element) -> tuple[RawObse
             )
         )
 
-    items = [_rss_item_data(relative_path, channel_info["channel_key"], item, index) for index, item in enumerate(_children(channel, "item"), start=1)]
+    items = _project_feed_items(
+        relative_path, channel_info["channel_key"],
+        enumerate(_children(channel, "item"), start=1), _rss_item_identity, _rss_item_data,
+    )
     observations.extend(_item_observations(relative_path, "rss", channel_info["channel_key"], items))
     return tuple(observations)
 
@@ -200,10 +208,10 @@ def _extract_atom(relative_path: str, root: ElementTree.Element) -> tuple[RawObs
             )
         )
 
-    entries = [
-        _atom_item_data(relative_path, channel_info["channel_key"], entry, index)
-        for index, entry in enumerate(_children(root, "entry"), start=1)
-    ]
+    entries = _project_feed_items(
+        relative_path, channel_info["channel_key"],
+        enumerate(_children(root, "entry"), start=1), _atom_item_identity, _atom_item_data,
+    )
     observations.extend(_item_observations(relative_path, "atom", channel_info["channel_key"], entries))
     return tuple(observations)
 
@@ -245,11 +253,8 @@ def _extract_json_feed(
             )
         )
 
-    items = [
-        _json_item_data(relative_path, channel_info["channel_key"], item, index)
-        for index, item in enumerate(payload.get("items", []), start=1)
-        if isinstance(item, dict)
-    ]
+    entries = ((index, item) for index, item in enumerate(payload.get("items", []), start=1) if isinstance(item, dict))
+    items = _project_feed_items(relative_path, channel_info["channel_key"], entries, _json_item_identity, _json_item_data)
     observations.extend(_item_observations(relative_path, "json-feed", channel_info["channel_key"], items))
     return tuple(observations)
 
@@ -258,20 +263,14 @@ def _item_observations(
     relative_path: str,
     feed_format: str,
     channel_key: str,
-    items: list[dict[str, Any]],
+    items: Iterable[tuple[dict[str, Any], int]],
 ) -> Iterator[RawObservation]:
-    counts: dict[str, int] = {}
-    for item in items:
-        counts[item["base_item_id"]] = counts.get(item["base_item_id"], 0) + 1
     seen: dict[str, int] = {}
-    for item in items:
+    for item, identity_count in items:
         base_item_id = item["base_item_id"]
         seen[base_item_id] = seen.get(base_item_id, 0) + 1
-        duplicate_identity = counts[base_item_id] > 1
-        if duplicate_identity:
-            item_id = f"{base_item_id}:duplicate-{seen[base_item_id]}"
-        else:
-            item_id = base_item_id
+        duplicate_identity = identity_count > 1
+        item_id = f"{base_item_id}:duplicate-{seen[base_item_id]}" if duplicate_identity else base_item_id
         item_key = feed_item_key(channel_key, item_id)
         item_metadata = {
             key: value

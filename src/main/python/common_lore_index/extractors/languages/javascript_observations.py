@@ -11,7 +11,7 @@ from common_lore_index.observations.raw import RawObservation
 from common_lore_index.extractors.languages.javascript_references import (
     _package_name,
     _safe_summary,
-    _sanitize_url,
+    _sanitize_reference_url,
 )
 
 
@@ -83,7 +83,7 @@ def _framework_specifier_observation(
         source_key,
         metadata={
             "reference_kind": "framework-package",
-            "specifier": _safe_summary(_sanitize_url(specifier)),
+            "specifier": _safe_summary(_sanitize_reference_url(specifier)),
             "package_name": _package_name(specifier),
             "not_loaded": True,
             "not_fetched": True,
@@ -180,7 +180,7 @@ def _reference_observation(
         "profiles": [profile],
         "parser": PARSER,
         "reference_kind": reference_kind,
-        "raw_value_summary": _safe_summary(_sanitize_url(raw_value)),
+        "raw_value_summary": _safe_summary(_sanitize_reference_url(raw_value)),
         "source_key": source_key,
         "target_key": target,
         "resolution_reason": resolution_reason,

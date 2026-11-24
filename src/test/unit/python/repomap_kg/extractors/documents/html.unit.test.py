@@ -40,6 +40,17 @@ HTML_FIXTURE = """\
 
 
 class HtmlExtractorUnitTests(unittest.TestCase):
+    def test_malformed_literal_link_preserves_the_next_valid_target(self):
+        observations = extract_html_file_observations(
+            "index.html",
+            '<a href="https://invalid.example:not-a-port/link">Broken</a><a href="https://example.invalid/valid">Good</a>',
+        )
+        first, second = [item for item in observations if item.kind == "html.link"]
+        self.assertTrue((first.target or "").startswith("unknown:"))
+        self.assertEqual(first.metadata["resolution_reason"], "malformed-url-redacted")
+        self.assertNotIn("raw_value_summary", first.metadata)
+        self.assertTrue((second.target or "").startswith("external.url:"))
+
     def test_extracts_document_elements_headings_links_assets_and_forms(self):
         observations = extract_html_file_observations("index.html", HTML_FIXTURE)
         payload = json.dumps(

@@ -12,7 +12,7 @@ from common_lore_index.extractors.languages.javascript_observations import (
 )
 from common_lore_index.extractors.languages.javascript_references import (
     _safe_summary,
-    _sanitize_url,
+    _sanitize_reference_url,
     _specifier_target,
 )
 
@@ -47,14 +47,14 @@ def _import_observations(
         relative_path=relative_path,
         source_id=f"{relative_path}#js-import:{line_number}:{len(specifier)}",
         start_line=line_number,
-        name=_safe_summary(specifier),
+        name=_safe_summary(_sanitize_reference_url(specifier)),
         target=target,
         metadata={
             "format": js_format,
             "profile": profile,
             "parser": PARSER,
             "import_kind": import_kind,
-            "import_specifier": _safe_summary(_sanitize_url(specifier)),
+            "import_specifier": _safe_summary(_sanitize_reference_url(specifier)),
             "source_key": source_key,
             "target_key": target,
             "not_loaded": True,
@@ -94,14 +94,14 @@ def _export_observations(
         relative_path=relative_path,
         source_id=f"{relative_path}#js-export:{line_number}:{len(specifier)}",
         start_line=line_number,
-        name=_safe_summary(specifier),
+        name=_safe_summary(_sanitize_reference_url(specifier)),
         target=target,
         metadata={
             "format": js_format,
             "profile": profile,
             "parser": PARSER,
             "export_kind": export_kind,
-            "import_specifier": _safe_summary(_sanitize_url(specifier)),
+            "import_specifier": _safe_summary(_sanitize_reference_url(specifier)),
             "source_key": source_key,
             "target_key": target,
             "not_loaded": True,
