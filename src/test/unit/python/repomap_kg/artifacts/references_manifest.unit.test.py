@@ -15,6 +15,7 @@ from common_lore_index.artifacts import (
     ManifestBinding,
     PortableSnapshotManifest,
 )
+from common_lore_index.artifacts._manifest_records import _artifacts_in_source_order
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
 
 
@@ -81,6 +82,15 @@ def test_manifest_canonical_bytes_bind_complete_vector_and_semantic_roles() -> N
     assert value.manifest_id.startswith("snapmanifest1:")
     assert b'"resolver_identity":"resolver1:nix-v1"' in value.canonical_bytes()
     assert value.effective_privacy is PrivacyClassification.RAW_SOURCE
+
+
+def test_artifact_capture_order_reuses_canonical_entries_and_stably_sorts_pairs() -> None:
+    value = manifest()
+    first, = value.entries
+    assert _artifacts_in_source_order(value.entries) is value.entries
+    last = replace(first, source_relative_path="src/other.py")
+    same_path = replace(first, reference=reference(digest=DIGEST_B))
+    assert tuple(_artifacts_in_source_order((last, first, same_path))) == (first, same_path, last)
 
 
 def test_locator_and_backend_relocation_do_not_change_manifest_identity() -> None:

@@ -5,11 +5,12 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 import os
-from itertools import chain, pairwise
+from itertools import chain
 from pathlib import Path, PurePosixPath
 import stat
 
-from common_lore_index.artifacts import FileSystemArtifactStore, ManifestArtifact, PortableSnapshotManifest
+from common_lore_index.artifacts import FileSystemArtifactStore, PortableSnapshotManifest
+from common_lore_index.artifacts._manifest_records import _artifacts_in_source_order
 from common_lore_index.artifacts._store_common import ArtifactErrorCode, ArtifactIntegrityError
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
 from common_lore_index.ops.config_records import OpsGraphConfig
@@ -268,13 +269,7 @@ def _capture_from_retained_manifest(
             omissions.append(OmissionRecord(b_id, None, r_code, f"binding {b_id} ({resolved_b.alias}) excluded before file open: {r_code}").validate())
         elif b_id not in bindings_by_id:
             omissions.append(OmissionRecord(b_id, None, "binding_absent_from_publication_vector", f"binding {b_id} is not present in accepted snapshot_vector").validate())
-    entries: Sequence[ManifestArtifact] = manifest.entries
-    if any(
-        (left.binding_id, left.source_relative_path) > (right.binding_id, right.source_relative_path)
-        for left, right in pairwise(entries)
-    ):
-        entries = sorted(entries, key=lambda item: (item.binding_id, item.source_relative_path))
-    for entry in entries:
+    for entry in _artifacts_in_source_order(manifest.entries):
         b_id = entry.binding_id
         if b_id in lexical_policy.excluded_binding_reasons or b_id not in resolved_by_id:
             continue

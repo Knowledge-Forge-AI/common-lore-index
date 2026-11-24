@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass, replace
 from itertools import chain
 from typing import Any
 
+from common_lore_index.artifacts._manifest_records import _artifacts_in_source_order
 from common_lore_index.artifacts._store_common import (
     ArtifactErrorCode,
     ArtifactIntegrityError,
@@ -188,31 +190,26 @@ def build_captured_text_projection(
     policy_digest = policy.policy_digest()
 
     bindings_by_id = {b.binding_id: b for b in inputs.manifest.bindings}
-    entries_by_binding: dict[str, list[Any]] = {b.binding_id: [] for b in inputs.manifest.bindings}
-    for entry in inputs.manifest.entries:
-        entries_by_binding.setdefault(entry.binding_id, []).append(entry)
-
-    excluded_bindings: list[ExcludedBindingRecord] = []
+    excluded_reasons = []
     for binding in sorted(inputs.manifest.bindings, key=lambda item: item.binding_id):
-        b_reason = evaluate_binding_exclusion(policy, binding)
-        if b_reason is not None:
-            excluded_bindings.append(
-                ExcludedBindingRecord(
-                    binding_id=binding.binding_id,
-                    reason=b_reason,
-                    file_count=len(entries_by_binding.get(binding.binding_id, ())),
-                )
-            )
+        reason = evaluate_binding_exclusion(policy, binding)
+        if reason is not None:
+            excluded_reasons.append((binding.binding_id, reason))
+
+    excluded_ids = {binding_id for binding_id, _ in excluded_reasons}
+    counts = Counter(
+        entry.binding_id for entry in inputs.manifest.entries if entry.binding_id in excluded_ids
+    ) if excluded_ids else Counter()
+    excluded_bindings = [
+        ExcludedBindingRecord(binding_id=binding_id, reason=reason, file_count=counts[binding_id])
+        for binding_id, reason in excluded_reasons
+    ]
 
     projected_files: list[ProjectedFileRecord] = []
     excluded_files: list[ExcludedFileRecord] = []
     aggregate_bytes_read = 0
 
-    sorted_entries = sorted(
-        inputs.manifest.entries,
-        key=lambda item: (item.binding_id, item.source_relative_path),
-    )
-    for entry in sorted_entries:
+    for entry in _artifacts_in_source_order(inputs.manifest.entries):
         binding = bindings_by_id[entry.binding_id]
         art_privacy = entry.reference.privacy.value
         pre_reason, source_format = evaluate_artifact_pre_open(policy, binding, entry)
