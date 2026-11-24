@@ -22,12 +22,13 @@ from common_lore_index.ops.ingestion._bulk_helpers import (
     root_path_summary,
     route_included,
     safe_size,
-    sha256_file,
     sha256_text,
 )
+from common_lore_index.ops.ingestion._source_archive_scan import _hash_admitted_file
 from common_lore_index.ops.ingestion.bulk_records import (
     BulkIncludedFile,
     BulkManifest,
+    BulkPolicyError,
     BulkSkippedFile,
     BulkSourceConfig,
 )
@@ -128,10 +129,11 @@ def build_bulk_manifest(
                 add_skipped(entry, "special_file")
                 continue
             total_seen += info.st_size
-            process_file(entry, info.st_size)
+            process_file(entry, info)
 
-    def process_file(path: Path, byte_count: int) -> None:
+    def process_file(path: Path, expected: os.stat_result) -> None:
         nonlocal total_included
+        byte_count = expected.st_size
         relative = relative_to_root(source_root, path)
         file_depth = depth(relative)
         route = classify_bulk_route(path)
@@ -156,8 +158,15 @@ def build_bulk_manifest(
         if len(included) >= config.max_files:
             add_skipped(path, "max_files_exceeded", byte_count=byte_count, route=route)
             return
-        repository_path = path.resolve().relative_to(repo_root).as_posix()
-        digest = sha256_file(path)
+        try:
+            source = path.resolve(strict=True)
+            ensure_contained(source, source_root, "bulk file")
+            if not config.follow_symlinks and source != path:
+                raise ValueError("unexpected bulk file alias")
+            repository_path = source.relative_to(repo_root).as_posix()
+            digest = _hash_admitted_file(source, expected)
+        except (OSError, RuntimeError, ValueError):
+            raise BulkPolicyError("bulk file changed during manifest scan") from None
         included.append(
             BulkIncludedFile(
                 relative_path=relative,

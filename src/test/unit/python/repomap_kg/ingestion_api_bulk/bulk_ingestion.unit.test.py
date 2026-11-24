@@ -1,18 +1,70 @@
 import json
 import tempfile
 import unittest
+from collections.abc import Iterator, Mapping
 from pathlib import Path
+from unittest.mock import patch
 
+from common_lore_index.graph.discovery import classify_path
 from common_lore_index.ops.ingestion.bulk import (
     BulkPolicyError,
     bulk_observations_from_plan,
     build_bulk_plan,
     import_bulk_source,
     load_bulk_source_config,
+    observations_for_file_info,
 )
+from common_lore_index.extractors.languages.python import PythonModuleIndex
 
 
 class BulkIngestionUnitTests(unittest.TestCase):
+    def test_bulk_markdown_resolves_links_without_cloning_the_anchor_inventory(self) -> None:
+        class AnchorInventory(Mapping[str, frozenset[str]]):
+            def __getitem__(self, path: str) -> frozenset[str]:
+                if path != "topic.md":
+                    raise KeyError(path)
+                return frozenset({"heading"})
+
+            def __iter__(self) -> Iterator[str]:
+                raise AssertionError("extracting a Markdown file enumerated the entire anchor inventory")
+
+            def __len__(self) -> int:
+                return 1
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            source = root / "index.md"
+            source.write_text("[Topic](topic.md#heading)\n", encoding="utf-8")
+            observations = observations_for_file_info(
+                root, classify_path(root, source), module_index=PythonModuleIndex.empty(),
+                repository_paths=frozenset({"index.md", "topic.md"}), markdown_anchors=AnchorInventory(),
+            )
+        links = [item.target for item in observations if item.kind == "markdown.link"]
+        self.assertEqual(links, ["doc.section:file%3Atopic.md:heading"])
+
+    def test_bulk_hash_rejects_replacement_after_extent_admission(self) -> None:
+        from common_lore_index.ops.ingestion import _bulk_manifest
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "corpus"
+            corpus.mkdir()
+            target = corpus / "note.md"
+            target.write_bytes(b"# Old\n")
+            replacement = root / "replacement.md"
+            replacement.write_bytes(b"# New\n")
+            config = load_bulk_source_config(self.write_bulk_config(root / "bulk.toml", corpus))
+            open_admitted = _bulk_manifest._hash_admitted_file
+
+            def replace_before_hash(path, expected):
+                replacement.replace(path)
+                return open_admitted(path, expected)
+
+            with patch.object(_bulk_manifest, "_hash_admitted_file", side_effect=replace_before_hash):
+                with self.assertRaisesRegex(BulkPolicyError, "bulk file changed during manifest scan") as error:
+                    build_bulk_plan(config, repository_root=corpus)
+            self.assertNotIn(str(corpus), str(error.exception))
+
     def test_bulk_config_requires_explicit_allowed_local_directory_policy(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

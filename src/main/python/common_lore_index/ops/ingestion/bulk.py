@@ -101,14 +101,11 @@ def observations_for_file_info(
     markdown_anchors: Mapping[str, set[str] | frozenset[str]],
 ) -> tuple[RawObservation, ...]:
     if file_info.language == "markdown":
-        converted_anchors: dict[str, set[str] | frozenset[str]] = {
-            key: frozenset(val) for key, val in markdown_anchors.items()
-        }
         return extract_markdown_file_observations_from_file(
             repo_root,
             file_info,
             repository_paths=repository_paths,
-            markdown_anchors=converted_anchors,
+            markdown_anchors=markdown_anchors,
         )
     if file_info.language == "shell":
         return extract_shell_file_observations(repo_root, file_info.path)

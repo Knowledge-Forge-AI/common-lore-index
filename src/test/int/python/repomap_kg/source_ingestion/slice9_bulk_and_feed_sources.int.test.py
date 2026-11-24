@@ -1,11 +1,14 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from common_lore_index.ops.ingestion.bulk import (
     BulkPolicyError,
     build_bulk_plan,
+    bulk_observations_from_plan,
     classify_bulk_route,
+    import_bulk_source,
     load_bulk_source_config,
 )
 from common_lore_index.ops.ingestion.source_common import SourcePolicyError
@@ -26,6 +29,34 @@ from repomap_test_support.source_ingestion_integration import (
 
 class Slice9BulkAndFeedSourcesIntegrationTests(unittest.TestCase):
     """Integration slice 9 tests covering bulk traversal, feed sources, and WARC parsing."""
+
+    def test_bulk_plan_reuses_markdown_inventory_and_refuses_grown_file(self) -> None:
+        from common_lore_index.ops.ingestion import _bulk_manifest
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            cfg = root / "bulk.toml"
+            cfg.write_bytes((bulk_fixture_root() / "mixed_corpus" / "bulk.toml").read_bytes())
+            (root / "index.md").write_text("[Topic](topic.md#heading)\n", encoding="utf-8")
+            topic = root / "topic.md"
+            topic.write_text("# Heading\n", encoding="utf-8")
+            config = load_bulk_source_config(cfg)
+            manifest = build_bulk_plan(config, repository_root=root)
+            observations = bulk_observations_from_plan(config, manifest, repository_root=root)
+            self.assertIn("doc.section:file%3Atopic.md:heading",
+                          {item.target for item in observations if item.kind == "markdown.link"})
+            open_admitted = _bulk_manifest._hash_admitted_file
+
+            def append_before_hash(path, expected):
+                if path == topic:
+                    with topic.open("a", encoding="utf-8") as stream:
+                        stream.write("additional bytes outside the admitted extent\n")
+                return open_admitted(path, expected)
+
+            with patch.object(_bulk_manifest, "_hash_admitted_file", side_effect=append_before_hash):
+                with self.assertRaisesRegex(BulkPolicyError, "bulk file changed during manifest scan"):
+                    import_bulk_source(cfg, root_path=root)
+            self.assertFalse((root / ".repomap").exists())
 
     def test_s9_b08_bulk_route_classification_and_unsupported_skips(self) -> None:
         """Route classification assigns expected routes and skips unsupported extensions."""

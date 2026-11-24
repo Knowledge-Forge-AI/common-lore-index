@@ -110,12 +110,25 @@ def _archive_included_file(
     if expected.st_size != byte_length:
         raise SourcePolicyError("archive file size changed during manifest scan")
 
+    digest = _hash_admitted_file(file_path, expected)
+    return ArchiveIncludedFile(
+        relative_path=file_path.relative_to(artifact_root).as_posix(),
+        repository_path=file_path.relative_to(root).as_posix(),
+        byte_length=byte_length,
+        sha256=digest,
+        extractor_route=_archive_extractor_route(file_path),
+        media_type=_archive_media_type(file_path),
+    )
+
+
+def _hash_admitted_file(file_path: Path, expected: os.stat_result) -> str:
+    """Read only the extent of a previously admitted regular file."""
     digest = hashlib.sha256()
     with open(file_path, "rb", opener=_open_archive_file) as source:
         initial = os.fstat(source.fileno())
         if _file_version(initial) != _file_version(expected):
             raise SourcePolicyError("archive file changed during manifest scan")
-        remaining = byte_length
+        remaining = expected.st_size
         while remaining:
             block = source.read(min(remaining, 256 * 1024))
             if not block:
@@ -125,14 +138,7 @@ def _archive_included_file(
         final = os.fstat(source.fileno())
         if _file_version(initial) != _file_version(final):
             raise SourcePolicyError("archive file changed during manifest scan")
-    return ArchiveIncludedFile(
-        relative_path=file_path.relative_to(artifact_root).as_posix(),
-        repository_path=file_path.relative_to(root).as_posix(),
-        byte_length=byte_length,
-        sha256=digest.hexdigest(),
-        extractor_route=_archive_extractor_route(file_path),
-        media_type=_archive_media_type(file_path),
-    )
+    return digest.hexdigest()
 
 
 def _open_archive_file(path: str, flags: int) -> int:
