@@ -357,7 +357,9 @@ def test_prepared_digest_enforces_final_input_limit_on_uneven_run_levels(
     observations = tuple(_observations(f"src/fixture_{index:02d}.py")[0] for index in range(13))
     prepared = build_staged_rows(observations, repository_name="prepared-digest", stage_id="prepared-fixture")
     try:
-        expected = structural_digest.digest_prepared_stage_rows(prepared)
+        with monkeypatch.context() as patch:
+            patch.setattr(external_row_sort, "OwnedTemporaryDirectory", lambda **_: pytest.fail("unneeded spill directory"))
+            expected = structural_digest.digest_prepared_stage_rows(prepared)
         original = external_row_sort._iter_encoded_run
         active = peak = 0
 

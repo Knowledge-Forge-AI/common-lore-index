@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator, Sequence
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
 
@@ -382,3 +383,18 @@ def test_prepared_stage_adapter_closes_an_active_row_iterator_on_failure() -> No
     with pytest.raises(RuntimeError, match="private diagnostic"):
         digest_prepared_stage_rows(prepared)
     assert closed is True
+
+
+def test_artifact_total_tracks_growth_and_removal(tmp_path: Path) -> None:
+    samples: list[tuple[int, int]] = []
+    tracker = external_row_sort._ArtifactTracker(lambda size, count: samples.append((size, count)))
+    first, second = tmp_path / "one", tmp_path / "two"
+    tracker.begin(first)
+    tracker.resize(first, 7)
+    tracker.begin(second)
+    tracker.resize(second, 13)
+    tracker.resize(first, 9)
+    tracker.remove(second)
+    tracker.clear()
+
+    assert samples == [(0, 1), (7, 1), (7, 2), (20, 2), (22, 2), (9, 1), (0, 0)]

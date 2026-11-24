@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+import os
 from pathlib import Path
 import stat
 import tempfile
+from typing import IO
 
 import pytest
 
@@ -33,7 +35,8 @@ def test_external_sort_merges_multiple_bounded_passes() -> None:
     ) == [[value, {"payload": value}] for value in range(13)]
 
 
-def test_external_sort_exposes_the_validated_canonical_row_encoding() -> None:
+def test_external_sort_exposes_the_validated_canonical_row_encoding(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(external_row_sort, "OwnedTemporaryDirectory", lambda **_: pytest.fail("unneeded spill directory"))
     assert list(
         external_sort_encoded_rows(
             ((2, {"z": 1, "a": "café"}), (1, {})),
@@ -160,6 +163,19 @@ def test_external_sort_bounds_live_runs_and_reports_merge_overlap() -> None:
     assert max(run_count for _bytes, run_count in artifacts) <= 17
     assert max(byte_count for byte_count, _runs in artifacts) > 0
     assert artifacts[-1] == (0, 0)
+
+
+def test_external_sort_refuses_short_run_write(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    original = os.fdopen
+
+    def short_open(fd: int, mode: str, *, encoding: str, newline: str) -> IO[str]:
+        handle = original(fd, mode, encoding=encoding, newline=newline)
+        monkeypatch.setattr(handle, "write", lambda _data: 0)
+        return handle
+    monkeypatch.setattr(os, "fdopen", short_open)
+    with pytest.raises(ExternalRowSortError, match="run write was incomplete"):
+        external_row_sort._write_encoded_rows(tmp_path, iter(("[1]",)), external_row_sort._ArtifactTracker(None))
+    assert not tuple(tmp_path.iterdir())
 
 
 def test_run_growth_is_observed_before_bytes_are_written(tmp_path) -> None:
