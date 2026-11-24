@@ -85,6 +85,20 @@ def test_real_literal_pagination_order_and_occurrence_cap(tmp_path: Path) -> Non
         assert not any(omission.reason_code == "result_page_bounded" for omission in full.omissions)
         full_locators = [hit.locator.identity_key() for hit in full.hits]
 
+        exact_cap = max(Counter(hit.locator.source_relative_path for hit in full.hits).values())
+        exact = query_graph_lexical_generation(
+            config,
+            MIXED_V1_GRAPH_ID,
+            LexicalQueryRequest(
+                query="def", query_style="literal_captured_text", selected_binding_ids=(core_id,), limit=100,
+            ),
+            authorize_body=True,
+            max_occurrences_per_file=exact_cap,
+        )
+        assert exact.capability_state == CapabilityState.AVAILABLE
+        assert [hit.locator.identity_key() for hit in exact.hits] == full_locators
+        assert not any(item.reason_code == "literal_occurrence_cap_exceeded" for item in exact.omissions)
+
         page = query_graph_lexical_generation(
             config,
             MIXED_V1_GRAPH_ID,

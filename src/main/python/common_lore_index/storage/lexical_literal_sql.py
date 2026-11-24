@@ -65,12 +65,8 @@ raw_occurrences AS (
     SELECT
         ed.repository_id,
         ed.lexical_generation_id,
-        ed.run_id,
-        ed.representation_version,
         ed.binding_id,
         ed.source_relative_path,
-        ed.normalized_text,
-        ed.artifact_privacy,
         1 AS occurrence_index,
         strpos(ed.normalized_text, %(query_text)s) AS match_pos_1
     FROM eligible_documents ed
@@ -78,17 +74,13 @@ raw_occurrences AS (
     SELECT
         ro.repository_id,
         ro.lexical_generation_id,
-        ro.run_id,
-        ro.representation_version,
         ro.binding_id,
         ro.source_relative_path,
-        ro.normalized_text,
-        ro.artifact_privacy,
         ro.occurrence_index + 1 AS occurrence_index,
-        ro.match_pos_1 + strpos(substr(ro.normalized_text, ro.match_pos_1 + 1), %(query_text)s) AS match_pos_1
+        ro.match_pos_1 + NULLIF(strpos(substr(ed.normalized_text, ro.match_pos_1 + 1), %(query_text)s), 0) AS match_pos_1
     FROM raw_occurrences ro
-    WHERE ro.occurrence_index <= %(max_occurrences_per_file)s
-      AND strpos(substr(ro.normalized_text, ro.match_pos_1 + 1), %(query_text)s) > 0
+    JOIN eligible_documents ed USING (repository_id, lexical_generation_id, binding_id, source_relative_path)
+    WHERE ro.occurrence_index <= %(max_occurrences_per_file)s AND ro.match_pos_1 IS NOT NULL
 ),
 capped_files AS MATERIALIZED (
     SELECT DISTINCT
@@ -96,20 +88,21 @@ capped_files AS MATERIALIZED (
         ro.source_relative_path
     FROM raw_occurrences ro
     WHERE ro.occurrence_index > %(max_occurrences_per_file)s
+      AND ro.match_pos_1 IS NOT NULL
 ),
 admitted_occurrences AS MATERIALIZED (
     SELECT
         ro.repository_id,
         ro.lexical_generation_id,
-        ro.run_id,
-        ro.representation_version,
+        ed.run_id,
+        ed.representation_version,
         ro.binding_id,
         ro.source_relative_path,
-        ro.artifact_privacy,
+        ed.artifact_privacy,
         ro.occurrence_index,
         ro.match_pos_1,
         1 + (ro.match_pos_1 - 1) - char_length(
-            replace(left(ro.normalized_text, ro.match_pos_1 - 1), chr(10), '')
+            replace(left(ed.normalized_text, ro.match_pos_1 - 1), chr(10), '')
         ) AS start_line,
         1 + (
             CASE
@@ -120,7 +113,7 @@ admitted_occurrences AS MATERIALIZED (
         ) - char_length(
             replace(
                 left(
-                    ro.normalized_text,
+                    ed.normalized_text,
                     CASE
                         WHEN right(%(query_text)s, 1) = chr(10) AND char_length(%(query_text)s) > 1
                             THEN ro.match_pos_1 + char_length(%(query_text)s) - 2
@@ -132,7 +125,8 @@ admitted_occurrences AS MATERIALIZED (
             )
         ) AS end_line
     FROM raw_occurrences ro
-    WHERE ro.occurrence_index <= %(max_occurrences_per_file)s
+    JOIN eligible_documents ed USING (repository_id, lexical_generation_id, binding_id, source_relative_path)
+    WHERE ro.occurrence_index <= %(max_occurrences_per_file)s AND ro.match_pos_1 IS NOT NULL
 ),
 ordered_hits AS MATERIALIZED (
     SELECT

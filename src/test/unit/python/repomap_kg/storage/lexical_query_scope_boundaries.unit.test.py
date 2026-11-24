@@ -356,3 +356,21 @@ def test_only_ranked_queries_prepare_alias_parameters(style: str, monkeypatch: p
     assert calls == ([query] if style == "ranked_terms" else [])
     assert sent[0]["query_text"] == query
     assert sent[0]["alias_query_text"] == ("http server" if style == "ranked_terms" else "")
+
+
+def test_ranked_sql_parses_each_query_form_once_and_sorts_before_paging() -> None:
+    compact = _compact(RANKED_TERMS_QUERY_SQL)
+    assert compact.count("websearch_to_tsquery(") == compact.count("plainto_tsquery(") == 1
+    assert "query_inputs AS MATERIALIZED" in compact
+    for sql in (RANKED_TERMS_QUERY_SQL, NORMALIZED_PHRASE_QUERY_SQL):
+        page = _compact(sql).split("paged AS MATERIALIZED (", 1)[1].split("enriched_hits AS", 1)[0]
+        assert 'ORDER BY score DESC, binding_id COLLATE "C" ASC' in page
+        assert page.index("ORDER BY") < page.index("OFFSET")
+
+
+def test_literal_walk_carries_positions_without_duplicating_document_text() -> None:
+    compact = _compact(LITERAL_CAPTURED_TEXT_QUERY_SQL)
+    walk = compact.split("raw_occurrences AS (", 1)[1].split("capped_files AS", 1)[0]
+    assert "ro.normalized_text" not in walk and walk.count("strpos(substr(") == 1
+    assert "ro.occurrence_index <= %(max_occurrences_per_file)s AND ro.match_pos_1 IS NOT NULL" in compact
+    assert "ro.occurrence_index > %(max_occurrences_per_file)s AND ro.match_pos_1 IS NOT NULL" in compact

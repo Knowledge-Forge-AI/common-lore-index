@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -206,6 +207,9 @@ def test_postgres_lexical_scope_prefixes_are_segment_bounded_and_ordered(
             unscoped = _query(config, style)
             assert unscoped.provenance["path_prefixes"] == []
             _assert_hits_for_scope(unscoped, style, expected_union)
+            request = replace(_request(style), offset=1, limit=1)
+            page = query_graph_lexical_generation(config, MIXED_V1_GRAPH_ID, request, authorize_body=True)
+            assert tuple(map(_order_key, page.hits)) == tuple(map(_order_key, unscoped.hits[1:2]))
 
             pkg = _query(
                 config,
