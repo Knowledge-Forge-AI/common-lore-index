@@ -289,13 +289,11 @@ def query_captured_text(
     raw_candidates: list[tuple[ProjectedFileRecord, int, int, int, str, str]] = []
     total_matches = 0
     ordered_files = sorted(
-        projection.projected_files, key=lambda file: (file.binding_id, file.source_relative_path)
+        (file for file in projection.projected_files if file.binding_id in req_binding_set
+         and (prefix is None or file.source_relative_path.startswith(prefix))),
+        key=lambda file: (file.binding_id, file.source_relative_path),
     )
     for file_rec in ordered_files:
-        if file_rec.binding_id not in req_binding_set:
-            continue
-        if prefix is not None and not file_rec.source_relative_path.startswith(prefix):
-            continue
         if file_rec.truncated:
             omissions.append(
                 OmissionRecord(

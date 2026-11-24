@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence, Set
 from dataclasses import dataclass
 from typing import Any
 
@@ -37,8 +37,20 @@ class ProjectedEvidenceLink:
         }
 
 
+def _evidence_file_key(row: Mapping[str, Any]) -> tuple[str, str] | None:
+    metadata = row.get("metadata_json")
+    if not isinstance(metadata, Mapping):
+        return None
+    binding, path = metadata.get("binding_id"), metadata.get("source_relative_path")
+    if isinstance(binding, str) and binding and isinstance(path, str) and path:
+        return binding, path
+    return None
+
+
 def index_bundle_evidence(
     bundle: PublicationBundle,
+    *,
+    file_keys: Set[tuple[str, str]] | None = None,
 ) -> dict[tuple[str, str], tuple[ProjectedEvidenceLink, ...]]:
     """Index same-bundle evidence records by (binding_id, source_relative_path).
 
@@ -47,6 +59,16 @@ def index_bundle_evidence(
     `start_line`, `end_line`, `confidence`, `metadata_json`). Never manufactures
     links when `binding_id` or `source_relative_path` is absent or ambiguous.
     """
+    if file_keys is not None and not file_keys:
+        return {}
+    evidence_rows = bundle.families.get("canonical_evidence", ())
+    selected_ids: set[str] | None = None
+    if file_keys is not None:
+        evidence_rows = tuple(row for row in evidence_rows if _evidence_file_key(row) in file_keys)
+        selected_ids = {
+            key for row in evidence_rows if isinstance(key := row.get("evidence_key"), str)
+        }
+
     node_links_by_evidence: dict[str, list[tuple[str, str]]] = {}
     for row in bundle.families.get("canonical_node_evidence", ()):
         ev_key = row.get("evidence_key")
@@ -55,6 +77,7 @@ def index_bundle_evidence(
         if (
             isinstance(ev_key, str)
             and ev_key
+            and (selected_ids is None or ev_key in selected_ids)
             and isinstance(node_key, str)
             and node_key
             and isinstance(link_kind, str)
@@ -63,19 +86,16 @@ def index_bundle_evidence(
             node_links_by_evidence.setdefault(ev_key, []).append((node_key, link_kind))
 
     by_file: dict[tuple[str, str], list[ProjectedEvidenceLink]] = {}
-    for row in bundle.families.get("canonical_evidence", ()):
+    for row in evidence_rows:
         ev_key = row.get("evidence_key")
         ev_kind = row.get("raw_kind")
         confidence = row.get("confidence", "extracted")
-        metadata = row.get("metadata_json")
         if not isinstance(ev_key, str) or not ev_key or not isinstance(ev_kind, str) or not ev_kind:
             continue
-        if not isinstance(metadata, Mapping):
+        file_key = _evidence_file_key(row)
+        if file_key is None:
             continue
-        binding_id = metadata.get("binding_id")
-        rel_path = metadata.get("source_relative_path")
-        if not isinstance(binding_id, str) or not binding_id or not isinstance(rel_path, str) or not rel_path:
-            continue
+        binding_id, rel_path = file_key
 
         raw_start = row.get("start_line")
         raw_end = row.get("end_line")

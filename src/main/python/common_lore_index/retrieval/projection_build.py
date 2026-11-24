@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from common_lore_index.artifacts._store_common import (
@@ -184,7 +184,6 @@ def build_captured_text_projection(
             "receipt.portable is required for projection build",
         )
     policy_digest = policy.policy_digest()
-    evidence_index = index_bundle_evidence(inputs.bundle)
 
     bindings_by_id = {b.binding_id: b for b in inputs.manifest.bindings}
     entries_by_binding: dict[str, list[Any]] = {b.binding_id: [] for b in inputs.manifest.bindings}
@@ -343,10 +342,16 @@ def build_captured_text_projection(
                 had_crlf_or_cr=norm_res.had_crlf_or_cr,
                 artifact_privacy=art_privacy,
                 binding_policy=policy.bindings[binding.binding_id],
-                evidence_links=evidence_index.get((binding.binding_id, entry.source_relative_path), ()),
+                evidence_links=(),
                 chunks=chunks,
             )
         )
+
+    file_keys = {(file.binding_id, file.source_relative_path) for file in projected_files}
+    evidence_index = index_bundle_evidence(inputs.bundle, file_keys=file_keys)
+    for index, file in enumerate(projected_files):
+        if links := evidence_index.get((file.binding_id, file.source_relative_path)):
+            projected_files[index] = replace(file, evidence_links=links)
 
     removed_bindings: tuple[str, ...] = ()
     removed_files: tuple[tuple[str, str], ...] = ()

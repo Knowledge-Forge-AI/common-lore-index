@@ -5,15 +5,17 @@ from __future__ import annotations
 from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
+from typing import Any
 
 import pytest
 
-from common_lore_index.retrieval import projection_query
+from common_lore_index.retrieval import projection_evidence, projection_query
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
 from common_lore_index.retrieval.projection_chunks import build_file_chunks
 from common_lore_index.retrieval.projection_evidence import (
     ProjectedEvidenceLink,
     first_link_for_line_span,
+    index_bundle_evidence,
     links_for_line_span,
 )
 from common_lore_index.retrieval.projection_policy import ExclusionReason
@@ -203,3 +205,37 @@ def test_query_reuses_evidence_only_within_the_same_file_and_span(
     ]
     assert observed == [(first.source_relative_path, 1, 1), (first.source_relative_path, 2, 2),
                         (second.source_relative_path, 2, 2)]
+
+
+@pytest.mark.parametrize("excluded_key", ("ev1:excluded", "ev1:alpha80"))
+def test_evidence_index_limits_records_and_links_to_admitted_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, excluded_key: str,
+) -> None:
+    inputs, _ = _build_fixture_projection(spool_dir=tmp_path / "spool")
+    evidence_row, = inputs.bundle.families["canonical_evidence"]
+    link_row, = inputs.bundle.families["canonical_node_evidence"]
+    binding_id = inputs.manifest.bindings[0].binding_id
+    families = dict(inputs.bundle.families)
+    excluded_row = {
+        **evidence_row,
+        "evidence_key": excluded_key,
+        "metadata_json": {"binding_id": binding_id, "source_relative_path": "pkg/excluded.py"},
+    }
+    families["canonical_evidence"] = (evidence_row, excluded_row)
+    families["canonical_node_evidence"] = (link_row, {**link_row, "evidence_key": excluded_key})
+    bundle = replace(inputs.bundle, families=families)
+    key = (binding_id, "pkg/alpha.py")
+    expected = index_bundle_evidence(bundle)
+    assert set(expected) == {key, (binding_id, "pkg/excluded.py")}
+    seen: list[str] = []
+
+    def make_link(*args: Any, **kwargs: Any) -> ProjectedEvidenceLink:
+        link = ProjectedEvidenceLink(*args, **kwargs)
+        seen.append(link.evidence_key)
+        return link
+
+    monkeypatch.setattr(projection_evidence, "ProjectedEvidenceLink", make_link)
+    assert index_bundle_evidence(bundle, file_keys={key}) == {key: expected[key]}
+    assert not index_bundle_evidence(bundle, file_keys=set())
+    expected_count = 2 if excluded_key == evidence_row["evidence_key"] else 1
+    assert seen == ["ev1:alpha80"] * expected_count

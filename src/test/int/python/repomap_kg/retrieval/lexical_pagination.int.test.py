@@ -17,6 +17,7 @@ from common_lore_index.ops.lexical_service import (
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
 from common_lore_index.retrieval import projection_query
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
+from common_lore_index.retrieval.projection_evidence import index_bundle_evidence
 from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, query_captured_text
 from common_lore_index.retrieval.query_contracts import CapabilityState
 from repomap_test_support.postgres_harness import temporary_postgres
@@ -133,7 +134,17 @@ def test_published_literal_page_retains_cross_chunk_unicode_start(
 ) -> None:
     working_copy = materialize_mixed_v1_working_copy(tmp_path / "working-copy")
     state = publish_and_load_sqlite_corpus(write_mixed_v1_sqlite_home(tmp_path / "home", working_copy))
-    projection = build_captured_text_projection(state.projection_inputs(), state.policy)
+    inputs = state.projection_inputs()
+    projection = build_captured_text_projection(inputs, state.policy)
+    evidence = index_bundle_evidence(inputs.bundle)
+    projected_evidence = {
+        (record.binding_id, record.source_relative_path): record.evidence_links
+        for record in projection.projected_files
+        if record.evidence_links
+    }
+    assert projected_evidence
+    admitted = {(record.binding_id, record.source_relative_path) for record in projection.projected_files}
+    assert projected_evidence == {key: links for key, links in evidence.items() if key in admitted}
     note, = (item for item in projection.projected_files
              if item.source_relative_path == "generated/long_line_notes.md")
     left, right = note.chunks[1:3]
