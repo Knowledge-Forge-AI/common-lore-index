@@ -18,6 +18,21 @@ from common_lore_index.ops.ingestion.source import (
 
 
 class WarcSourceIngestionUnitTests(SourceIngestionUnitTestCase):
+    def test_warc_clock_cannot_substitute_a_same_size_archive_after_admission(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            artifact = self.write_warc_fixture(root)
+            replacement = root / "alternate.warc"
+            replacement.write_bytes(artifact.read_bytes())
+            config = load_warc_source_config(self.write_warc_config(root / "source.toml"))
+
+            def replace_after_admission():
+                replacement.replace(artifact)
+                return self.fixed_clock()
+
+            with self.assertRaisesRegex(SourcePolicyError, "artifact changed during WARC manifest scan"):
+                build_warc_manifest(config, root_path=root, clock=replace_after_admission)
+
     def test_warc_manifest_reads_the_fixture_without_materializing_the_archive(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

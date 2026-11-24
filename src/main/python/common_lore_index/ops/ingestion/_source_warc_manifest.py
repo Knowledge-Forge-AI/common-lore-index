@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+import stat
 
 from common_lore_index.extractors.documents.css_html_matching import (
     extract_css_selector_match_observations,
@@ -51,13 +52,17 @@ def build_warc_manifest(
 ) -> WarcManifest:
     root = Path(root_path).resolve()
     artifact_path = _resolve_archive_artifact_path(root, config.artifact_path)
-    if artifact_path.is_symlink():
+    try:
+        expected_artifact = artifact_path.lstat()
+    except OSError:
+        raise SourcePolicyError("artifact.path must be an existing WARC file") from None
+    if stat.S_ISLNK(expected_artifact.st_mode):
         raise SourcePolicyError("artifact.path must not be a symlink")
-    if not artifact_path.is_file():
+    if not stat.S_ISREG(expected_artifact.st_mode):
         raise SourcePolicyError("artifact.path must be an existing WARC file")
     if artifact_path.suffix != ".warc":
         raise SourcePolicyError("WARC1 supports local .warc files only")
-    artifact_bytes = artifact_path.stat().st_size
+    artifact_bytes = expected_artifact.st_size
     if artifact_bytes > config.max_artifact_bytes:
         raise SourcePolicyError("artifact exceeds policy.max_artifact_bytes")
     now = clock() if clock is not None else _utc_now()
@@ -80,6 +85,7 @@ def build_warc_manifest(
         artifact_path=artifact_path,
         document_key=document_key,
         materialization_root=materialization_root,
+        expected_artifact=expected_artifact,
     )
     policy_snapshot = _warc_policy_snapshot(config)
     manifest_payload = {
@@ -90,12 +96,13 @@ def build_warc_manifest(
         "artifact_profile": config.artifact_profile,
         "artifact_path": config.artifact_path,
         "warc_version": warc_version,
-        "records": [record.to_jsonable() for record in records],
         "policy_snapshot": policy_snapshot,
         "warnings": list(warnings),
         "errors": list(errors),
     }
-    artifact_manifest_id = _source_manifest_id(manifest_payload)
+    artifact_manifest_id = _source_manifest_id(
+        manifest_payload, records={"records": (record.to_jsonable() for record in records)},
+    )
     return WarcManifest(
         source_id=config.source_id,
         source_type=config.source_type,

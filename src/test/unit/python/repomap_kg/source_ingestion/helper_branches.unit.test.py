@@ -7,7 +7,7 @@ from typing import Any, Mapping
 
 from common_lore_index.ops.ingestion import source
 from common_lore_index.ops.ingestion import source_common
-from common_lore_index.ops.ingestion.source_warc import _read_warc_record
+from common_lore_index.ops.ingestion.source_warc import _parse_header_lines, _read_warc_record
 
 
 class SourceIngestionHelperBranchUnitTests(unittest.TestCase):
@@ -15,6 +15,17 @@ class SourceIngestionHelperBranchUnitTests(unittest.TestCase):
         payload = {"ζ": {"nested": [True, None, -320, 0.25]}, "a": "輸入\0\n"}
         serialized = source.json_dumps_stable(payload).encode("utf-8")
         self.assertEqual(source_common._source_manifest_id(payload), hashlib.sha256(serialized).hexdigest()[:16])
+
+    def test_streamed_manifest_record_arrays_preserve_canonical_order_and_escaping(self) -> None:
+        payload = {"status": "allowed", "route": None, "info": {"n": 3}}
+        items: list[dict[str, Any]] = [{"path": 'é/"\n', "sizes": [0, 1]}, {"path": "輸入", "sizes": []}]
+        computed = source_common._source_manifest_id(
+            payload, records={"ordered": iter(items), "omitted": iter(())},
+        )
+        serialized = source.json_dumps_stable({**payload, "ordered": items, "omitted": []}).encode()
+        self.assertEqual(computed, hashlib.sha256(serialized).hexdigest()[:16])
+        with self.assertRaisesRegex(ValueError, "duplicate source manifest field"):
+            source_common._source_manifest_id(payload, records={"status": iter(items)})
 
     def test_warc_record_reader_skips_oversized_payload_io(self):
         class CountedFile(BytesIO):
@@ -39,6 +50,16 @@ class SourceIngestionHelperBranchUnitTests(unittest.TestCase):
             assert isinstance(accepted, tuple)
             self.assertEqual(accepted[-1], b"{}")
             self.assertLess(raw.bytes_read, 32768)
+
+    def test_warc_header_continuations_preserve_duplicate_and_whitespace_policy(self) -> None:
+        headers = _parse_header_lines(iter((
+            "ETag: first", "  fragment", "discard this", "  next", "",
+            "Other: another", "etag: replacement", "    ", "  final", "discard this", "\tlast ",
+        )))
+        self.assertEqual(list(headers.items()), [
+            ("etag", "replacement  final last"),
+            ("other", "another"),
+        ])
 
     def test_source_ingestion_validation_helpers_cover_safe_error_branches(self):
         self.assertEqual(source._mapping({"source": {"id": "x"}}, "source"), {"id": "x"})

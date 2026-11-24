@@ -364,7 +364,7 @@ def test_staged_refresh_replays_an_exact_published_attempt() -> None:
 def test_prepared_corpus_digest_spills_reorders_and_recovers_after_cancellation():
     observations = tuple(replace(
         _observations()[0], path=f"src/module_{i:05}.py", source_id=f"src/module_{i:05}.py",
-        metadata={**_observations()[0].metadata, "description": "module documentation " * 64},
+        metadata={**_observations()[0].metadata, "description": "é楚😀" * 30000 if i == 0 else "module docs " * 100},
     ) for i in range(5000))
     prepared = build_staged_rows(observations, repository_name="digest-corpus", stage_id="digest-stage")
     artifacts: list[tuple[int, int]] = []

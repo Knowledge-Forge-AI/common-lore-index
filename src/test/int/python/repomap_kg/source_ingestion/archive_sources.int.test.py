@@ -1,4 +1,5 @@
 from dataclasses import replace
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -111,6 +112,13 @@ class ArchiveSourceIngestionIntegrationTests(unittest.TestCase):
             )
         )
         self.assertEqual(limited.file_count, 1)
+        for archive in (manifest, limited):
+            identity = archive.to_jsonable()
+            for key in ("artifact_manifest_id", "file_count", "total_byte_count",
+                        "skipped_file_count", "warnings", "errors"):
+                del identity[key]
+            canonical = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+            self.assertEqual(archive.artifact_manifest_id, hashlib.sha256(canonical).hexdigest()[:16])
         self.assertTrue(
             any(skipped.reason == "max_file_count" for skipped in limited.skipped_files)
         )

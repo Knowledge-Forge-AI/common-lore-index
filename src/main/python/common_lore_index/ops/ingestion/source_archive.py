@@ -168,11 +168,12 @@ def build_archive_manifest(
         "artifact_profile": config.artifact_profile,
         "artifact_root": config.artifact_path,
         "entry_document": config.entry_document,
-        "included_files": [item.to_jsonable() for item in included],
-        "skipped_files": [item.to_jsonable() for item in skipped],
         "policy_snapshot": policy_snapshot,
     }
-    artifact_manifest_id = _source_manifest_id(manifest_payload)
+    artifact_manifest_id = _source_manifest_id(manifest_payload, records={
+        "included_files": (item.to_jsonable() for item in included),
+        "skipped_files": (item.to_jsonable() for item in skipped),
+    })
     return ArchiveManifest(
         source_id=config.source_id,
         source_type=config.source_type,

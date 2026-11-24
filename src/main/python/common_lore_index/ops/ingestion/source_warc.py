@@ -170,17 +170,22 @@ def _read_warc_record(
 def _parse_header_lines(lines: Iterable[str]) -> dict[str, str]:
     headers: dict[str, str] = {}
     current_key: str | None = None
+    value_parts: list[str] = []
     for line in lines:
         if not line:
             continue
         if line[:1] in {" ", "\t"} and current_key is not None:
-            headers[current_key] = f"{headers[current_key]} {line.strip()}"
+            value_parts.append(line.strip())
             continue
         key, separator, value = line.partition(":")
         if not separator:
             continue
+        if current_key is not None:
+            headers[current_key] = " ".join(value_parts)
         current_key = key.strip().lower()
-        headers[current_key] = value.strip()
+        value_parts = [value.strip()]
+    if current_key is not None:
+        headers[current_key] = " ".join(value_parts)
     return headers
 
 

@@ -72,6 +72,10 @@ class WarcSourceIngestionIntegrationTests(unittest.TestCase):
             sort_keys=True,
         )
         self.assertEqual(manifest.record_count, 8)
+        self.assertEqual(manifest.artifact_manifest_id, "85972d709f3ecaf4")
+        self.assertEqual(record_limit_manifest.artifact_manifest_id, "9b08306ead1a3c60")
+        self.assertEqual(byte_limit_manifest.artifact_manifest_id, "b2371bbf252f66f5")
+        self.assertEqual(malformed_manifest.artifact_manifest_id, "28a060abd688b845")
         self.assertEqual(manifest.routed_payload_count, 4)
         self.assertEqual(manifest.skipped_record_count, 1)
         self.assertIn("warc.document", kinds)
@@ -179,6 +183,7 @@ class WarcSourceIngestionIntegrationTests(unittest.TestCase):
                             "assets/local.css",
                             b".local {}\n",
                             content_type="text/css",
+                            extra_headers={"ETag": "fixture\r\n\tcontinued"},
                         ),
                         int_warc_record(
                             "resource",
@@ -346,6 +351,7 @@ class WarcSourceIngestionIntegrationTests(unittest.TestCase):
             )
 
         target_keys = {record.target_key for record in target_manifest.records}
+        self.assertEqual(target_manifest.records[2].safe_headers["etag"], "fixture continued")
         self.assertTrue(any(key and key.startswith("dynamic:") for key in target_keys))
         self.assertTrue(
             any(key == "external:file:absolute-warc-reference" for key in target_keys)

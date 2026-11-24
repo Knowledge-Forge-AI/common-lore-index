@@ -5,12 +5,14 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
-from os import fstat
+from os import fstat, stat_result
 from pathlib import Path
+import stat
 from typing import Any
 
 from common_lore_index.graph.keys import warc_record_key
 from common_lore_index.observations.raw import RawObservation
+from common_lore_index.ops.ingestion._source_archive_scan import _file_version, _open_archive_file
 from common_lore_index.ops.ingestion.source_common import SourcePolicyError
 from common_lore_index.ops.ingestion.source_warc import (
     _http_content_type,
@@ -41,6 +43,7 @@ def _parse_warc_records(
     artifact_path: Path,
     document_key: str,
     materialization_root: Path,
+    expected_artifact: stat_result | None = None,
 ) -> tuple[list[WarcRecordSummary], str | None, list[str], list[str]]:
     records: list[WarcRecordSummary] = []
     warnings: list[str] = []
@@ -50,8 +53,19 @@ def _parse_warc_records(
     routed_files = 0
     seen_identity_counts: dict[str, int] = {}
 
-    with artifact_path.open("rb") as source:
-        artifact_end = fstat(source.fileno()).st_size
+    if expected_artifact is None:
+        try:
+            expected_artifact = artifact_path.lstat()
+        except OSError:
+            raise SourcePolicyError("artifact.path must be an existing WARC file") from None
+    if not stat.S_ISREG(expected_artifact.st_mode):
+        raise SourcePolicyError("artifact.path must be an existing WARC file")
+    with open(artifact_path, "rb", opener=_open_archive_file) as source:
+        opened = fstat(source.fileno())
+        admitted_version = _file_version(expected_artifact)
+        if _file_version(opened) != admitted_version:
+            raise SourcePolicyError("artifact changed during WARC manifest scan")
+        artifact_end = opened.st_size
         if artifact_end > config.max_artifact_bytes:
             raise SourcePolicyError("artifact exceeds policy.max_artifact_bytes")
         while _skip_warc_record_padding(source, artifact_end):
@@ -71,6 +85,9 @@ def _parse_warc_records(
                     f"{total_record_bytes} > {config.max_record_bytes}"
                 )
                 continue
+            # Persist only payloads read while the admitted file version held.
+            if _file_version(fstat(source.fileno())) != admitted_version:
+                raise SourcePolicyError("artifact changed during WARC manifest scan")
             record, payload_bytes = _warc_record_summary(
                 config=config,
                 root=root,
@@ -87,6 +104,8 @@ def _parse_warc_records(
                 routed_files += 1
                 total_payload_bytes += payload_bytes
             records.append(record)
+        if _file_version(fstat(source.fileno())) != admitted_version:
+            raise SourcePolicyError("artifact changed during WARC manifest scan")
 
     return records, warc_version, warnings, errors
 

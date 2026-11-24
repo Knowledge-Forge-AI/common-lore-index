@@ -14,16 +14,15 @@ from typing import BinaryIO
 from common_lore_index._utf8 import byte_length
 
 
+_SPOOL_JSON = json.JSONEncoder(ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+_SPOOL_WRITE_CHARACTERS = 64 * 1024
+
+
 def _spool_row_text(row: Mapping[str, object]) -> str:
     """Serialize one staged row to compact, deterministic JSON text."""
     if not isinstance(row, Mapping):
         raise ValueError("staged row is invalid")
-    return json.dumps(
-        row if type(row) is dict else dict(row),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    )
+    return _SPOOL_JSON.encode(row if type(row) is dict else dict(row))
 
 
 def _spool_row_byte_count(row: Mapping[str, object]) -> int:
@@ -31,9 +30,28 @@ def _spool_row_byte_count(row: Mapping[str, object]) -> int:
     return byte_length(_spool_row_text(row)) + 1
 
 
-def _write_spool_row(handle: BinaryIO, encoded: bytes) -> None:
-    if handle.write(encoded) != len(encoded) or handle.write(b"\n") != 1:
+def _write_spool_chunk(handle: BinaryIO, chunk: bytes) -> None:
+    if handle.write(chunk) != len(chunk):
         raise OSError("staged row spool write was incomplete")
+
+
+def _write_spool_row(
+    handle: BinaryIO, row: Mapping[str, object], current_bytes: int,
+    observer: Callable[[int], None] | None,
+) -> int:
+    text = _spool_row_text(row)
+    encoded = text.encode("utf-8") if len(text) <= _SPOOL_WRITE_CHARACTERS else None
+    projected_bytes = current_bytes + (len(encoded) if encoded is not None else byte_length(text)) + 1
+    if observer is not None:
+        observer(projected_bytes)
+    if encoded is not None:
+        _write_spool_chunk(handle, encoded)
+    else:
+        for offset in range(0, len(text), _SPOOL_WRITE_CHARACTERS):
+            chunk = text[offset:offset + _SPOOL_WRITE_CHARACTERS].encode("utf-8")
+            _write_spool_chunk(handle, chunk)
+    _write_spool_chunk(handle, b"\n")
+    return projected_bytes
 
 
 def _identity(info: os.stat_result) -> tuple[int, int]:
@@ -129,13 +147,8 @@ class RowSpool:
             try:
                 for row in rows:
                     started = monotonic_ns() if timing_observer is not None else 0
-                    encoded = _spool_row_text(row).encode("utf-8")
-                    projected_bytes = byte_count + len(encoded) + 1
-                    if artifact_observer is not None:
-                        artifact_observer(projected_bytes)
-                    _write_spool_row(handle, encoded)
+                    byte_count = _write_spool_row(handle, row, byte_count, artifact_observer)
                     count += 1
-                    byte_count = projected_bytes
                     if timing_observer is not None:
                         elapsed_ns += max(0, monotonic_ns() - started)
             except BaseException:
@@ -249,13 +262,8 @@ class RowSpoolWriter:
     def write_row(self, row: Mapping[str, object]) -> None:
         if self._finished:
             raise RuntimeError("writer already finished")
-        encoded = _spool_row_text(row).encode("utf-8")
-        projected_bytes = self._byte_count + len(encoded) + 1
-        if self._artifact_observer is not None:
-            self._artifact_observer(projected_bytes)
-        _write_spool_row(self._handle, encoded)
+        self._byte_count = _write_spool_row(self._handle, row, self._byte_count, self._artifact_observer)
         self._count += 1
-        self._byte_count = projected_bytes
 
     def finish(self) -> RowSpool:
         if self._finished:

@@ -1,7 +1,9 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from repomap_test_support.cli_in_process import run_repo_map_in_process
 from repomap_test_support.postgres_harness import (
@@ -28,6 +30,37 @@ from repomap_test_support.source_ingestion_integration import (
 
 
 class StorageSourceWarcReadbackIntegrationTests(unittest.TestCase):
+    def test_warc_import_refuses_archive_changed_during_read_without_metadata_output(self) -> None:
+        from common_lore_index.ops.ingestion import _source_warc_extraction
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = copy_warc_fixture_root(Path(tmpdir))
+            config = root / "warc_sources" / "allowed-warc.toml"
+            artifact = root / "warc_artifacts" / "example.warc"
+            record = (b"WARC/1.1\r\nWARC-Type: resource\r\nContent-Type: text/html\r\n"
+                      b"Content-Length: 8\r\n\r\n<p>A</p>")
+            artifact.write_bytes(record)
+            before = artifact.stat()
+            changed = record.replace(b"<p>A</p>", b"<p>B</p>")
+            read = _source_warc_extraction._read_warc_record
+
+            def mutate_after_read(*args):
+                parsed = read(*args)
+                artifact.write_bytes(changed)
+                os.utime(artifact, ns=(before.st_atime_ns, before.st_mtime_ns))
+                return parsed
+
+            with patch.object(_source_warc_extraction, "_read_warc_record", side_effect=mutate_after_read):
+                status, out, err = run_repo_map_in_process(
+                    "sources", "import-warc", "--config", str(config), "--root-path", str(root), "--json",
+                )
+            self.assertEqual(status, 1)
+            self.assertEqual(out, "")
+            self.assertIn("artifact changed during WARC manifest scan", err)
+            self.assertNotIn(str(root), err)
+            self.assertEqual(artifact.read_bytes(), changed)
+            self.assertFalse((root / ".repomap").exists())
+
     def test_warc_and_http_header_readback_preserve_start_lines_and_duplicate_order(self):
         from common_lore_index.ops.ingestion.source_warc import (
             _http_headers_and_body_offset,
