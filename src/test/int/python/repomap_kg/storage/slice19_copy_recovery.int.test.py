@@ -76,9 +76,9 @@ def test_late_copy_refusal_preserves_committed_rows_and_allows_recovery(invalid_
                 assert cursor.fetchall() == [("base.py",), ("recovered.py",)]
 
 
-@pytest.mark.parametrize("excess", [False, True], ids=["short-spool", "overlong-spool"])
+@pytest.mark.parametrize("mismatch", ["short-spool", "overlong-spool", "changed-spool"])
 def test_prepared_copy_refusal_rolls_back_before_statistics_and_preserves_publication(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, excess: bool,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mismatch: str,
 ) -> None:
     require_postgres_binaries()
     prior_path = "accepted.py"
@@ -109,8 +109,15 @@ def test_prepared_copy_refusal_rolls_back_before_statistics_and_preserves_public
             prepared = original(*args, **kwargs)
             reference = tuple(prepared.family_rows["files"])
             assert prepared.row_counts["files"] == len(reference) == 1
-            rows = (*reference, {**reference[0], "family_ordinal": 1, "path": "surplus.py"}) if excess else ()
-            spool = RowSpool.from_rows(rows, dir=tmp_path)
+            rows = {
+                "short-spool": (),
+                "overlong-spool": (*reference, {**reference[0], "family_ordinal": 1, "path": "surplus.py"}),
+                "changed-spool": reference,
+            }
+            spool = RowSpool.from_rows(rows[mismatch], dir=tmp_path)
+            if mismatch == "changed-spool":
+                with spool.path.open("ab") as handle:
+                    handle.write(b"{}\n")
             files.append(spool)
             return replace(prepared, family_rows=dict(prepared.family_rows, files=spool))
 
@@ -122,7 +129,12 @@ def test_prepared_copy_refusal_rolls_back_before_statistics_and_preserves_public
         with monkeypatch.context() as patch:
             patch.setattr(staged_ingestion, "_resolve_prepared_rows", skew_counts)
             patch.setattr(staged_ingestion, "_refresh_canonical_node_evidence_statistics", observe_statistics)
-            with pytest.raises(StorageSchemaError, match="staged family completeness failed"):
+            refusal = (
+                pytest.raises(ValueError, match="staged row spool identity or extent changed")
+                if mismatch == "changed-spool"
+                else pytest.raises(StorageSchemaError, match="staged family completeness failed")
+            )
+            with refusal:
                 run_staged_full_refresh(postgres.psql_args, current[1:], authority=authority(),
                                        stage_id="mismatch-stage", repository_name=repo, root_path=root)
         assert len(files) == 1 and not files[0].path.exists()
