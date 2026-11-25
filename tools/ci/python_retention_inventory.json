@@ -3,6 +3,36 @@
   "cohorts": [
     {
       "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "adr0223.python_retention_support_dynamic.py",
+      "members": [
+        "tools/ci/python_retention_support_dynamic.py"
+      ],
+      "rationale": "ADR0223 new maintained authority owner with direct and dependency enforcement.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_tooling",
+      "id": "adr0223.python_retention_support_projection.py",
+      "members": [
+        "tools/ci/python_retention_support_projection.py"
+      ],
+      "rationale": "ADR0223 new maintained authority owner with direct and dependency enforcement.",
+      "root": "tools"
+    },
+    {
+      "admission": "admitted",
+      "governing_profile": "clean_test_owners",
+      "id": "adr0223.python_retention_support_projection.unit.test.py",
+      "members": [
+        "src/test/unit/python/tools/ci/python_retention_support_projection.unit.test.py"
+      ],
+      "rationale": "ADR0223 new maintained authority owner with direct and dependency enforcement.",
+      "root": "test_owners"
+    },
+    {
+      "admission": "admitted",
       "governing_profile": "clean_test_owners",
       "id": "cancel-publication-race1.test-owners",
       "members": [
@@ -68854,6 +68884,33 @@
       "maintained_executable": true,
       "path": "tools/windows_async15_reporting.py",
       "rationale": "REVISE32 cohesive decomposition of tools/run_windows_async15_tests.py; same maintained responsibility and quality profile.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_test_owners",
+      "maintained_executable": true,
+      "path": "src/test/unit/python/tools/ci/python_retention_support_projection.unit.test.py",
+      "rationale": "ADR0223 maintains the exact forward test-support lineage contract.",
+      "root": "test_owners",
+      "status": "active_unit_test"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/ci/python_retention_support_dynamic.py",
+      "rationale": "ADR0223 maintains the exact forward test-support lineage contract.",
+      "root": "tools",
+      "status": "active_tool"
+    },
+    {
+      "confidence": 0.95,
+      "governing_profile": "clean_tooling",
+      "maintained_executable": true,
+      "path": "tools/ci/python_retention_support_projection.py",
+      "rationale": "ADR0223 maintains the exact forward test-support lineage contract.",
       "root": "tools",
       "status": "active_tool"
     }

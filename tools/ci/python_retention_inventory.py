@@ -18,6 +18,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from ci.python_retention_history_git import HistoryContext
+from ci.python_retention_support_projection import SupportNamespaceProjection, verify_support_namespace
 from ci.retained_python_ratchets import RatchetContractError, validate_baseline
 from ci.python_retention_cohorts import validate_cohorts
 from ci.python_retention_cohort_evidence import evaluate_cohorts
@@ -93,12 +94,11 @@ def git_candidate_python_files(repo_root: Path = REPO_ROOT) -> list[str]:
 
 def validate_path_history(
     repo_root: Path, inventory_path: Path, current: set[str], data: dict,
-    *, context: HistoryContext | None = None,
+    *, context: HistoryContext | None = None, support: SupportNamespaceProjection | None = None,
 ):
-    """Preserve the public validation exception while exposing immutable history evidence."""
     from ci.python_retention_history import HistoryValidationError, validate_path_history as validate
     try:
-        return validate(repo_root, inventory_path, current, data, context=context)
+        return validate(repo_root, inventory_path, current, data, context=context, support=support)
     except HistoryValidationError as error:
         raise InventoryValidationError(str(error)) from error
 
@@ -149,8 +149,7 @@ def validate_inventory(repo_root: Path = REPO_ROOT, inventory_path: Path = DEFAU
         inventory_by_path[path] = entry
 
     tracked_files = git_candidate_python_files(repo_root)
-    tracked_set = set(tracked_files)
-    inventory_set = set(inventory_by_path)
+    tracked_set, inventory_set = set(tracked_files), set(inventory_by_path)
 
     untracked_in_inventory = inventory_set - tracked_set
     if untracked_in_inventory:
@@ -164,8 +163,12 @@ def validate_inventory(repo_root: Path = REPO_ROOT, inventory_path: Path = DEFAU
             f"Git candidate python files missing from inventory: {sorted(missing_from_inventory)[:5]}"
         )
 
-    transitions = validate_path_history(repo_root, inventory_path, inventory_set, data, context=context)
-    cohorts = validate_cohorts(data)
+    try:
+        support = verify_support_namespace(repo_root, exact_candidate=context.github_candidate_sha if context else None)
+    except (ValueError, RatchetContractError) as error:
+        raise InventoryValidationError(str(error)) from error
+    transitions = validate_path_history(repo_root, inventory_path, inventory_set, data, context=context, support=support)
+    cohorts = validate_cohorts(data, support=support)
     try:
         fixture_result = validate_fixture_manifest(
             repo_root, repo_root / "tools/ci/python_fixture_authority.json")

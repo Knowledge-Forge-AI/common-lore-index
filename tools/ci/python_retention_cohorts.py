@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
+
+if TYPE_CHECKING:
+    from ci.python_retention_support_projection import SupportNamespaceProjection
 
 from ci.python_retention_history_git import HistoryValidationError
 from ci.python_retention_dynamic_history import active_boundaries, validate_dynamic_transition
@@ -59,12 +62,14 @@ def _validate_member_path(path: object) -> str:
     return path
 
 
-def validate_cohorts(data: Mapping[str, Any]) -> list[dict[str, Any]]:
+def validate_cohorts(
+    data: Mapping[str, Any], *, support: SupportNamespaceProjection | None = None,
+) -> list[dict[str, Any]]:
     """Validate the stable cohort extension within an inventory document."""
     if not isinstance(data, Mapping):
         raise HistoryValidationError("inventory data must be a mapping")
     try:
-        active_boundaries(data)
+        active_boundaries(data, support=support)
     except ValueError as error:
         raise HistoryValidationError(str(error)) from error
 
@@ -216,6 +221,7 @@ def validate_cohorts(data: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 def _validate_admitted_replacement(
     source: str, cohort: Mapping[str, Any], data: Mapping[str, Any],
+    support: SupportNamespaceProjection | None = None,
 ) -> None:
     """Carry each removed obligation to live members of its original cohort."""
     # Reuse the inventory history parser; the import is deferred because that
@@ -225,7 +231,6 @@ def _validate_admitted_replacement(
     _, targets, _, _ = _parse_history(data)
     current = {entry["path"] for entry in data["files"]}
     members = set(cohort["members"])
-
     def walk(path: str, visiting: set[str]) -> None:
         if path in visiting:
             raise HistoryValidationError(f"cyclic admitted replacement: {source}")
@@ -235,7 +240,8 @@ def _validate_admitted_replacement(
                     f"admitted successor must remain in original cohort: {path}"
                 )
             return
-        successors = targets.get(path)
+        mapped = support.paths.get(path) if support is not None else None
+        successors = (mapped,) if mapped is not None else targets.get(path)
         if not successors:
             raise HistoryValidationError(
                 f"admitted cohort member cannot be removed without live successors: {path}"
@@ -247,11 +253,14 @@ def _validate_admitted_replacement(
 
 
 def validate_cohort_transition(
-    older_data: Mapping[str, Any], newer_data: Mapping[str, Any]
+    older_data: Mapping[str, Any], newer_data: Mapping[str, Any],
+    *,
+    older_support: SupportNamespaceProjection | None = None,
+    newer_support: SupportNamespaceProjection | None = None,
 ) -> None:
     """Enforce cohort immutability and monotonic admission across a lineage edge."""
     try:
-        validate_dynamic_transition(older_data, newer_data)
+        validate_dynamic_transition(older_data, newer_data, older_support=older_support, newer_support=newer_support)
     except ValueError as error:
         raise HistoryValidationError(str(error)) from error
     older_has = ("cohort_schema" in older_data) or ("cohorts" in older_data)
@@ -262,11 +271,11 @@ def validate_cohort_transition(
     if older_has and not newer_has:
         raise HistoryValidationError("cohort schema extension cannot disappear once introduced")
     if not older_has and newer_has:
-        validate_cohorts(newer_data)
+        validate_cohorts(newer_data, support=newer_support)
         return
 
-    older_cohorts = validate_cohorts(older_data)
-    newer_cohorts = validate_cohorts(newer_data)
+    older_cohorts = validate_cohorts(older_data, support=older_support)
+    newer_cohorts = validate_cohorts(newer_data, support=newer_support)
 
     older_by_id = {c["id"]: c for c in older_cohorts}
     newer_by_id = {c["id"]: c for c in newer_cohorts}
@@ -299,7 +308,7 @@ def validate_cohort_transition(
 
         if old_c["admission"] == "admitted":
             for member in sorted(removed):
-                _validate_admitted_replacement(member, new_c, newer_data)
+                _validate_admitted_replacement(member, new_c, newer_data, newer_support)
         else:
             if removed:
                 newer_transitions = {
@@ -311,6 +320,9 @@ def validate_cohort_transition(
                     if isinstance(d, Mapping) and isinstance(d.get("from"), str)
                 } if isinstance(newer_data.get("decompositions"), list) else set()
                 for m in removed:
+                    if newer_support is not None and m in newer_support.paths:
+                        _validate_admitted_replacement(m, new_c, newer_data, newer_support)
+                        continue
                     if m not in newer_transitions and m not in newer_decomps:
                         raise HistoryValidationError(
                             f"cohort member cannot silently change: {m} from {old_id}"

@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from ci.python_retention_dynamic_history import active_boundaries
+from ci.python_retention_support_projection import verify_support_namespace
+from ci.retained_python_contract import RatchetContractError
 from ci.python_retention_dynamic_coverage import coverage_fixture
 from ci.python_retention_dynamic_false_identity import generated_false_code_identity
 from ci.python_retention_dynamic_loaders import file_loader_spec
@@ -165,8 +167,8 @@ def apply_dynamic_boundaries(root: Path, candidate_paths: Sequence[str],
         return graph
     try:
         document = json.loads(inventory.read_bytes())
-        records = active_boundaries(document)
-    except (OSError, ValueError, TypeError) as error:
+        records = active_boundaries(document, support=verify_support_namespace(root))
+    except (OSError, ValueError, TypeError, RatchetContractError) as error:
         for path in candidate_paths:
             graph["errors"][path] = f"dynamic authority invalid: {type(error).__name__}"
         return graph
