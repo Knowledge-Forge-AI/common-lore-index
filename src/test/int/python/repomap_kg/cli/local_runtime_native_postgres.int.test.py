@@ -11,7 +11,7 @@ def test_native_mode_observes_direct_postgres_binding(tmp_path):
         available.bind(("127.0.0.1", 0))
         port = available.getsockname()[1]
     home = tmp_path / "native-home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     config = home / "repomap.rpl.toml"
     config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"').replace(
         "direct_host_port_enabled = false", "direct_host_port_enabled = true"

@@ -331,7 +331,7 @@ def test_local_direct_route_control_lifecycle(tmp_path, monkeypatch, credential_
     import common_lore_index
     from common_lore_index.runtime.local import setup_local_runtime
     home = tmp_path / "native-home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     assert home.stat().st_mode & 0o777 == 0o700
     values = dict(line.split("=", 1) for line in
                   (home / "runtime/.env").read_text().splitlines() if "=" in line)
@@ -389,7 +389,7 @@ def test_custom_credential_does_not_use_generated_admin(tmp_path, monkeypatch):
     from common_lore_index.runtime.local import setup_local_runtime
 
     home = tmp_path / "custom-home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     path = home / "repomap.rpl.toml"
     path.write_text(path.read_text().replace(
         'password_env = "REPOMAP_PG_PASSWORD"', 'password_env = "CUSTOM_ADMIN_PASSWORD"'

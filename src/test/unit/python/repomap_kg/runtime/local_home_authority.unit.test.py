@@ -14,21 +14,21 @@ def test_fresh_setup_private_under_permissive_umask(tmp_path):
     home = tmp_path / "fresh"
     previous = os.umask(0)
     try:
-        setup_local_runtime(home)
+        setup_local_runtime(home, config_format="legacy")
     finally:
         os.umask(previous)
     assert home.stat().st_mode & 0o777 == 0o700
     assert (home / "runtime/.env").stat().st_mode & 0o777 == 0o600
     assert (home / "runtime").stat().st_mode & 0o777 == 0o700
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
 
 
 def test_dry_run_does_not_create_or_chmod(tmp_path):
     home = tmp_path / "absent"
-    setup_local_runtime(home, dry_run=True)
+    setup_local_runtime(home, dry_run=True, config_format="legacy")
     assert not home.exists()
     home.mkdir(mode=0o755)
-    setup_local_runtime(home, dry_run=True)
+    setup_local_runtime(home, dry_run=True, config_format="legacy")
     assert home.stat().st_mode & 0o777 == 0o755
     assert list(home.iterdir()) == []
 
@@ -46,7 +46,7 @@ def test_unsafe_existing_home_refused_without_mutation(tmp_path, monkeypatch, ki
     if kind == "wrong-owner":
         monkeypatch.setattr(os, "getuid", lambda: before.st_uid + 1)
     with pytest.raises(LocalRuntimeError) as error:
-        setup_local_runtime(home)
+        setup_local_runtime(home, config_format="legacy")
     assert error.value.diagnostics[0].code == "repo-map-home-unsafe"
     assert home.lstat().st_mode == before.st_mode
     assert not (home / "runtime").exists()
@@ -55,7 +55,7 @@ def test_unsafe_existing_home_refused_without_mutation(tmp_path, monkeypatch, ki
 def test_existing_safe_home_accepted(tmp_path):
     home = tmp_path / "safe"
     home.mkdir(mode=0o700)
-    assert setup_local_runtime(home).result == "success"
+    assert setup_local_runtime(home, config_format="legacy").result == "success"
 
 
 def test_windows_new_directory_acl_only_on_creation(tmp_path, monkeypatch):
@@ -80,7 +80,7 @@ def test_runtime_env_symlink_refused_before_config_creation(tmp_path):
     target.write_text("unchanged")
     (home / "runtime/.env").symlink_to(target)
     with pytest.raises(LocalRuntimeError):
-        setup_local_runtime(home)
+        setup_local_runtime(home, config_format="legacy")
     assert target.read_text() == "unchanged"
     assert not (home / "repomap.rpl.toml").exists()
 
@@ -100,6 +100,6 @@ def test_private_creation_failure_has_local_runtime_diagnostic(tmp_path, monkeyp
         raise ValueError("fixture-secret")
     monkeypatch.setattr("common_lore_index.runtime.local.create_private_file", refuse)
     with pytest.raises(LocalRuntimeError) as error:
-        setup_local_runtime(tmp_path / "home")
+        setup_local_runtime(tmp_path / "home", config_format="legacy")
     assert error.value.diagnostics[0].code == "generated-local-admin-credential-unsafe"
     assert "fixture-secret" not in str(error.value)

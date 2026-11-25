@@ -47,12 +47,13 @@ The former Codex-specific default is no longer searched.
 Container-runtime setup supports the same family selection:
 
 ```sh
-cloe local setup --repo-map-home ./new-home --config-format cloe --dry-run --json
-cloe local setup --repo-map-home ./new-home --config-format cloe --json
+cloe local setup --repo-map-home ./new-home --dry-run --json
+cloe local setup --repo-map-home ./new-home --json
 ```
 
-A fresh implicit `~/.cloe` defaults to CLOE filenames. Explicit custom empty homes
-retain legacy bootstrap behavior unless `--config-format cloe` is selected.
+Fresh homes default to CLOE filenames, including homes selected with
+`--repo-map-home` or `CLOE_HOME`. The explicit legacy format remains available
+for conversion and recovery rehearsals.
 An existing home's active family is detected automatically. An explicit format
 must match it; this command does not convert a legacy home. Legacy setup creates
 `repomap.rpl.toml`; CLOE setup creates `repomap.local.cloe.toml`, with the same

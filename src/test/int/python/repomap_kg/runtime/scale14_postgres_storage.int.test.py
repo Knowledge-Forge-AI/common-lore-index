@@ -60,7 +60,7 @@ def test_scale14_exact_pgdata_authority_on_disposable_local_runtime(
     tmp_path: Path,
 ) -> None:
     home = tmp_path / "public-safe-runtime"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     repository = home / "repo-map"
     repository.mkdir()
     repository.joinpath("app.py").write_text(
@@ -82,7 +82,7 @@ def test_scale14_exact_pgdata_authority_on_disposable_local_runtime(
         flags=re.MULTILINE,
     )
     config_path.write_text(config, encoding="utf-8")
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     started = False
     try:
         result = up_local_runtime(home)

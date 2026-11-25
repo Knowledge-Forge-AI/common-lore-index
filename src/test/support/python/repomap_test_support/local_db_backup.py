@@ -153,7 +153,7 @@ def setup_real_backup_home(
     assert session is not None
     real_container = session.harness.container_name
     home.mkdir(mode=0o700, parents=True, exist_ok=True)
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     home.chmod(0o700)
     (home / "runtime").chmod(0o700)
     toml_path = home / "repomap.rpl.toml"

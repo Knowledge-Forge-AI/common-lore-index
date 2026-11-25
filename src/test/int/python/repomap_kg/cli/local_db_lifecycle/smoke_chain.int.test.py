@@ -24,7 +24,7 @@ class CliLocalDbLifecycleSmokeChainIntegrationTests(CliIntegrationTestCase):
             synthetic_db = "repomap_live_harden1"
             setup_exit, setup_stdout, setup_stderr = self.run_module_entrypoint(
                 "local",
-                "setup",
+                "setup", "--config-format", "legacy",
                 "--repo-map-home",
                 str(home),
                 "--json",

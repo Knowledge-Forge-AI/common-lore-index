@@ -19,7 +19,7 @@ from common_lore_index.runtime.plan import LocalContainerStatus, build_local_run
 
 def _home(tmp_path, mode="container"):
     home = tmp_path / "home"
-    local.setup_local_runtime(home)
+    local.setup_local_runtime(home, config_format="legacy")
     config = home / "repomap.rpl.toml"
     config.write_text(config.read_text().replace('[runtime]', f'[runtime]\ncoordinator_mode = "{mode}"'))
     return home

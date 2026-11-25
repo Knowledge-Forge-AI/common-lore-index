@@ -290,11 +290,10 @@ for its limits and persisted native-service recovery.
 
 An explicit home takes precedence over a nonempty `CLOE_HOME`. Without either, Common Lore Index selects `~/.cloe`. Existing legacy homes can be selected explicitly for migration. See [configuration and migration](docs/ops/cloe-config-compatibility.md) for the safety checks and commands.
 
-For a new container-runtime home, `local setup --config-format cloe` creates a
-CLOE overlay; existing homes are detected automatically and must match any
-explicit format. Fresh implicit defaults use CLOE files; explicit custom empty
-homes retain legacy bootstrap behavior. Use `--dry-run` first
-to inspect the selected format without writing files or credentials.
+For a new container-runtime home, `local setup` creates a CLOE overlay.
+Existing homes are detected automatically and must match any explicit format.
+Use `--dry-run` first to inspect the selected format without writing files
+or credentials.
 
 
 Use `--repo-map-home <dir>` with local and ops commands for an explicit home.

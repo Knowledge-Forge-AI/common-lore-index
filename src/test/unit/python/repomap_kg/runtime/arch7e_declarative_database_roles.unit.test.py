@@ -105,7 +105,7 @@ def test_role_secrets_reject_invalid_credential_values(invalid: str) -> None:
 
 def test_http_render_receives_only_read_status_database_secret(tmp_path: Path) -> None:
     home = tmp_path / "home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     compose = render_compose_yaml(build_local_runtime_plan(home))
     http = compose.split("\n  http:\n", 1)[1].split("\n  mcp:\n", 1)[0]
 
@@ -124,7 +124,7 @@ def test_read_only_services_project_the_parsed_config_onto_read_role(
     tmp_path: Path,
 ) -> None:
     home = tmp_path / "home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
 
     http_config, diagnostic_count, truncated = load_config_for_server(home)
     config_path = next(
@@ -153,7 +153,7 @@ def test_explicit_empty_mcp_read_secret_does_not_restore_admin_config(
     tmp_path: Path,
 ) -> None:
     home = tmp_path / "home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     config_path = next(
         path
         for path in home.rglob("*.toml")
@@ -177,7 +177,7 @@ def test_coordinator_authority_never_loads_admin_secret_and_routes_exact_roles(
     tmp_path: Path,
 ) -> None:
     home = tmp_path / "home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     home.chmod(0o700)
     secrets = read_role_secrets(home / "runtime" / ".env")
 
@@ -279,7 +279,7 @@ def test_control_role_sql_excludes_refresh_publication() -> None:
 
 def test_fresh_graph_init_reconciles_roles_inside_cleanup_boundary(tmp_path: Path) -> None:
     home = tmp_path / "home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     plan = build_local_runtime_plan(home)
     database = plan.graph_databases[0]
     events: list[str] = []
@@ -308,7 +308,7 @@ def test_fresh_graph_init_reconciles_roles_inside_cleanup_boundary(tmp_path: Pat
 
 def test_coordinated_restore_reconciles_graphs_then_control(tmp_path: Path) -> None:
     home = tmp_path / "home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     backup_path = _write_coordinated_backup(home)
     plan = build_local_runtime_plan(home)
     events: list[tuple[str, str]] = []

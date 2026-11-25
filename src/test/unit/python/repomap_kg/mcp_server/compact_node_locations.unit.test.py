@@ -219,7 +219,7 @@ def test_postgresql_routed_compact_parity_and_unavailable_credential_refusal(
             assert str(tmp_path) not in str(exc_info.value) and "REPOMAP_READ_STATUS_PASSWORD" not in str(exc_info.value)
 
     home = tmp_path / "postgres-home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
     secret = read_role_secrets(home / "runtime" / ".env").read_status
     monkeypatch.setenv("CLOE_HOME", str(home))

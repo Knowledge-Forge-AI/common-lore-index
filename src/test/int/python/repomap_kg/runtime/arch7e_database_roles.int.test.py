@@ -220,7 +220,7 @@ def _verify_cluster_toml(path: Path, postgres, graph_db: str) -> None:
 
 def _setup_cluster_home(path: Path, postgres, graph_db: str = "repomap_cluster_graph") -> Path:
     path.mkdir(mode=0o700, parents=True, exist_ok=True)
-    setup_local_runtime(path)
+    setup_local_runtime(path, config_format="legacy")
     toml = (
         f'schema_version = 1\n[service]\nmode = "local"\nmcp_transport = "stdio"\nlog_level = "info"\n'
         f'[runtime]\ncontainer_runtime = "docker"\nserver_host_port = 8080\nbind_host = "127.0.0.1"\n'

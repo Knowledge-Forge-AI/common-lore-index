@@ -16,7 +16,7 @@ from repomap_test_support.executable_authority import controlled_service_authori
 @pytest.mark.parametrize("failure", [False, True])
 def test_persisted_legacy_definition_is_inspected_and_removed_without_activation(tmp_path, monkeypatch, adapter_type, failure):
     home = tmp_path / "product-home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     config = home / "repomap.rpl.toml"
     config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
     with controlled_service_authority(tmp_path / "executables"):
@@ -88,7 +88,7 @@ def test_malformed_plist_values_refuse_at_the_adapter_boundary(tmp_path, body):
 
 def test_current_module_with_legacy_description_validates_without_native_activation(tmp_path, monkeypatch):
     home = tmp_path / "product-home"
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     config = home / "repomap.rpl.toml"
     config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
     with controlled_service_authority(tmp_path / "executables"):

@@ -210,7 +210,7 @@ def test_nonfile_legacy_base_entries_remain_ignored(tmp_path: Path, kind: str) -
         base.mkdir()
     else:
         base.symlink_to(tmp_path / "absent")
-    assert setup_local_runtime(tmp_path).result == "success"
+    assert setup_local_runtime(tmp_path, config_format="legacy").result == "success"
     assert (tmp_path / "repomap.rpl.toml").is_file()
 
 

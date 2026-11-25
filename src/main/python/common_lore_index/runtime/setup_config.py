@@ -27,15 +27,6 @@ def _config_refusal(error: OpsConfigError) -> NoReturn:
     _refuse(codes[0] if codes else "runtime-config-invalid", "configuration preflight refused")
 
 
-def resolve_setup_home(value: str | Path | None, config_format: str | None) -> tuple[Path, str | None]:
-    """Use CLOE filenames only for a fresh implicit new default; preserve explicit choices."""
-    try:
-        selection = _resolve_home_selection(value)
-    except OpsConfigError as error:
-        _config_refusal(error)
-    return selection.path, config_format or ("cloe" if selection.source == "fresh-default" else None)
-
-
 def resolve_runtime_home(value: str | Path | None = None) -> Path:
     """Keep lifecycle API selection failures in the runtime diagnostic family."""
     try:
@@ -88,7 +79,7 @@ def prepare_setup_config(
         family = ("cloe" if files[0].name.endswith(".cloe.toml") else "legacy") if files else None
         if family is not None and config_format is not None and family != config_format:
             _refuse("runtime-config-format-conflict", "requested format conflicts with the existing home")
-        selected = config_format or family or "legacy"
+        selected = config_format or family or "cloe"
         target = home / ("repomap.local.cloe.toml" if selected == "cloe" else "repomap.rpl.toml")
         portable = unicodedata.normalize("NFC", target.name).casefold()
         if any(p.name != target.name and unicodedata.normalize("NFC", p.name).casefold() == portable for p in entries):

@@ -63,4 +63,7 @@ def test_runtime_start_failure_stops_exact_started_runtime(
     with pytest.raises(RuntimeError, match="startup failed"):
         runtime_campaign.start_scale15_runtime(tmp_path, ("public-graph",))
 
-    assert stopped == [tmp_path / "runtime-home"]
+    home = tmp_path / "runtime-home"
+    assert (home / "repomap.local.cloe.toml").read_text() == "runtime-config"
+    assert not (home / "repomap.rpl.toml").exists()
+    assert stopped == [home]

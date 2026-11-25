@@ -32,7 +32,7 @@ def _operations(tmp_path, adapter, runner=None, health_probe=None):
     home = tmp_path / "repo-map-home"
     home.mkdir(mode=0o700)
     from common_lore_index.runtime.local import setup_local_runtime
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     config = home / "repomap.rpl.toml"
     config.write_text(config.read_text().replace('[runtime]', '[runtime]\ncoordinator_mode = "native"'))
     spec = build_service_package_spec(home)

@@ -26,7 +26,7 @@ def _service(compose: str, name: str, next_name: str | None) -> str:
 def test_compose_declares_complete_health_gated_cluster() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         home = Path(tmpdir) / "home"
-        setup_local_runtime(home)
+        setup_local_runtime(home, config_format="legacy")
         compose = (home / "runtime/compose.yaml").read_text(encoding="utf-8")
 
     for service in (
@@ -68,7 +68,7 @@ def test_compose_declares_complete_health_gated_cluster() -> None:
 def test_long_running_units_are_read_only_and_admin_mounts_are_one_shot_only() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         home = Path(tmpdir) / "home"
-        setup_local_runtime(home)
+        setup_local_runtime(home, config_format="legacy")
         compose = (home / "runtime/compose.yaml").read_text(encoding="utf-8")
 
     http = _service(compose, "http", "mcp")
@@ -106,7 +106,7 @@ def test_long_running_units_are_read_only_and_admin_mounts_are_one_shot_only() -
 def test_release_image_prepares_owner_private_container_state_roots() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         home = Path(tmpdir) / "home"
-        setup_local_runtime(home)
+        setup_local_runtime(home, config_format="legacy")
         dockerfile = (home / "runtime/repomap-server.Dockerfile").read_text(
             encoding="utf-8"
         )
@@ -121,7 +121,7 @@ def test_ambient_database_user_does_not_override_config_authority(
 ) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         home = Path(tmpdir) / "home"
-        setup_local_runtime(home)
+        setup_local_runtime(home, config_format="legacy")
         configured = load_ops_config_home(home)
         monkeypatch.setenv("REPOMAP_PG_USER", "repomap_read_status")
         reloaded = load_ops_config_home(home)
@@ -133,7 +133,7 @@ def test_ambient_database_user_does_not_override_config_authority(
 def test_enabled_source_root_is_read_only_only_where_execution_requires_it() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         home = Path(tmpdir) / "home"
-        setup_local_runtime(home)
+        setup_local_runtime(home, config_format="legacy")
         source = home / "source"
         source.mkdir(mode=0o700, exist_ok=True)
         source.chmod(0o700)
@@ -144,7 +144,7 @@ def test_enabled_source_root_is_read_only_only_where_execution_requires_it() -> 
             .replace("enabled = false", "enabled = true"),
             encoding="utf-8",
         )
-        setup_local_runtime(home)
+        setup_local_runtime(home, config_format="legacy")
         compose = (home / "runtime/compose.yaml").read_text(encoding="utf-8")
 
     http = _service(compose, "http", "mcp")

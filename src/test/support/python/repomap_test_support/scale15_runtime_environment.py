@@ -83,7 +83,7 @@ def start_scale15_runtime(
     )
     postgres_port = selected.available_port()
     server_port = selected.available_port()
-    home.joinpath("repomap.rpl.toml").write_text(
+    home.joinpath("repomap.local.cloe.toml").write_text(
         selected.runtime_config(graph_ids, postgres_port, server_port),
         encoding="utf-8",
     )

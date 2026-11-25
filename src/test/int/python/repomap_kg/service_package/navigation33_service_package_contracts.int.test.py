@@ -65,7 +65,7 @@ from repomap_test_support.executable_authority import controlled_service_authori
 def _build_spec_in_root(root: Path, name: str = "home"):
     home = root / name
     home.mkdir(mode=0o700, exist_ok=True)
-    setup_local_runtime(home)
+    setup_local_runtime(home, config_format="legacy")
     cfg = home / "repomap.rpl.toml"
     cfg.write_text(cfg.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
     return build_service_package_spec(home)

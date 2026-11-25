@@ -30,10 +30,18 @@ def test_setup_refuses_undecodable_config_before_writing_runtime(tmp_path: Path,
     assert not harness.forbidden_events() and not harness.shim_invocations()
 
 
-def test_cloe_setup_readback_status_and_plan_without_runtime_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("format_args", [(), ("--config-format", "cloe")], ids=("partial-default", "fresh-explicit"))
+def test_cloe_setup_readback_status_and_plan_without_runtime_execution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, format_args: tuple[str, ...],
+) -> None:
     home = tmp_path / "cloe home"
+    if not format_args:
+        home.mkdir(mode=0o700)
+        runtime = home / "runtime"
+        runtime.mkdir(mode=0o700)
+        (runtime / "compose.yaml").write_text("# partial setup mounted repomap.rpl.toml\n")
     harness = LocalHarness(tmp_path / "guard")
-    result = harness.run("local", "setup", "--repo-map-home", str(home), "--config-format", "cloe", "--json")
+    result = harness.run("local", "setup", "--repo-map-home", str(home), *format_args, "--json")
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
     assert payload["result"] == "success"
@@ -75,7 +83,7 @@ def test_cloe_dry_run_replays_as_the_same_real_cli_format(tmp_path: Path) -> Non
     from common_lore_index.runtime.local import setup_local_runtime
 
     home = tmp_path / "absent"
-    preview = setup_local_runtime(home, dry_run=True, config_format="cloe")
+    preview = setup_local_runtime(home, dry_run=True)
     assert not home.exists()
     result = run_cli_module(*preview.planned_command, "--json")
     assert result.returncode == 0, result.stderr
@@ -86,7 +94,7 @@ def test_cloe_dry_run_replays_as_the_same_real_cli_format(tmp_path: Path) -> Non
 def test_cloe_home_environment_selects_the_only_setup_destination(tmp_path: Path) -> None:
     home, wrong = tmp_path / "selected", tmp_path / "unselected"
     harness = LocalHarness(tmp_path / "guard")
-    result = harness.run("local", "setup", "--config-format", "cloe", "--json",
+    result = harness.run("local", "setup", "--json",
                          extra_env={"CLOE_HOME": str(home), "REPOMAP_HOME": str(wrong)})
     assert result.returncode == 0, result.stderr
     assert (home / "repomap.local.cloe.toml").is_file() and not wrong.exists()
