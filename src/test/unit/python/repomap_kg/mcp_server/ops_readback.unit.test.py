@@ -65,7 +65,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
             "os.environ",
             {
                 "CLOE_OPS_CONFIG": str(config_path),
-                "REPOMAP_PSQL_COMMAND": "psql",
+                "CLOE_PSQL_COMMAND": "psql",
             },
             clear=True,
         ):
@@ -85,7 +85,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
             "os.environ",
             {
                 "CLOE_OPS_CONFIG": str(config_path),
-                "REPOMAP_PSQL_COMMAND": "psql",
+                "CLOE_PSQL_COMMAND": "psql",
             },
             clear=True,
         ):
@@ -184,7 +184,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
         self.assertEqual(like_escape(r"%pkg_app"), r"\%pkg\_app")
         with patch.dict("os.environ", {}, clear=True):
             self.assertIsNone(psql_command_from_environment())
-        with patch.dict("os.environ", {"REPOMAP_PSQL_COMMAND": "psql"}, clear=True):
+        with patch.dict("os.environ", {"CLOE_PSQL_COMMAND": "psql"}, clear=True):
             self.assertIsNone(psql_command_from_environment())
         with self.assertRaisesRegex(McpOpsError, "query is required"):
             validate_query("")
@@ -192,10 +192,10 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
             validate_limit(0)
         with self.assertRaisesRegex(McpOpsError, "non-negative"):
             validate_offset(-1)
-        with patch.dict("os.environ", {"REPOMAP_PSQL_COMMAND": "bad psql"}):
+        with patch.dict("os.environ", {"CLOE_PSQL_COMMAND": "bad psql"}):
             with self.assertRaisesRegex(McpOpsError, "whitespace"):
                 psql_command_from_environment()
-        with patch.dict("os.environ", {"REPOMAP_PSQL_COMMAND": "/bin/echo"}):
+        with patch.dict("os.environ", {"CLOE_PSQL_COMMAND": "/bin/echo"}):
             with self.assertRaisesRegex(McpOpsError, "psql executable"):
                 psql_command_from_environment()
 

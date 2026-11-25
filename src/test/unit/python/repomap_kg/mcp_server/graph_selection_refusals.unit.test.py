@@ -28,7 +28,7 @@ class GraphSelectionRefusalsTests(McpServerTestSupport):
     def _armed(self, config: Any, investigation: Any, graph: Any) -> ExitStack:
         stack = ExitStack()
         stack.enter_context(patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()),
-                                                      "REPOMAP_PSQL_COMMAND": INVALID_PSQL_COMMAND}, clear=True))
+                                                      "CLOE_PSQL_COMMAND": INVALID_PSQL_COMMAND}, clear=True))
         stack.enter_context(patch("common_lore_index.server.ops.load_mcp_ops_config", lambda *_a: config))
         stack.enter_context(patch("common_lore_index.server.mcp_core.load_mcp_ops_config", lambda *_a: config))
         stack.enter_context(patch("common_lore_index.server.ops.investigation_stores", investigation))

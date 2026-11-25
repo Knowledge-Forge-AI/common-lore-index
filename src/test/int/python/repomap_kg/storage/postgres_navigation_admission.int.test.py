@@ -180,7 +180,7 @@ def test_real_portable_postgres_navigation_matches_sqlite_and_keeps_safe_identit
             database=postgres.database, user=postgres.user, password=postgres.password,
         )
         postgres_state = publish_and_load_postgres_corpus(postgres_home, psql_command=postgres.psql_command)
-        monkeypatch.setenv("REPOMAP_PSQL_COMMAND", postgres.psql_command)
+        monkeypatch.setenv("CLOE_PSQL_COMMAND", postgres.psql_command)
         postgres_store = investigation_stores(load_graph_registry_config_home(postgres_home)).investigation_store()
         for query in (
             NavigationSearchQuery(query="RetrievalExecutionPipeline", limit=5),
@@ -259,7 +259,7 @@ def test_read_status_role_can_use_public_navigation_without_lexical_schema_or_ow
             assert read_connection.execute("SELECT current_user").fetchone() == (READ_STATUS_ROLE,)
             public_count = read_connection.execute("SELECT count(*) FROM public.canonical_nodes").fetchone()
             assert public_count is not None and public_count[0] > 0
-        monkeypatch.setenv("REPOMAP_PSQL_COMMAND", postgres.psql_command)
+        monkeypatch.setenv("CLOE_PSQL_COMMAND", postgres.psql_command)
         store = investigation_stores(config).investigation_store()
         result = store.navigation_search(
             MIXED_V1_GRAPH_ID, NavigationSearchQuery(query="RetrievalExecutionPipeline", limit=5)

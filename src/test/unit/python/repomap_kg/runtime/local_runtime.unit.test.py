@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from common_lore_index.runtime.local import (
-    DEFAULT_POSTGRES_HOST_PORT, DEFAULT_SERVER_HOST_PORT, ENV_RUNTIME_SOURCE_ROOT,
+    DEFAULT_POSTGRES_HOST_PORT, DEFAULT_SERVER_HOST_PORT,
     LocalRuntimeError, LocalRuntimeIdentity, down_local_runtime, format_local_runtime_table,
     render_server_dockerfile, resolve_runtime_source_root, setup_local_runtime,
     up_local_runtime, query_local_runtime_status,
@@ -118,7 +118,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
             (source_root / "pyproject.toml").write_text("[build-system]\n", encoding="utf-8")
             (source_root / "README.md").write_text("# fixture\n", encoding="utf-8")
             home = Path(tmpdir) / "repo-map-home"
-            with patch.dict("os.environ", {ENV_RUNTIME_SOURCE_ROOT: str(source_root)}):
+            with patch.dict("os.environ", {"CLOE_SOURCE_ROOT": str(source_root)}):
                 result = setup_local_runtime(home, config_format="legacy")
             compose_text = (home / "runtime" / "compose.yaml").read_text(encoding="utf-8")
             self.assertEqual(resolve_runtime_source_root(source_root), source_root.resolve())

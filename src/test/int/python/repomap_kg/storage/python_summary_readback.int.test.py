@@ -50,7 +50,7 @@ def test_psycopg80_python_summary_connector_cli_and_mcp_parity() -> None:
             READBACK_DRIVER_ENV,
             "PGPASSWORD",
             "CLOE_OPS_CONFIG",
-            "REPOMAP_PSQL_COMMAND",
+            "CLOE_PSQL_COMMAND",
         )
     }
 
@@ -219,7 +219,7 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
             ("default", None, None, str(Path(tmpdir) / "missing" / "psql")),
         ):
             _select_connector(selector, connector, postgres=postgres)
-            os.environ["REPOMAP_PSQL_COMMAND"] = psql_command
+            os.environ["CLOE_PSQL_COMMAND"] = psql_command
             payloads[mode] = {
                 graph_id: cloe_python_summary(graph_id=graph_id)
                 for graph_id in ("public-python", "private-python")

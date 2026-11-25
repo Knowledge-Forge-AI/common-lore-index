@@ -196,7 +196,7 @@ refresh_policy = "manual"
 
             extra_env = {
                 "CLOE_OPS_CONFIG": str(cfg_path),
-                "REPOMAP_PSQL_COMMAND": postgres.psql_command,
+                "CLOE_PSQL_COMMAND": postgres.psql_command,
             }
 
             def call(req_id: int, tool: str, args: dict[str, object]) -> dict[str, object]:

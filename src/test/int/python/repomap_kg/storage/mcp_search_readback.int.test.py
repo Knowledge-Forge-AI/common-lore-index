@@ -197,7 +197,7 @@ _ENV_NAMES = (
     PG_CONNECTOR_ENV,
     READBACK_DRIVER_ENV,
     "CLOE_OPS_CONFIG",
-    "REPOMAP_PSQL_COMMAND",
+    "CLOE_PSQL_COMMAND",
     "PGPASSWORD",
     "PATH",
     "PUBLIC_SAFE_PASSWORD",
@@ -345,7 +345,7 @@ def _select(
     for name, value in (
         (PG_CONNECTOR_ENV, connector),
         (READBACK_DRIVER_ENV, driver),
-        ("REPOMAP_PSQL_COMMAND", command),
+        ("CLOE_PSQL_COMMAND", command),
     ):
         if value is None:
             os.environ.pop(name, None)

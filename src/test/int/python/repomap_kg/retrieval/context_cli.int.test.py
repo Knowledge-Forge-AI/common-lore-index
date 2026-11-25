@@ -158,7 +158,7 @@ def test_cli_context_select_and_pack_over_sqlite_and_postgres_homes(
 
     # PostgreSQL home CLI execution
     with temporary_postgres() as postgres:
-        monkeypatch.setenv("REPOMAP_PSQL_COMMAND", postgres.psql_command)
+        monkeypatch.setenv("CLOE_PSQL_COMMAND", postgres.psql_command)
         pg_dir = tmp_path / "pg_home"
         pg_dir.mkdir(parents=True, exist_ok=True)
         build_postgres_context_fixture(pg_dir, postgres)

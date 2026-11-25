@@ -88,7 +88,7 @@ Every configured tool first selects the graph from the parsed config
 (`graph_selection.GraphSelection`): unknown, disabled, readback-unsupported
 and hidden graphs refuse there with their existing text, before any backend is
 bound. Only then does the PostgreSQL binding (`postgres_read_binding`) read
-`REPOMAP_PSQL_COMMAND`, name the database and build the store. Selection does
+`CLOE_PSQL_COMMAND`, name the database and build the store. Selection does
 not require bound PostgreSQL connection authority: it opens no connection and
 holds no endpoint or credential, although the graph record it keeps may name
 the configured database. The configuration file
@@ -190,12 +190,13 @@ selectors before launching the server.
 ## MCP Server Environment
 
 - `CLOE_MCP_CONFIG`: path to the optional JSON project registry (default `~/.config/common-lore-index/mcp.json`).
-- `REPOMAP_PSQL_COMMAND`: psql executable override when `psql` is not on the
+- `CLOE_PSQL_COMMAND`: psql executable override when `psql` is not on the
   server path. `psql_command` is intentionally absent from every MCP tool
   schema and must remain a server-side setting, never a model-controlled
   argument.
-- `REPOMAP_PG_HOST`, `REPOMAP_PG_PORT`, `REPOMAP_PG_USER`,
-  `REPOMAP_PG_DATABASE`: explicit development-mode connection defaults only.
+- `CLOE_PG_HOST`, `CLOE_PG_PORT`, `CLOE_PG_USER`,
+  `CLOE_PG_DATABASE`: explicit development-mode connection defaults only.
+  Migrate retired RepoMap connection selectors before launch. A nonempty retired selector refuses startup before configuration or graph access.
 
 ## Resolution Rules
 

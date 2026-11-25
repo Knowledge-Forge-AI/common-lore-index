@@ -182,11 +182,11 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
         with patch.dict(
             "os.environ",
             {
-                "REPOMAP_PG_HOST": "/tmp/pg",
-                "REPOMAP_PG_PORT": "5433",
-                "REPOMAP_PG_USER": "slair",
-                "REPOMAP_PG_DATABASE": "repomap",
-                "REPOMAP_PSQL_COMMAND": "/opt/postgres/bin/psql",
+                "CLOE_PG_HOST": "/tmp/pg",
+                "CLOE_PG_PORT": "5433",
+                "CLOE_PG_USER": "slair",
+                "CLOE_PG_DATABASE": "repomap",
+                "CLOE_PSQL_COMMAND": "/opt/postgres/bin/psql",
             },
             clear=False,
         ):

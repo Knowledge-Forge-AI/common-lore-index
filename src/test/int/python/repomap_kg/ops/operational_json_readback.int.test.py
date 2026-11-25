@@ -55,7 +55,7 @@ def test_psycopg94_operational_refresh_status_connector_cli_and_mcp_parity() -> 
     selectors = (PG_CONNECTOR_ENV, READBACK_DRIVER_ENV)
     previous = {
         name: (name in os.environ, os.environ.get(name))
-        for name in (*selectors, "PGPASSWORD", "CLOE_OPS_CONFIG", "REPOMAP_PSQL_COMMAND")
+        for name in (*selectors, "PGPASSWORD", "CLOE_OPS_CONFIG", "CLOE_PSQL_COMMAND")
     }
     try:
         with temporary_postgres() as postgres, tempfile.TemporaryDirectory() as tmpdir:
@@ -151,7 +151,7 @@ def test_psycopg94_operational_refresh_status_connector_cli_and_mcp_parity() -> 
                 {"CLOE_OPS_CONFIG": str(config_path)},
                 clear=False,
             ):
-                os.environ.pop("REPOMAP_PSQL_COMMAND", None)
+                os.environ.pop("CLOE_PSQL_COMMAND", None)
                 graph_status = cloe_graph_status(graph_id="public-graph")
                 refresh_status = cloe_refresh_status(graph_id="public-graph")
             serialized = json.dumps(
@@ -241,12 +241,12 @@ def _select(connector: str | None, driver: str | None, *, postgres) -> None:
 
 
 def _run_cli(config_path: Path, psql_command: str) -> tuple[dict[str, object], str]:
-    command_env = os.environ.get("REPOMAP_PSQL_COMMAND")
+    command_env = os.environ.get("CLOE_PSQL_COMMAND")
     try:
         if "not-used" in psql_command:
-            os.environ.pop("REPOMAP_PSQL_COMMAND", None)
+            os.environ.pop("CLOE_PSQL_COMMAND", None)
         else:
-            os.environ["REPOMAP_PSQL_COMMAND"] = psql_command
+            os.environ["CLOE_PSQL_COMMAND"] = psql_command
         exit_code, stdout, stderr = run_repo_map_in_process(
             "ops",
             "refresh-status",
@@ -258,9 +258,9 @@ def _run_cli(config_path: Path, psql_command: str) -> tuple[dict[str, object], s
         )
     finally:
         if command_env is None:
-            os.environ.pop("REPOMAP_PSQL_COMMAND", None)
+            os.environ.pop("CLOE_PSQL_COMMAND", None)
         else:
-            os.environ["REPOMAP_PSQL_COMMAND"] = command_env
+            os.environ["CLOE_PSQL_COMMAND"] = command_env
     assert exit_code == 0, stderr
     return json.loads(stdout), stdout
 

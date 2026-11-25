@@ -111,6 +111,10 @@ def legacy_mcp_selector_error() -> str | None:
     """Refuse stale explicit authority without reading or disclosing its values."""
     if os.environ.get("REPOMAP_OPS_CONFIG") or os.environ.get("REPOMAP_MCP_CONFIG"):
         return "legacy-mcp-config-selector: migrate MCP selectors to CLOE_OPS_CONFIG or CLOE_MCP_CONFIG"
+    if any(os.environ.get(name) for name in (
+        "REPOMAP_PSQL_COMMAND", "REPOMAP_PG_HOST", "REPOMAP_PG_PORT", "REPOMAP_PG_USER", "REPOMAP_PG_DATABASE"
+    )):
+        return "legacy-mcp-connection-selector: migrate connection settings to CLOE_PSQL_COMMAND and CLOE_PG_*"
     return None
 
 
@@ -150,9 +154,7 @@ def _recognize_home_payloads(files: Sequence[tuple[str, bytes]]) -> bool:
 
 
 def load_ops_config_home(config_home: str | Path | None = None) -> OpsConfig:
-    home, merged_payload, config_files, diagnostics = _read_ops_config_home_payload(
-        config_home
-    )
+    home, merged_payload, config_files, diagnostics = _read_ops_config_home_payload(config_home)
     return build_ops_config_from_payload(
         merged_payload,
         config_path=str(home),

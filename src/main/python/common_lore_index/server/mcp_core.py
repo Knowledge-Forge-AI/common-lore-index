@@ -39,11 +39,11 @@ from common_lore_index.storage.canonical_filters import (
     canonical_node_kind_from_args as canonical_node_kind_from_args,
 )
 
-ENV_PG_HOST = "REPOMAP_PG_HOST"
-ENV_PG_PORT = "REPOMAP_PG_PORT"
-ENV_PG_USER = "REPOMAP_PG_USER"
-ENV_PG_DATABASE = "REPOMAP_PG_DATABASE"
-ENV_PSQL_COMMAND = "REPOMAP_PSQL_COMMAND"
+ENV_PG_HOST = "CLOE_PG_HOST"
+ENV_PG_PORT = "CLOE_PG_PORT"
+ENV_PG_USER = "CLOE_PG_USER"
+ENV_PG_DATABASE = "CLOE_PG_DATABASE"
+ENV_PSQL_COMMAND = "CLOE_PSQL_COMMAND"
 PRIVATE_ROOT_DISPLAY = "[private-root]"
 GRAPH_ROOT_DISPLAY = "[graph-root]"
 PROJECT_ROOT_DISPLAY = "[project-root]"

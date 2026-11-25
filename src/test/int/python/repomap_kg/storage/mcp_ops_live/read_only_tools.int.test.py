@@ -101,7 +101,7 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
                     "os.environ",
                     {
                         "CLOE_MCP_CONFIG": str(mcp_config_path),
-                        "REPOMAP_PSQL_COMMAND": postgres.psql_command,
+                        "CLOE_PSQL_COMMAND": postgres.psql_command,
                     },
                     clear=False,
                 ):
@@ -145,7 +145,7 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
             assert tools_response is not None
             with patch.dict(
                 "os.environ",
-                {"REPOMAP_PSQL_COMMAND": postgres.psql_command},
+                {"CLOE_PSQL_COMMAND": postgres.psql_command},
                 clear=False,
             ):
                 jsonrpc_status = handle_jsonrpc_message({
@@ -342,7 +342,7 @@ mode = "read_only"
                     "os.environ",
                     {"CLOE_MCP_CONFIG": str(legacy_path),
                      "CLOE_OPS_CONFIG": str(ops_path),
-                     "REPOMAP_PSQL_COMMAND": postgres.psql_command},
+                     "CLOE_PSQL_COMMAND": postgres.psql_command},
                 ):
                     current = cloe_status(project="fixture")
                     self.assertEqual(current["counts"], status["counts"])

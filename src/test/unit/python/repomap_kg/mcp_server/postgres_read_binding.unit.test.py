@@ -56,7 +56,7 @@ class PostgresBindingPreservationTests(McpServerTestSupport):
         from common_lore_index.server._ops_records import graph_context
         from common_lore_index.server.ops import investigation_stores, load_mcp_ops_config
 
-        with self._env(REPOMAP_PSQL_COMMAND=PSQL):
+        with self._env(CLOE_PSQL_COMMAND=PSQL):
             config = load_mcp_ops_config()
             assert isinstance(config, OpsConfig), "a PostgreSQL home loads OpsConfig"
             binding: Any = investigation_stores(config)
@@ -78,7 +78,7 @@ class PostgresBindingPreservationTests(McpServerTestSupport):
         from common_lore_index.server._ops_records import graph_context
         from common_lore_index.server.mcp import graph_stores, storage_connection
 
-        with self._env(REPOMAP_PSQL_COMMAND=PSQL), \
+        with self._env(CLOE_PSQL_COMMAND=PSQL), \
                 patch("common_lore_index.server.mcp.query_canonical_node_records") as nodes_owner, \
                 patch("common_lore_index.server.mcp.query_source_run_records") as runs_owner:
             target: Any = storage_connection(project="repo-map")
@@ -102,12 +102,12 @@ class PostgresBindingPreservationTests(McpServerTestSupport):
         from common_lore_index.server.mcp import RepoMapMcpError, handle_tool_call
 
         for tool, args in FAMILY_TOOLS:
-            with self.subTest(tool=tool), self._env(REPOMAP_PSQL_COMMAND=INVALID_PSQL_COMMAND), \
+            with self.subTest(tool=tool), self._env(CLOE_PSQL_COMMAND=INVALID_PSQL_COMMAND), \
                     patched_guards(NO_FALLBACK_GUARDS), self.assertRaises(RepoMapMcpError) as raised:
                 handle_tool_call(tool, dict(args))
             self.assertEqual(str(raised.exception), "psql command must not contain whitespace")
         # Selection refusals still come first, before the command is read.
-        with self._env(REPOMAP_PSQL_COMMAND=INVALID_PSQL_COMMAND), self.assertRaises(RepoMapMcpError) as raised:
+        with self._env(CLOE_PSQL_COMMAND=INVALID_PSQL_COMMAND), self.assertRaises(RepoMapMcpError) as raised:
             handle_tool_call("cloe_canonical_nodes", {"project": "hidden"})
         self.assertEqual(str(raised.exception), "graph 'hidden' is not MCP-visible")
 

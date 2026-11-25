@@ -321,3 +321,27 @@ def test_memory_readback_refuses_stale_mcp_config_authority(monkeypatch: pytest.
     with pytest.raises(ValueError, match="^legacy-mcp-config-selector:") as refused:
         load_server_memory_ops_config()
     assert "legacy-selector-value-must-not-leak" not in str(refused.value)
+
+
+def test_mcp_connection_uses_canonical_environment_defaults(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.server.mcp_core import StorageConnection, storage_connection
+
+    registry = tmp_path / "projects.json"
+    registry.write_text("{}")
+    monkeypatch.setenv("CLOE_MCP_CONFIG", str(registry))
+    monkeypatch.delenv("CLOE_HOME", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
+    for key, value in {"HOST": "public-fixture", "PORT": "55489", "USER": "readonly",
+                       "DATABASE": "fixture_db"}.items():
+        monkeypatch.delenv(f"REPOMAP_PG_{key}", raising=False)
+        monkeypatch.setenv(f"CLOE_PG_{key}", value)
+    monkeypatch.delenv("REPOMAP_PSQL_COMMAND", raising=False)
+    monkeypatch.setenv("CLOE_PSQL_COMMAND", "/fixture/bin/psql")
+    connection = storage_connection(root_path="/public-source", graph_stores=lambda _cfg: pytest.fail("queried"))
+    assert isinstance(connection, StorageConnection)
+    assert (connection.pg_host, connection.pg_port, connection.pg_user, connection.pg_database) == (
+        "public-fixture", "55489", "readonly", "fixture_db"
+    )
+    assert connection.psql_command == "/fixture/bin/psql"

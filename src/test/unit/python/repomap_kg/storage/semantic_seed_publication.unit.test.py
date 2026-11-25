@@ -276,7 +276,7 @@ def test_mcp_child_environment_and_real_module_lookup(
     root = Path(common_lore_index.__file__).resolve().parent.parent
     assert env["PYTHONPATH"] == str(root)
     assert env["CLOE_OPS_CONFIG"] == str(config)
-    assert env["REPOMAP_PSQL_COMMAND"] == "inert-psql"
+    assert env["CLOE_PSQL_COMMAND"] == "inert-psql"
     assert env["PGPASSWORD"] == "inert-auth-marker"
     assert env["PGOPTIONS"] == (f"-c role={reader_role}" if reader_role else parent_env["PGOPTIONS"])
     assert env["PYTHONUNBUFFERED"] == env["PYTHONDONTWRITEBYTECODE"] == "1"
@@ -321,7 +321,7 @@ def test_mcp_real_stdio_preserves_requests_ids_and_response_order(
     _inert_mcp_module(tmp_path, monkeypatch, """import json, os, sys
 requests = [json.loads(line) for line in sys.stdin]
 checks = [os.environ['PGOPTIONS'] == '-c role=unit_reader',
-          os.environ['REPOMAP_PSQL_COMMAND'] == 'inert-psql',
+          os.environ['CLOE_PSQL_COMMAND'] == 'inert-psql',
           os.environ['CLOE_OPS_CONFIG'].endswith('public-test.toml'),
           os.environ['PYTHONPATH'] == os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
           os.environ['PGPASSWORD'] == 'inert-auth-marker',

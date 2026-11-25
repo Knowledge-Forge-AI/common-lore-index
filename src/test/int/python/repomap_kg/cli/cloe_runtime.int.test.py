@@ -1,6 +1,7 @@
 """Real CLI CLOE runtime configuration production in the disposable sandbox."""
 from __future__ import annotations
 
+from itertools import takewhile
 import json
 import os
 from pathlib import Path
@@ -54,6 +55,18 @@ def test_cloe_setup_readback_status_and_plan_without_runtime_execution(
     assert compose.count("CLOE_HOME: /repo-map-home") == 5
     assert compose.count('--repo-map-home", "/repo-map-home"') == 6
     assert "REPOMAP_HOME:" not in compose
+    for service in ("http", "mcp"):
+        block = compose.split(f"\n  {service}:\n", 1)[1].split("\n    environment:\n", 1)[1]
+        environment = set(takewhile(lambda line: line.startswith("      "), block.splitlines()))
+        assert "      CLOE_PG_USER: repomap_read_status" in environment
+        assert all(not line.startswith(("      REPOMAP_PG_HOST:", "      REPOMAP_PG_PORT:",
+                                        "      REPOMAP_PG_USER:", "      REPOMAP_PG_DATABASE:",
+                                        "      REPOMAP_PSQL_COMMAND:")) for line in environment)
+        assert {
+            "      REPOMAP_READ_STATUS_PASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}",
+            "      REPOMAP_PG_PASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}",
+            "      PGPASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}",
+        } <= environment
     assert 'target: "/repo-map-home/repomap.local.cloe.toml"' in compose
     assert '/repo-map-home/repomap.rpl.toml' not in compose
     before = snapshot(home)
@@ -77,6 +90,18 @@ def test_cloe_setup_readback_status_and_plan_without_runtime_execution(
     assert snapshot(home) == before
     assert not harness.shim_invocations()
     assert "repomap.rpl.toml" not in (home / "runtime/repomap-server.Dockerfile").read_text()
+
+
+@pytest.mark.parametrize("subcommand", [("setup",), ("setup", "--dry-run"), ("status",)])
+def test_runtime_refuses_retired_source_selector_without_home_writes(tmp_path: Path, subcommand: tuple[str, ...]) -> None:
+    home = tmp_path / "absent"
+    harness = LocalHarness(tmp_path / "guard")
+    result = harness.run("local", *subcommand, "--repo-map-home", str(home), "--json",
+                         extra_env={"REPOMAP_SOURCE_ROOT": "private-source-sentinel"})
+    assert result.returncode == 1
+    assert not result.stdout and "legacy-runtime-source-selector" in result.stderr
+    assert "private-source-sentinel" not in result.stderr and str(home) not in result.stderr
+    assert not home.exists() and not harness.shim_invocations()
 
 
 def test_cloe_dry_run_replays_as_the_same_real_cli_format(tmp_path: Path) -> None:

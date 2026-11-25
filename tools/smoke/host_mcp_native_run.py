@@ -39,8 +39,9 @@ EXIT_CODES = {"completed_pending_manager_review": 0, "checks_failed": 1, "failed
               "cleanup_incomplete": 3, "interrupted": 130}
 QUALIFICATION_CLASSES = ("native-macos-checkout-console", "linux-harness-exercise")
 PARENT_STRIPPED_PREFIXES = ("PG",)
-PARENT_STRIPPED_KEYS = ("REPOMAP_STORAGE_PG_CONNECTOR", "REPOMAP_STORAGE_READBACK_DRIVER", "REPOMAP_PG_HOST",
-                        "REPOMAP_PG_PORT", "REPOMAP_PG_USER", "REPOMAP_PG_DATABASE", "REPOMAP_PSQL_COMMAND",
+PARENT_STRIPPED_KEYS = ("REPOMAP_STORAGE_PG_CONNECTOR", "REPOMAP_STORAGE_READBACK_DRIVER", "CLOE_PG_HOST",
+                        "CLOE_PG_PORT", "CLOE_PG_USER", "CLOE_PG_DATABASE", "CLOE_PSQL_COMMAND",
+                        "REPOMAP_PG_HOST", "REPOMAP_PG_PORT", "REPOMAP_PG_USER", "REPOMAP_PG_DATABASE", "REPOMAP_PSQL_COMMAND",
                         "REPOMAP_MCP_CONFIG", "REPOMAP_OPS_CONFIG", "REPOMAP_HOME", "CLOE_HOME",
                         "CLOE_MCP_CONFIG", "CLOE_OPS_CONFIG")
 

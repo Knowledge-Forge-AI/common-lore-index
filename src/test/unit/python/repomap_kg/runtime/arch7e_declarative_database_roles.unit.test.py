@@ -109,7 +109,7 @@ def test_http_render_receives_only_read_status_database_secret(tmp_path: Path) -
     compose = render_compose_yaml(build_local_runtime_plan(home))
     http = compose.split("\n  http:\n", 1)[1].split("\n  mcp:\n", 1)[0]
 
-    assert f"REPOMAP_PG_USER: {READ_STATUS_ROLE}" in http
+    assert f"CLOE_PG_USER: {READ_STATUS_ROLE}" in http
     assert "PGPASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}" in http
     assert "REPOMAP_PG_PASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}" in http
     assert "REPOMAP_READ_STATUS_PASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}" in http

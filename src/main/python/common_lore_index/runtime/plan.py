@@ -34,12 +34,21 @@ from common_lore_index.runtime._plan_records import (
 )
 
 
+def require_canonical_runtime_source_selector() -> None:
+    if os.environ.get("REPOMAP_SOURCE_ROOT"):
+        raise LocalRuntimeError((LocalRuntimeDiagnostic(
+            "error", "legacy-runtime-source-selector", ENV_RUNTIME_SOURCE_ROOT,
+            "legacy-runtime-source-selector: configure CLOE_SOURCE_ROOT before using the runtime",
+        ),))
+
+
 def build_local_runtime_plan(
     repo_map_home: Path,
     *,
     fallback_identity: LocalRuntimeIdentity | None = None,
     allow_invalid_config: bool = False,
 ) -> LocalRuntimePlan:
+    require_canonical_runtime_source_selector()
     config: OpsConfig | None = None
     try:
         config = load_ops_config_home(repo_map_home)
@@ -114,6 +123,7 @@ def default_local_runtime_plan(repo_map_home: Path) -> LocalRuntimePlan:
 
 
 def resolve_runtime_source_root(start: Path | None = None) -> Path:
+    require_canonical_runtime_source_selector()
     env_root = os.environ.get(ENV_RUNTIME_SOURCE_ROOT)
     if env_root:
         candidate = Path(env_root).expanduser()

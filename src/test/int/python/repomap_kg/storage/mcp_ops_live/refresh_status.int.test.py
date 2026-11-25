@@ -149,7 +149,7 @@ WHERE id = (SELECT max(id) FROM runs);
                     "os.environ",
                     {
                         "CLOE_OPS_CONFIG": str(ops_config_path),
-                        "REPOMAP_PSQL_COMMAND": postgres.psql_command,
+                        "CLOE_PSQL_COMMAND": postgres.psql_command,
                     },
                     clear=False,
                 ):

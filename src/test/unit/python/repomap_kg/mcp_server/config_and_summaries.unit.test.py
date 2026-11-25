@@ -138,7 +138,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
             "os.environ",
             {
                 "CLOE_OPS_CONFIG": str(config_path),
-                "REPOMAP_PSQL_COMMAND": "/usr/local/bin/psql",
+                "CLOE_PSQL_COMMAND": "/usr/local/bin/psql",
             },
         ):
             with patch(

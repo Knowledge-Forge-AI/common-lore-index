@@ -14,6 +14,7 @@ from common_lore_index.ops.config_records import OpsConfigError
 from common_lore_index.ops.config_storage import refuse_sqlite_home
 from common_lore_index.runtime._home_authority import create_private_file, ensure_private_directory
 from common_lore_index.runtime._plan_records import LocalRuntimeDiagnostic, LocalRuntimeError
+from common_lore_index.runtime.plan import require_canonical_runtime_source_selector
 
 
 def _refuse(code: str, message: str) -> NoReturn:
@@ -29,6 +30,7 @@ def _config_refusal(error: OpsConfigError) -> NoReturn:
 
 def resolve_runtime_home(value: str | Path | None = None) -> Path:
     """Keep lifecycle API selection failures in the runtime diagnostic family."""
+    require_canonical_runtime_source_selector()
     try:
         return _resolve_home_selection(value).path
     except OpsConfigError as error:

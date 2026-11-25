@@ -37,7 +37,7 @@ from common_lore_index.server.graph_selection import (
     visible_graphs as visible_graphs,
 )
 
-ENV_PSQL_COMMAND = "REPOMAP_PSQL_COMMAND"
+ENV_PSQL_COMMAND = "CLOE_PSQL_COMMAND"
 
 
 @dataclass(frozen=True)

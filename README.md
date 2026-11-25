@@ -371,8 +371,9 @@ cloe local status --repo-map-home ~/.cloe --check-containers --json
 ```
 
 For local source builds of the server image, run from the Common Lore Index checkout or
-set `REPOMAP_SOURCE_ROOT=/path/to/repo-map` so generated Compose files build the
+set `CLOE_SOURCE_ROOT=/path/to/common-lore-index` so generated Compose files build the
 image from the source tree rather than from an installed package location.
+A nonempty retired source-root variable prevents runtime setup and planning until it is migrated.
 
 ## Host-Side Ops With Containerized Postgres
 

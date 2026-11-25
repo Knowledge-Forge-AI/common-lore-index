@@ -106,7 +106,7 @@ services:
         condition: service_completed_successfully
     environment:
       CLOE_HOME: /repo-map-home
-      REPOMAP_PG_USER: repomap_read_status
+      CLOE_PG_USER: repomap_read_status
       REPOMAP_READ_STATUS_PASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}
       REPOMAP_PG_PASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}
       PGPASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}
@@ -142,7 +142,7 @@ services:
         condition: service_completed_successfully
     environment:
       CLOE_HOME: /repo-map-home
-      REPOMAP_PG_USER: repomap_read_status
+      CLOE_PG_USER: repomap_read_status
       REPOMAP_READ_STATUS_PASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}
       REPOMAP_PG_PASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}
       PGPASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}

@@ -166,7 +166,7 @@ refresh_policy = "manual"
                 from common_lore_index.ops.config_loading import load_ops_config
                 load_ops_config(cfg_path)
 
-                extra_env = {"CLOE_OPS_CONFIG": str(cfg_path), "REPOMAP_PSQL_COMMAND": postgres.psql_command}
+                extra_env = {"CLOE_OPS_CONFIG": str(cfg_path), "CLOE_PSQL_COMMAND": postgres.psql_command}
                 def call(req_id: int, tool: str, args: dict[str, object]) -> dict[str, object]:
                     return {
                         "jsonrpc": "2.0", "id": req_id, "method": "tools/call",

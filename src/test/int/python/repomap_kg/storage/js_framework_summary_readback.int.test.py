@@ -75,7 +75,7 @@ def test_psycopg71_js_framework_summary_connector_cli_and_mcp_parity() -> None:
         name: (name in os.environ, os.environ.get(name))
         for name in (
             PG_CONNECTOR_ENV, READBACK_DRIVER_ENV, "PGPASSWORD",
-            "CLOE_OPS_CONFIG", "REPOMAP_PSQL_COMMAND",
+            "CLOE_OPS_CONFIG", "CLOE_PSQL_COMMAND",
         )
     }
 
@@ -305,7 +305,7 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
             ("default", None, None, str(Path(tmpdir) / "missing" / "psql")),
         ):
             _select_connector(selector, connector, postgres=postgres)
-            os.environ["REPOMAP_PSQL_COMMAND"] = psql_command
+            os.environ["CLOE_PSQL_COMMAND"] = psql_command
             payloads[mode] = {
                 graph_id: cloe_js_framework_summary(graph_id=graph_id)
                 for graph_id in ("public-js-framework", "private-js-framework")

@@ -205,6 +205,20 @@ def test_mcp_refuses_nonempty_legacy_config_selectors_without_disclosing_values(
     assert not harness.forbidden_events() and not harness.shim_invocations()
 
 
+@pytest.mark.parametrize("selector", [
+    "REPOMAP_PSQL_COMMAND", "REPOMAP_PG_HOST", "REPOMAP_PG_PORT", "REPOMAP_PG_USER", "REPOMAP_PG_DATABASE",
+])
+def test_mcp_refuses_retired_connection_selectors_before_configuration_access(tmp_path: Path, selector: str) -> None:
+    harness = LocalHarness(tmp_path / "guarded", block_psycopg=True)
+    result = harness.run("mcp", "serve", "--config", str(tmp_path / "unread registry"),
+                         extra_env={selector: "private-connection-sentinel"})
+    assert result.returncode == 1 and result.stdout == ""
+    assert result.stderr == (
+        "legacy-mcp-connection-selector: migrate connection settings to CLOE_PSQL_COMMAND and CLOE_PG_*\n"
+    )
+    assert not harness.forbidden_events() and not harness.shim_invocations()
+
+
 @pytest.mark.parametrize("invalid", ['schema_version = "private-error-sentinel"\n', 'password = "private-error-sentinel\n'])
 def test_invalid_input_stderr_never_echoes_values_or_home(tmp_path: Path, invalid: str) -> None:
     (tmp_path / "00.rp.toml").write_text(invalid)
