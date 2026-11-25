@@ -186,10 +186,10 @@ def import_generation(
 
 def _query(postgres: PostgresHandle, query: CandidateQuery) -> CandidateResult:
     previous = os.environ.get("PGOPTIONS")
-    previous_driver = os.environ.get("REPOMAP_STORAGE_READBACK_DRIVER")
+    previous_driver = os.environ.get("CLOE_STORAGE_READBACK_DRIVER")
     try:
         os.environ["PGOPTIONS"] = f"-c role={READ_ROLE} -c default_transaction_read_only=on"
-        os.environ["REPOMAP_STORAGE_READBACK_DRIVER"] = "psql"
+        os.environ["CLOE_STORAGE_READBACK_DRIVER"] = "psql"
         return query_semantic_candidates(
             postgres.psql_args,
             query=query,
@@ -201,9 +201,9 @@ def _query(postgres: PostgresHandle, query: CandidateQuery) -> CandidateResult:
         else:
             os.environ["PGOPTIONS"] = previous
         if previous_driver is None:
-            os.environ.pop("REPOMAP_STORAGE_READBACK_DRIVER", None)
+            os.environ.pop("CLOE_STORAGE_READBACK_DRIVER", None)
         else:
-            os.environ["REPOMAP_STORAGE_READBACK_DRIVER"] = previous_driver
+            os.environ["CLOE_STORAGE_READBACK_DRIVER"] = previous_driver
 
 
 def _scope_for_query(

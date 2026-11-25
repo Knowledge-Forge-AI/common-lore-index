@@ -34,7 +34,7 @@ from repomap_test_support.storage_integration import canonicalization_fixture
 GRAPH_ID = "local-readback"
 REPOSITORY_NAME = "local-readback"
 ROOT_PATH = "/public/local-readback"
-READBACK_DRIVER_ENV = "REPOMAP_STORAGE_READBACK_DRIVER"
+READBACK_DRIVER_ENV = "CLOE_STORAGE_READBACK_DRIVER"
 READBACK_ENV_NAMES = (
     "PGPASSWORD",
     "REPOMAP_PG_PASSWORD",
@@ -80,7 +80,7 @@ def test_setup_owned_local_readback_uses_read_role_without_password_export(
 
         for name in READBACK_ENV_NAMES:
             monkeypatch.delenv(name, raising=False)
-        monkeypatch.delenv("REPOMAP_STORAGE_PG_CONNECTOR", raising=False)
+        monkeypatch.delenv("CLOE_STORAGE_PG_CONNECTOR", raising=False)
         monkeypatch.setenv(READBACK_DRIVER_ENV, "psycopg")
 
         def invoke(*args: str) -> dict[str, object]:

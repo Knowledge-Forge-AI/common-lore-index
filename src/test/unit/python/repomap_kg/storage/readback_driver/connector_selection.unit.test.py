@@ -23,6 +23,8 @@ def _completed(stdout: str) -> SimpleNamespace:
 def _clear_connector_selector_env(monkeypatch):
     monkeypatch.delenv(PG_CONNECTOR_ENV, raising=False)
     monkeypatch.delenv(READBACK_DRIVER_ENV, raising=False)
+    monkeypatch.delenv("REPOMAP_STORAGE_PG_CONNECTOR", raising=False)
+    monkeypatch.delenv("REPOMAP_STORAGE_READBACK_DRIVER", raising=False)
 
 
 class _FakeCursor:
@@ -112,8 +114,17 @@ def test_psycopg17_official_connectors_advertise_json_readback() -> None:
     for connector in readback_driver.CONNECTORS.values():
         assert connector.capabilities == frozenset({"json_readback"})
 def test_psycopg26_pg_connector_env_constant_is_additive() -> None:
-    assert PG_CONNECTOR_ENV == "REPOMAP_STORAGE_PG_CONNECTOR"
-    assert READBACK_DRIVER_ENV == "REPOMAP_STORAGE_READBACK_DRIVER"
+    assert PG_CONNECTOR_ENV == "CLOE_STORAGE_PG_CONNECTOR"
+    assert READBACK_DRIVER_ENV == "CLOE_STORAGE_READBACK_DRIVER"
+
+
+@pytest.mark.parametrize("legacy", ["REPOMAP_STORAGE_PG_CONNECTOR", "REPOMAP_STORAGE_READBACK_DRIVER"])
+def test_retired_selectors_refuse_before_connector_selection(monkeypatch: pytest.MonkeyPatch, legacy: str) -> None:
+    monkeypatch.setenv(legacy, "private-connector-value")
+    monkeypatch.setenv(READBACK_DRIVER_ENV, "psycopg")
+    with pytest.raises(StorageSchemaError, match="^legacy-readback-selector:") as refused:
+        readback_driver.selected_json_readback_driver()
+    assert "private-connector-value" not in str(refused.value)
 
 
 @pytest.mark.parametrize(

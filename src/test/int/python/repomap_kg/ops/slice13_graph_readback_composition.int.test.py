@@ -47,8 +47,8 @@ exit {exit_code}
             root = Path(tmp)
             psql_path = self._write_fake_psql(root, stdout_text="ERROR: catalog unreachable", exit_code=2)
             env = {
-                "REPOMAP_STORAGE_PG_CONNECTOR": "psql",
-                "REPOMAP_STORAGE_READBACK_DRIVER": "psql",
+                "CLOE_STORAGE_PG_CONNECTOR": "psql",
+                "CLOE_STORAGE_READBACK_DRIVER": "psql",
             }
             with patch.dict(os.environ, env):
                 with self.assertRaises(StorageSchemaError) as ctx:
@@ -81,8 +81,8 @@ exit {exit_code}
             root = Path(tmp)
             psql_path = self._write_fake_psql(root, stdout_text="{broken json: missing quotes", exit_code=0)
             env = {
-                "REPOMAP_STORAGE_PG_CONNECTOR": "psql",
-                "REPOMAP_STORAGE_READBACK_DRIVER": "psql",
+                "CLOE_STORAGE_PG_CONNECTOR": "psql",
+                "CLOE_STORAGE_READBACK_DRIVER": "psql",
             }
             with patch.dict(os.environ, env):
                 with self.assertRaises(StorageSchemaError) as ctx:
@@ -114,8 +114,8 @@ exit {exit_code}
             root = Path(tmp)
             psql_path = self._write_fake_psql(root, stdout_text='{"not": "an_array"}', exit_code=0)
             env = {
-                "REPOMAP_STORAGE_PG_CONNECTOR": "psql",
-                "REPOMAP_STORAGE_READBACK_DRIVER": "psql",
+                "CLOE_STORAGE_PG_CONNECTOR": "psql",
+                "CLOE_STORAGE_READBACK_DRIVER": "psql",
             }
             with patch.dict(os.environ, env):
                 with self.assertRaises(StorageSchemaError) as ctx:
@@ -146,10 +146,10 @@ exit {exit_code}
             invoked_marker = root / "invoked.sql"
             psql_path = self._write_fake_psql(root, stdout_text='{"ok": true}', exit_code=0)
 
-            # Conflicting selectors: REPOMAP_STORAGE_PG_CONNECTOR vs REPOMAP_STORAGE_READBACK_DRIVER
+            # Conflicting selectors: CLOE_STORAGE_PG_CONNECTOR vs CLOE_STORAGE_READBACK_DRIVER
             conflict_env = {
-                "REPOMAP_STORAGE_PG_CONNECTOR": "psql",
-                "REPOMAP_STORAGE_READBACK_DRIVER": "psycopg",
+                "CLOE_STORAGE_PG_CONNECTOR": "psql",
+                "CLOE_STORAGE_READBACK_DRIVER": "psycopg",
             }
             with patch.dict(os.environ, conflict_env):
                 with self.assertRaises(StorageSchemaError) as ctx:
@@ -166,8 +166,8 @@ exit {exit_code}
 
             # Normalization: uppercase and whitespace are stripped and mapped to supported driver
             norm_env = {
-                "REPOMAP_STORAGE_PG_CONNECTOR": "  PSQL  ",
-                "REPOMAP_STORAGE_READBACK_DRIVER": "  psql  ",
+                "CLOE_STORAGE_PG_CONNECTOR": "  PSQL  ",
+                "CLOE_STORAGE_READBACK_DRIVER": "  psql  ",
             }
             with patch.dict(os.environ, norm_env):
                 self.assertEqual(selected_json_readback_driver(), "psql")

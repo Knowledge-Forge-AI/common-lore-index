@@ -352,7 +352,7 @@ def test_readback_container_hints_and_host_error_augmentation(tmp_path: Path, mo
             expected_shape="object", mode="host_only",
         )
 
-    monkeypatch.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psql")
+    monkeypatch.setenv("CLOE_STORAGE_READBACK_DRIVER", "psql")
     with pytest.raises(StorageSchemaError, match="unable to launch psql command"):
         execute_ops_json_readback(
             config, database="repomap_g1", sql="SELECT 1", label="db1",

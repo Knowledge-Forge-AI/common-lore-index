@@ -76,7 +76,7 @@ of the same runner, is never native acceptance.
    | `LANG` | |
    | `TMPDIR` | |
    | `PYTHONDONTWRITEBYTECODE` | |
-   | `REPOMAP_STORAGE_READBACK_DRIVER` | `psycopg` |
+   | `CLOE_STORAGE_READBACK_DRIVER` | `psycopg` |
 
    The child gets no PostgreSQL, Docker, Python import-path, MCP/ops
    configuration, agent or provider variable. Its read/status secret is read

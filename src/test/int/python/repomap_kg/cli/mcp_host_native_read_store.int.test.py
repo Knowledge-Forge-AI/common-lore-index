@@ -56,9 +56,9 @@ def test_host_native_stdio_mcp_reads_seam_tools_without_docker_or_sources(
 ) -> None:
     require_postgres_binaries()
     for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "REPOMAP_READ_STATUS_PASSWORD",
-                 "REPOMAP_STORAGE_PG_CONNECTOR"):
+                 "CLOE_STORAGE_PG_CONNECTOR"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psycopg")
+    monkeypatch.setenv("CLOE_STORAGE_READBACK_DRIVER", "psycopg")
     with temporary_postgres() as postgres:
         multi_name = f"host_multi_{uuid.uuid4().hex[:10]}"
         multi_db = postgres.create_database(multi_name)
@@ -229,7 +229,7 @@ def _postgres_absent_sessions(tmp_path: Path, harness: HostMcpHarness, node: str
     outcomes = {}
     for label, direct, port, env in (
         ("closed-host-port", "true", closed_port, {}),
-        ("container-internal-psql", "false", 55439, {"REPOMAP_STORAGE_READBACK_DRIVER": "psql"}),
+        ("container-internal-psql", "false", 55439, {"CLOE_STORAGE_READBACK_DRIVER": "psql"}),
     ):
         home = tmp_path / f"absent-{label}"
         setup_local_runtime(home, config_format="legacy")

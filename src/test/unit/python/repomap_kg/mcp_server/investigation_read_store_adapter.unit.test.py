@@ -148,7 +148,7 @@ class InvestigationReadStoreAuthorityTests(McpServerTestSupport):
                     patch("common_lore_index.storage.readback_driver.execute_json_readback_with_driver", recorder), \
                     patch("common_lore_index.ops.readback.execute_json_readback_with_driver", recorder):
                 outcomes, refusals = self._run_seven(
-                    CLOE_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql",
+                    CLOE_HOME=str(home), CLOE_STORAGE_READBACK_DRIVER="psql",
                 )
             self.assertEqual(refusals, [expected] * 5)
             statuses = (outcomes[0]["storage"], *outcomes[1]["graphs"], *outcomes[2]["graphs"])
@@ -170,7 +170,7 @@ class InvestigationReadStoreAuthorityTests(McpServerTestSupport):
             "direct_host_port_enabled = true", "direct_host_port_enabled = false"
         ))
         recorder = _Recorder(StorageSchemaError(UNRESOLVED))
-        with self._env(CLOE_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql"), \
+        with self._env(CLOE_HOME=str(home), CLOE_STORAGE_READBACK_DRIVER="psql"), \
                 patch("common_lore_index.ops.readback.execute_json_readback_with_driver", recorder):
             config = load_mcp_ops_config()
             assert isinstance(config, OpsConfig), "a PostgreSQL home loads OpsConfig"
@@ -246,7 +246,7 @@ class PsqlDriverRefusalTextContrastTests(McpServerTestSupport):
         def missing(*_args, **_kwargs):
             raise StorageSchemaError(MISSING_DB)
 
-        psql = {"REPOMAP_STORAGE_READBACK_DRIVER": "psql"}
+        psql = {"CLOE_STORAGE_READBACK_DRIVER": "psql"}
         password = {"REPOMAP_PG_PASSWORD": "synthetic-secret"}
         for tool, args, label in (("cloe_search_files", {"query": "a"}, "files MCP search"),
                                   ("cloe_project_summary", {}, "canonical storage summary")):

@@ -99,7 +99,7 @@ def test_feed_publications_match_postgresql_source_owners(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     require_postgres_binaries()
-    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "REPOMAP_STORAGE_PG_CONNECTOR"):
+    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "CLOE_STORAGE_PG_CONNECTOR"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv(READBACK_DRIVER_ENV, "psycopg")
     with temporary_postgres() as postgres:

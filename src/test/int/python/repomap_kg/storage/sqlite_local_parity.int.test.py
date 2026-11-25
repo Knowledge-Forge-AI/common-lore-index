@@ -232,9 +232,9 @@ def test_same_validated_input_reads_identically_from_sqlite_and_postgresql(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     require_postgres_binaries()
-    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "REPOMAP_READ_STATUS_PASSWORD", "REPOMAP_STORAGE_PG_CONNECTOR"):
+    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "REPOMAP_READ_STATUS_PASSWORD", "CLOE_STORAGE_PG_CONNECTOR"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psycopg")
+    monkeypatch.setenv("CLOE_STORAGE_READBACK_DRIVER", "psycopg")
     with temporary_postgres() as postgres:
         token = uuid.uuid4().hex[:10]
         names = {ONE: f"sqlite_parity_one_{token}", MULTI: f"sqlite_parity_multi_{token}"}

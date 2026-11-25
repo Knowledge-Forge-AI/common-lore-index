@@ -20,7 +20,7 @@ import signal
 import subprocess
 from typing import Any
 
-ALLOWED_CHILD_KEYS = ("HOME", "LANG", "PATH", "PYTHONDONTWRITEBYTECODE", "REPOMAP_STORAGE_READBACK_DRIVER", "TMPDIR")
+ALLOWED_CHILD_KEYS = ("CLOE_STORAGE_READBACK_DRIVER", "HOME", "LANG", "PATH", "PYTHONDONTWRITEBYTECODE", "TMPDIR")
 SHIM_COMMANDS = ("docker", "podman", "nerdctl", "docker-compose", "launchctl", "systemctl")
 SHIM_EXIT = 97
 NATIVE_FORMS = ("absolute-shebang", "sh-exec-trampoline")
@@ -136,11 +136,11 @@ def child_environment(layout: ChildLayout, platform: str, *,
     """
     path = ":".join((str(layout.shims), *test_extra_path, "/usr/bin", "/bin"))
     return {
+        "CLOE_STORAGE_READBACK_DRIVER": "psycopg",
         "HOME": str(layout.user_home),
         "LANG": "en_US.UTF-8" if platform == "darwin" else "C.UTF-8",
         "PATH": path,
         "PYTHONDONTWRITEBYTECODE": "1",
-        "REPOMAP_STORAGE_READBACK_DRIVER": "psycopg",
         "TMPDIR": str(layout.tmp),
     }
 

@@ -48,7 +48,8 @@ from repomap_test_support.retrieval_evaluation_fixture import (
 )
 
 OUT, MCP = "child-stdout", "mcp-reply"
-READBACK = {"REPOMAP_STORAGE_READBACK_DRIVER": "psycopg"}
+READBACK = {"CLOE_STORAGE_READBACK_DRIVER": "psycopg"}
+PREDECESSOR_READBACK = {"REPOMAP_STORAGE_READBACK_DRIVER": "psycopg"}
 SERVER_PROBE = """import json, os, sys
 home, psql, database, graph, query = sys.argv[1:6]
 secret = os.path.join(home, 'pgpass.secret')
@@ -206,7 +207,7 @@ def test_released_provisioned_server_upgrade(
 
         def refresh(env: InstalledEnvironment, query: str, *, probe: str = SERVER_PROBE) -> None:
             result = run_child(env, (str(env.python), "-c", probe, str(home), str(client),
-                                     postgres.database, GRAPH_ID, query), extra=READBACK)
+                                     postgres.database, GRAPH_ID, query), extra=PREDECESSOR_READBACK if env is old else READBACK)
             assert result.exit == 0, result.exit
             payload = json_object(result.stdout.strip().splitlines()[-1])
             assert payload == {"result": "success", "publication_state": "committed", "function_present": True}
@@ -215,7 +216,7 @@ def test_released_provisioned_server_upgrade(
             selected = run_child(env, (str(env.wrapper("cloe")), "ops", "context-select",
                                        "--repo-map-home", str(home), "--graph", GRAPH_ID,
                                        "--binding", graph_source_binding_id(GRAPH_ID, "code"),
-                                       "--pin-publication", "--output", str(output)), extra=READBACK)
+                                       "--pin-publication", "--output", str(output)), extra=PREDECESSOR_READBACK if env is old else READBACK)
             assert selected.exit == 0, selected.exit
             return ((json_object(selected.stdout) or {}).get("expected_publication") or {}).get("generation")
 
@@ -224,7 +225,7 @@ def test_released_provisioned_server_upgrade(
             answer = useful_question(env, (str(env.wrapper("cloe")), "mcp", "serve", "--repo-map-home", str(home)),
                                      graph_id=GRAPH_ID, code_query=query, code_kind=CODE_KIND,
                                      docs_query=expected.docs_query, protocol=MCP_PROTOCOL_VERSION,
-                                     extra=READBACK, tool_prefix=tool_prefix)
+                                     extra=PREDECESSOR_READBACK if env is old else READBACK, tool_prefix=tool_prefix)
             assert answer.complete and answer.protocol_version == MCP_PROTOCOL_VERSION
             return tuple(answer.facts[key][0] for key in ("code_kind", "code_path", "code_line", "docs_path"))
 

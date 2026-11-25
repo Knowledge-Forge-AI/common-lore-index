@@ -69,7 +69,7 @@ def _read(postgres, query: CandidateQuery):
     # Enforce the SQL transaction and role boundary, not merely a Python promise.
     args = ("-c", f"role={READER}", "-c", "default_transaction_read_only=on")
     with pytest.MonkeyPatch.context() as env:
-        env.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psql")
+        env.setenv("CLOE_STORAGE_READBACK_DRIVER", "psql")
         env.setenv("PGOPTIONS", " ".join(args))
         return query_semantic_candidates(postgres.psql_args, query=query, psql_command=postgres.psql_command)
 
@@ -387,7 +387,7 @@ def test_pgvector_candidate_link_fence_applies_to_exact_and_ann_sql() -> None:
             ann_sql = build_hnsw_query_sql(query, source_scope=((BINDING, SNAPSHOT),), ann_scan_limit=3)
             args = ("-c", f"role={READER}", "-c", "default_transaction_read_only=on")
             with pytest.MonkeyPatch.context() as env:
-                env.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psql")
+                env.setenv("CLOE_STORAGE_READBACK_DRIVER", "psql")
                 env.setenv("PGOPTIONS", " ".join(args))
                 ann_payload = execute_json_readback(ann_sql, psql_args=postgres.psql_args, psql_command=postgres.psql_command, label="semantic candidate ANN", expected_shape="object")
             assert isinstance(ann_payload, dict)

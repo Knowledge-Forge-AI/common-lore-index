@@ -143,7 +143,7 @@ def test_cloe_and_legacy_dogfood_markers_match_in_both_stores(tmp_path: Path, mo
 
 def test_read_corpus_matches_postgresql_query_owners(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "REPOMAP_STORAGE_PG_CONNECTOR"):
+    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "CLOE_STORAGE_PG_CONNECTOR"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv(READBACK_DRIVER_ENV, "psycopg")
     with temporary_postgres() as postgres:

@@ -51,7 +51,7 @@ def _publish(postgres, *, revision: int) -> CandidatePublication:
 
 def _as_reader(postgres, monkeypatch: pytest.MonkeyPatch, call, **kwargs):
     with monkeypatch.context() as env:
-        env.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psql")
+        env.setenv("CLOE_STORAGE_READBACK_DRIVER", "psql")
         env.setenv("PGOPTIONS", f"-c role={READER} -c default_transaction_read_only=on")
         return call(postgres.psql_args, psql_command=postgres.psql_command, **kwargs)
 

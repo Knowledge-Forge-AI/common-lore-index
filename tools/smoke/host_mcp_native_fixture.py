@@ -37,6 +37,7 @@ from common_lore_index.ops.resolved_config import configured_repository_identity
 from common_lore_index.runtime.database_roles import READ_STATUS_ROLE, RoleSecrets
 from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.runtime.postgres_route import effective_postgres_route, readback_postgres_authority
+from common_lore_index.runtime.setup_config import prepare_setup_config
 from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.sql_core import sql_literal
 from repomap_test_support.host_mcp_publication import (
@@ -98,7 +99,8 @@ def stage_native_config(work: Path, host_port: int, multi_db: str, feed_db: str)
         (sources / name).parent.mkdir(parents=True, exist_ok=True)
         (sources / name).write_text(text, encoding="utf-8")
     (sources / "feed").mkdir(parents=True)
-    write_native_config(home, host_port, multi_db, feed_db, sources)
+    # Replace the generated starter configuration with the complete disposable fixture.
+    write_native_config(prepare_setup_config(home, dry_run=True), host_port, multi_db, feed_db, sources)
     return home, sources, {graph.id: graph for graph in load_ops_config_home(home).graphs}
 
 
@@ -134,7 +136,7 @@ def publish_native_fixture(work: Path, owner_role: str, databases: dict[str, Any
                          secrets=secrets, fetches=tuple(fetches))
 
 
-def write_native_config(home: Path, host_port: int, multi_db: str, feed_db: str, sources: Path) -> None:
+def write_native_config(config_path: Path, host_port: int, multi_db: str, feed_db: str, sources: Path) -> None:
     def binding(alias: str) -> str:
         return (f'[[graphs.source_bindings]]\nschema_version = 1\nsource_definition_id = "src1:{alias}"\n'
                 f'alias = "{alias}"\nrevision = 1\nkind = "folder"\nroot_path = "{sources / alias}"\n'
@@ -148,7 +150,7 @@ def write_native_config(home: Path, host_port: int, multi_db: str, feed_db: str,
                 f'enabled = true\nmcp_visible = {"true" if visible else "false"}\n'
                 'extractor_profile = "default"\nrefresh_policy = "manual"\n')
 
-    (home / "repomap.rpl.toml").write_text(f'''schema_version = 1
+    config_path.write_text(f'''schema_version = 1
 [service]
 mode = "local"
 mcp_transport = "stdio"

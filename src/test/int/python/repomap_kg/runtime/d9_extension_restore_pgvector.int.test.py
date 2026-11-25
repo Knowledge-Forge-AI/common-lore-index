@@ -85,7 +85,7 @@ def _execute(postgres: Any, sql: str, *, role: str | None = None) -> None:
 
 def _read_candidates(postgres: Any, query: Any) -> Any:
     with pytest.MonkeyPatch.context() as env:
-        env.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psql")
+        env.setenv("CLOE_STORAGE_READBACK_DRIVER", "psql")
         env.setenv("PGOPTIONS", f"-c role={READER} -c default_transaction_read_only=on")
         return query_semantic_candidates(postgres.psql_args, query=query, psql_command=postgres.psql_command)
 

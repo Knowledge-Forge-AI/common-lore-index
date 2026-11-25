@@ -176,8 +176,8 @@ def _worker(
         {
             "TMPDIR": str(scratch_root / "tmp"),
             "PYTHONPYCACHEPREFIX": str(scratch_root / "pycache"),
-            "REPOMAP_STORAGE_PG_CONNECTOR": "psycopg",
-            "REPOMAP_STORAGE_READBACK_DRIVER": "psycopg",
+            "CLOE_STORAGE_PG_CONNECTOR": "psycopg",
+            "CLOE_STORAGE_READBACK_DRIVER": "psycopg",
         }
     )
     result = subprocess.run(
