@@ -187,7 +187,9 @@ def test_mcp_module_and_console_commands_share_read_only_stdio(tmp_path: Path) -
     home = tmp_path / "explicit home"
     write_sqlite_home(home, graph_toml("one", "/not-read/source"))
     home.chmod(0o700)
-    env["CLOE_HOME"] = str(home)
+    decoy = tmp_path / "decoy home"
+    write_sqlite_home(decoy, graph_toml("decoy", "/different-source"))
+    decoy.chmod(0o700)
     before = snapshot(tmp_path)
     entrances = (
         ([sys.executable, "-m", "common_lore_index.server.mcp"], ()),
@@ -196,12 +198,13 @@ def test_mcp_module_and_console_commands_share_read_only_stdio(tmp_path: Path) -
     )
     responses = []
     for argv, args in entrances:
-        result = launch(argv, env, *args, input_text=MCP_REQUESTS)
+        selected_env = {**env, "CLOE_HOME": str(decoy if args else home)}
+        result = launch(argv, selected_env, *args, input_text=MCP_REQUESTS)
         assert result.returncode == 0 and result.stderr == "", result.stderr
         graph_list = assert_mcp_wire(result.stdout)
         assert graph_list.get("isError", False) is False
         assert [graph["graph_id"] for graph in graph_list["structuredContent"]["graphs"]] == ["one"]
-        assert str(home) not in result.stdout
+        assert str(home) not in result.stdout and str(decoy) not in result.stdout
         responses.append(result.stdout)
     assert len(set(responses)) == 1
     assert snapshot(tmp_path) == before

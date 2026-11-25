@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 import hashlib
 import json
+import os
 from pathlib import Path
+import stat
 from typing import Any, Literal
 
 import pytest
@@ -21,7 +24,7 @@ from repomap_test_support.installed_candidate import (
 from repomap_test_support.installed_environment import InstalledEnvironment, run_child
 from repomap_test_support.installed_experience_driver import json_object, pure_environment
 from repomap_test_support.installed_experience_fixture import (
-    current_config_name, expectations, tiny_home, write_tiny_material,
+    current_config_name, expectations, legacy_tiny_home, tiny_home, write_tiny_material,
 )
 from repomap_test_support.installed_mcp_session import useful_question
 from repomap_test_support.installed_origin import closure, observe_origin
@@ -49,12 +52,13 @@ def _cli(env: InstalledEnvironment, home: Path, command: str, *args: str) -> dic
 def _answer(
     env: InstalledEnvironment, home: Path, code_query: str | None = None, *,
     tool_prefix: Literal["cloe", "repomap"] = "cloe",
+    extra: dict[str, str] | None = None,
 ) -> tuple[str, str, int, str]:
     expected = expectations()
     answer = useful_question(env, (str(env.wrapper("cloe")), "mcp", "serve", "--repo-map-home", str(home)),
                              graph_id=GRAPH_ID, code_query=code_query or expected.code_query,
                              code_kind=CODE_KIND, docs_query=expected.docs_query, protocol=MCP_PROTOCOL_VERSION,
-                             tool_prefix=tool_prefix)
+                             tool_prefix=tool_prefix, extra=extra)
     assert answer.complete and answer.protocol_version == MCP_PROTOCOL_VERSION
     facts = {key: item[0] for key, item in answer.facts.items()}
     assert facts["code_kind"] == CODE_KIND and facts["code_path"] == expected.code_path
@@ -144,3 +148,109 @@ def test_preview005_predecessor_preserves_source_blind_local_recovery(
     assert _cli(installed, recovered, "sqlite-restore", "--backup", str(backup))["result"] == "restored"
     assert _answer(installed, recovered, tool_prefix="repomap") == before
     assert _files_digest((backup / "graph.sqlite3", backup / "manifest.json")) == frozen
+
+def _migration(env: InstalledEnvironment, home: Path, action: str) -> dict[str, Any]:
+    result = run_child(env, (str(env.wrapper("cloe")), "ops", f"config-migration-{action}",
+                             "--repo-map-home", str(home), "--yes", "--json"))
+    assert result.exit == 0 and result.stderr == "", (action, result.exit)
+    assert str(home) not in result.stdout
+    payload = json_object(result.stdout)
+    assert payload is not None
+    return payload
+
+
+def _owned_home_snapshot(home: Path) -> dict[str, tuple[int, str | None]]:
+    snapshot: dict[str, tuple[int, str | None]] = {}
+    for path in (home, *sorted(home.rglob("*"))):
+        info = path.lstat()
+        assert info.st_uid == os.getuid()
+        assert stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode)
+        snapshot[path.relative_to(home).as_posix()] = (
+            stat.S_IMODE(info.st_mode), _digest(path.read_bytes()) if stat.S_ISREG(info.st_mode) else None,
+        )
+    return snapshot
+
+
+def test_preview005_local_conversion_and_coherent_rollback(
+    tmp_path_factory: pytest.TempPathFactory, tmp_path: Path,
+) -> None:
+    preview = preview005_predecessor_wheel(tmp_path_factory)
+    candidate = candidate_wheel(tmp_path_factory)
+    child_cwd = tmp_path / "shared work directory"
+    child_cwd.mkdir(mode=0o700)
+    previous = replace(pure_environment(tmp_path / "preview predecessor", preview), cwd=child_cwd)
+    current = replace(pure_environment(tmp_path / "canonical candidate", candidate), cwd=child_cwd)
+    assert (preview.input_sha256, preview.input_count) == PREVIEW005_PACKAGE_INPUTS
+    assert _installed_digest(previous, preview, legacy_facade=True) == PREVIEW005_GRAPH_PARSER_SHA256
+    version = run_child(previous, (str(previous.wrapper("cloe")), "--version"))
+    assert (version.exit, version.stdout, version.stderr) == (0, "cloe 0.0.4\n", "")
+    assert preview.input_sha256 != candidate.input_sha256
+    assert wheel_inventory(candidate.wheel).record_valid
+    parser_path = "src/main/python/common_lore_index/cli/_parser_ops_graph.py"
+    assert _installed_digest(current, candidate) == _digest((ROOT / parser_path).read_bytes())
+
+    relative_source = Path("public source")
+    material = write_tiny_material(child_cwd / relative_source)
+    assert material == child_cwd / relative_source and material.is_dir()
+    hidden = material.with_name("public source offline")
+    home = legacy_tiny_home(tmp_path / "existing local graph", relative_source)
+    recovery = tmp_path / "canonical recovery graph"
+    recovery.mkdir(mode=0o700)
+    old_recovery = legacy_tiny_home(tmp_path / "predecessor recovery graph", relative_source)
+    decoy = tiny_home(tmp_path / "unselected graph home", relative_source, config_name=current_config_name())
+    decoy_config = decoy / current_config_name()
+    original_decoy = decoy_config.read_text()
+    assert GRAPH_ID in original_decoy
+    decoy_config.write_text(original_decoy.replace(GRAPH_ID, "decoy-graph"))
+    decoy_snapshot = _owned_home_snapshot(decoy)
+    choose_explicit = {"CLOE_HOME": str(decoy)}
+
+    backup = tmp_path / "preconversion backup"
+    _cli(previous, home, "sqlite-init")
+    assert _cli(previous, home, "refresh-graph")["accepted_generation"] == 1
+    expected = _answer(previous, home, tool_prefix="repomap")
+    assert _cli(previous, home, "sqlite-backup", "--output", str(backup))["result"] == "created"
+    retained = _owned_home_snapshot(backup)
+    assert set(retained) == {".", "graph.sqlite3", "manifest.json"}
+    before = _owned_home_snapshot(home)
+    assert before["."][0] == 0o700
+    old_config = {name: row for name, row in before.items() if name.endswith(".toml")}
+    assert len(old_config) == 2 and all(mode == 0o600 for mode, _ in old_config.values())
+
+    material.rename(hidden)
+    converted = _migration(current, home, "apply")
+    assert converted["result"] == "applied" and converted["rollback_available"] is True
+    after = _owned_home_snapshot(home)
+    assert after[".cloe-config-migration"][0] == 0o700
+    assert all(mode in (0o600, 0o700) for name, (mode, _) in after.items()
+               if name.startswith(".cloe-config-migration/"))
+    new_config = {name: row for name, row in after.items() if "/" not in name and name.endswith(".toml")}
+    assert set(new_config) == {current_config_name(), "zz-local.local.cloe.toml"}
+    assert sorted(new_config.values()) == sorted(old_config.values())
+    assert _answer(current, home, extra=choose_explicit) == expected
+    assert _owned_home_snapshot(home) == after
+    assert {k: v for k, v in before.items() if not k.endswith(".toml")} == {
+        k: v for k, v in after.items() if not (k.endswith(".toml") or k.startswith(".cloe-config-migration"))
+    }
+
+    for name, (mode, _) in new_config.items():
+        copied = recovery / name
+        copied.write_bytes((home / name).read_bytes())
+        copied.chmod(mode)
+    assert _owned_home_snapshot(recovery) == {".": (0o700, None), **new_config}
+    assert _cli(current, recovery, "sqlite-restore", "--backup", str(backup))["result"] == "restored"
+    assert _answer(current, recovery, extra=choose_explicit) == expected
+    hidden.rename(material)
+    assert _cli(current, recovery, "refresh-graph")["accepted_generation"] == 2
+    assert _answer(current, recovery, extra=choose_explicit) == expected
+    material.rename(hidden)
+
+    assert _migration(current, home, "rollback")["result"] == "rolled-back"
+    assert _migration(current, home, "rollback")["result"] == "nothing-to-recover"
+    assert _owned_home_snapshot(home) == before
+    assert _answer(previous, home, tool_prefix="repomap") == expected
+    assert _owned_home_snapshot(home) == before
+    assert _cli(previous, old_recovery, "sqlite-restore", "--backup", str(backup))["result"] == "restored"
+    assert _answer(previous, old_recovery, tool_prefix="repomap") == expected
+    assert _owned_home_snapshot(backup) == retained
+    assert _owned_home_snapshot(decoy) == decoy_snapshot
