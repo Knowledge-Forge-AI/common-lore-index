@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.ops.config import (
     PRIVATE_PRIVACY,
     OpsConfig,
@@ -191,7 +191,7 @@ def list_graphs_payload(
     config = load_mcp_ops_config(config_path)
     graphs = visible_graphs(config)
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "schema_version": config.schema_version,
@@ -228,7 +228,7 @@ def graph_status_payload(
         else None
     )
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "graph": graph_payload(
@@ -261,7 +261,7 @@ def refresh_status_payload(
         payload = {**payload, "warnings": graph_payload(graph)["warnings"]}
         graphs.append(sanitize_jsonable(payload))
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "graph_count": len(graphs),

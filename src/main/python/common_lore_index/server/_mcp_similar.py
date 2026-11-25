@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 from typing import Any
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.server._ops_records import McpOpsError
 from common_lore_index.server._ops_sanitization import safety_markers, sanitize_jsonable
 from common_lore_index.server.mcp_core import (
@@ -58,7 +58,7 @@ def similar_nodes_payload(
     if _profiles_need_redaction(result_data, selection.path_markers):
         result_data = unavailable("privacy_refused").to_jsonable()
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "graph": graph_payload(
@@ -131,7 +131,7 @@ def embedding_profiles_payload(
         # Redacting a tuple in place would invalidate its profile digest or IDs.
         result_data = profiles_unavailable("privacy_refused").to_jsonable()
     return {
-        "server": "repomap-kg", "version": __version__, "read_only": True,
+        "server": DISTRIBUTION_NAME, "version": __version__, "read_only": True,
         "graph": graph_payload(selection.graph, database=target.stores.storage_label(selection)),
         **result_data, "safety": safety_markers(),
     }

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.ops.config_local import (
     load_graph_registry_config,
     load_graph_registry_config_home,
@@ -90,7 +90,7 @@ def server_memory_summary_payload(
     config = load_server_memory_ops_config(config_path, config_home=config_home)
     catalog = load_server_memory_catalog(config)
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "enabled": catalog.enabled,
@@ -126,7 +126,7 @@ def server_memory_search_payload(
     ]
     window = matched[safe_offset : safe_offset + safe_limit]
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "enabled": catalog.enabled,

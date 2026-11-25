@@ -219,7 +219,7 @@ refresh_policy = "manual"
                 status_resp = resp_by_id[15]
                 self.assertNotIn("error", status_resp)
                 status_data = response_structured_content(status_resp)
-                self.assertEqual(json_string_field(status_data, "server"), "repomap-kg")
+                self.assertEqual(json_string_field(status_data, "server"), "common-lore-index")
                 self.assertTrue(json_bool_field(status_data, "read_only"))
                 self.assertEqual(json_string_field(status_data, "storage_model"), "canonical")
                 counts = json_object_field(status_data, "counts")

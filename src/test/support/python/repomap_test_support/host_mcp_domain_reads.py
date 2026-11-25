@@ -158,7 +158,7 @@ def twelve_tool_requests(start: int, *, summary_graph: str, feed_project: str,
 
 def _status(summary: Any, graph_id: str) -> dict[str, Any]:
     return {
-        "server": "repomap-kg", "version": __version__, "read_only": True, "root_path": "[graph-root]",
+        "server": "common-lore-index", "version": __version__, "read_only": True, "root_path": "[graph-root]",
         "repository_name": summary.repository_name, "graph_key_version": GRAPH_KEY_VERSION,
         "storage_model": "canonical", "project": graph_id,
         "counts": {name: getattr(summary, name) for name in (

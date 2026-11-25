@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.ops.config import OpsConfig
 from common_lore_index.ops.readback import (
     execute_ops_json_readback as default_execute_ops_json_readback,
@@ -190,7 +190,7 @@ def search_payload(
         has_more = True
         results = results[:safe_limit]
     payload = {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "graph": dependencies.graph_payload(

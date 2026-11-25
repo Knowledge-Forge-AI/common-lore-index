@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.server._mcp_ops_tools import ops_payload
 from common_lore_index.server._navigation_groups import group_page
 from common_lore_index.server._ops_search import validate_query
@@ -58,7 +58,7 @@ def navigation_search_payload(
     scan = target.stores.investigation_store().navigation_search(selection.graph_id, request)
     page = group_page(scan, request, selection.path_markers)
     return {
-        "server": "repomap-kg", "version": __version__, "read_only": True,
+        "server": DISTRIBUTION_NAME, "version": __version__, "read_only": True,
         "schema": "repomap.navigation_search", "schema_version": 1,
         "graph": graph_payload(selection.graph, database=target.stores.storage_label(selection)),
         "repository_identity": selection.repository_identity, "graph_key_version": 1,

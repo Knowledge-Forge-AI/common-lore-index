@@ -134,7 +134,7 @@ def _run_proof(tmp_path: Path, postgres, feed_db) -> None:
     assert domain_snapshot(publication) == before
 
     unbounded = session.structured(921)
-    assert unbounded["server"] == "repomap-kg"
+    assert unbounded["server"] == "common-lore-index"
     assert unbounded["read_only"] is True
     assert unbounded["graph"]["graph_id"] == "host-mixed"
     assert unbounded["result"]["center"]["canonical_key"] == node_id

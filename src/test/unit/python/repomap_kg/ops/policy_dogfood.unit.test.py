@@ -103,6 +103,7 @@ class OpsPolicyDogfoodUnitTests(unittest.TestCase):
             )
 
         self.assertEqual(payload["command"], "policy-dogfood")
+        self.assertEqual(payload["server"], "common-lore-index")
         self.assertTrue(payload["read_only"])
         self.assertEqual(payload["graph"]["graph_id"], "codex-vc")
         self.assertEqual(payload["graph"]["privacy"], "private-ops")

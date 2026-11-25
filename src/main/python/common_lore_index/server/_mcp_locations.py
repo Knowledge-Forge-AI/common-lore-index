@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.server._ops_records import McpOpsError
 from common_lore_index.server._ops_sanitization import (
     _public_location,
@@ -86,7 +86,7 @@ def node_locations_payload(
             result["reason"] = "historical_locations_only"
     result_fields = {**result, "locations": None, "historical_locations": None, "metadata_location": None}
     payload = {
-        "server": "repomap-kg", "version": __version__, "read_only": True,
+        "server": DISTRIBUTION_NAME, "version": __version__, "read_only": True,
         "graph": graph_payload(selection.graph, database=target.stores.storage_label(selection)),
         **sanitize_jsonable(result_fields, private_markers=markers),
         "canonical_key": sanitize_jsonable(canonical_key, private_markers=markers),

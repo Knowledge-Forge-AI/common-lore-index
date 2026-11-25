@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable, TypeGuard
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.graph._key_namespaces import _SEGMENT_COUNTS
 from common_lore_index.graph.keys import GRAPH_KEY_VERSION
 from common_lore_index.server._ops_records import McpOpsError
@@ -72,7 +72,7 @@ def project_summary_payload(
         ProjectSummaryQuery(graph_id=graph.id)
     )
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "graph": _graph_payload(target, dependencies),
@@ -111,7 +111,7 @@ def summary_payload(
     )
     summary = _SUMMARY_SERIALIZERS[family](record)
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "graph": _graph_payload(target, dependencies),
@@ -152,7 +152,7 @@ def neighborhood_payload(
     if _public_neighborhood_graph(graph_id, graph, target):
         _preserve_visible_endpoints(raw, result, target.selection.path_markers)
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "graph": graph,

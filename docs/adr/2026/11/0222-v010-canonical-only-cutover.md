@@ -36,6 +36,11 @@ closed receipts and release artifacts keep their original representation.
 Use forward-only migration where a selected current state identifier truly
 must change.
 
+Current MCP results and the CLI policy-dogfood report use
+"common-lore-index" for server provenance, matching MCP initialization.
+Historical captures retain their bytes. JSON keys, graph/source identities,
+tool dispatch names and read-only enforcement stay as defined in this slice.
+
 Separate the candidate source from deployment. Rehearse the supported
 installation and the one-time conversion in an owned disposable location.
 Use the existing migration journal and backup owners wherever they cover

@@ -28,6 +28,15 @@ DOC = doc_page_key("root/docs/guide.md")
 BINDING = graph_source_binding_id(GRAPH, "root")
 
 
+def captured_navigation_response(case: dict[str, object]) -> dict[str, object]:
+    """Project the ADR 0222 provenance field of the immutable navigation capture."""
+    expected = {key: value for key, value in case.items() if key not in {"tool", "arguments"}}
+    payload = expected.get("payload")
+    if isinstance(payload, dict) and payload.get("server") == "repomap-kg":
+        expected["payload"] = {**payload, "server": "common-lore-index"}
+    return expected
+
+
 def entry_response_differences(expected: object, actual: object, path: str = "") -> list[tuple[str, object, object]]:
     """Explain exact captured public-fixture mismatches without normalizing them."""
     if isinstance(expected, dict) and isinstance(actual, dict):

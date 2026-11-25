@@ -53,14 +53,14 @@ def test_sqlite_embedding_profiles_and_similar_nodes_disabled_refusals(tmp_path:
 
     p_disabled = structured(responses, 2)
     assert p_disabled["status"] == "capability_unavailable" and p_disabled["reason"] == "disabled"
-    assert p_disabled["server"] == "repomap-kg" and p_disabled["read_only"] is True
+    assert p_disabled["server"] == "common-lore-index" and p_disabled["read_only"] is True
 
     p_unsupported = structured(responses, 3)
     assert p_unsupported["status"] == "capability_unavailable" and p_unsupported["reason"] == "sqlite_unsupported"
 
     s_disabled = structured(responses, 4)
     assert s_disabled["status"] == "capability_unavailable" and s_disabled["reason"] == "disabled"
-    assert s_disabled["server"] == "repomap-kg" and s_disabled["read_only"] is True
+    assert s_disabled["server"] == "common-lore-index" and s_disabled["read_only"] is True
 
     s_unsupported = structured(responses, 5)
     assert s_unsupported["status"] == "capability_unavailable" and s_unsupported["reason"] == "sqlite_unsupported"

@@ -256,7 +256,7 @@ class McpServerSchemaJsonRpcUnitTests(McpServerTestSupport):
 
         with patch(
             "common_lore_index.server.mcp.repomap_status",
-            return_value={"server": "repomap-kg"},
+            return_value={"server": "common-lore-index"},
         ):
             response = handle_jsonrpc_message(
                 {
@@ -272,7 +272,7 @@ class McpServerSchemaJsonRpcUnitTests(McpServerTestSupport):
 
         self.assertIsNotNone(response)
         assert response is not None
-        self.assertEqual(response["result"]["structuredContent"]["server"], "repomap-kg")
+        self.assertEqual(response["result"]["structuredContent"]["server"], "common-lore-index")
 
         error = handle_jsonrpc_message(
             {
