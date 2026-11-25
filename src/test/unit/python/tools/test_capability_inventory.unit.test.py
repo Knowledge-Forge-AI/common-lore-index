@@ -45,7 +45,7 @@ def test_live():
         """\
 def test_cli_contract():
     runner(["podman", "network", "inspect", "owned"])
-    assert "REPOMAP_GO_HELPER" in env
+    assert "CLOE_GO_HELPER" in env
     assert "/proc/1/status"
     assert "ipcrm" in cleanup_command
 """,

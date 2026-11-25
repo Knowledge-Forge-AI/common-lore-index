@@ -220,7 +220,7 @@ class CliDiscoverGoIntegrationTests(CliIntegrationTestCase):
 
         with patch.dict(
             "os.environ",
-            {"REPOMAP_GO_HELPER": "/missing/repomap-go-extract"},
+            {"CLOE_GO_HELPER": "/missing/cloe-go-extract"},
         ):
             exit_code, stdout, stderr = self.run_module_entrypoint(
                 "discover", str(fixture), "--jsonl"

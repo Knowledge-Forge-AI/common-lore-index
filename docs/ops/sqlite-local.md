@@ -55,7 +55,7 @@ qualification:
   refuses before locking (see Commands).
 
 The wheel carries no Go helper. Go extraction from a wheel install needs
-`REPOMAP_GO_HELPER`.
+`CLOE_GO_HELPER`.
 
 ### Installed-wheel qualification
 

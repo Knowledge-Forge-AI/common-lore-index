@@ -193,7 +193,7 @@ class GoHelperCompositionIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             missing_path = Path(tmpdir) / "nonexistent-helper"
             with mock.patch.dict(
-                os.environ, {"REPOMAP_GO_HELPER": str(missing_path)}
+                os.environ, {"CLOE_GO_HELPER": str(missing_path)}
             ):
                 with self.assertRaises(GoHelperUnavailableError) as cm:
                     resolve_go_helper_command()

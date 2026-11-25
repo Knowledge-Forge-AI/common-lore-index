@@ -291,7 +291,7 @@ class ReportGeneratorUnitTests(ReportTestCase):
 
 
     def test_go_preflight_builds_for_pytest_suites_and_validates_unit(self):
-        helper = self.tmpdir / "repomap-go-extract"
+        helper = self.tmpdir / "cloe-go-extract"
         for suite, validation_calls in (("int", 0), ("unit", 1), ("staging", 0)):
             with self.subTest(suite=suite):
                 with (
@@ -305,7 +305,7 @@ class ReportGeneratorUnitTests(ReportTestCase):
                 ):
                     self.prepare_go_test_environment(suite)
                     self.assertEqual(
-                        os.environ["REPOMAP_GO_HELPER"],
+                        os.environ["CLOE_GO_HELPER"],
                         str(helper),
                     )
 

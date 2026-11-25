@@ -325,12 +325,12 @@ def test_discovery_failure_refuses_and_cleans_owned_child(tmp_path, monkeypatch,
 
 
 def test_child_environment_retains_test_authority_and_excludes_measurement():
-    source = {"PATH": "/bin", "REPOMAP_GO_HELPER": "/test/helper", "GOCOVERDIR": "/test/go-hits",
+    source = {"PATH": "/bin", "CLOE_GO_HELPER": "/test/helper", "GOCOVERDIR": "/test/go-hits",
               "COVERAGE_PROCESS_START": "/test/bootstrap", "PYTHONPATH": "/test/bootstrap",
               "PYTHONHASHSEED": "0", "PYTHONDONTWRITEBYTECODE": "1",
               "REPOMAP_TEST_PG_CONTAINER_PORT": "55433", "_REPOMAP_TEST_SANDBOX_TOKEN": "test-token",
-              "UNRELATED_SECRET": "never-passed"}
+              "REPOMAP_GO_HELPER": "/test/retired-helper", "UNRELATED_SECRET": "never-passed"}
     filtered = discovery.filter_child_environment(source)
-    assert filtered == {key: source[key] for key in ("PATH", "REPOMAP_GO_HELPER",
+    assert filtered == {key: source[key] for key in ("PATH", "CLOE_GO_HELPER",
                        "REPOMAP_TEST_PG_CONTAINER_PORT", "_REPOMAP_TEST_SANDBOX_TOKEN")}
     assert source["COVERAGE_PROCESS_START"] == "/test/bootstrap"

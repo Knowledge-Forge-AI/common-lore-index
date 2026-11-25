@@ -384,7 +384,7 @@ def test_scale20_disk_space_wrapper_under_child_coverage_session(
         encoding="utf-8",
     )
     monkeypatch.setenv("TMPDIR", str(tmp_path))
-    monkeypatch.setenv("REPOMAP_GO_HELPER", os.environ.get("REPOMAP_GO_HELPER") or str(resolve_go_helper_command()[0]))
+    monkeypatch.setenv("CLOE_GO_HELPER", os.environ.get("CLOE_GO_HELPER") or str(resolve_go_helper_command()[0]))
     monkeypatch.setattr(campaign, "__file__", str(wrapper))
     monkeypatch.setattr(campaign.shutil, "disk_usage", lambda _p: SimpleNamespace(free=free))
     session = ChildCoverageSession(coverage_module=coverage, scratch_dir=tmp_path / "session", source_root=campaign.REPO_ROOT, suite="staging")

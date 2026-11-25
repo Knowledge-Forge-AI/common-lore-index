@@ -54,7 +54,7 @@ class GoHelperBuildUnitTests(unittest.TestCase):
             self.assertEqual(len(commands), 1)
             command, kwargs = commands[0]
             self.assertEqual(command[:3], ("go", "build", "-trimpath"))
-            self.assertEqual(command[-1], "./cmd/repomap-go-extract")
+            self.assertEqual(command[-1], "./cmd/cloe-go-extract")
             self.assertEqual(kwargs["cwd"], REPO_ROOT / "src" / "main" / "go")
             self.assertTrue(kwargs["check"])
 

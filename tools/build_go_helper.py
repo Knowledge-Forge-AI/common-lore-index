@@ -56,7 +56,7 @@ def build_go_helper(
         "-trimpath",
         "-o",
         str(temporary),
-        "./cmd/repomap-go-extract",
+        "./cmd/cloe-go-extract",
     ])
     try:
         subprocess.run(

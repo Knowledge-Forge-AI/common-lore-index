@@ -36,7 +36,7 @@ DEFAULT_DISCOVERY_TIMEOUT_SECONDS = 120.0
 def filter_child_environment(environ: Mapping[str, str]) -> dict[str, str]:
     """Pass test-owned inputs, tool lookup and sandbox admission, not bootstrap."""
     exact = {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TZ", "TMPDIR", "TMP", "TEMP",
-             "REPOMAP_GO_HELPER", "DOCKER_HOST",
+             "CLOE_GO_HELPER", "DOCKER_HOST",
              "DOCKER_CONFIG", "DOCKER_CONTEXT", "PYTEST_DISABLE_PLUGIN_AUTOLOAD",
              "PYTEST_ADDOPTS", "PYTEST_PLUGINS"}
     projected = {key: value for key, value in environ.items()

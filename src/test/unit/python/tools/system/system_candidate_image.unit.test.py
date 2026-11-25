@@ -161,7 +161,7 @@ def test_build_and_verify_candidate_image_success(
     mock_container.logs.return_value = (
         b'{"python": "3.12.13", "psycopg": "3.2.12", "libpq": "170006", '
         b'"postgresql": "psql (PostgreSQL) 16.15", '
-        b'"go_helper": "/usr/local/bin/repomap-go-extract", "go_helper_protocol": "1"}\n'
+        b'"go_helper": "/usr/local/bin/cloe-go-extract", "go_helper_protocol": "1"}\n'
     )
     mock_go_container = MagicMock()
     mock_go_container.wait.return_value = {"StatusCode": 0}

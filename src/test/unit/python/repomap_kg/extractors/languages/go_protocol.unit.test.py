@@ -345,12 +345,12 @@ print(json.dumps({"protocol_version": 1, "type": "file_end", "sequence": 0, "pat
 class GoHelperResolutionUnitTests(unittest.TestCase):
     def test_resolves_explicit_absolute_helper(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            helper = Path(tmpdir) / "repomap-go-extract"
+            helper = Path(tmpdir) / "cloe-go-extract"
             helper.write_text("#!/bin/sh\nexit 0\n")
             helper.chmod(0o755)
 
             command = resolve_go_helper_command(
-                environment={"REPOMAP_GO_HELPER": str(helper)},
+                environment={"CLOE_GO_HELPER": str(helper)},
                 package_root=Path(tmpdir) / "unused",
                 target_platform="test-platform",
             )
@@ -361,7 +361,7 @@ class GoHelperResolutionUnitTests(unittest.TestCase):
     def test_resolves_only_packaged_platform_location(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             package_root = Path(tmpdir)
-            helper = package_root / "_bin" / "test-platform" / "repomap-go-extract"
+            helper = package_root / "_bin" / "test-platform" / "cloe-go-extract"
             helper.parent.mkdir(parents=True)
             helper.write_text("#!/bin/sh\nexit 0\n")
             helper.chmod(0o755)
@@ -379,10 +379,12 @@ class GoHelperResolutionUnitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             non_executable = Path(tmpdir) / "helper"
             non_executable.write_text("helper")
+            retired = Path(tmpdir) / "retired-override"
+            retired.touch(mode=0o700)
             environments: tuple[dict[str, str], ...] = (
-                {},
-                {"REPOMAP_GO_HELPER": "relative/helper"},
-                {"REPOMAP_GO_HELPER": str(non_executable)},
+                {}, {"REPOMAP_GO_HELPER": str(retired)},
+                {"CLOE_GO_HELPER": "relative/helper"},
+                {"CLOE_GO_HELPER": str(non_executable)},
             )
             for environment in environments:
                 with self.subTest(environment=environment):

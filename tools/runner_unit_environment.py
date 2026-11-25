@@ -43,7 +43,7 @@ def prepare_go_test_environment(
         )
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         raise RuntimeError(f"Go helper validation failed: {error}") from error
-    os.environ["REPOMAP_GO_HELPER"] = str(helper)
+    os.environ["CLOE_GO_HELPER"] = str(helper)
 
 
 @contextmanager
