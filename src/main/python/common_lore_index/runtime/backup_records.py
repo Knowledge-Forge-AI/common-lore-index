@@ -334,7 +334,7 @@ def safe_manifest_summary(manifest: Mapping[str, Any], backup_path: Path) -> dic
         blockers = sorted([*blockers, "extension-restore-protocol-unimplemented"])
     census = "complete" if version == 2 and isinstance(manifest.get("database_catalogs"), Mapping) else "unknown"
     restore_supported = bool(manifest.get("restore_supported", False)) and not blockers
-    hint = f"repomap-kg local db init --database {database} --from-dump {backup_id}" if (backup_id and database and restore_supported) else None
+    hint = f"cloe local db init --database {database} --from-dump {backup_id}" if (backup_id and database and restore_supported) else None
     return {
         "backup_format_version": version, "backup_id": backup_id, "timestamp": manifest.get("timestamp"),
         "backup_kind": manifest.get("backup_kind"), "database": database,
@@ -354,4 +354,4 @@ def bounded_sorted_union(groups: Iterable[Sequence[str]]) -> tuple[str, ...]:
 
 def restore_hint(plan: LocalDbBackupPlan) -> str:
     database = plan.database or "<database>"
-    return f"repomap-kg local db init --database {database} --from-dump {plan.backup_id}"
+    return f"cloe local db init --database {database} --from-dump {plan.backup_id}"

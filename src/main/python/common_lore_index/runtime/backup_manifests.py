@@ -285,7 +285,7 @@ def render_restore_doc(manifest: Mapping[str, Any]) -> str:
         "## Future Restore Command\n\n"
         "The intended future command shape is:\n\n"
         "```sh\n"
-        f"repomap-kg local db init --database {database} --from-dump <backup-dir>\n"
+        f"cloe local db init --database {database} --from-dump <backup-dir>\n"
         "```\n\n"
         "No passwords are stored in this restore note.\n"
     )

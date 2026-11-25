@@ -127,7 +127,7 @@ def _probe(pre: Prerequisites, checkout: Path, interpreter: str, platform: str, 
         shutil.rmtree(scratch, ignore_errors=True)
     result = record.get("result") or {}
     source = (checkout / "src" / "main" / "python").resolve()
-    inside = bool(result.get("repomap_kg_file")) and Path(result["repomap_kg_file"]).resolve().is_relative_to(source)
+    inside = bool(result.get("common_lore_index_file")) and Path(result["common_lore_index_file"]).resolve().is_relative_to(source)
     pre.add("console-imports", bool(record.get("ok")) and inside, probe=record,
             note="prerequisite probe with the child environment; a missing import is a prerequisite refusal, "
                  "never an automatic installation")

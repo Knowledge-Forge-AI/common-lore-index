@@ -17,7 +17,7 @@ from installed_experience_rules import (
 
 PURE_NORMAL = {"base-stdlib": 2, "base-dynload": 1, "env-purelib": 1, "owned-cwd": 1}
 PURE_ISOLATED = {"base-stdlib": 2, "base-dynload": 1, "env-purelib": 1}
-MODULES = {"common_lore_index": "env-purelib", "repomap_kg": "env-purelib", "typing_extensions": "env-purelib"}
+MODULES = {"common_lore_index": "env-purelib", "repomap_kg": "absent", "typing_extensions": "env-purelib"}
 
 
 def test_catalog_shape_owner_order_and_bounds() -> None:
@@ -40,7 +40,7 @@ def test_catalog_shape_owner_order_and_bounds() -> None:
 
 def test_declared_negatives_are_refusal_rows() -> None:
     refusals = {row.id for row in RECIPE if row.expectation == "refusal"}
-    assert refusals == {"A05", "A06", "A07", "L10", "L11", "R07"}
+    assert refusals == {"A05", "A06", "A07", "L10", "L11", "M03", "M05", "R07"}
     m06 = next(row for row in RECIPE if row.id == "M06")
     assert dict(m06.expected)["malformed_code"] == "-32700"
 

@@ -90,7 +90,7 @@ def test_migration_intent_requires_the_incumbent_binding() -> None:
 
 
 def test_every_intent_fits_the_sixteen_kibibyte_bound() -> None:
-    values: dict[str, dict[str, Any]] = {"L00": {"distributions":"x", "graph_migrations":1, "control_migrations":1}, "L01": {"cloe_stdout": "c\n", "long_stdout": "l\n", "legacy_stdout": "r\n"},
+    values: dict[str, dict[str, Any]] = {"L00": {"distributions":"x", "graph_migrations":1, "control_migrations":1}, "L01": {"cloe_stdout": "c\n", "long_stdout": "l\n"},
               "L05": {"code_line": 15}}
     assert len(owner_intent("local", PREP, values, fixture_digest="4" * 64, candidate_census="5" * 64,
                             python="3.13.12", platform="x86_64")) <= MAX_INTENT_BYTES

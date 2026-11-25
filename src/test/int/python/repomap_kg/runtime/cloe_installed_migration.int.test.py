@@ -1,8 +1,7 @@
 """Installed configuration migration apply, rollback and finalize (rows R01-R08).
 
 The homes live under ``owned homes/<name>`` (paths with spaces). Apply and
-finalize run through ``common_lore_index.ops.config_migration`` and rollback
-through the finite ``repomap_kg.ops.config_migration`` facade, each in an
+finalize and rollback run through the canonical API, each in an
 installed ``python -c`` probe with the home supplied as ``argv[1]``. The
 incumbent wheel's own command checks the legacy home where it supports it.
 """
@@ -35,10 +34,9 @@ from repomap_test_support.installed_experience_witnesses import (
 OUT, FS, MCP = "child-stdout", "filesystem", "mcp-reply"
 MIGRATION_PROBE = """import json, sys
 from common_lore_index.ops import config_migration as current
-from repomap_kg.ops import config_migration as legacy
 operations = {'apply': current.apply_cloe_config_migration,
               'finalize': current.finalize_cloe_config_migration,
-              'rollback': legacy.rollback_cloe_config_migration}
+              'rollback': current.rollback_cloe_config_migration}
 options = {'dry': {'dry_run': True}, 'confirmed': {'confirmed': True}, 'none': {}}
 home = None if sys.argv[1] == '-' else sys.argv[1]
 print(json.dumps(operations[sys.argv[3]](home, **options[sys.argv[2]]), sort_keys=True))

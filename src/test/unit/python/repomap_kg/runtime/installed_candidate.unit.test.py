@@ -23,7 +23,7 @@ dependencies = ["typing-extensions==4.16.0"]
 
 [project.scripts]
 cloe = "common_lore_index.entrypoints:cloe_main"
-repomap-kg = "common_lore_index.entrypoints:legacy_main"
+common-lore-index = "common_lore_index.entrypoints:long_main"
 
 [tool.setuptools.data-files]
 "share/common-lore-index/rdbms" = ["src/main/resources/rdbms/changelog.yaml"]
@@ -93,9 +93,7 @@ def test_expected_inventory_is_derived_from_owners_alone(tmp_path: Path) -> None
     assert "common_lore_index/cli/main.py" in expected
     assert "common_lore_index/third_party_licenses/a.json" in expected
     assert not any("__pycache__" in name for name in expected)
-    assert {name for name in expected if name.startswith("repomap_kg/")} == {
-        "repomap_kg/" + leaf for leaf in ("__init__.py", "__main__.py", "ops/__init__.py",
-                                          "ops/config_migration.py", "server/__init__.py", "server/mcp.py")}
+    assert not any(name.startswith("repomap_kg/") for name in expected)
     data = "common_lore_index-0.0.4.data/data/share/common-lore-index/rdbms"
     assert f"{data}/changelog.yaml" in expected and f"{data}/2026/06/01.sql" in expected
     assert not any(name.endswith("02.sql") for name in expected)
@@ -107,7 +105,7 @@ def test_expected_inventory_is_derived_from_owners_alone(tmp_path: Path) -> None
 def test_source_entry_points_and_requirement(tmp_path: Path) -> None:
     root = _tree(tmp_path)
     assert expected_entry_points(root) == ["cloe=common_lore_index.entrypoints:cloe_main",
-                                           "repomap-kg=common_lore_index.entrypoints:legacy_main"]
+                                           "common-lore-index=common_lore_index.entrypoints:long_main"]
     assert expected_requires(root) == ["typing-extensions==4.16.0"]
     assert rows_sha256(["a"]) != rows_sha256(["b"])
 

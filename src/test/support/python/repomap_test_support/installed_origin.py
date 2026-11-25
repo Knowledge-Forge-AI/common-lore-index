@@ -31,7 +31,7 @@ def origin(name):
 def triples(items):
     rows = [[i.relative_path, i.changeset_id, i.checksum] for i in items]
     return hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest(), len(rows)
-import common_lore_index, repomap_kg, typing_extensions
+import common_lore_index, typing_extensions
 from common_lore_index.storage import default_rdbms_root, discover_migrations
 graph_sha, graph_count = triples(discover_migrations())
 control_root = os.path.join(os.path.dirname(str(default_rdbms_root())), 'coordinator-rdbms')
@@ -47,7 +47,7 @@ if importlib.util.find_spec('psycopg') is not None:
 print(json.dumps({
     'prefix': sys.prefix, 'base_prefix': sys.base_prefix, 'path': list(sys.path),
     'no_user_site': bool(sys.flags.no_user_site), 'isolated': bool(sys.flags.isolated),
-    'modules': {'common_lore_index': common_lore_index.__file__, 'repomap_kg': repomap_kg.__file__,
+    'modules': {'common_lore_index': common_lore_index.__file__, 'repomap_kg': origin('repomap_kg'),
                 'typing_extensions': typing_extensions.__file__},
     'resource_root': str(default_rdbms_root()),
     'graph_migrations': graph_count, 'control_migrations': control_count,
@@ -143,7 +143,7 @@ def observe_origin(
                         all(payload["absent"].values()))
 
 
-def closure(env_class: str, normal: OriginRecord, isolated: OriginRecord) -> bool:
+def closure(env_class: str, normal: OriginRecord, isolated: OriginRecord, *, legacy_facade: bool = False) -> bool:
     """Section 6 for both probe runs, judged by the shared tool rules."""
     if not (normal.ok and isolated.ok):
         return False
@@ -153,7 +153,8 @@ def closure(env_class: str, normal: OriginRecord, isolated: OriginRecord) -> boo
             or normal.absent_families != isolated.absent_families):
         return False
     return closure_holds(env_class, normal.path_counts, isolated.path_counts, isolated.module_origins,
-                         isolated.resource_root, isolated.customize, isolated.absent_families)
+                         isolated.resource_root, isolated.customize, isolated.absent_families,
+                         legacy_facade=legacy_facade)
 
 
 def checkout_refusal(env_class: str, record: OriginRecord) -> str | None:

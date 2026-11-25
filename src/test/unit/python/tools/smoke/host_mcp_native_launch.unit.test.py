@@ -216,7 +216,7 @@ def test_import_probe_records_success_and_refusal_without_installing(layout: Chi
 
     def runner(argv, **kwargs):
         seen.append((tuple(argv), kwargs["env"], kwargs["cwd"]))
-        stdout = json.dumps({"repomap_kg_file": "/c/src/main/python/common_lore_index/__init__.py", "psycopg": "3.2"})
+        stdout = json.dumps({"common_lore_index_file": "/c/src/main/python/common_lore_index/__init__.py", "psycopg": "3.2"})
         return subprocess.CompletedProcess(argv, 0, stdout + "\n", "")
 
     ok = import_probe("/c/.venv/bin/python", layout, env, runner=runner)

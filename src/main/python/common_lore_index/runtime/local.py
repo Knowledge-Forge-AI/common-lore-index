@@ -285,7 +285,7 @@ def query_local_runtime_status(
     if not plan.compose_file.exists():
         diagnostics.append(LocalRuntimeDiagnostic(
             "warning", "runtime-files-missing", str(plan.compose_file),
-            "runtime files are missing; run repomap-kg local setup",
+            "runtime files are missing; run cloe local setup",
         ))
     if check_containers:
         runtime_available = shutil.which(plan.container_runtime) is not None

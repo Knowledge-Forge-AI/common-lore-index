@@ -24,7 +24,7 @@ def test_cli_wrapper_preserves_bootstrap_and_arguments(tmp_path, inherited):
         calls.append(command)
         return completed(command)
     sandbox_owner._prepare_workspace_and_identity(fake_runner, "8" * 64)
-    probe = next(c[-1] for c in calls if "/sandbox-scratch/bin/repomap-kg" in c[-1])
+    probe = next(c[-1] for c in calls if "/sandbox-scratch/bin/cloe" in c[-1])
     write = next(n for n in ast.walk(ast.parse(probe)) if isinstance(n, ast.Call)
                  and isinstance(n.func, ast.Attribute) and n.func.attr == "write_text")
     wrapper = tmp_path / "repomap-kg"

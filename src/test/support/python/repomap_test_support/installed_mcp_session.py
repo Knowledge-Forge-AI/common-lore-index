@@ -42,14 +42,8 @@ def result_digest(result: Any) -> str:
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
 
-def stderr_class(text: str, *, module_notice: str, command_notice: str) -> str:
-    if text == "":
-        return "empty"
-    if text == module_notice + "\n":
-        return "legacy-module-notice"
-    if text == command_notice + "\n":
-        return "legacy-command-notice"
-    return "other"
+def stderr_class(text: str) -> str:
+    return "other" if text else "empty"
 
 
 @dataclass

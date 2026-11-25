@@ -15,8 +15,6 @@ from repomap_test_support.installed_mcp_session import (
 )
 from repomap_test_support.installed_mcp_session import _hint_path, _member
 
-MODULE_NOTICE = "warning: legacy-module: example"
-COMMAND_NOTICE = "warning: legacy-command: example"
 
 
 def _session() -> McpSession:
@@ -201,11 +199,8 @@ def test_reply_count_is_bounded() -> None:
 
 
 def test_stderr_classes_and_canonical_digest() -> None:
-    kwargs = {"module_notice": MODULE_NOTICE, "command_notice": COMMAND_NOTICE}
-    assert stderr_class("", **kwargs) == "empty"
-    assert stderr_class(MODULE_NOTICE + "\n", **kwargs) == "legacy-module-notice"
-    assert stderr_class(COMMAND_NOTICE + "\n", **kwargs) == "legacy-command-notice"
-    assert stderr_class(COMMAND_NOTICE + "\nTraceback\n", **kwargs) == "other"
+    assert stderr_class("") == "empty"
+    assert stderr_class("diagnostic\n") == "other"
     assert result_digest({"b": 1, "a": "é"}) == result_digest({"a": "é", "b": 1})
 
 

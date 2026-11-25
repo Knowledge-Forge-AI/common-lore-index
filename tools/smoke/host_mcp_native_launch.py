@@ -31,7 +31,7 @@ _TOPOLOGY_MARKERS = ("docker", "Postgres container")
 PROBE_SOURCE = (
     "import json, platform, sys\n"
     "import common_lore_index, psycopg\n"
-    "print(json.dumps({'repomap_kg_file': common_lore_index.__file__, 'psycopg': psycopg.__version__,\n"
+    "print(json.dumps({'common_lore_index_file': common_lore_index.__file__, 'psycopg': psycopg.__version__,\n"
     "  'python': sys.version.split()[0], 'executable': sys.executable, 'machine': platform.machine(),\n"
     "  'platform': sys.platform}))\n"
 )

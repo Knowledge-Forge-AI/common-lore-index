@@ -30,10 +30,10 @@ def _digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def _installed_digest(env: InstalledEnvironment, wheel: BuiltWheel) -> str:
+def _installed_digest(env: InstalledEnvironment, wheel: BuiltWheel, *, legacy_facade: bool = False) -> str:
     normal = observe_origin(env, ROOT, isolated=False)
     isolated = observe_origin(env, ROOT, isolated=True)
-    assert closure("pure-local", normal, isolated)
+    assert closure("pure-local", normal, isolated, legacy_facade=legacy_facade)
     return installed_graph_parser_digest(wheel, env.purelib)
 
 
@@ -75,7 +75,7 @@ def test_released_local_home_upgrade_and_backup_recovery(
     previous = pure_environment(tmp_path / "released environment", released)
     current = pure_environment(tmp_path / "candidate environment", candidate)
     assert wheel_inventory(candidate.wheel).record_valid
-    assert _installed_digest(previous, released) != _installed_digest(current, candidate)
+    assert _installed_digest(previous, released, legacy_facade=True) != _installed_digest(current, candidate)
     assert released.input_sha256 != candidate.input_sha256
 
     material = write_tiny_material(tmp_path / "public material")
@@ -129,7 +129,7 @@ def test_preview005_predecessor_preserves_source_blind_local_recovery(
     assert (preview.input_sha256, preview.input_count) == PREVIEW005_PACKAGE_INPUTS
     assert wheel_inventory(preview.wheel).record_valid
     installed = pure_environment(tmp_path / "preview005 environment", preview)
-    assert _installed_digest(installed, preview) == PREVIEW005_GRAPH_PARSER_SHA256
+    assert _installed_digest(installed, preview, legacy_facade=True) == PREVIEW005_GRAPH_PARSER_SHA256
 
     material = write_tiny_material(tmp_path / "public material")
     home = tiny_home(tmp_path / "preview005 home", material, config_name=PREVIEW005_BASE_CONFIG)

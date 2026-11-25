@@ -6247,6 +6247,73 @@
       "source_commit": "0b0fe598b1f38868754a6ee5c34b54b054bf21d4",
       "source_manifest_sha256": "935a93401167c5758576dda56d3929e9fd10c05058a8ac2462c177cf861b2efd",
       "status_path": "tools/ci/cloe-product256-read2-exit.md"
+    },
+    {
+      "changes": [
+        {
+          "new": null,
+          "old": {
+            "module": "repomap_kg",
+            "ownership_class": "python_retained",
+            "path": "src/main/python/repomap_kg/__init__.py",
+            "tier": "T1-future"
+          }
+        },
+        {
+          "new": null,
+          "old": {
+            "module": "repomap_kg.__main__",
+            "ownership_class": "python_retained",
+            "path": "src/main/python/repomap_kg/__main__.py",
+            "tier": "T1-future"
+          }
+        },
+        {
+          "new": null,
+          "old": {
+            "module": "repomap_kg.ops",
+            "ownership_class": "python_retained",
+            "path": "src/main/python/repomap_kg/ops/__init__.py",
+            "tier": "T1-future"
+          }
+        },
+        {
+          "new": null,
+          "old": {
+            "module": "repomap_kg.ops.config_migration",
+            "ownership_class": "python_retained",
+            "path": "src/main/python/repomap_kg/ops/config_migration.py",
+            "tier": "T1-future"
+          }
+        },
+        {
+          "new": null,
+          "old": {
+            "module": "repomap_kg.server",
+            "ownership_class": "python_retained",
+            "path": "src/main/python/repomap_kg/server/__init__.py",
+            "tier": "T1-future"
+          }
+        },
+        {
+          "new": null,
+          "old": {
+            "module": "repomap_kg.server.mcp",
+            "ownership_class": "python_retained",
+            "path": "src/main/python/repomap_kg/server/mcp.py",
+            "tier": "T1-future"
+          }
+        }
+      ],
+      "new_ownership_manifest_sha256": "703963f361985f9f7c7d86fe77992a54e89899b95be0575ece6268cfc73a4379",
+      "new_selected_set_sha256": "8d3f965cfc778c96bb71f587eac9e065465dadaccf3977ad99a3381d84ac959e",
+      "old_ownership_manifest_sha256": "fcf53151c8c4e2703f7da60902b60e45b29522d34c922a26c4f689cb5c49391c",
+      "old_selected_set_sha256": "ab9d36c8d9c0957d555b5282cbff4aa85ab2b3ef42ab6981372a26b0fa30bedc",
+      "phase": "CLOE-RC010-M1F",
+      "reason": "Retire exactly six compatibility-only module owners under ADR 0222.",
+      "source_commit": "b806aad8545a7db15b3337753be755885b86e9e7",
+      "source_manifest_sha256": "fcf53151c8c4e2703f7da60902b60e45b29522d34c922a26c4f689cb5c49391c",
+      "status_path": "tools/ci/cloe-rc010-package-exit.md"
     }
   ],
   "schema": "repomap-retained-python-scope-transitions-v2"

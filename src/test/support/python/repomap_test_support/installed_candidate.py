@@ -36,7 +36,7 @@ from runner_coverage_execution import launch_observed_process, prepare_child_cov
 
 from installed_experience_pins import (
     CANDIDATE_INPUT_FILES, CANDIDATE_INPUT_TREES, CANDIDATE_VERSION, CANDIDATE_WHEEL_PREFIX,
-    INCUMBENT_COMMIT, INCUMBENT_WHEEL_PREFIX, LEGACY_FACADE, PREVIEW005_PACKAGE_INPUTS,
+    INCUMBENT_COMMIT, INCUMBENT_WHEEL_PREFIX, PREVIEW005_PACKAGE_INPUTS,
     PREVIEW005_SOURCE_COMMIT, RELEASED_CLOE_COMMIT, RELEASED_CLOE_INPUT_PATHS,
     RELEASED_CLOE_WHEEL_PREFIX, SETUPTOOLS_DEFAULT_LICENSE_PATTERNS,
 )
@@ -245,7 +245,6 @@ def expected_inventory(root: Path = ROOT, listed: Sequence[str] | None = None) -
     expected = {"common_lore_index/" + name[len(package):] for name in names
                 if name.startswith(package) and "/__pycache__/" not in name
                 and not name.endswith(".pyc")}
-    expected |= {"repomap_kg/" + suffix for suffix in LEGACY_FACADE}
     for target, patterns in _pyproject(root)["tool"]["setuptools"]["data-files"].items():
         for pattern in patterns:
             for name in names:

@@ -190,7 +190,7 @@ def test_released_provisioned_server_upgrade(
     for env in (old, new):
         normal = observe_origin(env, ROOT, isolated=False)
         isolated = observe_origin(env, ROOT, isolated=True)
-        assert closure("provisioned-server", normal, isolated)
+        assert closure("provisioned-server", normal, isolated, legacy_facade=env is old)
         driver = (isolated.payload or {}).get("driver") or {}
         assert driver.get("impl") == PSYCOPG_IMPL and driver.get("version") == PSYCOPG_VERSION
         assert classify(driver.get("file"), env, ROOT) == "system-site"

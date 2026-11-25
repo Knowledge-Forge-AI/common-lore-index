@@ -135,12 +135,12 @@ class HostMcpHarness:
 
     @property
     def console_script(self) -> Path:
-        script = Path(sys.executable).with_name("repomap-kg")
+        script = Path(sys.executable).with_name("cloe")
         if script.is_file():
             return script
-        provisioned = shutil.which("repomap-kg")
+        provisioned = shutil.which("cloe")
         if provisioned is None:
-            raise AssertionError(f"repomap-kg console script is missing: {script}")
+            raise AssertionError(f"cloe console script is missing: {script}")
         return Path(provisioned)
 
     def environment(self, extra: Mapping[str, str] | None = None) -> dict[str, str]:

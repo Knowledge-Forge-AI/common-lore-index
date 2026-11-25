@@ -40003,60 +40003,6 @@
     },
     {
       "confidence": 0.95,
-      "governing_profile": "retained_python_ratchets",
-      "maintained_executable": true,
-      "path": "src/main/python/repomap_kg/__init__.py",
-      "rationale": "ADR0123 finite namespace compatibility and installed ownership proof; zero-new-debt admission.",
-      "root": "product",
-      "status": "retained_ratchet"
-    },
-    {
-      "confidence": 0.95,
-      "governing_profile": "retained_python_ratchets",
-      "maintained_executable": true,
-      "path": "src/main/python/repomap_kg/__main__.py",
-      "rationale": "ADR0123 finite namespace compatibility and installed ownership proof; zero-new-debt admission.",
-      "root": "product",
-      "status": "retained_ratchet"
-    },
-    {
-      "confidence": 0.95,
-      "governing_profile": "retained_python_ratchets",
-      "maintained_executable": true,
-      "path": "src/main/python/repomap_kg/ops/__init__.py",
-      "rationale": "ADR0123 finite namespace compatibility and installed ownership proof; zero-new-debt admission.",
-      "root": "product",
-      "status": "retained_ratchet"
-    },
-    {
-      "confidence": 0.95,
-      "governing_profile": "retained_python_ratchets",
-      "maintained_executable": true,
-      "path": "src/main/python/repomap_kg/ops/config_migration.py",
-      "rationale": "ADR0123 finite namespace compatibility and installed ownership proof; zero-new-debt admission.",
-      "root": "product",
-      "status": "retained_ratchet"
-    },
-    {
-      "confidence": 0.95,
-      "governing_profile": "retained_python_ratchets",
-      "maintained_executable": true,
-      "path": "src/main/python/repomap_kg/server/__init__.py",
-      "rationale": "ADR0123 finite namespace compatibility and installed ownership proof; zero-new-debt admission.",
-      "root": "product",
-      "status": "retained_ratchet"
-    },
-    {
-      "confidence": 0.95,
-      "governing_profile": "retained_python_ratchets",
-      "maintained_executable": true,
-      "path": "src/main/python/repomap_kg/server/mcp.py",
-      "rationale": "ADR0123 finite namespace compatibility and installed ownership proof; zero-new-debt admission.",
-      "root": "product",
-      "status": "retained_ratchet"
-    },
-    {
-      "confidence": 0.95,
       "governing_profile": "clean_conftest",
       "maintained_executable": true,
       "path": "src/test/conftest.py",

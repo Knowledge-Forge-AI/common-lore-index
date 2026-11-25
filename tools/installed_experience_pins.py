@@ -42,11 +42,7 @@ PREVIEW005_BASE_CONFIG = "repomap.cloe.toml"
 RELEASED_CLOE_INPUT_PATHS = (
     "README.md", "LICENSE", "NOTICE", "pyproject.toml", "src/main/python", "src/main/resources",
 )
-CONSOLE_SCRIPTS: tuple[str, ...] = ("cloe", "common-lore-index", "repomap-kg")
-LEGACY_FACADE: tuple[str, ...] = (
-    "__init__.py", "__main__.py", "ops/__init__.py", "ops/config_migration.py",
-    "server/__init__.py", "server/mcp.py",
-)
+CONSOLE_SCRIPTS: tuple[str, ...] = ("cloe", "common-lore-index")
 
 # Candidate input census roots (cutover rule extended by root NOTICE).
 CANDIDATE_INPUT_FILES: tuple[str, ...] = ("README.md", "LICENSE", "NOTICE", "pyproject.toml")
@@ -80,7 +76,7 @@ __all__ = [
     "ABSENT_FAMILIES", "CANDIDATE_DISTRIBUTION", "CANDIDATE_INPUT_FILES", "CANDIDATE_INPUT_TREES",
     "CANDIDATE_VERSION", "CANDIDATE_WHEEL_PREFIX", "CHILD_DEADLINE_SECONDS", "CODE_KIND",
     "CODE_PATH", "CODE_QUERY", "CONSOLE_SCRIPTS", "DOCS_PATH", "DOCS_QUERY", "GRAPH_ID",
-    "INCUMBENT_COMMIT", "INCUMBENT_DISTRIBUTION", "INCUMBENT_WHEEL_PREFIX", "LEGACY_FACADE",
+    "INCUMBENT_COMMIT", "INCUMBENT_DISTRIBUTION", "INCUMBENT_WHEEL_PREFIX",
     "MCP_REPLY_LIMIT", "MCP_STDERR_LIMIT", "MCP_STDOUT_LIMIT", "MESSAGE_PATH", "MESSAGE_SHA256", "PIP_VERSION",
     "PREVIEW005_BASE_CONFIG", "PREVIEW005_GRAPH_PARSER_SHA256", "PREVIEW005_PACKAGE_INPUTS",
     "PREVIEW005_SOURCE_COMMIT",

@@ -17,12 +17,10 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from common_lore_index.entrypoints import LEGACY_COMMAND_NOTICE
 from common_lore_index.graph.multi_source import graph_source_binding_id
 from common_lore_index.retrieval.context_contracts import DEFAULT_BUDGET_BYTES
 from common_lore_index.server._mcp_dispatch import MCP_PROTOCOL_VERSION
 from installed_experience_pins import CODE_KIND, GRAPH_ID
-from repomap_kg.server.mcp import LEGACY_MCP_NOTICE
 from repomap_test_support.installed_candidate import ROOT, candidate_wheel
 from repomap_test_support.installed_environment import ChildResult, run_child
 from repomap_test_support.installed_experience_driver import (
@@ -42,7 +40,7 @@ OUT, EXIT, FS, MCP, GUARD = "child-stdout", "child-exit", "filesystem", "mcp-rep
 
 
 def _stderr(result: ChildResult) -> str:
-    return stderr_class(result.stderr, module_notice=LEGACY_MCP_NOTICE, command_notice=LEGACY_COMMAND_NOTICE)
+    return stderr_class(result.stderr)
 
 
 def _absolute_strings(value: Any) -> list[str]:
@@ -115,7 +113,7 @@ def test_installed_local_workflow(tmp_path_factory, tmp_path: Path) -> None:
     scripts = project["scripts"]
     source = {"L00": origin_source_values(ROOT),
               "L01": {f"{key}_stdout": f"{name} {version}\n" for key, name in (
-                  ("cloe", "cloe"), ("long", "common-lore-index"), ("legacy", "repomap-kg"))},
+                  ("cloe", "cloe"), ("long", "common-lore-index"))},
               "L05": {"code_line": expect.code_line}}
     run = OwnerRun("local", intent_for("local", preparation(candidate), source))
     run.registry.own(owned)
@@ -130,7 +128,7 @@ def test_installed_local_workflow(tmp_path_factory, tmp_path: Path) -> None:
 
     def l01() -> Observed:
         facts: dict[str, tuple[Any, str]] = {}
-        for key, name in (("cloe", "cloe"), ("long", "common-lore-index"), ("legacy", "repomap-kg")):
+        for key, name in (("cloe", "cloe"), ("long", "common-lore-index")):
             result = run_child(env, (str(env.wrapper(name)), "--version"))
             if result.returncode != 0:
                 return Observed(exit=result.exit, failure_code="child-exit-nonzero")

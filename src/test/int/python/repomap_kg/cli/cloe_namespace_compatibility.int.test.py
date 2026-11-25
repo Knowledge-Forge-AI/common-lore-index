@@ -1,4 +1,4 @@
-"""ADR 0123 clean-process canonical and legacy launches, stdout integrity and read-only MCP stdio."""
+"""ADR 0222 clean-process command and module launches, stdout integrity and read-only MCP stdio."""
 from __future__ import annotations
 
 import json
@@ -10,17 +10,13 @@ from typing import Any
 import pytest
 
 from common_lore_index import PREFERRED_CLI, __version__
-from common_lore_index.entrypoints import LEGACY_COMMAND_NOTICE
 from common_lore_index.runtime.project_identity import PROJECT_IDENTITY
 from common_lore_index.server.mcp_schemas import tool_definitions
-from repomap_kg.server.mcp import LEGACY_MCP_NOTICE
 from repomap_test_support.cli_in_process import REPO_ROOT, module_process_environment
 from repomap_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
 from repomap_test_support.sqlite_local_harness import initialize
 from runner_coverage_observer import launch_observed_process
 
-LEGACY_LINE = LEGACY_COMMAND_NOTICE + "\n"
-MCP_LINE = LEGACY_MCP_NOTICE + "\n"
 CANONICAL_MODULE = "python -m common_lore_index"
 
 
@@ -29,26 +25,22 @@ def console_script(entry: str) -> list[str]:
     return [sys.executable, "-c", f"import sys\nfrom common_lore_index.entrypoints import {entry}\nsys.exit({entry}())"]
 
 
-# label -> (argv, explicit brand, exact compatibility stderr prefix)
-LAUNCHES: dict[str, tuple[list[str], str, str]] = {
-    CANONICAL_MODULE: ([sys.executable, "-m", "common_lore_index"], PREFERRED_CLI, ""),
-    "cloe": (console_script("cloe_main"), "cloe", ""),
-    "common-lore-index": (console_script("long_main"), "common-lore-index", ""),
-    "repomap-kg": (console_script("legacy_main"), "repomap-kg", LEGACY_LINE),
-    "python -m repomap_kg": ([sys.executable, "-m", "repomap_kg"], "repomap-kg", LEGACY_LINE),
-}
-MCP_MODULES: dict[str, tuple[list[str], str]] = {
-    "canonical": ([sys.executable, "-m", "common_lore_index.server.mcp"], ""),
-    "legacy": ([sys.executable, "-m", "repomap_kg.server.mcp"], MCP_LINE),
+LAUNCHES: dict[str, tuple[list[str], str]] = {
+    CANONICAL_MODULE: ([sys.executable, "-m", "common_lore_index"], PREFERRED_CLI),
+    "cloe": (console_script("cloe_main"), "cloe"),
+    "common-lore-index": (console_script("long_main"), "common-lore-index"),
 }
 MCP_REQUESTS = "".join(json.dumps(item) + "\n" for item in (
     initialize(1),
     {"jsonrpc": "2.0", "method": "notifications/initialized"},
     {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
-    {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "repomap_status", "arguments": {}}},
+    {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+     "params": {"name": "cloe_list_graphs", "arguments": {}}},
+    {"jsonrpc": "2.0", "id": 4, "method": "tools/call",
+     "params": {"name": "repomap_status", "arguments": {}}},
 ))
 DRIVER_IMPORT_PROBE = """
-import importlib, importlib.abc, json, sys
+import importlib.abc, json, sys
 attempts = []
 class Blocker(importlib.abc.MetaPathFinder):
     def find_spec(self, fullname, path, target=None):
@@ -58,26 +50,18 @@ class Blocker(importlib.abc.MetaPathFinder):
         return None
 sys.meta_path.insert(0, Blocker())
 hooks = (list(sys.meta_path), list(sys.path_hooks))
-import repomap_kg
-import repomap_kg.ops.config_migration as legacy_migration
-import repomap_kg.server.mcp as legacy_mcp
 import common_lore_index
 import common_lore_index.entrypoints
-import common_lore_index.ops.config_migration as canonical_migration
+import common_lore_index.ops.config_migration as migration
 names = ('apply_cloe_config_migration', 'rollback_cloe_config_migration', 'finalize_cloe_config_migration')
 watched = ('common_lore_index.cli', 'common_lore_index.cli.main', 'common_lore_index.server.mcp')
 print(json.dumps({
     'attempts': attempts,
-    'identical': [getattr(legacy_migration, name) is getattr(canonical_migration, name) for name in names],
-    'constants': [getattr(repomap_kg, name) is getattr(common_lore_index, name)
-                  for name in ('DISTRIBUTION_NAME', 'IMPORT_PACKAGE', 'PREFERRED_CLI', '__version__')],
     'hooks_unchanged': hooks == (list(sys.meta_path), list(sys.path_hooks)),
-    'legacy_loaded': sorted(name for name in sys.modules if name.split('.')[0] == 'repomap_kg'),
-    'aliases': sorted(name for name, module in sys.modules.items()
-                      if name.split('.')[0] == 'repomap_kg' and getattr(module, '__name__', None) != name),
+    'legacy_loaded': any(name.split('.')[0] == 'repomap_kg' for name in sys.modules),
     'canonical_loaded': sorted(name for name in watched if name in sys.modules),
     'drivers_loaded': sorted(name for name in sys.modules if name.split('.')[0].startswith('psycopg')),
-    'mcp_public': sorted(name for name in vars(legacy_mcp) if not name.startswith('_')),
+    'migration_routes': [callable(getattr(migration, name)) for name in names],
 }, sort_keys=True))
 """
 
@@ -112,43 +96,45 @@ def mcp_responses(stdout: str) -> dict[int, dict[str, Any]]:
     return {int(response["id"]): response for response in responses}
 
 
-def assert_mcp_wire(stdout: str) -> None:
+def assert_mcp_wire(stdout: str) -> dict[str, Any]:
     responses = mcp_responses(stdout)
-    assert sorted(responses) == [1, 2, 3]
-    assert responses[3]["result"]["isError"] is True
-    assert "unknown RepoMap MCP tool" in responses[3]["result"]["structuredContent"]["error"]
+    assert sorted(responses) == [1, 2, 3, 4]
+    retired = responses[4]["result"]
+    assert retired["isError"] is True
+    assert "unknown RepoMap MCP tool" in retired["structuredContent"]["error"]
     initialized = responses[1]["result"]
     assert isinstance(initialized, dict) and initialized["serverInfo"] == {"name": "common-lore-index", "version": __version__}
     listed = responses[2]["result"]
     assert isinstance(listed, dict)
     assert [tool["name"] for tool in listed["tools"]] == [tool["name"] for tool in tool_definitions()]
+    return responses[3]["result"]
 
 
 @pytest.mark.parametrize("label", sorted(LAUNCHES))
-def test_clean_process_help_is_explicitly_branded_with_stderr_only_notice(tmp_path: Path, label: str) -> None:
-    argv, prog, notice = LAUNCHES[label]
+def test_clean_process_help_is_explicitly_branded(tmp_path: Path, label: str) -> None:
+    argv, prog = LAUNCHES[label]
     env = disposable_environment(tmp_path / "user home")
     result = launch(argv, env, "--help")
     assert result.returncode == 0, result.stderr
     assert result.stdout.startswith(f"usage: {prog} ") and "RepoMap" not in result.stdout
-    assert result.stderr == notice
+    assert result.stderr == ""
     assert "deprecated" not in result.stdout and snapshot(tmp_path / "user home") == {}
 
 
 def test_clean_process_version_and_identity_stdout_are_identical_for_every_launch(tmp_path: Path) -> None:
     env = disposable_environment(tmp_path / "user home")
     observed: dict[str, dict[str, tuple[int, str, str]]] = {}
-    for label, (argv, _prog, _notice) in LAUNCHES.items():
+    for label, (argv, _prog) in LAUNCHES.items():
         observed[label] = {}
         for args in (("--version",), ("identity", "--json"), ("identity",)):
             result = launch(argv, env, *args)
             observed[label][" ".join(args)] = (result.returncode, result.stdout, result.stderr)
     canonical = observed[CANONICAL_MODULE]
-    for label, (_argv, _prog, notice) in LAUNCHES.items():
+    for label, (_argv, prog) in LAUNCHES.items():
         for command, (code, stdout, stderr) in observed[label].items():
-            expected = (0, f"{_prog} {__version__}\n") if command == "--version" else canonical[command][:2]
+            expected = (0, f"{prog} {__version__}\n") if command == "--version" else canonical[command][:2]
             assert (code, stdout) == expected, (label, command, stderr)
-            assert stderr == notice, (label, command)
+            assert stderr == "", (label, command)
     _code, version, _stderr = canonical["--version"]
     assert version.count("\n") == 1 and version.split()[-1] == __version__
     identity = json.loads(canonical["identity --json"][1])
@@ -156,77 +142,68 @@ def test_clean_process_version_and_identity_stdout_are_identical_for_every_launc
     assert snapshot(tmp_path / "user home") == {}
 
 
-def test_clean_process_legacy_imports_are_canonical_identities_without_drivers_or_hooks(tmp_path: Path) -> None:
+def test_canonical_imports_defer_drivers_and_have_no_legacy_alias(tmp_path: Path) -> None:
     env = disposable_environment(tmp_path / "user home")
     result = launch([sys.executable, "-c", DRIVER_IMPORT_PROBE], env)
     assert result.returncode == 0, result.stderr
     assert result.stderr == ""
-    value = json.loads(result.stdout)
-    assert value == {
-        "aliases": [],
-        "attempts": [],
-        "canonical_loaded": [],
-        "constants": [True, True, True, True],
-        "drivers_loaded": [],
-        "hooks_unchanged": True,
-        "identical": [True, True, True],
-        "legacy_loaded": ["repomap_kg", "repomap_kg.ops", "repomap_kg.ops.config_migration",
-                          "repomap_kg.server", "repomap_kg.server.mcp"],
-        "mcp_public": ["LEGACY_MCP_NOTICE", "annotations", "main", "sys"],
+    assert json.loads(result.stdout) == {
+        "attempts": [], "canonical_loaded": [], "drivers_loaded": [],
+        "hooks_unchanged": True, "legacy_loaded": False,
+        "migration_routes": [True, True, True],
     }
 
 
-def test_mcp_module_launches_share_initialization_and_wire_tool_names(tmp_path: Path) -> None:
-    env = disposable_environment(tmp_path / "user home")
-    outputs: dict[str, str] = {}
-    for label, (argv, notice) in MCP_MODULES.items():
-        result = launch(argv, env, input_text=MCP_REQUESTS)
-        assert result.returncode == 0, result.stderr
-        assert result.stderr == notice
-        assert_mcp_wire(result.stdout)
-        outputs[label] = result.stdout
-    assert outputs["legacy"] == outputs["canonical"]
-    assert snapshot(tmp_path / "user home") == {}
+def test_canonical_mcp_module_can_start_without_a_graph_home(tmp_path: Path) -> None:
+    home = tmp_path / "user home"
+    env = disposable_environment(home)
+    result = launch([sys.executable, "-m", "common_lore_index.server.mcp"], env, input_text=MCP_REQUESTS)
+    assert result.returncode == 0 and result.stderr == "", result.stderr
+    assert_mcp_wire(result.stdout)
+    assert snapshot(home) == {}
 
 
-def test_legacy_module_keeps_the_service_environment_boundary(tmp_path: Path) -> None:
+def test_canonical_module_keeps_the_service_environment_boundary(tmp_path: Path) -> None:
     env = disposable_environment(tmp_path / "user home")
     code = """import json,os,runpy,sys
 import common_lore_index.cli as cli
-def record(argv=None, *, prog):
+def record(argv=None, *, prog=None):
     print(json.dumps({'keys':sorted(os.environ), 'argv':argv, 'prog':prog}))
     return 0
 cli.main=record
 os.environ.clear()
 os.environ.update(LANG='C.UTF-8', DATABASE_PASSWORD='xxxxxxxxxxxxxxxx')
-sys.argv=['repomap_kg','ops','coordinator-serve','--repo-map-home','/placeholder/home','--service-package-environment','--json']
-runpy.run_module('repomap_kg',run_name='__main__')
+sys.argv=['common_lore_index','ops','coordinator-serve','--repo-map-home','/placeholder/home','--service-package-environment','--json']
+runpy.run_module('common_lore_index',run_name='__main__')
 """
     result = launch([sys.executable, "-c", code], env)
-    assert result.returncode == 0 and result.stderr == LEGACY_LINE
-    assert json.loads(result.stdout) == {"keys": ["LANG"], "argv": None, "prog": "repomap-kg"}
+    assert result.returncode == 0 and result.stderr == ""
+    assert json.loads(result.stdout) == {"keys": ["LANG"], "argv": None, "prog": None}
     assert "xxxxxxxxxxxxxxxx" not in result.stdout + result.stderr
 
 
-def test_mcp_serve_through_canonical_and_legacy_commands_is_read_only_and_identical(tmp_path: Path) -> None:
+def test_mcp_module_and_console_commands_share_read_only_stdio(tmp_path: Path) -> None:
     env = disposable_environment(tmp_path / "user home")
     home = tmp_path / "explicit home"
     write_sqlite_home(home, graph_toml("one", "/not-read/source"))
     home.chmod(0o700)
+    env["CLOE_HOME"] = str(home)
     before = snapshot(tmp_path)
-    observed: dict[str, subprocess.CompletedProcess[str]] = {}
-    for label in ("cloe", "repomap-kg", "python -m repomap_kg"):
-        argv, _prog, _notice = LAUNCHES[label]
-        observed[label] = launch(argv, env, "mcp", "serve", "--repo-map-home", str(home), input_text=MCP_REQUESTS)
-    canonical = observed["cloe"]
-    assert canonical.returncode == 0, canonical.stderr
-    assert_mcp_wire(canonical.stdout)
-    for label in ("repomap-kg", "python -m repomap_kg"):
-        legacy = observed[label]
-        assert (legacy.returncode, legacy.stdout) == (canonical.returncode, canonical.stdout), label
-        assert legacy.stderr == LEGACY_LINE + canonical.stderr, label
-    for result in observed.values():
-        assert str(home) not in result.stdout + result.stderr
+    entrances = (
+        ([sys.executable, "-m", "common_lore_index.server.mcp"], ()),
+        (console_script("cloe_main"), ("mcp", "serve", "--repo-map-home", str(home))),
+        (console_script("long_main"), ("mcp", "serve", "--repo-map-home", str(home))),
+    )
+    responses = []
+    for argv, args in entrances:
+        result = launch(argv, env, *args, input_text=MCP_REQUESTS)
+        assert result.returncode == 0 and result.stderr == "", result.stderr
+        graph_list = assert_mcp_wire(result.stdout)
+        assert graph_list.get("isError", False) is False
+        assert [graph["graph_id"] for graph in graph_list["structuredContent"]["graphs"]] == ["one"]
+        assert str(home) not in result.stdout
+        responses.append(result.stdout)
+    assert len(set(responses)) == 1
     assert snapshot(tmp_path) == before
 
 

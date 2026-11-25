@@ -145,17 +145,17 @@ These are the exact argument shapes exercised by the containerized loop owner
 # (`graph-database-schema-behind`) and never upgraded here (see Schema upgrade).
 # The database is built in a temporary sibling file and hard-linked into place
 # only when complete; an existing file is never replaced.
-repomap-kg ops sqlite-init --repo-map-home ~/.repo-map-local --graph example --json
+cloe ops sqlite-init --repo-map-home ~/.repo-map-local --graph example --json
 
 # Full refresh: capture sources with the portable worker, validate in the
 # parent, and publish one new accepted generation.
-repomap-kg ops refresh-graph --repo-map-home ~/.repo-map-local --graph example --json
+cloe ops refresh-graph --repo-map-home ~/.repo-map-local --graph example --json
 
 # A second full refresh publishes generation 2 (previous_run_id 1).
-repomap-kg ops refresh-graph --repo-map-home ~/.repo-map-local --graph example --json
+cloe ops refresh-graph --repo-map-home ~/.repo-map-local --graph example --json
 
 # Read-only stdio MCP over the accepted generations.
-repomap-kg mcp serve --repo-map-home ~/.repo-map-local
+cloe mcp serve --repo-map-home ~/.repo-map-local
 ```
 
 The ordinary operator workflow
@@ -165,22 +165,22 @@ The ordinary operator workflow
 # Validate the merged home: backend authority, graph registry, source bindings,
 # privacy and visibility, and the SQLite-only refusals. Reads no graph root and
 # opens no database.
-repomap-kg ops config-check --repo-map-home ~/.repo-map-local --json
+cloe ops config-check --repo-map-home ~/.repo-map-local --json
 
 # Same, plus a read-only readiness probe of every configured graph's database.
-repomap-kg ops config-check --repo-map-home ~/.repo-map-local --check-db --json
+cloe ops config-check --repo-map-home ~/.repo-map-local --check-db --json
 
 # Configured graph inventory in configuration order; --check-db adds per-graph
 # readiness from the same probe.
-repomap-kg ops graphs --repo-map-home ~/.repo-map-local [--check-db] --json
+cloe ops graphs --repo-map-home ~/.repo-map-local [--check-db] --json
 
 # Inspect one enabled graph's configured sources and excludes; no database,
 # worker or publication.
-repomap-kg ops refresh-preflight --repo-map-home ~/.repo-map-local --graph example --json
+cloe ops refresh-preflight --repo-map-home ~/.repo-map-local --graph example --json
 
 # Refresh every enabled graph, in configuration order, each as a separate direct
 # refresh-graph (own lock, reconciliation and publication).
-repomap-kg ops refresh-enabled --repo-map-home ~/.repo-map-local --json
+cloe ops refresh-enabled --repo-map-home ~/.repo-map-local --json
 ```
 
 `config-check` keeps the PostgreSQL envelope (`valid`, `service`, `graphs`,
@@ -295,11 +295,11 @@ before anything is touched.
 ```sh
 # Write a verified backup of one initialized graph (enabled or not) into a new
 # or empty directory. The directory is also the Local export format.
-repomap-kg ops sqlite-backup --repo-map-home ~/.repo-map-local --graph example \
+cloe ops sqlite-backup --repo-map-home ~/.repo-map-local --graph example \
   --output ~/repomap-backups/example-2026-09-29 --json
 
 # Restore a verified backup into an ABSENT graph database.
-repomap-kg ops sqlite-restore --repo-map-home ~/.repo-map-local --graph example \
+cloe ops sqlite-restore --repo-map-home ~/.repo-map-local --graph example \
   --backup ~/repomap-backups/example-2026-09-29 --json
 ```
 
@@ -454,7 +454,7 @@ a missing or extra object, `user_version` disagreeing with the ledger) is
 
 ```sh
 # Explicitly upgrade one older-schema graph, writing a verified backup first.
-repomap-kg ops sqlite-upgrade --repo-map-home ~/.repo-map-local --graph example \
+cloe ops sqlite-upgrade --repo-map-home ~/.repo-map-local --graph example \
   --backup-output ~/repomap-backups/example-pre-v2 --json
 ```
 
@@ -523,10 +523,10 @@ Owned by the containerized cleanup owner
 
 ```sh
 # Inventory one graph's stale Local state. Changes nothing (dry run).
-repomap-kg ops sqlite-cleanup --repo-map-home ~/.repo-map-local --graph example --json
+cloe ops sqlite-cleanup --repo-map-home ~/.repo-map-local --graph example --json
 
 # Remove only what is provably safe, then sync state/ and the home.
-repomap-kg ops sqlite-cleanup --repo-map-home ~/.repo-map-local --graph example --yes --json
+cloe ops sqlite-cleanup --repo-map-home ~/.repo-map-local --graph example --yes --json
 ```
 
 `sqlite-cleanup` is SQLite-only, source-blind and driver-free; a PostgreSQL

@@ -14,11 +14,9 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from common_lore_index.entrypoints import LEGACY_COMMAND_NOTICE
 from common_lore_index.server._mcp_dispatch import MCP_PROTOCOL_VERSION
 from common_lore_index.server.mcp_schemas import tool_definitions
 from installed_experience_pins import CODE_KIND, GRAPH_ID
-from repomap_kg.server.mcp import LEGACY_MCP_NOTICE
 from repomap_test_support.installed_candidate import ROOT, candidate_wheel
 from repomap_test_support.installed_environment import run_child
 from repomap_test_support.installed_experience_driver import (
@@ -35,22 +33,13 @@ from repomap_test_support.installed_experience_witnesses import origin_source_va
 OUT, MCP, FS = "child-stdout", "mcp-reply", "filesystem"
 
 
-def _line(text: str) -> str:
-    """The single stderr line, or ``other`` when stderr is not exactly one line."""
-    return text[:-1] if text.endswith("\n") and text.count("\n") == 1 else "other"
-
-
-def _klass(text: str) -> str:
-    return stderr_class(text, module_notice=LEGACY_MCP_NOTICE, command_notice=LEGACY_COMMAND_NOTICE)
-
-
 def _snapshot(home: Path, database: Path) -> tuple[str, list[str]]:
     attempts = home / "state" / "portable-publication" / "sqlite-local" / GRAPH_ID / "attempts"
     listing = sorted(os.listdir(attempts)) if attempts.is_dir() else []
     return hashlib.sha256(database.read_bytes()).hexdigest(), listing
 
 
-def test_installed_mcp_canonical_and_legacy_servers(tmp_path_factory, tmp_path: Path) -> None:
+def test_installed_mcp_canonical_launch_and_legacy_absence(tmp_path_factory, tmp_path: Path) -> None:
     candidate = candidate_wheel(tmp_path_factory)
     owned = tmp_path / "owned root"
     env = pure_environment(owned / "pure env", candidate)
@@ -58,14 +47,11 @@ def test_installed_mcp_canonical_and_legacy_servers(tmp_path_factory, tmp_path: 
     home = tiny_home(owned / "owned homes" / "mcp home", material, config_name=current_config_name())
     expect = expectations()
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
-    version = project["version"]
     scripts = project["scripts"]
     tools_sha = result_digest({"tools": tool_definitions()})
     source = {"M00": origin_source_values(ROOT),
               "M01": {"protocol_version": MCP_PROTOCOL_VERSION, "tools_sha256": tools_sha},
-              "M02": {"tools_sha256": tools_sha}, "M03": {"stderr_line": LEGACY_MCP_NOTICE},
-              "M04": {"stderr_line": LEGACY_COMMAND_NOTICE},
-              "M05": {"stdout": f"repomap-kg {version}\n", "stderr_line": LEGACY_COMMAND_NOTICE}}
+              "M02": {"tools_sha256": tools_sha}}
     run = OwnerRun("mcp", intent_for("mcp", preparation(candidate), source))
     run.registry.own(owned)
     run.step("M00", lambda: pure_local_origin_witness(env, ROOT, scripts))
@@ -95,31 +81,35 @@ def test_installed_mcp_canonical_and_legacy_servers(tmp_path_factory, tmp_path: 
         state["digests"] = answer.digests
         return Observed({"protocol_version": (answer.protocol_version, MCP),
                          "tools_sha256": (answer.tools_sha256, MCP),
-                         "stderr_class": (_klass(answer.stderr_text), OUT),
+                         "stderr_class": (stderr_class(answer.stderr_text), OUT),
                          "useful_member_found": (found(answer), MCP)})
 
     def m02() -> Observed:
         answer = ask((str(env.python), "-m", "common_lore_index.server.mcp"), selector)
         return Observed({"tools_sha256": (answer.tools_sha256, MCP),
                          "digests_equal": (answer.complete and answer.digests == state.get("digests"), MCP),
-                         "stderr_class": (_klass(answer.stderr_text), OUT)})
+                         "stderr_class": (stderr_class(answer.stderr_text), OUT)})
 
-    def legacy(argv: tuple[str, ...], extra: dict[str, str] | None) -> Observed:
-        answer = ask(argv, extra)
-        return Observed({"stderr_line": (_line(answer.stderr_text), OUT),
-                         "digests_equal": (answer.complete and answer.digests == state.get("digests"), MCP)})
-
-    def m05() -> Observed:
-        result = run_child(env, (str(env.python), "-m", "repomap_kg", "--version"))
-        return Observed({"stdout": (result.stdout, OUT), "stderr_line": (_line(result.stderr), OUT)},
+    def removed_module(module: str, *args: str) -> Observed:
+        result = run_child(env, (str(env.python), "-m", module, *args))
+        message = "No module named repomap_kg"
+        if module == "repomap_kg.server.mcp":
+            message = ("Error while finding module specification for 'repomap_kg.server.mcp' "
+                       "(ModuleNotFoundError: No module named 'repomap_kg')")
+        missing = result.returncode == 1 and result.stderr == f"{env.python}: {message}\n"
+        return Observed({"missing_module": (missing, OUT), "stdout_empty": (not result.stdout, OUT)},
                         exit=result.exit)
+
+    def removed_wrapper() -> Observed:
+        wrapper = env.wrapper("repomap-kg")
+        return Observed({"wrapper_absent": (not wrapper.exists() and not wrapper.is_symlink(), FS)})
 
     def m06() -> Observed:
         session = McpSession(env, (str(env.wrapper("cloe")), "mcp", "serve", "--repo-map-home", str(home)))
         session.request("initialize", {"protocolVersion": MCP_PROTOCOL_VERSION, "capabilities": {},
                                        "clientInfo": {"name": "installed-experience", "version": "1"}})
         session.notify("notifications/initialized")
-        unknown = session.call("repomap_installed_experience_absent", {})
+        unknown = session.call("repomap_navigation_search", {})
         invalid = session.call("cloe_navigation_search",
                                {"graph_id": GRAPH_ID, "query": expect.code_query, "limit": 0})
         session.malformed()
@@ -144,10 +134,9 @@ def test_installed_mcp_canonical_and_legacy_servers(tmp_path_factory, tmp_path: 
                          "attempts_unchanged": (listing == before_listing, FS)})
 
     steps = (("M01", m01), ("M02", m02),
-             ("M03", lambda: legacy((str(env.python), "-m", "repomap_kg.server.mcp"), selector)),
-             ("M04", lambda: legacy((str(env.wrapper("repomap-kg")), "mcp", "serve", "--repo-map-home",
-                                     str(home)), None)),
-             ("M05", m05), ("M06", m06), ("M07", m07))
+             ("M03", lambda: removed_module("repomap_kg.server.mcp")),
+             ("M04", removed_wrapper), ("M05", lambda: removed_module("repomap_kg", "--version")),
+             ("M06", m06), ("M07", m07))
     for scenario, action in steps:
         run.step(scenario, action)
     root, verdict = run.finish(tmp_path)

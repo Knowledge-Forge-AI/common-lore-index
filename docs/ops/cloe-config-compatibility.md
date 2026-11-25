@@ -47,8 +47,8 @@ The former Codex-specific default is no longer searched.
 Container-runtime setup supports the same family selection:
 
 ```sh
-repomap-kg local setup --repo-map-home ./new-home --config-format cloe --dry-run --json
-repomap-kg local setup --repo-map-home ./new-home --config-format cloe --json
+cloe local setup --repo-map-home ./new-home --config-format cloe --dry-run --json
+cloe local setup --repo-map-home ./new-home --config-format cloe --json
 ```
 
 A fresh implicit `~/.cloe` defaults to CLOE filenames. Explicit custom empty homes
@@ -95,7 +95,7 @@ refusals. No malformed home is thereby certified usable.
 ## Read-only filename plan
 
 ```sh
-repomap-kg ops config-migration-plan --repo-map-home ./example-home --json
+cloe ops config-migration-plan --repo-map-home ./example-home --json
 ```
 
 The command reads the selected configuration files and validates the existing
@@ -145,10 +145,10 @@ recover from interruptions. They change configuration filenames only. Values,
 graphs, databases, source roots and the default home do not change.
 
 ```sh
-repomap-kg ops config-migration-apply    --repo-map-home ./example-home            # dry run
-repomap-kg ops config-migration-apply    --repo-map-home ./example-home --yes --json
-repomap-kg ops config-migration-rollback --repo-map-home ./example-home --yes
-repomap-kg ops config-migration-finalize --repo-map-home ./example-home --yes
+cloe ops config-migration-apply    --repo-map-home ./example-home            # dry run
+cloe ops config-migration-apply    --repo-map-home ./example-home --yes --json
+cloe ops config-migration-rollback --repo-map-home ./example-home --yes
+cloe ops config-migration-finalize --repo-map-home ./example-home --yes
 ```
 
 Each command needs an explicit `--repo-map-home`. There is no `--config` alias
@@ -264,8 +264,8 @@ output quotes filenames.
 An interrupted apply (crash, power loss or `failed-recovery-required`):
 
 ```sh
-repomap-kg ops config-migration-rollback --repo-map-home ./example-home        # inspect
-repomap-kg ops config-migration-rollback --repo-map-home ./example-home --yes  # restore legacy names
+cloe ops config-migration-rollback --repo-map-home ./example-home        # inspect
+cloe ops config-migration-rollback --repo-map-home ./example-home --yes  # restore legacy names
 ```
 
 Afterwards you can run apply again. Recovery still works after a reboot. It

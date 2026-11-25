@@ -15,7 +15,7 @@ deleted or modified during the audit.
 The current local-runtime path is:
 
 ```text
-repomap-kg local up
+cloe local up
   -> CLI local dispatch
   -> runtime.local.up_local_runtime
   -> runtime.plan.build_local_runtime_plan
@@ -29,10 +29,10 @@ repomap-kg local up
 Closeout and readback are:
 
 ```text
-repomap-kg local down
+cloe local down
   -> docker compose --project-name repomap-<home-hash> down
 
-repomap-kg local status --check-containers
+cloe local status --check-containers
   -> inspect the expected container names and Common Lore Index runtime labels
 ```
 

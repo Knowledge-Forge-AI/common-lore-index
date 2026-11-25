@@ -81,10 +81,7 @@ def wheels(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Path]:
     with zipfile.ZipFile(new) as wheel:
         names = wheel.namelist()
         assert not any(".data/data/share/repomap-kg/" in name for name in names)
-        legacy = {name for name in names if name.startswith("repomap_kg/")}
-        assert legacy == {"repomap_kg/" + suffix for suffix in (
-            "__init__.py", "__main__.py", "ops/__init__.py", "ops/config_migration.py",
-            "server/__init__.py", "server/mcp.py")}
+        assert not any(name.startswith("repomap_kg/") for name in names)
     source_files = require(("git", "ls-files", "--cached", "--others", "--exclude-standard"), ROOT).splitlines()
     inputs = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in sorted(set(source_files))
               if (ROOT / name).is_file() and (name in {"README.md", "LICENSE", "pyproject.toml"}
@@ -130,7 +127,7 @@ print(json.dumps({'graph':encode(discover_migrations()),'control':encode(discove
 """
 
 
-def test_fresh_candidate_commands_resources_and_finite_object_identity(wheels, tmp_path: Path) -> None:
+def test_fresh_candidate_commands_resources_and_legacy_absence(wheels, tmp_path: Path) -> None:
     _old, new = wheels
     python = interpreter(tmp_path)
     install(python, new, tmp_path)
@@ -138,32 +135,22 @@ def test_fresh_candidate_commands_resources_and_finite_object_identity(wheels, t
     from smoke.host_mcp_native_launch import console_entrypoint
     console = console_entrypoint(python.parent / "cloe")
     assert console.form == "absolute-shebang" and console.targets_cli_main
-    for name in ("cloe", "common-lore-index", "repomap-kg"):
+    obsolete = python.parent / "repomap-kg"
+    assert not obsolete.exists() and not obsolete.is_symlink()
+    for name in ("cloe", "common-lore-index"):
         wrapper = python.parent / name
         result = run((str(wrapper), "--version"), tmp_path)
         assert result.returncode == 0 and result.stdout == name + " 0.0.4\n"
-        assert bool(result.stderr) == (name == "repomap-kg")
+        assert result.stderr == ""
         identity = run((str(wrapper), "identity", "--json"), tmp_path)
         payload = json.loads(identity.stdout)
         assert identity.returncode == 0 and len(payload) == 6
         assert payload["distribution"] == "common-lore-index" and payload["package"] == "common_lore_index"
         assert payload["cli"] == "cloe"
-    objects = probe(python, """import json
-from common_lore_index.ops import config_migration as current
-from repomap_kg.ops import config_migration as legacy
-names=('apply_cloe_config_migration','rollback_cloe_config_migration','finalize_cloe_config_migration')
-print(json.dumps({'same':all(getattr(current,n) is getattr(legacy,n) for n in names)}))
+    package_absent = probe(python, """import importlib.util,json
+print(json.dumps({'absent':importlib.util.find_spec('repomap_kg') is None}))
 """, tmp_path)
-    assert objects == {"same": True}
-    unsupported = probe(python, """import importlib,json
-names=('repomap_kg.cli','repomap_kg.storage','repomap_kg.server.http','repomap_kg.ops.config')
-refused=[]
-for name in names:
-    try: importlib.import_module(name)
-    except ModuleNotFoundError: refused.append(name)
-print(json.dumps({'refused':refused}))
-""", tmp_path)
-    assert unsupported == {"refused": ["repomap_kg.cli", "repomap_kg.storage", "repomap_kg.server.http", "repomap_kg.ops.config"]}
+    assert package_absent == {"absent": True}
     installed = probe(python, CATALOG_PROBE, tmp_path)
     from common_lore_index.storage import discover_migrations
     from common_lore_index.coordinator._control_schema import discover_control_migrations
@@ -174,32 +161,35 @@ print(json.dumps({'refused':refused}))
 
 @pytest.mark.parametrize("order", [(0, 1), (1, 0)])
 @pytest.mark.parametrize("remove", [0, 1])
-def test_overlap_is_diagnosed_and_shared_wrapper_uninstall_is_observed(wheels, tmp_path: Path, order, remove):
+def test_installer_ownership_remains_separate_in_both_orders(wheels, tmp_path: Path, order, remove):
     python = interpreter(tmp_path)
     for index in order:
         install(python, wheels[index], tmp_path)
     assert probe(python, OWNERSHIP, tmp_path)["state"] == "conflicting"
-    shared = python.parent / "repomap-kg"
-    assert shared.is_file()
-    legacy_files = probe(python, """import json,sysconfig
-from pathlib import Path
-root=Path(sysconfig.get_path('purelib'))/'repomap_kg'
-names=('__init__.py','__main__.py','ops/__init__.py','ops/config_migration.py','server/__init__.py','server/mcp.py')
-print(json.dumps({name:str(root/name) for name in names}))
-""", tmp_path)
-    assert len(legacy_files) == 6 and all(Path(path).is_file() for path in legacy_files.values())
+    canonical = python.parent / "cloe"
+    legacy = python.parent / "repomap-kg"
+    assert canonical.is_file() and legacy.is_file()
+    wrappers = (legacy, canonical)
+    survivor = wrappers[1 - remove]
+    surviving_bytes = survivor.read_bytes()
     owner = ("repomap-kg", "common-lore-index")[remove]
     require((sys.executable, "-m", "pip", "--python", str(python), "uninstall", "-y", owner), tmp_path, pip=True)
-    # RECORD ownership is per distribution; neither installer order makes overlap safe.
-    assert not shared.exists()
-    assert not any(Path(path).exists() for path in legacy_files.values())
-    canonical = python.parent / "cloe"
-    assert canonical.exists() is (remove == 0)
+    retired = wrappers[remove]
+    assert not retired.exists() and not retired.is_symlink()
+    assert survivor.read_bytes() == surviving_bytes
+    identity = probe(python, """from importlib.machinery import PathFinder
+import json, sysconfig
+owned = [sysconfig.get_path('purelib')]
+def has_package(name):
+    spec = PathFinder.find_spec(name, owned)
+    return spec is not None and spec.origin is not None
+print(json.dumps({name: has_package(name) for name in ('common_lore_index', 'repomap_kg')}))
+""", tmp_path)
+    assert identity == {"common_lore_index": remove == 0, "repomap_kg": remove == 1}, identity
     if remove == 0:
-        result = run((str(canonical), "identity", "--json"), tmp_path)
-        assert result.returncode == 0 and json.loads(result.stdout)["distribution"] == "common-lore-index"
+        version = run((str(canonical), "--version"), tmp_path)
+        assert version.returncode == 0 and version.stdout.startswith("cloe ")
         assert probe(python, OWNERSHIP, tmp_path)["state"] == "single-owner"
-    print(json.dumps({"schema": "cloe-installer-overlap-proof-v1", "order": order,
-                      "removed": owner, "shared_wrapper_removed": True,
-                      "shared_legacy_files_removed": sorted(legacy_files),
+    print(json.dumps({"schema": "cloe-installer-separate-ownership-proof-v1", "order": order,
+                      "removed": owner, "surviving_wrapper_preserved": True,
                       "canonical_wrapper_present": canonical.exists()}, sort_keys=True))

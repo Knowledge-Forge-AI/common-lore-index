@@ -91,8 +91,8 @@ class HarnessDatabaseBackend:
 
 
 def _console() -> Path:
-    beside = Path(sys.executable).with_name("repomap-kg")
-    provisioned = shutil.which("repomap-kg")
+    beside = Path(sys.executable).with_name("cloe")
+    provisioned = shutil.which("cloe")
     return beside if beside.is_file() else Path(provisioned or beside)
 
 

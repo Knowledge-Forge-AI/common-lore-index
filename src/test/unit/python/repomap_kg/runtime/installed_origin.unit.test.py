@@ -30,7 +30,7 @@ def _record(counts: dict[str, int], **changes: object) -> OriginRecord:
     values: dict[str, Any] = {
         "result": ChildResult(0, "{}", ""), "payload": {"distributions": ["a==1", "b==2"]},
         "path_counts": counts,
-        "module_origins": {"common_lore_index": "env-purelib", "repomap_kg": "env-purelib",
+        "module_origins": {"common_lore_index": "env-purelib", "repomap_kg": "absent",
                     "typing_extensions": "env-purelib"},
         "resource_root": "env-data", "customize": {"sitecustomize": "absent", "usercustomize": "absent"},
         "absent_families": True,
@@ -76,7 +76,7 @@ def test_checkout_injection_refuses_a_pure_label() -> None:
     injected = _record({"checkout": 1, "base-stdlib": 2, "env-purelib": 1, "owned-cwd": 1})
     assert checkout_refusal("pure-local", injected) == "origin-checkout"
     module_only = _record({"base-stdlib": 2, "env-purelib": 1},
-                          module_origins={"common_lore_index": "checkout", "repomap_kg": "env-purelib",
+                          module_origins={"common_lore_index": "checkout", "repomap_kg": "absent",
                                    "typing_extensions": "env-purelib"})
     assert checkout_refusal("pure-local", module_only) == "origin-checkout"
     assert checkout_refusal("pure-local", _record({"base-stdlib": 2, "env-purelib": 1})) is None
@@ -84,7 +84,7 @@ def test_checkout_injection_refuses_a_pure_label() -> None:
 
 
 @pytest.mark.parametrize("field,changed", [
-    ("module_origins", {"common_lore_index": "checkout", "repomap_kg": "env-purelib",
+    ("module_origins", {"common_lore_index": "checkout", "repomap_kg": "absent",
                         "typing_extensions": "env-purelib"}),
     ("resource_root", "checkout"),
     ("customize", {"sitecustomize": "owned-cwd", "usercustomize": "absent"}),
@@ -98,7 +98,7 @@ def test_normal_probe_cannot_hide_foreign_origins(field: str, changed: Any) -> N
 
 def test_provisioned_probe_pair_keeps_facade_dependency_and_customize_guards() -> None:
     counts = {"base-stdlib": 2, "env-purelib": 1, "system-site": 1}
-    origins = {"common_lore_index": "env-purelib", "repomap_kg": "env-purelib",
+    origins = {"common_lore_index": "env-purelib", "repomap_kg": "absent",
                "typing_extensions": "system-site"}
     normal = _record({**counts, "owned-cwd": 1}, module_origins=origins, absent_families=False)
     isolated = _record(counts, module_origins=origins, absent_families=False)
