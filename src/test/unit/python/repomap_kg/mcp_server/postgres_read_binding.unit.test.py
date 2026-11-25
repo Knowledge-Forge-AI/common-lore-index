@@ -47,8 +47,8 @@ DRIVER_TRIPWIRES = tuple(target for target in PG_BINDING_TRIPWIRES if "readback_
 
 class PostgresBindingPreservationTests(McpServerTestSupport):
     def _env(self, **env: str) -> Any:
-        return patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()),
-                                         "REPOMAP_OPS_CONFIG": str(self.write_visible_ops_config()), **env},
+        return patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()),
+                                         "CLOE_OPS_CONFIG": str(self.write_visible_ops_config()), **env},
                           clear=True)
 
     def test_investigation_binding_keeps_database_command_and_second_resolution(self) -> None:
@@ -120,11 +120,11 @@ class PostgresBindingTripwireCanaryTests(McpServerTestSupport):
         from common_lore_index.server.ops import load_mcp_ops_config
 
         ops_path = self.write_visible_ops_config()
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(ops_path)}, clear=True):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(ops_path)}, clear=True):
             config = load_mcp_ops_config()
             assert isinstance(config, OpsConfig), "a PostgreSQL home loads OpsConfig"
         stack = ExitStack()
-        stack.enter_context(patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()),
+        stack.enter_context(patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()),
                                                       "REPOMAP_PG_PASSWORD": "synthetic"}, clear=True))
         stack.enter_context(patch("common_lore_index.server.ops.load_mcp_ops_config", lambda *_a: config))
         stack.enter_context(patch("common_lore_index.server.mcp_core.load_mcp_ops_config", lambda *_a: config))

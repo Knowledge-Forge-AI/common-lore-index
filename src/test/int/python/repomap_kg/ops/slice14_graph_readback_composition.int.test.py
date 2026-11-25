@@ -122,7 +122,7 @@ database = "{cls._postgres.database}"
     def test_s14_b01_mcp_search_files_path_filtering(self) -> None:
         """cloe_search_files filters results matching query and path constraint."""
         assert self._config_path is not None
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(self._config_path)}):
             matched = cloe_search_files(
                 graph_id="slice14-repo",
                 query="main",
@@ -142,7 +142,7 @@ database = "{cls._postgres.database}"
     def test_s14_b02_mcp_search_nodes_pagination_has_more(self) -> None:
         """cloe_search_nodes honors limit and offset and signals has_more properly."""
         assert self._config_path is not None
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(self._config_path)}):
             page1 = cloe_search_nodes(
                 graph_id="slice14-repo",
                 query="func",
@@ -167,7 +167,7 @@ database = "{cls._postgres.database}"
     def test_s14_b03_mcp_search_observations_kind_filter(self) -> None:
         """cloe_search_observations restricts results by kind and reports raw_payload_policy."""
         assert self._config_path is not None
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(self._config_path)}):
             payload = cloe_search_observations(
                 graph_id="slice14-repo",
                 query="main",
@@ -198,7 +198,7 @@ database = "{cls._postgres.database}"
     def test_s14_b04_mcp_search_query_length_validation(self) -> None:
         """Query length exceeding 200 characters or whitespace-only is rejected."""
         assert self._config_path is not None
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(self._config_path)}):
             with self.assertRaises((McpOpsError, RepoMapMcpError)) as cm_len:
                 cloe_search_nodes(graph_id="slice14-repo", query="a" * 201)
             self.assertIn("query must be at most 200 characters", str(cm_len.exception))
@@ -210,7 +210,7 @@ database = "{cls._postgres.database}"
     def test_s14_b05_mcp_search_limit_validation(self) -> None:
         """Limit values less than 1 are rejected as non-positive integers."""
         assert self._config_path is not None
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(self._config_path)}):
             with self.assertRaises((McpOpsError, RepoMapMcpError)) as cm_zero:
                 cloe_search_nodes(graph_id="slice14-repo", query="func", limit=0)
             self.assertIn("limit must be a positive integer", str(cm_zero.exception))
@@ -222,7 +222,7 @@ database = "{cls._postgres.database}"
     def test_s14_b06_mcp_search_offset_validation(self) -> None:
         """Negative offset values are rejected as non-negative integers."""
         assert self._config_path is not None
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(self._config_path)}):
             with self.assertRaises((McpOpsError, RepoMapMcpError)) as cm_neg:
                 cloe_search_nodes(graph_id="slice14-repo", query="func", offset=-1)
             self.assertIn("offset must be a non-negative integer", str(cm_neg.exception))

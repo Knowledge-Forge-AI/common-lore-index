@@ -95,7 +95,7 @@ class McpSearchReadbackUnitTests(McpServerTestSupport):
         with (
             patch.dict(
                 "os.environ",
-                {"REPOMAP_OPS_CONFIG": str(config_path)},
+                {"CLOE_OPS_CONFIG": str(config_path)},
                 clear=True,
             ),
             patch(
@@ -122,7 +122,7 @@ class McpSearchReadbackUnitTests(McpServerTestSupport):
         with (
             patch.dict(
                 "os.environ",
-                {"REPOMAP_OPS_CONFIG": str(config_path)},
+                {"CLOE_OPS_CONFIG": str(config_path)},
                 clear=True,
             ),
             patch(
@@ -144,7 +144,7 @@ class McpSearchReadbackUnitTests(McpServerTestSupport):
         with (
             patch.dict(
                 "os.environ",
-                {"REPOMAP_OPS_CONFIG": str(config_path)},
+                {"CLOE_OPS_CONFIG": str(config_path)},
                 clear=True,
             ),
             patch(
@@ -171,7 +171,7 @@ class McpSearchSideEffectGuardTests(McpServerTestSupport):
     """RESOLVE1 advisory B: guard the real factory-to-driver search boundary."""
 
     def _env(self, home: Any):
-        return patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()),
+        return patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()),
                                          "CLOE_HOME": str(home)}, clear=True)
 
     def test_configured_search_reads_host_only_through_real_binding_without_side_effects(self):

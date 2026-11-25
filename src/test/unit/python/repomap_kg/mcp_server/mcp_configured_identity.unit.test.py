@@ -14,7 +14,7 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
         from common_lore_index.server.ops import graph_context
 
         config_path = self.write_ops_config(self.visible_ops_config())
-        env = {"REPOMAP_OPS_CONFIG": str(config_path), "REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config())}
+        env = {"CLOE_OPS_CONFIG": str(config_path), "CLOE_MCP_CONFIG": str(self.write_empty_mcp_config())}
         with patch.dict("os.environ", env, clear=True):
             target: Any = storage_connection(project="repo-map")
             context = graph_context("repo-map")
@@ -187,7 +187,7 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
         )
 
         with (
-            patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}, clear=True),
+            patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}, clear=True),
             patch("common_lore_index.server.mcp.query_canonical_storage_summary", return_value=status_summary) as mock_status,
             patch("common_lore_index.server.mcp.query_canonical_node_records", return_value=(node,)) as mock_nodes,
             patch("common_lore_index.server.mcp.query_canonical_edge_records", return_value=(edge,)) as mock_edges,
@@ -256,7 +256,7 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
 
         config_path = self.write_ops_config(self.visible_ops_config())
         with (
-            patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}, clear=True),
+            patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}, clear=True),
             patch("common_lore_index.server.mcp.query_canonical_storage_summary") as mock_summary,
         ):
             # 1. Public graph: repository_name comes from selected current row; root stays display marker

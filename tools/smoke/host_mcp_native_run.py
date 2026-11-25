@@ -41,7 +41,8 @@ QUALIFICATION_CLASSES = ("native-macos-checkout-console", "linux-harness-exercis
 PARENT_STRIPPED_PREFIXES = ("PG",)
 PARENT_STRIPPED_KEYS = ("REPOMAP_STORAGE_PG_CONNECTOR", "REPOMAP_STORAGE_READBACK_DRIVER", "REPOMAP_PG_HOST",
                         "REPOMAP_PG_PORT", "REPOMAP_PG_USER", "REPOMAP_PG_DATABASE", "REPOMAP_PSQL_COMMAND",
-                        "REPOMAP_MCP_CONFIG", "REPOMAP_OPS_CONFIG", "REPOMAP_HOME", "CLOE_HOME")
+                        "REPOMAP_MCP_CONFIG", "REPOMAP_OPS_CONFIG", "REPOMAP_HOME", "CLOE_HOME",
+                        "CLOE_MCP_CONFIG", "CLOE_OPS_CONFIG")
 
 
 PHASES = ("pending", "active", "cleanup", "finalize")

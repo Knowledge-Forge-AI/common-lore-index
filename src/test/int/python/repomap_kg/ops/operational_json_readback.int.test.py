@@ -55,7 +55,7 @@ def test_psycopg94_operational_refresh_status_connector_cli_and_mcp_parity() -> 
     selectors = (PG_CONNECTOR_ENV, READBACK_DRIVER_ENV)
     previous = {
         name: (name in os.environ, os.environ.get(name))
-        for name in (*selectors, "PGPASSWORD", "REPOMAP_OPS_CONFIG", "REPOMAP_PSQL_COMMAND")
+        for name in (*selectors, "PGPASSWORD", "CLOE_OPS_CONFIG", "REPOMAP_PSQL_COMMAND")
     }
     try:
         with temporary_postgres() as postgres, tempfile.TemporaryDirectory() as tmpdir:
@@ -148,7 +148,7 @@ def test_psycopg94_operational_refresh_status_connector_cli_and_mcp_parity() -> 
             _select(None, None, postgres=postgres)
             with patch.dict(
                 os.environ,
-                {"REPOMAP_OPS_CONFIG": str(config_path)},
+                {"CLOE_OPS_CONFIG": str(config_path)},
                 clear=False,
             ):
                 os.environ.pop("REPOMAP_PSQL_COMMAND", None)

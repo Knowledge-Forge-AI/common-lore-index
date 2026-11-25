@@ -239,7 +239,7 @@ class GraphSelectionRecordTests(McpServerTestSupport):
         for body, graph_ids in ((self.visible_ops_config(), (G, "private-visible")),
                                 (setup_owned_config(), ("host-one", "host-multi"))):
             path = self.write_ops_config(body)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(path)}, clear=True):
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(path)}, clear=True):
                 from common_lore_index.server.ops import load_mcp_ops_config
 
                 config = load_mcp_ops_config()
@@ -286,7 +286,7 @@ class NeutralSelectionFakeStoreRoutingTests(McpServerTestSupport):
 
     def _armed(self, config: Any, investigation: Any, graph: Any) -> ExitStack:
         stack = ExitStack()
-        stack.enter_context(patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()),
+        stack.enter_context(patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()),
                                                       "REPOMAP_PSQL_COMMAND": INVALID_PSQL_COMMAND}, clear=True))
         stack.enter_context(patch("common_lore_index.server.ops.load_mcp_ops_config", lambda *_a: config))
         stack.enter_context(patch("common_lore_index.server.mcp_core.load_mcp_ops_config", lambda *_a: config))
@@ -298,7 +298,7 @@ class NeutralSelectionFakeStoreRoutingTests(McpServerTestSupport):
     def _parsed_config(self) -> Any:
         from common_lore_index.server.ops import load_mcp_ops_config
 
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self.write_visible_ops_config())}, clear=True):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(self.write_visible_ops_config())}, clear=True):
             return load_mcp_ops_config()
 
     def test_all_25_tools_route_to_their_named_store_operation_without_postgres_binding(self) -> None:
@@ -366,7 +366,7 @@ class NeutralSelectionFakeStoreRoutingTests(McpServerTestSupport):
         from common_lore_index.server.mcp import handle_tool_call
 
         path = self.write_visible_ops_config()
-        env = {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()), "REPOMAP_OPS_CONFIG": str(path)}
+        env = {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()), "CLOE_OPS_CONFIG": str(path)}
         with patch.dict("os.environ", env, clear=True), \
                 patch("common_lore_index.server.ops.investigation_stores", fail_if_reached), \
                 patch("common_lore_index.server.mcp.graph_stores", fail_if_reached), \

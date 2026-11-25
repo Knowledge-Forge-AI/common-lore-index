@@ -271,7 +271,7 @@ mode = "read_only"
                 with patch.dict(
                     "os.environ",
                     {
-                        "REPOMAP_OPS_CONFIG": str(ops_config_path),
+                        "CLOE_OPS_CONFIG": str(ops_config_path),
                         "REPOMAP_PSQL_COMMAND": postgres.psql_command,
                     },
                     clear=False,

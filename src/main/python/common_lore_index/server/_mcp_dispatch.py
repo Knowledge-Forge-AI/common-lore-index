@@ -7,6 +7,7 @@ import sys
 from typing import Any, Callable, TextIO
 
 from common_lore_index import DISTRIBUTION_NAME, __version__
+from common_lore_index.ops.config_loading import legacy_mcp_selector_error
 from common_lore_index.server._ops_records import McpOpsError
 from common_lore_index.server.mcp_core import (
     RepoMapMcpError,
@@ -176,6 +177,9 @@ def serve_stdio(
     output_stream: TextIO = sys.stdout,
     message_handler: Callable[[dict[str, Any]], dict[str, Any] | None] = handle_jsonrpc_message,
 ) -> int:
+    if message := legacy_mcp_selector_error():
+        print(message, file=sys.stderr)
+        return 1
     for line in input_stream:
         if not line.strip():
             continue

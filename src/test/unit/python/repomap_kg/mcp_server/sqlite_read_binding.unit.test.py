@@ -85,10 +85,10 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home = write_sqlite_home(tmp_path / "home", graphs)
     registry = tmp_path / "registry.json"
     registry.write_text('{"projects": {}}\n', encoding="utf-8")
-    for name in ("REPOMAP_OPS_CONFIG", "REPOMAP_READ_STATUS_PASSWORD"):
+    for name in ("CLOE_OPS_CONFIG", "REPOMAP_READ_STATUS_PASSWORD"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("CLOE_HOME", str(home))
-    monkeypatch.setenv("REPOMAP_MCP_CONFIG", str(registry))
+    monkeypatch.setenv("CLOE_MCP_CONFIG", str(registry))
     config = load_graph_registry_config_home(home)
     assert isinstance(config, LocalSqliteConfig)
     assert runtime_plan.resolve_ops_config is REAL_RESOLVE_OPS_CONFIG
@@ -313,7 +313,7 @@ def test_legacy_status_routing_precedence(home: Path, tmp_path: Path) -> None:
         encoding="utf-8",
     )
     with patch(READ_TRANSACTION, fail_if_reached), patch(PG_STATUS, return_value=record) as query, \
-            patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(registry)}):
+            patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(registry)}):
         assert _call("cloe_status", {"project": GRAPH})["counts"]["runs"] == 7  # legacy entry wins
         assert _call("cloe_status", {})["project"] == GRAPH  # legacy default_project
         explicit = _call("cloe_status", {"root_path": "/explicit", "pg_database": "explicit_db"})

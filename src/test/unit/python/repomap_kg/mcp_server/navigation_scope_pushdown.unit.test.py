@@ -32,7 +32,7 @@ def member_keys(result):
 
 def activate(monkeypatch, home):
     monkeypatch.setenv("CLOE_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
 
 
 def test_production_cap_same_binding_subtree_and_empty_scope(tmp_path, monkeypatch):

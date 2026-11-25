@@ -37,8 +37,12 @@ including configuration, Local state and MCP. An explicit MCP home also wins
 over an ambient CLOE_HOME. An explicitly selected CLOE home supports configured
 Local/Server reading, Local state operations and MCP. Keep the existing schema,
 backend declaration, graph identities,
-source roots and secret references. Other environment-variable names remain
-unchanged in this preparatory slice.
+source roots and secret references. MCP uses the canonical environment
+selectors `CLOE_OPS_CONFIG` for a single graph config file and `CLOE_MCP_CONFIG` for the
+optional JSON project registry, which defaults to `~/.config/common-lore-index/mcp.json`.
+MCP refuses nonempty legacy selectors. Update the client environment to use
+the CLOE names and explicitly select or copy an existing JSON registry.
+The former Codex-specific default is no longer searched.
 
 Container-runtime setup supports the same family selection:
 
@@ -129,8 +133,8 @@ so a plan does not assume a case-sensitive destination.
 
 `--config` is accepted only as a directory alias for this command; it does not
 plan an individual config file. If both options are supplied, `--repo-map-home`
-wins, as in existing ops selection. `REPOMAP_OPS_CONFIG` is an MCP-specific
-legacy setting and is not a planner selector. Use an explicit home when
+wins, as in existing ops selection. The MCP single-file `CLOE_OPS_CONFIG`
+selector does not select a planner home. Use an explicit home when
 planning a collection different from the current home selection.
 
 ## Apply, rollback and finalize

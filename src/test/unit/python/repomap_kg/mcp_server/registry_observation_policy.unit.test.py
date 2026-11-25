@@ -80,7 +80,7 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
             with self.subTest(mode=case["label"]):
                 mcp_config_path = self.write_mcp_config(case["mcp_config"])
                 if case["ops_config"] is None:
-                    env = {"REPOMAP_MCP_CONFIG": str(mcp_config_path)}
+                    env = {"CLOE_MCP_CONFIG": str(mcp_config_path)}
                     context = patch.dict("os.environ", env, clear=True)
                 else:
                     ops_config_path = self.write_ops_config(case["ops_config"])
@@ -275,7 +275,7 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
 
         with patch.dict(
             "os.environ",
-            {"REPOMAP_MCP_CONFIG": str(mcp_config_path)},
+            {"CLOE_MCP_CONFIG": str(mcp_config_path)},
             clear=True,
         ):
             with patch(

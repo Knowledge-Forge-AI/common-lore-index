@@ -142,7 +142,7 @@ class StorageConfigDogfoodReadbackIntegrationTests(unittest.TestCase):
                         "--kind",
                         "references",
                         "--target-key",
-                        "env:REPOMAP_MCP_CONFIG",
+                        "env:CLOE_MCP_CONFIG",
                         "--json",
                     )
                 )
@@ -261,7 +261,7 @@ class StorageConfigDogfoodReadbackIntegrationTests(unittest.TestCase):
                 ),
                 (
                     "config.path:file%3Amcp%2Frepo-map%2Fconfig.json:%2Fmcp_servers%2Frepomap%2Fenv%2FREPOMAP_MCP_CONFIG",
-                    "env:REPOMAP_MCP_CONFIG",
+                    "env:CLOE_MCP_CONFIG",
                 ),
             }.issubset(reference_pairs)
         )
@@ -291,7 +291,7 @@ class StorageConfigDogfoodReadbackIntegrationTests(unittest.TestCase):
 
         self.assertEqual(env_explain_exit, 0, env_explain_stderr)
         env_explanation = json.loads(env_explain_stdout)["result"]
-        self.assertEqual(env_explanation["edge"]["target_key"], "env:REPOMAP_MCP_CONFIG")
+        self.assertEqual(env_explanation["edge"]["target_key"], "env:CLOE_MCP_CONFIG")
         self.assertGreaterEqual(len(env_explanation["evidence"]), 1)
         self.assertTrue(
             {

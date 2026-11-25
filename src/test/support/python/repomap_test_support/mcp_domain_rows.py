@@ -195,7 +195,7 @@ refresh_policy = "manual"
             )
 
             extra_env = {
-                "REPOMAP_OPS_CONFIG": str(cfg_path),
+                "CLOE_OPS_CONFIG": str(cfg_path),
                 "REPOMAP_PSQL_COMMAND": postgres.psql_command,
             }
 

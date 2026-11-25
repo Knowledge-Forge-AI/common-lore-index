@@ -51,7 +51,7 @@ def test_psycopg108_mcp_search_connector_pagination_raw_and_privacy_parity(
             )
             _seed(private_postgres)
             config_path = _write_config(base, postgres=postgres)
-            os.environ["REPOMAP_OPS_CONFIG"] = str(config_path)
+            os.environ["CLOE_OPS_CONFIG"] = str(config_path)
 
             import common_lore_index.ops.readback as readback
 
@@ -176,7 +176,7 @@ def test_psycopg108_mcp_search_refuses_wrong_declared_password(
             )
             _seed(postgres)
             config_path = _write_config(Path(tmpdir), postgres=postgres)
-            os.environ["REPOMAP_OPS_CONFIG"] = str(config_path)
+            os.environ["CLOE_OPS_CONFIG"] = str(config_path)
             _select("psycopg", "psycopg", command=None, postgres=postgres)
             wrong = "wrong-" + secrets.token_hex(8)
             os.environ["PUBLIC_SAFE_PASSWORD"] = wrong
@@ -196,7 +196,7 @@ def test_psycopg108_mcp_search_refuses_wrong_declared_password(
 _ENV_NAMES = (
     PG_CONNECTOR_ENV,
     READBACK_DRIVER_ENV,
-    "REPOMAP_OPS_CONFIG",
+    "CLOE_OPS_CONFIG",
     "REPOMAP_PSQL_COMMAND",
     "PGPASSWORD",
     "PATH",

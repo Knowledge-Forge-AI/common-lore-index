@@ -100,7 +100,7 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
                 with patch.dict(
                     "os.environ",
                     {
-                        "REPOMAP_MCP_CONFIG": str(mcp_config_path),
+                        "CLOE_MCP_CONFIG": str(mcp_config_path),
                         "REPOMAP_PSQL_COMMAND": postgres.psql_command,
                     },
                     clear=False,
@@ -340,8 +340,8 @@ mode = "read_only"
                 )
                 with self.subTest(configured_root=configured_root), patch.dict(
                     "os.environ",
-                    {"REPOMAP_MCP_CONFIG": str(legacy_path),
-                     "REPOMAP_OPS_CONFIG": str(ops_path),
+                    {"CLOE_MCP_CONFIG": str(legacy_path),
+                     "CLOE_OPS_CONFIG": str(ops_path),
                      "REPOMAP_PSQL_COMMAND": postgres.psql_command},
                 ):
                     current = cloe_status(project="fixture")

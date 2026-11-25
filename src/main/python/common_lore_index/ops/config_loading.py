@@ -103,6 +103,22 @@ from common_lore_index.ops.config_loading_records import (
 )
 from common_lore_index.storage import parse_psql_json as parse_psql_json, run_psql as run_psql
 
+OPS_CONFIG_ENV = "CLOE_OPS_CONFIG"
+MCP_CONFIG_ENV = "CLOE_MCP_CONFIG"
+
+
+def legacy_mcp_selector_error() -> str | None:
+    """Refuse stale explicit authority without reading or disclosing its values."""
+    if os.environ.get("REPOMAP_OPS_CONFIG") or os.environ.get("REPOMAP_MCP_CONFIG"):
+        return "legacy-mcp-config-selector: migrate MCP selectors to CLOE_OPS_CONFIG or CLOE_MCP_CONFIG"
+    return None
+
+
+def require_canonical_mcp_selectors() -> None:
+    if message := legacy_mcp_selector_error():
+        raise ValueError(message)
+
+
 def resolve_repo_map_home(value: str | Path | None = None) -> Path:
     return _resolve_home_selection(value).path
 

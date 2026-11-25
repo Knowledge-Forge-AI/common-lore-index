@@ -17,7 +17,8 @@ INHERITED = {
     "PATH": "/opt/runner/bin:/usr/bin", "HOME": "/home/runner", "PYTHONPATH": "/checkout/src/main/python",
     "PYTHONHOME": "/x", "PYTHONSTARTUP": "/x", "PYTHONUSERBASE": "/x", "PYTHONEXECUTABLE": "/x",
     "PYTHONSAFEPATH": "1", "VIRTUAL_ENV": "/checkout/.venv", "COVERAGE_FILE": "/c", "PGHOST": "db", "PGPASSWORD": "pw", "REPOMAP_HOME": "/h", "CLOE_HOME": "/h",
-    "REPOMAP_OPS_CONFIG": "/h", "REPOMAP_PG_URL": "x", "SERVICE_TOKEN": "t", "LANG": "en_US.UTF-8",
+    "REPOMAP_OPS_CONFIG": "/h", "REPOMAP_MCP_CONFIG": "/h", "CLOE_OPS_CONFIG": "/h", "CLOE_MCP_CONFIG": "/h",
+    "REPOMAP_PG_URL": "x", "SERVICE_TOKEN": "t", "LANG": "en_US.UTF-8",
     "KEEP_ME": "kept",
 }
 

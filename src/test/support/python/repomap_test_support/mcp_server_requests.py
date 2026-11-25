@@ -127,14 +127,14 @@ mode = "read_only"
         return self.write_mcp_config({"projects": {}})
 
     def patch_ops_config(self, config_path: Path):
-        return patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)})
+        return patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)})
 
     def patch_mcp_and_ops_config(self, mcp_config_path: Path, ops_config_path: Path):
         return patch.dict(
             "os.environ",
             {
-                "REPOMAP_MCP_CONFIG": str(mcp_config_path),
-                "REPOMAP_OPS_CONFIG": str(ops_config_path),
+                "CLOE_MCP_CONFIG": str(mcp_config_path),
+                "CLOE_OPS_CONFIG": str(ops_config_path),
             },
             clear=True,
         )

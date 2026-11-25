@@ -217,9 +217,9 @@ def test_mcp_explicit_config_environment_does_not_inspect_default_home(defaults,
     current, _legacy = defaults
     populate(current, "foreign")
     args = build_parser().parse_args(["mcp", "serve"])
-    monkeypatch.setenv("REPOMAP_OPS_CONFIG", "explicit-config.toml")
+    monkeypatch.setenv("CLOE_OPS_CONFIG", "explicit-config.toml")
     _preflight_cli_home(args)
-    monkeypatch.setenv("REPOMAP_OPS_CONFIG", "")
+    monkeypatch.setenv("CLOE_OPS_CONFIG", "")
     with pytest.raises(OpsConfigError):
         _preflight_cli_home(args)
 

@@ -260,15 +260,15 @@ def test_owned_backend_acts_only_on_the_exact_loopback_container(
     assert runner.sessions == [True] * len(runner.commands), "docker helpers must leave the terminal's group"
 
 
-def test_parent_environment_strips_selectors_and_restores_exactly(
-        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_parent_environment_strips_selectors_and_restores_exactly(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     for key in ("PGPASSWORD", "PGSERVICE", "REPOMAP_STORAGE_PG_CONNECTOR", "REPOMAP_READ_STATUS_PASSWORD",
-                "REPOMAP_MCP_CONFIG", "REPOMAP_HOME", "CLOE_HOME"):
+                "REPOMAP_MCP_CONFIG", "REPOMAP_OPS_CONFIG", "REPOMAP_HOME", "CLOE_HOME", "CLOE_MCP_CONFIG", "CLOE_OPS_CONFIG"):
         monkeypatch.setenv(key, "poison")
     monkeypatch.setenv("REPOMAP_TEST_UNRELATED", "kept")
     before, tempdir = dict(os.environ), tempfile.tempdir
     with parent_environment(tmp_path / "venv bin", tmp_path) as record:
         assert not any(key.startswith("PG") for key in os.environ)
+        assert "CLOE_MCP_CONFIG" not in os.environ and "CLOE_OPS_CONFIG" not in os.environ
         assert os.environ["REPOMAP_STORAGE_READBACK_DRIVER"] == "psycopg"
         assert os.environ["REPOMAP_TEST_UNRELATED"] == "kept"
         assert os.environ["PATH"].startswith(str(tmp_path / "venv bin"))

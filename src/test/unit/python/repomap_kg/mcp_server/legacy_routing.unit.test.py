@@ -28,7 +28,7 @@ class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
             }
         )
 
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             with patch(
                 "common_lore_index.server.mcp.query_canonical_storage_summary",
                 return_value=CanonicalStorageSummaryRecord(
@@ -77,7 +77,7 @@ class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
             first_seen_run_id=1,
             last_seen_run_id=2,
         )
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             with patch(
                 "common_lore_index.server.mcp.query_canonical_node_records",
                 return_value=(record,),

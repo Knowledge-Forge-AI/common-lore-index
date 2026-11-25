@@ -362,7 +362,7 @@ def run_mcp_stdio_requests(
     env = os.environ.copy()
     # Parent pytest sys.path changes do not cross the interpreter boundary.
     env["PYTHONPATH"] = str(Path(common_lore_index.__file__).resolve().parent.parent)
-    env["REPOMAP_OPS_CONFIG"] = str(config_path)
+    env["CLOE_OPS_CONFIG"] = str(config_path)
     env["REPOMAP_PSQL_COMMAND"] = psql_command
     if reader_role:
         env["PGOPTIONS"] = f"-c role={reader_role}"

@@ -271,7 +271,7 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
         with patch.dict(
             os.environ,
             {
-                "REPOMAP_OPS_CONFIG": str(config_path),
+                "CLOE_OPS_CONFIG": str(config_path),
                 "REPOMAP_PSQL_COMMAND": postgres.psql_command,
             },
             clear=False,

@@ -26,7 +26,7 @@ from repomap_test_support.sqlite_local_fixtures import generation_bundle, public
 def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home, database = locator_home(tmp_path, reference_count=5)
     monkeypatch.setenv("CLOE_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     return database
 
 
@@ -208,7 +208,7 @@ def test_postgresql_routed_compact_parity_and_unavailable_credential_refusal(
     unauth.mkdir()
     (unauth / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
     monkeypatch.setenv("CLOE_HOME", str(unauth))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     with (
         patched_guards(NO_FALLBACK_GUARDS),
         patch("common_lore_index.storage.postgres_node_locations.execute_json_readback", side_effect=AssertionError("io")),

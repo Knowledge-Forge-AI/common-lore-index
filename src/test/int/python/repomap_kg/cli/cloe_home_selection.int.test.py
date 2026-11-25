@@ -209,7 +209,7 @@ def test_mcp_explicit_config_environment_survives_foreign_default(tmp_path: Path
     payload = "".join(json.dumps(item) + "\n" for item in (
         initialize(), tool(2, "cloe_graph_status", {"graph_id": "one"}),
     ))
-    served = harness.run("mcp", "serve", input_text=payload, extra_env={"REPOMAP_OPS_CONFIG": str(config)})
+    served = harness.run("mcp", "serve", input_text=payload, extra_env={"CLOE_OPS_CONFIG": str(config)})
     assert served.returncode == 0, served.stderr
     responses = [json.loads(line) for line in served.stdout.splitlines() if line.strip()]
     assert [item["id"] for item in responses] == [1, 2]

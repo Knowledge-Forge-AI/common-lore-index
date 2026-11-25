@@ -25,6 +25,7 @@ from common_lore_index.server._mcp_core_validation import (
     validate_read_schema_version as validate_read_schema_version,
     validate_source_id_arg as validate_source_id_arg,
 )
+from common_lore_index.ops.config_loading import MCP_CONFIG_ENV as ENV_MCP_CONFIG, require_canonical_mcp_selectors
 from common_lore_index.server.canonical_read_store import CanonicalReadStore
 from common_lore_index.server.graph_selection import GraphSelection, select_graph
 from common_lore_index.server.ops import McpOpsError, load_mcp_ops_config
@@ -43,7 +44,6 @@ ENV_PG_PORT = "REPOMAP_PG_PORT"
 ENV_PG_USER = "REPOMAP_PG_USER"
 ENV_PG_DATABASE = "REPOMAP_PG_DATABASE"
 ENV_PSQL_COMMAND = "REPOMAP_PSQL_COMMAND"
-ENV_MCP_CONFIG = "REPOMAP_MCP_CONFIG"
 PRIVATE_ROOT_DISPLAY = "[private-root]"
 GRAPH_ROOT_DISPLAY = "[graph-root]"
 PROJECT_ROOT_DISPLAY = "[project-root]"
@@ -53,7 +53,7 @@ _STORAGE_TOPOLOGY_HINT = " Direct DB host-port exposure is disabled"
 
 
 def default_mcp_config_path() -> Path:
-    return Path.home() / ".codex" / "codex-vc" / "mcp" / "repo-map" / "config.json"
+    return Path.home() / ".config" / "common-lore-index" / "mcp.json"
 
 
 def public_storage_error_message(error: BaseException) -> str:
@@ -188,6 +188,7 @@ def load_mcp_config(config_path: str | os.PathLike[str] | None = None) -> McpCon
 def resolve_mcp_config_path(
     config_path: str | os.PathLike[str] | None,
 ) -> tuple[Path, bool]:
+    require_canonical_mcp_selectors()
     if config_path is not None:
         return Path(config_path).expanduser(), True
     environment_path = optional_text(os.environ.get(ENV_MCP_CONFIG))

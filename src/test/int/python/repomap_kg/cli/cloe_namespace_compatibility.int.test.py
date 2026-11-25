@@ -86,7 +86,8 @@ def disposable_environment(user_home: Path) -> dict[str, str]:
     """A public-safe child environment whose only home is a disposable directory."""
     user_home.mkdir(mode=0o700)
     env = module_process_environment()
-    for name in ("CLOE_HOME", "REPOMAP_HOME", "REPOMAP_OPS_CONFIG", "REPOMAP_MCP_CONFIG"):
+    for name in ("CLOE_HOME", "REPOMAP_HOME", "CLOE_OPS_CONFIG", "CLOE_MCP_CONFIG",
+                 "REPOMAP_OPS_CONFIG", "REPOMAP_MCP_CONFIG"):
         env.pop(name, None)
     env["HOME"] = str(user_home)
     return env

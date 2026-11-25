@@ -32,7 +32,7 @@ def test_public_neighborhood_real_endpoints_and_unchanged_sanitization(
 
     home, _, _ = related_home(tmp_path)
     monkeypatch.setenv("CLOE_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     selection = ops.configured_graph(GRAPH).selection
     markers = selection.path_markers
     args = dict(graph_id=GRAPH, node=center, direction=direction, depth=1)
@@ -94,7 +94,7 @@ def test_legacy_canonical_routes_preserve_existing_endpoint_policy(
     config = home / "repomap.rp.toml"
     config.write_text(config.read_text().replace('privacy = "public-dev"', f'privacy = "{privacy}"'))
     monkeypatch.setenv("CLOE_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     def refuse_restoration(*args, **kwargs):
         pytest.fail("Legacy canonical tools must not use selected-graph endpoint restoration")
     monkeypatch.setattr(_ops_summaries, "_preserve_visible_endpoints", refuse_restoration)

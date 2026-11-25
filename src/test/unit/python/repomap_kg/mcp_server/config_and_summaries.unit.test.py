@@ -34,7 +34,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
             }
         )
 
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             config = load_mcp_config()
 
         self.assertEqual(config.default_project, "repo-map")
@@ -69,7 +69,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
 
         with patch.dict(
             "os.environ",
-            {"REPOMAP_MCP_CONFIG": str(config_path)},
+            {"CLOE_MCP_CONFIG": str(config_path)},
             clear=True,
         ):
             payload = cloe_projects()
@@ -137,7 +137,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
         with patch.dict(
             "os.environ",
             {
-                "REPOMAP_OPS_CONFIG": str(config_path),
+                "CLOE_OPS_CONFIG": str(config_path),
                 "REPOMAP_PSQL_COMMAND": "/usr/local/bin/psql",
             },
         ):
@@ -258,7 +258,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
         )
 
         config_path = self.write_ops_config(self.visible_ops_config())
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
             with patch(
                 "common_lore_index.server.ops.query_python_summary",
                 return_value=PythonSummaryRecord(

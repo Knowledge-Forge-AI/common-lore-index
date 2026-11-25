@@ -14,14 +14,14 @@ class CliLocalOpsMcpServeUnitTests(unittest.TestCase):
 
             with patch.dict("os.environ", {}, clear=True):
                 def serve() -> int:
-                    self.assertEqual(os.environ["REPOMAP_OPS_CONFIG"], str(config_path))
+                    self.assertEqual(os.environ["CLOE_OPS_CONFIG"], str(config_path))
                     return 0
 
                 with patch("common_lore_index.server.mcp.serve_stdio", side_effect=serve) as serve_stdio:
                     exit_code = main(["mcp", "serve", "--config", str(config_path)])
 
                 self.assertEqual(exit_code, 0)
-                self.assertNotIn("REPOMAP_OPS_CONFIG", os.environ)
+                self.assertNotIn("CLOE_OPS_CONFIG", os.environ)
                 serve_stdio.assert_called_once_with()
     def test_mcp_serve_sets_repo_map_home_and_delegates_to_stdio_server(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -40,5 +40,5 @@ class CliLocalOpsMcpServeUnitTests(unittest.TestCase):
                 self.assertEqual(exit_code, 0)
                 self.assertNotIn("CLOE_HOME", os.environ)
                 self.assertNotIn("REPO" + "_MAP_HOME", os.environ)
-                self.assertNotIn("REPOMAP_OPS_CONFIG", os.environ)
+                self.assertNotIn("CLOE_OPS_CONFIG", os.environ)
                 serve_stdio.assert_called_once_with()

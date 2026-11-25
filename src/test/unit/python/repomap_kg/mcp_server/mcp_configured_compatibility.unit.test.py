@@ -56,7 +56,7 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
         )
 
         with (
-            patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(mcp_config_path)}, clear=True),
+            patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(mcp_config_path)}, clear=True),
             patch("common_lore_index.server.mcp.query_canonical_storage_summary", return_value=status_summary) as mock_status,
             patch("common_lore_index.server.mcp.query_canonical_node_records", return_value=(node,)) as mock_nodes,
             patch("common_lore_index.server.mcp.query_canonical_edge_records", return_value=(edge,)) as mock_edges,
@@ -200,7 +200,7 @@ enabled = true
         )
         config_path = self.write_ops_config(portable_ops_config)
         with (
-            patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}, clear=True),
+            patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}, clear=True),
             patch("common_lore_index.server.mcp.query_canonical_storage_summary") as mock_summary,
         ):
             mock_summary.return_value = CanonicalStorageSummaryRecord(

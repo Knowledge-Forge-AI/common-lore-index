@@ -50,7 +50,7 @@ def test_psycopg77_terraform_summary_connector_cli_and_mcp_parity() -> None:
             PG_CONNECTOR_ENV,
             READBACK_DRIVER_ENV,
             "PGPASSWORD",
-            "REPOMAP_OPS_CONFIG",
+            "CLOE_OPS_CONFIG",
             "REPOMAP_PSQL_COMMAND",
         )
     }
@@ -237,7 +237,7 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
             _ops_config(postgres, public_root=public_root, private_root=private_root),
             encoding="utf-8",
         )
-        os.environ["REPOMAP_OPS_CONFIG"] = str(config_path)
+        os.environ["CLOE_OPS_CONFIG"] = str(config_path)
         payloads = {}
         for mode, selector, connector, psql_command in (
             ("psql", PG_CONNECTOR_ENV, "psql", postgres.psql_command),

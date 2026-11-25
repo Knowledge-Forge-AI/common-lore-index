@@ -46,7 +46,8 @@ SHIMS = (
 _SCRUBBED_MARKERS = ("PASSWORD", "PGPASS", "SECRET", "TOKEN", "REPOMAP_PG", "REPOMAP_STORAGE")
 _SCRUBBED_KEYS = frozenset(
     {"PGHOST", "PGPORT", "PGUSER", "PGDATABASE", "PGSERVICE", "DATABASE_URL", "DOCKER_HOST",
-     "REPOMAP_OPS_CONFIG", "REPOMAP_PSQL_COMMAND", "REPOMAP_HOME", "CLOE_HOME"}
+     "REPOMAP_OPS_CONFIG", "REPOMAP_MCP_CONFIG", "CLOE_OPS_CONFIG", "CLOE_MCP_CONFIG",
+     "REPOMAP_PSQL_COMMAND", "REPOMAP_HOME", "CLOE_HOME"}
 )
 CHILD_DEADLINE_SECONDS = 300
 BARRIER_DEADLINE_SECONDS = 240
@@ -85,7 +86,7 @@ class LocalHarness:
                 "PATH": f"{self.shims}:{Path(sys.executable).parent}:/usr/bin:/bin",
                 "LANG": "C.UTF-8",
                 "PYTHONDONTWRITEBYTECODE": "1",
-                "REPOMAP_MCP_CONFIG": str(self.registry),
+                "CLOE_MCP_CONFIG": str(self.registry),
                 sqlite_local_guard.GUARD_LOG_ENV: str(self.guard_log),
             }
         )

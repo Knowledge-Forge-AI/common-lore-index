@@ -29,7 +29,7 @@ from repomap_test_support.host_read_store_config import NO_FALLBACK_GUARDS, patc
 def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home, database = navigation_home(tmp_path)
     monkeypatch.setenv("CLOE_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     return database
 
 
@@ -276,7 +276,7 @@ def test_canonical_dispatch_replays_frozen_entry_cases(tmp_path: Path,
 
     home, _ = locator_home(tmp_path)
     monkeypatch.setenv("CLOE_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     golden = Path("src/test/resources/navigation_search_entry.json")
     cases = json.loads(golden.read_text())["cases"]
     assert len(cases) == 67

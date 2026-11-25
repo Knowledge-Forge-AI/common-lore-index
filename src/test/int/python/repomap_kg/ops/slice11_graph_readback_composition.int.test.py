@@ -155,7 +155,7 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
                 payload = cloe_search_nodes(graph_id="repo-map", query="100%_done")
             self.assertEqual(payload["result_count"], 1)
             self.assertEqual(payload["results"][0]["canonical_key"], "file:src/app_100%25_done.py")
@@ -167,7 +167,7 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
                 files_payload = cloe_search_nodes(graph_id="repo-map", query="helper", kind="file")
                 funcs_payload = cloe_search_nodes(graph_id="repo-map", query="helper", kind="python.function")
             self.assertEqual(files_payload["result_count"], 1)
@@ -182,7 +182,7 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
                 payload = cloe_search_observations(
                     graph_id="repo-map", query="format", path="src/helper.py"
                 )
@@ -196,7 +196,7 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
                 payload = cloe_search_observations(
                     graph_id="repo-map", query="format", include_raw=False
                 )
@@ -213,7 +213,7 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
                 payload = cloe_search_nodes(graph_id="repo-map", query="common")
             self.assertEqual(payload["result_count"], 1)
             self.assertEqual(payload["results"][0]["canonical_key"], "file:src/common.py")
@@ -247,7 +247,7 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
                 payload = cloe_search_observations(
                     graph_id="repo-map", query="format", include_raw=True
                 )
@@ -359,7 +359,7 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
                 warc_payload = cloe_search_nodes(graph_id="repo-map", query="warc")
                 shell_payload = cloe_search_nodes(graph_id="repo-map", query="deploy")
             self.assertEqual(warc_payload["result_count"], 1)

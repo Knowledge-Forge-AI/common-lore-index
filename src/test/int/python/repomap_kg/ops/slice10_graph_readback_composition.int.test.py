@@ -238,7 +238,7 @@ refresh_policy = "manual"
 database = "{postgres.database}"
 """
             config_path = support.write_ops_config(config_content)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
                 payload = cloe_search_nodes(graph_id="slice10-repo", query="alpha")
 
             self.assertEqual(payload["target"], "nodes")

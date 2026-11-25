@@ -265,7 +265,7 @@ class DomainReadStoreDispatchTests(McpServerTestSupport):
 
             calls = source_calls(project_args)
             with self.subTest(form=sorted(project_args)), \
-                    patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(legacy)}, clear=True), \
+                    patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(legacy)}, clear=True), \
                     patch("common_lore_index.server.mcp.source_read_store", source_factory), \
                     patch("common_lore_index.server.mcp.canonical_read_store", canonical_factory), \
                     patch("common_lore_index.server.mcp.graph_stores", fail_if_reached), \

@@ -28,7 +28,7 @@ navigate = vars(consumer_module)["navigate"]
 def environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path, dict[str, Any]]:
     home, database = locator_home(tmp_path, reference_count=5)
     monkeypatch.setenv("CLOE_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     workspace = tmp_path / "caller-workspace"
     (workspace / "docs").mkdir(parents=True)
     (workspace / "docs/guide.md").write_text("Fixture guide.\n", encoding="utf-8")

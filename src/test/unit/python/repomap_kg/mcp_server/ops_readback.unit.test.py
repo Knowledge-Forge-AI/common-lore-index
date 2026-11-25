@@ -64,7 +64,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
         with patch.dict(
             "os.environ",
             {
-                "REPOMAP_OPS_CONFIG": str(config_path),
+                "CLOE_OPS_CONFIG": str(config_path),
                 "REPOMAP_PSQL_COMMAND": "psql",
             },
             clear=True,
@@ -84,7 +84,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
         with patch.dict(
             "os.environ",
             {
-                "REPOMAP_OPS_CONFIG": str(config_path),
+                "CLOE_OPS_CONFIG": str(config_path),
                 "REPOMAP_PSQL_COMMAND": "psql",
             },
             clear=True,
@@ -256,7 +256,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
 
         config_path = self.write_ops_config(self.visible_ops_config())
         config = load_ops_config(config_path)
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
             from common_lore_index.server.mcp import cloe_project_summary
 
             with self.assertRaisesRegex(RepoMapMcpError, "unknown graph_id"):
@@ -314,7 +314,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
         )
         config_path = self.write_ops_config(self.server_memory_ops_config(fixture))
 
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
             summary = cloe_server_memory_summary()
             search = cloe_server_memory_search(query="RepoMap", limit=1)
             jsonrpc = handle_jsonrpc_message(
@@ -348,7 +348,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
 
         config_path = self.write_ops_config(self.visible_ops_config())
 
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
             payload = cloe_server_memory_summary()
 
         self.assertFalse(payload["enabled"])

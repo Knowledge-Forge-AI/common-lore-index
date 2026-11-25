@@ -185,7 +185,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
         """Resolve a configured target and return its PostgreSQL-bound connection."""
         from common_lore_index.server.mcp import storage_connection
 
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()), **env}, clear=True):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()), **env}, clear=True):
             target: Any = storage_connection(project=graph_id)
         return target.stores.canonical_store(target.selection).connection
 
@@ -234,7 +234,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
             (config_file, {"REPOMAP_PG_PASSWORD": "operator-secret"}, "repomap", "operator-secret"),
         )
         for path, env, user, password in cases:
-            connection = self._connection("host-one", REPOMAP_OPS_CONFIG=str(path), **env)
+            connection = self._connection("host-one", CLOE_OPS_CONFIG=str(path), **env)
             calls: list[tuple[tuple, dict]] = []
             with patch.dict("os.environ", env, clear=True):
                 PostgresCanonicalReadStore(connection, _recording_queries(calls)).canonical_edges(
@@ -246,7 +246,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
     def test_compose_style_read_status_environment_is_equivalent(self) -> None:
         env = {"REPOMAP_READ_STATUS_PASSWORD": "compose-read-secret"}
         connection = self._connection(
-            "repo-map", REPOMAP_OPS_CONFIG=str(self.write_container_internal_ops_config()), **env
+            "repo-map", CLOE_OPS_CONFIG=str(self.write_container_internal_ops_config()), **env
         )
         calls: list[tuple[tuple, dict]] = []
         with patch.dict("os.environ", env, clear=True):
@@ -306,7 +306,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
                      "common_lore_index.coordinator")
         self.assertFalse({name for name in imported if name and name.startswith(forbidden)})
         connection = self._connection(
-            "repo-map", REPOMAP_OPS_CONFIG=str(self.write_visible_ops_config())
+            "repo-map", CLOE_OPS_CONFIG=str(self.write_visible_ops_config())
         )
         with patch.object(module, "readback_postgres_authority", _fail):
             queries = CanonicalStorageQueries(nodes=_fail, edges=_fail, edge_explanation=_fail, neighborhood=_fail,

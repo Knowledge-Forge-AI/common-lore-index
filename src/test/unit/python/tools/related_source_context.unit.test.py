@@ -32,7 +32,7 @@ expand = API["expand_selected"]
 def environment(tmp_path, monkeypatch):
     home, _, workspace = related_home(tmp_path)
     monkeypatch.setenv("CLOE_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     return workspace, CapturedCalls()
 
 

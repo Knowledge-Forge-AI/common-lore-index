@@ -151,12 +151,14 @@ def dispatch_observation_commands(
         return 0
 
     if args.command == "mcp" and args.mcp_command == "serve":
+        from common_lore_index.ops.config_loading import OPS_CONFIG_ENV
+
         explicit_home = getattr(args, "repo_map_home", None)
         overrides = {}
         if explicit_home:
             overrides["CLOE_HOME"] = explicit_home
         if args.config:
-            overrides["REPOMAP_OPS_CONFIG"] = args.config
+            overrides[OPS_CONFIG_ENV] = args.config
         previous = {key: os.environ.get(key) for key in overrides}
         try:
             os.environ.update(overrides)

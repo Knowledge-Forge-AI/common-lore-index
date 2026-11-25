@@ -147,6 +147,64 @@ def test_cloe_home_owns_local_state_with_driver_unavailable(tmp_path: Path) -> N
     assert not harness.forbidden_events() and not harness.shim_invocations()
 
 
+def test_mcp_config_selectors_use_independent_canonical_defaults(tmp_path: Path) -> None:
+    harness = LocalHarness(tmp_path / "guarded", block_psycopg=True)
+    home = tmp_path / "graph home"
+    home.mkdir(mode=0o700)
+    content = sqlite_home_toml(graph_toml("home-graph", "/not-read/source"))
+    (home / "00.cloe.toml").write_text(content)
+    (home / "mcp.json").write_text("home-relative project registry must never be opened")
+    old_registry = harness.user_home / ".codex/codex-vc/mcp/repo-map/config.json"
+    old_registry.parent.mkdir(parents=True)
+    old_registry.write_text("old default must never be opened")
+    alternate_config = tmp_path / "alt.cloe.toml"
+    alternate_config.write_text(content.replace("home-graph", "alternate-graph"))
+    def create_registry(path: Path, name: str) -> None:
+        project = {"root_path": "/not-read/source", "pg_database": "unused"}
+        path.write_text(json.dumps({"default_project": name, "projects": {name: project}}))
+
+    requests = [initialize(), tool(2, "cloe_projects", {})]
+    optional = structured(harness.mcp(home, requests, extra_env={"CLOE_MCP_CONFIG": ""}), 2)
+    assert optional["default_project"] is None and optional["projects"] == []
+    canonical = harness.user_home / ".config/common-lore-index/mcp.json"
+    canonical.parent.mkdir(parents=True, mode=0o700)
+    create_registry(canonical, "canonical-default")
+    alternate_registry = tmp_path / "alternate mcp.json"
+    create_registry(alternate_registry, "canonical-explicit")
+    before = _snapshot(harness.user_home), _snapshot(home)
+    for extra, expected_project, expected_graph in (
+        ({"CLOE_MCP_CONFIG": ""}, "canonical-default", "home-graph"),
+        ({"CLOE_MCP_CONFIG": "", "CLOE_OPS_CONFIG": str(alternate_config)}, "canonical-default", "alternate-graph"),
+        ({"CLOE_MCP_CONFIG": str(alternate_registry)}, "canonical-explicit", "home-graph"),
+    ):
+        observed = structured(harness.mcp(home, requests, extra_env=extra), 2)
+        assert observed["default_project"] == expected_project
+        assert [graph["graph_id"] for graph in observed["graphs"]] == [expected_graph]
+    payload = "".join(json.dumps(item) + "\n" for item in requests)
+    without_graph_home = harness.run("mcp", "serve", input_text=payload, extra_env={"CLOE_MCP_CONFIG": ""})
+    assert without_graph_home.returncode == 0, without_graph_home.stderr
+    replies = {item["id"]: item for item in map(json.loads, without_graph_home.stdout.splitlines())}
+    registry_only = structured(replies, 2)
+    assert registry_only["default_project"] == "canonical-default"
+    assert registry_only["graph_registry_available"] is False
+    assert (_snapshot(harness.user_home), _snapshot(home)) == before
+    assert not harness.forbidden_events() and not harness.shim_invocations()
+
+
+@pytest.mark.parametrize("selector", ["REPOMAP_OPS_CONFIG", "REPOMAP_MCP_CONFIG"])
+def test_mcp_refuses_nonempty_legacy_config_selectors_without_disclosing_values(tmp_path: Path, selector: str) -> None:
+    harness = LocalHarness(tmp_path / "guarded", block_psycopg=True)
+    private_value = str(tmp_path / "must-not-leak")
+    for argv in (("mcp", "serve"), ("mcp", "serve", "--config", str(tmp_path / "wrong.toml"))):
+        refused = harness.run(*argv, extra_env={selector: private_value})
+        assert refused.returncode == 1 and not refused.stdout
+        assert refused.stderr == (
+            "legacy-mcp-config-selector: migrate MCP selectors to CLOE_OPS_CONFIG or CLOE_MCP_CONFIG\n"
+        )
+        assert private_value not in refused.stderr
+    assert not harness.forbidden_events() and not harness.shim_invocations()
+
+
 @pytest.mark.parametrize("invalid", ['schema_version = "private-error-sentinel"\n', 'password = "private-error-sentinel\n'])
 def test_invalid_input_stderr_never_echoes_values_or_home(tmp_path: Path, invalid: str) -> None:
     (tmp_path / "00.rp.toml").write_text(invalid)

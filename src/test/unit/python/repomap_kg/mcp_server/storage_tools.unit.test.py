@@ -46,7 +46,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
             }
         )
 
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             with patch("common_lore_index.server.mcp.query_canonical_storage_summary") as query:
                 with self.assertRaisesRegex(
                     RepoMapMcpError,
@@ -78,7 +78,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
                 },
             }
         )
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(allowed_config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(allowed_config_path)}):
             with patch(
                 "common_lore_index.server.mcp.query_canonical_storage_summary",
                 return_value=CanonicalStorageSummaryRecord(
@@ -118,7 +118,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
             }
         )
 
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             with patch(
                 "common_lore_index.server.mcp.query_canonical_storage_summary",
                 return_value=CanonicalStorageSummaryRecord(

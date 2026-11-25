@@ -23,7 +23,7 @@ from smoke.host_mcp_native_launch import (
 
 POISON = {"PGPASSWORD": "poison-admin", "PGPASSFILE": "/poison/pgpass", "PGSERVICE": "poison",
           "PYTHONPATH": "/poison/path", "VIRTUAL_ENV": "/poison/venv", "DOCKER_HOST": "unix:///poison.sock",
-          "REPOMAP_MCP_CONFIG": "/poison/mcp.json", "REPOMAP_READ_STATUS_PASSWORD": "poison-read",
+          "CLOE_MCP_CONFIG": "/poison/mcp.json", "REPOMAP_READ_STATUS_PASSWORD": "poison-read",
           "REPOMAP_PG_PASSWORD": "poison-pg", "OPENAI_API_KEY": "poison-provider", "PYTHONSTARTUP": "/poison"}
 INTERPRETER_ADDED = {"__CF_USER_TEXT_ENCODING", "LC_CTYPE", "PYTHONNOUSERSITE"}
 FAKE_CONSOLE = f"""#!{sys.executable}

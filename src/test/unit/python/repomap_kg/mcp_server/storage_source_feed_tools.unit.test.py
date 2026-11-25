@@ -36,7 +36,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
         item_key = (
             "feed.item:feed.channel%3Afeed.document%253Afile%25253Arss.xml%3Aself:item-1"
         )
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             with patch(
                 "common_lore_index.server.mcp.query_ingested_source_records",
                 return_value=(

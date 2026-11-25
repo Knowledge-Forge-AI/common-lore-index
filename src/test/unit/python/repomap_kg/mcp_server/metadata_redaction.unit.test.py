@@ -20,7 +20,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
 
         with patch.dict(
             "os.environ",
-            {"REPOMAP_OPS_CONFIG": str(config_path.parent)},
+            {"CLOE_OPS_CONFIG": str(config_path.parent)},
         ):
             payload = cloe_list_graphs()
 
@@ -79,7 +79,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
         with (
             patch.dict(
                 "os.environ",
-                {"REPOMAP_MCP_CONFIG": str(config_path)},
+                {"CLOE_MCP_CONFIG": str(config_path)},
                 clear=True,
             ),
             patch(
@@ -132,7 +132,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
 
         with patch.dict(
             "os.environ",
-            {"REPOMAP_MCP_CONFIG": str(config_path)},
+            {"CLOE_MCP_CONFIG": str(config_path)},
             clear=True,
         ):
             with patch(
@@ -172,7 +172,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
 
         with patch.dict(
             "os.environ",
-            {"REPOMAP_MCP_CONFIG": str(config_path)},
+            {"CLOE_MCP_CONFIG": str(config_path)},
             clear=True,
         ):
             with patch(

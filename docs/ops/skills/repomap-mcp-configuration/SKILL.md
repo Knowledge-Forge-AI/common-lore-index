@@ -39,13 +39,13 @@ environment (not a wheel or installed-package qualification):
 ```
 
 Client-neutral stdio entry; map the fields onto the client's own format, and
-point `REPOMAP_MCP_CONFIG` at a file containing `{"projects": {}}`:
+point `CLOE_MCP_CONFIG` at a file containing `{"projects": {}}`:
 
 ```json
 {
   "command": "/abs/checkout/.venv/bin/cloe",
   "args": ["mcp", "serve", "--repo-map-home", "/abs/repo-map-home"],
-  "env": {"REPOMAP_MCP_CONFIG": "/abs/repo-map-home/empty-mcp-registry.json"}
+  "env": {"CLOE_MCP_CONFIG": "/abs/repo-map-home/empty-mcp-registry.json"}
 }
 ```
 
@@ -182,14 +182,14 @@ source/feed tools) resolve named projects from a JSON registry file:
 Project entries may also include `pg_host`, `pg_port`, and `pg_user`. Keep
 secrets out of this file.
 
-Set `REPOMAP_MCP_CONFIG` in the MCP server environment to select the
-registry file explicitly. Always set it for a portable configuration: the
-compiled-in default path is a development-machine artifact and is not a
-contract.
+Set `CLOE_MCP_CONFIG` in the MCP server environment to select the
+registry file explicitly for a portable setup. Without this setting the server
+uses the optional registry at `~/.config/common-lore-index/mcp.json`. Migrate old client environment
+selectors before launching the server.
 
 ## MCP Server Environment
 
-- `REPOMAP_MCP_CONFIG`: path to the legacy JSON project registry.
+- `CLOE_MCP_CONFIG`: path to the optional JSON project registry (default `~/.config/common-lore-index/mcp.json`).
 - `REPOMAP_PSQL_COMMAND`: psql executable override when `psql` is not on the
   server path. `psql_command` is intentionally absent from every MCP tool
   schema and must remain a server-side setting, never a model-controlled

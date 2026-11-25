@@ -149,7 +149,7 @@ class HostMcpHarness:
             "PATH": f"{self.shims}:{Path(sys.executable).parent}:/usr/bin:/bin",
             "LANG": "C.UTF-8",
             "PYTHONDONTWRITEBYTECODE": "1",
-            "REPOMAP_MCP_CONFIG": str(self.registry),
+            "CLOE_MCP_CONFIG": str(self.registry),
         }
         env.update(extra or {})
         return env

@@ -119,7 +119,7 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
     def test_search_handlers_forward_repository_identity(self) -> None:
         config_path = self.write_ops_config(self.visible_ops_config())
         with (
-            patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}, clear=True),
+            patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}, clear=True),
             patch("common_lore_index.server.ops.query_mcp_search") as mock_query,
         ):
             mock_query.return_value = {"results": [], "total": 0, "has_more": False}
@@ -152,7 +152,7 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
             edges=(),
         )
         with (
-            patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}, clear=True),
+            patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}, clear=True),
             patch(
                 "common_lore_index.server.ops.query_canonical_storage_summary",
                 return_value=fake_summary,
@@ -171,7 +171,7 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
     def test_schema_error_maps_to_public_mcp_error(self) -> None:
         config_path = self.write_ops_config(self.visible_ops_config())
         with (
-            patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}, clear=True),
+            patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}, clear=True),
             patch(
                 "common_lore_index.server.ops.McpOpsGraphContext.repository_identity",
                 new_callable=lambda: "invalid:identity:shape",
@@ -247,7 +247,7 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
             record = MagicMock(spec=record_type, to_dict=lambda root=root: {"root_path": root})
             with (
                 self.subTest(owner=owner),
-                patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}, clear=True),
+                patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}, clear=True),
                 patch("common_lore_index.ops.refresh.run_storage_readback_with_ops_psql",
                       side_effect=AssertionError("retained ops-psql wrapper used")),
                 patch(f"common_lore_index.server.ops.{owner}", return_value=record) as mock_owner,
@@ -274,7 +274,7 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
             cloe_nix_summary,
         )
         with (
-            patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}, clear=True),
+            patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}, clear=True),
             patch(
                 "common_lore_index.server.ops.McpOpsGraphContext.repository_identity",
                 new_callable=lambda: "invalid:identity:shape",

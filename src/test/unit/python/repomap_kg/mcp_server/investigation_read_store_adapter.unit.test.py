@@ -67,7 +67,7 @@ class _Recorder:
 
 class InvestigationReadStoreAuthorityTests(McpServerTestSupport):
     def _env(self, **env: str):
-        return patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()), **env}, clear=True)
+        return patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()), **env}, clear=True)
 
     def _run_seven(self, **env: str) -> tuple[list[Any], list[str]]:
         from common_lore_index.server.mcp import RepoMapMcpError, handle_tool_call
@@ -120,10 +120,10 @@ class InvestigationReadStoreAuthorityTests(McpServerTestSupport):
         ), encoding="utf-8")
         compose = self.write_ops_config(setup_owned_config())
         cases = (
-            ({"REPOMAP_OPS_CONFIG": str(custom)}, "custom_reader", "custom-secret"),
-            ({"REPOMAP_OPS_CONFIG": str(home / "repomap.rpl.toml"), "REPOMAP_PG_PASSWORD": "operator-secret"},
+            ({"CLOE_OPS_CONFIG": str(custom)}, "custom_reader", "custom-secret"),
+            ({"CLOE_OPS_CONFIG": str(home / "repomap.rpl.toml"), "REPOMAP_PG_PASSWORD": "operator-secret"},
              "repomap", "operator-secret"),
-            ({"REPOMAP_OPS_CONFIG": str(compose), "REPOMAP_READ_STATUS_PASSWORD": "compose-read-secret"},
+            ({"CLOE_OPS_CONFIG": str(compose), "REPOMAP_READ_STATUS_PASSWORD": "compose-read-secret"},
              "repomap_read_status", "compose-read-secret"),
         )
         for env, user, password in cases:
@@ -213,7 +213,7 @@ class InvestigationReadStoreAuthorityTests(McpServerTestSupport):
                      "common_lore_index.ops.direct_publication", "common_lore_index.graph.multi_source_pipeline",
                      "common_lore_index.coordinator", "common_lore_index.server.ops", "common_lore_index.server.mcp")
         self.assertFalse({name for name in imported if name and name.startswith(forbidden)})
-        with self._env(REPOMAP_OPS_CONFIG=str(self.write_visible_ops_config())):
+        with self._env(CLOE_OPS_CONFIG=str(self.write_visible_ops_config())):
             config = load_mcp_ops_config()
             assert isinstance(config, OpsConfig), "a PostgreSQL home loads OpsConfig"
         with patched_guards(("common_lore_index.server.canonical_read_store.readback_postgres_authority",
@@ -233,8 +233,8 @@ class PsqlDriverRefusalTextContrastTests(McpServerTestSupport):
     def _refusal(self, tool: str, args: dict[str, Any], env: dict[str, str], run_psql=None, psycopg=None) -> str:
         from common_lore_index.server.mcp import RepoMapMcpError, handle_tool_call
 
-        env = {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()),
-               "REPOMAP_OPS_CONFIG": str(self.write_visible_ops_config()), **env}
+        env = {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()),
+               "CLOE_OPS_CONFIG": str(self.write_visible_ops_config()), **env}
         with patch.dict("os.environ", env, clear=True), patched_guards(), \
                 patch("common_lore_index.storage.readback_driver.run_psql", run_psql or fail_if_reached), \
                 patch("common_lore_index.storage.readback_driver._import_psycopg", psycopg or fail_if_reached), \

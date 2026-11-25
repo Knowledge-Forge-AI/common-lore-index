@@ -108,7 +108,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
             with (
                 patch.dict(
                     "os.environ",
-                    {"REPOMAP_OPS_CONFIG": str(home)},
+                    {"CLOE_OPS_CONFIG": str(home)},
                     clear=True,
                 ),
                 patch(

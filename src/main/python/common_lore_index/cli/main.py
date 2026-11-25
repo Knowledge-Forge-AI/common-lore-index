@@ -289,8 +289,11 @@ def _preflight_cli_home(args: argparse.Namespace) -> None:
         _resolve_home_selection("")  # Reject before any explicit config route can bypass home selection.
     if args.version or not hasattr(args, "repo_map_home") or getattr(args, "config", None) is not None:
         return
-    if args.command == "mcp" and getattr(args, "mcp_command", None) == "serve" and os.environ.get("REPOMAP_OPS_CONFIG"):
-        return  # MCP's explicit single-file setting owns selection, including with a home option.
+    if args.command == "mcp" and getattr(args, "mcp_command", None) == "serve":
+        from common_lore_index.ops.config_loading import OPS_CONFIG_ENV, legacy_mcp_selector_error
+
+        if legacy_mcp_selector_error() or os.environ.get(OPS_CONFIG_ENV):
+            return  # The stdio owner handles the legacy refusal and single-file selection.
     if args.command == "ops" and getattr(args, "ops_command", None) in (
         "config-migration-apply", "config-migration-rollback", "config-migration-finalize",
     ):
