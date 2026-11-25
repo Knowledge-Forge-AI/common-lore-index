@@ -111,53 +111,53 @@ SEARCH = {"graph_id": G, "query": "a"}
 LANGUAGE_FAMILIES: tuple[LanguageSummaryFamily, ...] = ("python", "terraform", "openapi", "js_framework", "nix")
 # (tool, arguments, expected (family, operation, graph id, query record)).
 TOOLS: tuple[tuple[str, dict[str, Any], tuple[str, str, str, Any]], ...] = (
-    ("repomap_graph_status", {"graph_id": G},
+    ("cloe_graph_status", {"graph_id": G},
      ("investigation", "refresh_statuses", G, GraphRefreshStatusQuery((G,)))),
-    ("repomap_refresh_status", {"graph_id": "private-visible"},
+    ("cloe_refresh_status", {"graph_id": "private-visible"},
      ("investigation", "refresh_statuses", "private-visible", GraphRefreshStatusQuery(("private-visible",)))),
-    ("repomap_refresh_status", {},
+    ("cloe_refresh_status", {},
      ("investigation", "refresh_statuses", "*", GraphRefreshStatusQuery((G, "private-visible")))),
-    ("repomap_search_nodes", SEARCH,
+    ("cloe_search_nodes", SEARCH,
      ("investigation", "search", G, GraphSearchQuery(G, "nodes", "a", None, None, 20, 0, False))),
-    ("repomap_search_files", SEARCH,
+    ("cloe_search_files", SEARCH,
      ("investigation", "search", G, GraphSearchQuery(G, "files", "a", None, None, 20, 0, False))),
-    ("repomap_search_observations", {**SEARCH, "include_raw": True},
+    ("cloe_search_observations", {**SEARCH, "include_raw": True},
      ("investigation", "search", G, GraphSearchQuery(G, "observations", "a", None, None, 20, 0, True))),
-    ("repomap_project_summary", {"graph_id": G}, ("investigation", "project_summary", G, ProjectSummaryQuery(G))),
-    ("repomap_neighborhood", {"graph_id": G, "node": A},
+    ("cloe_project_summary", {"graph_id": G}, ("investigation", "project_summary", G, ProjectSummaryQuery(G))),
+    ("cloe_neighborhood", {"graph_id": G, "node": A},
      ("investigation", "configured_neighborhood", G, ConfiguredNeighborhoodQuery(G, A, "both", 1, 1))),
     *(
-        (f"repomap_{family}_summary", {"graph_id": G},
+        (f"cloe_{family}_summary", {"graph_id": G},
          ("investigation", "language_summary", G, LanguageSummaryQuery(G, family)))
         for family in LANGUAGE_FAMILIES
     ),
-    ("repomap_status", {"project": G}, ("canonical", "canonical_storage_summary", G, None)),
-    ("repomap_canonical_nodes", {"project": G},
+    ("cloe_status", {"project": G}, ("canonical", "canonical_storage_summary", G, None)),
+    ("cloe_canonical_nodes", {"project": G},
      ("canonical", "canonical_nodes", G, CanonicalNodeQuery(None, None, None, 1, 51, 0))),
-    ("repomap_canonical_edges", {"project": G},
+    ("cloe_canonical_edges", {"project": G},
      ("canonical", "canonical_edges", G, CanonicalEdgeQuery(None, None, None, 1, 51, 0))),
-    ("repomap_explain_canonical_edge", {"project": G, "source_key": A, "kind": "imports", "target_key": B},
+    ("cloe_explain_canonical_edge", {"project": G, "source_key": A, "kind": "imports", "target_key": B},
      ("canonical", "canonical_edge_explanation", G,
       CanonicalEdgeExplanationQuery(A, "imports", B, identity_metadata_hash({}), 1, 51, 0))),
-    ("repomap_canonical_neighborhood", {"project": G, "node": A},
+    ("cloe_canonical_neighborhood", {"project": G, "node": A},
      ("canonical", "canonical_neighborhood", G, CanonicalNeighborhoodQuery(A, "both", 1, 1, 51, 0, 51, 0))),
-    ("repomap_ingested_sources", {"project": G},
+    ("cloe_ingested_sources", {"project": G},
      ("source", "ingested_sources", G, IngestedSourcesQuery(None, None, 50))),
-    ("repomap_source_summary", {"project": G, "source_id": "feed"},
+    ("cloe_source_summary", {"project": G, "source_id": "feed"},
      ("source", "source_summary", G, SourceSummaryQuery("feed"))),
-    ("repomap_source_runs", {"project": G, "source_id": "feed"},
+    ("cloe_source_runs", {"project": G, "source_id": "feed"},
      ("source", "source_runs", G, SourceRunsQuery("feed", 25))),
-    ("repomap_source_feed_items", {"project": G, "source_id": "feed"},
+    ("cloe_source_feed_items", {"project": G, "source_id": "feed"},
      ("source", "source_feed_items", G, SourceFeedItemsQuery("feed", None, 50))),
-    ("repomap_explain_source_feed_item", {"project": G, "item_key": ITEM_KEY},
+    ("cloe_explain_source_feed_item", {"project": G, "item_key": ITEM_KEY},
      ("source", "source_feed_item_explanation", G, SourceFeedItemExplanationQuery(ITEM_KEY, None))),
-    ("repomap_source_references", {"project": G, "source_id": "feed"},
+    ("cloe_source_references", {"project": G, "source_id": "feed"},
      ("source", "source_references", G, SourceReferencesQuery("feed", None, None, 50))),
-    ("repomap_similar_nodes", {"graph_id": G, "canonical_key": A, "rebuild_id": "routing-test",
+    ("cloe_similar_nodes", {"graph_id": G, "canonical_key": A, "rebuild_id": "routing-test",
                                "profile_identity": "sha256:" + "0" * 64, "dimensions": 3},
      ("investigation", "similar_nodes", G,
       SimilarNodesQuery(A, "routing-test", "sha256:" + "0" * 64, 3))),
-    ("repomap_embedding_profiles", {"graph_id": G, "selected": True},
+    ("cloe_embedding_profiles", {"graph_id": G, "selected": True},
      ("investigation", "embedding_profiles", G, EmbeddingProfilesQuery(selected=True))),
 )
 
@@ -320,11 +320,11 @@ class NeutralSelectionFakeStoreRoutingTests(McpServerTestSupport):
                     payloads.append(handle_tool_call(name, dict(args))["structuredContent"])
 
         database_tools = {name for name, _args, _expected in TOOLS}
-        other_tools = {"repomap_list_graphs", "repomap_projects", "repomap_server_memory_summary",
-                       "repomap_server_memory_search"}
+        other_tools = {"cloe_list_graphs", "cloe_projects", "cloe_server_memory_summary",
+                       "cloe_server_memory_search"}
         # These registered tools have selected-SQLite coverage; _FakeBinding
         # deliberately does not implement their navigation/location operations.
-        sqlite_tools = {"repomap_navigation_search", "repomap_node_locations"}
+        sqlite_tools = {"cloe_navigation_search", "cloe_node_locations"}
         catalog = tool_definitions()
         self.assertEqual(len(database_tools), 25)
         self.assertEqual(len(catalog), 31)
@@ -347,10 +347,10 @@ class NeutralSelectionFakeStoreRoutingTests(McpServerTestSupport):
             home, _, _ = related_home(Path(directory))
             with patch.dict("os.environ", {"CLOE_HOME": str(home)}, clear=True), \
                     patched_guards(PG_BINDING_TRIPWIRES):
-                navigation = handle_tool_call("repomap_navigation_search", {
+                navigation = handle_tool_call("cloe_navigation_search", {
                     "graph_id": GRAPH, "query": IMPORTED, "scope": "code",
                 })["structuredContent"]
-                location = handle_tool_call("repomap_node_locations", {
+                location = handle_tool_call("cloe_node_locations", {
                     "graph_id": GRAPH, "canonical_key": IMPORTED,
                     "evidence_role": "direct", "detail": "compact", "limit": 2,
                 })["structuredContent"]
@@ -373,7 +373,7 @@ class NeutralSelectionFakeStoreRoutingTests(McpServerTestSupport):
                 patched_guards(("common_lore_index.server.canonical_read_store.readback_postgres_authority",
                                 "common_lore_index.ops.readback.readback_postgres_authority",
                                 "common_lore_index.server._ops_records.psql_command_from_environment")):
-            graphs = handle_tool_call("repomap_list_graphs", {})["structuredContent"]
-            projects = handle_tool_call("repomap_projects", {})["structuredContent"]
+            graphs = handle_tool_call("cloe_list_graphs", {})["structuredContent"]
+            projects = handle_tool_call("cloe_projects", {})["structuredContent"]
         self.assertEqual([graph["graph_id"] for graph in graphs["graphs"]], [G, "private-visible"])
         self.assertEqual([graph["graph_id"] for graph in projects["graphs"]], [G, "private-visible"])

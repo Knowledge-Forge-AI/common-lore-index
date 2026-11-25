@@ -4,7 +4,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from unittest.mock import patch
 
 from common_lore_index.cli import main
-from common_lore_index.server.mcp import repomap_canonical_nodes
+from common_lore_index.server.mcp import cloe_canonical_nodes
 from common_lore_index.storage import CanonicalNodeRecord
 
 
@@ -186,7 +186,7 @@ def test_arch7a1_mcp_uses_same_page_envelope_and_lookahead() -> None:
         "common_lore_index.server.mcp.query_canonical_node_records",
         return_value=records,
     ) as query:
-        payload = repomap_canonical_nodes(
+        payload = cloe_canonical_nodes(
             root_path="/tmp/fixture",
             pg_database="postgres",
             limit=2,

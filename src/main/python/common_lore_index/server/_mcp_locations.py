@@ -21,7 +21,7 @@ from common_lore_index.storage.node_locations import NodeLocationsQuery
 
 def node_locations_tool_definition() -> dict[str, Any]:
     return {
-        "name": "repomap_node_locations",
+        "name": "cloe_node_locations",
         "description": "Resolve one selected node to bounded stored source evidence. SQLite Local and "
                        "PostgreSQL; other backends report unsupported. Use evidence_role=direct for subjects or "
                        "reference for incoming/outgoing links and containment context. "
@@ -171,7 +171,7 @@ def _window_status(leads: bool, metadata_path: bool, has_more: bool) -> tuple[st
     return "unavailable", "no_usable_location"
 
 
-def repomap_node_locations(
+def cloe_node_locations(
     *, graph_id: str, canonical_key: str, limit: int = 10,
     evidence_role: str = "all", detail: str = "full",
 ) -> dict[str, Any]:

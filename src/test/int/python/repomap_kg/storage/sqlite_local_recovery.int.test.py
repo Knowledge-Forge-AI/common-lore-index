@@ -172,7 +172,7 @@ def test_killed_writer_leaves_previous_generation_readable_and_recoverable(tmp_p
     finally:
         writer.communicate()
     assert writer.returncode == -signal.SIGKILL
-    reopened = harness.mcp(home, [initialize(1), tool(2, "repomap_graph_status", {"graph_id": GRAPH})])
+    reopened = harness.mcp(home, [initialize(1), tool(2, "cloe_graph_status", {"graph_id": GRAPH})])
     storage = structured(reopened, 2)["storage"]
     assert storage["latest_run_id"] == 1
     assert storage["publication"] == gen1["publication"]
@@ -278,7 +278,7 @@ def test_publisher_internal_failure_keeps_the_accepted_generation_and_retry_succ
     assert "after_family:canonical_nodes" in reached, reached
     assert _dump(path) == accepted and _accepted(config, GRAPH) == identity
     monkeypatch.setattr(publisher, "_fault_point", lambda _name: None)
-    status = harness.mcp(home, [initialize(1), tool(2, "repomap_graph_status", {"graph_id": GRAPH})])
+    status = harness.mcp(home, [initialize(1), tool(2, "cloe_graph_status", {"graph_id": GRAPH})])
     assert structured(status, 2)["storage"]["latest_run_id"] == 1
 
     later, first = _refresh(harness, home, GRAPH), _refresh(harness, home, FRESH)
@@ -286,8 +286,8 @@ def test_publisher_internal_failure_keeps_the_accepted_generation_and_retry_succ
     assert (first["accepted_generation"], first["previous_run_id"]) == (1, None), first
     reads = harness.mcp(home, [
         initialize(1),
-        tool(2, "repomap_canonical_nodes", {"project": FRESH, "limit": 2}),
-        tool(3, "repomap_graph_status", {"graph_id": GRAPH}),
+        tool(2, "cloe_canonical_nodes", {"project": FRESH, "limit": 2}),
+        tool(3, "cloe_graph_status", {"graph_id": GRAPH}),
     ])
     assert structured(reads, 2)["items"], structured(reads, 2)
     assert structured(reads, 3)["storage"]["latest_run_id"] == 2
@@ -345,7 +345,7 @@ def test_post_commit_uncertainty_is_reconciled_without_sources_or_a_new_generati
     assert set(_attempts(home, GRAPH)) == attempt_names, "reconciliation must not capture a new attempt"
     assert _unsettled(home, GRAPH) == {}
     assert {_attempts(home, GRAPH)[name]["retention_class"] for name in pending} == {"terminal-accepted"}
-    status = harness.mcp(home, [initialize(1), tool(2, "repomap_graph_status", {"graph_id": GRAPH})])
+    status = harness.mcp(home, [initialize(1), tool(2, "cloe_graph_status", {"graph_id": GRAPH})])
     storage = structured(status, 2)["storage"]
     assert storage["latest_run_id"] == 2 and storage["publication"] == replayed["publication"], storage
     assert _state(config, GRAPH)["latest_run_id"] == 2 and _accepted(config, GRAPH)[1]["runs"] == 2
@@ -387,7 +387,7 @@ def test_killed_initializer_never_poisons_the_final_path(tmp_path: Path, point: 
     retry = harness.cli_json("ops", "sqlite-init", "--repo-map-home", str(home), "--graph", GRAPH)
     assert retry["result"] == ("already-current" if installed else "initialized"), retry
     assert _refresh(harness, home, GRAPH)["accepted_generation"] == 1
-    status = harness.mcp(home, [initialize(1), tool(2, "repomap_graph_status", {"graph_id": GRAPH})])
+    status = harness.mcp(home, [initialize(1), tool(2, "cloe_graph_status", {"graph_id": GRAPH})])
     assert structured(status, 2)["storage"]["latest_run_id"] == 1
     assert harness.forbidden_events() == []
     remove_database(path)

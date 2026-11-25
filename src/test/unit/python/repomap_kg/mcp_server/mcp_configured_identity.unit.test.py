@@ -44,17 +44,17 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
 
     def test_all_eleven_exposed_tools_forward_configured_identity(self) -> None:
         from common_lore_index.server.mcp import (
-            repomap_canonical_edges,
-            repomap_canonical_neighborhood,
-            repomap_canonical_nodes,
-            repomap_explain_canonical_edge,
-            repomap_explain_source_feed_item,
-            repomap_ingested_sources,
-            repomap_source_feed_items,
-            repomap_source_references,
-            repomap_source_runs,
-            repomap_source_summary,
-            repomap_status,
+            cloe_canonical_edges,
+            cloe_canonical_neighborhood,
+            cloe_canonical_nodes,
+            cloe_explain_canonical_edge,
+            cloe_explain_source_feed_item,
+            cloe_ingested_sources,
+            cloe_source_feed_items,
+            cloe_source_references,
+            cloe_source_runs,
+            cloe_source_summary,
+            cloe_status,
         )
         from common_lore_index.storage import (
             CanonicalEdgeExplanationRecord,
@@ -201,19 +201,19 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
             patch("common_lore_index.server.mcp.query_source_reference_records", return_value=(source_ref,)) as mock_source_refs,
         ):
             # 1. status
-            repomap_status(project="repo-map")
+            cloe_status(project="repo-map")
             self.assertEqual(mock_status.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
             # 2. canonical nodes
-            repomap_canonical_nodes(project="repo-map", kind="python.module")
+            cloe_canonical_nodes(project="repo-map", kind="python.module")
             self.assertEqual(mock_nodes.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
             # 3. canonical edges
-            repomap_canonical_edges(project="repo-map", kind="imports")
+            cloe_canonical_edges(project="repo-map", kind="imports")
             self.assertEqual(mock_edges.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
             # 4. canonical explain
-            repomap_explain_canonical_edge(
+            cloe_explain_canonical_edge(
                 project="repo-map",
                 source_key="python.module:common_lore_index.cli",
                 kind="imports",
@@ -223,35 +223,35 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
             self.assertEqual(mock_explain_edge.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
             # 5. canonical neighborhood
-            repomap_canonical_neighborhood(project="repo-map", node="python.module:common_lore_index.cli")
+            cloe_canonical_neighborhood(project="repo-map", node="python.module:common_lore_index.cli")
             self.assertEqual(mock_neighborhood.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
             # 6. ingested sources
-            repomap_ingested_sources(project="repo-map")
+            cloe_ingested_sources(project="repo-map")
             self.assertEqual(mock_sources.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
             # 7. source summary
-            repomap_source_summary(project="repo-map", source_id="example-feed")
+            cloe_source_summary(project="repo-map", source_id="example-feed")
             self.assertEqual(mock_source_summary.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
             # 8. source runs
-            repomap_source_runs(project="repo-map", source_id="example-feed")
+            cloe_source_runs(project="repo-map", source_id="example-feed")
             self.assertEqual(mock_source_runs.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
             # 9. source feed items
-            repomap_source_feed_items(project="repo-map", source_id="example-feed")
+            cloe_source_feed_items(project="repo-map", source_id="example-feed")
             self.assertEqual(mock_feed_items.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
             # 10. explain source feed item
-            repomap_explain_source_feed_item(project="repo-map", item_key="feed.item:example:1")
+            cloe_explain_source_feed_item(project="repo-map", item_key="feed.item:example:1")
             self.assertEqual(mock_explain_feed.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
             # 11. source references
-            repomap_source_references(project="repo-map", source_id="example-feed")
+            cloe_source_references(project="repo-map", source_id="example-feed")
             self.assertEqual(mock_source_refs.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
     def test_configured_status_repository_name_from_row_and_root_display_marker(self) -> None:
-        from common_lore_index.server.mcp import repomap_status
+        from common_lore_index.server.mcp import cloe_status
         from common_lore_index.storage import CanonicalStorageSummaryRecord
 
         config_path = self.write_ops_config(self.visible_ops_config())
@@ -271,7 +271,7 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
                 canonical_edges=30,
                 canonical_evidence=40,
             )
-            payload_public = repomap_status(project="repo-map")
+            payload_public = cloe_status(project="repo-map")
             self.assertEqual(payload_public["repository_name"], "relocated-current-name")
             self.assertEqual(payload_public["root_path"], "[graph-root]")
             self.assertEqual(payload_public["project"], "repo-map")
@@ -289,7 +289,7 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
                 canonical_edges=15,
                 canonical_evidence=25,
             )
-            payload_private = repomap_status(project="private-visible")
+            payload_private = cloe_status(project="private-visible")
             self.assertEqual(payload_private["repository_name"], "private-current-name")
             self.assertEqual(payload_private["root_path"], "[private-root]")
             self.assertEqual(payload_private["project"], "private-visible")

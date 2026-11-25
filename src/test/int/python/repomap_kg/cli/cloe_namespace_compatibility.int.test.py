@@ -45,6 +45,7 @@ MCP_REQUESTS = "".join(json.dumps(item) + "\n" for item in (
     initialize(1),
     {"jsonrpc": "2.0", "method": "notifications/initialized"},
     {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+    {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "repomap_status", "arguments": {}}},
 ))
 DRIVER_IMPORT_PROBE = """
 import importlib, importlib.abc, json, sys
@@ -112,7 +113,9 @@ def mcp_responses(stdout: str) -> dict[int, dict[str, Any]]:
 
 def assert_mcp_wire(stdout: str) -> None:
     responses = mcp_responses(stdout)
-    assert sorted(responses) == [1, 2]
+    assert sorted(responses) == [1, 2, 3]
+    assert responses[3]["result"]["isError"] is True
+    assert "unknown RepoMap MCP tool" in responses[3]["result"]["structuredContent"]["error"]
     initialized = responses[1]["result"]
     assert isinstance(initialized, dict) and initialized["serverInfo"] == {"name": "common-lore-index", "version": __version__}
     listed = responses[2]["result"]

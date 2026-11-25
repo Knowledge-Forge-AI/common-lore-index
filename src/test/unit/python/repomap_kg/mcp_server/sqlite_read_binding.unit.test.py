@@ -4,7 +4,7 @@ A SQLite Local home routes all 24 database-reading tools to real read-only
 SQLite queries with every PostgreSQL binding tripwire armed, including the six
 source/feed tools over a real offline feed publication (LOCAL5); logical
 selection refusals and argument validation keep the PostgreSQL texts and
-precede any open; legacy ``repomap_status`` keeps its legacy and explicit
+precede any open; legacy ``cloe_status`` keeps its legacy and explicit
 PostgreSQL routes; and PostgreSQL homes still bind PostgreSQL stores.
 """
 
@@ -116,12 +116,12 @@ def _refusal(name: str, arguments: dict[str, Any]) -> str:
 
 
 SOURCE_ARGUMENTS: dict[str, dict[str, Any]] = {
-    "repomap_ingested_sources": {"project": FEEDS},
-    "repomap_source_summary": {"project": FEEDS, "source_id": RSS},
-    "repomap_source_runs": {"project": FEEDS, "source_id": RSS},
-    "repomap_source_feed_items": {"project": FEEDS, "source_id": RSS},
-    "repomap_explain_source_feed_item": {"project": FEEDS, "item_key": ITEM_KEY},
-    "repomap_source_references": {"project": FEEDS, "source_id": RSS},
+    "cloe_ingested_sources": {"project": FEEDS},
+    "cloe_source_summary": {"project": FEEDS, "source_id": RSS},
+    "cloe_source_runs": {"project": FEEDS, "source_id": RSS},
+    "cloe_source_feed_items": {"project": FEEDS, "source_id": RSS},
+    "cloe_explain_source_feed_item": {"project": FEEDS, "item_key": ITEM_KEY},
+    "cloe_source_references": {"project": FEEDS, "source_id": RSS},
 }
 SUMMARIES = ("python", "terraform", "openapi", "js_framework", "nix")
 
@@ -130,9 +130,9 @@ def test_matrix_covers_every_graph_reading_tool() -> None:
     assert len(SUPPORTED_TOOLS) == len(set(SUPPORTED_TOOLS)) == 25
     assert set(SOURCE_ARGUMENTS) <= set(SUPPORTED_TOOLS)
     catalog = {tool["name"] for tool in mcp.tool_definitions()}
-    configuration = {"repomap_list_graphs", "repomap_projects"}
-    server_memory = {"repomap_server_memory_summary", "repomap_server_memory_search"}
-    assert set(OPTIONAL_POSTGRES_TOOLS) == {"repomap_similar_nodes", "repomap_embedding_profiles"}
+    configuration = {"cloe_list_graphs", "cloe_projects"}
+    server_memory = {"cloe_server_memory_summary", "cloe_server_memory_search"}
+    assert set(OPTIONAL_POSTGRES_TOOLS) == {"cloe_similar_nodes", "cloe_embedding_profiles"}
     assert not set(OPTIONAL_POSTGRES_TOOLS) & set(SUPPORTED_TOOLS)
     assert len(catalog) == 31
     assert catalog == set(SUPPORTED_TOOLS) | set(OPTIONAL_POSTGRES_TOOLS) | configuration | server_memory
@@ -141,24 +141,24 @@ def test_matrix_covers_every_graph_reading_tool() -> None:
 
 def test_source_tools_validate_before_any_database_open(home: Path) -> None:
     cases = (
-        ("repomap_source_summary", {"project": FEEDS, "source_id": "has space"},
+        ("cloe_source_summary", {"project": FEEDS, "source_id": "has space"},
          "source_id must not contain whitespace"),
-        ("repomap_source_runs", {"project": FEEDS, "source_id": "https://example.invalid/x"},
+        ("cloe_source_runs", {"project": FEEDS, "source_id": "https://example.invalid/x"},
          "source_id must not be a URL"),
-        ("repomap_source_runs", {"project": FEEDS, "source_id": RSS, "limit": 0},
+        ("cloe_source_runs", {"project": FEEDS, "source_id": RSS, "limit": 0},
          "limit must be between 1 and 500"),
-        ("repomap_ingested_sources", {"project": FEEDS, "policy_status": "https://x.invalid/"},
+        ("cloe_ingested_sources", {"project": FEEDS, "policy_status": "https://x.invalid/"},
          "policy_status must not be a URL"),
-        ("repomap_source_feed_items", {"project": FEEDS, "source_id": RSS, "source_run_id": "file://x"},
+        ("cloe_source_feed_items", {"project": FEEDS, "source_id": RSS, "source_run_id": "file://x"},
          "source_run_id must not be a URL"),
-        ("repomap_source_references", {"project": FEEDS, "source_id": RSS, "target_kind": "http://x"},
+        ("cloe_source_references", {"project": FEEDS, "source_id": RSS, "target_kind": "http://x"},
          "target_kind must not be a URL"),
-        ("repomap_explain_source_feed_item", {"project": FEEDS, "item_key": "file:x.xml"},
+        ("cloe_explain_source_feed_item", {"project": FEEDS, "item_key": "file:x.xml"},
          "item_key must use the feed.item namespace"),
-        ("repomap_explain_source_feed_item", {"project": FEEDS, "item_key": ITEM_KEY, "source_id": "a b"},
+        ("cloe_explain_source_feed_item", {"project": FEEDS, "item_key": ITEM_KEY, "source_id": "a b"},
          "source_id must not contain whitespace"),
-        ("repomap_source_summary", {"project": "hidden", "source_id": RSS}, "graph 'hidden' is not MCP-visible"),
-        ("repomap_source_references", {"project": "disabled", "source_id": RSS}, "graph 'disabled' is not enabled"),
+        ("cloe_source_summary", {"project": "hidden", "source_id": RSS}, "graph 'hidden' is not MCP-visible"),
+        ("cloe_source_references", {"project": "disabled", "source_id": RSS}, "graph 'disabled' is not enabled"),
     )
     with patched_guards(PG_BINDING_TRIPWIRES), patch(READ_TRANSACTION, fail_if_reached):
         for name, arguments, text in cases:
@@ -167,15 +167,15 @@ def test_source_tools_validate_before_any_database_open(home: Path) -> None:
 
 def test_source_tools_read_a_feed_publication_with_every_postgres_tripwire_armed(home: Path) -> None:
     with patched_guards(PG_BINDING_TRIPWIRES):
-        inventory = _call("repomap_ingested_sources", {"project": FEEDS})
-        summary = _call("repomap_source_summary", SOURCE_ARGUMENTS["repomap_source_summary"])
-        runs = _call("repomap_source_runs", SOURCE_ARGUMENTS["repomap_source_runs"])
-        items = _call("repomap_source_feed_items", SOURCE_ARGUMENTS["repomap_source_feed_items"])
-        references = _call("repomap_source_references", {"project": FEEDS, "source_id": RSS,
+        inventory = _call("cloe_ingested_sources", {"project": FEEDS})
+        summary = _call("cloe_source_summary", SOURCE_ARGUMENTS["cloe_source_summary"])
+        runs = _call("cloe_source_runs", SOURCE_ARGUMENTS["cloe_source_runs"])
+        items = _call("cloe_source_feed_items", SOURCE_ARGUMENTS["cloe_source_feed_items"])
+        references = _call("cloe_source_references", {"project": FEEDS, "source_id": RSS,
                                                          "target_kind": "feed.author"})
-        explained = _call("repomap_explain_source_feed_item", {
+        explained = _call("cloe_explain_source_feed_item", {
             "project": FEEDS, "item_key": items[0]["item_key"], "source_id": RSS})
-        corpus = _call("repomap_ingested_sources", {"project": CORPUS})
+        corpus = _call("cloe_ingested_sources", {"project": CORPUS})
     assert [row["source_id"] for row in inventory] == [
         "example-atom-feed", RSS, "example-secret-bearing-feed"]
     assert summary["parse_errors"] == 1 and summary["feed_items"] == 5, summary
@@ -187,20 +187,20 @@ def test_source_tools_read_a_feed_publication_with_every_postgres_tripwire_armed
 
 def test_selection_refusals_keep_public_texts_before_any_open(home: Path) -> None:
     cases = (
-        ("repomap_canonical_nodes", {"project": "nope"},
+        ("cloe_canonical_nodes", {"project": "nope"},
          "unknown legacy MCP project or graph-registry graph_id: nope"),
-        ("repomap_canonical_nodes", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
-        ("repomap_canonical_edges", {"project": "disabled"}, "graph 'disabled' is not enabled"),
-        ("repomap_status", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
-        ("repomap_search_nodes", {"graph_id": "nope", "query": "x"}, "unknown graph_id: nope"),
-        ("repomap_graph_status", {"graph_id": "hidden"}, "graph 'hidden' is not MCP-visible"),
-        ("repomap_refresh_status", {"graph_id": "hidden"}, "graph 'hidden' is not MCP-visible"),
-        ("repomap_project_summary", {"graph_id": "disabled"}, "graph 'disabled' is not enabled"),
-        ("repomap_search_observations", {"graph_id": "hidden", "query": "x"},
+        ("cloe_canonical_nodes", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
+        ("cloe_canonical_edges", {"project": "disabled"}, "graph 'disabled' is not enabled"),
+        ("cloe_status", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
+        ("cloe_search_nodes", {"graph_id": "nope", "query": "x"}, "unknown graph_id: nope"),
+        ("cloe_graph_status", {"graph_id": "hidden"}, "graph 'hidden' is not MCP-visible"),
+        ("cloe_refresh_status", {"graph_id": "hidden"}, "graph 'hidden' is not MCP-visible"),
+        ("cloe_project_summary", {"graph_id": "disabled"}, "graph 'disabled' is not enabled"),
+        ("cloe_search_observations", {"graph_id": "hidden", "query": "x"},
          "graph 'hidden' is not MCP-visible"),
-        ("repomap_neighborhood", {"graph_id": "disabled", "node": "x"}, "graph 'disabled' is not enabled"),
-        ("repomap_nix_summary", {"graph_id": "hidden"}, "graph 'hidden' is not MCP-visible"),
-        ("repomap_status", {"project": GRAPH, "pg_database": "other"},
+        ("cloe_neighborhood", {"graph_id": "disabled", "node": "x"}, "graph 'disabled' is not enabled"),
+        ("cloe_nix_summary", {"graph_id": "hidden"}, "graph 'hidden' is not MCP-visible"),
+        ("cloe_status", {"project": GRAPH, "pg_database": "other"},
          "graph-registry project routing cannot be combined with explicit connection overrides"),
     )
     with patched_guards(PG_BINDING_TRIPWIRES), patch(READ_TRANSACTION, fail_if_reached):
@@ -211,16 +211,16 @@ def test_selection_refusals_keep_public_texts_before_any_open(home: Path) -> Non
 def test_new_tools_validate_before_any_database_open(home: Path) -> None:
     long_query = "x" * 201
     cases = (
-        ("repomap_neighborhood", {"graph_id": GRAPH, "node": "x", "depth": 2},
+        ("cloe_neighborhood", {"graph_id": GRAPH, "node": "x", "depth": 2},
          "neighborhood depth is capped at 1 in MCP-OPS4"),
-        ("repomap_neighborhood", {"graph_id": GRAPH, "node": "x", "direction": "sideways"},
+        ("cloe_neighborhood", {"graph_id": GRAPH, "node": "x", "direction": "sideways"},
          "neighborhood direction must be one of both, in, out"),
-        ("repomap_search_observations", {"graph_id": GRAPH, "query": "   "}, "query is required"),
-        ("repomap_search_observations", {"graph_id": GRAPH, "query": long_query},
+        ("cloe_search_observations", {"graph_id": GRAPH, "query": "   "}, "query is required"),
+        ("cloe_search_observations", {"graph_id": GRAPH, "query": long_query},
          "query must be at most 200 characters"),
-        ("repomap_search_observations", {"graph_id": GRAPH, "query": "x", "limit": 0},
+        ("cloe_search_observations", {"graph_id": GRAPH, "query": "x", "limit": 0},
          "limit must be a positive integer"),
-        ("repomap_search_observations", {"graph_id": GRAPH, "query": "x", "offset": -1},
+        ("cloe_search_observations", {"graph_id": GRAPH, "query": "x", "offset": -1},
          "offset must be a non-negative integer"),
     )
     with patched_guards(PG_BINDING_TRIPWIRES), patch(READ_TRANSACTION, fail_if_reached):
@@ -229,66 +229,66 @@ def test_new_tools_validate_before_any_database_open(home: Path) -> None:
 
 
 def test_canonical_and_investigation_tools_read_sqlite_with_every_postgres_tripwire_armed(home: Path) -> None:
-    edge = mcp.handle_tool_call("repomap_canonical_edges", {"project": GRAPH, "limit": 1})
+    edge = mcp.handle_tool_call("cloe_canonical_edges", {"project": GRAPH, "limit": 1})
     first = edge["structuredContent"]["items"][0]
     with patched_guards(PG_BINDING_TRIPWIRES), patch(PG_STATUS, fail_if_reached):
-        nodes = _call("repomap_canonical_nodes", {"project": GRAPH, "limit": 2})
+        nodes = _call("cloe_canonical_nodes", {"project": GRAPH, "limit": 2})
         assert len(nodes["items"]) == 2 and nodes["page"]["truncated"] is True
-        assert _call("repomap_canonical_nodes", {"project": GRAPH, "result_schema_version": 0})
-        assert _call("repomap_canonical_edges", {"project": GRAPH})["items"]
-        explained = _call("repomap_explain_canonical_edge", {
+        assert _call("cloe_canonical_nodes", {"project": GRAPH, "result_schema_version": 0})
+        assert _call("cloe_canonical_edges", {"project": GRAPH})["items"]
+        explained = _call("cloe_explain_canonical_edge", {
             "project": GRAPH, "source_key": first["source_key"], "kind": first["edge_kind"],
             "target_key": first["target_key"], "identity_metadata": first["identity_metadata"],
         })
         assert explained["result"]["edge"]["source_key"] == first["source_key"]
         assert explained["result"]["evidence"]
-        around = _call("repomap_canonical_neighborhood", {"project": GRAPH, "node": first["source_key"]})
+        around = _call("cloe_canonical_neighborhood", {"project": GRAPH, "node": first["source_key"]})
         assert around["result"]["center"]["canonical_key"] == first["source_key"]
-        status = _call("repomap_graph_status", {"graph_id": GRAPH})
+        status = _call("cloe_graph_status", {"graph_id": GRAPH})
         assert status["storage"]["publication"]["execution_route"] == "portable-worker-v1"
         assert status["graph"]["database_source"] == "sqlite-graph-file"
-        everything = _call("repomap_refresh_status", {})
+        everything = _call("cloe_refresh_status", {})
         rows = {row["graph_id"]: row for row in everything["graphs"]}
         assert rows[GRAPH]["repository_exists"] is True
         assert rows["absent"]["error"] == "graph-database-not-initialized"
         assert rows["absent"]["repository_exists"] is False and rows["absent"]["db_checked"] is True
-        summary = _call("repomap_project_summary", {"graph_id": GRAPH})
+        summary = _call("cloe_project_summary", {"graph_id": GRAPH})
         assert summary["summary"]["counts"]["runs"] == 1
-        assert _call("repomap_search_nodes", {"graph_id": GRAPH, "query": "init"})["results"]
-        files = _call("repomap_search_files", {"graph_id": GRAPH, "query": "py"})
+        assert _call("cloe_search_nodes", {"graph_id": GRAPH, "query": "init"})["results"]
+        files = _call("cloe_search_files", {"graph_id": GRAPH, "query": "py"})
         assert [row["path"] for row in files["results"]] == ["pkg/init.py"]
-        listed = _call("repomap_list_graphs", {})
+        listed = _call("cloe_list_graphs", {})
         assert {graph["database_source"] for graph in listed["graphs"]} == {"sqlite-graph-file"}
-        projects = _call("repomap_projects", {})
+        projects = _call("cloe_projects", {})
         assert projects["graph_registry_available"] is True and projects["graph_count"] == 5
 
-        legacy = _call("repomap_status", {"project": GRAPH})
+        legacy = _call("cloe_status", {"project": GRAPH})
         assert legacy["project"] == GRAPH and legacy["counts"]["runs"] == 1
         assert legacy["counts"]["canonical_nodes"] == summary["summary"]["counts"]["canonical_nodes"]
         assert legacy["root_path"] == "[graph-root]" and legacy["storage_model"] == "canonical"
-        observed = _call("repomap_search_observations", {"graph_id": CORPUS, "query": "tfvars", "limit": 2})
+        observed = _call("cloe_search_observations", {"graph_id": CORPUS, "query": "tfvars", "limit": 2})
         assert observed["result_count"] == 2 and observed["has_more"] is True
         assert all("payload" not in row for row in observed["results"])
         assert observed["raw_payload_policy"]["payload_included"] is False
-        center = _call("repomap_neighborhood", {"graph_id": GRAPH, "node": first["source_key"]})
+        center = _call("cloe_neighborhood", {"graph_id": GRAPH, "node": first["source_key"]})
         assert center["result"]["center"]["canonical_key"] == first["source_key"]
         assert center["result"]["edges"] and center["depth"] == 1
-        missing = _call("repomap_neighborhood", {"graph_id": GRAPH, "node": "python.module:absent"})
+        missing = _call("cloe_neighborhood", {"graph_id": GRAPH, "node": "python.module:absent"})
         assert missing["result"] == {"center": None, "nodes": [], "edges": []}
         headline = {"python": "python_observations", "terraform": "terraform_observations",
                     "openapi": "openapi_observations", "js_framework": "framework_observations",
                     "nix": "nix_observations"}
         for family in SUMMARIES:
-            payload = _call(f"repomap_{family}_summary", {"graph_id": CORPUS})
+            payload = _call(f"cloe_{family}_summary", {"graph_id": CORPUS})
             assert payload["summary_kind"] == family and payload["summary"][headline[family]] > 0, family
 
 
 def test_observation_raw_payload_consent_and_private_redaction(home: Path) -> None:
     with patched_guards(PG_BINDING_TRIPWIRES):
-        plain = _call("repomap_search_observations", {"graph_id": CORPUS, "query": "custom.note"})
-        raw = _call("repomap_search_observations",
+        plain = _call("cloe_search_observations", {"graph_id": CORPUS, "query": "custom.note"})
+        raw = _call("cloe_search_observations",
                     {"graph_id": CORPUS, "query": "custom.note", "include_raw": True})
-        hidden = _call("repomap_search_observations",
+        hidden = _call("cloe_search_observations",
                        {"graph_id": "private", "query": "custom.note", "include_raw": True})
     assert [row["kind"] for row in plain["results"]] == ["custom.note"]
     assert "payload" not in plain["results"][0] and plain["results"][0]["metadata"]["b"] == 150
@@ -314,9 +314,9 @@ def test_legacy_status_routing_precedence(home: Path, tmp_path: Path) -> None:
     )
     with patch(READ_TRANSACTION, fail_if_reached), patch(PG_STATUS, return_value=record) as query, \
             patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(registry)}):
-        assert _call("repomap_status", {"project": GRAPH})["counts"]["runs"] == 7  # legacy entry wins
-        assert _call("repomap_status", {})["project"] == GRAPH  # legacy default_project
-        explicit = _call("repomap_status", {"root_path": "/explicit", "pg_database": "explicit_db"})
+        assert _call("cloe_status", {"project": GRAPH})["counts"]["runs"] == 7  # legacy entry wins
+        assert _call("cloe_status", {})["project"] == GRAPH  # legacy default_project
+        explicit = _call("cloe_status", {"root_path": "/explicit", "pg_database": "explicit_db"})
     assert "project" not in explicit and explicit["counts"]["runs"] == 7
     assert [call.args[0][-1] for call in query.call_args_list] == ["legacy_db", "legacy_db", "explicit_db"]
 
@@ -327,22 +327,22 @@ def test_content_tools_refuse_unpublished_graphs_and_legacy_status_reports_zeros
     path = config.graph_store_root / "absent.sqlite3"
     initialize_graph_database(path, local_binding("absent"), applied_at="2026-09-29T00:00:00Z")
     for name, arguments in (
-        ("repomap_search_observations", {"graph_id": "absent", "query": "x"}),
-        ("repomap_neighborhood", {"graph_id": "absent", "node": "x"}),
-        *((f"repomap_{family}_summary", {"graph_id": "absent"}) for family in SUMMARIES),
+        ("cloe_search_observations", {"graph_id": "absent", "query": "x"}),
+        ("cloe_neighborhood", {"graph_id": "absent", "node": "x"}),
+        *((f"cloe_{family}_summary", {"graph_id": "absent"}) for family in SUMMARIES),
         *((name, {**arguments, "project": "absent"}) for name, arguments in SOURCE_ARGUMENTS.items()),
     ):
         assert _refusal(name, arguments) == "graph-publication-absent", name
-    zeros = _call("repomap_status", {"project": "absent"})
+    zeros = _call("cloe_status", {"project": "absent"})
     assert zeros["repository_name"] is None and set(zeros["counts"].values()) == {0}
 
 
 def test_uninitialized_graph_refuses_content_tools_without_creating_a_file(home: Path) -> None:
     store_root = home / "state" / "sqlite-local" / "graphs"
-    assert _refusal("repomap_canonical_nodes", {"project": "absent"}) == "graph-database-not-initialized"
-    assert _refusal("repomap_project_summary", {"graph_id": "absent"}) == "graph-database-not-initialized"
-    assert _refusal("repomap_status", {"project": "absent"}) == "graph-database-not-initialized"
-    assert _refusal("repomap_nix_summary", {"graph_id": "absent"}) == "graph-database-not-initialized"
+    assert _refusal("cloe_canonical_nodes", {"project": "absent"}) == "graph-database-not-initialized"
+    assert _refusal("cloe_project_summary", {"graph_id": "absent"}) == "graph-database-not-initialized"
+    assert _refusal("cloe_status", {"project": "absent"}) == "graph-database-not-initialized"
+    assert _refusal("cloe_nix_summary", {"graph_id": "absent"}) == "graph-database-not-initialized"
     assert not (store_root / "absent.sqlite3").exists()
 
 

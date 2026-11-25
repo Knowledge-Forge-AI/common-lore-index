@@ -89,7 +89,7 @@ class McpSearchReadbackUnitTests(McpServerTestSupport):
         )
 
     def test_psycopg108_search_payload_reaches_the_bound_search_owner(self):
-        from common_lore_index.server.mcp import repomap_search_files
+        from common_lore_index.server.mcp import cloe_search_files
 
         config_path = self.write_ops_config(self.visible_ops_config())
         with (
@@ -107,7 +107,7 @@ class McpSearchReadbackUnitTests(McpServerTestSupport):
                 },
             ) as query,
         ):
-            payload = repomap_search_files(graph_id="repo-map", query="main")
+            payload = cloe_search_files(graph_id="repo-map", query="main")
 
         self.assertEqual(payload["results"], [{"path": "src/main.py"}])
         self.assertEqual(query.call_args.args[0].config_path, str(config_path))
@@ -116,7 +116,7 @@ class McpSearchReadbackUnitTests(McpServerTestSupport):
         self.assertIsNone(query.call_args.kwargs["psql_command"])
 
     def test_psycopg108_validation_precedes_search_database_access(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_search_files
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_search_files
 
         config_path = self.write_ops_config(self.visible_ops_config())
         with (
@@ -131,14 +131,14 @@ class McpSearchReadbackUnitTests(McpServerTestSupport):
             ) as query,
         ):
             with self.assertRaises(RepoMapMcpError):
-                repomap_search_files(graph_id="missing", query="main")
+                cloe_search_files(graph_id="missing", query="main")
             with self.assertRaises(RepoMapMcpError):
-                repomap_search_files(graph_id="repo-map", query=" ")
+                cloe_search_files(graph_id="repo-map", query=" ")
 
         query.assert_not_called()
 
     def test_psycopg108_adapter_failure_remains_public_mcp_error(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_search_files
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_search_files
 
         config_path = self.write_ops_config(self.visible_ops_config())
         with (
@@ -154,7 +154,7 @@ class McpSearchReadbackUnitTests(McpServerTestSupport):
             ),
         ):
             with self.assertRaisesRegex(RepoMapMcpError, "bounded search failure"):
-                repomap_search_files(graph_id="repo-map", query="main")
+                cloe_search_files(graph_id="repo-map", query="main")
 
     def test_psycopg108_query_uses_the_operational_readback_owner(self):
         import inspect
@@ -176,13 +176,13 @@ class McpSearchSideEffectGuardTests(McpServerTestSupport):
 
     def test_configured_search_reads_host_only_through_real_binding_without_side_effects(self):
         from common_lore_index.runtime.database_role_contract import read_read_status_password
-        from common_lore_index.server.mcp import repomap_search_files
+        from common_lore_index.server.mcp import cloe_search_files
 
         home = setup_owned_home(self)
         recorder = _DriverRecorder()
         with self._env(home), patched_guards(), \
                 patch("common_lore_index.ops.readback.execute_json_readback_with_driver", recorder):
-            payload = repomap_search_files(graph_id="host-one", query="main", limit=1)
+            payload = cloe_search_files(graph_id="host-one", query="main", limit=1)
 
         self.assertEqual(payload["results"], ROWS[:1])
         self.assertTrue(payload["has_more"])
@@ -197,7 +197,7 @@ class McpSearchSideEffectGuardTests(McpServerTestSupport):
         # Synthetic canary: a store bound through the real factory seam tries
         # one lifecycle/source/container action; the same guards must fire and
         # the refusal must escape the tool rather than become a read result.
-        from common_lore_index.server.mcp import repomap_search_files
+        from common_lore_index.server.mcp import cloe_search_files
 
         home = setup_owned_home(self)
         for label, attempt in SIDE_EFFECT_ATTEMPTS:
@@ -216,4 +216,4 @@ class McpSearchSideEffectGuardTests(McpServerTestSupport):
             with self.subTest(attempt=label), self._env(home), patched_guards(), \
                     patch("common_lore_index.server.ops.investigation_stores", lambda _config: _Binding()), \
                     self.assertRaisesRegex(AssertionError, "container, or subprocess path"):
-                repomap_search_files(graph_id="host-one", query="main")
+                cloe_search_files(graph_id="host-one", query="main")

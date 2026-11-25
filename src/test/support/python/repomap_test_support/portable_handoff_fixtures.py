@@ -49,7 +49,7 @@ def routed_locator(tmp_path: Path, monkeypatch: Any) -> tuple[dict[str, Any], Pa
     home, _ = locator_home(tmp_path)
     monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
-    reply = mcp.handle_tool_call("repomap_node_locations", {
+    reply = mcp.handle_tool_call("cloe_node_locations", {
         "graph_id": GRAPH, "canonical_key": DOC, "evidence_role": "direct", "detail": "compact",
     })
     assert not reply.get("isError")

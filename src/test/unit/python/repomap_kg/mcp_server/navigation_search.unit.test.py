@@ -34,7 +34,7 @@ def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def call(**options: Any) -> dict[str, Any]:
-    return mcp.handle_tool_call("repomap_navigation_search", {
+    return mcp.handle_tool_call("cloe_navigation_search", {
         "graph_id": GRAPH, "query": "beacon", **options,
     })["structuredContent"]
 
@@ -49,7 +49,7 @@ def edit(database: Path, sql: str, params: tuple = ()) -> None:
 
 
 def test_scope_precedes_page_and_never_widens(store: Path) -> None:
-    raw = mcp.repomap_search_nodes(graph_id=GRAPH, query="beacon", limit=1)
+    raw = mcp.cloe_search_nodes(graph_id=GRAPH, query="beacon", limit=1)
     assert raw["results"][0]["kind"].startswith("doc.")
     code, docs = call(scope="code", limit=1), call(scope="docs", limit=1)
     assert members(code)[0]["kind"].startswith("python.")
@@ -60,7 +60,7 @@ def test_scope_precedes_page_and_never_widens(store: Path) -> None:
     # Synthetic key ordering exercises the reverse of producer doc.* < python.*.
     edit(store, "UPDATE canonical_nodes SET canonical_key = 'aaa:' || canonical_key "
          "WHERE kind LIKE 'python.%'")
-    reverse = mcp.repomap_search_nodes(graph_id=GRAPH, query="beacon", limit=2)
+    reverse = mcp.cloe_search_nodes(graph_id=GRAPH, query="beacon", limit=2)
     assert len(reverse["results"]) == 2 and all(row["kind"].startswith("python.") for row in reverse["results"])
     assert members(call(scope="docs", limit=1))[0]["kind"].startswith("doc.")
 
@@ -85,7 +85,7 @@ def test_group_membership_precedes_group_page(store: Path) -> None:
 
 
 def test_bound_subtree_uses_direct_source_and_component_boundary(store: Path) -> None:
-    reference = mcp.repomap_node_locations(graph_id=GRAPH, canonical_key=ALPHA_DOC, evidence_role="reference")
+    reference = mcp.cloe_node_locations(graph_id=GRAPH, canonical_key=ALPHA_DOC, evidence_role="reference")
     assert any(row["path"] == "root/src/pkg/link.md" for row in reference["locations"])
     assert any(row["canonical_key"] == ALPHA_DOC for row in members(call(scope="docs", limit=50)))
     result = call(scope="code", source_binding_id=BINDING, source_path_prefix="src/pkg/", limit=50)
@@ -102,7 +102,7 @@ def test_bound_subtree_uses_direct_source_and_component_boundary(store: Path) ->
 
 @pytest.mark.parametrize("query", ["%", "_", "\\", "café", "'", "naïve", "%2F"])
 def test_literal_search_agrees_with_raw_membership(store: Path, query: str) -> None:
-    raw = mcp.repomap_search_nodes(graph_id=GRAPH, query=query, limit=100)
+    raw = mcp.cloe_search_nodes(graph_id=GRAPH, query=query, limit=100)
     nav = call(query=query, limit=50)
     assert [row["canonical_key"] for row in members(nav)] == [row["canonical_key"] for row in raw["results"]]
     assert nav == call(query=query, limit=50)
@@ -259,7 +259,7 @@ def test_graph_repository_and_optional_backend_boundaries(store: Path, tmp_path:
 
 
 def test_schema_discovery_and_new_tool_default_equivalence(store: Path) -> None:
-    schema = mcp.tool_input_schema("repomap_navigation_search")
+    schema = mcp.tool_input_schema("cloe_navigation_search")
     assert schema["additionalProperties"] is False
     assert schema["properties"]["grouping"]["default"] == "none"
     assert call() == call(scope="all", grouping="none", limit=20, offset=0, member_limit=5)
@@ -270,7 +270,7 @@ def test_schema_discovery_and_new_tool_default_equivalence(store: Path) -> None:
     assert hashlib.sha256(store.read_bytes()).hexdigest() == before
 
 
-def test_captured_entry_responses_and_errors_remain_byte_equal(tmp_path: Path,
+def test_canonical_dispatch_replays_frozen_entry_cases(tmp_path: Path,
                                                               monkeypatch: pytest.MonkeyPatch) -> None:
     from repomap_test_support.node_location_fixtures import captured_navigation_response, entry_response_differences, locator_home
 
@@ -282,7 +282,7 @@ def test_captured_entry_responses_and_errors_remain_byte_equal(tmp_path: Path,
     assert len(cases) == 67
     for case in cases:
         try:
-            actual = {"payload": mcp.handle_tool_call(case["tool"], case["arguments"])["structuredContent"]}
+            actual = {"payload": mcp.handle_tool_call("cloe_" + case["tool"].removeprefix("repomap_"), case["arguments"])["structuredContent"]}
         except RepoMapMcpError as error:
             actual = {"error_type": type(error).__name__, "error": str(error)}
         expected = captured_navigation_response(case)
@@ -298,7 +298,7 @@ def test_duplicate_heavy_raw_pages_cannot_hide_later_document_groups(store: Path
     documents = {"docs/alpha.md": "# Parent Alpha\n" + "\n".join(f"## Needle {i}\n" for i in range(31)),
                  "docs/beta.md": "# Parent Beta\n## Needle B\n", "docs/gamma.md": "# Parent Gamma\n## Needle C\n"}
     publish_custom(store, documents)
-    raw = mcp.repomap_search_nodes(graph_id=GRAPH, query="needle", limit=6)
+    raw = mcp.cloe_search_nodes(graph_id=GRAPH, query="needle", limit=6)
     assert raw["has_more"] and all("alpha.md" in row["canonical_key"] for row in raw["results"])
     args = {"query": "needle", "scope": "docs", "grouping": "source_document", "member_limit": 1}
     full = call(**args, limit=50)
@@ -382,7 +382,7 @@ def test_compact_navigation_hints_expand_via_existing_locator(store: Path) -> No
     hint = member["source_hints"][0]
     assert not {"evidence_key", "publication", "extractor", "extractor_version"} & hint.keys()
     assert set(hint["raw_observation"]) == {"status", "ordinal", "kind"}
-    full = mcp.repomap_node_locations(graph_id=GRAPH, canonical_key=member["canonical_key"], evidence_role="direct")
+    full = mcp.cloe_node_locations(graph_id=GRAPH, canonical_key=member["canonical_key"], evidence_role="direct")
     row = full["locations"][0]
     assert hint["source"] == row["source"] and hint["path"] == row["path"]
     assert hint["start_line"] == row["start_line"] and hint["publication_relation"] == row["publication_relation"]

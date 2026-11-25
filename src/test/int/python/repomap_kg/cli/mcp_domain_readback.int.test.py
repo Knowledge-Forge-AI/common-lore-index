@@ -78,11 +78,11 @@ class McpDomainReadbackIntegrationTests(unittest.TestCase):
         self.assertEqual(tools_resp["id"], 2)
         tools = json_object_list_field(response_result(tools_resp), "tools")
         tool_names = [json_string_field(tool, "name") for tool in tools]
-        self.assertIn("repomap_status", tool_names)
-        self.assertIn("repomap_canonical_nodes", tool_names)
-        self.assertIn("repomap_canonical_edges", tool_names)
-        self.assertIn("repomap_canonical_neighborhood", tool_names)
-        self.assertIn("repomap_projects", tool_names)
+        self.assertIn("cloe_status", tool_names)
+        self.assertIn("cloe_canonical_nodes", tool_names)
+        self.assertIn("cloe_canonical_edges", tool_names)
+        self.assertIn("cloe_canonical_neighborhood", tool_names)
+        self.assertIn("cloe_projects", tool_names)
 
         # Confirm safety markers: MCP must not offer source acquisition or modification tools
         for name in tool_names:
@@ -176,28 +176,28 @@ refresh_policy = "manual"
                 responses = self._run_mcp(
                     [
                         init_req,
-                        call(2, "repomap_projects", {}),
-                        call(3, "repomap_canonical_nodes", {"project": "domain-pub", "limit": 10, "offset": 0}),
-                        call(4, "repomap_canonical_edges", {"project": "domain-pub"}),
-                        call(5, "repomap_canonical_neighborhood", {"project": "domain-pub", "node": "file:README.md"}),
-                        call(6, "repomap_canonical_nodes", {"project": "nonexistent-project"}),
-                        call(7, "repomap_canonical_nodes", {"project": "domain-pub", "invalid_param": "foo"}),
-                        call(8, "repomap_canonical_neighborhood", {"project": "domain-pub"}),
-                        call(9, "repomap_canonical_nodes", {"project": "domain-pub", "limit": 999}),
-                        call(10, "repomap_canonical_nodes", {"project": "domain-pub", "offset": -1}),
-                        call(11, "repomap_canonical_nodes", {"project": "domain-pub", "result_schema_version": 99}),
-                        call(12, "repomap_canonical_nodes", {"project": "domain-pub", "limit": 1, "offset": 0}),
-                        call(13, "repomap_canonical_nodes", {"project": "domain-pub", "limit": 1, "offset": 1}),
-                        call(14, "repomap_canonical_nodes", {"project": "domain-hidden"}),
-                        call(15, "repomap_status", {"project": "domain-pub"}),
-                        call(16, "repomap_canonical_edges", {"project": "domain-pub", "limit": 10, "offset": 100}),
+                        call(2, "cloe_projects", {}),
+                        call(3, "cloe_canonical_nodes", {"project": "domain-pub", "limit": 10, "offset": 0}),
+                        call(4, "cloe_canonical_edges", {"project": "domain-pub"}),
+                        call(5, "cloe_canonical_neighborhood", {"project": "domain-pub", "node": "file:README.md"}),
+                        call(6, "cloe_canonical_nodes", {"project": "nonexistent-project"}),
+                        call(7, "cloe_canonical_nodes", {"project": "domain-pub", "invalid_param": "foo"}),
+                        call(8, "cloe_canonical_neighborhood", {"project": "domain-pub"}),
+                        call(9, "cloe_canonical_nodes", {"project": "domain-pub", "limit": 999}),
+                        call(10, "cloe_canonical_nodes", {"project": "domain-pub", "offset": -1}),
+                        call(11, "cloe_canonical_nodes", {"project": "domain-pub", "result_schema_version": 99}),
+                        call(12, "cloe_canonical_nodes", {"project": "domain-pub", "limit": 1, "offset": 0}),
+                        call(13, "cloe_canonical_nodes", {"project": "domain-pub", "limit": 1, "offset": 1}),
+                        call(14, "cloe_canonical_nodes", {"project": "domain-hidden"}),
+                        call(15, "cloe_status", {"project": "domain-pub"}),
+                        call(16, "cloe_canonical_edges", {"project": "domain-pub", "limit": 10, "offset": 100}),
                     ],
                     extra_env=extra_env,
                 )
 
                 resp_by_id: dict[int, McpResponse] = {r["id"]: r for r in responses}
 
-                # Verify repomap_projects response with privacy boundaries and hidden graph exclusion
+                # Verify cloe_projects response with privacy boundaries and hidden graph exclusion
                 proj_resp = resp_by_id[2]
                 self.assertNotIn("error", proj_resp)
                 proj_data = response_structured_content(proj_resp)
@@ -215,7 +215,7 @@ refresh_policy = "manual"
                 warnings = json_object_list_field(priv_graph, "warnings")
                 self.assertEqual(json_string_field(warnings[0], "code"), "private-graph-visible")
 
-                # Verify repomap_status receipt-readback payload structure
+                # Verify cloe_status receipt-readback payload structure
                 status_resp = resp_by_id[15]
                 self.assertNotIn("error", status_resp)
                 status_data = response_structured_content(status_resp)
@@ -225,7 +225,7 @@ refresh_policy = "manual"
                 counts = json_object_field(status_data, "counts")
                 self.assertGreaterEqual(json_int_field(counts, "files"), 2)
 
-                # Verify repomap_canonical_nodes response
+                # Verify cloe_canonical_nodes response
                 nodes_resp = resp_by_id[3]
                 self.assertNotIn("error", nodes_resp)
                 nodes_data = response_structured_content(nodes_resp)
@@ -253,7 +253,7 @@ refresh_policy = "manual"
                 self.assertTrue(json_bool_field(response_result(hidden_resp), "isError"))
                 self.assertIn("is not MCP-visible", response_error_text(hidden_resp))
 
-                # Verify repomap_canonical_edges response
+                # Verify cloe_canonical_edges response
                 edges_resp = resp_by_id[4]
                 self.assertNotIn("error", edges_resp)
                 edges_data = response_structured_content(edges_resp)
@@ -270,7 +270,7 @@ refresh_policy = "manual"
                 self.assertEqual(json_object_list_field(edges_empty, "items"), [])
                 assert_mcp_page(self, edges_empty, limit=10, offset=100, returned=0, truncated=False, next_offset=None)
 
-                # Verify repomap_canonical_neighborhood response
+                # Verify cloe_canonical_neighborhood response
                 neighborhood_resp = resp_by_id[5]
                 self.assertNotIn("error", neighborhood_resp)
                 neighborhood_data = response_structured_content(neighborhood_resp)
@@ -341,7 +341,7 @@ refresh_policy = "manual"
             "jsonrpc": "2.0",
             "id": 3,
             "method": "tools/call",
-            "params": {"name": "repomap_status", "arguments": "not-an-object"},
+            "params": {"name": "cloe_status", "arguments": "not-an-object"},
         }
         # Unsupported JSON-RPC method
         unsupported_method_req = {

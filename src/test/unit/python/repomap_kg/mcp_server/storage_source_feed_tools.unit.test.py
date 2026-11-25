@@ -14,12 +14,12 @@ from repomap_test_support.mcp_server import McpServerTestSupport
 class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
     def test_source_feed_mcp_tools_are_read_only_and_project_scoped(self):
         from common_lore_index.server.mcp import (
-            repomap_explain_source_feed_item,
-            repomap_ingested_sources,
-            repomap_source_feed_items,
-            repomap_source_references,
-            repomap_source_runs,
-            repomap_source_summary,
+            cloe_explain_source_feed_item,
+            cloe_ingested_sources,
+            cloe_source_feed_items,
+            cloe_source_references,
+            cloe_source_runs,
+            cloe_source_summary,
         )
 
         config_path = self.write_mcp_config(
@@ -54,7 +54,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
                     ),
                 ),
             ) as sources_query:
-                sources_payload = repomap_ingested_sources(source_type="feed.rss")
+                sources_payload = cloe_ingested_sources(source_type="feed.rss")
             with patch(
                 "common_lore_index.server.mcp.query_source_summary",
                 return_value=SourceSummaryRecord(
@@ -78,7 +78,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
                     known_limitations=("source metadata is inferred from RSS2 evidence",),
                 ),
             ) as summary_query:
-                summary_payload = repomap_source_summary(
+                summary_payload = cloe_source_summary(
                     source_id="example-news-feed",
                 )
             with patch(
@@ -98,7 +98,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
                     ),
                 ),
             ) as runs_query:
-                runs_payload = repomap_source_runs(source_id="example-news-feed")
+                runs_payload = cloe_source_runs(source_id="example-news-feed")
             with patch(
                 "common_lore_index.server.mcp.query_source_feed_item_records",
                 return_value=(
@@ -119,7 +119,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
                     ),
                 ),
             ) as items_query:
-                items_payload = repomap_source_feed_items(
+                items_payload = cloe_source_feed_items(
                     source_id="example-news-feed",
                 )
             with patch(
@@ -138,7 +138,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
                     ),
                 ),
             ) as references_query:
-                references_payload = repomap_source_references(
+                references_payload = cloe_source_references(
                     source_id="example-news-feed",
                     target_kind="external.url",
                 )
@@ -152,7 +152,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
                     "content_policy": "full feed bodies are not exposed",
                 },
             ) as explain_query:
-                explanation_payload = repomap_explain_source_feed_item(
+                explanation_payload = cloe_explain_source_feed_item(
                     item_key=item_key,
                 )
 
@@ -172,12 +172,12 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
 
     def test_source_feed_mcp_empty_and_missing_results_are_bounded(self):
         from common_lore_index.server.mcp import (
-            repomap_explain_source_feed_item,
-            repomap_ingested_sources,
-            repomap_source_feed_items,
-            repomap_source_references,
-            repomap_source_runs,
-            repomap_source_summary,
+            cloe_explain_source_feed_item,
+            cloe_ingested_sources,
+            cloe_source_feed_items,
+            cloe_source_references,
+            cloe_source_runs,
+            cloe_source_summary,
         )
 
         private_root = "/Users/synthetic-user/private-repo"
@@ -200,7 +200,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
             "common_lore_index.server.mcp.query_ingested_source_records",
             return_value=(),
         ) as sources_query:
-            sources_payload = repomap_ingested_sources(
+            sources_payload = cloe_ingested_sources(
                 **connection_kwargs,
                 source_type="feed.rss",
             )
@@ -227,7 +227,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
                 known_limitations=("source metadata unavailable",),
             ),
         ) as summary_query:
-            summary_payload = repomap_source_summary(
+            summary_payload = cloe_source_summary(
                 **connection_kwargs,
                 source_id=missing_source_id,
             )
@@ -235,7 +235,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
             "common_lore_index.server.mcp.query_source_run_records",
             return_value=(),
         ) as runs_query:
-            runs_payload = repomap_source_runs(
+            runs_payload = cloe_source_runs(
                 **connection_kwargs,
                 source_id=missing_source_id,
             )
@@ -243,7 +243,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
             "common_lore_index.server.mcp.query_source_feed_item_records",
             return_value=(),
         ) as items_query:
-            items_payload = repomap_source_feed_items(
+            items_payload = cloe_source_feed_items(
                 **connection_kwargs,
                 source_id=missing_source_id,
             )
@@ -251,7 +251,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
             "common_lore_index.server.mcp.query_source_reference_records",
             return_value=(),
         ) as references_query:
-            references_payload = repomap_source_references(
+            references_payload = cloe_source_references(
                 **connection_kwargs,
                 source_id=missing_source_id,
             )
@@ -265,7 +265,7 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
                 "content_policy": "full feed bodies are not exposed",
             },
         ) as explain_query:
-            explanation_payload = repomap_explain_source_feed_item(
+            explanation_payload = cloe_explain_source_feed_item(
                 **connection_kwargs,
                 source_id=missing_source_id,
                 item_key=item_key,
@@ -323,12 +323,12 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
         from common_lore_index.server.mcp import RepoMapMcpError, tool_input_schema
 
         for name in (
-            "repomap_ingested_sources",
-            "repomap_source_summary",
-            "repomap_source_runs",
-            "repomap_source_feed_items",
-            "repomap_explain_source_feed_item",
-            "repomap_source_references",
+            "cloe_ingested_sources",
+            "cloe_source_summary",
+            "cloe_source_runs",
+            "cloe_source_feed_items",
+            "cloe_explain_source_feed_item",
+            "cloe_source_references",
         ):
             with self.subTest(tool=name):
                 schema = tool_input_schema(name)
@@ -336,10 +336,10 @@ class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
                 self.assertNotIn("feed_url", schema["properties"])
                 self.assertNotIn("config_path", schema["properties"])
 
-        from common_lore_index.server.mcp import repomap_source_summary
+        from common_lore_index.server.mcp import cloe_source_summary
 
         with self.assertRaisesRegex(RepoMapMcpError, "source_id must not be a URL"):
-            repomap_source_summary(
+            cloe_source_summary(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 source_id="https://example.invalid/feed.xml",

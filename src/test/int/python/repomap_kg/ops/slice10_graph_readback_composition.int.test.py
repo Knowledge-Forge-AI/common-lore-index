@@ -197,7 +197,7 @@ class Slice10GraphReadbackCompositionIntegrationTests(unittest.TestCase):
     def test_s10_c08_mcp_public_boundary_search_composition(self) -> None:
         """MCP public boundary search executes search_payload -> query_mcp_search -> SQL/readback."""
         from unittest.mock import patch
-        from common_lore_index.server.mcp import repomap_search_nodes
+        from common_lore_index.server.mcp import cloe_search_nodes
         from repomap_test_support.mcp_server import McpServerTestSupport
 
         require_postgres_binaries()
@@ -239,7 +239,7 @@ database = "{postgres.database}"
 """
             config_path = support.write_ops_config(config_content)
             with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-                payload = repomap_search_nodes(graph_id="slice10-repo", query="alpha")
+                payload = cloe_search_nodes(graph_id="slice10-repo", query="alpha")
 
             self.assertEqual(payload["target"], "nodes")
             self.assertEqual(payload["query"], "alpha")

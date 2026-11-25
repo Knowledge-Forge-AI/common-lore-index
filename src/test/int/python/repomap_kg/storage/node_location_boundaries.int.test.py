@@ -56,8 +56,8 @@ def test_node_locations_multi_binding_and_absent_relative_path(tmp_path: Path) -
     args = {"graph_id": GRAPH, "canonical_key": SYMBOL, "limit": 5}
     requests = [
         initialize(),
-        tool(2, "repomap_node_locations", {**args, "detail": "full"}),
-        tool(3, "repomap_node_locations", {**args, "detail": "compact"}),
+        tool(2, "cloe_node_locations", {**args, "detail": "full"}),
+        tool(3, "cloe_node_locations", {**args, "detail": "compact"}),
     ]
     responses = harness.mcp(home, requests)
     assert responses == harness.mcp(home, requests)
@@ -111,8 +111,8 @@ def test_node_locations_relative_path_sanitization_boundaries(tmp_path: Path) ->
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     requests = [
         initialize(),
-        tool(2, "repomap_node_locations", {"graph_id": GRAPH, "canonical_key": DOC, "detail": "compact"}),
-        tool(3, "repomap_node_locations", {"graph_id": GRAPH, "canonical_key": SYMBOL}),
+        tool(2, "cloe_node_locations", {"graph_id": GRAPH, "canonical_key": DOC, "detail": "compact"}),
+        tool(3, "cloe_node_locations", {"graph_id": GRAPH, "canonical_key": SYMBOL}),
     ]
     responses = harness.mcp(home, requests)
     assert responses == harness.mcp(home, requests)
@@ -145,9 +145,9 @@ def test_node_locations_validation_and_refusal_boundaries(tmp_path: Path) -> Non
     ]
     requests = [
         initialize(),
-        *(tool(mid, "repomap_node_locations", {**base_args, **opts})
+        *(tool(mid, "cloe_node_locations", {**base_args, **opts})
           for mid, (opts, _) in enumerate(invalid_options, 2)),
-        tool(30, "repomap_node_locations", base_args),
+        tool(30, "cloe_node_locations", base_args),
     ]
     responses = harness.mcp(home, requests)
     for mid, (_, expected_msg) in enumerate(invalid_options, 2):
@@ -172,7 +172,7 @@ def test_node_locations_publication_absent_refusal(tmp_path: Path) -> None:
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     requests = [
         initialize(),
-        tool(2, "repomap_node_locations", {"graph_id": GRAPH, "canonical_key": SYMBOL}),
+        tool(2, "cloe_node_locations", {"graph_id": GRAPH, "canonical_key": SYMBOL}),
     ]
     responses = harness.mcp(home, requests)
     mcp_result = structured(responses, 2)

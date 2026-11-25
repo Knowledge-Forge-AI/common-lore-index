@@ -229,7 +229,7 @@ def test_psycopg77_terraform_summary_connector_cli_and_mcp_parity() -> None:
 
 
 def _mcp_payloads(postgres, *, public_root: str, private_root: str):
-    from common_lore_index.server.mcp import repomap_terraform_summary
+    from common_lore_index.server.mcp import cloe_terraform_summary
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config_path = Path(tmpdir) / "psycopg77.local.toml"
@@ -246,7 +246,7 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
             _select_connector(selector, connector, postgres=postgres)
             os.environ["REPOMAP_PSQL_COMMAND"] = psql_command
             payloads[mode] = {
-                graph_id: repomap_terraform_summary(graph_id=graph_id)
+                graph_id: cloe_terraform_summary(graph_id=graph_id)
                 for graph_id in ("public-terraform", "private-terraform")
             }
         return payloads

@@ -88,35 +88,35 @@ SQLITE_STORAGE_LABEL = "[sqlite-local]"
 SQLITE_DATABASE_SOURCE = "sqlite-graph-file"
 
 SUPPORTED_TOOLS = (
-    "repomap_navigation_search",
-    "repomap_node_locations",
-    "repomap_canonical_nodes",
-    "repomap_canonical_edges",
-    "repomap_explain_canonical_edge",
-    "repomap_canonical_neighborhood",
-    "repomap_status",
-    "repomap_graph_status",
-    "repomap_refresh_status",
-    "repomap_project_summary",
-    "repomap_search_nodes",
-    "repomap_search_files",
-    "repomap_search_observations",
-    "repomap_neighborhood",
-    "repomap_python_summary",
-    "repomap_terraform_summary",
-    "repomap_openapi_summary",
-    "repomap_js_framework_summary",
-    "repomap_nix_summary",
-    "repomap_ingested_sources",
-    "repomap_source_summary",
-    "repomap_source_runs",
-    "repomap_source_feed_items",
-    "repomap_explain_source_feed_item",
-    "repomap_source_references",
+    "cloe_navigation_search",
+    "cloe_node_locations",
+    "cloe_canonical_nodes",
+    "cloe_canonical_edges",
+    "cloe_explain_canonical_edge",
+    "cloe_canonical_neighborhood",
+    "cloe_status",
+    "cloe_graph_status",
+    "cloe_refresh_status",
+    "cloe_project_summary",
+    "cloe_search_nodes",
+    "cloe_search_files",
+    "cloe_search_observations",
+    "cloe_neighborhood",
+    "cloe_python_summary",
+    "cloe_terraform_summary",
+    "cloe_openapi_summary",
+    "cloe_js_framework_summary",
+    "cloe_nix_summary",
+    "cloe_ingested_sources",
+    "cloe_source_summary",
+    "cloe_source_runs",
+    "cloe_source_feed_items",
+    "cloe_explain_source_feed_item",
+    "cloe_source_references",
 )
 
 # Advertised across backends, but explicitly unavailable on SQLite without IO.
-OPTIONAL_POSTGRES_TOOLS = ("repomap_similar_nodes", "repomap_embedding_profiles")
+OPTIONAL_POSTGRES_TOOLS = ("cloe_similar_nodes", "cloe_embedding_profiles")
 
 
 # Closed family set; each value is a named SQLite summary operation.
@@ -181,7 +181,7 @@ class SqliteCanonicalReadStore:
             )
 
     def canonical_storage_summary(self) -> CanonicalStorageSummaryRecord:
-        """Legacy ``repomap_status`` counts; an unpublished graph reports zeros."""
+        """Legacy ``cloe_status`` counts; an unpublished graph reports zeros."""
         with read_transaction(self.path, self.binding) as connection:
             return investigation_queries.storage_summary(
                 connection, root_path=self.binding.root_path

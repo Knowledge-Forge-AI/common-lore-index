@@ -12,9 +12,9 @@ from unittest.mock import patch
 from common_lore_index.server._ops_records import McpOpsError
 from common_lore_index.server.mcp import (
     RepoMapMcpError,
-    repomap_search_files,
-    repomap_search_nodes,
-    repomap_search_observations,
+    cloe_search_files,
+    cloe_search_nodes,
+    cloe_search_observations,
 )
 from common_lore_index.storage import apply_migrations, default_rdbms_root
 from repomap_test_support.postgres_harness import (
@@ -120,10 +120,10 @@ database = "{cls._postgres.database}"
         )
 
     def test_s14_b01_mcp_search_files_path_filtering(self) -> None:
-        """repomap_search_files filters results matching query and path constraint."""
+        """cloe_search_files filters results matching query and path constraint."""
         assert self._config_path is not None
         with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
-            matched = repomap_search_files(
+            matched = cloe_search_files(
                 graph_id="slice14-repo",
                 query="main",
                 path="src/main.py",
@@ -132,7 +132,7 @@ database = "{cls._postgres.database}"
             self.assertEqual(matched["result_count"], 1)
             self.assertEqual(matched["results"][0]["path"], "src/main.py")
 
-            unmatched = repomap_search_files(
+            unmatched = cloe_search_files(
                 graph_id="slice14-repo",
                 query="main",
                 path="docs/index.md",
@@ -140,10 +140,10 @@ database = "{cls._postgres.database}"
             self.assertEqual(unmatched["result_count"], 0)
 
     def test_s14_b02_mcp_search_nodes_pagination_has_more(self) -> None:
-        """repomap_search_nodes honors limit and offset and signals has_more properly."""
+        """cloe_search_nodes honors limit and offset and signals has_more properly."""
         assert self._config_path is not None
         with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
-            page1 = repomap_search_nodes(
+            page1 = cloe_search_nodes(
                 graph_id="slice14-repo",
                 query="func",
                 limit=1,
@@ -154,7 +154,7 @@ database = "{cls._postgres.database}"
             self.assertTrue(page1["has_more"])
             first_key = page1["results"][0]["canonical_key"]
 
-            page2 = repomap_search_nodes(
+            page2 = cloe_search_nodes(
                 graph_id="slice14-repo",
                 query="func",
                 limit=1,
@@ -165,10 +165,10 @@ database = "{cls._postgres.database}"
             self.assertNotEqual(first_key, second_key)
 
     def test_s14_b03_mcp_search_observations_kind_filter(self) -> None:
-        """repomap_search_observations restricts results by kind and reports raw_payload_policy."""
+        """cloe_search_observations restricts results by kind and reports raw_payload_policy."""
         assert self._config_path is not None
         with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
-            payload = repomap_search_observations(
+            payload = cloe_search_observations(
                 graph_id="slice14-repo",
                 query="main",
                 kind="file",
@@ -181,14 +181,14 @@ database = "{cls._postgres.database}"
             self.assertEqual(len(payload["results"]), 1)
             self.assertEqual(payload["results"][0]["kind"], "file")
             self.assertEqual(payload["results"][0]["path"], "src/main.py")
-            functions = repomap_search_observations(
+            functions = cloe_search_observations(
                 graph_id="slice14-repo", query="main", kind="function",
             )
             self.assertEqual(functions["result_count"], 1)
             self.assertEqual(functions["results"][0]["kind"], "function")
             self.assertEqual(functions["results"][0]["path"], "src/main.py")
 
-            empty = repomap_search_observations(
+            empty = cloe_search_observations(
                 graph_id="slice14-repo",
                 query="main",
                 kind="nonexistent_kind",
@@ -200,11 +200,11 @@ database = "{cls._postgres.database}"
         assert self._config_path is not None
         with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
             with self.assertRaises((McpOpsError, RepoMapMcpError)) as cm_len:
-                repomap_search_nodes(graph_id="slice14-repo", query="a" * 201)
+                cloe_search_nodes(graph_id="slice14-repo", query="a" * 201)
             self.assertIn("query must be at most 200 characters", str(cm_len.exception))
 
             with self.assertRaises((McpOpsError, RepoMapMcpError)) as cm_empty:
-                repomap_search_nodes(graph_id="slice14-repo", query="   ")
+                cloe_search_nodes(graph_id="slice14-repo", query="   ")
             self.assertIn("query is required", str(cm_empty.exception))
 
     def test_s14_b05_mcp_search_limit_validation(self) -> None:
@@ -212,11 +212,11 @@ database = "{cls._postgres.database}"
         assert self._config_path is not None
         with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
             with self.assertRaises((McpOpsError, RepoMapMcpError)) as cm_zero:
-                repomap_search_nodes(graph_id="slice14-repo", query="func", limit=0)
+                cloe_search_nodes(graph_id="slice14-repo", query="func", limit=0)
             self.assertIn("limit must be a positive integer", str(cm_zero.exception))
 
             with self.assertRaises((McpOpsError, RepoMapMcpError)) as cm_neg:
-                repomap_search_nodes(graph_id="slice14-repo", query="func", limit=-5)
+                cloe_search_nodes(graph_id="slice14-repo", query="func", limit=-5)
             self.assertIn("limit must be a positive integer", str(cm_neg.exception))
 
     def test_s14_b06_mcp_search_offset_validation(self) -> None:
@@ -224,7 +224,7 @@ database = "{cls._postgres.database}"
         assert self._config_path is not None
         with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self._config_path)}):
             with self.assertRaises((McpOpsError, RepoMapMcpError)) as cm_neg:
-                repomap_search_nodes(graph_id="slice14-repo", query="func", offset=-1)
+                cloe_search_nodes(graph_id="slice14-repo", query="func", offset=-1)
             self.assertIn("offset must be a non-negative integer", str(cm_neg.exception))
 
 

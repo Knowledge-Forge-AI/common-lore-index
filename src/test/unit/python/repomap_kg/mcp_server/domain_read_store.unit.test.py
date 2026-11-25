@@ -2,7 +2,7 @@
 
 The five language/framework summaries read through
 ``InvestigationReadStore.language_summary``; the six ingested-source/feed tools
-read through ``SourceReadStore``; legacy ``repomap_status`` reads through
+read through ``SourceReadStore``; legacy ``cloe_status`` reads through
 ``CanonicalReadStore.canonical_storage_summary``. Fake stores are unit-only.
 """
 
@@ -102,17 +102,17 @@ SUMMARY_RECORDS = {family: _Summary(family) for family in FAMILIES}
 
 def source_calls(project_args: dict[str, Any]) -> tuple[tuple[str, dict[str, Any], str, Any], ...]:
     return (
-        ("repomap_ingested_sources", {**project_args, "source_type": "feed.rss", "policy_status": "allowed",
+        ("cloe_ingested_sources", {**project_args, "source_type": "feed.rss", "policy_status": "allowed",
                                       "limit": 3}, "ingested_sources", IngestedSourcesQuery("feed.rss", "allowed", 3)),
-        ("repomap_source_summary", {**project_args, "source_id": "example-feed"}, "source_summary",
+        ("cloe_source_summary", {**project_args, "source_id": "example-feed"}, "source_summary",
          SourceSummaryQuery("example-feed")),
-        ("repomap_source_runs", {**project_args, "source_id": "example-feed"}, "source_runs",
+        ("cloe_source_runs", {**project_args, "source_id": "example-feed"}, "source_runs",
          SourceRunsQuery("example-feed", 25)),
-        ("repomap_source_feed_items", {**project_args, "source_id": "example-feed", "source_run_id": "run-1",
+        ("cloe_source_feed_items", {**project_args, "source_id": "example-feed", "source_run_id": "run-1",
                                        "limit": 1}, "source_feed_items", SourceFeedItemsQuery("example-feed", "run-1", 1)),
-        ("repomap_explain_source_feed_item", {**project_args, "item_key": ITEM_KEY, "source_id": "example-feed"},
+        ("cloe_explain_source_feed_item", {**project_args, "item_key": ITEM_KEY, "source_id": "example-feed"},
          "source_feed_item_explanation", SourceFeedItemExplanationQuery(ITEM_KEY, "example-feed")),
-        ("repomap_source_references", {**project_args, "source_id": "example-feed", "target_kind": "external.url"},
+        ("cloe_source_references", {**project_args, "source_id": "example-feed", "target_kind": "external.url"},
          "source_references", SourceReferencesQuery("example-feed", None, "external.url", 50)),
     )
 
@@ -200,9 +200,9 @@ class DomainReadStoreDispatchTests(McpServerTestSupport):
             connections.append(connection)
             return canonical
 
-        summary_calls = [(f"repomap_{family}_summary", {"graph_id": "repo-map"}) for family in FAMILIES]
+        summary_calls = [(f"cloe_{family}_summary", {"graph_id": "repo-map"}) for family in FAMILIES]
         sources = source_calls({"project": "repo-map"})
-        status = ("repomap_status", {"project": "repo-map"})
+        status = ("cloe_status", {"project": "repo-map"})
         calls = [*summary_calls, *((name, args) for name, args, _op, _query in sources), status]
         guards = ("common_lore_index.ops.refresh.run_storage_readback_with_ops_psql",
                   "common_lore_index.ops.refresh._container_psql_execution")
@@ -272,7 +272,7 @@ class DomainReadStoreDispatchTests(McpServerTestSupport):
                     patch("common_lore_index.server.canonical_read_store.readback_postgres_authority", fail_if_reached):
                 for name, args, _operation, _query in calls:
                     self._handle(name, args)
-                status = self._handle("repomap_status", project_args)
+                status = self._handle("cloe_status", project_args)
             self.assertEqual(source.queries, [(operation, query) for _n, _a, operation, query in calls])
             self.assertEqual(status.get("project"), expected_project)
             self.assertEqual(len(connections), 7)
@@ -307,29 +307,29 @@ class DomainReadStoreDispatchTests(McpServerTestSupport):
 
         feed = {"project": "repo-map", "source_id": "example-feed"}
         cases: tuple[tuple[str, dict[str, Any], str], ...] = (
-            ("repomap_source_summary", {**feed, "source_id": "   "}, "source_id is required"),
-            ("repomap_source_runs", {**feed, "source_id": "https://example.invalid/feed"},
+            ("cloe_source_summary", {**feed, "source_id": "   "}, "source_id is required"),
+            ("cloe_source_runs", {**feed, "source_id": "https://example.invalid/feed"},
              "source_id must not be a URL"),
-            ("repomap_source_runs", {**feed, "source_id": "has space"}, "source_id must not contain whitespace"),
-            ("repomap_source_feed_items", {**feed, "limit": 0}, "limit must be between 1 and 500"),
-            ("repomap_source_feed_items", {**feed, "source_run_id": "  "}, "source_run_id is required"),
-            ("repomap_source_references", {**feed, "target_kind": "https://x.invalid"},
+            ("cloe_source_runs", {**feed, "source_id": "has space"}, "source_id must not contain whitespace"),
+            ("cloe_source_feed_items", {**feed, "limit": 0}, "limit must be between 1 and 500"),
+            ("cloe_source_feed_items", {**feed, "source_run_id": "  "}, "source_run_id is required"),
+            ("cloe_source_references", {**feed, "target_kind": "https://x.invalid"},
              "target_kind must not be a URL"),
-            ("repomap_ingested_sources", {"project": "repo-map", "source_type": "   "}, "source_type is required"),
-            ("repomap_ingested_sources", {"project": "repo-map", "limit": 501}, "limit must be between 1 and 500"),
-            ("repomap_explain_source_feed_item", {"project": "repo-map", "item_key": "python.module:a"},
+            ("cloe_ingested_sources", {"project": "repo-map", "source_type": "   "}, "source_type is required"),
+            ("cloe_ingested_sources", {"project": "repo-map", "limit": 501}, "limit must be between 1 and 500"),
+            ("cloe_explain_source_feed_item", {"project": "repo-map", "item_key": "python.module:a"},
              "item_key must use the feed.item namespace"),
-            ("repomap_source_summary", {**feed, "project": "missing"},
+            ("cloe_source_summary", {**feed, "project": "missing"},
              "unknown legacy MCP project or graph-registry graph_id: missing"),
-            ("repomap_source_summary", {**feed, "project": "hidden"}, "graph 'hidden' is not MCP-visible"),
-            ("repomap_source_runs", {**feed, "project": "disabled"}, "graph 'disabled' is not enabled"),
-            ("repomap_status", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
-            ("repomap_status", {"project": "missing"},
+            ("cloe_source_summary", {**feed, "project": "hidden"}, "graph 'hidden' is not MCP-visible"),
+            ("cloe_source_runs", {**feed, "project": "disabled"}, "graph 'disabled' is not enabled"),
+            ("cloe_status", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
+            ("cloe_status", {"project": "missing"},
              "unknown legacy MCP project or graph-registry graph_id: missing"),
-            ("repomap_python_summary", {"graph_id": "missing"}, "unknown graph_id: missing"),
-            ("repomap_nix_summary", {"graph_id": "hidden"}, "graph 'hidden' is not MCP-visible"),
-            ("repomap_openapi_summary", {"graph_id": "disabled"}, "graph 'disabled' is not enabled"),
-            ("repomap_terraform_summary", {"graph_id": "repo-map", "sql": "SELECT 1"},
+            ("cloe_python_summary", {"graph_id": "missing"}, "unknown graph_id: missing"),
+            ("cloe_nix_summary", {"graph_id": "hidden"}, "graph 'hidden' is not MCP-visible"),
+            ("cloe_openapi_summary", {"graph_id": "disabled"}, "graph 'disabled' is not enabled"),
+            ("cloe_terraform_summary", {"graph_id": "repo-map", "sql": "SELECT 1"},
              "unexpected argument(s): sql"),
         )
         env = self.patch_mcp_and_ops_config(self.write_empty_mcp_config(), self.write_visible_ops_config())

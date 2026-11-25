@@ -9,7 +9,7 @@ from typing import Any, TextIO
 import common_lore_index.server._mcp_dispatch as _mcp_dispatch
 import common_lore_index.server._mcp_projects as _mcp_projects
 import common_lore_index.server._mcp_sources as _mcp_sources
-from common_lore_index.server._mcp_navigation import repomap_navigation_search as repomap_navigation_search
+from common_lore_index.server._mcp_navigation import cloe_navigation_search as cloe_navigation_search
 import common_lore_index.server.mcp_canonical as _canonical_impl
 from common_lore_index.graph.keys import GRAPH_KEY_VERSION
 from common_lore_index.server._mcp_dispatch import (
@@ -20,25 +20,25 @@ from common_lore_index.server._mcp_dispatch import (
 )
 from common_lore_index.server._mcp_ops_tools import (
     ops_payload as ops_payload,
-    repomap_graph_status as repomap_graph_status,
-    repomap_js_framework_summary as repomap_js_framework_summary,
-    repomap_list_graphs as repomap_list_graphs,
-    repomap_neighborhood as repomap_neighborhood,
-    repomap_nix_summary as repomap_nix_summary,
-    repomap_openapi_summary as repomap_openapi_summary,
-    repomap_project_summary as repomap_project_summary,
-    repomap_python_summary as repomap_python_summary,
-    repomap_refresh_status as repomap_refresh_status,
-    repomap_search_files as repomap_search_files,
-    repomap_search_nodes as repomap_search_nodes,
-    repomap_search_observations as repomap_search_observations,
-    repomap_server_memory_search as repomap_server_memory_search,
-    repomap_server_memory_summary as repomap_server_memory_summary,
-    repomap_terraform_summary as repomap_terraform_summary,
+    cloe_graph_status as cloe_graph_status,
+    cloe_js_framework_summary as cloe_js_framework_summary,
+    cloe_list_graphs as cloe_list_graphs,
+    cloe_neighborhood as cloe_neighborhood,
+    cloe_nix_summary as cloe_nix_summary,
+    cloe_openapi_summary as cloe_openapi_summary,
+    cloe_project_summary as cloe_project_summary,
+    cloe_python_summary as cloe_python_summary,
+    cloe_refresh_status as cloe_refresh_status,
+    cloe_search_files as cloe_search_files,
+    cloe_search_nodes as cloe_search_nodes,
+    cloe_search_observations as cloe_search_observations,
+    cloe_server_memory_search as cloe_server_memory_search,
+    cloe_server_memory_summary as cloe_server_memory_summary,
+    cloe_terraform_summary as cloe_terraform_summary,
 )
 from common_lore_index.server._mcp_similar import (
-    embedding_profiles_payload as embedding_profiles_payload, repomap_embedding_profiles as repomap_embedding_profiles,
-    repomap_similar_nodes as repomap_similar_nodes,
+    embedding_profiles_payload as embedding_profiles_payload, cloe_embedding_profiles as cloe_embedding_profiles,
+    cloe_similar_nodes as cloe_similar_nodes,
     similar_nodes_payload as similar_nodes_payload,
 )
 from common_lore_index.ops.config import OpsConfig
@@ -68,7 +68,7 @@ from common_lore_index.server.mcp_core import (
     validate_read_schema_version as validate_read_schema_version,
 )
 from common_lore_index.server.mcp_schemas import tool_definitions as tool_definitions
-from common_lore_index.server._mcp_locations import repomap_node_locations as repomap_node_locations
+from common_lore_index.server._mcp_locations import cloe_node_locations as cloe_node_locations
 from common_lore_index.ops.config_local import LocalSqliteConfig
 from common_lore_index.server.postgres_read_binding import postgres_graph_stores
 from common_lore_index.server.sqlite_read_binding import SqliteGraphStores
@@ -180,8 +180,8 @@ def _project_dependencies() -> _mcp_projects.ProjectDependencies:
     )
 
 
-def repomap_projects() -> dict[str, Any]:
-    return _mcp_projects.repomap_projects(dependencies=_project_dependencies())
+def cloe_projects() -> dict[str, Any]:
+    return _mcp_projects.cloe_projects(dependencies=_project_dependencies())
 
 
 def graph_registry_projects_hint() -> dict[str, Any]:
@@ -200,7 +200,7 @@ def _source_tool_dependencies() -> _mcp_sources.SourceToolDependencies:
     )
 
 
-def repomap_status(
+def cloe_status(
     *,
     root_path: str | None = None,
     project: str | None = None,
@@ -213,7 +213,7 @@ def repomap_status(
     return _canonical_impl.status_payload(**locals(), dependencies=_canonical_tool_dependencies())
 
 
-def repomap_canonical_nodes(
+def cloe_canonical_nodes(
     *,
     root_path: str | None = None, project: str | None = None,
     pg_database: str | None = None, pg_host: str | None = None,
@@ -228,7 +228,7 @@ def repomap_canonical_nodes(
     )
 
 
-def repomap_canonical_edges(
+def cloe_canonical_edges(
     *,
     root_path: str | None = None, project: str | None = None,
     pg_database: str | None = None, pg_host: str | None = None,
@@ -243,7 +243,7 @@ def repomap_canonical_edges(
     )
 
 
-def repomap_explain_canonical_edge(
+def cloe_explain_canonical_edge(
     *,
     root_path: str | None = None, project: str | None = None,
     pg_database: str | None = None, pg_host: str | None = None,
@@ -260,7 +260,7 @@ def repomap_explain_canonical_edge(
     )
 
 
-def repomap_canonical_neighborhood(
+def cloe_canonical_neighborhood(
     *,
     root_path: str | None = None, project: str | None = None,
     pg_database: str | None = None, pg_host: str | None = None,
@@ -277,7 +277,7 @@ def repomap_canonical_neighborhood(
     )
 
 
-def repomap_ingested_sources(
+def cloe_ingested_sources(
     *,
     root_path: str | None = None, project: str | None = None,
     pg_database: str | None = None, pg_host: str | None = None,
@@ -286,10 +286,10 @@ def repomap_ingested_sources(
     source_type: str | None = None, policy_status: str | None = None,
     limit: int = 50,
 ) -> list[dict[str, Any]]:
-    return _mcp_sources.repomap_ingested_sources(**locals(), dependencies=_source_tool_dependencies())
+    return _mcp_sources.cloe_ingested_sources(**locals(), dependencies=_source_tool_dependencies())
 
 
-def repomap_source_summary(
+def cloe_source_summary(
     *,
     source_id: str,
     root_path: str | None = None, project: str | None = None,
@@ -297,10 +297,10 @@ def repomap_source_summary(
     pg_port: str | int | None = None, pg_user: str | None = None,
     psql_command: str | None = None,
 ) -> dict[str, Any]:
-    return _mcp_sources.repomap_source_summary(**locals(), dependencies=_source_tool_dependencies())
+    return _mcp_sources.cloe_source_summary(**locals(), dependencies=_source_tool_dependencies())
 
 
-def repomap_source_runs(
+def cloe_source_runs(
     *,
     source_id: str,
     root_path: str | None = None, project: str | None = None,
@@ -308,10 +308,10 @@ def repomap_source_runs(
     pg_port: str | int | None = None, pg_user: str | None = None,
     psql_command: str | None = None, limit: int = 25,
 ) -> list[dict[str, Any]]:
-    return _mcp_sources.repomap_source_runs(**locals(), dependencies=_source_tool_dependencies())
+    return _mcp_sources.cloe_source_runs(**locals(), dependencies=_source_tool_dependencies())
 
 
-def repomap_source_feed_items(
+def cloe_source_feed_items(
     *,
     source_id: str,
     root_path: str | None = None, project: str | None = None,
@@ -321,10 +321,10 @@ def repomap_source_feed_items(
     source_run_id: str | None = None,
     limit: int = 50,
 ) -> list[dict[str, Any]]:
-    return _mcp_sources.repomap_source_feed_items(**locals(), dependencies=_source_tool_dependencies())
+    return _mcp_sources.cloe_source_feed_items(**locals(), dependencies=_source_tool_dependencies())
 
 
-def repomap_explain_source_feed_item(
+def cloe_explain_source_feed_item(
     *,
     item_key: str,
     root_path: str | None = None, project: str | None = None,
@@ -333,10 +333,10 @@ def repomap_explain_source_feed_item(
     psql_command: str | None = None,
     source_id: str | None = None,
 ) -> dict[str, Any]:
-    return _mcp_sources.repomap_explain_source_feed_item(**locals(), dependencies=_source_tool_dependencies())
+    return _mcp_sources.cloe_explain_source_feed_item(**locals(), dependencies=_source_tool_dependencies())
 
 
-def repomap_source_references(
+def cloe_source_references(
     *,
     source_id: str,
     root_path: str | None = None, project: str | None = None,
@@ -347,7 +347,7 @@ def repomap_source_references(
     target_kind: str | None = None,
     limit: int = 50,
 ) -> list[dict[str, Any]]:
-    return _mcp_sources.repomap_source_references(**locals(), dependencies=_source_tool_dependencies())
+    return _mcp_sources.cloe_source_references(**locals(), dependencies=_source_tool_dependencies())
 
 
 def _resolve_tool(function_name: str) -> Any:

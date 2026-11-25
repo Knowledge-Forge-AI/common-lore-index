@@ -14,7 +14,7 @@ import contextlib
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
@@ -65,8 +65,8 @@ print(json.dumps({'stage': 'refresh', 'result': result.result,
                   'publication_state': result.publication_state,
                   'failure_category': result.error_category}), flush=True)
 os.environ['CLOE_HOME'] = home
-from common_lore_index.server._mcp_navigation import repomap_navigation_search
-found = repomap_navigation_search(graph_id=graph, query=query, scope='code')
+from common_lore_index.server._mcp_navigation import cloe_navigation_search
+found = cloe_navigation_search(graph_id=graph, query=query, scope='code')
 kinds = [member.get('kind') for group in found.get('results', []) for member in group.get('members', [])]
 print(json.dumps({'result': result.result, 'publication_state': result.publication_state,
                   'function_present': %r in kinds}))
@@ -204,8 +204,8 @@ def test_released_provisioned_server_upgrade(
                                         host=postgres.host, port=postgres.port, database=postgres.database,
                                         user=postgres.user, password=postgres.password)
 
-        def refresh(env: InstalledEnvironment, query: str) -> None:
-            result = run_child(env, (str(env.python), "-c", SERVER_PROBE, str(home), str(client),
+        def refresh(env: InstalledEnvironment, query: str, *, probe: str = SERVER_PROBE) -> None:
+            result = run_child(env, (str(env.python), "-c", probe, str(home), str(client),
                                      postgres.database, GRAPH_ID, query), extra=READBACK)
             assert result.exit == 0, result.exit
             payload = json_object(result.stdout.strip().splitlines()[-1])
@@ -219,17 +219,20 @@ def test_released_provisioned_server_upgrade(
             assert selected.exit == 0, selected.exit
             return ((json_object(selected.stdout) or {}).get("expected_publication") or {}).get("generation")
 
-        def locations(env: InstalledEnvironment, query: str) -> tuple[object, ...]:
+        def locations(env: InstalledEnvironment, query: str, *,
+                      tool_prefix: Literal["cloe", "repomap"] = "cloe") -> tuple[object, ...]:
             answer = useful_question(env, (str(env.wrapper("cloe")), "mcp", "serve", "--repo-map-home", str(home)),
                                      graph_id=GRAPH_ID, code_query=query, code_kind=CODE_KIND,
-                                     docs_query=expected.docs_query, protocol=MCP_PROTOCOL_VERSION, extra=READBACK)
+                                     docs_query=expected.docs_query, protocol=MCP_PROTOCOL_VERSION,
+                                     extra=READBACK, tool_prefix=tool_prefix)
             assert answer.complete and answer.protocol_version == MCP_PROTOCOL_VERSION
             return tuple(answer.facts[key][0] for key in ("code_kind", "code_path", "code_line", "docs_path"))
 
-        refresh(old, expected.code_query)
+        released_probe = SERVER_PROBE.replace("cloe_navigation_search", "repomap_navigation_search")
+        refresh(old, expected.code_query, probe=released_probe)
         assert generation(old, tmp_path / "release-selection.json") == 1
         original = (CODE_KIND, expected.code_path, expected.code_line, expected.docs_path)
-        assert locations(old, expected.code_query) == original
+        assert locations(old, expected.code_query, tool_prefix="repomap") == original
         hidden = material.with_name("material offline")
         material.rename(hidden)
         assert locations(new, expected.code_query) == original

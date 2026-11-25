@@ -8,7 +8,7 @@ from repomap_test_support.mcp_server import McpServerTestSupport
 
 class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
     def test_all_hidden_home_listing_omits_config_locations(self):
-        from common_lore_index.server.mcp import repomap_list_graphs
+        from common_lore_index.server.mcp import cloe_list_graphs
 
         config_path = self.write_ops_config(
             self.visible_ops_config().replace(
@@ -22,7 +22,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
             "os.environ",
             {"REPOMAP_OPS_CONFIG": str(config_path.parent)},
         ):
-            payload = repomap_list_graphs()
+            payload = cloe_list_graphs()
 
         self.assertEqual(payload["graph_count"], 0)
         self.assertEqual(payload["hidden_graph_count"], 4)
@@ -32,11 +32,11 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
         self.assertNotIn(str(config_path.parent), json.dumps(payload, sort_keys=True))
 
     def test_graph_metadata_uses_path_free_root_and_database_markers(self):
-        from common_lore_index.server.mcp import repomap_list_graphs
+        from common_lore_index.server.mcp import cloe_list_graphs
 
         config_path = self.write_visible_ops_config()
         with self.patch_ops_config(config_path):
-            payload = repomap_list_graphs()
+            payload = cloe_list_graphs()
 
         graphs = {graph["graph_id"]: graph for graph in payload["graphs"]}
         self.assertEqual(graphs["repo-map"]["root_path_display"], "[graph-root]")
@@ -59,7 +59,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
             self.assertNotIn(internal_value, serialized)
 
     def test_legacy_projects_mask_connection_metadata(self):
-        from common_lore_index.server.mcp import repomap_projects
+        from common_lore_index.server.mcp import cloe_projects
 
         config_path = self.write_mcp_config(
             {
@@ -87,7 +87,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
                 side_effect=OSError("no operations config"),
             ),
         ):
-            payload = repomap_projects()
+            payload = cloe_projects()
 
         project = payload["projects"][0]
         self.assertEqual(project["root_path"], "[project-root]")
@@ -106,7 +106,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
             self.assertNotIn(internal_value, serialized)
 
     def test_legacy_status_masks_root_but_preserves_query_routing(self):
-        from common_lore_index.server.mcp import repomap_status
+        from common_lore_index.server.mcp import cloe_status
 
         config_path = self.write_mcp_config(
             {
@@ -139,14 +139,14 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
                 "common_lore_index.server.mcp.query_canonical_storage_summary",
                 return_value=summary,
             ) as query:
-                payload = repomap_status(project="repo-map")
+                payload = cloe_status(project="repo-map")
 
         self.assertEqual(payload["root_path"], "[project-root]")
         self.assertEqual(query.call_args.kwargs["root_path"], "/synthetic/repo-map")
         self.assertEqual(query.call_args.args[0], ["-d", "internal_repo_map"])
 
     def test_legacy_status_labels_legacy_storage_counts(self):
-        from common_lore_index.server.mcp import repomap_status
+        from common_lore_index.server.mcp import cloe_status
 
         config_path = self.write_mcp_config(
             {
@@ -179,7 +179,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
                 "common_lore_index.server.mcp.query_canonical_storage_summary",
                 return_value=summary,
             ):
-                payload = repomap_status(project="repo-map")
+                payload = cloe_status(project="repo-map")
 
         self.assertEqual(payload["storage_model"], "canonical")
         self.assertEqual(
@@ -217,11 +217,11 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
         )
 
         with patch(
-            "common_lore_index.server.mcp.repomap_status",
+            "common_lore_index.server.mcp.cloe_status",
             side_effect=storage_error,
         ):
             with self.assertRaises(RepoMapMcpError) as raised:
-                handle_tool_call("repomap_status", {"project": "fixture"})
+                handle_tool_call("cloe_status", {"project": "fixture"})
 
         self.assertEqual(str(raised.exception), safe_reason)
 
@@ -233,7 +233,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
         self.assertEqual(str(ops_raised.exception), safe_reason)
 
         with patch(
-            "common_lore_index.server.mcp.repomap_status",
+            "common_lore_index.server.mcp.cloe_status",
             side_effect=storage_error,
         ):
             response = handle_jsonrpc_message(
@@ -242,7 +242,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
                     "id": 24,
                     "method": "tools/call",
                     "params": {
-                        "name": "repomap_status",
+                        "name": "cloe_status",
                         "arguments": {"project": "fixture"},
                     },
                 }
@@ -262,9 +262,9 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
 
     def test_graph_status_and_summary_mask_output_but_preserve_query_routing(self):
         from common_lore_index.server.mcp import (
-            repomap_project_summary,
-            repomap_refresh_status,
-            repomap_status,
+            cloe_project_summary,
+            cloe_refresh_status,
+            cloe_status,
         )
 
         mcp_config_path = self.write_empty_mcp_config()
@@ -303,9 +303,9 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
                     return_value={"repo-map": refresh_status},
                 ),
             ):
-                legacy = repomap_status(project="repo-map")
-                project = repomap_project_summary(graph_id="repo-map")
-                refresh = repomap_refresh_status("repo-map")
+                legacy = cloe_status(project="repo-map")
+                project = cloe_project_summary(graph_id="repo-map")
+                refresh = cloe_refresh_status("repo-map")
 
         self.assertEqual(legacy["root_path"], "[graph-root]")
         self.assertEqual(project["graph"]["root_path_display"], "[graph-root]")
@@ -330,7 +330,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
         self.assertEqual(summary_query.call_args.kwargs["root_path"], "/tmp/fixture")
 
     def test_public_search_masks_configured_paths_but_preserves_query_routing(self):
-        from common_lore_index.server.mcp import repomap_search_nodes
+        from common_lore_index.server.mcp import cloe_search_nodes
 
         config_path = self.write_visible_ops_config()
         result = {
@@ -351,7 +351,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
                 "common_lore_index.server.ops.query_mcp_search",
                 return_value=result,
             ) as query:
-                payload = repomap_search_nodes(graph_id="repo-map", query="pkg")
+                payload = cloe_search_nodes(graph_id="repo-map", query="pkg")
 
         serialized = json.dumps(payload, sort_keys=True)
         self.assertNotIn("/tmp/fixture", serialized)

@@ -14,8 +14,8 @@ navigation (`cloe-intent-rank-v1`, `cloe-intent-tiebreak-v1`,
 1. **Preserved Retrieval and MCP Contracts**: The six `QueryMode` values and
    five `MatchSurface` values in `cloe-retrieval-query-v1` ([ADR 0127](../adr/2026/10/0127-cloe-retrieval-contracts-and-evaluation.md)),
    the read-only MCP tool catalog and schemas, `InvestigationReadStore`, and the
-   default `_EVIDENCE_ROLE_SQL` payload behavior for `repomap_navigation_search`
-   and `repomap_node_locations` remain unchanged.
+   default `_EVIDENCE_ROLE_SQL` payload behavior for `cloe_navigation_search`
+   and `cloe_node_locations` remain unchanged.
 2. **Metadata-Only Storage Access and Credential Isolation**: Context assembly
    reads accepted canonical metadata (`canonical_nodes`, `canonical_edges`,
    `canonical_node_evidence`, `canonical_evidence`, `runs`, and publication

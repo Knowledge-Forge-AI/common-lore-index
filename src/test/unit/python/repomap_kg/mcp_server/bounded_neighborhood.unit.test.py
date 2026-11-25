@@ -58,7 +58,7 @@ def bounded_home(tmp_path, monkeypatch):
 
 
 def public_call(**options):
-    reply = mcp.handle_tool_call("repomap_neighborhood", dict(graph_id=GRAPH, node=CENTER, **options))
+    reply = mcp.handle_tool_call("cloe_neighborhood", dict(graph_id=GRAPH, node=CENTER, **options))
     assert json.loads(reply["content"][0]["text"]) == reply["structuredContent"]
     return reply
 
@@ -113,7 +113,7 @@ def test_invalid_limits_refuse_public_and_python_calls_before_store(bounded_home
         with pytest.raises(RepoMapMcpError, match=option + " must be an integer between 1 and 100"):
             public_call(**{option: value})
         with pytest.raises(RepoMapMcpError, match=option + " must be an integer between 1 and 100"):
-            mcp.repomap_neighborhood(graph_id=GRAPH, node=CENTER, **{option: value})
+            mcp.cloe_neighborhood(graph_id=GRAPH, node=CENTER, **{option: value})
 
 
 @pytest.mark.parametrize("graph,message", [("hidden", "not MCP-visible"), ("disabled", "not enabled"),
@@ -121,7 +121,7 @@ def test_invalid_limits_refuse_public_and_python_calls_before_store(bounded_home
 def test_bounded_selection_refusals_precede_store(bounded_home, graph, message):
     with patch("common_lore_index.server.sqlite_read_binding.read_transaction", side_effect=AssertionError("opened")):
         with pytest.raises(RepoMapMcpError, match=message):
-            mcp.handle_tool_call("repomap_neighborhood", dict(graph_id=graph, node=CENTER, node_limit=1))
+            mcp.handle_tool_call("cloe_neighborhood", dict(graph_id=graph, node=CENTER, node_limit=1))
 
 
 def test_unsupported_postgres_refuses_bounded_but_default_read_stays_exact(tmp_path, monkeypatch):
@@ -135,17 +135,17 @@ def test_unsupported_postgres_refuses_bounded_but_default_read_stays_exact(tmp_p
     with patch("common_lore_index.server.investigation_read_store.read_configured_graph",
                side_effect=AssertionError("PG read")) as read:
         with pytest.raises(RepoMapMcpError, match="supported only by SQLite Local"):
-            mcp.handle_tool_call("repomap_neighborhood", dict(graph_id=graph, node=CENTER, edge_limit=1))
+            mcp.handle_tool_call("cloe_neighborhood", dict(graph_id=graph, node=CENTER, edge_limit=1))
         read.assert_not_called()
         with pytest.raises(AssertionError, match="PG read"):
-            mcp.handle_tool_call("repomap_neighborhood", dict(graph_id=graph, node=CENTER))
+            mcp.handle_tool_call("cloe_neighborhood", dict(graph_id=graph, node=CENTER))
         assert read.call_args.kwargs == dict(root_path=config.graphs[0].root_path,
             node=CENTER, direction="both", depth=1, graph_key_version=1)
 
 
 def test_complete_empty_scope_and_missing_center(bounded_home):
     for node in ("python.module:pkg.absent", "malformed:key", "file:/synthetic/private"):
-        reply = mcp.handle_tool_call("repomap_neighborhood", dict(graph_id=GRAPH, node=node,
+        reply = mcp.handle_tool_call("cloe_neighborhood", dict(graph_id=GRAPH, node=node,
             node_limit=1, edge_limit=1))
         assert json.loads(reply["content"][0]["text"]) == reply["structuredContent"]
         result = reply["structuredContent"]["result"]

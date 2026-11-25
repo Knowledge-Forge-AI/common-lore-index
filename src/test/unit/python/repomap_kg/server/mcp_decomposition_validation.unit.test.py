@@ -119,7 +119,7 @@ def test_mcp_dispatch_tool_errors() -> None:
 
     with pytest.raises(RepoMapMcpError, match="unexpected argument"):
         validate_tool_call_arguments(
-            "repomap_status",
+            "cloe_status",
             {"nonexistent_arg": 123},
         )
 
@@ -188,7 +188,7 @@ def test_mcp_projects_decomposition() -> None:
     from common_lore_index.server._mcp_projects import (
         ProjectDependencies,
         graph_registry_projects_hint,
-        repomap_projects,
+        cloe_projects,
     )
 
     # Test error handling fallback in graph_registry_projects_hint
@@ -200,7 +200,7 @@ def test_mcp_projects_decomposition() -> None:
     assert hint["graph_count"] == 0
     assert "legacy project config is active" in hint["message"]
 
-    # Test repomap_projects with mock config
+    # Test cloe_projects with mock config
     from unittest.mock import MagicMock
     mock_config = MagicMock()
     mock_config.default_project = "demo"
@@ -210,7 +210,7 @@ def test_mcp_projects_decomposition() -> None:
         load_mcp_config=lambda: mock_config,
         load_mcp_ops_config=lambda *args: (_ for _ in ()).throw(ValueError("bad")),
     )
-    payload = repomap_projects(dependencies=mock_deps)
+    payload = cloe_projects(dependencies=mock_deps)
     assert payload["default_project"] == "demo"
     assert payload["allow_project_overrides"] is True
 

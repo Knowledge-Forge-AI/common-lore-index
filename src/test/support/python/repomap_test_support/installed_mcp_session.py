@@ -22,7 +22,7 @@ import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from runner_coverage_bootstrap import resolve_bootstrap_capability
 from runner_coverage_execution import popen_observed_process
@@ -291,13 +291,14 @@ def _initialize(session: McpSession, protocol: str) -> int:
 def useful_question(
     env: InstalledEnvironment, argv: Sequence[str], *, graph_id: str, code_query: str, code_kind: str,
     docs_query: str, protocol: str, extra: Mapping[str, str] | None = None,
+    tool_prefix: Literal["cloe", "repomap"] = "cloe",
 ) -> UsefulAnswer:
     """Navigation (code, docs), then the selected member's compact locations."""
     first = McpSession(env, argv, extra=extra)
     init = _initialize(first, protocol)
     tools = first.request("tools/list")
-    code = first.call("repomap_navigation_search", {"graph_id": graph_id, "query": code_query, "scope": "code"})
-    docs = first.call("repomap_navigation_search", {"graph_id": graph_id, "query": docs_query, "scope": "docs"})
+    code = first.call(f"{tool_prefix}_navigation_search", {"graph_id": graph_id, "query": code_query, "scope": "code"})
+    docs = first.call(f"{tool_prefix}_navigation_search", {"graph_id": graph_id, "query": docs_query, "scope": "docs"})
     navigation = first.close()
     member = _member(structured(navigation, code), code_kind, code_query)
     docs_member = _member(structured(navigation, docs), None, None)
@@ -310,7 +311,7 @@ def useful_question(
     if member is not None:
         second = McpSession(env, argv, extra=extra)
         _initialize(second, protocol)
-        located = second.call("repomap_node_locations", {
+        located = second.call(f"{tool_prefix}_node_locations", {
             "graph_id": graph_id, "canonical_key": member["canonical_key"],
             "evidence_role": "direct", "detail": "compact"})
         locations = second.close()

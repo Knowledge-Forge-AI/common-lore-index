@@ -75,14 +75,14 @@ def test_body_only_literal_is_visible_natively_but_complete_empty_in_node_search
     with sqlite3.connect(database) as connection:
         identities = connection.execute("SELECT canonical_key, kind, display_name FROM canonical_nodes").fetchall()
     assert identities and all(literal not in (field or "") for row in identities for field in row)
-    raw = call("repomap_search_nodes", query=literal)
+    raw = call("cloe_search_nodes", query=literal)
     assert raw["results"] == [] and raw["has_more"] is False
     for scope in ("code", "all"):
-        navigation = call("repomap_navigation_search", query=literal, scope=scope, grouping="none")
+        navigation = call("cloe_navigation_search", query=literal, scope=scope, grouping="none")
         assert navigation["status"] == "ok" and navigation["scan"]["complete"] is True
         assert navigation["results"] == [] and navigation["has_more"] is False
     # A true extracted identity in the same publication remains reachable.
-    hit = call("repomap_search_nodes", query="normalize_label")
+    hit = call("cloe_search_nodes", query="normalize_label")
     assert [row["display_name"] for row in hit["results"]] == ["normalize_label"]
 
 
@@ -94,10 +94,10 @@ def test_same_spelling_as_real_indexed_subject_hits_and_consumer_verifies(
     text = f'def {name}():\n    return "named subject"\n'
     source.write_text(text, encoding="utf-8")
     publish_source(database, text, 2)
-    raw = call("repomap_search_nodes", query=name)
+    raw = call("cloe_search_nodes", query=name)
     key = f"python.function:src.subject:{name}"
     assert [row["canonical_key"] for row in raw["results"]] == [key]
-    navigation = call("repomap_navigation_search", query=name, scope="code")
+    navigation = call("cloe_navigation_search", query=name, scope="code")
     assert navigation["status"] == "ok" and navigation["scan"]["complete"] is True
     assert [member["canonical_key"] for group in navigation["results"] for member in group["members"]] == [key]
     navigate = vars(consumer_module)["navigate"]
@@ -106,22 +106,22 @@ def test_same_spelling_as_real_indexed_subject_hits_and_consumer_verifies(
     assert result["branch"] == "search_locator" and result["outcome"] == "verified"
     assert result["graph_calls"] == 2
     assert [event["tool"] for event in result["trace"] if event["action"] == "tool_call"] == [
-        "repomap_search_nodes", "repomap_node_locations",
+        "cloe_search_nodes", "cloe_node_locations",
     ]
 
 
 def test_file_fields_and_retained_observation_payload_are_distinct_from_source_body(source_store: tuple) -> None:
     for query in ("src/subject.py", "python", "source"):
-        files = call("repomap_search_files", query=query, path="root/src/subject.py")
+        files = call("cloe_search_files", query=query, path="root/src/subject.py")
         assert [row["path"] for row in files["results"]] == ["root/src/subject.py"]
-    assert call("repomap_search_files", query="orchard_body_literal")["results"] == []
+    assert call("cloe_search_files", query="orchard_body_literal")["results"] == []
     query = '"async": false'
-    assert call("repomap_search_nodes", query=query)["results"] == []
-    brief = call("repomap_search_observations", query=query, kind="python.function", path="root/src/subject.py")
-    full = call("repomap_search_observations", query=query, kind="python.function", path="root/src/subject.py",
+    assert call("cloe_search_nodes", query=query)["results"] == []
+    brief = call("cloe_search_observations", query=query, kind="python.function", path="root/src/subject.py")
+    full = call("cloe_search_observations", query=query, kind="python.function", path="root/src/subject.py",
                 include_raw=True)
     assert len(brief["results"]) == 1 and "payload" not in brief["results"][0]
     assert brief["results"] == [{key: value for key, value in row.items() if key != "payload"}
                                 for row in full["results"]]
     assert full["results"][0]["payload"]["metadata"]["async"] is False
-    assert call("repomap_search_observations", query="orchard_body_literal")["results"] == []
+    assert call("cloe_search_observations", query="orchard_body_literal")["results"] == []

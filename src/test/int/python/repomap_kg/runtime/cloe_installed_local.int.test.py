@@ -194,7 +194,7 @@ def test_installed_local_workflow(tmp_path_factory, tmp_path: Path) -> None:
         session.request("initialize", {"protocolVersion": MCP_PROTOCOL_VERSION, "capabilities": {},
                                        "clientInfo": {"name": "installed-experience", "version": "1"}})
         session.notify("notifications/initialized")
-        message = session.call("repomap_search_nodes", {"graph_id": GRAPH_ID,
+        message = session.call("cloe_search_nodes", {"graph_id": GRAPH_ID,
                                 "query": "email.message", "kind": "email.message"})
         transcript = session.close()
         rows = (structured(transcript, message) or {}).get("results") or []

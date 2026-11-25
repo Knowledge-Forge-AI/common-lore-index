@@ -176,9 +176,9 @@ def test_sqlite_local_operator_workflow_without_postgres(tmp_path: Path) -> None
         home,
         [
             initialize(),
-            tool(2, "repomap_graph_status", {"graph_id": "zulu"}),
-            tool(3, "repomap_canonical_nodes", {"project": "zulu", "limit": 2}),
-            tool(4, "repomap_graph_status", {"graph_id": "alpha"}),
+            tool(2, "cloe_graph_status", {"graph_id": "zulu"}),
+            tool(3, "cloe_canonical_nodes", {"project": "zulu", "limit": 2}),
+            tool(4, "cloe_graph_status", {"graph_id": "alpha"}),
         ],
     )
     assert structured(responses, 3)["items"], responses[3]

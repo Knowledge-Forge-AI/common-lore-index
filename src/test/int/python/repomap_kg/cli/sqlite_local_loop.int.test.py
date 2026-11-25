@@ -48,15 +48,15 @@ CONSTELLATION = FIXTURE_ROOT / "multi_source_nix_constellation"
 CENTERS = {ONE: "file:root/flake.nix", MULTI: "file:entry/flake.nix"}
 SUMMARIES = ("python", "terraform", "openapi", "js_framework", "nix")
 SOURCE_ARGUMENTS: dict[str, dict[str, Any]] = {
-    "repomap_ingested_sources": {"project": ONE},
-    "repomap_source_summary": {"project": ONE, "source_id": "feed"},
-    "repomap_source_runs": {"project": ONE, "source_id": "feed"},
-    "repomap_source_feed_items": {"project": ONE, "source_id": "feed"},
-    "repomap_explain_source_feed_item": {
+    "cloe_ingested_sources": {"project": ONE},
+    "cloe_source_summary": {"project": ONE, "source_id": "feed"},
+    "cloe_source_runs": {"project": ONE, "source_id": "feed"},
+    "cloe_source_feed_items": {"project": ONE, "source_id": "feed"},
+    "cloe_explain_source_feed_item": {
         "project": ONE,
         "item_key": "feed.item:feed.channel%3Afeed.document%253Afile%25253Arss.xml%3Aself:item-1",
     },
-    "repomap_source_references": {"project": ONE, "source_id": "feed"},
+    "cloe_source_references": {"project": ONE, "source_id": "feed"},
 }
 
 
@@ -94,26 +94,26 @@ def _dump(path: Path) -> str:
 
 def _plan(base: int, graph: str, query: str, file_query: str) -> list[dict[str, Any]]:
     return [
-        tool(base + 1, "repomap_canonical_nodes", {"project": graph, "limit": 2}),
-        tool(base + 2, "repomap_canonical_nodes", {"project": graph, "limit": 2, "offset": 2}),
-        tool(base + 3, "repomap_canonical_nodes", {"project": graph, "result_schema_version": 0}),
-        tool(base + 4, "repomap_canonical_edges", {"project": graph}),
-        tool(base + 5, "repomap_canonical_edges", {"project": graph, "kind": "sources"}),
-        tool(base + 6, "repomap_graph_status", {"graph_id": graph}),
-        tool(base + 7, "repomap_refresh_status", {"graph_id": graph}),
-        tool(base + 8, "repomap_project_summary", {"graph_id": graph}),
-        tool(base + 9, "repomap_search_nodes", {"graph_id": graph, "query": query, "limit": 1}),
-        tool(base + 10, "repomap_search_files", {"graph_id": graph, "query": file_query}),
-        tool(base + 11, "repomap_status", {"project": graph}),
-        tool(base + 12, "repomap_search_observations", {"graph_id": graph, "query": "nix", "limit": 1}),
-        tool(base + 13, "repomap_search_observations",
+        tool(base + 1, "cloe_canonical_nodes", {"project": graph, "limit": 2}),
+        tool(base + 2, "cloe_canonical_nodes", {"project": graph, "limit": 2, "offset": 2}),
+        tool(base + 3, "cloe_canonical_nodes", {"project": graph, "result_schema_version": 0}),
+        tool(base + 4, "cloe_canonical_edges", {"project": graph}),
+        tool(base + 5, "cloe_canonical_edges", {"project": graph, "kind": "sources"}),
+        tool(base + 6, "cloe_graph_status", {"graph_id": graph}),
+        tool(base + 7, "cloe_refresh_status", {"graph_id": graph}),
+        tool(base + 8, "cloe_project_summary", {"graph_id": graph}),
+        tool(base + 9, "cloe_search_nodes", {"graph_id": graph, "query": query, "limit": 1}),
+        tool(base + 10, "cloe_search_files", {"graph_id": graph, "query": file_query}),
+        tool(base + 11, "cloe_status", {"project": graph}),
+        tool(base + 12, "cloe_search_observations", {"graph_id": graph, "query": "nix", "limit": 1}),
+        tool(base + 13, "cloe_search_observations",
              {"graph_id": graph, "query": "nix", "limit": 1, "offset": 1}),
-        tool(base + 14, "repomap_neighborhood", {"graph_id": graph, "node": CENTERS[graph]}),
-        *(tool(base + 15 + index, f"repomap_{family}_summary", {"graph_id": graph})
+        tool(base + 14, "cloe_neighborhood", {"graph_id": graph, "node": CENTERS[graph]}),
+        *(tool(base + 15 + index, f"cloe_{family}_summary", {"graph_id": graph})
           for index, family in enumerate(SUMMARIES)),
-        tool(base + 20, "repomap_search_observations",
+        tool(base + 20, "cloe_search_observations",
              {"graph_id": graph, "query": "flake.nix", "kind": "file", "include_raw": True}),
-        tool(base + 21, "repomap_neighborhood",
+        tool(base + 21, "cloe_neighborhood",
              {"graph_id": graph, "node": CENTERS[graph], "node_limit": 1, "edge_limit": 1}),
     ]
 
@@ -180,14 +180,14 @@ def test_sqlite_local_loop_indexes_and_serves_database_tools_without_postgres(tm
     before = {graph: (_digest(path), _dump(path)) for graph, path in databases.items()}
 
     requests = [initialize(1), {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
-                tool(3, "repomap_refresh_status", {}), tool(4, "repomap_list_graphs", {}),
-                tool(5, "repomap_projects", {}),
-                tool(6, "repomap_canonical_nodes", {"project": "no-such-graph"}),
-                tool(7, "repomap_search_nodes", {"graph_id": HIDDEN, "query": "x"}),
-                tool(8, "repomap_canonical_nodes", {"project": ABSENT}),
-                tool(9, "repomap_neighborhood", {"graph_id": ONE, "node": CENTERS[ONE], "depth": 2}),
-                tool(10, "repomap_python_summary", {"graph_id": HIDDEN}),
-                tool(11, "repomap_status", {"project": ONE, "pg_database": "elsewhere"})]
+                tool(3, "cloe_refresh_status", {}), tool(4, "cloe_list_graphs", {}),
+                tool(5, "cloe_projects", {}),
+                tool(6, "cloe_canonical_nodes", {"project": "no-such-graph"}),
+                tool(7, "cloe_search_nodes", {"graph_id": HIDDEN, "query": "x"}),
+                tool(8, "cloe_canonical_nodes", {"project": ABSENT}),
+                tool(9, "cloe_neighborhood", {"graph_id": ONE, "node": CENTERS[ONE], "depth": 2}),
+                tool(10, "cloe_python_summary", {"graph_id": HIDDEN}),
+                tool(11, "cloe_status", {"project": ONE, "pg_database": "elsewhere"})]
     requests += _plan(100, ONE, "SH", ".sh") + _plan(200, MULTI, "flake", "flake.nix")
     source_ids = {900 + index: name for index, name in enumerate(SOURCE_ARGUMENTS)}
     requests += [tool(mid, name, SOURCE_ARGUMENTS[name]) for mid, name in source_ids.items()]
@@ -210,8 +210,8 @@ def test_sqlite_local_loop_indexes_and_serves_database_tools_without_postgres(tm
     assert refusal(first, 11) == (
         "graph-registry project routing cannot be combined with explicit connection overrides")
     empty = {name: structured(first, mid) for mid, name in source_ids.items()}
-    assert empty["repomap_source_summary"]["known_limitations"] == ["source metadata unavailable"], empty
-    assert empty["repomap_explain_source_feed_item"]["item"] is None, empty
+    assert empty["cloe_source_summary"]["known_limitations"] == ["source metadata unavailable"], empty
+    assert empty["cloe_explain_source_feed_item"]["item"] is None, empty
     assert [empty[name] for name in SOURCE_ARGUMENTS if name.endswith(("sources", "runs", "items", "references"))
             ] == [[], [], [], []], empty
 
@@ -241,12 +241,12 @@ def test_sqlite_local_loop_indexes_and_serves_database_tools_without_postgres(tm
     edge = structured(first, 104)["items"][0]
     second = harness.mcp(home, [
         initialize(1),
-        tool(2, "repomap_explain_canonical_edge", {
+        tool(2, "cloe_explain_canonical_edge", {
             "project": ONE, "source_key": edge["source_key"], "kind": edge["edge_kind"],
             "target_key": edge["target_key"], "identity_metadata": edge["identity_metadata"],
             "evidence_limit": 1,
         }),
-        tool(3, "repomap_canonical_neighborhood", {"project": ONE, "node": edge["source_key"]}),
+        tool(3, "cloe_canonical_neighborhood", {"project": ONE, "node": edge["source_key"]}),
         *_plan(100, ONE, "SH", ".sh"),
     ])
     explained = structured(second, 2)
@@ -262,9 +262,9 @@ def test_sqlite_local_loop_indexes_and_serves_database_tools_without_postgres(tm
     _write_sources(sources, extra=True)
     gen2 = harness.cli_json("ops", "refresh-graph", "--repo-map-home", str(home), "--graph", ONE)
     assert (gen2["accepted_generation"], gen2["previous_run_id"]) == (2, 1), gen2
-    third = harness.mcp(home, [initialize(1), tool(2, "repomap_graph_status", {"graph_id": ONE}),
-                               tool(3, "repomap_search_files", {"graph_id": ONE, "query": "extra"}),
-                               tool(4, "repomap_project_summary", {"graph_id": MULTI})])
+    third = harness.mcp(home, [initialize(1), tool(2, "cloe_graph_status", {"graph_id": ONE}),
+                               tool(3, "cloe_search_files", {"graph_id": ONE, "query": "extra"}),
+                               tool(4, "cloe_project_summary", {"graph_id": MULTI})])
     assert structured(third, 2)["storage"]["latest_run_id"] == 2, structured(third, 2)
     extra_paths = [row["path"] for row in structured(third, 3)["results"]]
     assert extra_paths == ["root/extra.sh"], extra_paths
@@ -371,7 +371,7 @@ def test_unreadable_or_conflicting_state_refuses_and_preserves_the_pending_attem
     tampered["sqlite_local_publication"]["publication_bundle_id"] = "bundle1:" + "0" * 64
     _replace_owner_only(record, json.dumps(tampered, sort_keys=True, separators=(",", ":")).encode())
     refused("publication-identity-conflict")
-    status = harness.mcp(home, [initialize(1), tool(2, "repomap_graph_status", {"graph_id": ONE})])
+    status = harness.mcp(home, [initialize(1), tool(2, "cloe_graph_status", {"graph_id": ONE})])
     assert structured(status, 2)["storage"]["latest_run_id"] == 2  # the committed generation is intact
 
     _replace_owner_only(record, pristine)  # the operator restores the true record

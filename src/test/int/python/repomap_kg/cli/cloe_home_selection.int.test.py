@@ -60,7 +60,7 @@ def test_explicit_legacy_plan_and_mcp_readback_preserve_existing_sqlite_state(tm
     assert status["state"] == "current" and status["accepted_generation"] is None
     assert str(home) not in implicit.stderr and "foreign opaque sentinel" not in implicit.stderr
     payload = "".join(json.dumps(item) + "\n" for item in (
-        initialize(), tool(2, "repomap_graph_status", {"graph_id": "one"}),
+        initialize(), tool(2, "cloe_graph_status", {"graph_id": "one"}),
     ))
     served = harness.run("mcp", "serve", "--repo-map-home", str(home), input_text=payload)
     assert served.returncode == 0, served.stderr
@@ -207,7 +207,7 @@ def test_mcp_explicit_config_environment_survives_foreign_default(tmp_path: Path
     (current / "foreign.txt").write_text("opaque private sentinel")
     before = snapshot(current)
     payload = "".join(json.dumps(item) + "\n" for item in (
-        initialize(), tool(2, "repomap_graph_status", {"graph_id": "one"}),
+        initialize(), tool(2, "cloe_graph_status", {"graph_id": "one"}),
     ))
     served = harness.run("mcp", "serve", input_text=payload, extra_env={"REPOMAP_OPS_CONFIG": str(config)})
     assert served.returncode == 0, served.stderr

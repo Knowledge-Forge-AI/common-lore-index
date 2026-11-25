@@ -218,7 +218,7 @@ class StorageNixDomainSummaryIntegrationTests(unittest.TestCase):
                 )
             )
 
-            from common_lore_index.server.mcp import repomap_nix_summary
+            from common_lore_index.server.mcp import cloe_nix_summary
 
             with tempfile.TemporaryDirectory() as ops_config_tmpdir:
                 ops_config_path = Path(ops_config_tmpdir) / "nix-summary4.local.toml"
@@ -276,8 +276,8 @@ mode = "read_only"
                     },
                     clear=False,
                 ):
-                    public_mcp_payload = repomap_nix_summary(graph_id="repo-map")
-                    private_mcp_payload = repomap_nix_summary(
+                    public_mcp_payload = cloe_nix_summary(graph_id="repo-map")
+                    private_mcp_payload = cloe_nix_summary(
                         graph_id="private-visible"
                     )
 

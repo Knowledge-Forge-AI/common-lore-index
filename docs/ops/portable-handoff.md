@@ -64,7 +64,7 @@ selected alternative separately and record omitted alternatives with `has_more`;
 do not drop contrary evidence to fit a budget. A complete node no-match applies
 only to its recorded surface and scope, never to arbitrary source-text absence.
 
-For a selected compact `repomap_node_locations` reply, preserve the header's
+For a selected compact `cloe_node_locations` reply, preserve the header's
 `repository_identity`; use the chosen location's `source_relative_path` and exact
 nullable `start_line`/`end_line`, and resolve its `binding` index into the header's
 `bindings`. That supplied `binding_id` becomes `root.key` with `stored_binding`

@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
@@ -47,12 +47,14 @@ def _cli(env: InstalledEnvironment, home: Path, command: str, *args: str) -> dic
 
 
 def _answer(
-    env: InstalledEnvironment, home: Path, code_query: str | None = None,
+    env: InstalledEnvironment, home: Path, code_query: str | None = None, *,
+    tool_prefix: Literal["cloe", "repomap"] = "cloe",
 ) -> tuple[str, str, int, str]:
     expected = expectations()
     answer = useful_question(env, (str(env.wrapper("cloe")), "mcp", "serve", "--repo-map-home", str(home)),
                              graph_id=GRAPH_ID, code_query=code_query or expected.code_query,
-                             code_kind=CODE_KIND, docs_query=expected.docs_query, protocol=MCP_PROTOCOL_VERSION)
+                             code_kind=CODE_KIND, docs_query=expected.docs_query, protocol=MCP_PROTOCOL_VERSION,
+                             tool_prefix=tool_prefix)
     assert answer.complete and answer.protocol_version == MCP_PROTOCOL_VERSION
     facts = {key: item[0] for key, item in answer.facts.items()}
     assert facts["code_kind"] == CODE_KIND and facts["code_path"] == expected.code_path
@@ -84,7 +86,7 @@ def test_released_local_home_upgrade_and_backup_recovery(
     _cli(previous, primary, "sqlite-init")
     first = _cli(previous, primary, "refresh-graph")["accepted_generation"]
     assert first == 1
-    original = _answer(previous, primary)
+    original = _answer(previous, primary, tool_prefix="repomap")
     assert original[2] == expectations().code_line
     assert _cli(previous, primary, "sqlite-backup", "--output", str(backup))["result"] == "created"
     assert {path.name for path in backup.iterdir()} == {"graph.sqlite3", "manifest.json"}
@@ -112,7 +114,7 @@ def test_released_local_home_upgrade_and_backup_recovery(
     assert _cli(current, recovery, "sqlite-restore", "--backup", str(backup))["result"] == "restored"
     assert _answer(current, recovery) == original
     assert _cli(previous, rollback, "sqlite-restore", "--backup", str(backup))["result"] == "restored"
-    assert _answer(previous, rollback) == original
+    assert _answer(previous, rollback, tool_prefix="repomap") == original
     assert _files_digest(bundle) == pre_upgrade
     print(json.dumps({"event": "released-local-upgrade-proof", "baseline_commit": RELEASED_CLOE_COMMIT,
                       "baseline_generation": first, "candidate_generation": next_generation,
@@ -135,10 +137,10 @@ def test_preview005_predecessor_preserves_source_blind_local_recovery(
     backup = tmp_path / "preview005 backup"
     _cli(installed, home, "sqlite-init")
     assert _cli(installed, home, "refresh-graph")["accepted_generation"] == 1
-    before = _answer(installed, home)
+    before = _answer(installed, home, tool_prefix="repomap")
     assert _cli(installed, home, "sqlite-backup", "--output", str(backup))["result"] == "created"
     frozen = _files_digest((backup / "graph.sqlite3", backup / "manifest.json"))
     material.rename(material.with_name("hidden public material"))
     assert _cli(installed, recovered, "sqlite-restore", "--backup", str(backup))["result"] == "restored"
-    assert _answer(installed, recovered) == before
+    assert _answer(installed, recovered, tool_prefix="repomap") == before
     assert _files_digest((backup / "graph.sqlite3", backup / "manifest.json")) == frozen

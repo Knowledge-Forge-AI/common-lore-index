@@ -148,7 +148,7 @@ observations have been published to storage: `storage nodes` /
 `storage edges` with feed and config kinds, `storage explain-canonical-edge`
 for evidence, and the domain summaries (`storage bulk-summary`,
 `storage api-summary`). Read-only MCP source/feed tools
-(`repomap_ingested_sources`, `repomap_source_summary`, `repomap_source_runs`,
-`repomap_source_feed_items`, `repomap_explain_source_feed_item`,
-`repomap_source_references`) expose the same already-ingested metadata; see
+(`cloe_ingested_sources`, `cloe_source_summary`, `cloe_source_runs`,
+`cloe_source_feed_items`, `cloe_explain_source_feed_item`,
+`cloe_source_references`) expose the same already-ingested metadata; see
 the `repomap-mcp-readback` skill.

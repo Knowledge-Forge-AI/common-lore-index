@@ -220,14 +220,14 @@ refresh_policy = "manual"
             responses = run_mcp_fn(
                 [
                     init_req,
-                    call(2, "repomap_projects", {}),
-                    call(3, "repomap_canonical_nodes", {"project": "portable-pub", "limit": 10, "offset": 0}),
-                    call(4, "repomap_canonical_nodes", {"project": "portable-pub", "limit": 1, "offset": 0}),
-                    call(5, "repomap_canonical_nodes", {"project": "portable-pub", "limit": 1, "offset": 1}),
-                    call(6, "repomap_canonical_nodes", {"project": "portable-pub", "limit": 1, "offset": 2}),
-                    call(7, "repomap_canonical_edges", {"project": "portable-pub"}),
-                    call(8, "repomap_canonical_neighborhood", {"project": "portable-pub", "node": "file:pkg/main.py"}),
-                    call(9, "repomap_explain_canonical_edge", {
+                    call(2, "cloe_projects", {}),
+                    call(3, "cloe_canonical_nodes", {"project": "portable-pub", "limit": 10, "offset": 0}),
+                    call(4, "cloe_canonical_nodes", {"project": "portable-pub", "limit": 1, "offset": 0}),
+                    call(5, "cloe_canonical_nodes", {"project": "portable-pub", "limit": 1, "offset": 1}),
+                    call(6, "cloe_canonical_nodes", {"project": "portable-pub", "limit": 1, "offset": 2}),
+                    call(7, "cloe_canonical_edges", {"project": "portable-pub"}),
+                    call(8, "cloe_canonical_neighborhood", {"project": "portable-pub", "node": "file:pkg/main.py"}),
+                    call(9, "cloe_explain_canonical_edge", {
                         "project": "portable-pub",
                         "source_key": "file:pkg/main.py",
                         "kind": "defines",
@@ -235,11 +235,11 @@ refresh_policy = "manual"
                         "evidence_limit": 1,
                         "evidence_offset": 0,
                     }),
-                    call(10, "repomap_canonical_nodes", {"project": "portable-priv", "limit": 10, "offset": 0}),
-                    call(11, "repomap_canonical_nodes", {"project": "portable-pub", "limit": 201}),
-                    call(12, "repomap_canonical_edges", {"project": "portable-pub", "offset": 100}),
-                    call(13, "repomap_canonical_nodes", {"project": "portable-priv", "include_source": True}),
-                    call(14, "repomap_status", {"project": "portable-pub"}),
+                    call(10, "cloe_canonical_nodes", {"project": "portable-priv", "limit": 10, "offset": 0}),
+                    call(11, "cloe_canonical_nodes", {"project": "portable-pub", "limit": 201}),
+                    call(12, "cloe_canonical_edges", {"project": "portable-pub", "offset": 100}),
+                    call(13, "cloe_canonical_nodes", {"project": "portable-priv", "include_source": True}),
+                    call(14, "cloe_status", {"project": "portable-pub"}),
 
                 ],
                 extra_env,
@@ -247,7 +247,7 @@ refresh_policy = "manual"
 
             resp_by_id: dict[int, McpResponse] = {r["id"]: r for r in responses}
 
-            # 1. Verify repomap_projects response with privacy markers
+            # 1. Verify cloe_projects response with privacy markers
             proj_resp = resp_by_id[2]
             test_case.assertNotIn("error", proj_resp)
             proj_data = response_structured_content(proj_resp)
@@ -264,7 +264,7 @@ refresh_policy = "manual"
             warnings = json_object_list_field(priv_graph, "warnings")
             test_case.assertEqual(json_string_field(warnings[0], "code"), "private-graph-visible")
 
-            # 2. Verify repomap_canonical_nodes returned from accepted publication
+            # 2. Verify cloe_canonical_nodes returned from accepted publication
             nodes_resp = resp_by_id[3]
             test_case.assertNotIn("error", nodes_resp)
             nodes_data = response_structured_content(nodes_resp)
@@ -298,7 +298,7 @@ refresh_policy = "manual"
             test_case.assertEqual(len(json_object_list_field(p3_data, "items")), 1)
             assert_mcp_page(test_case, p3_data, limit=1, offset=2, returned=1, truncated=False, next_offset=None)
 
-            # 4. Verify repomap_canonical_edges
+            # 4. Verify cloe_canonical_edges
             edges_resp = resp_by_id[7]
             test_case.assertNotIn("error", edges_resp)
             edges_data = response_structured_content(edges_resp)
@@ -316,7 +316,7 @@ refresh_policy = "manual"
             test_case.assertIn((file_key("pkg/main.py"), "defines", python_module_key("pkg.main")), edge_tuples)
             test_case.assertIn((file_key("pkg/main.py"), "defines", python_function_key("pkg.main", "serve")), edge_tuples)
 
-            # 5. Verify repomap_canonical_neighborhood
+            # 5. Verify cloe_canonical_neighborhood
             neighborhood_resp = resp_by_id[8]
             test_case.assertNotIn("error", neighborhood_resp)
             neighborhood_data = response_structured_content(neighborhood_resp)
@@ -324,7 +324,7 @@ refresh_policy = "manual"
             center = json_object_field(neigh_result, "center")
             test_case.assertEqual(json_string_field(center, "canonical_key"), file_key("pkg/main.py"))
 
-            # 6. Verify repomap_explain_canonical_edge with evidence readback
+            # 6. Verify cloe_explain_canonical_edge with evidence readback
             explain_resp = resp_by_id[9]
             test_case.assertNotIn("error", explain_resp)
             explain_data = response_structured_content(explain_resp)

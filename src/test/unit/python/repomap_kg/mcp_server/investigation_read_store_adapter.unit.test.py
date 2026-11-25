@@ -29,14 +29,14 @@ from repomap_test_support.mcp_server import McpServerTestSupport
 MISSING_DB = 'psql failed: FATAL: database "repomap_x" does not exist'
 UNRESOLVED = 'could not translate host name "postgres" to address'
 SEVEN_TOOL_CALLS: tuple[tuple[str, dict[str, Any]], ...] = (
-    ("repomap_graph_status", {"graph_id": "host-one"}),
-    ("repomap_refresh_status", {"graph_id": "host-multi"}),
-    ("repomap_refresh_status", {}),
-    ("repomap_search_nodes", {"graph_id": "host-one", "query": "a"}),
-    ("repomap_search_files", {"graph_id": "host-multi", "query": "a"}),
-    ("repomap_search_observations", {"graph_id": "host-one", "query": "a", "include_raw": True}),
-    ("repomap_project_summary", {"graph_id": "host-one"}),
-    ("repomap_neighborhood", {"graph_id": "host-multi", "node": "python.module:a"}),
+    ("cloe_graph_status", {"graph_id": "host-one"}),
+    ("cloe_refresh_status", {"graph_id": "host-multi"}),
+    ("cloe_refresh_status", {}),
+    ("cloe_search_nodes", {"graph_id": "host-one", "query": "a"}),
+    ("cloe_search_files", {"graph_id": "host-multi", "query": "a"}),
+    ("cloe_search_observations", {"graph_id": "host-one", "query": "a", "include_raw": True}),
+    ("cloe_project_summary", {"graph_id": "host-one"}),
+    ("cloe_neighborhood", {"graph_id": "host-multi", "node": "python.module:a"}),
 )
 
 
@@ -193,7 +193,7 @@ class InvestigationReadStoreAuthorityTests(McpServerTestSupport):
                   "common_lore_index.storage.readback_driver.run_psql")
         home = setup_owned_home(self)
         with self._env(CLOE_HOME=str(home)), patched_guards(guards):
-            payload = handle_tool_call("repomap_list_graphs", {})["structuredContent"]
+            payload = handle_tool_call("cloe_list_graphs", {})["structuredContent"]
         self.assertEqual([graph["graph_id"] for graph in payload["graphs"]], ["host-one", "host-multi"])
         self.assertFalse(any(graph["root_path_checked"] for graph in payload["graphs"]))
         self.assertFalse(Path("/public/host-one").exists())
@@ -248,8 +248,8 @@ class PsqlDriverRefusalTextContrastTests(McpServerTestSupport):
 
         psql = {"REPOMAP_STORAGE_READBACK_DRIVER": "psql"}
         password = {"REPOMAP_PG_PASSWORD": "synthetic-secret"}
-        for tool, args, label in (("repomap_search_files", {"query": "a"}, "files MCP search"),
-                                  ("repomap_project_summary", {}, "canonical storage summary")):
+        for tool, args, label in (("cloe_search_files", {"query": "a"}, "files MCP search"),
+                                  ("cloe_project_summary", {}, "canonical storage summary")):
             with self.subTest(tool=tool):
                 self.assertIn("missing or not initialized", self._refusal(tool, args, psql, missing))
                 self.assertEqual(self._refusal(tool, args, {**psql, **password}, missing),
@@ -266,7 +266,7 @@ class PsqlDriverRefusalTextContrastTests(McpServerTestSupport):
             def connect(**_kwargs):
                 raise OperationalError("database does not exist")
 
-        message = self._refusal("repomap_search_files", {"query": "a"},
+        message = self._refusal("cloe_search_files", {"query": "a"},
                                 {"REPOMAP_PG_PASSWORD": "synthetic-secret"}, psycopg=lambda: FakePsycopg)
         self.assertIn("missing or not initialized", message)
         self.assertNotIn("synthetic-secret", message)

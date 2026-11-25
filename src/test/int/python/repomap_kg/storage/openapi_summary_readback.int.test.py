@@ -265,7 +265,7 @@ def _cli_connection_args(postgres, *, root_path: str) -> tuple[str, ...]:
     )
 
 def _mcp_payloads(postgres, *, public_root: str, private_root: str):
-    from common_lore_index.server.mcp import repomap_openapi_summary
+    from common_lore_index.server.mcp import cloe_openapi_summary
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config_path = Path(tmpdir) / "psycopg74.local.toml"
@@ -282,7 +282,7 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
             _select_connector(selector, connector, postgres=postgres)
             os.environ["REPOMAP_PSQL_COMMAND"] = psql_command
             payloads[mode] = {
-                graph_id: repomap_openapi_summary(graph_id=graph_id)
+                graph_id: cloe_openapi_summary(graph_id=graph_id)
                 for graph_id in ("public-openapi", "private-openapi")
             }
         return payloads

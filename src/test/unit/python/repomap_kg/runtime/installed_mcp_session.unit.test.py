@@ -155,7 +155,7 @@ def test_requests_are_one_json_line_each_and_ids_increase() -> None:
     session = _session()
     first = session.request("initialize", {"protocolVersion": "2024-11-05"})
     session.notify("notifications/initialized")
-    second = session.call("repomap_navigation_search", {"graph_id": "tiny", "query": "q"})
+    second = session.call("cloe_navigation_search", {"graph_id": "tiny", "query": "q"})
     session.malformed()
     assert (first, second) == (1, 2) and session.request_ids == [1, 2] and session.malformed_sent == 1
     assert all(line.endswith(b"\n") and line.count(b"\n") == 1 for line in session.lines)

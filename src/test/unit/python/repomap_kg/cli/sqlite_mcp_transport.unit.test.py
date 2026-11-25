@@ -43,7 +43,7 @@ def test_run_mcp_session_streams_responses_ignores_notifications_and_unlinks_std
     responses = run_mcp_session(
         harness,
         tmp_path / "home",
-        [initialize(1), tool(2, "repomap_graph_status", {"graph_id": "g"})],
+        [initialize(1), tool(2, "cloe_graph_status", {"graph_id": "g"})],
     )
     assert set(responses.keys()) == {1, 2}
     assert responses[1]["result"] == {"ok": 1}
@@ -116,7 +116,7 @@ def test_run_mcp_session_protocol_and_exit_validation(
         run_mcp_session(
             harness,
             tmp_path / "home",
-            [initialize(1), tool(2, "repomap_graph_status", {"graph_id": "g"})],
+            [initialize(1), tool(2, "cloe_graph_status", {"graph_id": "g"})],
         )
     assert "/Users/private_user/secret_path" not in str(exc_info.value)
 

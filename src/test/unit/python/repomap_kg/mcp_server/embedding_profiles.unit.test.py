@@ -25,7 +25,7 @@ from repomap_test_support.semantic_candidate_fixtures import BINDING, PROFILE, S
 class EmbeddingProfilesMcpTests(McpServerTestSupport):
     def _call(self, arguments):
         response = handle_jsonrpc_message({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-            "params": {"name": "repomap_embedding_profiles", "arguments": arguments}})
+            "params": {"name": "cloe_embedding_profiles", "arguments": arguments}})
         assert response is not None
         return response["result"]
 
@@ -47,7 +47,7 @@ class EmbeddingProfilesMcpTests(McpServerTestSupport):
     def test_catalog_advertises_one_strict_bounded_read_operation(self):
         tools = tool_definitions()
         self.assertEqual(len(tools), 31)
-        tool, = [item for item in tools if item["name"] == "repomap_embedding_profiles"]
+        tool, = [item for item in tools if item["name"] == "cloe_embedding_profiles"]
         schema = tool["inputSchema"]
         self.assertEqual(schema["required"], ["graph_id"])
         self.assertFalse(schema["additionalProperties"])

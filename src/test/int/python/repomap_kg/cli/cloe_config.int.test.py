@@ -177,7 +177,7 @@ def test_explicit_mcp_home_wins_in_a_fresh_driver_free_process(tmp_path: Path) -
     (home / "00.cloe.toml").write_text(sqlite_home_toml(graph_toml("one", "/not-read/source")))
     harness = LocalHarness(tmp_path / "guarded", block_psycopg=True)
     responses = harness.mcp(
-        home, [initialize(1), tool(2, "repomap_list_graphs", {})],
+        home, [initialize(1), tool(2, "cloe_list_graphs", {})],
         extra_env={"CLOE_HOME": str(tmp_path / "wrong ambient")},
     )
     payload = structured(responses, 2)

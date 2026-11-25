@@ -259,7 +259,7 @@ def _cli_connection_args(postgres, *, root_path: str) -> tuple[str, ...]:
 
 
 def _mcp_payloads(postgres, *, public_root: str, private_root: str):
-    from common_lore_index.server.mcp import repomap_nix_summary
+    from common_lore_index.server.mcp import cloe_nix_summary
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config_path = Path(tmpdir) / "psycopg62.local.toml"
@@ -282,7 +282,7 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
             ):
                 _select_connector(selector, connector, postgres=postgres)
                 payloads[mode] = {
-                    graph_id: repomap_nix_summary(graph_id=graph_id)
+                    graph_id: cloe_nix_summary(graph_id=graph_id)
                     for graph_id in ("public-nix", "private-nix")
                 }
         return payloads

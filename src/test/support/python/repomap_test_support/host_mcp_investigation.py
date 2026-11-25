@@ -33,8 +33,8 @@ from common_lore_index.storage.readback_driver import execute_json_readback
 from repomap_test_support.host_mcp_publication import HostPublication, cli, jsonable
 from repomap_test_support.mcp_response_assertions import structural_difference
 
-SEARCH_TOOLS = {"nodes": "repomap_search_nodes", "files": "repomap_search_files",
-                "observations": "repomap_search_observations"}
+SEARCH_TOOLS = {"nodes": "cloe_search_nodes", "files": "cloe_search_files",
+                "observations": "cloe_search_observations"}
 VISIBLE_GRAPHS = ("host-one", "host-multi", "host-absent")
 
 
@@ -64,9 +64,9 @@ def build_plan(pub: HostPublication) -> InvestigationPlan:
         return sanitize_jsonable({key: value for key, value in status(gid).items() if key != "warnings"})
 
     for mid, gid in zip((301, 302, 303), VISIBLE_GRAPHS):
-        plan.add(mid, "repomap_graph_status", {"graph_id": gid}, lambda p: p["storage"], status(gid))
-    plan.add(304, "repomap_refresh_status", {"graph_id": "host-multi"}, _without_warnings, [listed("host-multi")])
-    plan.add(305, "repomap_refresh_status", {}, _without_warnings, [listed(gid) for gid in VISIBLE_GRAPHS])
+        plan.add(mid, "cloe_graph_status", {"graph_id": gid}, lambda p: p["storage"], status(gid))
+    plan.add(304, "cloe_refresh_status", {"graph_id": "host-multi"}, _without_warnings, [listed("host-multi")])
+    plan.add(305, "cloe_refresh_status", {}, _without_warnings, [listed(gid) for gid in VISIBLE_GRAPHS])
 
     edge = cli(pub.home, "host-one", "edges", "--limit", "200")["items"][0]
     multi_edges = cli(pub.home, "host-multi", "edges", "--limit", "200")["items"]
@@ -86,14 +86,14 @@ def build_plan(pub: HostPublication) -> InvestigationPlan:
         expected = _search(pub, contexts[gid], gid, target, **args)
         plan.add(mid, SEARCH_TOOLS[target], {"graph_id": gid, **args}, _search_projection, expected)
     for mid, gid in ((320, "host-one"), (321, "host-multi")):
-        plan.add(mid, "repomap_project_summary", {"graph_id": gid}, lambda p: p["summary"],
+        plan.add(mid, "cloe_project_summary", {"graph_id": gid}, lambda p: p["summary"],
                  _summary(pub, contexts[gid], gid))
     for mid, gid, node in ((322, "host-one", key), (323, "host-multi", multi_key)):
-        plan.add(mid, "repomap_neighborhood", {"graph_id": gid, "node": node}, lambda p: p["result"],
+        plan.add(mid, "cloe_neighborhood", {"graph_id": gid, "node": node}, lambda p: p["result"],
                  _neighborhood(pub, contexts[gid], gid, node))
-    plan.add(330, "repomap_canonical_edges", {"project": "host-one", "source_key": key, "limit": 200},
+    plan.add(330, "cloe_canonical_edges", {"project": "host-one", "source_key": key, "limit": 200},
              lambda p: p, cli(pub.home, "host-one", "edges", "--source-key", key, "--limit", "200"))
-    plan.add(331, "repomap_explain_canonical_edge", {"project": "host-one", **_explain_tool(edge), "evidence_limit": 1},
+    plan.add(331, "cloe_explain_canonical_edge", {"project": "host-one", **_explain_tool(edge), "evidence_limit": 1},
              lambda p: p, cli(pub.home, "host-one", "explain-canonical-edge",
                               *_explain_args(edge, "--evidence-limit", "1")))
     _advisory_b(plan, pub, multi_edges)
@@ -107,10 +107,10 @@ def _advisory_b(plan: InvestigationPlan, pub: HostPublication, edges: list[dict[
     assert rich is not None, "fixture has no canonical edge with two evidence rows"
     plan.paging = {"graph": gid, "edge": _edge_identity(rich)}
     for mid, offset in ((341, 0), (342, 1)):
-        plan.add(mid, "repomap_canonical_edges", {"project": gid, "limit": 1, "offset": offset}, lambda p: p,
+        plan.add(mid, "cloe_canonical_edges", {"project": gid, "limit": 1, "offset": offset}, lambda p: p,
                  cli(pub.home, gid, "edges", "--limit", "1", "--offset", str(offset)))
     for mid, offset in ((343, 0), (344, 1)):
-        plan.add(mid, "repomap_explain_canonical_edge",
+        plan.add(mid, "cloe_explain_canonical_edge",
                  {"project": gid, **_explain_tool(rich), "evidence_limit": 1, "evidence_offset": offset}, lambda p: p,
                  cli(pub.home, gid, "explain-canonical-edge",
                      *_explain_args(rich, "--evidence-limit", "1", "--evidence-offset", str(offset))))
@@ -120,7 +120,7 @@ def _advisory_b(plan: InvestigationPlan, pub: HostPublication, edges: list[dict[
         graph_key_version=GRAPH_KEY_VERSION, node_limit=2, node_offset=0, edge_limit=2, edge_offset=0,
         repository_identity=f"repo1:{gid}", psql_command=database.psql_command)
     nodes, links = public_read_page(record.nodes, limit=1, offset=0), public_read_page(record.edges, limit=1, offset=0)
-    plan.add(340, "repomap_canonical_neighborhood",
+    plan.add(340, "cloe_canonical_neighborhood",
              {"project": gid, "node": rich["source_key"], "node_limit": 1, "edge_limit": 1, "result_schema_version": 0},
              lambda p: p, canonical_neighborhood_to_jsonable(replace(record, nodes=nodes.items, edges=links.items)))
 
@@ -175,14 +175,14 @@ def verify_plan(plan: InvestigationPlan, structured: Callable[[int], Any]) -> di
 
 def seven_tool_requests(start: int, graph_id: str, node: str) -> dict[int, tuple[str, dict[str, Any]]]:
     calls: tuple[tuple[str, dict[str, Any]], ...] = (
-        ("repomap_graph_status", {"graph_id": graph_id}),
-        ("repomap_refresh_status", {"graph_id": graph_id}),
-        ("repomap_refresh_status", {}),
-        ("repomap_search_nodes", {"graph_id": graph_id, "query": "sh"}),
-        ("repomap_search_files", {"graph_id": graph_id, "query": "sh"}),
-        ("repomap_search_observations", {"graph_id": graph_id, "query": "sh"}),
-        ("repomap_project_summary", {"graph_id": graph_id}),
-        ("repomap_neighborhood", {"graph_id": graph_id, "node": node}),
+        ("cloe_graph_status", {"graph_id": graph_id}),
+        ("cloe_refresh_status", {"graph_id": graph_id}),
+        ("cloe_refresh_status", {}),
+        ("cloe_search_nodes", {"graph_id": graph_id, "query": "sh"}),
+        ("cloe_search_files", {"graph_id": graph_id, "query": "sh"}),
+        ("cloe_search_observations", {"graph_id": graph_id, "query": "sh"}),
+        ("cloe_project_summary", {"graph_id": graph_id}),
+        ("cloe_neighborhood", {"graph_id": graph_id, "node": node}),
     )
     return {start + index: call for index, call in enumerate(calls)}
 

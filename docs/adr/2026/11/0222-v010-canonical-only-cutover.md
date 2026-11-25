@@ -38,8 +38,12 @@ must change.
 
 Current MCP results and the CLI policy-dogfood report use
 "common-lore-index" for server provenance, matching MCP initialization.
-Historical captures retain their bytes. JSON keys, graph/source identities,
-tool dispatch names and read-only enforcement stay as defined in this slice.
+Historical captures retain their bytes. JSON keys, graph/source identities
+and read-only enforcement retain their existing contracts.
+
+All 31 wire names use the canonical prefix. The catalog, dispatch, embedded
+navigation references and current consumers move together. Archived wheels
+keep their original wire names for exact historical recovery proof.
 
 Separate the candidate source from deployment. Rehearse the supported
 installation and the one-time conversion in an owned disposable location.

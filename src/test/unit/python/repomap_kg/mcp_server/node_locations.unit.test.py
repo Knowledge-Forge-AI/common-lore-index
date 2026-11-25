@@ -36,7 +36,7 @@ def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def call(key: str = SYMBOL, *, graph: str = GRAPH, limit: object = 10) -> dict[str, Any]:
-    return mcp.handle_tool_call("repomap_node_locations", {
+    return mcp.handle_tool_call("cloe_node_locations", {
         "graph_id": graph, "canonical_key": key, "limit": limit,
     })["structuredContent"]
 
@@ -50,10 +50,10 @@ def test_symbol_evidence_bounds_and_legacy_search_are_source_blind(store: Path, 
     stored_digest = hashlib.sha256(store.read_bytes()).hexdigest()
     arguments: dict[str, Any] = {"graph_id": GRAPH, "query": "sample.service", "limit": 1}
     with patched_guards(PG_BINDING_TRIPWIRES):
-        before = mcp.repomap_search_nodes(**arguments)
+        before = mcp.cloe_search_nodes(**arguments)
         first, every = call(limit=1), call()
-        after = mcp.repomap_search_nodes(**arguments)
-        second = mcp.repomap_search_nodes(**arguments, offset=1)
+        after = mcp.cloe_search_nodes(**arguments)
+        second = mcp.cloe_search_nodes(**arguments, offset=1)
     assert before == after
     assert hashlib.sha256(store.read_bytes()).hexdigest() == stored_digest
     assert set(before) == {"server", "version", "read_only", "graph", "target", "query", "kind",
@@ -160,17 +160,17 @@ def test_limit_validation_precedes_io(store: Path, limit: object) -> None:
 
 def test_search_literal_order_and_pages_are_unchanged(store: Path) -> None:
     args: dict[str, Any] = {"graph_id": GRAPH, "query": "root"}
-    before = mcp.repomap_search_nodes(**args, limit=100)
+    before = mcp.cloe_search_nodes(**args, limit=100)
     call()
-    assert mcp.repomap_search_nodes(**args, limit=100) == before
+    assert mcp.cloe_search_nodes(**args, limit=100) == before
     keys = [row["canonical_key"] for row in before["results"]]
     assert len(keys) >= 3 and keys == sorted(keys)
-    first = mcp.repomap_search_nodes(**args, limit=2)
-    second = mcp.repomap_search_nodes(**args, limit=2, offset=2)
+    first = mcp.cloe_search_nodes(**args, limit=2)
+    second = mcp.cloe_search_nodes(**args, limit=2, offset=2)
     assert first["results"] + second["results"] == before["results"][:4]
     assert first["total"] == 2 and first["has_more"] is True
     assert second["total"] == min(4, len(keys))
-    assert mcp.repomap_search_nodes(graph_id=GRAPH, query="sample%service")["results"] == []
+    assert mcp.cloe_search_nodes(graph_id=GRAPH, query="sample%service")["results"] == []
 
 
 def test_node_search_lookahead_does_not_transfer_metadata(store: Path) -> None:

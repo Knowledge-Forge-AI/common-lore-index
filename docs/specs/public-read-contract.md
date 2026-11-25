@@ -184,14 +184,14 @@ result object. It does not restore unbounded embedded collections.
 
 ## MCP Contract
 
-`repomap_canonical_nodes` and `repomap_canonical_edges` use the same default,
+`cloe_canonical_nodes` and `cloe_canonical_edges` use the same default,
 maximum, lookahead, ordering, envelope, and diagnostic rules as the CLI.
 `result_schema_version=0` is the compatibility alias for the bounded legacy
 array. Version 1 is the announced default. Other versions are rejected before
 storage query execution.
 
-`repomap_canonical_neighborhood` accepts independent node and edge windows.
-`repomap_explain_canonical_edge` accepts an evidence window. Both use the
+`cloe_canonical_neighborhood` accepts independent node and edge windows.
+`cloe_explain_canonical_edge` accepts an evidence window. Both use the
 embedded version 1 envelope by default and accept `result_schema_version=0`
 for the bounded legacy result object. Other schema versions and invalid
 collection windows are rejected before storage query execution.

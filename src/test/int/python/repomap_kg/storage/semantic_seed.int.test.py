@@ -56,7 +56,7 @@ def _rpc_call(req_id: int, **arguments: Any) -> dict[str, Any]:
         "jsonrpc": "2.0",
         "id": req_id,
         "method": "tools/call",
-        "params": {"name": "repomap_similar_nodes", "arguments": arguments},
+        "params": {"name": "cloe_similar_nodes", "arguments": arguments},
     }
 
 
@@ -161,7 +161,7 @@ def test_seed_public_entry_boundary() -> None:
             resp_by_id = {r["id"]: r for r in responses}
 
             assert resp_by_id[1]["result"]["serverInfo"]["name"] == "common-lore-index"
-            assert any(t["name"] == "repomap_similar_nodes" for t in resp_by_id[2]["result"]["tools"])
+            assert any(t["name"] == "cloe_similar_nodes" for t in resp_by_id[2]["result"]["tools"])
 
             def _sc(req_id: int) -> dict[str, Any]:
                 return resp_by_id[req_id]["result"]["structuredContent"]

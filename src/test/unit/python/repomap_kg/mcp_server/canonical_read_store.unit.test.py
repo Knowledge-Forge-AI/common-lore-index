@@ -47,14 +47,14 @@ EDGE = CanonicalEdgeRecord(
 EXPLANATION = CanonicalEdgeExplanationRecord(edge=EDGE, evidence=())
 NEIGHBORHOOD = CanonicalNeighborhoodRecord(center=NODE, nodes=(NODE,), edges=(EDGE,))
 TOOL_CALLS = (
-    ("repomap_canonical_nodes", {"kind": "python.module", "limit": 1, "offset": 3}),
-    ("repomap_canonical_edges", {"kind": "imports", "source_key": "python.module:pkg.a", "limit": 2}),
-    ("repomap_explain_canonical_edge", {
+    ("cloe_canonical_nodes", {"kind": "python.module", "limit": 1, "offset": 3}),
+    ("cloe_canonical_edges", {"kind": "imports", "source_key": "python.module:pkg.a", "limit": 2}),
+    ("cloe_explain_canonical_edge", {
         "source_key": "python.module:pkg.a", "kind": "imports",
         "target_key": "python.module:pkg.b", "identity_metadata": {"alias": "b"},
         "evidence_limit": 4, "evidence_offset": 1,
     }),
-    ("repomap_canonical_neighborhood", {
+    ("cloe_canonical_neighborhood", {
         "node": "python.module:pkg.a", "direction": "out", "node_limit": 5,
         "node_offset": 1, "edge_limit": 6, "edge_offset": 2,
     }),
@@ -148,27 +148,27 @@ class CanonicalReadStoreDispatchTests(McpServerTestSupport):
         a, b = "python.module:a", "python.module:b"
         edge_args = {"source_key": a, "kind": "imports", "target_key": b}
         cases = (
-            ("repomap_canonical_nodes", {"limit": 201}, "limit must be between 1 and 200"),
-            ("repomap_canonical_nodes", {"offset": -1}, "offset must be a non-negative integer"),
-            ("repomap_canonical_nodes", {"result_schema_version": 2}, "result schema version must be 0 or 1"),
-            ("repomap_canonical_nodes", {"graph_key_version": 2}, "unsupported graph key version"),
-            ("repomap_canonical_nodes", {"sql": "SELECT 1"}, "unexpected argument(s): sql"),
-            ("repomap_canonical_edges", {"source_key": "x"},
+            ("cloe_canonical_nodes", {"limit": 201}, "limit must be between 1 and 200"),
+            ("cloe_canonical_nodes", {"offset": -1}, "offset must be a non-negative integer"),
+            ("cloe_canonical_nodes", {"result_schema_version": 2}, "result schema version must be 0 or 1"),
+            ("cloe_canonical_nodes", {"graph_key_version": 2}, "unsupported graph key version"),
+            ("cloe_canonical_nodes", {"sql": "SELECT 1"}, "unexpected argument(s): sql"),
+            ("cloe_canonical_edges", {"source_key": "x"},
              "invalid source canonical key: canonical key must include a namespace separator"),
-            ("repomap_explain_canonical_edge", {**edge_args, "identity_metadata": "x"},
+            ("cloe_explain_canonical_edge", {**edge_args, "identity_metadata": "x"},
              "identity_metadata must be a JSON object"),
-            ("repomap_explain_canonical_edge", {"kind": "imports", "target_key": b},
+            ("cloe_explain_canonical_edge", {"kind": "imports", "target_key": b},
              "missing required argument(s): source_key"),
-            ("repomap_explain_canonical_edge", {**edge_args, "evidence_limit": 201},
+            ("cloe_explain_canonical_edge", {**edge_args, "evidence_limit": 201},
              "limit must be between 1 and 200"),
-            ("repomap_canonical_neighborhood", {"node": a, "direction": "sideways"},
+            ("cloe_canonical_neighborhood", {"node": a, "direction": "sideways"},
              "direction must be one of both, in, out"),
-            ("repomap_canonical_neighborhood", {"node": a, "depth": 9},
+            ("cloe_canonical_neighborhood", {"node": a, "depth": 9},
              "storage neighborhood only supports depth 1"),
-            ("repomap_canonical_nodes", {"project": "missing"},
+            ("cloe_canonical_nodes", {"project": "missing"},
              "unknown legacy MCP project or graph-registry graph_id: missing"),
-            ("repomap_canonical_nodes", {"project": "disabled"}, "graph 'disabled' is not enabled"),
-            ("repomap_canonical_nodes", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
+            ("cloe_canonical_nodes", {"project": "disabled"}, "graph 'disabled' is not enabled"),
+            ("cloe_canonical_nodes", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
         )
         env = self.patch_mcp_and_ops_config(self.write_empty_mcp_config(), self.write_visible_ops_config())
         with env, patch("common_lore_index.server.mcp.canonical_read_store", _fail), patch(
@@ -288,7 +288,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
 
             with env, patch("common_lore_index.server.mcp.query_canonical_node_records", failing):
                 with _patched(guards), self.assertRaises(RepoMapMcpError) as raised:
-                    handle_tool_call("repomap_canonical_nodes", {"project": "repo-map"})
+                    handle_tool_call("cloe_canonical_nodes", {"project": "repo-map"})
             self.assertEqual(str(raised.exception), expected)
 
     def test_seam_import_boundary_and_pure_construction(self) -> None:

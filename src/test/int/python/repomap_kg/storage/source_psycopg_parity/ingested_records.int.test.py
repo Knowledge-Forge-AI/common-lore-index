@@ -55,7 +55,7 @@ class StorageIngestedSourceRecordsPsycopgParityIntegrationTests(unittest.TestCas
                 body=feed_body,
             )
 
-        from common_lore_index.server.mcp import repomap_ingested_sources
+        from common_lore_index.server.mcp import cloe_ingested_sources
 
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -119,7 +119,7 @@ class StorageIngestedSourceRecordsPsycopgParityIntegrationTests(unittest.TestCas
                         policy_status="blocked",
                         psql_command=postgres.psql_command,
                     )
-                    psql_mcp_payload = repomap_ingested_sources(
+                    psql_mcp_payload = cloe_ingested_sources(
                         **mcp_args,
                         source_type="feed.rss",
                         policy_status="allowed_with_limits",
@@ -189,7 +189,7 @@ class StorageIngestedSourceRecordsPsycopgParityIntegrationTests(unittest.TestCas
                         policy_status="blocked",
                         psql_command=psycopg_only_psql_command,
                     )
-                    psycopg_mcp_payload = repomap_ingested_sources(
+                    psycopg_mcp_payload = cloe_ingested_sources(
                         **mcp_args,
                         source_type="feed.rss",
                         policy_status="allowed_with_limits",

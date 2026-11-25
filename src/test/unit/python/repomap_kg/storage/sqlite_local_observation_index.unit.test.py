@@ -2,7 +2,7 @@
 
 The named workload is exact-path observation search. Its SQL comes from the
 product (``observation_search_sql``), so the planner assertion plans exactly
-what ``repomap_search_observations`` runs. On the v2 schema SQLite's
+what ``cloe_search_observations`` runs. On the v2 schema SQLite's
 ``EXPLAIN QUERY PLAN`` searches ``idx_raw_observations_path_run`` with
 ``path=?`` and needs no temporary B-tree for ``ORDER BY run_id DESC,
 ordinal``; on the same data at v1 the index is absent and the order needs a

@@ -60,8 +60,8 @@ from repomap_test_support.sqlite_local_harness import (
 FEEDS, EMPTY, HIDDEN = "sqlite-feed", "sqlite-feed-empty", "sqlite-feed-hidden"
 ABSENT_ITEM = "feed.item:feed.channel%3Aabsent:guid%3Anone"
 SOURCE_TOOLS = frozenset({
-    "repomap_ingested_sources", "repomap_source_summary", "repomap_source_runs",
-    "repomap_source_feed_items", "repomap_explain_source_feed_item", "repomap_source_references",
+    "cloe_ingested_sources", "cloe_source_summary", "cloe_source_runs",
+    "cloe_source_feed_items", "cloe_explain_source_feed_item", "cloe_source_references",
 })
 
 
@@ -97,29 +97,29 @@ def _requests(item_key: str, rss1: str) -> list[dict[str, Any]]:
     return [
         initialize(1),
         {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
-        tool(10, "repomap_ingested_sources", p),
-        tool(11, "repomap_ingested_sources", {**p, "source_type": "feed.atom"}),
-        tool(12, "repomap_ingested_sources", {**p, "policy_status": "allowed_with_limits", "limit": 1}),
-        tool(13, "repomap_source_summary", rss),
-        tool(14, "repomap_source_summary", {**p, "source_id": "no-such-source"}),
-        tool(15, "repomap_source_runs", rss),
-        tool(16, "repomap_source_runs", {**rss, "limit": 1}),
-        tool(17, "repomap_source_feed_items", rss),
-        tool(18, "repomap_source_feed_items", {**rss, "source_run_id": rss1}),
-        tool(19, "repomap_source_feed_items", {**rss, "source_run_id": "no-such-run"}),
-        tool(20, "repomap_source_references", rss),
-        tool(21, "repomap_source_references", {**rss, "target_kind": "feed.author"}),
-        tool(22, "repomap_source_references", {**rss, "source_run_id": rss1, "target_kind": "file"}),
-        tool(23, "repomap_explain_source_feed_item", {**p, "item_key": item_key}),
-        tool(24, "repomap_explain_source_feed_item", {**p, "item_key": item_key, "source_id": ATOM}),
-        tool(25, "repomap_explain_source_feed_item", {**p, "item_key": ABSENT_ITEM}),
-        tool(26, "repomap_source_feed_items", {"project": FEEDS, "source_id": SECRET}),
-        tool(30, "repomap_source_summary", {**p, "source_id": "has space"}),
-        tool(31, "repomap_explain_source_feed_item", {**p, "item_key": "file:feed.xml"}),
-        tool(32, "repomap_source_runs", {"project": HIDDEN, "source_id": RSS}),
-        tool(33, "repomap_ingested_sources", {"project": EMPTY}),
-        tool(34, "repomap_source_runs", {**rss, "limit": 0}),
-        tool(35, "repomap_source_references", {**rss, "target_kind": "https://example.invalid/"}),
+        tool(10, "cloe_ingested_sources", p),
+        tool(11, "cloe_ingested_sources", {**p, "source_type": "feed.atom"}),
+        tool(12, "cloe_ingested_sources", {**p, "policy_status": "allowed_with_limits", "limit": 1}),
+        tool(13, "cloe_source_summary", rss),
+        tool(14, "cloe_source_summary", {**p, "source_id": "no-such-source"}),
+        tool(15, "cloe_source_runs", rss),
+        tool(16, "cloe_source_runs", {**rss, "limit": 1}),
+        tool(17, "cloe_source_feed_items", rss),
+        tool(18, "cloe_source_feed_items", {**rss, "source_run_id": rss1}),
+        tool(19, "cloe_source_feed_items", {**rss, "source_run_id": "no-such-run"}),
+        tool(20, "cloe_source_references", rss),
+        tool(21, "cloe_source_references", {**rss, "target_kind": "feed.author"}),
+        tool(22, "cloe_source_references", {**rss, "source_run_id": rss1, "target_kind": "file"}),
+        tool(23, "cloe_explain_source_feed_item", {**p, "item_key": item_key}),
+        tool(24, "cloe_explain_source_feed_item", {**p, "item_key": item_key, "source_id": ATOM}),
+        tool(25, "cloe_explain_source_feed_item", {**p, "item_key": ABSENT_ITEM}),
+        tool(26, "cloe_source_feed_items", {"project": FEEDS, "source_id": SECRET}),
+        tool(30, "cloe_source_summary", {**p, "source_id": "has space"}),
+        tool(31, "cloe_explain_source_feed_item", {**p, "item_key": "file:feed.xml"}),
+        tool(32, "cloe_source_runs", {"project": HIDDEN, "source_id": RSS}),
+        tool(33, "cloe_ingested_sources", {"project": EMPTY}),
+        tool(34, "cloe_source_runs", {**rss, "limit": 0}),
+        tool(35, "cloe_source_references", {**rss, "target_kind": "https://example.invalid/"}),
     ]
 
 

@@ -88,8 +88,8 @@ def _mcp_state(harness: LocalHarness, home: Path) -> tuple[dict[str, Any], list[
         home,
         [
             initialize(),
-            tool(2, "repomap_graph_status", {"graph_id": GRAPH}),
-            tool(3, "repomap_canonical_nodes", {"project": GRAPH, "limit": 50}),
+            tool(2, "cloe_graph_status", {"graph_id": GRAPH}),
+            tool(3, "cloe_canonical_nodes", {"project": GRAPH, "limit": 50}),
         ],
     )
     nodes = sorted(str(item["canonical_key"]) for item in structured(responses, 3)["items"])

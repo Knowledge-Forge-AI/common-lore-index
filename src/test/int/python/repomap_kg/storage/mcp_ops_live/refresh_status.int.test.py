@@ -38,7 +38,7 @@ class StorageMcpRefreshStatusIntegrationTests(unittest.TestCase):
         expected_latest_raw = sum(
             1 for line in raw_jsonl.read_text(encoding="utf-8").splitlines() if line
         )
-        from common_lore_index.server.mcp import repomap_graph_status, repomap_refresh_status
+        from common_lore_index.server.mcp import cloe_graph_status, cloe_refresh_status
 
         with temporary_postgres() as postgres:
             apply_migrations(
@@ -153,8 +153,8 @@ WHERE id = (SELECT max(id) FROM runs);
                     },
                     clear=False,
                 ):
-                    graph_status = repomap_graph_status(graph_id="repo-map")
-                    refresh_status = repomap_refresh_status(graph_id="repo-map")
+                    graph_status = cloe_graph_status(graph_id="repo-map")
+                    refresh_status = cloe_refresh_status(graph_id="repo-map")
 
         first_payload = graph_summary_to_jsonable(config, first_summary)["graph"]
         second_payload = graph_summary_to_jsonable(config, second_summary)["graph"]

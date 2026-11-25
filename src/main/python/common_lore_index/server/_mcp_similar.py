@@ -70,7 +70,7 @@ def similar_nodes_payload(
     }
 
 
-def repomap_similar_nodes(
+def cloe_similar_nodes(
     *,
     graph_id: str,
     canonical_key: str,
@@ -111,8 +111,8 @@ def repomap_similar_nodes(
 __all__ = (
     "SimilarNodesQuery",
     "embedding_profiles_payload",
-    "repomap_embedding_profiles",
-    "repomap_similar_nodes",
+    "cloe_embedding_profiles",
+    "cloe_similar_nodes",
     "similar_nodes_payload",
 )
 
@@ -217,7 +217,7 @@ def _profiles_need_redaction(payload: dict[str, Any], markers: tuple[str, ...]) 
     return any(contains_username(payload.get(field), (field,)) for field in ("profiles", "provenance"))
 
 
-def repomap_embedding_profiles(
+def cloe_embedding_profiles(
     *, graph_id: str, selected: bool = False, limit: int = 20,
     config_path: str | os.PathLike[str] | None = None,
 ) -> dict[str, Any]:
@@ -233,7 +233,7 @@ def repomap_embedding_profiles(
 
 def embedding_profiles_tool_definition() -> dict[str, Any]:
     return {
-        "name": "repomap_embedding_profiles",
+        "name": "cloe_embedding_profiles",
         "description": "Read current public-safe precomputed profile tuples; explicitly choose one for similar_nodes.",
         "inputSchema": {
             "type": "object",

@@ -6,11 +6,11 @@ from unittest.mock import MagicMock, patch
 
 from common_lore_index.server.mcp import (
     RepoMapMcpError,
-    repomap_neighborhood,
-    repomap_project_summary,
-    repomap_search_files,
-    repomap_search_nodes,
-    repomap_search_observations,
+    cloe_neighborhood,
+    cloe_project_summary,
+    cloe_search_files,
+    cloe_search_nodes,
+    cloe_search_observations,
 )
 from common_lore_index.server.mcp_search_sql import build_mcp_search_sql
 from common_lore_index.storage import StorageSchemaError
@@ -124,13 +124,13 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
         ):
             mock_query.return_value = {"results": [], "total": 0, "has_more": False}
 
-            repomap_search_nodes(graph_id="repo-map", query="add")
+            cloe_search_nodes(graph_id="repo-map", query="add")
             self.assertEqual(mock_query.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
-            repomap_search_files(graph_id="repo-map", query="add")
+            cloe_search_files(graph_id="repo-map", query="add")
             self.assertEqual(mock_query.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
-            repomap_search_observations(graph_id="repo-map", query="add")
+            cloe_search_observations(graph_id="repo-map", query="add")
             self.assertEqual(mock_query.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
     def test_summary_and_neighborhood_forward_repository_identity(self) -> None:
@@ -162,10 +162,10 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
                 return_value=fake_neighborhood,
             ) as mock_neighborhood,
         ):
-            repomap_project_summary(graph_id="repo-map")
+            cloe_project_summary(graph_id="repo-map")
             self.assertEqual(mock_summary.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
-            repomap_neighborhood(graph_id="repo-map", node="node:1")
+            cloe_neighborhood(graph_id="repo-map", node="node:1")
             self.assertEqual(mock_neighborhood.call_args.kwargs["repository_identity"], "repo1:repo-map")
 
     def test_schema_error_maps_to_public_mcp_error(self) -> None:
@@ -178,7 +178,7 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
             ),
         ):
             with self.assertRaises(RepoMapMcpError):
-                repomap_search_nodes(graph_id="repo-map", query="add")
+                cloe_search_nodes(graph_id="repo-map", query="add")
 
     def test_repository_filter_precedence_in_database(self) -> None:
         import sqlite3
@@ -219,11 +219,11 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
 
     def test_language_summaries_forward_repository_identity(self) -> None:
         from common_lore_index.server.mcp import (
-            repomap_js_framework_summary,
-            repomap_nix_summary,
-            repomap_openapi_summary,
-            repomap_python_summary,
-            repomap_terraform_summary,
+            cloe_js_framework_summary,
+            cloe_nix_summary,
+            cloe_openapi_summary,
+            cloe_python_summary,
+            cloe_terraform_summary,
         )
         from common_lore_index.storage import (
             JSFrameworkSummaryRecord,
@@ -237,11 +237,11 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
         # (host readback authority), never through the retained ops-psql wrapper.
         config_path = self.write_ops_config(self.visible_ops_config())
         cases = (
-            (repomap_python_summary, "query_python_summary", PythonSummaryRecord, "/app/fixture"),
-            (repomap_terraform_summary, "query_terraform_summary", TerraformSummaryRecord, "/app/fixture"),
-            (repomap_openapi_summary, "query_openapi_summary", OpenAPISummaryRecord, "/app/fixture"),
-            (repomap_js_framework_summary, "query_js_framework_summary", JSFrameworkSummaryRecord, "/app/fixture"),
-            (repomap_nix_summary, "query_nix_summary", NixSummaryRecord, "[root-path]"),
+            (cloe_python_summary, "query_python_summary", PythonSummaryRecord, "/app/fixture"),
+            (cloe_terraform_summary, "query_terraform_summary", TerraformSummaryRecord, "/app/fixture"),
+            (cloe_openapi_summary, "query_openapi_summary", OpenAPISummaryRecord, "/app/fixture"),
+            (cloe_js_framework_summary, "query_js_framework_summary", JSFrameworkSummaryRecord, "/app/fixture"),
+            (cloe_nix_summary, "query_nix_summary", NixSummaryRecord, "[root-path]"),
         )
         for tool, owner, record_type, root in cases:
             record = MagicMock(spec=record_type, to_dict=lambda root=root: {"root_path": root})
@@ -258,20 +258,20 @@ class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):
 
     def test_language_summaries_reject_invalid_identity_with_mcp_error(self) -> None:
         from common_lore_index.server.mcp import (
-            repomap_js_framework_summary,
-            repomap_nix_summary,
-            repomap_openapi_summary,
-            repomap_python_summary,
-            repomap_terraform_summary,
+            cloe_js_framework_summary,
+            cloe_nix_summary,
+            cloe_openapi_summary,
+            cloe_python_summary,
+            cloe_terraform_summary,
         )
 
         config_path = self.write_ops_config(self.visible_ops_config())
         summary_callers = (
-            repomap_python_summary,
-            repomap_terraform_summary,
-            repomap_openapi_summary,
-            repomap_js_framework_summary,
-            repomap_nix_summary,
+            cloe_python_summary,
+            cloe_terraform_summary,
+            cloe_openapi_summary,
+            cloe_js_framework_summary,
+            cloe_nix_summary,
         )
         with (
             patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}, clear=True),

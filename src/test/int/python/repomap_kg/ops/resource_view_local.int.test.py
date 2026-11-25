@@ -286,7 +286,7 @@ def test_concurrent_guarded_observed_local_refreshes_serialize_on_graph_lock(
     assert refused[0]["report"]["instrumentation"] == "incomplete"
     state = harness.mcp(
         home,
-        [initialize(), tool(2, "repomap_graph_status", {"graph_id": MIXED_V1_GRAPH_ID})],
+        [initialize(), tool(2, "cloe_graph_status", {"graph_id": MIXED_V1_GRAPH_ID})],
     )
     assert structured(state, 2)["storage"]["latest_run_id"] == published[0]["run_id"]
     assert attempt(database, harness.environment(), "probe") == "probed"
@@ -339,7 +339,7 @@ def test_local_replay_report_and_refused_report_preserve_readback(tmp_path: Path
     (tmp_path / "companion-missing").rename(working / "companion")
     status = harness.mcp(
         home,
-        [initialize(), tool(2, "repomap_graph_status", {"graph_id": MIXED_V1_GRAPH_ID})],
+        [initialize(), tool(2, "cloe_graph_status", {"graph_id": MIXED_V1_GRAPH_ID})],
     )
     assert structured(status, 2)["storage"]["latest_run_id"] == replay.run_id
     recovered = _json(harness.run(
@@ -376,7 +376,7 @@ def test_local_sigint_owned_child_reports_unrecorded_after_commit(tmp_path: Path
     _assert_private_report(report, home, working)
     accepted = harness.mcp(
         home,
-        [initialize(), tool(2, "repomap_graph_status", {"graph_id": MIXED_V1_GRAPH_ID})],
+        [initialize(), tool(2, "cloe_graph_status", {"graph_id": MIXED_V1_GRAPH_ID})],
     )
     accepted_storage = structured(accepted, 2)["storage"]
     assert accepted_storage["latest_run_status"] == "complete"

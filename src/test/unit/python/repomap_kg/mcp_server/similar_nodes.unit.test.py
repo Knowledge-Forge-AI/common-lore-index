@@ -1,4 +1,4 @@
-"""Unit tests for the repomap_similar_nodes MCP tool and dispatch surface."""
+"""Unit tests for the cloe_similar_nodes MCP tool and dispatch surface."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from common_lore_index.server._mcp_dispatch import TOOL_FUNCTIONS
 from common_lore_index.server._mcp_similar import SimilarNodesQuery, similar_nodes_payload
 from common_lore_index.server.mcp import (
     handle_jsonrpc_message, handle_tool_call,
-    repomap_similar_nodes as facade_similar_nodes,
+    cloe_similar_nodes as facade_similar_nodes,
     similar_nodes_payload as facade_similar_nodes_payload,
 )
 from common_lore_index.server.sqlite_read_binding import SqliteInvestigationStores
@@ -24,7 +24,7 @@ from repomap_test_support.semantic_candidate_fixtures import BINDING, PROFILE, S
 
 
 class SimilarNodesUnitTest(McpServerTestSupport):
-    """Test suite for repomap_similar_nodes tool reachability and validation."""
+    """Test suite for cloe_similar_nodes tool reachability and validation."""
 
     def _call_rpc(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         message: dict[str, Any] = {"jsonrpc": "2.0", "id": 1, "method": method}
@@ -36,7 +36,7 @@ class SimilarNodesUnitTest(McpServerTestSupport):
         return response
 
     def _call_tool(self, arguments: dict[str, Any]) -> dict[str, Any]:
-        return self._call_rpc("tools/call", {"name": "repomap_similar_nodes", "arguments": arguments})
+        return self._call_rpc("tools/call", {"name": "cloe_similar_nodes", "arguments": arguments})
 
     def _valid_args(self, **overrides: Any) -> dict[str, Any]:
         args: dict[str, Any] = {
@@ -52,7 +52,7 @@ class SimilarNodesUnitTest(McpServerTestSupport):
     def test_tools_list_advertises_repomap_similar_nodes_contract(self) -> None:
         response = self._call_rpc("tools/list")
         tools = response["result"]["tools"]
-        tool = next((t for t in tools if t["name"] == "repomap_similar_nodes"), None)
+        tool = next((t for t in tools if t["name"] == "cloe_similar_nodes"), None)
         self.assertIsNotNone(tool)
         assert tool is not None
         schema = tool["inputSchema"]
@@ -300,7 +300,7 @@ class SimilarNodesUnitTest(McpServerTestSupport):
     def test_facade_and_direct_tool_call_reachability(self) -> None:
         env = self.patch_mcp_and_ops_config(self.write_empty_mcp_config(), self.write_visible_ops_config())
         with env:
-            direct = handle_tool_call("repomap_similar_nodes", self._valid_args())
+            direct = handle_tool_call("cloe_similar_nodes", self._valid_args())
             self.assertEqual(direct["structuredContent"]["status"], "capability_unavailable")
 
             facade = facade_similar_nodes(**self._valid_args())
@@ -312,7 +312,7 @@ class SimilarNodesUnitTest(McpServerTestSupport):
             facade_payload = facade_similar_nodes_payload(**self._valid_args())
             self.assertEqual(facade_payload["status"], "capability_unavailable")
 
-        self.assertEqual(TOOL_FUNCTIONS["repomap_similar_nodes"], "repomap_similar_nodes")
+        self.assertEqual(TOOL_FUNCTIONS["cloe_similar_nodes"], "cloe_similar_nodes")
 
     def _fixture_results(self, profile: Any = None) -> tuple[EmbeddingProfilesResult, CandidateResult]:
         prof = replace(PROFILE, generator="synthetic-fixture-author") if profile is None else profile
@@ -387,13 +387,13 @@ class SimilarNodesUnitTest(McpServerTestSupport):
                      "seed", "candidates", "runner", "src", "app", "test", "3" * 64, "4" * 64, "a" * 64)
         for user in usernames:
             with self.subTest(user=user), self.patch_mcp_and_ops_config(self.write_empty_mcp_config(), self.write_visible_ops_config()), patch(prof_owner, return_value=prof_res), patch(sim_owner, return_value=sim_res), patch("pathlib.Path.home", return_value=Path("/private/fixture-home") / user):
-                disc = self._call_rpc("tools/call", {"name": "repomap_embedding_profiles", "arguments": {"graph_id": "repo-map", "selected": True}})["result"]["structuredContent"]
+                disc = self._call_rpc("tools/call", {"name": "cloe_embedding_profiles", "arguments": {"graph_id": "repo-map", "selected": True}})["result"]["structuredContent"]
                 chosen = disc["profiles"][0]
                 sim = self._call_tool(self._valid_args(canonical_key="file:tools/runner_arguments.py", rebuild_id=chosen["rebuild_id"], profile_identity=chosen["profile_identity"], dimensions=chosen["dimensions"], selected=True))["result"]["structuredContent"]
                 ev_keys = [ev["evidence_key"] for cand in sim["candidates"] for ev in cand["evidence"]]
                 self.assertEqual((disc["status"], sim["status"], sim["candidates"], sim["provenance"], sim["provenance"]["profile_identity"], ev_keys, list(sim_res.candidates), sim_res.provenance), ("ok", "ok", expected_cands, expected_prov, chosen["profile_identity"], expected_ev, expected_cands, expected_prov))
         priv_prof, priv_sim = self._fixture_results(replace(PROFILE, model="fixture-privateuser-model"))
         with self.patch_mcp_and_ops_config(self.write_empty_mcp_config(), self.write_visible_ops_config()), patch(prof_owner, return_value=priv_prof), patch(sim_owner, return_value=priv_sim), patch("pathlib.Path.home", return_value=Path("/private/fixture-home/privateuser")):
-            disc_ref = self._call_rpc("tools/call", {"name": "repomap_embedding_profiles", "arguments": {"graph_id": "repo-map", "selected": True}})["result"]["structuredContent"]
+            disc_ref = self._call_rpc("tools/call", {"name": "cloe_embedding_profiles", "arguments": {"graph_id": "repo-map", "selected": True}})["result"]["structuredContent"]
             sim_ref = self._call_tool(self._valid_args(selected=True))["result"]["structuredContent"]
         self.assertEqual((disc_ref["reason"], sim_ref["reason"]), ("privacy_refused", "privacy_refused"))

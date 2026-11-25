@@ -76,7 +76,7 @@ def test_unknown_node_searches_then_locates_exact_python_range(environment: tupl
     result = navigate(query="sample.service", **options)
     assert result["branch"] == "search_locator" and result["outcome"] == "verified"
     assert result["graph_calls"] == 2
-    assert [row["tool"] for row in actions(result, "tool_call")] == ["repomap_search_nodes", "repomap_node_locations"]
+    assert [row["tool"] for row in actions(result, "tool_call")] == ["cloe_search_nodes", "cloe_node_locations"]
     assert [(row["start_line"], row["end_line"]) for row in actions(result, "source_read")] == [(5, 15)]
 
 
@@ -156,7 +156,7 @@ def test_unknown_ambiguous_search_stops_before_locator(environment: tuple) -> No
     _, _, options = environment
     result = navigate(query="root", **options)
     assert result["outcome"] == "native_search" and result["graph_calls"] == 1
-    assert actions(result, "tool_call")[0]["tool"] == "repomap_search_nodes"
+    assert actions(result, "tool_call")[0]["tool"] == "cloe_search_nodes"
     assert actions(result, "source_read") == []
 
 
@@ -276,6 +276,6 @@ def test_indexed_subject_no_match_or_error_falls_back_once_without_spelling_rule
 
     result = navigate(graph_id="example", repository_identity="repo1:example", bindings={},
                       source_check=lambda _: False, query="__all__", tool_call=graph)
-    assert calls == [("repomap_search_nodes", {"graph_id": "example", "query": "__all__", "limit": 2})]
+    assert calls == [("cloe_search_nodes", {"graph_id": "example", "query": "__all__", "limit": 2})]
     assert result["graph_calls"] == 1 and result["outcome"] == "native_search"
     assert len(actions(result, "native_search")) == 1

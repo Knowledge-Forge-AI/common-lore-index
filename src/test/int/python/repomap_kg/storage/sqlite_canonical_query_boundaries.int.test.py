@@ -63,9 +63,9 @@ def test_canonical_nodes_by_key_and_prefix_and_window_boundaries(tmp_path: Path)
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     requests = [
         initialize(),
-        tool(2, "repomap_canonical_nodes", {"project": GRAPH, "limit": 0}),
-        tool(3, "repomap_canonical_nodes", {"project": GRAPH, "limit": 10, "offset": -1}),
-        tool(4, "repomap_canonical_nodes", {"project": GRAPH, "limit": 2}),
+        tool(2, "cloe_canonical_nodes", {"project": GRAPH, "limit": 0}),
+        tool(3, "cloe_canonical_nodes", {"project": GRAPH, "limit": 10, "offset": -1}),
+        tool(4, "cloe_canonical_nodes", {"project": GRAPH, "limit": 2}),
     ]
     responses = harness.mcp(home, requests)
     assert "limit must be between 1 and 200" in refusal(responses, 2)
@@ -113,14 +113,14 @@ def test_canonical_edge_explanation_and_missing_edge_boundary(tmp_path: Path) ->
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     requests = [
         initialize(),
-        tool(2, "repomap_explain_canonical_edge", {
+        tool(2, "cloe_explain_canonical_edge", {
             "project": GRAPH,
             "source_key": "doc.page:absent_source",
             "kind": "references",
             "target_key": "doc.page:absent_target",
             "identity_metadata": {},
         }),
-        tool(3, "repomap_canonical_edges", {"project": GRAPH, "limit": 1}),
+        tool(3, "cloe_canonical_edges", {"project": GRAPH, "limit": 1}),
     ]
     responses = harness.mcp(home, requests)
     exp_result = structured(responses, 2)["result"]
@@ -180,9 +180,9 @@ def test_canonical_neighborhood_refused_directions_depth_and_windows(tmp_path: P
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     requests = [
         initialize(),
-        tool(2, "repomap_canonical_neighborhood", {"project": GRAPH, "node": BETA_DOC, "depth": 2}),
-        tool(3, "repomap_canonical_neighborhood", {"project": GRAPH, "node": BETA_DOC, "direction": "diagonal"}),
-        tool(4, "repomap_canonical_neighborhood", {"project": GRAPH, "node": BETA_DOC, "direction": "both"}),
+        tool(2, "cloe_canonical_neighborhood", {"project": GRAPH, "node": BETA_DOC, "depth": 2}),
+        tool(3, "cloe_canonical_neighborhood", {"project": GRAPH, "node": BETA_DOC, "direction": "diagonal"}),
+        tool(4, "cloe_canonical_neighborhood", {"project": GRAPH, "node": BETA_DOC, "direction": "both"}),
     ]
     responses = harness.mcp(home, requests)
     assert "storage neighborhood only supports depth 1" in refusal(responses, 2)

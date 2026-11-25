@@ -3,7 +3,7 @@
 A real PostgreSQL publication (a tiny mixed-language graph and one RSS
 acquisition) is read by a real ``repomap-kg mcp serve`` subprocess that has no
 Docker access, no inherited database password, and no source roots. The five
-language summaries, six ingested-source reads and legacy ``repomap_status``
+language summaries, six ingested-source reads and legacy ``cloe_status``
 must equal the maintained query owners and serializers run as the fixture
 admin on the same published records.
 
@@ -43,7 +43,7 @@ from repomap_test_support.host_mcp_stdio import (
 )
 from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
-CATALOG_SHA256 = "181c74446606a9abb2fd97567eb38157263dffa1f00c1616a43dcd8674d83cb8"  # 31 read tools
+CATALOG_SHA256 = "2c2a37e9b510e564431e5c26d00d19adee436543fce309355a6f38c058f42a78"  # 31 read tools
 CANARY_KEY = "REPOMAP_ENV_CANARY_PASSWORD_PROBE"
 BAD_ITEM = "python.module:not-a-feed-item"
 
@@ -83,31 +83,31 @@ def _run_proof(tmp_path: Path, postgres, feed_db) -> None:
     )
     assert node_id, "host-mixed publication must provide at least one canonical node"
     refusals: dict[int, tuple[str, dict[str, object], str]] = {
-        900: ("repomap_source_summary", {**feed, "project": "no-such-graph"},
+        900: ("cloe_source_summary", {**feed, "project": "no-such-graph"},
               "unknown legacy MCP project or graph-registry graph_id: no-such-graph"),
-        901: ("repomap_python_summary", {"graph_id": "no-such-graph"}, "unknown graph_id: no-such-graph"),
-        902: ("repomap_nix_summary", {"graph_id": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
-        903: ("repomap_ingested_sources", {"project": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
-        904: ("repomap_status", {"project": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
-        905: ("repomap_source_runs", {**feed, "source_id": "   "}, "source_id is required"),
-        906: ("repomap_source_feed_items", {**feed, "limit": 0}, "limit must be between 1 and 500"),
-        907: ("repomap_explain_source_feed_item", {"project": "host-feed", "item_key": BAD_ITEM},
+        901: ("cloe_python_summary", {"graph_id": "no-such-graph"}, "unknown graph_id: no-such-graph"),
+        902: ("cloe_nix_summary", {"graph_id": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
+        903: ("cloe_ingested_sources", {"project": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
+        904: ("cloe_status", {"project": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
+        905: ("cloe_source_runs", {**feed, "source_id": "   "}, "source_id is required"),
+        906: ("cloe_source_feed_items", {**feed, "limit": 0}, "limit must be between 1 and 500"),
+        907: ("cloe_explain_source_feed_item", {"project": "host-feed", "item_key": BAD_ITEM},
               "item_key must use the feed.item namespace"),
-        908: ("repomap_source_references", {**feed, "target_kind": "https://example.invalid"},
+        908: ("cloe_source_references", {**feed, "target_kind": "https://example.invalid"},
               "target_kind must not be a URL"),
         # Absent database: bounded generic Psycopg label on read_configured_graph (disclosed change).
-        910: ("repomap_python_summary", {"graph_id": "host-absent"}, "psycopg readback failed for python summary"),
-        911: ("repomap_ingested_sources", {"project": "host-absent"},
+        910: ("cloe_python_summary", {"graph_id": "host-absent"}, "psycopg readback failed for python summary"),
+        911: ("cloe_ingested_sources", {"project": "host-absent"},
               "psycopg readback failed for ingested source records"),
-        912: ("repomap_status", {"project": "host-absent"}, "psycopg readback failed for canonical storage summary"),
-        920: ("repomap_neighborhood",
+        912: ("cloe_status", {"project": "host-absent"}, "psycopg readback failed for canonical storage summary"),
+        920: ("cloe_neighborhood",
               {"graph_id": "host-mixed", "node": node_id, "node_limit": 10, "edge_limit": 10},
               "bounded neighborhood is supported only by SQLite Local"),
     }
     requests = [initialize_request(1), tools_list_request(2),
                 *(tool_request(mid, name, args) for mid, (name, args) in plan.requests.items()),
                 *(tool_request(mid, name, args) for mid, (name, args, _text) in refusals.items()),
-                tool_request(921, "repomap_neighborhood", {"graph_id": "host-mixed", "node": node_id})]
+                tool_request(921, "cloe_neighborhood", {"graph_id": "host-mixed", "node": node_id})]
     session = harness.run(requests)
     assert session.returncode == 0, session.stderr
     assert forbidden_env_keys(session.observed_env_keys) == (), session.observed_env_keys
@@ -144,7 +144,7 @@ def _run_proof(tmp_path: Path, postgres, feed_db) -> None:
     assert_least_privilege(feed_db, publication.secrets.read_status)
     postgres.psql_scalar(f'ALTER ROLE "{READ_STATUS_ROLE}" NOLOGIN;')
     try:
-        denied = harness.run([initialize_request(1), tool_request(2, "repomap_list_graphs", {}),
+        denied = harness.run([initialize_request(1), tool_request(2, "cloe_list_graphs", {}),
                               *_requests(twelve_tool_requests(10, summary_graph="host-mixed",
                                                               feed_project="host-feed", item_key=item_key))])
     finally:
@@ -159,7 +159,7 @@ def _run_proof(tmp_path: Path, postgres, feed_db) -> None:
     assert restarted.returncode == 0
     for mid, source in ((2, 420), (3, 400), (4, 411)):
         assert restarted.structured(mid) == session.structured(source), mid
-    canary = harness.run([initialize_request(1), tool_request(2, "repomap_list_graphs", {})],
+    canary = harness.run([initialize_request(1), tool_request(2, "cloe_list_graphs", {})],
                          extra_env={CANARY_KEY: "synthetic"})
     assert canary.returncode == 0 and CANARY_KEY in canary.observed_env_keys
     assert forbidden_env_keys(canary.observed_env_keys) == (CANARY_KEY,)

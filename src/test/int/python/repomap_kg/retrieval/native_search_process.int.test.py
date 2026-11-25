@@ -269,12 +269,12 @@ def test_retrieval_mcp_navigation_session_and_post_deletion_projection_separatio
     requests = [
         initialize(1),
         {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}},
-        tool(2, "repomap_navigation_search", args),
-        tool(3, "repomap_navigation_search", {**args, "offset": 1}),
+        tool(2, "cloe_navigation_search", args),
+        tool(3, "cloe_navigation_search", {**args, "offset": 1}),
         {"jsonrpc": "2.0", "id": 4, "method": "tools/list"},
         tool(
             5,
-            "repomap_navigation_search",
+            "cloe_navigation_search",
             {
                 **args,
                 "source_binding_id": binding_id_for_alias("core"),

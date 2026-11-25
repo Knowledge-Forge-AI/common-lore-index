@@ -1,6 +1,6 @@
 """Implementation support for canonical RepoMap MCP tools.
 
-The four canonical tools and legacy ``repomap_status`` read through the named
+The four canonical tools and legacy ``cloe_status`` read through the named
 canonical read-store seam.
 """
 

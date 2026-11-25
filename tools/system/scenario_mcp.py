@@ -53,9 +53,9 @@ def run_mcp_public_readback(
                 },
             },
             {"jsonrpc": "2.0", "method": "notifications/initialized"},
-            {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "repomap_list_graphs", "arguments": {}}},
-            {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "repomap_graph_status", "arguments": {"graph_id": "fixture"}}},
-            {"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "repomap_search_nodes", "arguments": {"graph_id": "fixture", "query": "add"}}},
+            {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "cloe_list_graphs", "arguments": {}}},
+            {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "cloe_graph_status", "arguments": {"graph_id": "fixture"}}},
+            {"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "cloe_search_nodes", "arguments": {"graph_id": "fixture", "query": "add"}}},
         ]
         stdin_text = "\n".join(json.dumps(req) for req in rpc_requests) + "\n"
 
@@ -111,10 +111,10 @@ def run_mcp_public_readback(
         if init_res.get("serverInfo", {}).get("name") != DISTRIBUTION_NAME:
             raise SystemTestError(f"unexpected MCP serverInfo: {init_res}")
 
-        # Check response 3 (repomap_list_graphs)
+        # Check response 3 (cloe_list_graphs)
         list_graphs_payload = responses_by_id[3].get("result", {})
         if list_graphs_payload.get("isError"):
-            raise SystemTestError(f"repomap_list_graphs returned tool error: {list_graphs_payload}")
+            raise SystemTestError(f"cloe_list_graphs returned tool error: {list_graphs_payload}")
         list_graphs_struct = list_graphs_payload.get("structuredContent", {})
         graphs = list_graphs_struct.get("graphs", [])
         graph_ids = [
@@ -123,46 +123,46 @@ def run_mcp_public_readback(
             if isinstance(g, dict) and isinstance(g.get("graph_id"), str)
         ]
         if "fixture" not in graph_ids:
-            raise SystemTestError(f"repomap_list_graphs did not contain 'fixture' graph: {graph_ids}")
+            raise SystemTestError(f"cloe_list_graphs did not contain 'fixture' graph: {graph_ids}")
 
-        # Check response 4 (repomap_graph_status)
+        # Check response 4 (cloe_graph_status)
         status_payload = responses_by_id[4].get("result", {})
         if status_payload.get("isError"):
-            raise SystemTestError(f"repomap_graph_status returned tool error: {status_payload}")
+            raise SystemTestError(f"cloe_graph_status returned tool error: {status_payload}")
         status_struct = status_payload.get("structuredContent", {})
         graph_obj = status_struct.get("graph", {}) if isinstance(status_struct.get("graph"), dict) else status_struct
         storage_obj = status_struct.get("storage", {}) if isinstance(status_struct.get("storage"), dict) else status_struct
 
         graph_id = graph_obj.get("graph_id") or status_struct.get("graph_id")
         if graph_id != "fixture":
-            raise SystemTestError(f"repomap_graph_status returned invalid graph_id: {status_struct}")
+            raise SystemTestError(f"cloe_graph_status returned invalid graph_id: {status_struct}")
         repo_name = graph_obj.get("repository_name") or status_struct.get("repository_name")
         if repo_name != "fixture":
             raise SystemTestError(
-                f"repomap_graph_status returned the wrong fixture repository: {status_struct}"
+                f"cloe_graph_status returned the wrong fixture repository: {status_struct}"
             )
         canonical_nodes = storage_obj.get("canonical_nodes") or status_struct.get("canonical_nodes")
         canonical_edges = storage_obj.get("canonical_edges") or status_struct.get("canonical_edges")
         if not isinstance(canonical_nodes, int) or canonical_nodes <= 0:
-            raise SystemTestError(f"repomap_graph_status returned invalid canonical_nodes (expected > 0): {canonical_nodes}")
+            raise SystemTestError(f"cloe_graph_status returned invalid canonical_nodes (expected > 0): {canonical_nodes}")
         if not isinstance(canonical_edges, int) or canonical_edges <= 0:
-            raise SystemTestError(f"repomap_graph_status returned invalid canonical_edges (expected > 0): {canonical_edges}")
+            raise SystemTestError(f"cloe_graph_status returned invalid canonical_edges (expected > 0): {canonical_edges}")
 
-        # Check response 5 (repomap_search_nodes)
+        # Check response 5 (cloe_search_nodes)
         search_payload = responses_by_id[5].get("result", {})
         if search_payload.get("isError"):
-            raise SystemTestError(f"repomap_search_nodes returned tool error: {search_payload}")
+            raise SystemTestError(f"cloe_search_nodes returned tool error: {search_payload}")
         search_struct = search_payload.get("structuredContent", {})
         matches = search_struct.get("results") or search_struct.get("matches", [])
         if not isinstance(matches, list) or not matches:
-            raise SystemTestError(f"repomap_search_nodes returned empty matches for query 'add': {search_struct}")
+            raise SystemTestError(f"cloe_search_nodes returned empty matches for query 'add': {search_struct}")
         found_keys = [
             m.get("canonical_key") for m in matches if isinstance(m, dict) and "canonical_key" in m
         ]
         expected_exact_key = "python.function:calc:add"
         if expected_exact_key not in found_keys:
             raise SystemTestError(
-                f"repomap_search_nodes did not find expected exact semantic key {expected_exact_key!r}: found {found_keys}"
+                f"cloe_search_nodes did not find expected exact semantic key {expected_exact_key!r}: found {found_keys}"
             )
 
         # Build stable canonical semantic projection

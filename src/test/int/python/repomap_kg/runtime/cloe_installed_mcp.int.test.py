@@ -120,10 +120,10 @@ def test_installed_mcp_canonical_and_legacy_servers(tmp_path_factory, tmp_path: 
                                        "clientInfo": {"name": "installed-experience", "version": "1"}})
         session.notify("notifications/initialized")
         unknown = session.call("repomap_installed_experience_absent", {})
-        invalid = session.call("repomap_navigation_search",
+        invalid = session.call("cloe_navigation_search",
                                {"graph_id": GRAPH_ID, "query": expect.code_query, "limit": 0})
         session.malformed()
-        valid = session.call("repomap_navigation_search",
+        valid = session.call("cloe_navigation_search",
                              {"graph_id": GRAPH_ID, "query": expect.code_query, "scope": "code"})
         transcript = session.close()
         if transcript.outcome != "complete":

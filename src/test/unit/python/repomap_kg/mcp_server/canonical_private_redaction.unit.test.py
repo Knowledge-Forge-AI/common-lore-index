@@ -13,10 +13,10 @@ from common_lore_index.storage import (
 class McpServerCanonicalPrivateRedactionUnitTests(McpServerTestSupport):
     def test_private_canonical_payloads_redact_configured_path_markers(self):
         from common_lore_index.server.mcp import (
-            repomap_canonical_edges,
-            repomap_canonical_neighborhood,
-            repomap_canonical_nodes,
-            repomap_explain_canonical_edge,
+            cloe_canonical_edges,
+            cloe_canonical_neighborhood,
+            cloe_canonical_nodes,
+            cloe_explain_canonical_edge,
         )
 
         config_path = self.write_visible_ops_config()
@@ -75,7 +75,7 @@ class McpServerCanonicalPrivateRedactionUnitTests(McpServerTestSupport):
                 "common_lore_index.server.mcp.canonical_node_records_to_jsonable",
                 (object(),),
                 [node],
-                lambda: repomap_canonical_nodes(
+                lambda: cloe_canonical_nodes(
                     project="private-visible",
                     kind="python.module",
                     canonical_key=node_key,
@@ -87,7 +87,7 @@ class McpServerCanonicalPrivateRedactionUnitTests(McpServerTestSupport):
                 "common_lore_index.server.mcp.canonical_edge_records_to_jsonable",
                 (object(),),
                 [edge],
-                lambda: repomap_canonical_edges(
+                lambda: cloe_canonical_edges(
                     project="private-visible",
                     kind=edge_kind,
                     source_key=source_key,
@@ -100,7 +100,7 @@ class McpServerCanonicalPrivateRedactionUnitTests(McpServerTestSupport):
                 "common_lore_index.server.mcp.canonical_edge_explanation_to_jsonable",
                 CanonicalEdgeExplanationRecord(edge=None, evidence=cast(Any, (object(),))),
                 explanation,
-                lambda: repomap_explain_canonical_edge(
+                lambda: cloe_explain_canonical_edge(
                     project="private-visible",
                     source_key=source_key,
                     kind=edge_kind,
@@ -117,7 +117,7 @@ class McpServerCanonicalPrivateRedactionUnitTests(McpServerTestSupport):
                     edges=cast(Any, (object(),)),
                 ),
                 neighborhood,
-                lambda: repomap_canonical_neighborhood(
+                lambda: cloe_canonical_neighborhood(
                     project="private-visible",
                     node=node_key,
                 ),
@@ -151,7 +151,7 @@ class McpServerCanonicalPrivateRedactionUnitTests(McpServerTestSupport):
         self.assertEqual(edge["target_key"], node_key)
 
     def test_public_graph_canonical_payload_preserves_non_sensitive_metadata(self):
-        from common_lore_index.server.mcp import repomap_canonical_edges
+        from common_lore_index.server.mcp import cloe_canonical_edges
 
         config_path = self.write_visible_ops_config()
         public_value = "/tmp/fixture/bin/tool"
@@ -172,7 +172,7 @@ class McpServerCanonicalPrivateRedactionUnitTests(McpServerTestSupport):
                     return_value=[edge],
                 ),
             ):
-                payload = repomap_canonical_edges(
+                payload = cloe_canonical_edges(
                     project="repo-map",
                     kind="imports",
                     source_key="python.module:source",

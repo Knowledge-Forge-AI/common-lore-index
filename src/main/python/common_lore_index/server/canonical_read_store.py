@@ -1,7 +1,7 @@
 """Named canonical read-store seam for the migrated MCP canonical tools.
 
 The four canonical MCP tools (nodes, edges, edge explanation, neighborhood)
-and the legacy ``repomap_status`` storage summary read through
+and the legacy ``cloe_status`` storage summary read through
 :class:`CanonicalReadStore`. Callers supply validated filters and
 a fetch window; they never supply SQL, callbacks, or commands. The
 PostgreSQL production adapter is :class:`PostgresCanonicalReadStore`, which
@@ -229,7 +229,7 @@ class PostgresCanonicalReadStore:
         )
 
     def canonical_storage_summary(self) -> CanonicalStorageSummaryRecord:
-        """Legacy ``repomap_status`` counts; the connection is the scope."""
+        """Legacy ``cloe_status`` counts; the connection is the scope."""
         return self._read(self.queries.storage_summary)
 
     def _read(self, storage_query: Callable[..., _ReadT], **filters: Any) -> _ReadT:

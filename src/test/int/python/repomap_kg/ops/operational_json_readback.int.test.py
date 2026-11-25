@@ -143,7 +143,7 @@ def test_psycopg94_operational_refresh_status_connector_cli_and_mcp_parity() -> 
             assert psql_cli == default_cli == expected
             assert psql_raw == default_raw == json.dumps(expected, sort_keys=True) + "\n"
 
-            from common_lore_index.server.mcp import repomap_graph_status, repomap_refresh_status
+            from common_lore_index.server.mcp import cloe_graph_status, cloe_refresh_status
 
             _select(None, None, postgres=postgres)
             with patch.dict(
@@ -152,8 +152,8 @@ def test_psycopg94_operational_refresh_status_connector_cli_and_mcp_parity() -> 
                 clear=False,
             ):
                 os.environ.pop("REPOMAP_PSQL_COMMAND", None)
-                graph_status = repomap_graph_status(graph_id="public-graph")
-                refresh_status = repomap_refresh_status(graph_id="public-graph")
+                graph_status = cloe_graph_status(graph_id="public-graph")
+                refresh_status = cloe_refresh_status(graph_id="public-graph")
             serialized = json.dumps(
                 {
                     "direct": payloads,

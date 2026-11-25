@@ -42,11 +42,11 @@ def test_sqlite_embedding_profiles_and_similar_nodes_disabled_refusals(tmp_path:
     }
     requests = [
         initialize(),
-        tool(2, "repomap_embedding_profiles", {"graph_id": GRAPH, "selected": False}),
-        tool(3, "repomap_embedding_profiles", {"graph_id": GRAPH, "selected": True}),
-        tool(4, "repomap_similar_nodes", {**similar_args, "selected": False}),
-        tool(5, "repomap_similar_nodes", {**similar_args, "selected": True}),
-        tool(6, "repomap_navigation_search", {"graph_id": GRAPH, "query": "beacon"}),
+        tool(2, "cloe_embedding_profiles", {"graph_id": GRAPH, "selected": False}),
+        tool(3, "cloe_embedding_profiles", {"graph_id": GRAPH, "selected": True}),
+        tool(4, "cloe_similar_nodes", {**similar_args, "selected": False}),
+        tool(5, "cloe_similar_nodes", {**similar_args, "selected": True}),
+        tool(6, "cloe_navigation_search", {"graph_id": GRAPH, "query": "beacon"}),
     ]
     responses = harness.mcp(home, requests)
     assert responses == harness.mcp(home, requests)
@@ -108,9 +108,9 @@ def test_navigation_search_scope_prefix_exclusion_and_conflicting_identities(tmp
     }
     requests = [
         initialize(),
-        tool(2, "repomap_navigation_search", prefix_args),
-        tool(3, "repomap_navigation_search", unscoped_args),
-        tool(4, "repomap_search_nodes", {"graph_id": GRAPH, "query": "beacon", "limit": 1}),
+        tool(2, "cloe_navigation_search", prefix_args),
+        tool(3, "cloe_navigation_search", unscoped_args),
+        tool(4, "cloe_search_nodes", {"graph_id": GRAPH, "query": "beacon", "limit": 1}),
     ]
     responses = harness.mcp(home, requests)
     assert responses == harness.mcp(home, requests)
@@ -154,9 +154,9 @@ def test_bounded_neighborhood_validation_and_refusals(tmp_path: Path) -> None:
     ]
     requests = [
         initialize(),
-        *(tool(mid, "repomap_neighborhood", {**base_args, **opts})
+        *(tool(mid, "cloe_neighborhood", {**base_args, **opts})
           for mid, (opts, _) in enumerate(invalid_options, 2)),
-        tool(20, "repomap_neighborhood", {**base_args, "node_limit": 5, "edge_limit": 5}),
+        tool(20, "cloe_neighborhood", {**base_args, "node_limit": 5, "edge_limit": 5}),
     ]
     responses = harness.mcp(home, requests)
     for mid, (_, expected_msg) in enumerate(invalid_options, 2):
@@ -194,9 +194,9 @@ def test_navigation_search_validation_contract_boundaries(tmp_path: Path) -> Non
     ]
     requests = [
         initialize(),
-        *(tool(mid, "repomap_navigation_search", {**base_args, **opts})
+        *(tool(mid, "cloe_navigation_search", {**base_args, **opts})
           for mid, (opts, _) in enumerate(invalid_queries, 2)),
-        tool(50, "repomap_navigation_search", base_args),
+        tool(50, "cloe_navigation_search", base_args),
     ]
     responses = harness.mcp(home, requests)
     for mid, (_, expected_msg) in enumerate(invalid_queries, 2):

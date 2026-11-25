@@ -55,7 +55,7 @@ class StorageSourceReferenceRecordsPsycopgParityIntegrationTests(unittest.TestCa
                 body=feed_body,
             )
 
-        from common_lore_index.server.mcp import repomap_source_references
+        from common_lore_index.server.mcp import cloe_source_references
 
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -124,7 +124,7 @@ class StorageSourceReferenceRecordsPsycopgParityIntegrationTests(unittest.TestCa
                         source_id="missing-source",
                         psql_command=postgres.psql_command,
                     )
-                    psql_mcp_payload = repomap_source_references(
+                    psql_mcp_payload = cloe_source_references(
                         **mcp_args,
                         source_id="example-rss-feed",
                         source_run_id=source_run_id,
@@ -201,7 +201,7 @@ class StorageSourceReferenceRecordsPsycopgParityIntegrationTests(unittest.TestCa
                         source_id="missing-source",
                         psql_command=psycopg_only_psql_command,
                     )
-                    psycopg_mcp_payload = repomap_source_references(
+                    psycopg_mcp_payload = cloe_source_references(
                         **mcp_args,
                         source_id="example-rss-feed",
                         source_run_id=source_run_id,

@@ -65,44 +65,44 @@ def build_domain_plan(pub: HostDomainPublication) -> DomainPlan:
 
     for offset, (family, (owner, serialize)) in enumerate(SUMMARIES.items()):
         summary = sanitize_summary_jsonable(serialize(admin("host-mixed", owner)), graphs["host-mixed"])
-        plan.add(400 + offset, f"repomap_{family}_summary", {"graph_id": "host-mixed"}, summary,
+        plan.add(400 + offset, f"cloe_{family}_summary", {"graph_id": "host-mixed"}, summary,
                  lambda payload: payload["summary"])
 
     feed = {"project": "host-feed"}
     source = {**feed, "source_id": FEED_SOURCE_ID}
-    plan.add(410, "repomap_ingested_sources", {**feed, "source_type": "feed.rss"},
+    plan.add(410, "cloe_ingested_sources", {**feed, "source_type": "feed.rss"},
              ingested_source_records_to_jsonable(admin("host-feed", query_ingested_source_records,
                                                        source_type="feed.rss", policy_status=None, limit=50)))
-    plan.add(411, "repomap_source_summary", source,
+    plan.add(411, "cloe_source_summary", source,
              source_summary_to_jsonable(admin("host-feed", query_source_summary, source_id=FEED_SOURCE_ID)))
     runs = admin("host-feed", query_source_run_records, source_id=FEED_SOURCE_ID, limit=25)
-    plan.add(412, "repomap_source_runs", source, source_run_records_to_jsonable(runs))
+    plan.add(412, "cloe_source_runs", source, source_run_records_to_jsonable(runs))
     run_id = runs[0].source_run_id
     items = admin("host-feed", query_source_feed_item_records, source_id=FEED_SOURCE_ID, source_run_id=run_id,
                   limit=50)
-    plan.add(413, "repomap_source_feed_items", {**source, "source_run_id": run_id},
+    plan.add(413, "cloe_source_feed_items", {**source, "source_run_id": run_id},
              source_feed_item_records_to_jsonable(items))
-    plan.add(414, "repomap_source_feed_items", {**source, "limit": 1},
+    plan.add(414, "cloe_source_feed_items", {**source, "limit": 1},
              source_feed_item_records_to_jsonable(admin("host-feed", query_source_feed_item_records,
                                                         source_id=FEED_SOURCE_ID, source_run_id=None, limit=1)))
     references = admin("host-feed", query_source_reference_records, source_id=FEED_SOURCE_ID, source_run_id=None,
                        target_kind="external.url", limit=50)
-    plan.add(416, "repomap_source_references", {**source, "target_kind": "external.url"},
+    plan.add(416, "cloe_source_references", {**source, "target_kind": "external.url"},
              source_reference_records_to_jsonable(references))
     # Chain: a listed feed item that has an external reference -> explanation.
     referenced = {reference.source_item_key for reference in references}
     item_key = next(item.item_key for item in items if item.item_key in referenced)
-    plan.add(415, "repomap_explain_source_feed_item", {**feed, "item_key": item_key, "source_id": FEED_SOURCE_ID},
+    plan.add(415, "cloe_explain_source_feed_item", {**feed, "item_key": item_key, "source_id": FEED_SOURCE_ID},
              admin("host-feed", query_source_feed_item_explanation, item_key=item_key, source_id=FEED_SOURCE_ID))
     # Empty-but-valid reads: a mismatched source id and an unknown run id.
-    plan.add(417, "repomap_explain_source_feed_item", {**feed, "item_key": item_key, "source_id": "other-feed"},
+    plan.add(417, "cloe_explain_source_feed_item", {**feed, "item_key": item_key, "source_id": "other-feed"},
              admin("host-feed", query_source_feed_item_explanation, item_key=item_key, source_id="other-feed"))
-    plan.add(418, "repomap_source_feed_items", {**source, "source_run_id": "no-such-run"},
+    plan.add(418, "cloe_source_feed_items", {**source, "source_run_id": "no-such-run"},
              source_feed_item_records_to_jsonable(admin("host-feed", query_source_feed_item_records,
                                                         source_id=FEED_SOURCE_ID, source_run_id="no-such-run",
                                                         limit=50)))
     for mid, graph_id in ((420, "host-mixed"), (421, "host-feed")):
-        plan.add(mid, "repomap_status", {"project": graph_id}, _status(admin(graph_id, query_canonical_storage_summary),
+        plan.add(mid, "cloe_status", {"project": graph_id}, _status(admin(graph_id, query_canonical_storage_summary),
                                                                       graph_id))
     plan.chain = {"run_id": run_id, "item_key": item_key, "items": len(items)}
     return plan
@@ -144,14 +144,14 @@ def twelve_tool_requests(start: int, *, summary_graph: str, feed_project: str,
                          item_key: str) -> dict[int, tuple[str, dict[str, Any]]]:
     source = {"project": feed_project, "source_id": FEED_SOURCE_ID}
     calls: tuple[tuple[str, dict[str, Any]], ...] = (
-        *((f"repomap_{family}_summary", {"graph_id": summary_graph}) for family in SUMMARIES),
-        ("repomap_ingested_sources", {"project": feed_project}),
-        ("repomap_source_summary", source),
-        ("repomap_source_runs", source),
-        ("repomap_source_feed_items", source),
-        ("repomap_explain_source_feed_item", {"project": feed_project, "item_key": item_key}),
-        ("repomap_source_references", source),
-        ("repomap_status", {"project": feed_project}),
+        *((f"cloe_{family}_summary", {"graph_id": summary_graph}) for family in SUMMARIES),
+        ("cloe_ingested_sources", {"project": feed_project}),
+        ("cloe_source_summary", source),
+        ("cloe_source_runs", source),
+        ("cloe_source_feed_items", source),
+        ("cloe_explain_source_feed_item", {"project": feed_project, "item_key": item_key}),
+        ("cloe_source_references", source),
+        ("cloe_status", {"project": feed_project}),
     )
     return {start + index: call for index, call in enumerate(calls)}
 

@@ -161,7 +161,7 @@ def test_runner_exercises_fixture_and_stdio_mechanics_in_the_linux_harness(
     assert json.loads(members["session-restart.json"])["pid"] != main["pid"]
     oracle = json.loads(members["oracle.json"])["messages"]
     assert {oracle[mid]["tool"] for mid in ("20", "30", "40")} == {
-        "repomap_canonical_nodes", "repomap_search_nodes", "repomap_ingested_sources"}
+        "cloe_canonical_nodes", "cloe_search_nodes", "cloe_ingested_sources"}
 
     assert remaining == "0" and read_backends == "0" and not work.exists()
     assert json.loads(members["cleanup.json"])["steps"][-1] == {"step": "remove-work-root", "ok": True,

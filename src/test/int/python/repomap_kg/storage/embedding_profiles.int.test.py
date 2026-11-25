@@ -45,7 +45,7 @@ def discover(postgres, *, repository=REPOSITORY, limit=20):
             query=EmbeddingProfilesQuery(selected=True, limit=limit), psql_command=postgres.psql_command)
 
 
-def rpc(req_id, name="repomap_embedding_profiles", **arguments):
+def rpc(req_id, name="cloe_embedding_profiles", **arguments):
     return {"jsonrpc": "2.0", "id": req_id, "method": "tools/call",
             "params": {"name": name, "arguments": arguments}}
 
@@ -123,7 +123,7 @@ def test_profile_discovery_publication_and_stdio_boundary():
             ], reader_role=READER)
             by_id = {item["id"]: item for item in responses}
             assert len(by_id[1]["result"]["tools"]) == 31
-            assert any(t["name"] == "repomap_embedding_profiles" for t in by_id[1]["result"]["tools"])
+            assert any(t["name"] == "cloe_embedding_profiles" for t in by_id[1]["result"]["tools"])
             assert content(by_id[2])["reason"] == "disabled"
             discovered = content(by_id[3])
             assert discovered["status"] == "ok" and discovered["has_more"]
@@ -132,7 +132,7 @@ def test_profile_discovery_publication_and_stdio_boundary():
             assert by_id[4]["result"]["isError"] and by_id[5]["result"]["isError"]
             selected = {field: chosen[field] for field in ("rebuild_id", "profile_identity", "dimensions")}
             compared = content(run_mcp_stdio_requests(config, postgres.psql_command, [
-                rpc(6, "repomap_similar_nodes", graph_id=GRAPH, canonical_key=SEED_KEY,
+                rpc(6, "cloe_similar_nodes", graph_id=GRAPH, canonical_key=SEED_KEY,
                     source_binding_id=context.binding_a_id, selected=True, **selected),
             ], reader_role=READER)[0])
             assert compared["status"] == "ok" and len(compared["candidates"]) == 4
@@ -211,13 +211,13 @@ def test_profile_discovery_publication_and_stdio_boundary():
             with patch.dict(os.environ, {"HOME": f"/nonexistent-home/{private_token}"}):
                 private_responses = run_mcp_stdio_requests(config, postgres.psql_command, [
                     rpc(8, graph_id=GRAPH, selected=True, limit=2),
-                    rpc(9, "repomap_similar_nodes", graph_id=GRAPH, canonical_key=SEED_KEY,
+                    rpc(9, "cloe_similar_nodes", graph_id=GRAPH, canonical_key=SEED_KEY,
                         source_binding_id=successor.binding_a_id, rebuild_id="c-private",
                         profile_identity=token_profile.identity, dimensions=token_profile.dimensions, selected=True),
-                    rpc(10, "repomap_similar_nodes", graph_id=GRAPH, canonical_key=SEED_KEY,
+                    rpc(10, "cloe_similar_nodes", graph_id=GRAPH, canonical_key=SEED_KEY,
                         source_binding_id=successor.binding_a_id, rebuild_id="d-path",
                         profile_identity=path_profile.identity, dimensions=path_profile.dimensions, selected=True),
-                    rpc(11, "repomap_similar_nodes", graph_id=GRAPH, canonical_key=SEED_KEY,
+                    rpc(11, "cloe_similar_nodes", graph_id=GRAPH, canonical_key=SEED_KEY,
                         source_binding_id=successor.binding_a_id, rebuild_id="b-successor",
                         profile_identity=PROFILE.identity, dimensions=PROFILE.dimensions, selected=True),
                 ], reader_role=READER)

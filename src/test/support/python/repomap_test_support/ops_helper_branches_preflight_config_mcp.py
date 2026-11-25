@@ -276,7 +276,7 @@ class OpsPreflightConfigMcpHelperBranchContract(unittest.TestCase):
         self.assertEqual(dict(storage.manifest_counter([])), {})
 
         check_mcp_validators(self)
-        self.assertEqual(mcp_server.tool_input_schema("repomap_status")["type"], "object")
+        self.assertEqual(mcp_server.tool_input_schema("cloe_status")["type"], "object")
         with self.assertRaises(mcp_server.RepoMapMcpError):
             mcp_server.tool_input_schema("repomap_unknown")
 

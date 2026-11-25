@@ -34,7 +34,7 @@ def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def call(key: str = DOC, **options: Any) -> dict[str, Any]:
-    return mcp.handle_tool_call("repomap_node_locations", {
+    return mcp.handle_tool_call("cloe_node_locations", {
         "graph_id": GRAPH, "canonical_key": key, **options,
     })["structuredContent"]
 
@@ -222,13 +222,13 @@ def test_invalid_role_is_bounded_error_before_io(store: Path, role: Any) -> None
 
 
 def test_filtered_views_preserve_search_visibility_identity_and_redaction(store: Path) -> None:
-    before = mcp.repomap_search_nodes(graph_id=GRAPH, query="root", limit=2)
+    before = mcp.cloe_search_nodes(graph_id=GRAPH, query="root", limit=2)
     for role in ("all", "direct", "reference", "unknown"):
         call(evidence_role=role)
         assert call(evidence_role=role, graph_id="sibling")["reason"] == "node_not_found"
         with pytest.raises(RepoMapMcpError, match="not MCP-visible"):
             call(evidence_role=role, graph_id="hidden")
-    assert mcp.repomap_search_nodes(graph_id=GRAPH, query="root", limit=2) == before
+    assert mcp.cloe_search_nodes(graph_id=GRAPH, query="root", limit=2) == before
     edit(store, "UPDATE canonical_evidence SET path = '/Users/example/private.md'")
     result = call(SYMBOL, evidence_role="direct", limit=1)
     assert result["status"] == "incomplete" and result["locations"][0]["path"] is None

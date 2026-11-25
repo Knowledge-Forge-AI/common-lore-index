@@ -204,7 +204,7 @@ def test_psycopg80_python_summary_connector_cli_and_mcp_parity() -> None:
 
 
 def _mcp_payloads(postgres, *, public_root: str, private_root: str):
-    from common_lore_index.server.mcp import repomap_python_summary
+    from common_lore_index.server.mcp import cloe_python_summary
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config_path = Path(tmpdir) / "psycopg80.local.toml"
@@ -221,7 +221,7 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
             _select_connector(selector, connector, postgres=postgres)
             os.environ["REPOMAP_PSQL_COMMAND"] = psql_command
             payloads[mode] = {
-                graph_id: repomap_python_summary(graph_id=graph_id)
+                graph_id: cloe_python_summary(graph_id=graph_id)
                 for graph_id in ("public-python", "private-python")
             }
         return payloads

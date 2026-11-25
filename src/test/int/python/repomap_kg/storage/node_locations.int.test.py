@@ -22,12 +22,12 @@ def test_node_locations_over_guarded_sqlite_stdio(tmp_path: Path) -> None:
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     args = {"graph_id": GRAPH, "canonical_key": SYMBOL}
     requests = [initialize(1),
-                tool(2, "repomap_node_locations", args),
-                tool(3, "repomap_node_locations", {**args, "limit": 1}),
-                tool(4, "repomap_node_locations", {**args, "canonical_key": DOC}),
-                tool(5, "repomap_node_locations", {**args, "graph_id": "sibling"}),
-                tool(6, "repomap_node_locations", {**args, "graph_id": "hidden"}),
-                tool(7, "repomap_search_nodes", {"graph_id": GRAPH, "query": "sample.service"})]
+                tool(2, "cloe_node_locations", args),
+                tool(3, "cloe_node_locations", {**args, "limit": 1}),
+                tool(4, "cloe_node_locations", {**args, "canonical_key": DOC}),
+                tool(5, "cloe_node_locations", {**args, "graph_id": "sibling"}),
+                tool(6, "cloe_node_locations", {**args, "graph_id": "hidden"}),
+                tool(7, "cloe_search_nodes", {"graph_id": GRAPH, "query": "sample.service"})]
     first = harness.mcp(home, requests)
     second = harness.mcp(home, requests)
     assert first == second
@@ -57,8 +57,8 @@ def test_node_locations_keep_refresh_history_separate_over_stdio(tmp_path: Path)
     args = {"graph_id": GRAPH, "canonical_key": SYMBOL}
     requests = [
         initialize(1),
-        tool(2, "repomap_node_locations", {**args, "limit": 2}),
-        tool(3, "repomap_node_locations", {**args, "limit": 1}),
+        tool(2, "cloe_node_locations", {**args, "limit": 2}),
+        tool(3, "cloe_node_locations", {**args, "limit": 1}),
     ]
     response = harness.mcp(home, requests)
     assert response == harness.mcp(home, requests)
@@ -83,10 +83,10 @@ def test_direct_source_view_filters_before_guarded_stdio_windows(tmp_path: Path)
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     args = {"graph_id": GRAPH, "canonical_key": DOC, "limit": 1}
     requests = [initialize(1),
-                tool(2, "repomap_node_locations", args),
-                tool(3, "repomap_node_locations", {**args, "evidence_role": "direct"}),
-                tool(4, "repomap_node_locations", {**args, "evidence_role": "reference"}),
-                tool(5, "repomap_node_locations", {**args, "evidence_role": "unknown"})]
+                tool(2, "cloe_node_locations", args),
+                tool(3, "cloe_node_locations", {**args, "evidence_role": "direct"}),
+                tool(4, "cloe_node_locations", {**args, "evidence_role": "reference"}),
+                tool(5, "cloe_node_locations", {**args, "evidence_role": "unknown"})]
     response = harness.mcp(home, requests)
     assert response == harness.mcp(home, requests)
     assert structured(response, 2)["locations"][0]["link_kind"] == "inferred_from_edge"
@@ -121,10 +121,10 @@ def test_compact_source_locations_over_guarded_sqlite_stdio(tmp_path: Path) -> N
     before = hashlib.sha256(database.read_bytes()).hexdigest()
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     args = {"graph_id": GRAPH, "canonical_key": DOC, "evidence_role": "direct", "limit": 1}
-    requests = [initialize(1), tool(2, "repomap_node_locations", args),
-                tool(3, "repomap_node_locations", {**args, "detail": "full"}),
-                tool(4, "repomap_node_locations", {**args, "detail": "compact"}),
-                tool(5, "repomap_node_locations", {**args, "detail": "invalid"})]
+    requests = [initialize(1), tool(2, "cloe_node_locations", args),
+                tool(3, "cloe_node_locations", {**args, "detail": "full"}),
+                tool(4, "cloe_node_locations", {**args, "detail": "compact"}),
+                tool(5, "cloe_node_locations", {**args, "detail": "invalid"})]
     responses = harness.mcp(home, requests)
     full, compact = structured(responses, 2), structured(responses, 4)
     assert structured(responses, 3) == full
@@ -155,8 +155,8 @@ def test_withheld_location_windows_do_not_become_handoff_targets(tmp_path: Path,
     before = hashlib.sha256(database.read_bytes()).hexdigest()
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     args = {"graph_id": GRAPH, "canonical_key": SYMBOL, "limit": limit, "evidence_role": "direct"}
-    requests = [initialize(), tool(2, "repomap_node_locations", args),
-                tool(3, "repomap_node_locations", {**args, "detail": "compact"})]
+    requests = [initialize(), tool(2, "cloe_node_locations", args),
+                tool(3, "cloe_node_locations", {**args, "detail": "compact"})]
     responses = harness.mcp(home, requests)
     full, compact = structured(responses, 2), structured(responses, 3)
     more = limit == 1
@@ -181,8 +181,8 @@ def test_location_validation_refusals_preserve_following_reads(tmp_path: Path) -
     invalid: list[tuple[dict[str, Any], str]] = [({"canonical_key": ""}, "canonical_key"), ({"limit": True}, "limit"),
                ({"evidence_role": "unsupported"}, "evidence_role")]
     responses = harness.mcp(home, [initialize(),
-        *(tool(mid, "repomap_node_locations", {**args, **options})
-          for mid, (options, _) in enumerate(invalid, 2)), tool(10, "repomap_node_locations", args)])
+        *(tool(mid, "cloe_node_locations", {**args, **options})
+          for mid, (options, _) in enumerate(invalid, 2)), tool(10, "cloe_node_locations", args)])
     for mid, (_, message) in enumerate(invalid, 2):
         assert message in refusal(responses, mid)
     assert structured(responses, 10)["status"] == "located"

@@ -21,7 +21,7 @@ from repomap_test_support.sqlite_local_fixtures import local_binding
 
 
 def call(**options):
-    return mcp.handle_tool_call("repomap_navigation_search", {
+    return mcp.handle_tool_call("cloe_navigation_search", {
         "graph_id": GRAPH, "query": "needle", "scope": "docs", "source_binding_id": BINDING, **options,
     })["structuredContent"]
 

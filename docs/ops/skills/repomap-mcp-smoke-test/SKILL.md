@@ -43,23 +43,23 @@ Use only the Common Lore Index MCP tools.
 Use project="<name>" (or graph_id="<graph-id>" for graph-registry tools).
 
 Call these tools and summarize whether each call succeeded:
-1. repomap_projects
-2. repomap_status
-3. repomap_canonical_nodes with kind="python.module" (or another known kind)
-4. repomap_canonical_edges with kind="imports" and a known source_key
-5. repomap_explain_canonical_edge for a known canonical edge
-6. repomap_canonical_neighborhood for a known node
+1. cloe_projects
+2. cloe_status
+3. cloe_canonical_nodes with kind="python.module" (or another known kind)
+4. cloe_canonical_edges with kind="imports" and a known source_key
+5. cloe_explain_canonical_edge for a known canonical edge
+6. cloe_canonical_neighborhood for a known node
 
 If the graph registry is configured, also call:
-7. repomap_list_graphs
-8. repomap_graph_status with a known graph_id
-9. repomap_search_nodes with that graph_id and a known query term
+7. cloe_list_graphs
+8. cloe_graph_status with a known graph_id
+9. cloe_search_nodes with that graph_id and a known query term
 
 If ingested feed source data is expected, also call:
-10. repomap_ingested_sources
-11. repomap_source_summary for a known source_id
-12. repomap_source_feed_items for that source_id
-13. repomap_source_references for that source_id
+10. cloe_ingested_sources
+11. cloe_source_summary for a known source_id
+12. cloe_source_feed_items for that source_id
+13. cloe_source_references for that source_id
 
 Do not call any ingestion, fetch, load, discovery, scheduler, source-editing,
 or arbitrary URL tool through MCP.
@@ -72,19 +72,19 @@ failures.
 
 The smoke test passes only when all applicable checks succeed:
 
-- `repomap_projects` returns the expected registry, or an intentionally
+- `cloe_projects` returns the expected registry, or an intentionally
   empty registry when explicit development mode is being tested.
-- `repomap_status` returns `read_only=true`, the expected graph key version,
+- `cloe_status` returns `read_only=true`, the expected graph key version,
   `storage_model="canonical"`, and named counts for runs, files, raw
   observations, canonical nodes, canonical edges, and canonical evidence.
-- `repomap_canonical_nodes` returns at least one expected canonical node
+- `cloe_canonical_nodes` returns at least one expected canonical node
   kind inside a bounded result envelope.
-- `repomap_canonical_edges` returns expected edges for a known source node.
-- `repomap_explain_canonical_edge` finds a known edge and returns evidence.
-- `repomap_canonical_neighborhood` returns a center node and adjacent
+- `cloe_canonical_edges` returns expected edges for a known source node.
+- `cloe_explain_canonical_edge` finds a known edge and returns evidence.
+- `cloe_canonical_neighborhood` returns a center node and adjacent
   structure.
-- When the graph registry is configured, `repomap_list_graphs` lists the
-  expected MCP-visible graphs and `repomap_graph_status` returns stored
+- When the graph registry is configured, `cloe_list_graphs` lists the
+  expected MCP-visible graphs and `cloe_graph_status` returns stored
   status for a known `graph_id`, with private roots redacted.
 - When ingested source data is expected, the source/feed tools return
   stored metadata without fetching anything.

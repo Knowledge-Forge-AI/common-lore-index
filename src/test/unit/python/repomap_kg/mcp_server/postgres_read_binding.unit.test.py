@@ -32,10 +32,10 @@ from repomap_test_support.mcp_server import McpServerTestSupport
 
 PSQL = "/opt/pg/bin/psql"
 FAMILY_TOOLS: tuple[tuple[str, dict[str, Any]], ...] = (
-    ("repomap_project_summary", {"graph_id": "repo-map"}),
-    ("repomap_search_files", {"graph_id": "repo-map", "query": "a"}),
-    ("repomap_canonical_nodes", {"project": "repo-map"}),
-    ("repomap_source_runs", {"project": "repo-map", "source_id": "feed"}),
+    ("cloe_project_summary", {"graph_id": "repo-map"}),
+    ("cloe_search_files", {"graph_id": "repo-map", "query": "a"}),
+    ("cloe_canonical_nodes", {"project": "repo-map"}),
+    ("cloe_source_runs", {"project": "repo-map", "source_id": "feed"}),
 )
 CONTEXT_TRIPWIRES = ("common_lore_index.server._ops_records.McpOpsGraphContext.__init__",)
 DATABASE_TRIPWIRES = tuple(target for target in PG_BINDING_TRIPWIRES if target.endswith(".graph_database"))
@@ -108,7 +108,7 @@ class PostgresBindingPreservationTests(McpServerTestSupport):
             self.assertEqual(str(raised.exception), "psql command must not contain whitespace")
         # Selection refusals still come first, before the command is read.
         with self._env(REPOMAP_PSQL_COMMAND=INVALID_PSQL_COMMAND), self.assertRaises(RepoMapMcpError) as raised:
-            handle_tool_call("repomap_canonical_nodes", {"project": "hidden"})
+            handle_tool_call("cloe_canonical_nodes", {"project": "hidden"})
         self.assertEqual(str(raised.exception), "graph 'hidden' is not MCP-visible")
 
 

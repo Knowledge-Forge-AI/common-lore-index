@@ -829,8 +829,8 @@ MCP dispatch is read-only. It may inspect configured and stored state, but it
 does not refresh graphs, initialize or migrate databases, restore or drop
 databases, install services, or mutate source roots.
 
-`repomap_canonical_nodes`, `repomap_canonical_edges`,
-`repomap_explain_canonical_edge`, and `repomap_canonical_neighborhood` read
+`cloe_canonical_nodes`, `cloe_canonical_edges`,
+`cloe_explain_canonical_edge`, and `cloe_canonical_neighborhood` read
 through the named canonical read-store seam in
 `src/main/python/common_lore_index/server/canonical_read_store.py`. The payload
 functions in `server/mcp_canonical.py` resolve the graph, apply visibility,
@@ -854,9 +854,9 @@ see `docs/status/2026/09/28/00970-product2-host-mcp-readstore1-exit.md`.
 Seven configured-graph investigation tools read through the named
 investigation read-store seam in
 `src/main/python/common_lore_index/server/investigation_read_store.py`:
-`repomap_graph_status`, `repomap_refresh_status`, `repomap_search_nodes`,
-`repomap_search_files`, `repomap_search_observations`,
-`repomap_project_summary` and `repomap_neighborhood`. The payload owners in
+`cloe_graph_status`, `cloe_refresh_status`, `cloe_search_nodes`,
+`cloe_search_files`, `cloe_search_observations`,
+`cloe_project_summary` and `cloe_neighborhood`. The payload owners in
 `server/ops.py`, `server/_ops_search.py` and `server/_ops_summaries.py` keep
 graph visibility, validation, serialization, redaction and paging. They pass
 a graph id and frozen query records (`GraphRefreshStatusQuery`,
@@ -885,7 +885,7 @@ READSTORE3 finishes the remaining twelve database readers on the same seams:
   `SourceReferencesQuery`) to `SourceReadStore` in
   `src/main/python/common_lore_index/server/source_read_store.py`, whose only adapter
   delegates to the maintained `storage/source_readback.py` owners;
-- legacy `repomap_status` calls
+- legacy `cloe_status` calls
   `CanonicalReadStore.canonical_storage_summary()`; its payload is unchanged.
 
 The source and status adapters share
@@ -925,8 +925,8 @@ fallback for configured graphs. The CLI default (`host_then_container`) is
 unchanged in `ops.refresh`. RESOLVE1 removed the dormant
 `mcp_core.StorageConnection.query_storage` and
 `server/ops.py::query_configured_storage`, and a unit guard keeps every
-`server` module free of the retained fallback names. `repomap_list_graphs`
-and `repomap_projects` read configuration only, with no backend binding. The
+`server` module free of the retained fallback names. `cloe_list_graphs`
+and `cloe_projects` read configuration only, with no backend binding. The
 two server-memory tools read files through the memory bridge. Still
 PostgreSQL-specific:
 
@@ -1540,7 +1540,7 @@ canonical tools
 (`docs/status/2026/09/28/00970-product2-host-mcp-readstore1-exit.md`), the
 seven configured investigation tools
 (`docs/status/2026/09/28/00971-product2-host-mcp-readstore2-exit.md`), and the
-five language summaries, six source/feed tools and legacy `repomap_status`
+five language summaries, six source/feed tools and legacy `cloe_status`
 (`docs/status/2026/09/28/00972-product2-host-mcp-readstore3-exit.md`). The
 census is 23 database reads + 2 configuration inventories + 2 server-memory
 file reads = 27 tools. RESOLVE1
@@ -1635,7 +1635,7 @@ operational Local path; the operator reference is `docs/ops/sqlite-local.md`.
 - `mcp serve` binds a SQLite home through `server.sqlite_read_binding`. All
   23 database-reading tools read the accepted generation read-only (`mode=ro`,
   one snapshot per operation) through named SQLite query owners:
-  - LOCAL4 added legacy `repomap_status`, observation search, the configured
+  - LOCAL4 added legacy `cloe_status`, observation search, the configured
     neighborhood and the five language summaries.
   - LOCAL5 (status 00981) added the six source/feed tools. They are served by
     `SqliteSourceReadStore` over `storage.sqlite_local.source_queries` and

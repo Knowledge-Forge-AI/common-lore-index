@@ -31,7 +31,7 @@ def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def call(key: str = DOC, **options: Any) -> dict[str, Any]:
-    return mcp.handle_tool_call("repomap_node_locations", {
+    return mcp.handle_tool_call("cloe_node_locations", {
         "graph_id": GRAPH, "canonical_key": key, **options,
     })["structuredContent"]
 
@@ -91,14 +91,14 @@ def test_compact_matches_full_navigation_facts(store: Path, tmp_path: Path, key:
 
 
 def test_compact_preserves_default_search_and_uses_one_bound_read(store: Path) -> None:
-    search = mcp.repomap_search_nodes(graph_id=GRAPH, query="root", limit=2)
+    search = mcp.cloe_search_nodes(graph_id=GRAPH, query="root", limit=2)
     full = call()
     with patch.object(node_location_queries, "read_transaction", wraps=node_location_queries.read_transaction) as read:
         compact = call(detail="compact")
     assert read.call_count == 1
     assert "evidence_role" not in full and compact["evidence_role"] == "all"
     assert call() == full and call(detail="full") == full
-    assert mcp.repomap_search_nodes(graph_id=GRAPH, query="root", limit=2) == search
+    assert mcp.cloe_search_nodes(graph_id=GRAPH, query="root", limit=2) == search
 
 
 def test_conflicting_direct_ranges_and_bindings_are_not_merged(store: Path) -> None:
@@ -271,19 +271,19 @@ def test_invalid_detail_refuses_before_configuration_or_storage(detail: Any) -> 
         with pytest.raises(RepoMapMcpError, match="detail must be full or compact"):
             call(detail=detail)
         response = mcp.handle_jsonrpc_message({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-            "params": {"name": "repomap_node_locations", "arguments": {
+            "params": {"name": "cloe_node_locations", "arguments": {
                 "graph_id": GRAPH, "canonical_key": DOC, "detail": detail}}})
         assert response is not None
         assert response["result"]["isError"] is True
 
 
 def test_public_schema_and_jsonrpc_serialization(store: Path) -> None:
-    definition = next(row for row in mcp.tool_definitions() if row["name"] == "repomap_node_locations")
+    definition = next(row for row in mcp.tool_definitions() if row["name"] == "cloe_node_locations")
     assert definition["inputSchema"]["properties"]["detail"] == {
         "type": "string", "enum": ["full", "compact"], "default": "full",
     }
     response = mcp.handle_jsonrpc_message({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-        "params": {"name": "repomap_node_locations", "arguments": {
+        "params": {"name": "cloe_node_locations", "arguments": {
             "graph_id": GRAPH, "canonical_key": DOC, "detail": "compact", "evidence_role": "direct"}}})
     assert response is not None
     result = response["result"]
