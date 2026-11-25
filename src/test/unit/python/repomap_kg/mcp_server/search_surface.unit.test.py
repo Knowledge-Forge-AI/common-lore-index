@@ -43,7 +43,7 @@ def source_store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path,
     config.graph_store_root.mkdir(parents=True)
     database = config.graph_store_root / f"{GRAPH}.sqlite3"
     initialize_graph_database(database, local_binding(GRAPH), applied_at="2026-10-15T00:00:00Z")
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
     source = tmp_path / "workspace" / "src" / "subject.py"
     source.parent.mkdir(parents=True)

@@ -1,5 +1,5 @@
 # Local/private RepoMap operations overlay.
-# Copy this pattern into REPOMAP_HOME and keep machine-specific files private.
+# Copy this pattern into CLOE_HOME and keep machine-specific files private.
 # Graph ids below are neutral examples; use your own local names.
 
 schema_version = 1

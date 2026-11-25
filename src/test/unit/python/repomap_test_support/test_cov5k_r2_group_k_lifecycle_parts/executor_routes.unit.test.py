@@ -215,8 +215,8 @@ def test_group_k_outer_executor_all_routes_parameterized(
         call_env = run_k_calls[0]["env"]
         assert isinstance(call_env, dict)
         assert run_k_calls[0]["cwd"] == case_root
-        assert "REPOMAP_HOME" in call_env
-        assert str(case_root) in call_env["REPOMAP_HOME"]
+        assert "CLOE_HOME" in call_env
+        assert str(case_root) in call_env["CLOE_HOME"]
         assert "PGPASSWORD" not in call_env
     elif condition_id == "K06":
         assert argv[0] == "psql"

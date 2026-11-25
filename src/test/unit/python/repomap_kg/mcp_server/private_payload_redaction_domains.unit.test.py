@@ -21,7 +21,7 @@ def endpoint_home(tmp_path, monkeypatch):
     from repomap_test_support.related_context_fixtures import related_home
 
     home, _, _ = related_home(tmp_path)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
     return home
 

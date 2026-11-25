@@ -22,7 +22,7 @@ def test_cloe_home_precedence_without_creation(tmp_path: Path, monkeypatch: pyte
     assert resolve_repo_map_home() == new
     assert resolve_repo_map_home(explicit) == explicit
     monkeypatch.setenv("CLOE_HOME", "")
-    assert resolve_repo_map_home() == old
+    assert resolve_repo_map_home() == tmp_path / ".cloe"
     monkeypatch.delenv("REPOMAP_HOME")
     monkeypatch.setenv("CLOE_PATH", str(new))
     assert resolve_repo_map_home() == tmp_path / ".cloe"
@@ -148,21 +148,26 @@ def test_explicit_mcp_home_temporarily_overrides_ambient_cloe_home(
     original, selected = str(tmp_path / "ambient"), str(tmp_path / "explicit")
     monkeypatch.setenv("CLOE_HOME", original)
     monkeypatch.setenv("REPOMAP_HOME", original)
+    monkeypatch.setenv("REPOMAP_OPS_CONFIG", "incumbent-config")
 
     def serve() -> int:
         assert resolve_repo_map_home() == Path(selected)
+        assert os.environ["REPOMAP_HOME"] == original
+        assert os.environ["REPOMAP_OPS_CONFIG"] == "explicit-config"
         if fails:
             raise RuntimeError("serve failure")
         return 0
 
     monkeypatch.setattr(mcp, "serve_stdio", serve)
-    args = argparse.Namespace(command="mcp", mcp_command="serve", repo_map_home=selected, config=None)
+    args = argparse.Namespace(command="mcp", mcp_command="serve", repo_map_home=selected, config="explicit-config")
     if fails:
         with pytest.raises(RuntimeError, match="serve failure"):
             dispatch_observation_commands(args, ModuleType("cloe_test_commands"), lambda *_args, **_kwargs: None)
     else:
         assert dispatch_observation_commands(args, ModuleType("cloe_test_commands"), lambda *_args, **_kwargs: None) == 0
     assert resolve_repo_map_home() == Path(original)
+    assert os.environ["REPOMAP_OPS_CONFIG"] == "incumbent-config"
+    assert os.environ["REPOMAP_HOME"] == original
 
 
 def test_preexisting_target_name_refuses_conversion() -> None:

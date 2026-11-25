@@ -365,4 +365,4 @@ class CliLocalDbInitIntegrationTests(CliIntegrationTestCase):
         run_mock.assert_not_called()
         self.assertEqual(outside_exit, 1)
         self.assertEqual(outside_stdout, "")
-        self.assertIn("backup path must stay under REPOMAP_HOME/backups", outside_stderr)
+        self.assertIn("backup path must stay under CLOE_HOME/backups", outside_stderr)

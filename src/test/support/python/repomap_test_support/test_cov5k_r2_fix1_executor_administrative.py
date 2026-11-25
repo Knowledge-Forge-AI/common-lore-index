@@ -148,7 +148,7 @@ def execute_group_k_administrative(
         _k_rehearsal_config(case_root),
         encoding="utf-8",
     )
-    environment["REPOMAP_HOME"] = str(repomap_home)
+    environment["CLOE_HOME"] = str(repomap_home)
     environment["REPOMAP_PG_PASSWORD"] = uuid.uuid4().hex
     command = list(shape)
     observed_argv = shape

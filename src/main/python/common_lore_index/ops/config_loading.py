@@ -8,7 +8,11 @@ import tomllib as tomllib
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from common_lore_index.ops.home_selection import HomeSelection as _HomeSelection, select_home as _select_home
+from common_lore_index.ops.home_selection import (
+    DEFAULT_CLOE_HOME as DEFAULT_CLOE_HOME,
+    HomeSelection as _HomeSelection,
+    select_home as _select_home,
+)
 
 from common_lore_index.ops.config_helpers import (
     KNOWN_POSTGRES_FIELDS as KNOWN_POSTGRES_FIELDS,
@@ -99,9 +103,6 @@ from common_lore_index.ops.config_loading_records import (
 )
 from common_lore_index.storage import parse_psql_json as parse_psql_json, run_psql as run_psql
 
-DEFAULT_REPOMAP_HOME = "~/.repo-map"
-
-
 def resolve_repo_map_home(value: str | Path | None = None) -> Path:
     return _resolve_home_selection(value).path
 
@@ -157,7 +158,7 @@ def _read_ops_config_home_payload(
                     "error",
                     "config-home-missing",
                     str(home),
-                    "REPOMAP_HOME does not exist; MCP-RUNTIME1 validates existing config homes only",
+                    "CLOE_HOME does not exist; MCP-RUNTIME1 validates existing config homes only",
                 ),
             )
         )
@@ -168,7 +169,7 @@ def _read_ops_config_home_payload(
                     "error",
                     "config-home-not-directory",
                     str(home),
-                    "REPOMAP_HOME must be a directory",
+                    "CLOE_HOME must be a directory",
                 ),
             )
         )
@@ -223,7 +224,7 @@ def load_ops_config(config_path: str | Path) -> OpsConfig:
                     str(path),
                     (
                         "JSON ops/MCP registry config is removed from the local "
-                        "operations target; use REPOMAP_HOME with *.rp.toml "
+                        "operations target; use CLOE_HOME with *.rp.toml "
                         "and *.rpl.toml files"
                     ),
                 ),

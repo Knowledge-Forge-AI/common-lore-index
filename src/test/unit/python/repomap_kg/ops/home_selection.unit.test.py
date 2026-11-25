@@ -88,8 +88,27 @@ def test_explicit_precedence_does_not_inspect_defaults(defaults, monkeypatch: py
     monkeypatch.setenv("CLOE_HOME", str(current))
     assert resolve_repo_map_home() == current
     assert _resolve_home_selection(legacy).source == "explicit"
+
+
+def test_legacy_environment_does_not_select_a_home(defaults, monkeypatch: pytest.MonkeyPatch) -> None:
+    current, legacy = defaults
+    populate(legacy, "sqlite")
+    monkeypatch.setenv("REPOMAP_HOME", str(legacy))
     monkeypatch.setenv("CLOE_HOME", "")
-    assert resolve_repo_map_home() == legacy
+    assert _resolve_home_selection().source == "fresh-default"
+    assert resolve_repo_map_home() == current and not current.exists()
+
+
+def test_empty_explicit_home_refuses_instead_of_selecting_cwd_or_environment(
+    defaults, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    current, legacy = defaults
+    monkeypatch.setenv("CLOE_HOME", str(legacy))
+    monkeypatch.setattr(home_selection, "_classify", lambda *_args: pytest.fail("empty explicit home inspected defaults"))
+    with pytest.raises(OpsConfigError) as raised:
+        resolve_repo_map_home("")
+    assert [item.code for item in raised.value.diagnostics] == ["explicit-home-empty"]
+    assert not current.exists() and not legacy.exists()
 
 
 def test_cloe_path_is_never_a_product_setting(defaults, monkeypatch: pytest.MonkeyPatch) -> None:

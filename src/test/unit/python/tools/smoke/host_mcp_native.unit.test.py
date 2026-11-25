@@ -263,7 +263,7 @@ def test_owned_backend_acts_only_on_the_exact_loopback_container(
 def test_parent_environment_strips_selectors_and_restores_exactly(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     for key in ("PGPASSWORD", "PGSERVICE", "REPOMAP_STORAGE_PG_CONNECTOR", "REPOMAP_READ_STATUS_PASSWORD",
-                "REPOMAP_MCP_CONFIG", "REPOMAP_HOME"):
+                "REPOMAP_MCP_CONFIG", "REPOMAP_HOME", "CLOE_HOME"):
         monkeypatch.setenv(key, "poison")
     monkeypatch.setenv("REPOMAP_TEST_UNRELATED", "kept")
     before, tempdir = dict(os.environ), tempfile.tempdir

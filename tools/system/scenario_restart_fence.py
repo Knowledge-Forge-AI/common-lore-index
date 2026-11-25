@@ -40,7 +40,7 @@ from common_lore_index.coordinator.configured_refresh import ConfiguredRefreshRe
 from common_lore_index.runtime.database_role_contract import REFRESH_PUBLICATION_ROLE, read_role_secrets
 from common_lore_index.runtime.release import PACKAGED_PSQL
 
-home = Path(os.environ.get("REPOMAP_HOME", "/repo-map-home"))
+home = Path(os.environ.get("CLOE_HOME") or "/repo-map-home")
 psql = Path(shutil.which("psql") or os.environ.get("REPOMAP_PACKAGED_PSQL", PACKAGED_PSQL))
 role_secrets = read_role_secrets(home / "runtime" / ".env")
 resolver = ConfiguredRefreshResolver(home, psql, postgres_user=REFRESH_PUBLICATION_ROLE,

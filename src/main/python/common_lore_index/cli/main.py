@@ -285,6 +285,8 @@ def __dir__() -> list[str]:
 
 
 def _preflight_cli_home(args: argparse.Namespace) -> None:
+    if getattr(args, "repo_map_home", None) == "":
+        _resolve_home_selection("")  # Reject before any explicit config route can bypass home selection.
     if args.version or not hasattr(args, "repo_map_home") or getattr(args, "config", None) is not None:
         return
     if args.command == "mcp" and getattr(args, "mcp_command", None) == "serve" and os.environ.get("REPOMAP_OPS_CONFIG"):

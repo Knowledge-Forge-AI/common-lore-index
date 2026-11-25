@@ -152,20 +152,24 @@ def dispatch_observation_commands(
 
     if args.command == "mcp" and args.mcp_command == "serve":
         explicit_home = getattr(args, "repo_map_home", None)
-        selected_cloe_home = os.environ.get("CLOE_HOME")
+        overrides = {}
         if explicit_home:
-            os.environ["REPOMAP_HOME"] = args.repo_map_home
-            if selected_cloe_home:
-                os.environ["CLOE_HOME"] = args.repo_map_home
+            overrides["CLOE_HOME"] = explicit_home
         if args.config:
-            os.environ["REPOMAP_OPS_CONFIG"] = args.config
+            overrides["REPOMAP_OPS_CONFIG"] = args.config
+        previous = {key: os.environ.get(key) for key in overrides}
         try:
+            os.environ.update(overrides)
             from common_lore_index.server.mcp import serve_stdio
 
             return serve_stdio()
         finally:
-            if explicit_home and selected_cloe_home:
-                os.environ["CLOE_HOME"] = selected_cloe_home
+            for key, value in previous.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+
 
     if args.command == "server" and args.server_command == "serve":
         try:

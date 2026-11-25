@@ -345,7 +345,7 @@ class NeutralSelectionFakeStoreRoutingTests(McpServerTestSupport):
 
         with tempfile.TemporaryDirectory() as directory:
             home, _, _ = related_home(Path(directory))
-            with patch.dict("os.environ", {"REPOMAP_HOME": str(home)}, clear=True), \
+            with patch.dict("os.environ", {"CLOE_HOME": str(home)}, clear=True), \
                     patched_guards(PG_BINDING_TRIPWIRES):
                 navigation = handle_tool_call("repomap_navigation_search", {
                     "graph_id": GRAPH, "query": IMPORTED, "scope": "code",

@@ -83,12 +83,20 @@ def test_up_verification_failure_runs_supported_teardown(tmp_path):
 
 def test_up_published_output_is_engine_derived(tmp_path):
     plan = plan_for(tmp_path)
+    compose = plan.compose_file.read_text()
+    plan.compose_file.write_text(compose.replace("CLOE_HOME:", "REPOMAP_HOME:"))
+
+    def observe_runtime_call(_command):
+        rendered = plan.compose_file.read_text()
+        assert "REPOMAP_HOME:" not in rendered
+        assert rendered.count("CLOE_HOME: /repo-map-home") == compose.count("CLOE_HOME: /repo-map-home") == 5
+
     good = observe(plan, record_for(plan, [{"HostIp": "127.0.0.1", "HostPort": "55432"}]))
     with (patch("common_lore_index.runtime.local.shutil.which", return_value="docker"),
           patch("common_lore_index.runtime.local.is_local_port_open", return_value=False),
           patch("common_lore_index.runtime.local.inspect_container", return_value=good),
           patch("common_lore_index.runtime.local.inspect_compose_coordinator", return_value="absent"),
-          patch("common_lore_index.runtime.local._run_container_runtime")):
+          patch("common_lore_index.runtime.local._run_container_runtime", side_effect=observe_runtime_call)):
         runtime = up_local_runtime(tmp_path).to_jsonable()["runtime"]
     assert runtime["postgres_host_port_checked"]
     assert runtime["postgres_host_port_published"]

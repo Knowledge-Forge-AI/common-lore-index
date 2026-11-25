@@ -77,7 +77,7 @@ def setup_local_runtime(
             plan=plan,
             diagnostics=(*diagnostics, LocalRuntimeDiagnostic(
                 "info", "setup-dry-run", "config-home",
-                "local setup would create REPOMAP_HOME runtime files",
+                "local setup would create CLOE_HOME runtime files",
             ),),
             planned_command=("local", "setup", "--repo-map-home", str(home), "--config-format", config_format),
         )
@@ -93,7 +93,7 @@ def setup_local_runtime(
         raise
     except (OSError, ValueError):
         raise LocalRuntimeError((LocalRuntimeDiagnostic(
-            "error", "repo-map-home-unsafe", "REPOMAP_HOME",
+            "error", "repo-map-home-unsafe", "CLOE_HOME",
             "Local home and runtime authority must be owned ordinary private objects",
         ),)) from None
     if _create_setup_config(config_path, default_repomap_rpl_toml()):

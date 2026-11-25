@@ -71,7 +71,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      REPOMAP_HOME: /repo-map-home
+      CLOE_HOME: /repo-map-home
       REPOMAP_ADMIN_ROOT: /repo-map-admin
       REPOMAP_CONTAINER_INTERNAL: "1"
       REPOMAP_RUNTIME_HOME_HASH: {plan.identity.home_hash}
@@ -105,7 +105,7 @@ services:
       init-upgrade:
         condition: service_completed_successfully
     environment:
-      REPOMAP_HOME: /repo-map-home
+      CLOE_HOME: /repo-map-home
       REPOMAP_PG_USER: repomap_read_status
       REPOMAP_READ_STATUS_PASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}
       REPOMAP_PG_PASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}
@@ -141,7 +141,7 @@ services:
       init-upgrade:
         condition: service_completed_successfully
     environment:
-      REPOMAP_HOME: /repo-map-home
+      CLOE_HOME: /repo-map-home
       REPOMAP_PG_USER: repomap_read_status
       REPOMAP_READ_STATUS_PASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}
       REPOMAP_PG_PASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}
@@ -170,7 +170,7 @@ services:
       init-upgrade:
         condition: service_completed_successfully
     environment:
-      REPOMAP_HOME: /repo-map-home
+      CLOE_HOME: /repo-map-home
       REPOMAP_ADMIN_ROOT: /repo-map-admin
       REPOMAP_CONTAINER_INTERNAL: "1"
       REPOMAP_RUNTIME_HOME_HASH: {plan.identity.home_hash}
@@ -280,7 +280,7 @@ def _coordinator_service(plan: LocalRuntimePlan, config_mounts: str, execution_m
       init-upgrade:
         condition: service_completed_successfully
     environment:
-      REPOMAP_HOME: /repo-map-home
+      CLOE_HOME: /repo-map-home
       REPOMAP_READ_STATUS_PASSWORD: ${{REPOMAP_READ_STATUS_PASSWORD}}
       REPOMAP_REFRESH_PUBLICATION_PASSWORD: ${{REPOMAP_REFRESH_PUBLICATION_PASSWORD}}
       REPOMAP_COORDINATOR_CONTROL_PASSWORD: ${{REPOMAP_COORDINATOR_CONTROL_PASSWORD}}

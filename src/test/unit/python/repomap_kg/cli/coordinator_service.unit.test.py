@@ -223,7 +223,7 @@ def test_container_foreground_accepts_fixed_psql_and_bounded_startup_wait():
             }
         )
 
-    with patch.dict(os.environ, {"REPOMAP_HOME": "/repo-map-home"}, clear=True):
+    with patch.dict(os.environ, {"CLOE_HOME": "/repo-map-home"}, clear=True):
         with patch("common_lore_index.cli.serve_configured_coordinator", side_effect=serve):
             with redirect_stdout(io.StringIO()):
                 exit_code = main(
@@ -242,7 +242,7 @@ def test_container_foreground_accepts_fixed_psql_and_bounded_startup_wait():
 
     assert exit_code == 0
     assert observed == {
-        "environment": {"REPOMAP_HOME": "/repo-map-home"},
+        "environment": {"CLOE_HOME": "/repo-map-home"},
         "psql_path": "/usr/lib/postgresql/16/bin/psql",
         "startup_wait_seconds": 75,
     }

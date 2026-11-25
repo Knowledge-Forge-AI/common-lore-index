@@ -53,7 +53,7 @@ class OpsConfigUnitTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             env_home = Path(tmpdir) / "configured-home"
-            with patch.dict("os.environ", {"REPOMAP_HOME": str(env_home)}):
+            with patch.dict("os.environ", {"CLOE_HOME": str(env_home)}):
                 resolved = resolve_repo_map_home()
 
             self.assertEqual(resolved, env_home)

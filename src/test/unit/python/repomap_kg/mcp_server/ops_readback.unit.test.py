@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, cast
 from unittest.mock import patch
 
@@ -249,8 +250,8 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
         from common_lore_index.server.mcp import RepoMapMcpError, repomap_list_graphs
         from common_lore_index.server.ops import query_mcp_search
 
-        with patch.dict("os.environ", {}, clear=True):
-            with self.assertRaisesRegex(RepoMapMcpError, "REPOMAP_HOME"):
+        with TemporaryDirectory() as isolated_home, patch.dict("os.environ", {"HOME": isolated_home}, clear=True):
+            with self.assertRaisesRegex(RepoMapMcpError, "CLOE_HOME does not exist"):
                 repomap_list_graphs()
 
         config_path = self.write_ops_config(self.visible_ops_config())

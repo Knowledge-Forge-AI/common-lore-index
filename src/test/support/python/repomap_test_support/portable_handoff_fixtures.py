@@ -47,7 +47,7 @@ def routed_locator(tmp_path: Path, monkeypatch: Any) -> tuple[dict[str, Any], Pa
     from repomap_test_support.node_location_fixtures import BINDING, DOC, GRAPH, locator_home
 
     home, _ = locator_home(tmp_path)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
     reply = mcp.handle_tool_call("repomap_node_locations", {
         "graph_id": GRAPH, "canonical_key": DOC, "evidence_role": "direct", "detail": "compact",

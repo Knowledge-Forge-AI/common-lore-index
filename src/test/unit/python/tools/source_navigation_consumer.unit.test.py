@@ -27,7 +27,7 @@ navigate = vars(consumer_module)["navigate"]
 @pytest.fixture
 def environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path, dict[str, Any]]:
     home, database = locator_home(tmp_path, reference_count=5)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
     workspace = tmp_path / "caller-workspace"
     (workspace / "docs").mkdir(parents=True)
@@ -131,7 +131,7 @@ def test_real_postgresql_unsupported_callable_falls_back(environment: tuple, tmp
     home = tmp_path / "unsupported-home"
     home.mkdir()
     (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     options["graph_id"] = "host-one"
     with patched_guards(NO_FALLBACK_GUARDS):
         result = navigate(canonical_key=DOC, **options)

@@ -83,9 +83,9 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
         ambient = {"PGPASSWORD": "ambient-admin", "REPOMAP_PG_PASSWORD": "ambient-admin"}
         recorder = _Recorder()
         with _patched_driver(recorder), patched_guards(), \
-                patch.dict("os.environ", {"REPOMAP_HOME": str(home), **ambient}, clear=True):
+                patch.dict("os.environ", {"CLOE_HOME": str(home), **ambient}, clear=True):
             before = dict(os.environ)
-            refusals = self._run_twelve(REPOMAP_HOME=str(home), **ambient)
+            refusals = self._run_twelve(CLOE_HOME=str(home), **ambient)
             self.assertEqual(dict(os.environ), before)
         self.assertEqual(refusals, [RECORDED] * 12)
         self.assertEqual([call["label"] for call in recorder.calls], [label for _n, _a, label in TWELVE_TOOL_CALLS])
@@ -151,7 +151,7 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
         for error, expected in ((StorageSchemaError(UNRESOLVED), UNRESOLVED), (OSError("psql missing"), "psql missing")):
             recorder = _Recorder(error)
             with self.subTest(error=type(error).__name__), patched_guards(), _patched_driver(recorder):
-                refusals = self._run_twelve(REPOMAP_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql")
+                refusals = self._run_twelve(CLOE_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql")
             self.assertEqual(refusals, [expected] * 12)
             self.assertEqual(len(recorder.calls), 12)
             self.assertNotIn("docker", str(refusals))
@@ -170,7 +170,7 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
             "direct_host_port_enabled = true", "direct_host_port_enabled = false"
         ))
         recorder = _Recorder(StorageSchemaError(UNRESOLVED))
-        with self._env(REPOMAP_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql"), \
+        with self._env(CLOE_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql"), \
                 patch("common_lore_index.storage.readback_driver.run_psql", recorder), \
                 patched_guards(), self.assertRaisesRegex(AssertionError, "container, or subprocess path"):
             context = graph_context("host-one")

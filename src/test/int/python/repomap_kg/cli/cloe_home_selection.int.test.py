@@ -47,9 +47,13 @@ def test_explicit_legacy_plan_and_mcp_readback_preserve_existing_sqlite_state(tm
     warm = harness.run("ops", "graphs", "--repo-map-home", str(home), "--check-db", "--json")
     assert warm.returncode == 0, warm.stderr
     before = snapshot(harness.user_home)
-    implicit = harness.run("ops", "config-migration-plan", "--json")
+    implicit = harness.run("ops", "config-migration-plan", "--json", extra_env={"REPOMAP_HOME": str(home)})
     expected_refusal = "default-home-unrecognized" if foreign_new else "config-home-missing"
     assert implicit.returncode == 1 and expected_refusal in implicit.stderr
+    canonical = harness.run("ops", "config-migration-plan", "--json", extra_env={"CLOE_HOME": str(home)})
+    assert canonical.returncode == 0, canonical.stderr
+    assert json.loads(canonical.stdout)["writes_performed"] == 0
+    assert snapshot(harness.user_home) == before
     explicit = harness.run("ops", "graphs", "--repo-map-home", str(home), "--check-db", "--json")
     assert explicit.returncode == 0, explicit.stderr
     status = json.loads(explicit.stdout)["graphs"][0]["storage_status"]
@@ -71,6 +75,18 @@ def test_explicit_legacy_plan_and_mcp_readback_preserve_existing_sqlite_state(tm
     assert "psycopg" not in harness.imported_modules()
     if not foreign_new:
         assert not current.exists()
+
+
+@pytest.mark.parametrize("command", [("local", "setup"), ("mcp", "serve", "--config", "unread-config")])
+def test_empty_explicit_home_refuses_before_touching_cwd_or_environment(tmp_path: Path, command: tuple[str, ...]) -> None:
+    harness = LocalHarness(tmp_path / "empty selector harness", block_psycopg=True)
+    (harness.cwd / "unrelated.txt").write_text("unchanged")
+    selected = tmp_path / "unselected-home"
+    before = snapshot(harness.cwd)
+    result = harness.run(*command, "--repo-map-home", "", extra_env={"CLOE_HOME": str(selected)})
+    assert result.returncode == 1 and "explicit-home-empty" in result.stderr and not result.stdout
+    assert snapshot(harness.cwd) == before and not selected.exists()
+    assert not (harness.user_home / ".cloe").exists() and not harness.shim_invocations()
 
 
 def test_fresh_default_setup_is_cloe_private_and_dry_run_replayable(tmp_path: Path, monkeypatch) -> None:

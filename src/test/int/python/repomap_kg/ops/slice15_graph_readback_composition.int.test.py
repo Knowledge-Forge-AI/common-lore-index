@@ -203,7 +203,7 @@ def test_baselines_reports_and_source_generation_edge_contracts(tmp_path: Path) 
     b_root.mkdir(parents=True)
     g_root = b_root / gid
     os.symlink(tmp_path, g_root)
-    with pytest.raises(OpsRefreshError, match="outside REPOMAP_HOME"):
+    with pytest.raises(OpsRefreshError, match="outside CLOE_HOME"):
         prune_graph_baselines(config, gid, kind="stored", keep=1)
     g_root.unlink()
 

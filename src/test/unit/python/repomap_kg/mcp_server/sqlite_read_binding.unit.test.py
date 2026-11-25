@@ -87,7 +87,7 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     registry.write_text('{"projects": {}}\n', encoding="utf-8")
     for name in ("REPOMAP_OPS_CONFIG", "REPOMAP_READ_STATUS_PASSWORD"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.setenv("REPOMAP_MCP_CONFIG", str(registry))
     config = load_graph_registry_config_home(home)
     assert isinstance(config, LocalSqliteConfig)

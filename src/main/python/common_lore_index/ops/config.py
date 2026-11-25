@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Mapping, Sequence, cast
 
 from common_lore_index.ops.config_loading import (
-    DEFAULT_REPOMAP_HOME as DEFAULT_REPOMAP_HOME,
+    DEFAULT_CLOE_HOME as DEFAULT_CLOE_HOME,
     GRAPH_ID_PATTERN as GRAPH_ID_PATTERN,
     KNOWN_POSTGRES_FIELDS as KNOWN_POSTGRES_FIELDS,
     KNOWN_RUNTIME_FIELDS as KNOWN_RUNTIME_FIELDS,

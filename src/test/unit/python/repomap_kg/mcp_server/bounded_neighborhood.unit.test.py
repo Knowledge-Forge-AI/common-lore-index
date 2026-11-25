@@ -51,7 +51,7 @@ def published_home(root: Path) -> tuple[Path, Path]:
 @pytest.fixture
 def bounded_home(tmp_path, monkeypatch):
     home, database = published_home(tmp_path)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
     monkeypatch.setenv("REPOMAP_MCP_CONFIG", str(tmp_path / "empty-registry.json"))
     return home, database
@@ -128,7 +128,7 @@ def test_unsupported_postgres_refuses_bounded_but_default_read_stays_exact(tmp_p
     home = tmp_path / "pg"
     home.mkdir()
     (home / "repomap.rpl.toml").write_text(setup_owned_config())
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
     config = ops.load_mcp_ops_config()
     graph = config.graphs[0].id

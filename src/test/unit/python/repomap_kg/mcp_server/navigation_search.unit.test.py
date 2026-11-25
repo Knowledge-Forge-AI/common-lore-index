@@ -28,7 +28,7 @@ from repomap_test_support.host_read_store_config import NO_FALLBACK_GUARDS, patc
 @pytest.fixture
 def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home, database = navigation_home(tmp_path)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
     return database
 
@@ -207,7 +207,7 @@ def test_graph_repository_and_optional_backend_boundaries(store: Path, tmp_path:
     unauth = tmp_path / "pg-unauth"
     unauth.mkdir()
     (unauth / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
-    monkeypatch.setenv("REPOMAP_HOME", str(unauth))
+    monkeypatch.setenv("CLOE_HOME", str(unauth))
     with patched_guards(NO_FALLBACK_GUARDS), patch(
         "common_lore_index.storage.postgres_navigation_search.execute_json_readback", side_effect=AssertionError("io"),
     ):
@@ -218,7 +218,7 @@ def test_graph_repository_and_optional_backend_boundaries(store: Path, tmp_path:
     setup_local_runtime(home)
     (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
     secret = read_role_secrets(home / "runtime" / ".env").read_status
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     calls: list[tuple[str, dict[str, Any]]] = []
 
     def fake_nav(sql: str, **kwargs: Any) -> dict[str, Any]:
@@ -275,7 +275,7 @@ def test_captured_entry_responses_and_errors_remain_byte_equal(tmp_path: Path,
     from repomap_test_support.node_location_fixtures import captured_navigation_response, entry_response_differences, locator_home
 
     home, _ = locator_home(tmp_path)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
     golden = Path("src/test/resources/navigation_search_entry.json")
     cases = json.loads(golden.read_text())["cases"]

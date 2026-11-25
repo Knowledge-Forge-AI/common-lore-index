@@ -35,7 +35,7 @@ the interpreter's console script explicitly. From a checkout virtual
 environment (not a wheel or installed-package qualification):
 
 ```sh
-<checkout>/.venv/bin/cloe mcp serve --repo-map-home <REPOMAP_HOME>
+<checkout>/.venv/bin/cloe mcp serve --repo-map-home <CLOE_HOME>
 ```
 
 Client-neutral stdio entry; map the fields onto the client's own format, and
@@ -152,7 +152,7 @@ The optional similarity tool remains advertised on SQLite and returns explicit
 ### Graph registry (preferred)
 
 `mcp serve` accepts `--repo-map-home <dir>` and reads the same TOML
-configuration as local ops (`REPOMAP_HOME`, default `~/.repo-map`). Each
+configuration as local ops (`CLOE_HOME`, default `~/.cloe`). Each
 `[[graphs]]` entry with `enabled = true` and `mcp_visible = true` becomes
 visible to the graph-registry MCP tools (`repomap_list_graphs`,
 `repomap_graph_status`, search, neighborhood, summaries, refresh status).

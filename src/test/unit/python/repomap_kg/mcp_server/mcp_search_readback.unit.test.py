@@ -172,7 +172,7 @@ class McpSearchSideEffectGuardTests(McpServerTestSupport):
 
     def _env(self, home: Any):
         return patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()),
-                                         "REPOMAP_HOME": str(home)}, clear=True)
+                                         "CLOE_HOME": str(home)}, clear=True)
 
     def test_configured_search_reads_host_only_through_real_binding_without_side_effects(self):
         from common_lore_index.runtime.database_role_contract import read_read_status_password

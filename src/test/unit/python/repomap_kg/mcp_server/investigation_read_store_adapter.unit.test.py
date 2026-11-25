@@ -91,9 +91,9 @@ class InvestigationReadStoreAuthorityTests(McpServerTestSupport):
         recorder = _Recorder()
         with patch("common_lore_index.storage.readback_driver.execute_json_readback_with_driver", recorder), \
                 patch("common_lore_index.ops.readback.execute_json_readback_with_driver", recorder), \
-                patch.dict("os.environ", {"REPOMAP_HOME": str(home), **ambient}, clear=True):
+                patch.dict("os.environ", {"CLOE_HOME": str(home), **ambient}, clear=True):
             before = dict(os.environ)
-            outcomes, _ = self._run_seven(REPOMAP_HOME=str(home), **ambient)
+            outcomes, _ = self._run_seven(CLOE_HOME=str(home), **ambient)
             self.assertEqual(dict(os.environ), before)
         labels = [call["label"] for call in recorder.calls]
         self.assertIn("nodes MCP search", labels)
@@ -148,7 +148,7 @@ class InvestigationReadStoreAuthorityTests(McpServerTestSupport):
                     patch("common_lore_index.storage.readback_driver.execute_json_readback_with_driver", recorder), \
                     patch("common_lore_index.ops.readback.execute_json_readback_with_driver", recorder):
                 outcomes, refusals = self._run_seven(
-                    REPOMAP_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql",
+                    CLOE_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql",
                 )
             self.assertEqual(refusals, [expected] * 5)
             statuses = (outcomes[0]["storage"], *outcomes[1]["graphs"], *outcomes[2]["graphs"])
@@ -170,7 +170,7 @@ class InvestigationReadStoreAuthorityTests(McpServerTestSupport):
             "direct_host_port_enabled = true", "direct_host_port_enabled = false"
         ))
         recorder = _Recorder(StorageSchemaError(UNRESOLVED))
-        with self._env(REPOMAP_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql"), \
+        with self._env(CLOE_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql"), \
                 patch("common_lore_index.ops.readback.execute_json_readback_with_driver", recorder):
             config = load_mcp_ops_config()
             assert isinstance(config, OpsConfig), "a PostgreSQL home loads OpsConfig"
@@ -192,7 +192,7 @@ class InvestigationReadStoreAuthorityTests(McpServerTestSupport):
                   "common_lore_index.storage.readback_driver.execute_json_readback_with_driver",
                   "common_lore_index.storage.readback_driver.run_psql")
         home = setup_owned_home(self)
-        with self._env(REPOMAP_HOME=str(home)), patched_guards(guards):
+        with self._env(CLOE_HOME=str(home)), patched_guards(guards):
             payload = handle_tool_call("repomap_list_graphs", {})["structuredContent"]
         self.assertEqual([graph["graph_id"] for graph in payload["graphs"]], ["host-one", "host-multi"])
         self.assertFalse(any(graph["root_path_checked"] for graph in payload["graphs"]))

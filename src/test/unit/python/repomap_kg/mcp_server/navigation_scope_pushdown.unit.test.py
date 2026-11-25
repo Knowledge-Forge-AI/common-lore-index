@@ -31,7 +31,7 @@ def member_keys(result):
 
 
 def activate(monkeypatch, home):
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
 
 

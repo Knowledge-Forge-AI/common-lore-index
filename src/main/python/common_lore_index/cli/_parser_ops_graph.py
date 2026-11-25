@@ -264,7 +264,7 @@ def add_ops_graph_commands(
     graph_baseline.add_argument("--json", action="store_true", help="emit graph baseline as JSON")
     baseline_save = ops_subcommands.add_parser(
         "baseline-save",
-        help="save accepted graph baselines under REPOMAP_HOME/status/baselines",
+        help="save accepted graph baselines under CLOE_HOME/status/baselines",
     )
     add_ops_config_arguments(baseline_save)
     baseline_save.add_argument("--graph", required=True, help="configured graph id to save a baseline for")
@@ -281,7 +281,7 @@ def add_ops_graph_commands(
     baseline_save.add_argument("--json", action="store_true", help="emit baseline-save metadata as JSON")
     baseline_prune = ops_subcommands.add_parser(
         "baseline-prune",
-        help="prune old accepted graph baselines under REPOMAP_HOME/status/baselines",
+        help="prune old accepted graph baselines under CLOE_HOME/status/baselines",
     )
     add_ops_config_arguments(baseline_prune)
     baseline_prune.add_argument("--graph", required=True, help="configured graph id to prune baselines for")

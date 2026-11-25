@@ -43,6 +43,9 @@ def test_cloe_setup_readback_status_and_plan_without_runtime_execution(tmp_path:
     assert overlay.is_file() and not (home / "repomap.rpl.toml").exists()
     assert overlay.stat().st_mode & 0o777 == 0o600
     compose = (home / "runtime/compose.yaml").read_text()
+    assert compose.count("CLOE_HOME: /repo-map-home") == 5
+    assert compose.count('--repo-map-home", "/repo-map-home"') == 6
+    assert "REPOMAP_HOME:" not in compose
     assert 'target: "/repo-map-home/repomap.local.cloe.toml"' in compose
     assert '/repo-map-home/repomap.rpl.toml' not in compose
     before = snapshot(home)

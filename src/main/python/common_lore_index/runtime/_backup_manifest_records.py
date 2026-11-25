@@ -325,7 +325,7 @@ def ensure_path_under_backups_root(backups_root: Path, path: Path) -> None:
                     "error",
                     "backup-path-outside-root",
                     str(path),
-                    "backup path must stay under REPOMAP_HOME/backups",
+                    "backup path must stay under CLOE_HOME/backups",
                 ),
             )
         )

@@ -288,7 +288,7 @@ homes. Ordinary `identity --json` remains unchanged. See
 [installed upgrade compatibility](docs/ops/cloe-installed-upgrade-compatibility.md)
 for its limits and persisted native-service recovery.
 
-The [CLOE compatibility milestone](docs/ops/cloe-config-compatibility.md) accepts a nonempty `CLOE_HOME` ahead of `REPOMAP_HOME` and a separate CLOE configuration family. Explicit invocation homes win. Without a selector, a recognizable private `~/.cloe` wins, while a recognizable legacy `~/.repo-map` remains a safe fallback. Fresh defaults use `~/.cloe`; unrelated or unsafe homes are never silently initialized. `ops config-migration-plan` prepares filenames without applying changes. See the [accepted transition roadmap](docs/specs/cloe-roadmap-transition-v1.md) for the coordinated rebrand.
+An explicit home takes precedence over a nonempty `CLOE_HOME`. Without either, Common Lore Index selects `~/.cloe`. Existing legacy homes can be selected explicitly for migration. See [configuration and migration](docs/ops/cloe-config-compatibility.md) for the safety checks and commands.
 
 For a new container-runtime home, `local setup --config-format cloe` creates a
 CLOE overlay; existing homes are detected automatically and must match any
@@ -300,9 +300,9 @@ to inspect the selected format without writing files or credentials.
 Use `--repo-map-home <dir>` with local and ops commands for an explicit home.
 Home selection creates no files and never moves or merges existing graph data.
 
-Implicit recognition requires a private owned home. For an older manually created
-legacy home with broader permissions, inspect it and use `chmod 700 ~/.repo-map`,
-or select it explicitly through `REPOMAP_HOME`, `CLOE_HOME` or `--repo-map-home`.
+Implicit recognition requires a private owned home. Inspect an older home before
+selecting it explicitly through `CLOE_HOME` or `--repo-map-home`. Update shell
+startup files and MCP clients that set the old environment variable.
 If fresh setup stopped after creating runtime directories but before creating its
 configuration, inspect the partial home, then resume with
 `local setup --repo-map-home ~/.cloe --config-format cloe`. The explicit format
@@ -328,7 +328,7 @@ Common Lore Index's intended local runtime is an isolated container cluster:
 
 - a Common Lore Index server/MCP container;
 - a Common Lore Index-owned Postgres container;
-- `REPOMAP_HOME` mounted for config and runtime state;
+- `CLOE_HOME` mounted for config and runtime state;
 - localhost-only, configurable, non-standard ports.
 
 Basic lifecycle for an explicitly selected legacy home:
@@ -382,17 +382,17 @@ ops commands need database readback or refresh loading, they first try the
 normal `psql` path. If that cannot reach a configured internal container host
 such as `postgres`, Common Lore Index can use the running Common Lore Index-owned Postgres container
 through `docker exec` or the configured container runtime. The container must be
-owned by the same `REPOMAP_HOME` runtime metadata and labels; Common Lore Index does not
+owned by the same `CLOE_HOME` runtime metadata and labels; Common Lore Index does not
 silently use unrelated Postgres containers.
 
 This means these host-side commands work with the local runtime up and direct DB
 debug exposure off:
 
 ```sh
-export REPOMAP_HOME=/path/to/repo-map-home
-repomap-kg ops refresh-status --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
-repomap-kg ops graph-summary --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
-repomap-kg ops refresh-graph --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
+export CLOE_HOME=/path/to/repo-map-home
+repomap-kg ops refresh-status --repo-map-home "$CLOE_HOME" --graph repo-map --json
+repomap-kg ops graph-summary --repo-map-home "$CLOE_HOME" --graph repo-map --json
+repomap-kg ops refresh-graph --repo-map-home "$CLOE_HOME" --graph repo-map --json
 ```
 
 `--psql-command` remains available as an explicit override for development and
@@ -441,7 +441,7 @@ notes. Use Common Lore Index graph evidence for generated source/config/readback
 
 ## Graph Configuration
 
-Graphs are configured with `[[graphs]]` entries under `REPOMAP_HOME`:
+Graphs are configured with `[[graphs]]` entries under `CLOE_HOME`:
 
 ```toml
 [[graphs]]
@@ -519,7 +519,7 @@ and [Static Nix Cross-Source Resolution](docs/specs/nix-cross-source-resolution.
 ## Folder-Backed Graph Tracking
 
 Common Lore Index's intended casual-user default is a database backed by a configured
-folder tree or repository. Once a graph is configured under `REPOMAP_HOME`,
+folder tree or repository. Once a graph is configured under `CLOE_HOME`,
 Common Lore Index local ops or an authorized agent should keep the graph database aligned
 with the current source state. The user should not need to manually redirect
 `discover` output into a JSONL file and then hand-load that file into storage
@@ -528,15 +528,15 @@ for routine operation.
 Recommended operating model:
 
 ```sh
-export REPOMAP_HOME=/path/to/repo-map-home
+export CLOE_HOME=/path/to/repo-map-home
 
-repomap-kg local status --repo-map-home "$REPOMAP_HOME" --check-containers --json
-repomap-kg ops config-check --repo-map-home "$REPOMAP_HOME" --json
-repomap-kg ops graphs --repo-map-home "$REPOMAP_HOME" --json
-repomap-kg ops refresh-preflight --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
-repomap-kg ops refresh-graph --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
-repomap-kg ops refresh-status --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
-repomap-kg ops graph-summary --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
+repomap-kg local status --repo-map-home "$CLOE_HOME" --check-containers --json
+repomap-kg ops config-check --repo-map-home "$CLOE_HOME" --json
+repomap-kg ops graphs --repo-map-home "$CLOE_HOME" --json
+repomap-kg ops refresh-preflight --repo-map-home "$CLOE_HOME" --graph repo-map --json
+repomap-kg ops refresh-graph --repo-map-home "$CLOE_HOME" --graph repo-map --json
+repomap-kg ops refresh-status --repo-map-home "$CLOE_HOME" --graph repo-map --json
+repomap-kg ops graph-summary --repo-map-home "$CLOE_HOME" --graph repo-map --json
 ```
 
 For private or large graphs, keep the preflight and drift-check gates from the
@@ -547,7 +547,7 @@ baselines have been reviewed for that maintenance run.
 If a configured graph database must be recreated or dropped to restore
 alignment with its source root, use Common Lore Index's backup-first database lifecycle
 commands. Backup dumps, manifests, checksums, and restore notes belong under
-`REPOMAP_HOME/backups`. Do not use unbacked wipe/reset/drop/clear/truncate
+`CLOE_HOME/backups`. Do not use unbacked wipe/reset/drop/clear/truncate
 operations, and do not operate on host-installed or unrelated Postgres.
 
 ## First Refresh Runbook
@@ -572,13 +572,13 @@ Recommended first-refresh order:
 Example commands:
 
 ```sh
-export REPOMAP_HOME=/path/to/repo-map-home
-repomap-kg local status --repo-map-home "$REPOMAP_HOME" --check-containers --json
-repomap-kg ops config-check --repo-map-home "$REPOMAP_HOME" --json
-repomap-kg ops graphs --repo-map-home "$REPOMAP_HOME" --json
+export CLOE_HOME=/path/to/repo-map-home
+repomap-kg local status --repo-map-home "$CLOE_HOME" --check-containers --json
+repomap-kg ops config-check --repo-map-home "$CLOE_HOME" --json
+repomap-kg ops graphs --repo-map-home "$CLOE_HOME" --json
 curl -fsS http://127.0.0.1:55880/status
-repomap-kg ops refresh-graph --repo-map-home "$REPOMAP_HOME" --graph <graph-id> --json
-repomap-kg ops refresh-status --repo-map-home "$REPOMAP_HOME" --graph <graph-id> --json
+repomap-kg ops refresh-graph --repo-map-home "$CLOE_HOME" --graph <graph-id> --json
+repomap-kg ops refresh-status --repo-map-home "$CLOE_HOME" --graph <graph-id> --json
 ```
 
 When direct DB host-port exposure is disabled, host-side refreshes automatically
@@ -610,12 +610,12 @@ then decide whether to run an actual refresh. Avoid `refresh-enabled` while
 private graphs are enabled unless you have deliberately reviewed every graph.
 
 ```sh
-export REPOMAP_HOME=/path/to/repo-map-home
-repomap-kg ops refresh-preflight --repo-map-home "$REPOMAP_HOME" --graph <private-graph-id> --json
+export CLOE_HOME=/path/to/repo-map-home
+repomap-kg ops refresh-preflight --repo-map-home "$CLOE_HOME" --graph <private-graph-id> --json
 
 # Review counts, configured exclude hit counts, and safety markers.
 # Only with explicit approval:
-# repomap-kg ops refresh-graph --repo-map-home "$REPOMAP_HOME" --graph <private-graph-id> --json
+# repomap-kg ops refresh-graph --repo-map-home "$CLOE_HOME" --graph <private-graph-id> --json
 ```
 
 Refresh exactly one private graph per approval and inspect bounded
@@ -662,7 +662,7 @@ preflight candidate set for one graph, `ops drift-check` to compare current
 state against those explicit baselines before a maintenance refresh, and
 `ops baseline-prune` for retention. `drift-check` exits `0` on match and `2`
 on drift; treat drift as a stop-and-review gate. Baseline files live under
-`$REPOMAP_HOME/status/baselines/<graph>/<stored|preflight>/` and are private
+`$CLOE_HOME/status/baselines/<graph>/<stored|preflight>/` and are private
 local operational state, not public repository artifacts; never store raw
 observations, source snippets, dumps, server-memory JSONL, credentials, or
 unbounded path lists as baselines.

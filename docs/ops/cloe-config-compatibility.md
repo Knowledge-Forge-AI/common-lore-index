@@ -1,20 +1,13 @@
 # CLOE configuration compatibility
 
-Common Lore Index (CLOE) is Common Lore Index's selected successor identity. This first
-compatibility sequence keeps the existing `repomap-kg` distribution, executable
-and import namespace while preparing the coordinated package cutover.
-It does not move an existing home or database.
+Common Lore Index can read an explicitly selected predecessor home for data recovery and migration.
 
 ## Home selection
 
-An explicit `--repo-map-home` wins. Otherwise a nonempty `CLOE_HOME` wins over
-nonempty `REPOMAP_HOME`. Without an explicit selector, a recognizable owned private
-`~/.cloe` wins. Otherwise a recognizable private `~/.repo-map` remains selected,
-including when an unrelated ordinary `~/.cloe` directory exists. The CLI emits
-a bounded compatibility notice on stderr and leaves that unrelated directory
-untouched. Missing defaults select `~/.cloe` without creating it; read-only commands
-never initialize it. Other unsafe or unrecognized states refuse and suggest an
-explicit `CLOE_HOME`. `CLOE_PATH` is unrelated and is ignored.
+An explicit `--repo-map-home` wins over a nonempty `CLOE_HOME`. Without either,
+the default is `~/.cloe`. An empty explicit flag is a usage error. Legacy environment settings such as `REPOMAP_HOME`
+are ignored. Select an older home explicitly for migration. Home selection
+creates no files and refuses unsafe or unrecognized defaults. `CLOE_PATH` is ignored.
 
 Implicit recognition requires an ordinary owned private directory, ordinary owned
 configuration files in one supported family, valid schema/layering and a storage
@@ -155,7 +148,7 @@ repomap-kg ops config-migration-finalize --repo-map-home ./example-home --yes
 ```
 
 Each command needs an explicit `--repo-map-home`. There is no `--config` alias
-and no `CLOE_HOME`/`REPOMAP_HOME`/default fallback. Without `--yes` a command is
+and no `CLOE_HOME` or default fallback. Without `--yes` a command is
 a dry run: it writes nothing, creates no lock or directory, and chmods nothing.
 `--dry-run` and `--yes` cannot be combined.
 

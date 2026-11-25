@@ -222,8 +222,8 @@ class CliOpsConfigIntegrationTests(CliIntegrationTestCase):
             e_exit, _, e_err = self.run_module_entrypoint("ops", "config-check", "--repo-map-home", str(empty_home), "--json")
 
         self.assertEqual((m_exit, f_exit, e_exit), (1, 1, 1))
-        self.assertIn("REPOMAP_HOME does not exist", m_err)
-        self.assertIn("REPOMAP_HOME must be a directory", f_err)
+        self.assertIn("CLOE_HOME does not exist", m_err)
+        self.assertIn("CLOE_HOME must be a directory", f_err)
         self.assertIn("contains no *.rp.toml or *.rpl.toml files", e_err)
         self.assertIn("CLOE (*.cloe.toml) files", e_err)
 

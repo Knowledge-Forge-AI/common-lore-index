@@ -201,7 +201,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
             ("host-one", "/public/host-one", "repomap_host_one"),
             ("host-multi", "graph:host-multi", "repomap_host_multi"),
         ):
-            connection = self._connection(graph_id, REPOMAP_HOME=str(home), **ambient)
+            connection = self._connection(graph_id, CLOE_HOME=str(home), **ambient)
             calls: list[tuple[tuple, dict]] = []
             with patch.dict("os.environ", ambient, clear=True):
                 store = PostgresCanonicalReadStore(connection, _recording_queries(calls))
