@@ -1027,11 +1027,11 @@
       },
       {
         "path": "tools/ci/d12_system_grant.py",
-        "sha256": "e605b8938665f94f8b63cf0a91a725acfd6228e49a2215fd3c283d11f068a91f"
+        "sha256": "63123ee46431f377235f77752077a778d92babbe146a430b24ae164e8b935a56"
       },
       {
         "path": "tools/ci/d12_system_grant_history.py",
-        "sha256": "002fce8a3e11ff6fba9c21a084809c58a4498b062bf2fa3005d5ad671a06656b"
+        "sha256": "0d309d27cce397b54f09f5d46f590c035ecdaa3ea215ab3843d1507512841c92"
       },
       {
         "path": "tools/ci/d12_system_grant_io.py",

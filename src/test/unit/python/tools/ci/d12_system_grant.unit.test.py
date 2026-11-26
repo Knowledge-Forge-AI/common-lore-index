@@ -112,7 +112,7 @@ def _coherent_candidate_record(grant: dict[str, Any]) -> tuple[dict[str, Any], b
     return validate_expected_candidate_record(cand_doc), raw, hashlib.sha256(raw).hexdigest()
 
 
-def test_load_tracked_system_build_grant_matches_ci173_and_refuses_drifted_candidate() -> None:
+def test_load_tracked_system_build_grant_matches_ci174_and_refuses_drifted_candidate() -> None:
     cand_path = REPO_ROOT / DEFAULT_CANDIDATE_RELPATH
     grant_path = REPO_ROOT / DEFAULT_GRANT_RELPATH
     raw_grant, _ = load_and_validate_system_build_grant(grant_path)
@@ -171,9 +171,9 @@ def test_load_tracked_system_build_grant_matches_ci173_and_refuses_drifted_candi
     assert grant["schema"] == SYSTEM_BUILD_GRANT_SCHEMA
     assert grant["platform"] == "linux/amd64"
     assert grant["owner"] == "main-system-gate"
-    assert grant["workflow_ordinal"] == 173
+    assert grant["workflow_ordinal"] == 174
     assert grant["workflow_attempt"] == 1
-    assert (grant["maximum_total"], grant["maximum_per_platform"]) == (77, 77)
+    assert (grant["maximum_total"], grant["maximum_per_platform"]) == (78, 78)
     assert grant["before"] == EXPECTED_BEFORE_SHA
     assert grant["base"] == EXPECTED_BASE_SHA
     assert grant["approval_sha256"] == EXPECTED_APPROVAL_SHA256
