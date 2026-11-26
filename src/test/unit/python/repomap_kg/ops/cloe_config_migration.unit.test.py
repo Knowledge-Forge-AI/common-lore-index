@@ -62,7 +62,7 @@ def test_apply_converts_both_layers_preserving_bytes_mode_inode_and_effective_or
     (home / "notes.toml").write_text("unrelated = true\n")
     (home / "notes.toml").chmod(0o640)
     before = {name: (home / name).stat() for name in ("00-project.rp.toml", "90-machine.rpl.toml")}
-    _, payload, files, _ = _read_ops_config_home_payload(home)
+    _, payload, files, _ = _read_ops_config_home_payload(home, migration=True)
     result = apply_cloe_config_migration(home, confirmed=True)
     assert set(result) == RESULT_KEYS and result["result"] == "applied" and result["refusals"] == []
     assert result["changes"] == [

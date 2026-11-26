@@ -326,7 +326,7 @@ def test_no_old_origin_name_or_scenario_retry_selector_remains() -> None:
         root / "support/python/common_lore_index_test_support/test_cov5k_r2_fix2_evidence.py",
         root / "support/python/common_lore_index_test_support/test_cov5k_r2_fix2_preparation.py",
         root / "support/python/common_lore_index_test_support/test_cov5k_r2_groupa_contract.py",
-        root / "unit/python/common_lore_index_test_support/test_cov5k_r2_groupa_fix1_contract.unit.test.py",
+        root / "unit/python/repomap_test_support/test_cov5k_r2_groupa_fix1_contract.unit.test.py",
     )
     old_name = "raw_evidence" + "_origin"
     assert all(old_name not in path.read_text(encoding="utf-8") for path in owners)

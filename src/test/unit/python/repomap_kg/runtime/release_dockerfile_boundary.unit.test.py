@@ -18,9 +18,9 @@ def test_commands_reexports_pure_leaf_and_preserves_recipe_bytes() -> None:
     # Pin the unresolved recipe and the frozen recipe with its archive sources.
     cases = (
         (release.DYNAMIC_PACKAGE_MANIFEST, release.PSYCOPG_LIBPQ_VERSION,
-         "20db9ee3957945882d3a2f1fa83626a6cd37235ed0fdd4665e6d83c99ca37cf2"),
+         "a7afea874d268cda746f8fb23b62a9b5dc8a4a1d941e0fbb852ddfe2f31c3041"),
         (release_manifest.D12_CANDIDATE_PACKAGE_MANIFEST, release_manifest.D12_CANDIDATE_LIBPQ_VERSION,
-         "42efd587afc908a35f1fa7d49e704f9a3edef5904d721c06617e82d7bdbd9404"),
+         "aef872be84cf267973463df2b185ca13bee6d804ebc59fb05acfbc58bcc78dac"),
     )
     for manifest, libpq_version, expected in cases:
         assert hashlib.sha256(render_server_dockerfile(manifest, libpq_version).encode()).hexdigest() == expected
@@ -39,7 +39,7 @@ def test_older_builder_header_selection_has_a_distinct_recipe_identity() -> None
     ))
     rendered = render_server_dockerfile(manifest, release_manifest.D12_CANDIDATE_LIBPQ_VERSION)
     assert hashlib.sha256(rendered.encode()).hexdigest() == (
-        "df921c1e8e7b1e2da45bbe1c2ee29499d82649676d309c9751d88c592a28887e"
+        "0bf4282961db4570bae04980ddeab5f961b7b0b7d39291ea2a084ee1f8aefd66"
     )
 
 

@@ -14,7 +14,7 @@ from common_lore_index_test_support.test_cov5k_r2_fix1_catalog_values import (
 
 K_FIXED_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
     "K01": (
-        "repomap-kg",
+        "cloe",
         "local",
         "db",
         "dump",
@@ -24,7 +24,7 @@ K_FIXED_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
         "--json",
     ),
     "K02": (
-        "repomap-kg",
+        "cloe",
         "local",
         "db",
         "restore-all",
@@ -34,7 +34,7 @@ K_FIXED_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
         "--json",
     ),
     "K03": (
-        "repomap-kg",
+        "cloe",
         "local",
         "db",
         "upgrade-schema",
@@ -44,7 +44,7 @@ K_FIXED_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
         "--json",
     ),
     "K04": (
-        "repomap-kg",
+        "cloe",
         "local",
         "db",
         "init",
@@ -55,7 +55,7 @@ K_FIXED_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
         "--json",
     ),
     "K05": (
-        "repomap-kg",
+        "cloe",
         "local",
         "db",
         "drop",
@@ -94,7 +94,7 @@ K_FIXED_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
 
 K_REHEARSAL_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
     "K01": (
-        "repomap-kg",
+        "cloe",
         "local",
         "db",
         "dump",
@@ -104,7 +104,7 @@ K_REHEARSAL_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
         "--json",
     ),
     "K02": (
-        "repomap-kg",
+        "cloe",
         "local",
         "db",
         "restore-all",
@@ -114,7 +114,7 @@ K_REHEARSAL_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
         "--json",
     ),
     "K03": (
-        "repomap-kg",
+        "cloe",
         "local",
         "db",
         "upgrade-schema",
@@ -124,7 +124,7 @@ K_REHEARSAL_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
         "--json",
     ),
     "K04": (
-        "repomap-kg",
+        "cloe",
         "local",
         "db",
         "init",
@@ -135,7 +135,7 @@ K_REHEARSAL_ARGV_SHAPES: dict[str, tuple[str, ...]] = {
         "--json",
     ),
     "K05": (
-        "repomap-kg",
+        "cloe",
         "local",
         "db",
         "drop",

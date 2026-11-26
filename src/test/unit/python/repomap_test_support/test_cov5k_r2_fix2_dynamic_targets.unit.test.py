@@ -292,10 +292,10 @@ def test_preserves_independent_re_resolution_and_identities() -> None:
         _python_identity("unsupported/path.py", "main")
 
 
-_ACCEPTED_PREP_DIGEST = "124e1c7d05016c601739f946a6a4fd69646c794b0168e80444a612bb4189ef30"
+_ACCEPTED_PREP_DIGEST = "ef113ce0e950e7ad555b77417bd4c9baba7f8468be823b4580e0877384c84c13"
 _PRIOR_PREP_DIGEST = "c3eb4a85bc29f9e1eb2275c0ac16d21f3539eff0ef6db99ee30ddf8f117c2c53"
 _PREP_PATH = "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_preparation.py"
-_ACCEPTED_RESOURCE_DIGEST = "958fb547b2b7b78b45872dffcd2175823da66d842bfccf0bf057736f0fc99a84"
+_ACCEPTED_RESOURCE_DIGEST = "39d65d9f02ca85d109700c6c8371c42255541a7ebc433085bb3ab71cd2070f0d"
 _PRIOR_RESOURCE_DIGEST = "8f81a75e0fb8164390de910e49ccc024fcd68eceac987a4a6918603ea00c8a25"
 _RESOURCE_PATH = "src/test/support/python/common_lore_index_test_support/resource_test_images.py"
 _RESOURCE_SYM = "TestImageManager.build_ephemeral_image"

@@ -215,7 +215,7 @@ def test_group_k_rehearsal_argv_cannot_change_subcommand(frozen, tmp_path):
         item for item in frozen.entries if item.case_id == "K01-backup"
     )
     observed = dict(_run_group_k(Path.cwd(), tmp_path, entry))
-    observed["argv"] = ("repomap-kg", "unrelated", "--help")
+    observed["argv"] = ("cloe", "unrelated", "--help")
     artifact = build_result(
         frozen,
         open_observations(frozen),

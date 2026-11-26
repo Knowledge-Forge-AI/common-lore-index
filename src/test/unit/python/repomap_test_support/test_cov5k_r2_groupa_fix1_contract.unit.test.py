@@ -380,7 +380,7 @@ def test_all_real_group_a_histories_remain_accepted(
 
 
 def test_scoped_assertions_retain_public_safe_group_a_context() -> None:
-    root = Path("src/test/unit/python/common_lore_index_test_support")
+    root = Path(__file__).resolve().parent
     sources = (
         (root / "test_cov5k_r2_fix3_enactment.unit.test.py").read_text(),
         (root / "test_cov5k_r2_fix3_review2_reproductions.unit.test.py").read_text(),
