@@ -16,6 +16,11 @@ from common_lore_index_test_support.resource_ledger import (
     ResourceLedger,
     RetainedReason,
 )
+from common_lore_index_test_support.resource_scratch_history import (
+    HistoricalScratchCandidate,
+    HistoricalScratchInventory,
+    classify_historical_scratch,
+)
 from common_lore_index_test_support.test_scratch import TestScratchLayout
 
 
@@ -349,13 +354,6 @@ class ScratchRunOwner:
             inode_count=measurement.inode_count,
         )
         self._retained.add(path.resolve())
-
-
-from common_lore_index_test_support.resource_scratch_history import (  # noqa: E402
-    HistoricalScratchCandidate,
-    HistoricalScratchInventory,
-    classify_historical_scratch,
-)
 
 
 __all__ = [

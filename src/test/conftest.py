@@ -40,23 +40,22 @@ _SUPPORT_ROOT = Path(__file__).resolve().parent / "support" / "python"
 if str(_SUPPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_SUPPORT_ROOT))
 
-from common_lore_index_test_support.test_scratch import (  # noqa: E402
-    ENV_RUN_ROOT,
-    establish_run,
-    finalize_run,
-)
-from common_lore_index_test_support.build_profile_debt import (  # noqa: E402
-    DEFERRED_BUILD_PROFILE_NODE_IDS,
-    enforce_build_profile_authority,
-)
-from common_lore_index_test_support.resource_run_test_support import (  # noqa: E402
-    preserve_resource_run_process_state,
-)
+
+def _load_test_support():
+    """Import the scratch owners after the support root is available."""
+    from common_lore_index_test_support import test_scratch
+    from common_lore_index_test_support import build_profile_debt
+    from common_lore_index_test_support import resource_run_test_support
+
+    return test_scratch, build_profile_debt, resource_run_test_support
+
+
+_test_scratch, _build_profile_debt, _resource_run_test_support = _load_test_support()
 # Reuses an inherited REPOMAP_TEST_RUN_ROOT when the runner already allocated
 # one, so a direct pytest invocation under the runner never creates a second
 # run root.
 os.environ.pop("CLOE_HOME", None)  # Isolate collection/session fixtures as well as tests.
-_LAYOUT = establish_run().apply()
+_LAYOUT = _test_scratch.establish_run().apply()
 
 
 @pytest.fixture(autouse=True)
@@ -98,7 +97,7 @@ def pytest_collection_modifyitems(session, config, items):
     collected = {item.nodeid for item in items} & optional
     if marked_ids - optional or collected - marked_ids:
         raise d12.D12ProfileError("D12 optional marker and one-node registry disagree")
-    if optional & set(DEFERRED_BUILD_PROFILE_NODE_IDS) or any(
+    if optional & set(_build_profile_debt.DEFERRED_BUILD_PROFILE_NODE_IDS) or any(
         item.get_closest_marker("requires_build_profile") is not None for item in marked
     ):
         raise d12.D12ProfileError("the D12 optional owner must not enter deferred build debt")
@@ -123,7 +122,7 @@ def pytest_collection_modifyitems(session, config, items):
 def _reconcile_body_study(config, items):
     from common_lore_index_test_support import retrieval_body_study as body_study
     body_study.reconcile_body_study(
-        config, items, deferred_build_node_ids=DEFERRED_BUILD_PROFILE_NODE_IDS,
+        config, items, deferred_build_node_ids=_build_profile_debt.DEFERRED_BUILD_PROFILE_NODE_IDS,
     )
 
 
@@ -132,7 +131,7 @@ def _reconcile_supplement_study(config, items):
     from common_lore_index_test_support import retrieval_supplement_study as study
 
     study.reconcile_supplement_study(
-        config, items, deferred_build_node_ids=DEFERRED_BUILD_PROFILE_NODE_IDS,
+        config, items, deferred_build_node_ids=_build_profile_debt.DEFERRED_BUILD_PROFILE_NODE_IDS,
     )
 
 
@@ -187,13 +186,13 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 
 
 def pytest_report_header(config):
-    return f"repomap test scratch: {_LAYOUT.run_root.name} ({ENV_RUN_ROOT})"
+    return f"repomap test scratch: {_LAYOUT.run_root.name} ({_test_scratch.ENV_RUN_ROOT})"
 
 
 @pytest.fixture
 def isolate_test_resource_run_process_state():
     """Prevent allocating-owner unit seams from poisoning later tests."""
-    with preserve_resource_run_process_state():
+    with _resource_run_test_support.preserve_resource_run_process_state():
         yield
 
 
@@ -225,7 +224,7 @@ def clean_test_scratch(request):
 def pytest_runtest_setup(item):
     """Refuse direct execution of visible build debt without build authority."""
     if item.get_closest_marker("requires_build_profile") is not None:
-        enforce_build_profile_authority()
+        _build_profile_debt.enforce_build_profile_authority()
     from common_lore_index_test_support import d12_core_image as d12
 
     if item.get_closest_marker(d12.MARKER) is not None:
@@ -275,7 +274,7 @@ def pytest_sessionfinish(session, exitstatus):
     leave its manifest ``running`` for an operator to find, rather than being
     reported as a clean finish it never had.
     """
-    finalize_run(
+    _test_scratch.finalize_run(
         _LAYOUT,
         "passed" if int(exitstatus) == 0 else "failed",
         exit_status=int(exitstatus),

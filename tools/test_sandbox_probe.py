@@ -14,19 +14,16 @@ for path in (REPO_ROOT, TOOLS_ROOT, TEST_SUPPORT_ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from common_lore_index_test_support.unit_purity import require_live_resource_allowed  # noqa: E402
-from test_sandbox import ensure_sandbox_image, run_in_sandbox  # noqa: E402
-from test_sandbox_entrypoint import (  # noqa: E402
-    INFRASTRUCTURE_PROBE_FLAG,
-    INFRASTRUCTURE_PROBE_PAYLOAD,
-)
-
-
 DOCKERFILE = REPO_ROOT / "tools" / "test_sandbox" / "Dockerfile"
 
 
 def main() -> int:
+    from common_lore_index_test_support.unit_purity import require_live_resource_allowed
+
     require_live_resource_allowed("integration sandbox infrastructure probe")
+    from test_sandbox import ensure_sandbox_image, run_in_sandbox
+    from test_sandbox_entrypoint import INFRASTRUCTURE_PROBE_FLAG, INFRASTRUCTURE_PROBE_PAYLOAD
+
     image_id = ensure_sandbox_image(dockerfile=DOCKERFILE)
     return run_in_sandbox(
         [INFRASTRUCTURE_PROBE_FLAG, *INFRASTRUCTURE_PROBE_PAYLOAD],
