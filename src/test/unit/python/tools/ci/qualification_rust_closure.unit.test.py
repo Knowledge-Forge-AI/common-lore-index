@@ -15,7 +15,7 @@ from ci.qualification_rust_closure import ClosureRefused, module_path, required_
 from ci.qualification_rust_manifest import GUEST_FILES
 
 ROOT = Path(__file__).resolve().parents[6]
-MANIFEST = ROOT / "tools/ci/rust_pilot_qualification_manifest.json"
+MANIFEST = ROOT / "tools/ci/rust_pilot_qualification_manifest_cloe_namespace_v1.json"
 
 
 def test_frozen_manifest_matches_resolved_component_closure() -> None:

@@ -23,7 +23,7 @@ from ci import rust_pilot_qualification as command
 from ci.qualification_rust_accounting import AccountingGap
 from common_lore_index.extractors.rust_pilot import prepared_profile
 
-manifest_path = root/'tools/ci/rust_pilot_qualification_manifest.json'
+manifest_path = root/'tools/ci/rust_pilot_qualification_manifest_cloe_namespace_v1.json'
 manifest = json.loads(manifest_path.read_bytes())
 native = json.loads((base/'t1-native.json').read_bytes())
 state = base/'d12';state.mkdir(mode=0o700)

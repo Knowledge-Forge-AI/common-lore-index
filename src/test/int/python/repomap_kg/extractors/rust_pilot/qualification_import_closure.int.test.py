@@ -93,7 +93,7 @@ from common_lore_index_test_support.rust_pilot_fake_docker import FakeDockerBrid
 from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import stand_in_wheels
 
 manifest = json.loads(
-    (root / "tools/ci/rust_pilot_qualification_manifest.json").read_text(encoding="utf-8")
+    (root / "tools/ci/rust_pilot_qualification_manifest_cloe_namespace_v1.json").read_text(encoding="utf-8")
 )
 synthetic = stand_in_wheels()
 deferred = {
@@ -128,7 +128,7 @@ with tempfile.TemporaryDirectory(prefix="rust-pilot-qualification-t1-") as raw:
         from common_lore_index.extractors.rust_pilot.prepared_profile import (
             ProfileUnavailable, VerifiedProfile, profile_bytes,
         )
-        manifest = validate_manifest(root / "tools/ci/rust_pilot_qualification_manifest.json", root)
+        manifest = validate_manifest(root / "tools/ci/rust_pilot_qualification_manifest_cloe_namespace_v1.json", root)
         fixture_root, _ = fixture_paths(manifest, root)
         source_paths = tuple(path for path in manifest["fixture"]["files"] if not path.startswith("golds/"))
         assert len(source_paths) == 13
@@ -364,7 +364,7 @@ from ci.qualification_rust_import_guard import HostImportRefused, host_import_gu
 from ci.qualification_rust_shape import source_digests
 
 manifest = json.loads(
-    (root / "tools/ci/rust_pilot_qualification_manifest.json").read_text(encoding="utf-8")
+    (root / "tools/ci/rust_pilot_qualification_manifest_cloe_namespace_v1.json").read_text(encoding="utf-8")
 )
 target_path = "src/main/python/common_lore_index/graph/discovery.py"
 target_module = "common_lore_index.graph.discovery"
