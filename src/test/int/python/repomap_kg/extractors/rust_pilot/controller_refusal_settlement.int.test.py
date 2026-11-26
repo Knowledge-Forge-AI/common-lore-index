@@ -18,8 +18,8 @@ from common_lore_index.extractors.rust_pilot.bounded_exec import ExecResult
 from common_lore_index.extractors.rust_pilot.controller import RustPilotController
 from common_lore_index.extractors.rust_pilot.docker_boundary import DockerBoundary
 from common_lore_index.graph.discovery_records import FileInfo
-from repomap_test_support.rust_pilot_fake_docker import FakeDockerBridge, IMAGE, _Container
-from repomap_test_support.rust_pilot_semantic_fixtures import prepare_synthetic_profile
+from common_lore_index_test_support.rust_pilot_fake_docker import FakeDockerBridge, IMAGE, _Container
+from common_lore_index_test_support.rust_pilot_semantic_fixtures import prepare_synthetic_profile
 
 
 def _result(*, code: int | None = 0, stdout: bytes = b"", timeout: bool = False) -> ExecResult:

@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from repomap_test_support.scale28_adr2_frame_model import (
+from common_lore_index_test_support.scale28_adr2_frame_model import (
     MAX_OBSERVATION_ACK_BYTES,
     MAX_OBSERVATION_FRAME_BYTES,
     MAX_SIGNED_INT,

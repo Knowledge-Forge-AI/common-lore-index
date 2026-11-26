@@ -10,12 +10,19 @@ from ci.python_retention_owner_contract import CONTRACTS, validate_owner_context
 ROOT = Path(__file__).resolve().parents[6]
 
 
-@pytest.mark.parametrize("owner", sorted(CONTRACTS))
+def _owner_id(owner: str) -> str:
+    # Keep the six existing parametrized node IDs selectable after the support move.
+    if owner == "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_discovery_cases.py":
+        return "src/test/support/python/repomap_test_support/pgvector_prebuilt_discovery_cases.py"
+    return owner
+
+
+@pytest.mark.parametrize("owner", sorted(CONTRACTS), ids=_owner_id)
 def test_complete_current_owner_context(owner: str) -> None:
     validate_owner_context(owner, ast.parse((ROOT / owner).read_text()))
 
 
-@pytest.mark.parametrize("owner", sorted(CONTRACTS))
+@pytest.mark.parametrize("owner", sorted(CONTRACTS), ids=_owner_id)
 @pytest.mark.parametrize("extra", [
     "REPO_ROOT = Path('/foreign')",
     "sys.path.append('/foreign')",

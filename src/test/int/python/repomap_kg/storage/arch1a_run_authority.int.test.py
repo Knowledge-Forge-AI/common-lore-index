@@ -14,7 +14,7 @@ from common_lore_index.storage.run_authority import (
     build_run_authority_query_sql,
     parse_run_authority,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.postgres_harness import temporary_postgres
 
 
 _RowValue = TypeVar("_RowValue")

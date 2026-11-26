@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support.build_profile_debt import DEFERRED_BUILD_PROFILE_NODE_IDS
+from common_lore_index_test_support.build_profile_debt import DEFERRED_BUILD_PROFILE_NODE_IDS
 from runner_integration_obligations import AbruptDeclaration
 from runner_integration_obligations import MAINTAINED_ABRUPT_DECLARATIONS
 from runner_integration_population import (

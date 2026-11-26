@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 from unittest.mock import patch
 
-from repomap_test_support.ops_refresh import OpsRefreshUnitTestCase
+from common_lore_index_test_support.ops_refresh import OpsRefreshUnitTestCase
 
 from common_lore_index.graph.multi_source_pipeline import scan_multi_source_generations
 from common_lore_index.ops.generations import canonicalizer_generation, extractor_generation

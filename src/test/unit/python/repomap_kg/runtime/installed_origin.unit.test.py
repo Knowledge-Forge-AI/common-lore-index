@@ -12,8 +12,8 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.installed_environment import ChildResult, InstalledEnvironment
-from repomap_test_support.installed_origin import (
+from common_lore_index_test_support.installed_environment import ChildResult, InstalledEnvironment
+from common_lore_index_test_support.installed_origin import (
     BASE_PROBE, ORIGIN_PROBE, OriginRecord, checkout_refusal, classify, closure, distributions_text,
     inspect_wrappers, wrappers_hold,
 )
@@ -137,7 +137,7 @@ def test_wrappers_direct_and_quoted_trampoline(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("change", ["none", "extra-distribution", "driver", "system-site", "current-product"])
 def test_incumbent_witness_requires_its_exact_pure_closure(tmp_path: Path, monkeypatch, change: str) -> None:
-    import repomap_test_support.installed_experience_witnesses as witness
+    import common_lore_index_test_support.installed_experience_witnesses as witness
 
     env = _env(tmp_path / "incumbent root")
     expected = ("repomap-kg==0.0.3", "typing-extensions==4.16.0")

@@ -11,8 +11,8 @@ from typing import Any
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
 from common_lore_index.storage.sqlite_local.navigation_queries import navigation_candidates
 
-from repomap_test_support.navigation_search_fixtures import BETA_DOC, BINDING, GRAPH, navigation_home
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
+from common_lore_index_test_support.navigation_search_fixtures import BETA_DOC, BINDING, GRAPH, navigation_home
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
 
 
 def test_scoped_storage_search_without_an_admission_predicate_refuses(tmp_path: Path) -> None:

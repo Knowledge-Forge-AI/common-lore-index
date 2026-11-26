@@ -16,8 +16,8 @@ from common_lore_index.storage.sqlite_local.queries import (
     canonical_nodes,
 )
 from common_lore_index.storage.sqlite_local.schema import PUBLICATION_ABSENT, LocalStoreError
-from repomap_test_support.navigation_search_fixtures import BETA_DOC, GRAPH, navigation_home
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
+from common_lore_index_test_support.navigation_search_fixtures import BETA_DOC, GRAPH, navigation_home
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
 
 
 def test_canonical_nodes_by_key_and_prefix_and_window_boundaries(tmp_path: Path) -> None:

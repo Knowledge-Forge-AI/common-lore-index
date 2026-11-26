@@ -25,7 +25,7 @@ from common_lore_index.coordinator._refresh_capability_io import validate_config
 from common_lore_index.coordinator.core import SyntheticCoordinator
 from common_lore_index.coordinator.limits import CoordinatorLimits
 from common_lore_index.coordinator.refresh_adapter import refresh_terminal, run_refresh_worker
-from repomap_test_support.run25_portable_workflows import create_run25_test_capability
+from common_lore_index_test_support.run25_portable_workflows import create_run25_test_capability
 
 
 class _DispositionStoreDouble:

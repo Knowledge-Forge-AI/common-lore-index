@@ -25,7 +25,7 @@ from common_lore_index.ops.resolved_config import configured_repository_identity
 from common_lore_index.graph.multi_source_pipeline import scan_multi_source_generations
 from common_lore_index.runtime.postgres_route import effective_postgres_route
 from common_lore_index.storage import apply_migrations, default_rdbms_root, staged_ingestion
-from repomap_test_support.startup_recovery_scenarios import (
+from common_lore_index_test_support.startup_recovery_scenarios import (
     _make_refresh_fixture, _refresh_harness, _req_norm,
     _run_real_refresh_attempt, _search_path,
 )

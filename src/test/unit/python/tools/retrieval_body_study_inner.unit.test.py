@@ -5,7 +5,7 @@ from dataclasses import replace
 
 import pytest
 
-from repomap_test_support.retrieval_body_study_driver import run_authenticated_body_study
+from common_lore_index_test_support.retrieval_body_study_driver import run_authenticated_body_study
 from retrieval_body_study_preflight import WorkerEpochReceipt, _ISSUED, _receipt_identity
 
 

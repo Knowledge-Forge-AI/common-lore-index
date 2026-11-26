@@ -10,9 +10,9 @@ from typing import Any
 import coverage
 import pytest
 
-from repomap_test_support.d12_image_probes import restore_replay_shim_source
-from repomap_test_support.test_scratch import establish_run, read_run_manifest
-from repomap_test_support.runner_recovery_probe import probe_command
+from common_lore_index_test_support.d12_image_probes import restore_replay_shim_source
+from common_lore_index_test_support.test_scratch import establish_run, read_run_manifest
+from common_lore_index_test_support.runner_recovery_probe import probe_command
 from runner_failure_evidence import CHILD_SCHEMA, DISCOVERY_SCHEMA, FAILURE_SCHEMA, read_diagnostic
 import runner_staging_discovery as discovery
 from runner_coverage import ChildCoverageSession, get_active_bootstrap_capability

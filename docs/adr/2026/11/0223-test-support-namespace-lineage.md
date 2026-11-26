@@ -68,7 +68,9 @@ match. Derive each new operation fingerprint from the actual source and
 check it against the same operation mapped through the permitted import
 rewrite. Verify owner and test bytes against both source revisions. The
 only non-namespace witness change is the exact Rust guest reader and
-synthetic history preparation in the shared guest test.
+synthetic history preparation in the shared guest test. The guarded
+resolver's literal target domain is sorted again after the namespace
+projection because the module prefix changes its lexical position.
 Compare the exact targets and typed recipe parameters after only the
 separately specified path fields have been mapped and each
 digest verified. Never carry authority in arbitrary parameters.

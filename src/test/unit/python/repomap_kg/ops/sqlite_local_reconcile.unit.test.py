@@ -45,9 +45,9 @@ from common_lore_index.storage.sqlite_local.connection import publisher_lock, re
 from common_lore_index.storage.sqlite_local.publisher import LocalPublication, publish_generation
 from common_lore_index.storage.sqlite_local.durability import DURABILITY_FAILED
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.host_read_store_config import fail_if_reached
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.host_read_store_config import fail_if_reached
+from common_lore_index_test_support.sqlite_local_fixtures import (
     generation_bundle,
     graph_toml,
     publication_for,

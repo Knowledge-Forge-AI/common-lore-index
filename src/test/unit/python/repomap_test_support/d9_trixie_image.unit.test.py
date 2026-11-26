@@ -17,9 +17,9 @@ from typing import Any
 import pytest
 
 from common_lore_index.runtime import release
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support import d9_extension_restore as d9
-from repomap_test_support.postgres_container import PostgresContainerHarness, TEST_POSTGRES_IMAGE
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support import d9_extension_restore as d9
+from common_lore_index_test_support.postgres_container import PostgresContainerHarness, TEST_POSTGRES_IMAGE
 import test_sandbox
 import test_sandbox_contract as contract
 

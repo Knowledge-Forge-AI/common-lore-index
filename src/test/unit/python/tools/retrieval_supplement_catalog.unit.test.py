@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.retrieval_supplement_fixtures import (
+from common_lore_index_test_support.retrieval_supplement_fixtures import (
     gold,
     make_test_bindings,
     make_test_catalog_payload,

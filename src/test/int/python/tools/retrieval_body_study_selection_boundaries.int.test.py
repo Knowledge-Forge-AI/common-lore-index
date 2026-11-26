@@ -14,16 +14,16 @@ from common_lore_index.retrieval.context_assembly import (
     select_context_sources,
 )
 from common_lore_index.retrieval.context_contracts import ContextRequest
-from repomap_test_support.context_assertions import (
+from common_lore_index_test_support.context_assertions import (
     assert_valid_context_packet,
     build_postgres_context_fixture,
 )
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE,
     CTX_GRAPH_ID,
     build_sqlite_context_fixture,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

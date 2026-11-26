@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-from repomap_test_support.storage_rows_contracts import _nix_summary_payload
+from common_lore_index_test_support.storage_rows_contracts import _nix_summary_payload
 
 
 def test_nix_summary_from_storage_payload_nix_helpers_records_contracts() -> None:

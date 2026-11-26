@@ -9,7 +9,7 @@ from common_lore_index.storage.sqlite_local.raw_payload import (
     ascii_lower, contains_ascii_folded, jsonb_contains_ascii_folded, jsonb_text, jsonb_value,
 )
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):

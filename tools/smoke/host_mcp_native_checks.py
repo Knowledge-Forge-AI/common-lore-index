@@ -43,12 +43,12 @@ from common_lore_index.storage import (
     source_feed_item_records_to_jsonable, source_reference_records_to_jsonable, source_run_records_to_jsonable,
     source_summary_to_jsonable,
 )
-from repomap_test_support.host_mcp_domain_reads import _status
-from repomap_test_support.host_mcp_investigation import (
+from common_lore_index_test_support.host_mcp_domain_reads import _status
+from common_lore_index_test_support.host_mcp_investigation import (
     _edge_identity, _explain_args, _explain_tool, _search, _search_projection, _summary, _without_warnings,
 )
-from repomap_test_support.host_mcp_publication import cli, jsonable
-from repomap_test_support.host_mcp_stdio import initialize_request, tool_request, tools_list_request
+from common_lore_index_test_support.host_mcp_publication import cli, jsonable
+from common_lore_index_test_support.host_mcp_stdio import initialize_request, tool_request, tools_list_request
 
 from .host_mcp_native_fixture import FEED_SOURCE_ID, VISIBLE_GRAPHS, NativeFixture, stored_repository_facts
 from .host_mcp_native_launch import Expectation

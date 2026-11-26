@@ -4,7 +4,7 @@ from typing import TypedDict
 import unittest
 from unittest.mock import patch
 
-from repomap_test_support.canonical_contract import (
+from common_lore_index_test_support.canonical_contract import (
     DISCOVERY_FIXTURE_ROOT,
     odf_package as _odf_package,
 )

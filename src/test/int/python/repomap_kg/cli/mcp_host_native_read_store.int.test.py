@@ -32,15 +32,15 @@ from common_lore_index.storage import (
     public_embedded_read_result_to_jsonable, public_read_page, public_read_page_to_jsonable,
     query_canonical_neighborhood, query_canonical_node_records,
 )
-from repomap_test_support.host_mcp_investigation import build_plan, seven_tool_requests, verify_plan
-from repomap_test_support.host_mcp_publication import (
+from common_lore_index_test_support.host_mcp_investigation import build_plan, seven_tool_requests, verify_plan
+from common_lore_index_test_support.host_mcp_publication import (
     ABSENT_DATABASE, RESTORE_LOGIN_SQL, assert_least_privilege, await_no_read_role_backends, cli, jsonable,
     publish_fixture, snapshot, write_config,
 )
-from repomap_test_support.host_mcp_stdio import (
+from common_lore_index_test_support.host_mcp_stdio import (
     HostMcpHarness, forbidden_env_keys, initialize_request, tool_request, tools_list_request,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 SEAM_TOOLS = ("cloe_canonical_nodes", "cloe_canonical_edges",
               "cloe_explain_canonical_edge", "cloe_canonical_neighborhood")

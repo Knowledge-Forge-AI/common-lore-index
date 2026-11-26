@@ -17,7 +17,7 @@ from common_lore_index.service_package.operations import (
     ServicePackageError,
 )
 from common_lore_index.service_package.systemd import SystemdUserAdapter
-from repomap_test_support.executable_authority import controlled_service_authority
+from common_lore_index_test_support.executable_authority import controlled_service_authority
 
 
 class RecordingRunner:

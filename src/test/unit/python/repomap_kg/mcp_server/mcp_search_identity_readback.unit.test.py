@@ -23,7 +23,7 @@ from common_lore_index.storage.sql_canonical import (
     build_canonical_neighborhood_query_sql,
     build_canonical_storage_summary_query_sql,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class McpSearchIdentityReadbackUnitTests(McpServerTestSupport):

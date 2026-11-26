@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import pytest
 
-from repomap_test_support.retrieval_body_fixtures import (
+from common_lore_index_test_support.retrieval_body_fixtures import (
     make_body_bindings,
     make_body_catalog_payload,
     make_body_identity,

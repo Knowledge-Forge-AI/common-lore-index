@@ -37,8 +37,8 @@ from common_lore_index.storage import (
     SourceRunRecord,
     SourceSummaryRecord,
 )
-from repomap_test_support.host_read_store_config import fail_if_reached, failing_store_binding
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.host_read_store_config import fail_if_reached, failing_store_binding
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 ITEM_KEY = "feed.item:feed.channel%3Afeed.document%253Afile%25253Arss.xml%3Aself:item-1"
 FAMILIES: tuple[LanguageSummaryFamily, ...] = ("python", "terraform", "openapi", "js_framework", "nix")

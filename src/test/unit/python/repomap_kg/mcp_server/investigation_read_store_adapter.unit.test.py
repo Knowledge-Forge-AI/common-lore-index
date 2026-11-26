@@ -17,14 +17,14 @@ from common_lore_index.server.investigation_read_store import (
     PostgresInvestigationReadStore,
 )
 from common_lore_index.storage import StorageSchemaError
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     NO_FALLBACK_GUARDS,
     fail_if_reached,
     patched_guards,
     setup_owned_config,
     setup_owned_home,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 MISSING_DB = 'psql failed: FATAL: database "repomap_x" does not exist'
 UNRESOLVED = 'could not translate host name "postgres" to address'

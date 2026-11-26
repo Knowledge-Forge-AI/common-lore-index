@@ -284,11 +284,21 @@ def test_unit_owner_can_witness_its_own_dynamic_operation(tmp_path: Path) -> Non
 
 
 def test_current_coverage_owners_resolve_every_declared_operation() -> None:
+    from ci.python_retention_support_projection import verify_support_namespace
+
     root = Path(__file__).resolve().parents[6]
     inventory = json.loads((root / 'tools/ci/python_retention_inventory.json').read_bytes())
     paths = [entry['path'] for entry in inventory['files']]
     graph = build_dependency_graph(root, paths)
-    records = active_boundaries(inventory)
+    support = verify_support_namespace(root)
+    assert support is not None
+    records = active_boundaries(inventory, support=support)
+    dispatch = next(record for record in records if record["id"] ==
+                    "cloe.preview004.cloe.server-parity1.dispatch.v1.cloe-support")
+    dispatch_owner = dispatch["owner"]
+    assert dispatch_owner not in graph["errors"], graph["errors"].get(dispatch_owner)
+    assert dispatch_owner not in graph["dynamic_uncertainty"]
+    assert dispatch["id"] in graph["resolved_dynamic_dependencies"]
     for filename, count in (
         ('coverage_json_export.unit.test.py', 6),
         ('test_runner_coverage_child.unit.test.py', 1),

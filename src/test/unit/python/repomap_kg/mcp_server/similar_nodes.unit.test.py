@@ -19,8 +19,8 @@ from common_lore_index.server.mcp import (
 from common_lore_index.server.sqlite_read_binding import SqliteInvestigationStores
 from common_lore_index.storage.semantic_candidate_readback import candidate_provenance
 from common_lore_index.storage.semantic_candidates import CandidateResult, EmbeddingProfilesResult, validated_profile_entry
-from repomap_test_support.mcp_server import McpServerTestSupport
-from repomap_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
 
 
 class SimilarNodesUnitTest(McpServerTestSupport):

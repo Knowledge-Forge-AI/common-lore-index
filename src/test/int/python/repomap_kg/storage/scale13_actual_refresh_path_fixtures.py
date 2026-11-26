@@ -150,7 +150,7 @@ def _actual_refresh_argv(
     return (
         sys.executable,
         "-m",
-        "repomap_test_support.scale14_actual_refresh_child",
+        "common_lore_index_test_support.scale14_actual_refresh_child",
         "--cancel-code",
         test_control_code,
         "--wait-seconds",

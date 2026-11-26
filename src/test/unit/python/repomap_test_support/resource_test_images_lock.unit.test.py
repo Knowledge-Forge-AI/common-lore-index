@@ -11,8 +11,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_test_images import (
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_test_images import (
     TestImageError as ImageLifecycleError,
     TestImageManager as ImageManager,
 )
@@ -85,7 +85,7 @@ def test_lifecycle_lock_path_never_uses_system_temporary_directories(tmp_path):
 
     source = (
         Path(__file__).parents[3]
-        / "support/python/repomap_test_support/resource_test_images.py"
+        / "support/python/common_lore_index_test_support/resource_test_images.py"
     ).read_text(encoding="utf-8")
     assert '"/tmp"' not in source
     assert "/private/tmp" not in source

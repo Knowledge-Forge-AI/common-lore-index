@@ -28,7 +28,7 @@ from common_lore_index.graph.discovery_extractors import (
 from common_lore_index.observations.raw import RawObservation
 
 
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class ShellPipelineIntegrationTests(unittest.TestCase):

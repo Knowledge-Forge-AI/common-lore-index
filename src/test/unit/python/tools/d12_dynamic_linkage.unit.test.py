@@ -11,8 +11,8 @@ import sys
 
 import pytest
 
-from repomap_test_support import d12_dynamic_linkage as linkage
-from repomap_test_support import resource_test_image_commands as materializer
+from common_lore_index_test_support import d12_dynamic_linkage as linkage
+from common_lore_index_test_support import resource_test_image_commands as materializer
 
 
 def _elf(needed, undefined, defined, *, wide=True, little=True) -> bytes:

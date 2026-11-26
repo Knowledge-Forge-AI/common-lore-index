@@ -20,26 +20,26 @@ for candidate in (TOOLS_ROOT, SUPPORT_ROOT):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-from repomap_test_support.resource_gc_ledger import GcLedger as GcLedger
-from repomap_test_support.resource_deletion_gc import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger as GcLedger
+from common_lore_index_test_support.resource_deletion_gc import (
     DeletionGcError as DeletionGcError,
     delete_quarantine_batch as delete_quarantine_batch,
     public_deletion_projection as public_deletion_projection,
 )
-from repomap_test_support.resource_deletion_records import (
+from common_lore_index_test_support.resource_deletion_records import (
     DeletionRecordError as DeletionRecordError,
     DeletionRecordStore as DeletionRecordStore,
 )
-from repomap_test_support.resource_hygiene_policy import (
+from common_lore_index_test_support.resource_hygiene_policy import (
     HygieneConfigError as HygieneConfigError,
     load_hygiene_config as load_hygiene_config,
 )
-from repomap_test_support.resource_index import (
+from common_lore_index_test_support.resource_index import (
     AdvisoryIndex as AdvisoryIndex,
     HostAdmissionRefused as HostAdmissionRefused,
 )
-from repomap_test_support.resource_index_records import safe_run_id as safe_run_id
-from repomap_test_support.resource_index_maintenance import (
+from common_lore_index_test_support.resource_index_records import safe_run_id as safe_run_id
+from common_lore_index_test_support.resource_index_maintenance import (
     IndexMaintenanceError as IndexMaintenanceError,
     compact_index as compact_index,
     rebuild_inventory as rebuild_inventory,
@@ -47,33 +47,33 @@ from repomap_test_support.resource_index_maintenance import (
     recover_stale_admission_lock as recover_stale_admission_lock,
     reconcile_deleted_run as reconcile_deleted_run,
 )
-from repomap_test_support.resource_index_mode_migration import (
+from common_lore_index_test_support.resource_index_mode_migration import (
     IndexParentModeError as IndexParentModeError,
     assess_index_parent_mode as assess_index_parent_mode,
     harden_legacy_index_parent_mode as harden_legacy_index_parent_mode,
 )
-from repomap_test_support.resource_index_recovery import (
+from common_lore_index_test_support.resource_index_recovery import (
     IndexRecoveryError as IndexRecoveryError,
     MaintenanceIndexBinding as MaintenanceIndexBinding,
     recover_index as recover_index,
 )
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimError as ClaimError,
     ClaimRegistry as ClaimRegistry,
     ProcessLiveness as ProcessLiveness,
 )
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_operator_reclamation import (
     OperatorReclamationInterrupted as OperatorReclamationInterrupted,
     OperatorReclamationPreflightError as OperatorReclamationPreflightError,
     OperatorReclamationRequest as OperatorReclamationRequest,
     public_operator_projection as public_operator_projection,
     reclaim_run_population as reclaim_run_population,
 )
-from repomap_test_support.resource_protection_authority import (
+from common_lore_index_test_support.resource_protection_authority import (
     ProtectionAuthorityError as ProtectionAuthorityError,
     observe_protections as observe_protections,
 )
-from repomap_test_support.resource_quarantine_gc import (
+from common_lore_index_test_support.resource_quarantine_gc import (
     QuarantineError as QuarantineError,
     QuarantineResult as QuarantineResult,
     public_projection as public_projection,
@@ -81,13 +81,13 @@ from repomap_test_support.resource_quarantine_gc import (
     recover_interrupted_renames as recover_interrupted_renames,
     restore_quarantined as restore_quarantined,
 )
-from repomap_test_support.resource_safe_tree_delete import (
+from common_lore_index_test_support.resource_safe_tree_delete import (
     SafeTreeDeleteError as SafeTreeDeleteError,
 )
-from repomap_test_support.resource_scratch_history import (
+from common_lore_index_test_support.resource_scratch_history import (
     discover_historical_gc as discover_historical_gc,
 )
-from repomap_test_support.test_scratch import (
+from common_lore_index_test_support.test_scratch import (
     ENV_SCRATCH_ROOT as ENV_SCRATCH_ROOT,
     select_scratch_root as select_scratch_root,
 )
@@ -148,7 +148,7 @@ def main(
 ) -> int:
     args = parser().parse_args(argv)
     if args.command == "recover-maintenance-owner":
-        from repomap_test_support.resource_maintenance_recovery import recover_maintenance_owner
+        from common_lore_index_test_support.resource_maintenance_recovery import recover_maintenance_owner
         explicit = os.environ.get(ENV_SCRATCH_ROOT)
         try:
             if not explicit or not Path(explicit).is_absolute():

@@ -19,7 +19,7 @@ from common_lore_index.coordinator.refresh_adapter import (
 )
 from common_lore_index.runtime.database_role_contract import REFRESH_PUBLICATION_ROLE
 from common_lore_index.service_package.environment import apply_service_environment
-from repomap_test_support.executable_authority import approved_psql
+from common_lore_index_test_support.executable_authority import approved_psql
 
 
 @pytest.mark.parametrize("path_value", [None, "", ".", "relative", ":relative:"])

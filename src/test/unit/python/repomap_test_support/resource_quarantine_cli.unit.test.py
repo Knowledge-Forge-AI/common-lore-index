@@ -25,14 +25,14 @@ import pytest
 
 
 
-from repomap_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
 
 
 
 
 
 
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_ledger import (
     ResourceKind,
     ResourceLedger,
     RetainedReason,
@@ -41,7 +41,7 @@ from repomap_test_support.resource_ledger import (
 
 
 
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimRegistry,
 )
 
@@ -50,11 +50,11 @@ from repomap_test_support.resource_lifecycle_claim import (
 
 
 
-from repomap_test_support.resource_retention import DAY_SECONDS, RetentionClass
+from common_lore_index_test_support.resource_retention import DAY_SECONDS, RetentionClass
 
 
 
-from repomap_test_support.resource_scratch_history import (
+from common_lore_index_test_support.resource_scratch_history import (
     HistoricalGcCandidate,
     discover_historical_gc,
 )
@@ -168,7 +168,7 @@ def _candidate(run_id: str, size: int, terminal: int, over: bool) -> HistoricalG
 
 def test_no_physical_deletion_or_arbitrary_path_entrypoint():
     import test_hygiene_maintenance as maintenance_tool
-    import repomap_test_support.resource_quarantine_gc as subject
+    import common_lore_index_test_support.resource_quarantine_gc as subject
 
     source = inspect.getsource(subject)
     assert "rmtree" not in source

@@ -6,11 +6,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     maybe_provenance_runner_result,
     unit_maintenance_window_patch,
 )
-from repomap_test_support.public_branch_contracts import (
+from common_lore_index_test_support.public_branch_contracts import (
     owned_container_result,
     unexpected_runner,
     write_backup_fixture,

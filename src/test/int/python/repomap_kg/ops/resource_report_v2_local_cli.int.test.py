@@ -17,11 +17,11 @@ from common_lore_index.ops.config_local import (
 from common_lore_index.storage.sqlite_local.connection import read_transaction
 from common_lore_index.storage.sqlite_local.schema import accepted_identity
 
-from repomap_test_support.resource_report_cli_files import (
+from common_lore_index_test_support.resource_report_cli_files import (
     limit, metric, private_directory, report_leftovers, report_payload,
 )
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import LocalHarness
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness
 
 GRAPH = "report-v2-local"
 POSTGRES_IMPLEMENTATION = {

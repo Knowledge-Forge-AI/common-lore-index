@@ -6,31 +6,31 @@ import json
 from pathlib import Path
 
 import pytest
-import repomap_test_support.resource_operator_reclamation as reclamation
+import common_lore_index_test_support.resource_operator_reclamation as reclamation
 
-from repomap_test_support.resource_hygiene_policy import HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex
-from repomap_test_support.resource_index_recovery import (
+from common_lore_index_test_support.resource_hygiene_policy import HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex
+from common_lore_index_test_support.resource_index_recovery import (
     MaintenanceIndexBinding,
     acquire_admission_barrier,
     recover_index,
     release_admission_barrier,
 )
-from repomap_test_support.resource_lifecycle_claim import ClaimRegistry
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_lifecycle_claim import ClaimRegistry
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     OperatorReclamationRequest,
     public_operator_projection,
     reclaim_run_population,
 )
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     PROJECT,
     add_run,
     dead,
     private_root,
     live,
 )
-from repomap_test_support.resource_retention import RetentionClass, TerminalOutcome
+from common_lore_index_test_support.resource_retention import RetentionClass, TerminalOutcome
 
 
 def approved() -> OperatorReclamationRequest:

@@ -187,7 +187,7 @@ def validate_runner_options(
 ) -> None:
     if parallel_jobs_enabled_fn is None:
         parallel_jobs_enabled_fn = parallel_jobs_enabled
-    from repomap_test_support.d12_core_image import validate_options as validate_d12_options
+    from common_lore_index_test_support.d12_core_image import validate_options as validate_d12_options
     from runner_d12_options import validate_d12_system_proof_option
     validate_d12_options(args)
     from hosted_staging_parts import validate_options as validate_hosted_staging_options
@@ -259,7 +259,7 @@ def validate_pgvector_forwarded_selections(
     """Validate optional profile selections before dispatch without changing facade callbacks.
 
     D12 (ADR 0089 D9): the host preflight refuses every platform; E1 and build admission refuse each other."""
-    from repomap_test_support.d12_core_image import admit_profile, validate_selection as validate_d12_selection
+    from common_lore_index_test_support.d12_core_image import admit_profile, validate_selection as validate_d12_selection
     from test_sandbox import active_sandbox
     root, platform = repo_root or Path(__file__).resolve().parents[1], getattr(args, "d12_core_image_profile", None)
     if getattr(args, "d12_core_image_preflight", False):

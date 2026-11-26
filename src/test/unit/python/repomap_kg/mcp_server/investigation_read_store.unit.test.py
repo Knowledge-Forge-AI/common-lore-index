@@ -24,8 +24,8 @@ from common_lore_index.storage import (
     CanonicalStorageSummaryRecord,
     identity_metadata_hash,
 )
-from repomap_test_support.host_read_store_config import fail_if_reached, failing_store_binding
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.host_read_store_config import fail_if_reached, failing_store_binding
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 LANGUAGE_FAMILIES = ("python", "terraform", "openapi", "js_framework", "nix")
 
@@ -245,7 +245,7 @@ class PostgresInvestigationReadStoreScopeTests(McpServerTestSupport):
 
     def test_readback_unsupported_graph_is_a_status_row_but_refuses_reads(self) -> None:
         from common_lore_index.server.ops import McpOpsError
-        from repomap_test_support.host_read_store_config import setup_owned_config
+        from common_lore_index_test_support.host_read_store_config import setup_owned_config
 
         body = setup_owned_config().replace(
             "role = \"source\"\nenabled = true\n",

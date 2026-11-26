@@ -7,8 +7,8 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_test_images import TestImageManager as ImageManager
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_test_images import TestImageManager as ImageManager
 
 
 BASE_REFERENCE = "python:3.12-slim-bookworm@sha256:" + "c" * 64

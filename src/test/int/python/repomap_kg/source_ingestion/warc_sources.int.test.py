@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from repomap_test_support.source_ingestion_integration import (
+from common_lore_index_test_support.source_ingestion_integration import (
     copy_warc_fixture_root,
     fixed_clock,
     int_warc_record,

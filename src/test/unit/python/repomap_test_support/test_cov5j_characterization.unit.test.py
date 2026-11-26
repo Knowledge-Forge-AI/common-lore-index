@@ -9,14 +9,14 @@ import scale28_preparation_worker_process as process_owner
 
 import pytest
 
-from repomap_test_support.scale28_fix10_candidate_receipt import (
+from common_lore_index_test_support.scale28_fix10_candidate_receipt import (
     OBSERVED_CORRECTED_FIX9_EVIDENCE,
     ReceiptDefect,
     receipt_defects,
 )
-from repomap_test_support.scale28_fix9_failure_inventory import FORMER_FAILURES
-from repomap_test_support.test_cov5i_characterization import CATEGORY_CONTRACTS
-from repomap_test_support.test_cov5j_characterization import (
+from common_lore_index_test_support.scale28_fix9_failure_inventory import FORMER_FAILURES
+from common_lore_index_test_support.test_cov5i_characterization import CATEGORY_CONTRACTS
+from common_lore_index_test_support.test_cov5j_characterization import (
     BLOCKED_GROUPS,
     COMPLETED_GROUPS,
     CORRECTED_CANDIDATE_PATCH_SHA256,

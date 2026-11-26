@@ -35,7 +35,7 @@ from common_lore_index.coordinator._portable_capability import (
 from common_lore_index.coordinator._portable_worker_launch import run_portable_worker
 from common_lore_index.storage.authority import AttemptNumber, JobId, OperationId
 from common_lore_index.storage.errors import StorageSchemaError
-from repomap_test_support.run25_durable_families import assert_durable_families
+from common_lore_index_test_support.run25_durable_families import assert_durable_families
 from common_lore_index.storage.main import apply_migrations, default_rdbms_root
 from common_lore_index.storage.publication import PortablePublicationBinding, RunPublicationReceipt
 from common_lore_index.storage.publication_fencing import MergeContext, PublicationHandoff
@@ -50,14 +50,14 @@ from common_lore_index.storage.staged_ingestion import (
     stage_id_for_authority,
 )
 from common_lore_index.storage.staged_publication import reconcile_commit_unknown
-from repomap_test_support.portable_publication_fixtures import (
+from common_lore_index_test_support.portable_publication_fixtures import (
     create_single_source_graph_config,
     row as _row,
 )
-from repomap_test_support.portable_worker_scenarios import (
+from common_lore_index_test_support.portable_worker_scenarios import (
     PORTABLE_SUCCESS_CORPORA, coordinator_test_limits, portable_corpus_dependencies,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
 

@@ -7,7 +7,7 @@ from unittest.mock import patch
 from common_lore_index.storage.staging_observability import StagingMeasurements
 from common_lore_index.storage.staging_phase_events import StagingPhaseEventCategory
 
-from repomap_test_support.ops_refresh import (
+from common_lore_index_test_support.ops_refresh import (
     OpsRefreshUnitTestCase,
     VALID_REFRESH_CONFIG,
 )

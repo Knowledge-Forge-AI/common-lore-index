@@ -19,7 +19,7 @@ import sys
 
 import pytest
 
-from repomap_test_support.process_boundary import (
+from common_lore_index_test_support.process_boundary import (
     POISON_PSQL_EXIT_CODE,
     PsqlInvokedError,
     RecordingProcessBoundary,

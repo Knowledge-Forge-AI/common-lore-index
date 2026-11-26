@@ -22,8 +22,8 @@ from common_lore_index.storage.publication_readback import read_run_publication
 from common_lore_index.storage.readback_driver import _psycopg_connection_params_from_psql_args
 from common_lore_index.storage.sql_load import repository_run_prefix_sql
 from common_lore_index.storage.staged_publication import execute_final_transaction
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.publication_fixtures import PublicationFixture
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.publication_fixtures import PublicationFixture
 
 
 @pytest.fixture

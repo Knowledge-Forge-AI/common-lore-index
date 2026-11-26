@@ -42,7 +42,7 @@ from common_lore_index.storage.lexical_lifecycle import PublishedLexicalGenerati
 from common_lore_index.storage.lexical_probe import LexicalRuntimeProbe
 from common_lore_index.storage.lexical_query_sql import RawLexicalQueryRow
 from common_lore_index.storage.lexical_revoke import LexicalRevocationOutcome
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,

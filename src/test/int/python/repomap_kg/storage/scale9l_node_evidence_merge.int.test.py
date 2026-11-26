@@ -16,7 +16,7 @@ from common_lore_index.storage.staging_ownership import StageOwner
 from common_lore_index.storage.staged_ingestion import (
     _refresh_canonical_node_evidence_statistics,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

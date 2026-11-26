@@ -24,7 +24,7 @@ from common_lore_index.extractors.shell.powershell import (
     extract_powershell_file_observations,
 )
 from common_lore_index.extractors.shell.zsh import extract_zsh_file_observations
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class Slice10ShellCanonicalPipelineIntegrationTests(unittest.TestCase):

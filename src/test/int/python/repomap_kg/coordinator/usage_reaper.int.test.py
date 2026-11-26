@@ -1,6 +1,6 @@
 """Real owned-worker attribution through the private portable launch chain.
 
-Each case runs the closed ``repomap_test_support.usage_worker`` module with
+Each case runs the closed ``common_lore_index_test_support.usage_worker`` module with
 ``collect_usage=True``. CPU and peak RSS come only from the parent's single
 ``wait4`` of the launched child; nothing here is self-reported by the worker.
 These are Linux container proofs; no native Windows or Darwin claim is made.
@@ -13,7 +13,7 @@ import sys
 
 import pytest
 
-from repomap_test_support.usage_worker import BURN_SECONDS, RSS_BYTES, run_usage_worker
+from common_lore_index_test_support.usage_worker import BURN_SECONDS, RSS_BYTES, run_usage_worker
 
 LINUX = sys.platform.startswith("linux")
 BURN_FLOOR_NS = int(BURN_SECONDS * 0.8 * 10**9)

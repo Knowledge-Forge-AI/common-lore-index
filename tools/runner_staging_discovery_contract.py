@@ -21,7 +21,7 @@ RECEIPT_KEYS = {"schema", "request_sha256", "exit_code", "collected", "eligible"
 OPTIONAL_KEYS = {"excluded", "count", "raw_count", "reason"}
 # ADR 0089 D10: the one registered optional owner, pinned in this stdlib module
 # so the standalone report validator never imports test support. A unit test
-# proves equality with repomap_test_support.d12_core_image.
+# proves equality with common_lore_index_test_support.d12_core_image.
 OPTIONAL_REASON = "optional D12 core-image owner runs only under --d12-core-image-profile"
 OPTIONAL_NODE_IDS = (
     "src/test/int/python/repomap_kg/runtime/d12_core_image_refresh.int.test.py"

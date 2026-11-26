@@ -115,7 +115,7 @@ def test_exported_qualification_recomputes_valid_runtime_with_affected_unknown_d
 def test_complete_slim_sized_bundle_fits_existing_transport_and_part_limits(tmp_path, monkeypatch):
     # The native suppliers produced 3,649 / 3,558 rows and 857 / 927 kB parts.
     # Exercise the whole writer/export/verifier with a larger synthetic observation.
-    from repomap_test_support import d12_core_image as d12
+    from common_lore_index_test_support import d12_core_image as d12
 
     session, directory, manifest = make_bundle(tmp_path, monkeypatch, verification_rows=4000)
     sizes = {path.name: path.stat().st_size for path in directory.glob("*.json")}

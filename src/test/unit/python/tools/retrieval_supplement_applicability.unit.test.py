@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from common_lore_index.retrieval.projection_policy import BodyProjectionPolicy, ResolvedBindingPolicy
-from repomap_test_support.retrieval_supplement_fixtures import (
+from common_lore_index_test_support.retrieval_supplement_fixtures import (
     expected_enumeration,
     expected_literal_body,
     expected_privacy,

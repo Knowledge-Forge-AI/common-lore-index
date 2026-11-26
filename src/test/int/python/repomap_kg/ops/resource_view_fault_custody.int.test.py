@@ -30,12 +30,12 @@ from common_lore_index.storage.staging_observability import (
     StagingMeasurementAvailability, StagingMeasurementCategory, StagingMeasurementEvent,
     StagingMeasurements,
 )
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE, BINDING_DOCS, CTX_GRAPH_ID, build_sqlite_context_fixture,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID, binding_id_for_alias, materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home, write_mixed_v1_sqlite_home,
 )

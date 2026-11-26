@@ -16,13 +16,13 @@ from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.server import mcp
 from common_lore_index.server.mcp_core import RepoMapMcpError
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     NO_FALLBACK_GUARDS, patched_guards, setup_owned_config,
 )
-from repomap_test_support.node_location_fixtures import (
+from common_lore_index_test_support.node_location_fixtures import (
     DOC, GRAPH, SYMBOL, locator_home, publish_locator_generation,
 )
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, publication_for
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, publication_for
 
 
 @pytest.fixture

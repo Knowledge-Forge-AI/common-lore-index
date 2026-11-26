@@ -5,8 +5,8 @@ from typing import Any
 
 import coverage
 
-from repomap_test_support.w5_component_artifacts import make_component_pair
-from repomap_test_support.w5_component_cli import build_argv, run_component_cli
+from common_lore_index_test_support.w5_component_artifacts import make_component_pair
+from common_lore_index_test_support.w5_component_cli import build_argv, run_component_cli
 from retrieval_semantic_component_dossier_io import read_component_dossier
 from runner_coverage import ChildCoverageSession
 from runner_coverage_receipts import read_registered_children

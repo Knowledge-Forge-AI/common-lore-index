@@ -67,7 +67,7 @@ def test_helper_contract_probe_resolves_cleanly() -> None:
     tree = _helper_tree()
     call, params, modules = _probe_params(tree)
     resolved = file_loader_spec(call, tree, params, _REPO_ROOT, modules)
-    assert resolved == {("repomap_test_support.contract_loader_fixtures.nested.probe", "Selected")}
+    assert resolved == {("common_lore_index_test_support.contract_loader_fixtures.nested.probe", "Selected")}
 
 
 @pytest.mark.parametrize("case", ["conftest_refusal", "conftest_inspection"])
@@ -198,7 +198,7 @@ def test_loader_rejects_chain_mismatch() -> None:
 
 _PGVECTOR_OWNERS = {
     "pgvector_transport": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
-    "pgvector_discovery": "src/test/support/python/repomap_test_support/pgvector_prebuilt_discovery_cases.py",
+    "pgvector_discovery": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_discovery_cases.py",
     "pgvector_native": "src/test/unit/python/tools/pgvector_prebuilt_transport.unit.test.py",
 }
 

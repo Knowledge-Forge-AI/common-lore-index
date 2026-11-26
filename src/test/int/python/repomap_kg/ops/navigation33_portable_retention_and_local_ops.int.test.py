@@ -58,7 +58,7 @@ from common_lore_index.ops.readback import (
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
-from repomap_test_support.ops_refresh import VALID_REFRESH_CONFIG
+from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
 
 
 def _sample_refs() -> tuple[ArtifactReference, ArtifactReference]:

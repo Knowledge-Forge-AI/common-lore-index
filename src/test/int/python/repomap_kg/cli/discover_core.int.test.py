@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[6]
-from repomap_test_support.cli_integration import CliIntegrationTestCase
+from common_lore_index_test_support.cli_integration import CliIntegrationTestCase
 
 
 class CliDiscoverCoreIntegrationTests(CliIntegrationTestCase):

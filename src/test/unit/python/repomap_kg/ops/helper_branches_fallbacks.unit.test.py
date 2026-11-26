@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from repomap_test_support.ops_refresh import OpsRefreshUnitTestCase
+from common_lore_index_test_support.ops_refresh import OpsRefreshUnitTestCase
 
 from common_lore_index.ops._refresh_psql import (
     _load_file_observations_with_ops_psql,

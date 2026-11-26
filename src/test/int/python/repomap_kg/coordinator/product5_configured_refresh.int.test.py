@@ -22,9 +22,9 @@ from common_lore_index.coordinator.refresh_adapter import (
     build_refresh_worker_runner,
 )
 from common_lore_index.coordinator.startup_recovery import PublicationRouteChangedError
-from repomap_test_support.executable_authority import controlled_psql_copy
-from repomap_test_support.portable_worker_scenarios import coordinator_test_limits
-from repomap_test_support.startup_recovery_scenarios import (
+from common_lore_index_test_support.executable_authority import controlled_psql_copy
+from common_lore_index_test_support.portable_worker_scenarios import coordinator_test_limits
+from common_lore_index_test_support.startup_recovery_scenarios import (
     _make_refresh_fixture,
     _refresh_harness,
 )

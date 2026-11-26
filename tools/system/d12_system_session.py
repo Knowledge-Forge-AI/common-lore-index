@@ -23,11 +23,11 @@ from common_lore_index.runtime.release import (
     PlatformPackages,
 )
 from common_lore_index.runtime.release_manifest import D12_CANDIDATE_LIBPQ_VERSION
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support.d12_image_probes import _create, _hashes, _start_server
-from repomap_test_support.d12_complete_inventory import complete_inventory as _inventory
-from repomap_test_support.resource_docker_current import CurrentRunDockerContainers
-from repomap_test_support.resource_run import active_resource_run
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support.d12_image_probes import _create, _hashes, _start_server
+from common_lore_index_test_support.d12_complete_inventory import complete_inventory as _inventory
+from common_lore_index_test_support.resource_docker_current import CurrentRunDockerContainers
+from common_lore_index_test_support.resource_run import active_resource_run
 from tools.system.candidate_identity import (
     CTX_IDENTITY_KEYS,
     compute_session_binding_digest,

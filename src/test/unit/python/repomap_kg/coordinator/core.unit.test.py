@@ -5,7 +5,7 @@ import pytest
 
 from common_lore_index.coordinator.core import SyntheticCoordinator
 from common_lore_index.coordinator.protocol import WorkerLaunchError
-from repomap_test_support.coordinator_core_fakes import Claim, FakeStore, terminal
+from common_lore_index_test_support.coordinator_core_fakes import Claim, FakeStore, terminal
 
 
 def test_startup_acquires_singleton_and_reconciles_before_accepting_submission():

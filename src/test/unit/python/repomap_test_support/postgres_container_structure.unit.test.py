@@ -9,7 +9,7 @@ import pytest
 
 
 def test_pgvector_readiness_crosses_psql_format_boundary(monkeypatch: MonkeyPatch) -> None:
-    from repomap_test_support import postgres_container as container
+    from common_lore_index_test_support import postgres_container as container
 
     monkeypatch.setattr(container, "active_resource_run", lambda: None)
     monkeypatch.setenv("REPOMAP_TEST_PG_IMAGE", "sha256:" + "b" * 64)
@@ -44,7 +44,7 @@ def test_pgvector_readiness_crosses_psql_format_boundary(monkeypatch: MonkeyPatc
 
 @pytest.fixture
 def readiness_harness(monkeypatch: MonkeyPatch):
-    from repomap_test_support import postgres_container as container
+    from common_lore_index_test_support import postgres_container as container
 
     monkeypatch.setattr(container, "active_resource_run", lambda: None)
     monkeypatch.setenv("REPOMAP_TEST_PG_IMAGE", "sha256:" + "b" * 64)
@@ -147,7 +147,7 @@ def test_pgvector_image_readback_failure_keeps_probe_failure(readiness_harness) 
 
 
 def test_core_readiness_and_ordinary_psql_preserve_contract(monkeypatch: MonkeyPatch) -> None:
-    from repomap_test_support import postgres_container as container
+    from common_lore_index_test_support import postgres_container as container
 
     monkeypatch.setattr(container, "active_resource_run", lambda: None)
     monkeypatch.setenv("REPOMAP_TEST_PG_PROFILE", "core")
@@ -178,8 +178,8 @@ def test_core_readiness_and_ordinary_psql_preserve_contract(monkeypatch: MonkeyP
 
 
 def test_rootpkg36_container_helpers_are_reexported() -> None:
-    from repomap_test_support import postgres_harness as harness
-    from repomap_test_support import postgres_container as container
+    from common_lore_index_test_support import postgres_harness as harness
+    from common_lore_index_test_support import postgres_container as container
 
     names = (
         "PostgresContainerConfig",
@@ -208,7 +208,7 @@ def test_rootpkg36_container_helpers_are_reexported() -> None:
 def test_database_scalar_preserves_container_runner_patch(
     monkeypatch: MonkeyPatch, sql: str, stdout: str, expected: str,
 ) -> None:
-    from repomap_test_support import postgres_container as container
+    from common_lore_index_test_support import postgres_container as container
 
     calls: list[str] = []
 
@@ -223,7 +223,7 @@ def test_database_scalar_preserves_container_runner_patch(
 
 
 def test_database_scalar_insert_returning_suppresses_command_tag(monkeypatch: MonkeyPatch) -> None:
-    from repomap_test_support import postgres_container as container
+    from common_lore_index_test_support import postgres_container as container
 
     calls: list[tuple[list[str], str]] = []
     sql = "INSERT INTO fixture(value) VALUES ('public-fixture') RETURNING id"
@@ -240,7 +240,7 @@ def test_database_scalar_insert_returning_suppresses_command_tag(monkeypatch: Mo
 
 
 def test_database_scalar_query_error_preserves_failure(monkeypatch: MonkeyPatch) -> None:
-    from repomap_test_support import postgres_container as container
+    from common_lore_index_test_support import postgres_container as container
 
     sql = "SELECT missing_column FROM fixture"
     failure = subprocess.CalledProcessError(3, ["psql"], output="42\n", stderr="ERROR: fixture query failed")
@@ -256,7 +256,7 @@ def test_database_scalar_query_error_preserves_failure(monkeypatch: MonkeyPatch)
 
 
 def test_database_creation_preserves_connection_and_password(monkeypatch: MonkeyPatch) -> None:
-    from repomap_test_support import postgres_container as container
+    from common_lore_index_test_support import postgres_container as container
 
     runner = MagicMock(return_value=CompletedProcess(["psql"], 0, "", ""))
     monkeypatch.setattr(container, "run", runner)
@@ -278,7 +278,7 @@ def test_database_creation_preserves_connection_and_password(monkeypatch: Monkey
 
 
 def test_binary_resolution_preserves_harness_config_patch(monkeypatch: MonkeyPatch) -> None:
-    from repomap_test_support import postgres_harness as harness
+    from common_lore_index_test_support import postgres_harness as harness
 
     expected = Path("/public-fixture/postgres/bin")
     monkeypatch.setattr(harness, "postgres_config_path", lambda option: expected)
@@ -286,7 +286,7 @@ def test_binary_resolution_preserves_harness_config_patch(monkeypatch: MonkeyPat
 
 
 def test_ipc_guard_preserves_harness_capture_patch(monkeypatch: MonkeyPatch) -> None:
-    from repomap_test_support import postgres_harness as harness
+    from common_lore_index_test_support import postgres_harness as harness
 
     monkeypatch.setattr(harness, "capture_shared_memory_segments", lambda runner: ())
     guard = harness.PostgresIpcGuard(current_user="public-fixture")
@@ -295,7 +295,7 @@ def test_ipc_guard_preserves_harness_capture_patch(monkeypatch: MonkeyPatch) -> 
 
 
 def test_build_psql_wrapper_script_embeds_docker_environment() -> None:
-    from repomap_test_support.postgres_container_config import build_psql_wrapper_script
+    from common_lore_index_test_support.postgres_container_config import build_psql_wrapper_script
 
     script = build_psql_wrapper_script(
         password="secret-password",
@@ -318,7 +318,7 @@ def test_build_psql_wrapper_restores_docker_host_under_sanitized_psql_environmen
     import subprocess
     import sys
     from common_lore_index.coordinator.configured_refresh import _psql_environment
-    from repomap_test_support.postgres_container_config import build_psql_wrapper_script
+    from common_lore_index_test_support.postgres_container_config import build_psql_wrapper_script
 
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir(mode=0o700)
@@ -381,7 +381,7 @@ def test_build_psql_wrapper_restores_docker_host_under_sanitized_psql_environmen
 
 def test_reset_database_drops_lexical_and_public_schemas_in_order(monkeypatch: MonkeyPatch) -> None:
     from common_lore_index.runtime._lexical_restore import LEXICAL_SCHEMA
-    from repomap_test_support.postgres_container import PostgresContainerConfig, PostgresContainerHarness
+    from common_lore_index_test_support.postgres_container import PostgresContainerConfig, PostgresContainerHarness
 
     assert LEXICAL_SCHEMA == "cloe_lexical"
     harness = PostgresContainerHarness(PostgresContainerConfig(user="repomap_test"))

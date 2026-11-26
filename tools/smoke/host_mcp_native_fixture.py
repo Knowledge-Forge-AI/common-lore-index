@@ -40,10 +40,10 @@ from common_lore_index.runtime.postgres_route import effective_postgres_route, r
 from common_lore_index.runtime.setup_config import prepare_setup_config
 from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.sql_core import sql_literal
-from repomap_test_support.host_mcp_publication import (
+from common_lore_index_test_support.host_mcp_publication import (
     COUNTED_TABLES, SHELL_LIB, SHELL_MAIN, HostPublication, provision_roles, role_secrets,
 )
-from repomap_test_support.storage_integration import discovery_fixture, fixed_source_clock, source_fixture
+from common_lore_index_test_support.storage_integration import discovery_fixture, fixed_source_clock, source_fixture
 
 VISIBLE_GRAPHS = ("host-multi", "host-feed")
 FEED_SOURCE_ID = "example-rss-feed"

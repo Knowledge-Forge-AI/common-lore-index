@@ -9,18 +9,18 @@ from pathlib import Path
 import pytest
 
 from common_lore_index.cli.main import main
-from repomap_test_support.context_assertions import (
+from common_lore_index_test_support.context_assertions import (
     assert_valid_budget_error,
     assert_valid_context_packet,
     build_postgres_context_fixture,
 )
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE,
     BINDING_DOCS,
     CTX_GRAPH_ID,
     build_sqlite_context_fixture,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

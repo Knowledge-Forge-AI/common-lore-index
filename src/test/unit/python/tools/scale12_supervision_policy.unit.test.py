@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 
-from repomap_test_support.scale12_supervision_policy import (
+from common_lore_index_test_support.scale12_supervision_policy import (
     OperationArmedElapsedMonitor,
     attribution_qualification_monitor,
 )

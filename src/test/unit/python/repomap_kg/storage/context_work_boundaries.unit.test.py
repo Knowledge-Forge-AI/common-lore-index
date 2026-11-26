@@ -29,7 +29,7 @@ from common_lore_index.storage.navigation_search import NavigationSearchQuery
 from common_lore_index.storage.node_locations import NodeLocationsQuery
 from common_lore_index.storage.postgres_navigation_search import read_postgres_navigation_search_with_executor
 from common_lore_index.storage.postgres_node_locations import read_postgres_node_locations_with_executor
-from repomap_test_support.context_fixture import build_sqlite_context_fixture
+from common_lore_index_test_support.context_fixture import build_sqlite_context_fixture
 
 
 class _CountingConnection(sqlite3.Connection):

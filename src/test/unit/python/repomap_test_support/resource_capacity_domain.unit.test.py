@@ -3,8 +3,8 @@
 from pathlib import Path
 from types import SimpleNamespace
 
-from repomap_test_support import resource_admission as admission
-from repomap_test_support.resource_hygiene_policy import (
+from common_lore_index_test_support import resource_admission as admission
+from common_lore_index_test_support.resource_hygiene_policy import (
     GIB,
     HygieneConfig,
     HygieneProfile,
@@ -42,8 +42,8 @@ from types import SimpleNamespace
 sys.path[:0] = sys.argv[1:3]
 import test_sandbox
 import test_sandbox_capacity as capacity
-from repomap_test_support import resource_admission as admission
-from repomap_test_support.resource_hygiene_policy import HygieneConfig, HygieneProfile
+from common_lore_index_test_support import resource_admission as admission
+from common_lore_index_test_support.resource_hygiene_policy import HygieneConfig, HygieneProfile
 capacity.BINDING_PATH, capacity.OWNER_PATH = map(Path, sys.argv[3:5])
 capacity.time.time = lambda: 1121
 capacity.os.fstat = lambda fd: SimpleNamespace(st_uid=0, st_mode=0o100600)
@@ -113,7 +113,7 @@ def sandbox_measurements(monkeypatch):
 def test_runner_selected_profiles_use_current_whole_tmpfs_pressure(
     sandbox_measurements, suite, requested, free
 ):
-    from repomap_test_support.resource_runner_profile import resolve_runner_profile
+    from common_lore_index_test_support.resource_runner_profile import resolve_runner_profile
 
     selection = resolve_runner_profile(
         suite,
@@ -148,16 +148,16 @@ def test_effective_override_is_logical_limit_not_physical_reservation(
     tmp_path, sandbox_measurements, quota, monkeypatch, sandboxed
 ):
     from dataclasses import replace
-    from repomap_test_support.resource_run import TestResourceRun
-    from repomap_test_support.resource_hygiene_policy import QuotaExceeded
-    from repomap_test_support.test_scratch import establish_run
+    from common_lore_index_test_support.resource_run import TestResourceRun
+    from common_lore_index_test_support.resource_hygiene_policy import QuotaExceeded
+    from common_lore_index_test_support.test_scratch import establish_run
 
     layout = establish_run(
         {"REPOMAP_TEST_SCRATCH_ROOT": str(tmp_path)},
         project="repo-map_dev",
         phase="PR26-STAGING-FIX2",
     )
-    from repomap_test_support.resource_run_test_support import admitted_host_signals
+    from common_lore_index_test_support.resource_run_test_support import admitted_host_signals
 
     monkeypatch.setattr(test_sandbox, "active_sandbox", lambda: sandboxed)
     run = TestResourceRun.start(
@@ -189,8 +189,8 @@ def test_runner_admission_releases_or_cleans_exact_owned_state(
     tmp_path, monkeypatch, sandbox_measurements, suite, failure, capsys
 ):
     import run_tests
-    from repomap_test_support import resource_run
-    from repomap_test_support.test_scratch import establish_run
+    from common_lore_index_test_support import resource_run
+    from common_lore_index_test_support.test_scratch import establish_run
 
     layout = establish_run(
         {"REPOMAP_TEST_SCRATCH_ROOT": str(tmp_path)},

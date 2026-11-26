@@ -17,8 +17,8 @@ from common_lore_index.ops.config import OpsConfig
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.lexical_service import build_graph_lexical_generation
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_FIXTURE_ROOT,
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
@@ -26,13 +26,13 @@ from repomap_test_support.retrieval_evaluation_fixture import (
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
     publish_and_load_sqlite_corpus,
 )
-from repomap_test_support.semantic_candidate_restore import cleanup_optional_sql_fixture
-from repomap_test_support.w5_experiment_ann_diagnostic import run_hnsw_catalog_diagnostic
-from repomap_test_support.w5_experiment_postgres import (
+from common_lore_index_test_support.semantic_candidate_restore import cleanup_optional_sql_fixture
+from common_lore_index_test_support.w5_experiment_ann_diagnostic import run_hnsw_catalog_diagnostic
+from common_lore_index_test_support.w5_experiment_postgres import (
     HNSW_OWNER_ROLE,
     READ_ROLE,
     WRITE_ROLE,
@@ -40,19 +40,19 @@ from repomap_test_support.w5_experiment_postgres import (
     import_generation,
     install_candidate_schema,
 )
-from repomap_test_support.w5_experiment_results import ResultV2Run, finalize_attempt_evidence, safe_failure_code
-from repomap_test_support.w5_experiment_support import (
+from common_lore_index_test_support.w5_experiment_results import ResultV2Run, finalize_attempt_evidence, safe_failure_code
+from common_lore_index_test_support.w5_experiment_support import (
     DECLARED_PROFILE_IDENTITY, EXPERIMENT_ATTEMPTS_ROOT, PUBLIC_ALIASES,
     calibration_task_manifest, calibration_tasks_for_generation, candidate_publication,
     experiment_source_closure, load_calibration_catalog, make_generation_plan,
     make_public_reader, record_baseline, selected_public_binding_ids,
     worker_source_closure,
 )
-from repomap_test_support.w5_experiment_vector import (
+from common_lore_index_test_support.w5_experiment_vector import (
     VECTOR_ARM_IDS, baseline_file_metrics, baseline_file_metrics_with_correspondence,
     run_vector_task,
 )
-from repomap_test_support.w5_generator_support import GeneratorFixtureReader
+from common_lore_index_test_support.w5_generator_support import GeneratorFixtureReader
 from retrieval_evaluation_execution import ArmContext, TaskOutcome
 from retrieval_evaluation_attempts import admit_attempt
 from retrieval_evaluation_fts import execute_postgres_native_fts_task

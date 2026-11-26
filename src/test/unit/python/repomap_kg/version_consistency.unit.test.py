@@ -32,7 +32,7 @@ def test_version_consistency() -> None:
 
 def test_locator_bundle_reproduces_both_exact_release_version_identities(monkeypatch: pytest.MonkeyPatch) -> None:
     from common_lore_index.extractors.documents import markdown
-    from repomap_test_support.node_location_fixtures import entry_response_differences, locator_bundle
+    from common_lore_index_test_support.node_location_fixtures import entry_response_differences, locator_bundle
 
     monkeypatch.setattr(markdown, "__version__", "0.0.3")
     previous = locator_bundle()

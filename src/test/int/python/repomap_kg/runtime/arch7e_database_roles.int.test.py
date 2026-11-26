@@ -22,7 +22,7 @@ from common_lore_index.runtime.release_cluster import (
 )
 from common_lore_index.storage import default_rdbms_root, discover_migrations
 from common_lore_index.storage.main import _migration_script
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

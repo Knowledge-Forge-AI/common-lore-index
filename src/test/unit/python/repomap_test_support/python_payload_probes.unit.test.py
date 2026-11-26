@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 from common_lore_index.runtime import python_payload as payload
-from repomap_test_support.python_payload_probes import (
+from common_lore_index_test_support.python_payload_probes import (
     is_stdlib_import_probe_command,
     make_stdlib_import_probe_runner,
     validate_allowed_stdlib_modules,
@@ -58,7 +58,7 @@ def test_validate_allowed_stdlib_modules_accepts_stdlib_and_refuses_product_or_i
         ["math.sin"],
         ["common_lore_index"],
         ["common_lore_index.runtime"],
-        ["repomap_test_support"],
+        ["common_lore_index_test_support"],
         ["not_a_stdlib_module_xyz"],
     ):
         with pytest.raises(ValueError):

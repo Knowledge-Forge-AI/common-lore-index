@@ -5,7 +5,7 @@ import inspect
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_groupa_contract import (
+from common_lore_index_test_support.test_cov5k_r2_groupa_contract import (
     derive_expected_group_a_state_history,
     derive_forced_tail_policy,
     derive_observed_cleanup_disposition,

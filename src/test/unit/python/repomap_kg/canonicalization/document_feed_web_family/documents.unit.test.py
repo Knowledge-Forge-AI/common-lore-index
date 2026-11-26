@@ -6,7 +6,7 @@ from common_lore_index.extractors.documents.office import (
     extract_odf_file_observations,
 )
 from common_lore_index.observations.raw import RawObservation
-from repomap_test_support.canonicalization import (
+from common_lore_index_test_support.canonicalization import (
     odf_package,
     odf_spreadsheet_content,
     odf_text_content,

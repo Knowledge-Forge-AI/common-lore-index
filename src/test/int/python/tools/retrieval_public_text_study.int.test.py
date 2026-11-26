@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.w5_public_text_study import StudyEnvironment, run_public_text_study
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.w5_public_text_study import StudyEnvironment, run_public_text_study
 from test_sandbox_contract import INNER_REPORT_ROOT
 
 EXPORT_ROOT = INNER_REPORT_ROOT / "public-text-study"

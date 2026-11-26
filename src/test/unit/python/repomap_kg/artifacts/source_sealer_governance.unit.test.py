@@ -14,7 +14,7 @@ from common_lore_index.artifacts.sealing_governance import SealingBudget, Sealin
 from common_lore_index.graph.discovery import discover_repository
 from common_lore_index.graph.multi_source_capture import MultiSourceCaptureError, _capture_inventory
 from common_lore_index.graph.multi_source import graph_source_binding_id
-from repomap_test_support.sealing_governance_fixtures import (
+from common_lore_index_test_support.sealing_governance_fixtures import (
     GRAPH_ID,
     binding_for,
     expectation_for,

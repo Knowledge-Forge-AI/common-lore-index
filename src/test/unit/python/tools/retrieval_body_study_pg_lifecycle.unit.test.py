@@ -16,9 +16,9 @@ from common_lore_index.ops.lexical_publication import (
 from common_lore_index.runtime.postgres_route import (
     effective_postgres_route, execution_postgres,
 )
-from repomap_test_support import retrieval_body_study_pg as study_pg
-from repomap_test_support.postgres_container_config import PostgresContainerDatabase
-from repomap_test_support.retrieval_body_study_pg_lifecycle import (
+from common_lore_index_test_support import retrieval_body_study_pg as study_pg
+from common_lore_index_test_support.postgres_container_config import PostgresContainerDatabase
+from common_lore_index_test_support.retrieval_body_study_pg_lifecycle import (
     BODY_PG_COMMAND_LIMIT, BODY_PG_LABELS, COMMAND_RESERVATION_BYTES,
     MAX_BODY_LIFECYCLE_RESERVED_BYTES, MAX_COMMAND_OUTPUT_BYTES,
     MAX_READINESS_PROBES, BodyProcessError, BodyProcessResult,

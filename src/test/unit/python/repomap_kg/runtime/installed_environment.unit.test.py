@@ -7,11 +7,11 @@ import subprocess
 
 import pytest
 
-from repomap_test_support.installed_environment import (
+from common_lore_index_test_support.installed_environment import (
     DELETED_KEYS, FIXED_VALUES, ChildExecutionFailure, ChildResult, InstalledEnvironment,
     child_environment, create_environment, include_system_site_packages, run_child,
 )
-from repomap_test_support import installed_environment as owner
+from common_lore_index_test_support import installed_environment as owner
 
 INHERITED = {
     "PATH": "/opt/runner/bin:/usr/bin", "HOME": "/home/runner", "PYTHONPATH": "/checkout/src/main/python",

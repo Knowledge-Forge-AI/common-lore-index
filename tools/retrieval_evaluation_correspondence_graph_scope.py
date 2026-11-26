@@ -12,7 +12,7 @@ from time import perf_counter_ns
 from typing import Any
 
 from common_lore_index.retrieval.query_contracts import CapabilityState
-from repomap_test_support.retrieval_evaluation_fixture import binding_id_for_alias
+from common_lore_index_test_support.retrieval_evaluation_fixture import binding_id_for_alias
 from retrieval_evaluation_current_observations import (
     FencedObservationResult,
     query_fenced_current_observations as _query,

@@ -16,7 +16,7 @@ from pathlib import Path
 import secrets
 from typing import Any
 
-from repomap_test_support.host_mcp_publication import assert_least_privilege, await_no_read_role_backends
+from common_lore_index_test_support.host_mcp_publication import assert_least_privilege, await_no_read_role_backends
 
 from .host_mcp_native_checks import (
     OUTAGE_READS, RESTART_IDS, build_native_plan, catalog_digest, chain_checks, requests_for,

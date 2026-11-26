@@ -27,8 +27,8 @@ from common_lore_index.storage.staging_event_transport import (
     StagingEventChannel,
     StagingEventTransportError,
 )
-from repomap_test_support.ops_refresh import VALID_REFRESH_CONFIG
-from repomap_test_support.staging_transport_test_harness import BoundedTestPeer
+from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
+from common_lore_index_test_support.staging_transport_test_harness import BoundedTestPeer
 
 
 class Slice7ControlReadbackIntegrationTests(unittest.TestCase):

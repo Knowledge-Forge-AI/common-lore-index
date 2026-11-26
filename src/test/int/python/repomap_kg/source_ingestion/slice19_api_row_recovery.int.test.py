@@ -8,8 +8,8 @@ import pytest
 
 from common_lore_index.ops.ingestion.api import ApiPolicyError, acquire_api_source
 from common_lore_index.storage.staged_rows import build_staged_rows
-from repomap_test_support.source_ingestion_integration import api_fixture_root
-from repomap_test_support.run25_acquisition_fixtures import snapshot_directory_state
+from common_lore_index_test_support.source_ingestion_integration import api_fixture_root
+from common_lore_index_test_support.run25_acquisition_fixtures import snapshot_directory_state
 
 
 @pytest.mark.parametrize("response", [

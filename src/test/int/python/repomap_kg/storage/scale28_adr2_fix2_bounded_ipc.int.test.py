@@ -7,8 +7,8 @@ import time
 
 import pytest
 
-import repomap_test_support.scale28_adr2_bounded_ipc as bounded_ipc_transport
-from repomap_test_support.scale28_adr2_bounded_ipc import (
+import common_lore_index_test_support.scale28_adr2_bounded_ipc as bounded_ipc_transport
+from common_lore_index_test_support.scale28_adr2_bounded_ipc import (
     ACKNOWLEDGEMENT_MESSAGE, OBSERVATION_MESSAGE, RECEIPT_MESSAGE,
     BoundedIpcFailure, BoundedIpcMessageSpec, process_close_without_send,
     process_hold_partial_frame, process_send_messages, process_send_raw_frame,
@@ -16,20 +16,20 @@ from repomap_test_support.scale28_adr2_bounded_ipc import (
     receive_bounded_message, supports_raw_connection_fault_injection,
     write_raw_connection_frame,
 )
-from repomap_test_support.scale28_adr2_frame_model import (
+from common_lore_index_test_support.scale28_adr2_frame_model import (
     validate_observation_frame,
 )
-from repomap_test_support.scale28_adr2_immutable_values import (
+from common_lore_index_test_support.scale28_adr2_immutable_values import (
     canonical_protocol_bytes,
     structural_digest,
 )
-from repomap_test_support.scale28_adr2_model_fixtures import (
+from common_lore_index_test_support.scale28_adr2_model_fixtures import (
     fixture_frame_and_acknowledgement,
     fixture_observation_expectations,
     fixture_receipt_expectations,
     fixture_receipt_payload,
 )
-from repomap_test_support.scale28_adr2_receipt_model import (
+from common_lore_index_test_support.scale28_adr2_receipt_model import (
     encode_receipt,
     validate_preparation_receipt,
 )

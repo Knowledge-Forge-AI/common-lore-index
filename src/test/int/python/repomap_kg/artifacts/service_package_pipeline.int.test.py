@@ -33,10 +33,10 @@ from common_lore_index.service_package.operations import CoordinatorServiceOpera
 from common_lore_index.service_package.platforms import NativeServiceAdapter
 from common_lore_index.service_package.systemd import SystemdUserAdapter
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
-from repomap_test_support.service_publication_families import (
+from common_lore_index_test_support.service_publication_families import (
     sample_publication_families,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class RecordingRunner:

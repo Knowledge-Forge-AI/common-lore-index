@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_docker import (
+from common_lore_index_test_support.resource_docker import (
     DockerBaseline,
     DockerObject,
     DockerOwnershipError,
     DockerResourceOwner,
     ownership_labels,
 )
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_ledger import (
     ResourceKind,
     ResourceLedger,
     RunIdentity,

@@ -113,7 +113,7 @@ def test_ci2a_r1_staging_dispatches_to_the_owned_sandbox(monkeypatch) -> None:
     dispatched = Mock(return_value=23)
     monkeypatch.setattr("test_sandbox.run_in_sandbox", dispatched)
     monkeypatch.setattr(
-        "repomap_test_support.unit_purity.require_live_resource_allowed",
+        "common_lore_index_test_support.unit_purity.require_live_resource_allowed",
         lambda _label: None,
     )
 

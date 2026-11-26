@@ -9,17 +9,17 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_interruption import (
+from common_lore_index_test_support.resource_interruption import (
     InterruptionOutcome,
     classify_interruption,
     operator_marker_path,
 )
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     OperatorReclamationRequest,
     reclaim_run_population,
 )
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     PHASE,
     PROJECT,
     add_run,
@@ -27,7 +27,7 @@ from repomap_test_support.resource_operator_reclamation_test_support import (
     live,
     private_root,
 )
-from repomap_test_support.resource_safe_tree_delete import (
+from common_lore_index_test_support.resource_safe_tree_delete import (
     SafeTreeDeleteError,
     SafeTreeDeleteFailure,
     delete_run_entry,

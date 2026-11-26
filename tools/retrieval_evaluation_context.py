@@ -9,7 +9,7 @@ import tempfile
 from typing import Any
 
 from common_lore_index.retrieval.context_assembly import ContextReadPort, build_compact_context
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
 from retrieval_evaluation_admission import runtime_profile, source_digests
 from retrieval_evaluation_attempts import AttemptJournal, admit_attempt
 from retrieval_evaluation_context_catalog import (

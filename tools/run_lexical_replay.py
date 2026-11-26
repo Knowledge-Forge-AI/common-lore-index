@@ -23,7 +23,7 @@ OUTCOME_PRECEDENCE = {
 
 
 def _inner() -> int:
-    from repomap_test_support.retrieval_body_study_pg import disposable_socket_postgres
+    from common_lore_index_test_support.retrieval_body_study_pg import disposable_socket_postgres
     from retrieval_body_study_inputs import load_body_study_inputs
     from retrieval_lexical_replay import schedule
     from retrieval_lexical_replay_execution import ReplayJournal
@@ -96,7 +96,7 @@ def _inner() -> int:
 def _run_publication_replay(
     frame: Any, snapshot: Any, postgres: Any, treatment: dict[str, str], journal: Any,
 ) -> dict[str, Any]:
-    from repomap_test_support.retrieval_body_study_pg_publication import publish_registered_lexical_store
+    from common_lore_index_test_support.retrieval_body_study_pg_publication import publish_registered_lexical_store
     from retrieval_lexical_replay import ReplayIntegrityError, ReplayShortfall, ReplayStore, query_without_identity
     from retrieval_lexical_replay_execution import paired_replay, read_generation_census
 

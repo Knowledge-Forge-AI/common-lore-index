@@ -24,15 +24,15 @@ from pathlib import Path
 from typing import Any
 
 from common_lore_index.server.mcp_schemas import tool_definitions
-from repomap_test_support.cli_in_process import FIXTURE_ROOT
-from repomap_test_support.host_read_store_config import setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.cli_in_process import FIXTURE_ROOT
+from common_lore_index_test_support.host_read_store_config import setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import (
     graph_toml,
     multi_graph_toml,
     write_sqlite_home,
 )
-from repomap_test_support.sqlite_local_read_corpus import write_polyglot_source
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.sqlite_local_read_corpus import write_polyglot_source
+from common_lore_index_test_support.sqlite_local_harness import (
     LocalHarness,
     await_ready,
     initialize,

@@ -9,7 +9,7 @@ import pytest
 from ci.python_retention_evidence import compact_retention_evidence, canonical_json_bytes, make_collection_commitment
 from ci.python_retention_evidence_schema import validate_retention_evidence_schema
 from ci.pre_review_records import sanitize_machine_result
-from repomap_test_support.retention_evidence_fixture import evidence_source
+from common_lore_index_test_support.retention_evidence_fixture import evidence_source
 
 
 def reordered(value: Any) -> Any:

@@ -24,7 +24,7 @@ from common_lore_index.retrieval.context_budget_reservation import (
 from common_lore_index.retrieval.context_contracts import ContextRequest
 from common_lore_index.retrieval.context_packet_builder import build_packet_skeleton
 from common_lore_index.retrieval.context_work import WorkLedger
-from repomap_test_support.context_assertions import (
+from common_lore_index_test_support.context_assertions import (
     assert_valid_budget_error,
     assert_valid_context_packet,
 )

@@ -17,15 +17,15 @@ from common_lore_index.ops.resource_view import ResourceObserver
 from common_lore_index.ops.resource_view._projections import project_compact_context
 from common_lore_index.retrieval.context_contracts import CONTEXT_LOCATION_KEYS
 from common_lore_index.retrieval.projection_policy import ExclusionReason
-from repomap_test_support.context_assertions import assert_valid_context_packet
-from repomap_test_support.governance3_first_use_sealing import assert_mixed_snapshot_equivalence
-from repomap_test_support.first_use_workflow import (
+from common_lore_index_test_support.context_assertions import assert_valid_context_packet
+from common_lore_index_test_support.governance3_first_use_sealing import assert_mixed_snapshot_equivalence
+from common_lore_index_test_support.first_use_workflow import (
     first_use_expectations,
     guard_first_use_root,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_BINDINGS,
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
@@ -33,10 +33,10 @@ from repomap_test_support.retrieval_evaluation_fixture import (
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
 )
-from repomap_test_support.sqlite_local_harness import LocalHarness
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness
 
 
 def _invoke(argv: list[str], capsys: Any) -> tuple[int, dict[str, Any]]:

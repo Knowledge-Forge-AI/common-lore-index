@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from common_lore_index.graph.discovery import discover_observations
-from repomap_test_support.retrieval_supplement_fixtures import (
+from common_lore_index_test_support.retrieval_supplement_fixtures import (
     make_test_bindings, make_test_corpus_payload, make_test_identity,
 )
 from retrieval_supplement_corpus import materialize_corpus, parse_corpus

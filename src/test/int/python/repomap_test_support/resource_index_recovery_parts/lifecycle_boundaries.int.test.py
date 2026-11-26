@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support import resource_index_recovery as recovery
-from repomap_test_support.resource_hygiene_policy import HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
-from repomap_test_support.resource_ledger_io import write_private_json_exclusive
+from common_lore_index_test_support import resource_index_recovery as recovery
+from common_lore_index_test_support.resource_hygiene_policy import HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
+from common_lore_index_test_support.resource_ledger_io import write_private_json_exclusive
 
 
 def test_isolated_lifecycle_boundaries(tmp_path: Path) -> None:

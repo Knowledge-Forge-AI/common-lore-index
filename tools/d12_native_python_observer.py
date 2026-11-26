@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import Any, Mapping, MutableMapping, Sequence
 
 from common_lore_index.runtime import python_payload as payload
-from repomap_test_support import d12_native_python_proof as proof
-from repomap_test_support.resource_docker_operation_records import DERIVED_OPERATION_FIELDS
+from common_lore_index_test_support import d12_native_python_proof as proof
+from common_lore_index_test_support.resource_docker_operation_records import DERIVED_OPERATION_FIELDS
 
 SLOT, ROLE = "python31216_component", "d12-python31216-component"
 WAIT_SECONDS = 900
@@ -39,8 +39,8 @@ def observe_exploration(steps: MutableMapping[str, Any], client: Any, owner: Any
     record = steps[SLOT] = new_record(str(admission.platform))
     record["closure_cross_check"] = {"result": "not_run", "fields": []}  # A6: replaced only after the closure step
     try:
-        from repomap_test_support import d12_core_image as d12
-        from repomap_test_support.resource_run import active_resource_run
+        from common_lore_index_test_support import d12_core_image as d12
+        from common_lore_index_test_support.resource_run import active_resource_run
 
         boundary, run = d12.locate_run_boundary(), active_resource_run()
         if run is None:
@@ -99,7 +99,7 @@ def _stage(record: dict[str, Any], name: str) -> None:
 
 
 def _ledger_containers(run: Any) -> list[Any]:
-    from repomap_test_support.resource_ledger import ResourceKind
+    from common_lore_index_test_support.resource_ledger import ResourceKind
 
     return [item for item in run.ledger.records if item.kind is ResourceKind.DOCKER_CONTAINER]
 
@@ -152,7 +152,7 @@ def _probe(record: dict[str, Any], state: dict[str, Any], client: Any, owner: An
 
 
 def _finish(record: dict[str, Any], state: dict[str, Any], owner: Any, run: Any, boundary: Any) -> None:
-    from repomap_test_support.resource_ledger import ResourceKind
+    from common_lore_index_test_support.resource_ledger import ResourceKind
 
     cleanup = record["cleanup"] = {"verified": False}
     try:

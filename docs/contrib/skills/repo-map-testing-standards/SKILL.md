@@ -89,7 +89,7 @@ Podman compatibility is deferred.
 
 Ordinary canonical `unit`, `int`, and `staging` do not execute real builds. The
 runner validates and deselects the exact `requires_build_profile` debt registry
-in `repomap_test_support.build_profile_debt`, reports its count, and refuses a
+in `common_lore_index_test_support.build_profile_debt`, reports its count, and refuses a
 forwarded marker override. Direct execution of a deferred node requires
 separately implemented build-profile authority; ambient environment cannot
 authorize it, and skip or xfail is never a substitute.

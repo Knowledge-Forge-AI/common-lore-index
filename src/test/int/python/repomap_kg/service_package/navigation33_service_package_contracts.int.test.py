@@ -59,7 +59,7 @@ from common_lore_index.service_package.systemd import (
     _recognized_foreground_argv as _systemd_recognized_argv,
     decode_systemd_exec_argv,
 )
-from repomap_test_support.executable_authority import controlled_service_authority
+from common_lore_index_test_support.executable_authority import controlled_service_authority
 
 
 def _build_spec_in_root(root: Path, name: str = "home"):

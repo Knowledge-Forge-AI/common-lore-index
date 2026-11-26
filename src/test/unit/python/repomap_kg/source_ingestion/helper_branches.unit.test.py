@@ -8,7 +8,7 @@ from typing import Any, Mapping, cast
 from unittest.mock import patch
 
 
-from repomap_test_support.source_ingestion import SourceIngestionUnitTestCase
+from common_lore_index_test_support.source_ingestion import SourceIngestionUnitTestCase
 
 from common_lore_index.ops.ingestion import _source_warc_manifest as warc
 from common_lore_index.ops.ingestion import source

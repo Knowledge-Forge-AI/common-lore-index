@@ -89,8 +89,8 @@ sys.path[:0] = [str(root / "tools"), str(root / "src/main/python"),
 
 from ci.qualification_rust_import_guard import host_import_guard
 from ci.qualification_rust_shape import source_digests
-from repomap_test_support.rust_pilot_fake_docker import FakeDockerBridge, IMAGE
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import stand_in_wheels
+from common_lore_index_test_support.rust_pilot_fake_docker import FakeDockerBridge, IMAGE
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import stand_in_wheels
 
 manifest = json.loads(
     (root / "tools/ci/rust_pilot_qualification_manifest.json").read_text(encoding="utf-8")
@@ -106,7 +106,7 @@ deferred = {
 # Retain the class/value objects, then remove only those support modules so
 # entering the real guard cannot accept an eager test import.
 for name in tuple(sys.modules):
-    if name.startswith("repomap_test_support.rust_pilot_fake_"):
+    if name.startswith("common_lore_index_test_support.rust_pilot_fake_"):
         sys.modules.pop(name, None)
 
 assert not deferred.intersection(sys.modules)
@@ -302,7 +302,7 @@ with tempfile.TemporaryDirectory(prefix="rust-pilot-qualification-t1-") as raw:
                 root, fixture_root, scratch / "profile", IMAGE, audit_dir, manifest,
                 platform="linux/arm64", cross_cpu_profile=scratch / "cross-profile",
             )
-    from repomap_test_support.rust_pilot_qualification_report import assert_t1_amd_report_fits
+    from common_lore_index_test_support.rust_pilot_qualification_report import assert_t1_amd_report_fits
     print("T1_AMD_REPORT_BYTES=" + str(assert_t1_amd_report_fits(root, scratch, result)))
 
 assert {name for kind, name in qualification_events if kind == "containment"} == set(ALL_PROBES)

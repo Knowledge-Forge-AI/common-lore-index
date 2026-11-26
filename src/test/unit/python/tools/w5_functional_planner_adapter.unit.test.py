@@ -10,11 +10,11 @@ import sys
 
 import pytest
 
-from repomap_test_support.w5_component_planner_adapter import (
+from common_lore_index_test_support.w5_component_planner_adapter import (
     FunctionalAdapterRefusal, PLANNER_OPTION, make_functional_adapter,
     selected_options, sql_digest,
 )
-from repomap_test_support.postgres_container_config import build_psql_wrapper_script
+from common_lore_index_test_support.postgres_container_config import build_psql_wrapper_script
 
 
 EXPLAIN = 'SET ROLE "w5_experiment_reader";\nBEGIN READ ONLY; EXPLAIN SELECT 1; COMMIT;'

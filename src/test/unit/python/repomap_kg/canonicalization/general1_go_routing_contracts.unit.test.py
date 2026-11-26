@@ -17,7 +17,7 @@ from common_lore_index.graph.go_source_keys import (
     go_source_type_key,
 )
 from common_lore_index.graph.keys import file_key, go_module_key
-from repomap_test_support.go_canonicalization import (
+from common_lore_index_test_support.go_canonicalization import (
     accounting,
     file_observation,
     observation,

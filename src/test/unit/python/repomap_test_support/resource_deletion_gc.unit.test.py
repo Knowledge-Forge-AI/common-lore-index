@@ -8,28 +8,28 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_deletion_gc import (
+from common_lore_index_test_support.resource_deletion_gc import (
     DeletionGcError,
     PhysicalMutationState,
     public_deletion_projection,
 )
-from repomap_test_support.resource_deletion_records import (
+from common_lore_index_test_support.resource_deletion_records import (
     DeletionRecordError,
     DeletionRecordStore,
 )
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimError,
     ClaimPurpose,
     ProcessLiveness,
     register_protection,
 )
-from repomap_test_support.resource_protection_authority import ProtectionAuthorityError
-from repomap_test_support.resource_safe_tree_delete import (
+from common_lore_index_test_support.resource_protection_authority import ProtectionAuthorityError
+from common_lore_index_test_support.resource_safe_tree_delete import (
     SafeTreeDeleteError,
     SafeTreeDeleteResult,
 )
-from repomap_test_support.resource_deletion_gc_test_support import (
+from common_lore_index_test_support.resource_deletion_gc_test_support import (
     NOW,
     delete as _delete,
     empty_provider as _empty_provider,

@@ -31,11 +31,11 @@ from common_lore_index.runtime.release import (
     RELEASE_FINAL_PROBE_PY,
     RELEASE_PROBE_HELPERS_PY,
 )
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support import d12_dynamic_linkage as linkage
-from repomap_test_support.resource_docker_current import CurrentRunDockerContainers
-from repomap_test_support.resource_run import active_resource_run
-from repomap_test_support.resource_test_images import ensure_canonical_runtime_image
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support import d12_dynamic_linkage as linkage
+from common_lore_index_test_support.resource_docker_current import CurrentRunDockerContainers
+from common_lore_index_test_support.resource_run import active_resource_run
+from common_lore_index_test_support.resource_test_images import ensure_canonical_runtime_image
 
 REPO_ROOT = Path(__file__).resolve().parents[6]
 VERSIONS = "REPOMAP_DEPENDENCY_VERSIONS="

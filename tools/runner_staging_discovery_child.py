@@ -49,7 +49,7 @@ def _collect(request_path: Path, receipt_path: Path) -> int:
     import pytest
     from runner_integration_population import ItemCollectorPlugin
 
-    from repomap_test_support.d12_core_image import POPULATION_ATTR
+    from common_lore_index_test_support.d12_core_image import POPULATION_ATTR
 
     class OptionalPopulation:
         """Rebase the conftest's optional-owner record onto the collector-visible population.

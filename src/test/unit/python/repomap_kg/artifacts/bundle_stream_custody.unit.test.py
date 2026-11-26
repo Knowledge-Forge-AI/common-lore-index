@@ -12,7 +12,7 @@ from common_lore_index.artifacts._bundle_stream_encode import PublicationExpecta
 from common_lore_index.artifacts.receipt import ExtractionReceipt
 from common_lore_index.artifacts.store import FileSystemArtifactStore
 from common_lore_index.storage.row_spool import RowSpoolWriter
-from repomap_test_support.portable_publication_fixtures import _bundle
+from common_lore_index_test_support.portable_publication_fixtures import _bundle
 
 
 def _inputs(tmp_path: Path) -> tuple[bytes, PublicationExpectation, ExtractionReceipt]:

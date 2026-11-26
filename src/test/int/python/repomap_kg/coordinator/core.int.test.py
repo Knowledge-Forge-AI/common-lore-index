@@ -14,11 +14,11 @@ from common_lore_index.coordinator import normalize_request
 from common_lore_index.coordinator.core import SyntheticCoordinator
 from common_lore_index.coordinator.storage import ControlStore, SingletonActiveError
 from common_lore_index.coordinator.protocol import WorkerLaunchError
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.synthetic_worker_adapter import (
+from common_lore_index_test_support.synthetic_worker_adapter import (
     build_synthetic_coordinator,
 )
 

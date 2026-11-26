@@ -6,30 +6,30 @@ import json
 from pathlib import Path
 import pytest
 
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ProcessLiveness,
 )
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     OperatorReclamationRequest,
     reclaim_run_population,
 )
-import repomap_test_support.resource_operator_reclamation as reclamation
-from repomap_test_support.resource_operator_records import (
+import common_lore_index_test_support.resource_operator_reclamation as reclamation
+from common_lore_index_test_support.resource_operator_records import (
     create_operation_record,
     read_operation_record,
 )
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     add_run,
     private_root,
 )
-from repomap_test_support.resource_operator_scope import (
+from common_lore_index_test_support.resource_operator_scope import (
     classify_cotenant_activity,
     classify_liveness,
     close_scope_pins,
     inventory_operator_scope,
 )
-from repomap_test_support.resource_safe_tree_delete import (
+from common_lore_index_test_support.resource_safe_tree_delete import (
     SafeTreeDeleteResult,
 )
 

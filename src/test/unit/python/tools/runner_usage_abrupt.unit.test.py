@@ -155,7 +155,7 @@ def _usage_spec(root, case="sigkill", probe=None):
     args.extend(("--capability", str(root / "capability.json"), "--job-id", "job-usage", "--attempt", "1"))
     repo_root = Path(__file__).resolve().parents[5]
     return WorkerLaunchSpec(
-        argv=(sys.executable, "-m", "repomap_test_support.usage_worker", *args),
+        argv=(sys.executable, "-m", "common_lore_index_test_support.usage_worker", *args),
         environment={
             "PYTHONPATH": os.pathsep.join((
                 str(repo_root / "src/test/support/python"), str(repo_root / "src/main/python"),

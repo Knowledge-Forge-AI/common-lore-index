@@ -5,7 +5,7 @@ from dataclasses import replace
 
 import pytest
 
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import (
     make_w5_sample_nodes_and_evidence, make_w5_verified_pin,
 )
 from retrieval_semantic_generator_inputs import prepare_public_generation_input

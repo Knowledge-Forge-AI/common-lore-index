@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from dataclasses import replace
 import pytest
 
-from repomap_test_support.executable_authority import approved_psql, search_path_for
+from common_lore_index_test_support.executable_authority import approved_psql, search_path_for
 from common_lore_index.coordinator.configured_refresh import ConfiguredRefreshResolver
 from common_lore_index.coordinator.refresh_adapter import (
     RefreshCapability, RefreshConfigurationError, create_refresh_capability, load_refresh_capability,

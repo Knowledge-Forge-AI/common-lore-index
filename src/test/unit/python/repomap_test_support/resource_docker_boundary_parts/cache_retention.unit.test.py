@@ -5,25 +5,25 @@ from types import MethodType, SimpleNamespace
 
 import pytest
 
-from repomap_test_support.resource_docker_boundary import (
+from common_lore_index_test_support.resource_docker_boundary import (
     RunWideDockerBoundary,
     RunWideDockerResidueError,
 )
-from repomap_test_support.resource_docker_mediation import CanonicalDockerAuthority
-from repomap_test_support.resource_docker_operations import (
+from common_lore_index_test_support.resource_docker_mediation import CanonicalDockerAuthority
+from common_lore_index_test_support.resource_docker_operations import (
     JOURNAL_FILENAME,
     DockerOperationJournal,
 )
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_ledger import (
     RetainedReason,
     ResourceKind,
     ResourceLedger,
     RunIdentity,
 )
-from repomap_test_support.resource_run import TestResourceRun
-from repomap_test_support.resource_scratch import ScratchRunOwner
-from repomap_test_support.test_scratch import establish_run
-from repomap_test_support.resource_test_image_base import (
+from common_lore_index_test_support.resource_run import TestResourceRun
+from common_lore_index_test_support.resource_scratch import ScratchRunOwner
+from common_lore_index_test_support.test_scratch import establish_run
+from common_lore_index_test_support.resource_test_image_base import (
     BaseImageProvenance,
     parse_immutable_image_authority,
 )

@@ -8,7 +8,7 @@ from common_lore_index.graph import discovery, multi_source_pipeline as pipeline
 from common_lore_index.graph._capture_control import CancelCheck
 from common_lore_index.graph.multi_source_capture import _capture_inventory
 from common_lore_index.graph.multi_source import graph_source_binding_id
-from repomap_test_support.capture_cancellation_fixtures import capture_graph
+from common_lore_index_test_support.capture_cancellation_fixtures import capture_graph
 if TYPE_CHECKING:
     from common_lore_index.artifacts._sealing_meter import SealingMeter
 

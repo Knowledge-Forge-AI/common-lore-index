@@ -14,13 +14,13 @@ from typing import Any
 from common_lore_index.ops.config_local import LocalSqliteConfig, load_graph_registry_config_home
 from common_lore_index.ops.local_refresh import refresh_local_graph
 from common_lore_index.ops.resource_view import ResourceObserver
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.sqlite_local_harness import (
     LocalHarness,
     await_ready,
     kill_paused_child,
@@ -30,11 +30,11 @@ from repomap_test_support.sqlite_local_harness import (
     structured,
     tool,
 )
-from repomap_test_support.sqlite_managed_child import (
+from common_lore_index_test_support.sqlite_managed_child import (
     ManagedChild,
     cleanup_after_failure,
 )
-from repomap_test_support.sqlite_local_lock_children import attempt
+from common_lore_index_test_support.sqlite_local_lock_children import attempt
 from runner_coverage_observer import popen_observed_process
 
 _TEST_CONTROL_ACK = b"resource-view-test-control-ack-v1\n"
@@ -108,7 +108,7 @@ def _launch_observed_local(
     raw = popen_observed_process(
         [
             sys.executable, "-c", script, str(home),
-            str(Path(__file__).parents[4] / "support/python/repomap_test_support/sqlite_local_guard.py"),
+            str(Path(__file__).parents[4] / "support/python/common_lore_index_test_support/sqlite_local_guard.py"),
             MIXED_V1_GRAPH_ID,
             *((str(parent_pid),) if parent_pid is not None else ()),
         ],

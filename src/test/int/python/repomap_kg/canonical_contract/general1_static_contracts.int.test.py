@@ -9,7 +9,7 @@ from pathlib import Path
 
 from common_lore_index.canonicalization import canonicalize_observations
 from common_lore_index.observations.raw import RawObservation
-from repomap_test_support.cli_integration import CliIntegrationTestCase
+from common_lore_index_test_support.cli_integration import CliIntegrationTestCase
 
 
 class General1StaticContractsIntegrationTests(CliIntegrationTestCase):

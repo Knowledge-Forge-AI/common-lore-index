@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.retrieval_body_fixtures import make_body_bindings, make_body_catalog_payload, make_body_identity
+from common_lore_index_test_support.retrieval_body_fixtures import make_body_bindings, make_body_catalog_payload, make_body_identity
 from retrieval_body_catalog import BodyCase, BodyCatalog, parse_functional_catalog
 from retrieval_body_values import REGISTERED_IDENTITY, BodyError, BodyIdentity, canonical_bytes
 from retrieval_public_text_admission import public_text_applicability

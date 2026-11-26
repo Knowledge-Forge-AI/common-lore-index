@@ -9,11 +9,11 @@ import stat
 from tempfile import TemporaryDirectory
 from typing import Callable, Mapping
 
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 from common_lore_index.coordinator.client import CoordinatorClientError, LocalCoordinatorClient
 from common_lore_index.coordinator.contracts import normalize_request
 from common_lore_index.coordinator.storage import ControlStore
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 from common_lore_index.coordinator.endpoint import (
     EndpointDescriptorError,
     LoopbackEndpointDescriptor,

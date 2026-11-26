@@ -17,9 +17,9 @@ from common_lore_index.server import _mcp_locations, mcp
 from common_lore_index.server.mcp_core import RepoMapMcpError
 from common_lore_index.storage.sqlite_local import node_location_queries
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.host_read_store_config import NO_FALLBACK_GUARDS, patched_guards, setup_owned_config
-from repomap_test_support.node_location_fixtures import DOC, GRAPH, SYMBOL, locator_home, publish_locator_generation
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, publication_for
+from common_lore_index_test_support.host_read_store_config import NO_FALLBACK_GUARDS, patched_guards, setup_owned_config
+from common_lore_index_test_support.node_location_fixtures import DOC, GRAPH, SYMBOL, locator_home, publish_locator_generation
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, publication_for
 
 
 @pytest.fixture

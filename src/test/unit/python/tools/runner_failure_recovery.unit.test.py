@@ -137,10 +137,10 @@ def test_non_exception_measurement_flag_retains_only_actual_validation_exception
 
 @pytest.mark.parametrize("available", [True, False])
 def test_discovery_only_probe_uses_signal_seam_without_changing_config(tmp_path, monkeypatch, available):
-    from repomap_test_support import resource_run
-    from repomap_test_support.resource_admission import decide_host_admission
-    from repomap_test_support.resource_hygiene_policy import HygieneConfig, HygieneProfile
-    from repomap_test_support.runner_recovery_probe import RecoveryResourceRun
+    from common_lore_index_test_support import resource_run
+    from common_lore_index_test_support.resource_admission import decide_host_admission
+    from common_lore_index_test_support.resource_hygiene_policy import HygieneConfig, HygieneProfile
+    from common_lore_index_test_support.runner_recovery_probe import RecoveryResourceRun
 
     config = HygieneConfig()
     calls = []
@@ -161,7 +161,7 @@ def test_discovery_only_probe_uses_signal_seam_without_changing_config(tmp_path,
 
 
 def test_discovery_probe_refuses_conflicting_inputs_and_workload(tmp_path):
-    from repomap_test_support.runner_recovery_probe import RecoveryResourceRun, refuse_workload, run_probe, probe_command
+    from common_lore_index_test_support.runner_recovery_probe import RecoveryResourceRun, refuse_workload, run_probe, probe_command
 
     with pytest.raises(ValueError, match="conflicting host signals"):
         RecoveryResourceRun.start(tmp_path, host_signals=None)
@@ -176,8 +176,8 @@ def test_discovery_probe_refuses_conflicting_inputs_and_workload(tmp_path):
 @pytest.mark.parametrize("available", [True, False])
 def test_probe_invokes_canonical_entrypoint_with_workload_refusal_and_restores(tmp_path, monkeypatch, available):
     import run_tests
-    from repomap_test_support import runner_recovery_probe
-    from repomap_test_support.runner_recovery_probe import MISSING_SELECTOR, RecoveryResourceRun, refuse_workload, run_probe
+    from common_lore_index_test_support import runner_recovery_probe
+    from common_lore_index_test_support.runner_recovery_probe import MISSING_SELECTOR, RecoveryResourceRun, refuse_workload, run_probe
 
     original = run_tests.TestResourceRun, run_tests.run_pytest, run_tests.run_pytest_with_coverage
     monkeypatch.setattr(runner_recovery_probe, "active_sandbox", lambda: True)
@@ -198,7 +198,7 @@ def test_probe_invokes_canonical_entrypoint_with_workload_refusal_and_restores(t
 
 def test_discovery_probe_refuses_outside_sandbox_before_dispatch(tmp_path, monkeypatch):
     import run_tests
-    from repomap_test_support import runner_recovery_probe
+    from common_lore_index_test_support import runner_recovery_probe
 
     monkeypatch.setattr(runner_recovery_probe, "active_sandbox", lambda: False)
     monkeypatch.setattr(run_tests, "main", lambda args: pytest.fail("unexpected canonical re-dispatch"))

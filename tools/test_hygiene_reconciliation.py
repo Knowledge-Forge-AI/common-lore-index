@@ -19,32 +19,32 @@ for candidate in (TOOLS_ROOT, SUPPORT_ROOT):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-from repomap_test_support.resource_deletion_candidates import DeletionCandidate
-from repomap_test_support.resource_deletion_records import (
+from common_lore_index_test_support.resource_deletion_candidates import DeletionCandidate
+from common_lore_index_test_support.resource_deletion_records import (
     DeletionRecordError,
     DeletionRecordStore,
 )
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_hygiene_policy import HygieneConfig
-from repomap_test_support.resource_index import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_hygiene_policy import HygieneConfig
+from common_lore_index_test_support.resource_index import (
     AdvisoryIndex,
     HostAdmissionRefused,
 )
-from repomap_test_support.resource_index_maintenance import (
+from common_lore_index_test_support.resource_index_maintenance import (
     reconcile_deleted_run,
     recover_deleted_index_reconciliations,
     recover_stale_admission_lock,
 )
-from repomap_test_support.resource_index_mode_migration import (
+from common_lore_index_test_support.resource_index_mode_migration import (
     IndexParentHardeningResult,
 )
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimError,
     ClaimRegistry,
     MaintenanceHandle,
     ProcessLiveness,
 )
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_operator_reclamation import (
     OperatorReclamationInterrupted,
     OperatorReclamationPreflightError,
     OperatorReclamationRequest,
@@ -52,15 +52,15 @@ from repomap_test_support.resource_operator_reclamation import (
     public_operator_projection,
     reclaim_run_population,
 )
-from repomap_test_support.resource_protection_authority import (
+from common_lore_index_test_support.resource_protection_authority import (
     ProtectionAuthorityError,
     ProtectionObservation,
     observe_protections,
 )
-from repomap_test_support.resource_quarantine_gc import (
+from common_lore_index_test_support.resource_quarantine_gc import (
     recover_interrupted_renames,
 )
-from repomap_test_support.test_scratch import ENV_SCRATCH_ROOT
+from common_lore_index_test_support.test_scratch import ENV_SCRATCH_ROOT
 from test_hygiene_reporting import (
     report_operator_reclamation_projection,
     report_operator_reclamation_refused,

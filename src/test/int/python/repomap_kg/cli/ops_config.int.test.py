@@ -2,7 +2,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from repomap_test_support.cli_integration import (
+from common_lore_index_test_support.cli_integration import (
     OPS_CONFIG_TEMPLATE,
     CliIntegrationTestCase,
 )

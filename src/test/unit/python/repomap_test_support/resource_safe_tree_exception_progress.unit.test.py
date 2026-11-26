@@ -8,8 +8,8 @@ from types import SimpleNamespace
 
 import pytest
 
-import repomap_test_support.resource_safe_tree_delete as subject
-from repomap_test_support.resource_safe_tree_failure import (
+import common_lore_index_test_support.resource_safe_tree_delete as subject
+from common_lore_index_test_support.resource_safe_tree_failure import (
     SAFE_TREE_FAILURE_CATEGORIES,
     SafeTreeDeleteFailure,
 )

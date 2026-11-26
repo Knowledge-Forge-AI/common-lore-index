@@ -7,8 +7,8 @@ from typing import Any, Mapping
 
 import pytest
 
-from repomap_test_support.executable_authority import controlled_psql_copy
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.executable_authority import controlled_psql_copy
+from common_lore_index_test_support.test_scratch import short_test_directory
 from common_lore_index.ops.config import load_ops_config
 from common_lore_index.runtime.postgres_route import effective_postgres_route
 from common_lore_index.graph.multi_source_pipeline import scan_multi_source_generations
@@ -21,7 +21,7 @@ from common_lore_index.storage import (
     apply_migrations,
     default_rdbms_root,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -34,7 +34,7 @@ from common_lore_index.coordinator.refresh_adapter import (
     load_refresh_capability,
 )
 from datetime import timedelta
-from repomap_test_support.startup_recovery_scenarios import _harness, _refresh_harness, _make_refresh_fixture, _req, _req_norm
+from common_lore_index_test_support.startup_recovery_scenarios import _harness, _refresh_harness, _make_refresh_fixture, _req, _req_norm
 
 
 def _running_claim(store, request):

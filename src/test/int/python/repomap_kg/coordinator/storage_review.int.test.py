@@ -10,7 +10,7 @@ from common_lore_index.coordinator import JobRequest
 from common_lore_index.coordinator.configured_refresh import (
     ConfiguredRefreshResolver, build_configured_refresh_coordinator,
 )
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 from common_lore_index.coordinator.limits import DEFAULT_LIMITS
 from common_lore_index.coordinator.storage import (
     ControlSchemaError,

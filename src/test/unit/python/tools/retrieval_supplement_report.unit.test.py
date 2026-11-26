@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from common_lore_index.retrieval.query_contracts import CapabilityState, FallbackDisclosure, MatchSurface, QueryMode
-from repomap_test_support.retrieval_supplement_report_fixture import (
+from common_lore_index_test_support.retrieval_supplement_report_fixture import (
     make_baseline_slot_result, make_functional_report_fixture,
 )
 from retrieval_evaluation_grading import ExecutionState

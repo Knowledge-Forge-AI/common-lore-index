@@ -249,7 +249,7 @@ def validate_actual_refresh_arguments(arguments: Sequence[str]) -> tuple[str, ..
     test_child = (
         len(argv) >= 8
         and argv[1:3]
-        == ("-m", "repomap_test_support.scale14_actual_refresh_child")
+        == ("-m", "common_lore_index_test_support.scale14_actual_refresh_child")
         and separator >= 0
         and argv[separator + 1 : separator + 3] == ("ops", "refresh-graph")
     )

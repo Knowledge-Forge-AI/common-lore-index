@@ -10,12 +10,12 @@ import sys
 import time
 from typing import Protocol
 
-from repomap_test_support.resource_hygiene_policy import HygieneConfig, HygieneProfile
-from repomap_test_support.resource_retention import TerminalOutcome
-from repomap_test_support.resource_run import TestResourceRun
-from repomap_test_support.resource_runner_profile import RunnerProfileSelection
-from repomap_test_support.resource_docker_boundary import RunWideDockerBoundary
-from repomap_test_support.test_scratch import TestScratchLayout
+from common_lore_index_test_support.resource_hygiene_policy import HygieneConfig, HygieneProfile
+from common_lore_index_test_support.resource_retention import TerminalOutcome
+from common_lore_index_test_support.resource_run import TestResourceRun
+from common_lore_index_test_support.resource_runner_profile import RunnerProfileSelection
+from common_lore_index_test_support.resource_docker_boundary import RunWideDockerBoundary
+from common_lore_index_test_support.test_scratch import TestScratchLayout
 import runner_arguments as _runner_arguments
 
 

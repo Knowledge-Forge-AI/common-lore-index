@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import repomap_test_support.resource_protection_authority as resource_protection_authority_owner
+import common_lore_index_test_support.resource_protection_authority as resource_protection_authority_owner
 
 import hashlib
 import json
@@ -10,25 +10,25 @@ from pathlib import Path
 
 
 import test_hygiene_maintenance as maintenance_tool
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_index import AdvisoryIndex, ReconciledBound
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_index import AdvisoryIndex, ReconciledBound
+from common_lore_index_test_support.resource_ledger import (
     ResourceKind,
     ResourceLedger,
     RetainedReason,
     RunIdentity,
 )
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimPurpose,
     ClaimRegistry,
     register_protection,
 )
-from repomap_test_support.resource_quarantine_gc import quarantine_batch
-from repomap_test_support.resource_receipts import (
+from common_lore_index_test_support.resource_quarantine_gc import quarantine_batch
+from common_lore_index_test_support.resource_receipts import (
     verify_appended_report_packet,
     write_close_receipt,
 )
-from repomap_test_support.resource_scratch_history import discover_historical_gc
+from common_lore_index_test_support.resource_scratch_history import discover_historical_gc
 
 
 NOW = 2_000_000

@@ -9,7 +9,7 @@ from common_lore_index.coordinator.local_lifecycle import (
     initialize_coordinator_control,
     upgrade_coordinator_control,
 )
-from repomap_test_support.coordinator_control_fixtures import (
+from common_lore_index_test_support.coordinator_control_fixtures import (
     BackupInspectionStub,
     BackupResultStub,
     BareAuthority,

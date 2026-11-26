@@ -6,8 +6,8 @@ import time
 from pathlib import Path
 from types import SimpleNamespace
 import pytest
-from repomap_test_support.resource_test_image_cache import write_private_runtime_evidence
-from repomap_test_support.resource_test_images import (
+from common_lore_index_test_support.resource_test_image_cache import write_private_runtime_evidence
+from common_lore_index_test_support.resource_test_images import (
     DEPLOYMENT_IMAGE_PREFIX,
     EPHEMERAL_IMAGE_PREFIX,
     TestImageError as ImageLifecycleError,
@@ -242,9 +242,9 @@ def test_no_broad_prune_api_is_reachable(tmp_path):
         path.read_text(encoding="utf-8")
         for path in (
             Path(__file__).parents[3]
-            / "support/python/repomap_test_support/resource_test_images.py",
+            / "support/python/common_lore_index_test_support/resource_test_images.py",
             Path(__file__).parents[3]
-            / "support/python/repomap_test_support/resource_docker_engine.py",
+            / "support/python/common_lore_index_test_support/resource_docker_engine.py",
         )
     )
     assert ".images.prune(" not in sources
@@ -267,5 +267,5 @@ def test_network_pull_call_is_owned_only_by_test_image_manager():
                 owners.append(path.relative_to(repository).as_posix())
 
     assert owners == [
-        "src/test/support/python/repomap_test_support/resource_test_images.py"
+        "src/test/support/python/common_lore_index_test_support/resource_test_images.py"
     ]

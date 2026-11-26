@@ -16,11 +16,11 @@ from common_lore_index.retrieval.context_assembly import build_compact_context
 from common_lore_index.retrieval.context_budget import serialize_compact_json
 from common_lore_index.retrieval.context_contracts import ContextRequest
 from common_lore_index.retrieval.context_work import WorkLedger
-from repomap_test_support.context_assertions import assert_valid_context_packet
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_assertions import assert_valid_context_packet
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE, CTX_GRAPH_ID, SNAP_CORE, build_sqlite_context_fixture,
 )
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
 
 
 def _publication(database: Path) -> tuple[int, int]:

@@ -20,7 +20,7 @@ from common_lore_index.graph.multi_source_pipeline import (
     scan_multi_source_generations,
 )
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
-from repomap_test_support.composition_extraction_fixtures import (
+from common_lore_index_test_support.composition_extraction_fixtures import (
     create_composition_graph_config,
     populate_shell_project,
 )

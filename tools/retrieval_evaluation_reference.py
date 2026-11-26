@@ -22,7 +22,7 @@ from common_lore_index.retrieval.query_contracts import (
     QueryScope,
     unavailable_envelope,
 )
-from repomap_test_support.retrieval_evaluation_fixture import binding_id_for_alias
+from common_lore_index_test_support.retrieval_evaluation_fixture import binding_id_for_alias
 from retrieval_evaluation_accounting import ByteLayerAccounting
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_evaluation_schema import EvaluationTask

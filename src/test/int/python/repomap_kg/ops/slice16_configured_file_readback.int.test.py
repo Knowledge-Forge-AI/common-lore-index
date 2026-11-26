@@ -11,7 +11,7 @@ from common_lore_index.ops.graph_files import (
 )
 from common_lore_index.storage import apply_migrations, default_rdbms_root, run_psql
 from common_lore_index.storage.sql_core import sql_literal
-from repomap_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.postgres_harness import temporary_postgres
 
 
 def test_non_utf8_registry_refuses_before_configured_readback(tmp_path, capsys):

@@ -5,7 +5,7 @@ import sys
 import pytest
 
 from common_lore_index.coordinator.protocol import WorkerLaunchSpec, run_worker_spec
-from repomap_test_support.portable_worker_conformance import run_portable_worker_conformance
+from common_lore_index_test_support.portable_worker_conformance import run_portable_worker_conformance
 
 
 @pytest.mark.parametrize("completion", ["eof", "delayed-zero", "exit-error", "late-protocol", "blocked-exit", "group-error", "stdout-unsettled", "stderr-unsettled"])
@@ -105,7 +105,7 @@ def test_parity_consumer_requires_successful_process_completion(tmp_path, monkey
     from common_lore_index.artifacts import parity_harness
     from common_lore_index.coordinator._portable_worker_launch import _run_portable_worker_command
     from common_lore_index.coordinator import _portable_worker_launch
-    from repomap_test_support.portable_publication_fixtures import create_single_source_graph_config
+    from common_lore_index_test_support.portable_publication_fixtures import create_single_source_graph_config
 
     source = tmp_path / "source"
     source.mkdir()
@@ -123,7 +123,7 @@ def test_parity_consumer_requires_successful_process_completion(tmp_path, monkey
     def launch(capability_path, identity, limits):
         result = _run_portable_worker_command(
             capability_path, identity, limits,
-            module="repomap_test_support.portable_worker_conformance",
+            module="common_lore_index_test_support.portable_worker_conformance",
             module_arguments=("--case", "terminal-validation:completion-" + (
                 "normal" if completion == "cleanup-error" else completion)),
             python_paths=(root / "src/test/support/python", root / "src/main/python"),

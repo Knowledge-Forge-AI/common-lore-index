@@ -21,11 +21,11 @@ from common_lore_index.storage.semantic_candidate_readback import query_embeddin
 from common_lore_index.storage.semantic_candidates import CandidatePublication, EmbeddingEntry, EmbeddingProfilesQuery
 from common_lore_index.storage.sql_core import sql_literal
 from common_lore_index.storage.staged_ingestion import run_staged_portable_refresh
-from repomap_test_support.portable_publication_fixtures import _authority, _binding
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
-from repomap_test_support.semantic_candidate_publication import candidate_bundle
-from repomap_test_support.semantic_candidate_restore import optional_sql_fixture_cleanup
+from common_lore_index_test_support.portable_publication_fixtures import _authority, _binding
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
+from common_lore_index_test_support.semantic_candidate_publication import candidate_bundle
+from common_lore_index_test_support.semantic_candidate_restore import optional_sql_fixture_cleanup
 
 REPOSITORY = "repo1:candidate-fixture"
 ROOT = "graph:candidate-fixture"

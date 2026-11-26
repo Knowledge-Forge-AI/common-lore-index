@@ -31,8 +31,8 @@ from common_lore_index.coordinator.transport import (
     TransportError,
     UnixSocketService,
 )
-from repomap_test_support.portable_worker_scenarios import make_missing_manifest_reference
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.portable_worker_scenarios import make_missing_manifest_reference
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 def _hello(*, portable: bool = False) -> dict[str, object]:

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_preparation import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation import (
     _forced_tail_for_observations,
 )
 from scale28_preparation_worker import (
@@ -47,7 +47,7 @@ class _TailProcess:
 def test_forced_tail_stdout_closes_on_normal_path(monkeypatch) -> None:
     process = _TailProcess()
     monkeypatch.setattr(
-        "repomap_test_support.test_cov5k_r2_fix2_preparation.subprocess.Popen",
+        "common_lore_index_test_support.test_cov5k_r2_fix2_preparation.subprocess.Popen",
         lambda *_args, **_kwargs: process,
     )
     _forced_tail_for_observations(("preparation_timeout",))
@@ -57,7 +57,7 @@ def test_forced_tail_stdout_closes_on_normal_path(monkeypatch) -> None:
 def test_forced_tail_stdout_closes_on_exception_path(monkeypatch) -> None:
     process = _TailProcess("bad\n")
     monkeypatch.setattr(
-        "repomap_test_support.test_cov5k_r2_fix2_preparation.subprocess.Popen",
+        "common_lore_index_test_support.test_cov5k_r2_fix2_preparation.subprocess.Popen",
         lambda *_args, **_kwargs: process,
     )
     with pytest.raises(RuntimeError, match="did not become ready"):
@@ -67,7 +67,7 @@ def test_forced_tail_stdout_closes_on_exception_path(monkeypatch) -> None:
 
 def test_descriptor_authority_is_actual_forced_tail_stdout_lifecycle() -> None:
     source = Path(
-        "src/test/support/python/repomap_test_support/"
+        "src/test/support/python/common_lore_index_test_support/"
         "test_cov5k_r2_fix2_preparation.py"
     ).read_text()
     assert "def _probe_descriptor_settlement" not in source

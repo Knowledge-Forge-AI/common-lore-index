@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from repomap_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.sqlite_local_harness import (
     LocalHarness,
     initialize,
     structured,

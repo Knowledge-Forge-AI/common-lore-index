@@ -24,7 +24,7 @@ for extra_path in (
     if str(extra_path) not in sys.path:
         sys.path.insert(0, str(extra_path))
 
-from repomap_test_support.test_scratch import ENV_RUN_ROOT, ENV_SCRATCH_ROOT
+from common_lore_index_test_support.test_scratch import ENV_RUN_ROOT, ENV_SCRATCH_ROOT
 from runner_coverage_execution import prepare_child_coverage_environment
 from test_sandbox_contract import ENV_ACTIVE, ENV_TOKEN, IMAGE_TAG
 

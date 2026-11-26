@@ -18,20 +18,20 @@ import pytest
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.ops.lexical_service import build_graph_lexical_generation
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_body_fixtures import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_body_fixtures import (
     make_body_bindings,
     make_body_catalog_payload,
     make_body_corpus_payload,
     make_body_identity,
     make_body_policy,
 )
-from repomap_test_support.retrieval_body_publication_fixture import (
+from common_lore_index_test_support.retrieval_body_publication_fixture import (
     BodyStoreFixture,
     publish_body_fixture, write_body_home,
 )
-from repomap_test_support.retrieval_body_study_fixtures import PIN
-from repomap_test_support.retrieval_body_study_slots import _baseline
+from common_lore_index_test_support.retrieval_body_study_fixtures import PIN
+from common_lore_index_test_support.retrieval_body_study_slots import _baseline
 from retrieval_body_admission_rules import evaluate_body_case
 from retrieval_body_catalog import parse_functional_catalog
 from retrieval_body_corpus import materialize_body_corpus, parse_body_corpus

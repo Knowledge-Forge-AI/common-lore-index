@@ -4,20 +4,20 @@ import subprocess
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import CatalogEntry, build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import CatalogEntry, build_closed_catalog
 from common_lore_index.storage.authority import PublicationGenerations
 from scale15_terminal_contracts import ExpectedRefreshAuthority
-from repomap_test_support.test_cov5k_r2_fix2_evidence import ExecutorEvidenceError
-from repomap_test_support.test_cov5k_r2_groupa_contract import group_a_public_context
-from repomap_test_support.test_cov5k_r2_fix2_observer import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import ExecutorEvidenceError
+from common_lore_index_test_support.test_cov5k_r2_groupa_contract import group_a_public_context
+from common_lore_index_test_support.test_cov5k_r2_fix2_observer import (
     execute_observer_request,
     execute_observer_schedule,
 )
-from repomap_test_support.test_cov5k_r2_fix2_preparation import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation import (
     execute_preparation_state_path,
 )
-from repomap_test_support.test_cov5k_r2_fix2_registry import build_executor_registry
-from repomap_test_support.test_cov5k_r2_fix2_runtime import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_registry import build_executor_registry
+from common_lore_index_test_support.test_cov5k_r2_fix2_runtime import (
     execute_container_rss_equivalence,
     execute_runtime_driver_read,
 )
@@ -105,7 +105,7 @@ def test_review2_psql_categories_come_from_process_evidence() -> None:
 
 def test_review2_container_pairs_enter_registered_runtime_owner(monkeypatch) -> None:
     entry = _entries("D", "container_rss_equivalence")[0]
-    import repomap_test_support.test_cov5k_r2_fix2_runtime as runtime
+    import common_lore_index_test_support.test_cov5k_r2_fix2_runtime as runtime
 
     entered = 0
 
@@ -151,7 +151,7 @@ def test_review2_enacted_parameters_are_independently_observed() -> None:
 
 
 def test_review2_runtime_generic_executor_insertion_is_refused(monkeypatch) -> None:
-    import repomap_test_support.test_cov5k_r2_fix2_runtime as runtime
+    import common_lore_index_test_support.test_cov5k_r2_fix2_runtime as runtime
 
     monkeypatch.setattr(runtime, "execute_failure_causality", lambda _entry: None)
     with pytest.raises(Exception, match="executor|owner|code"):

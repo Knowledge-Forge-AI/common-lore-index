@@ -19,8 +19,8 @@ from common_lore_index.runtime import release_manifest as historical
 from common_lore_index.runtime.release import (
     GO_RELEASE_IMAGE, POSTGRES_RELEASE_IMAGE, PYTHON_RELEASE_IMAGE, DebPackage, PlatformPackages,
 )
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support.d12_core_image_cleanup import run_candidate_cleanup
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support.d12_core_image_cleanup import run_candidate_cleanup
 
 from ci.d12_hosted_evidence import (
     EXPECTED_CANDIDATE_SCHEMA, EXPECTED_SDK_DOCKERFILE_SHA256, EXPECTED_SDK_HELPER_SHA256,

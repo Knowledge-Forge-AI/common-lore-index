@@ -50,14 +50,14 @@ from common_lore_index.storage.staged_validation import (
     validate_stage,
 )
 from common_lore_index.storage.staging_merge import build_source_index_merge_statements
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.publication_fixtures import execute_statements
+from common_lore_index_test_support.publication_fixtures import execute_statements
 
 
-from repomap_test_support.portable_publication_fixtures import (
+from common_lore_index_test_support.portable_publication_fixtures import (
     _authority, _binding, _bundle, _seven_family_bundle, _row,
 )
 

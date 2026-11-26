@@ -14,7 +14,7 @@ from common_lore_index.graph.keys import file_key
 from common_lore_index.storage.navigation_search import EVIDENCE_SCAN_LIMIT, NavigationSearchQuery
 from common_lore_index.storage.sqlite_local.connection import read_transaction
 from common_lore_index.storage.sqlite_local.navigation_queries import navigation_candidates
-from repomap_test_support.navigation_search_fixtures import (
+from common_lore_index_test_support.navigation_search_fixtures import (
     ALPHA_DOC,
     BETA_DOC,
     BINDING,
@@ -22,9 +22,9 @@ from repomap_test_support.navigation_search_fixtures import (
     GRAPH,
     navigation_home,
 )
-from repomap_test_support.sqlite_local_fixtures import local_binding
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
-from repomap_test_support.navigation_pushdown_fixtures import pushdown_home
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
+from common_lore_index_test_support.navigation_pushdown_fixtures import pushdown_home
 
 
 def test_scoped_grouped_navigation_over_guarded_sqlite_stdio(tmp_path: Path) -> None:

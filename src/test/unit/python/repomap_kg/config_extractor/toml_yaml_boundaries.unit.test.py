@@ -4,7 +4,7 @@ import unittest
 from common_lore_index.extractors.config.generic import (
     extract_config_file_observations,
 )
-from repomap_test_support.config_extractor import observations_format
+from common_lore_index_test_support.config_extractor import observations_format
 
 
 class ConfigExtractorTomlYamlBoundariesUnitTests(unittest.TestCase):

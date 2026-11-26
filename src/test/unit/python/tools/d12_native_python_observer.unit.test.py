@@ -18,9 +18,9 @@ import pytest
 import d12_dependency_preflight as preflight
 import d12_native_python_observer as observer
 from common_lore_index.runtime import python_payload as payload
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support import d12_native_python_proof as proof
-from repomap_test_support import resource_run
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support import d12_native_python_proof as proof
+from common_lore_index_test_support import resource_run
 from src.test.unit.python.tools.d12_native_python_fixture_helpers import (
     AMD, ARM, CONTAINER_ID, ROOT, World, capture, raw_and_inner,
 )

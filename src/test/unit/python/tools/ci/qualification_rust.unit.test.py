@@ -25,7 +25,7 @@ from ci.qualification_rust_manifest import (
 )
 from ci.qualification_rust_runtime import RuntimeGap, _audit, _graph_quality, _legacy_measure, _navigation
 from common_lore_index.canonicalization.rust_pilot_family import canonicalize_rust_pilot
-from repomap_test_support.rust_pilot_semantic_fixtures import live_pilot
+from common_lore_index_test_support.rust_pilot_semantic_fixtures import live_pilot
 
 ROOT = Path(__file__).resolve().parents[6]
 MANIFEST = ROOT / "tools/ci/rust_pilot_qualification_manifest.json"

@@ -28,8 +28,8 @@ from common_lore_index.retrieval.source_selection import (
     revalidate_selection_record,
     write_selection_file,
 )
-from repomap_test_support.context_assertions import assert_valid_context_packet
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_assertions import assert_valid_context_packet
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE,
     BINDING_DOCS,
     SNAP_CORE,

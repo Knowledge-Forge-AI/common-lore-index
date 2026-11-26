@@ -13,7 +13,7 @@ import pytest
 from common_lore_index.storage import retained_publication_readback as readback
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.storage.errors import StorageSchemaError
-from repomap_test_support.portable_publication_fixtures import authority, binding, seven_family_bundle
+from common_lore_index_test_support.portable_publication_fixtures import authority, binding, seven_family_bundle
 
 
 def _publication():

@@ -22,7 +22,7 @@ from common_lore_index.retrieval.projection_query import (
     query_captured_text,
 )
 from common_lore_index.retrieval.query_contracts import CapabilityState
-from repomap_test_support.w5_publication_validation_fixtures import (
+from common_lore_index_test_support.w5_publication_validation_fixtures import (
     build_validation_projection,
 )
 

@@ -36,7 +36,7 @@ from common_lore_index.storage.sql_sources import (
     build_source_run_query_sql,
     build_source_summary_query_sql,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.postgres_harness import temporary_postgres
 
 
 ROOT = "/workspace/fixture"

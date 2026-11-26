@@ -20,10 +20,10 @@ from common_lore_index.ops.resource_reports._codec import encode_report
 from common_lore_index.ops.resource_reports._delivery import DeliveryError
 from common_lore_index.ops.resource_view import begin, finish_local
 from common_lore_index.ops.resource_view._context_projection import unfinished_compact_context
-from repomap_test_support.resource_report_cli_files import (
+from common_lore_index_test_support.resource_report_cli_files import (
     limit, private_directory, report_leftovers, report_payload,
 )
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
 
 GRAPH = "report-local"
 

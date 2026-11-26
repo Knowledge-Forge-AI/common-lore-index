@@ -17,17 +17,17 @@ from installed_experience_pins import (
     CODE_KIND, GRAPH_ID, PREVIEW005_BASE_CONFIG, PREVIEW005_GRAPH_PARSER_SHA256,
     PREVIEW005_PACKAGE_INPUTS, RELEASED_CLOE_COMMIT,
 )
-from repomap_test_support.installed_candidate import (
+from common_lore_index_test_support.installed_candidate import (
     ROOT, BuiltWheel, candidate_wheel, installed_graph_parser_digest, preview005_predecessor_wheel,
     released_cloe_wheel, wheel_inventory,
 )
-from repomap_test_support.installed_environment import InstalledEnvironment, run_child
-from repomap_test_support.installed_experience_driver import json_object, pure_environment
-from repomap_test_support.installed_experience_fixture import (
+from common_lore_index_test_support.installed_environment import InstalledEnvironment, run_child
+from common_lore_index_test_support.installed_experience_driver import json_object, pure_environment
+from common_lore_index_test_support.installed_experience_fixture import (
     current_config_name, expectations, legacy_tiny_home, tiny_home, write_tiny_material,
 )
-from repomap_test_support.installed_mcp_session import useful_question
-from repomap_test_support.installed_origin import closure, observe_origin
+from common_lore_index_test_support.installed_mcp_session import useful_question
+from common_lore_index_test_support.installed_origin import closure, observe_origin
 
 def _digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()

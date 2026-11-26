@@ -24,14 +24,14 @@ from common_lore_index.storage import (
     StorageSchemaError,
     identity_metadata_hash,
 )
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     NO_FALLBACK_GUARDS,
     fail_if_reached as _fail,
     patched_guards as _patched,
     setup_owned_config as _setup_owned_config,
     setup_owned_home,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 NODE = CanonicalNodeRecord(
     canonical_key="python.module:pkg.a", graph_key_version=1, kind="python.module",

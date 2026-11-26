@@ -7,23 +7,23 @@ from pathlib import Path
 
 import pytest
 
-import repomap_test_support.resource_operator_reclamation as reclamation
+import common_lore_index_test_support.resource_operator_reclamation as reclamation
 import test_hygiene_maintenance as maintenance_tool
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     OperatorReclamationRequest,
 )
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     add_run,
     private_root,
 )
-from repomap_test_support.resource_operator_records import (
+from common_lore_index_test_support.resource_operator_records import (
     PUBLIC_LOG_SCHEMA,
     SCOPE_CLASS,
     append_public_log,
 )
-from repomap_test_support.resource_safe_tree_failure import SafeTreeDeleteFailure
-from repomap_test_support.resource_validation import HygieneValidationError
+from common_lore_index_test_support.resource_safe_tree_failure import SafeTreeDeleteFailure
+from common_lore_index_test_support.resource_validation import HygieneValidationError
 
 
 def approved() -> OperatorReclamationRequest:

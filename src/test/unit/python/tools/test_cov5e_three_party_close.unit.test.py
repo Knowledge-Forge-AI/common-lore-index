@@ -7,7 +7,7 @@ import psycopg
 import pytest
 
 import scale28_backend_observer_session as observer_session
-from repomap_test_support.observer_schedule import ObserverSchedule
+from common_lore_index_test_support.observer_schedule import ObserverSchedule
 
 from scale28_backend_observer_session import (
     BackendMonitorError,

@@ -10,7 +10,7 @@ from common_lore_index.coordinator import _control_submission as subject
 from common_lore_index.coordinator.contracts import JobRequest
 from common_lore_index.coordinator.limits import CoordinatorLimits
 from common_lore_index.storage.authority import RequestId
-from repomap_test_support.control_db_fakes import ScriptedCursor, connect_with
+from common_lore_index_test_support.control_db_fakes import ScriptedCursor, connect_with
 
 
 def request(*, priority: str = "manual") -> JobRequest:

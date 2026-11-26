@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from common_lore_index.retrieval.query_contracts import MatchSurface, QueryScope, QueryMode
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_FIXTURE_ROOT, binding_id_for_alias,
 )
 from retrieval_evaluation_grading import ExecutionState

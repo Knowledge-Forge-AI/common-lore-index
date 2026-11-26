@@ -8,7 +8,7 @@ import tempfile
 from typing import Any
 import unittest
 
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     baseline_toc_bytes,
     default_baseline_database_catalog,
     default_baseline_server_provenance,

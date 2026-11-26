@@ -31,7 +31,7 @@ from common_lore_index.runtime._extension_restore_toc import build_derived_toc_p
 from common_lore_index.runtime.backup_commands import planned_pg_restore_command
 from common_lore_index.runtime.backup_records import LocalDbBackupError
 from common_lore_index.runtime.release_cluster import initialize_release_cluster
-from repomap_test_support.d9_extension_policies import (
+from common_lore_index_test_support.d9_extension_policies import (
     DEFAULT_ARTIFACT_QUALIFICATION, DEFAULT_REPLAY_BOUNDS, DEFAULT_TEST_ENGINE_IMAGE_ID, UNIT_TEMPLATE_BASELINE,
     UNIT_VECTOR_CONTROL_SHA256, UNIT_VECTOR_SCRIPT_SHA256,
     adr0077_pgvector_extension_policy, synthetic_multilevel_extension_policy,

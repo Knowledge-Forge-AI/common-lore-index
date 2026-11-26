@@ -15,10 +15,10 @@ from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.sqlite_local import source_feed_queries, source_queries
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.sqlite_local_feed_corpus import (
+from common_lore_index_test_support.sqlite_local_feed_corpus import (
     ATOM, RSS, acquire_feed_runs, feed_bundle, generation_observations,
 )
-from repomap_test_support.sqlite_local_fixtures import local_binding, publication_for
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding, publication_for
 
 
 @pytest.fixture

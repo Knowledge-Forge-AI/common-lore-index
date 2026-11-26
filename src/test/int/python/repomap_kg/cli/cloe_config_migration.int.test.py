@@ -17,11 +17,11 @@ from common_lore_index.ops.config_migration import (
     apply_cloe_config_migration, finalize_cloe_config_migration, rollback_cloe_config_migration,
 )
 from common_lore_index.ops.config_migration_fs import Home, MAX_CONFIG_FILES, MAX_FILE_BYTES, MAX_TOTAL_BYTES
-from repomap_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
-from repomap_test_support.cli_in_process import REPO_ROOT, module_process_environment
+from common_lore_index_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
+from common_lore_index_test_support.cli_in_process import REPO_ROOT, module_process_environment
 from runner_coverage_observer import launch_observed_process
-from repomap_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml
-from repomap_test_support.sqlite_local_harness import LocalHarness
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness
 
 SECRET = "migration-int-secret-sentinel"
 OVERLAY = 'schema_version = 1\n[service]\nlog_level = "debug"\n'

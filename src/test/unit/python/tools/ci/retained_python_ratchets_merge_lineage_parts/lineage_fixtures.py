@@ -13,7 +13,7 @@ from ci.retained_python_records import (
     ScopeRegistry,
     ScopeTransitionRecord,
 )
-from repomap_test_support.retained_ratchet_fixture import (
+from common_lore_index_test_support.retained_ratchet_fixture import (
     BASELINE_PATH as BASELINE_PATH,
     MODULE_PATH as MODULE_PATH,
     SCOPE_PATH as SCOPE_PATH,

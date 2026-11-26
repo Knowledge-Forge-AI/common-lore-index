@@ -25,7 +25,7 @@ from common_lore_index.storage.staging_event_transport import (
 )
 from common_lore_index.storage.staging_observability import StagingMeasurements
 from common_lore_index.storage.staging_ownership import StageOwner
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
 def _insert_repository_and_stage(postgres, stage_id: str) -> str:

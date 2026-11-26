@@ -17,8 +17,8 @@ from common_lore_index.coordinator.limits import DEFAULT_LIMITS
 from common_lore_index.coordinator.service import CoordinatorService, default_transport_factory
 from common_lore_index.coordinator.startup_recovery import StartupRecoveryReport
 from common_lore_index.coordinator.transport import LoopbackTcpService, UnixSocketService
-from repomap_test_support.test_scratch import short_test_directory
-from repomap_test_support.startup_recovery_scenarios import _harness, _req
+from common_lore_index_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.startup_recovery_scenarios import _harness, _req
 
 
 @contextmanager

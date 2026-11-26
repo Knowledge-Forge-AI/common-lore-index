@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_administrative import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_administrative import (
     rehearse_actual_administrative_operation,
 )
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
 
 
 _K_ENTRIES = tuple(

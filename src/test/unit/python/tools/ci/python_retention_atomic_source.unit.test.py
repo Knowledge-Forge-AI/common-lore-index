@@ -13,7 +13,7 @@ from ci.python_retention_evidence_source import (
     RetentionSourceValidationError,
     validate_source_document,
 )
-from repomap_test_support.retention_evidence_fixture import evidence_source as _make_source
+from common_lore_index_test_support.retention_evidence_fixture import evidence_source as _make_source
 
 
 def _build_atomic_source(

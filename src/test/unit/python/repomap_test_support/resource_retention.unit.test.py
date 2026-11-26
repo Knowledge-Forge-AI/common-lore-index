@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_receipts import (
+from common_lore_index_test_support.resource_receipts import (
     read_append_record,
     read_close_receipt,
     report_source_release,
@@ -16,8 +16,8 @@ from repomap_test_support.resource_receipts import (
     write_close_receipt,
     write_operator_release,
 )
-from repomap_test_support.resource_report_packet import MAX_PACKET_BYTES
-from repomap_test_support.resource_retention import (
+from common_lore_index_test_support.resource_report_packet import MAX_PACKET_BYTES
+from common_lore_index_test_support.resource_retention import (
     RetentionClass,
     RetentionError,
     TerminalOutcome,

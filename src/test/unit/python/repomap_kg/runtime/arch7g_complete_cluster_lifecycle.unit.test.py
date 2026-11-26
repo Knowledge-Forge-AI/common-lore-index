@@ -18,7 +18,7 @@ from common_lore_index.runtime.release_cluster import (
     initialize_release_cluster,
     release_cluster_status,
 )
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     baseline_observation_json_bytes,
     baseline_toc_bytes,
 )

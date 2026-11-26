@@ -5,7 +5,7 @@ import uuid
 import psycopg
 import pytest
 
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 from common_lore_index.coordinator.local_lifecycle import (
     CoordinatorControlError,
     LocalControlAuthority,
@@ -19,8 +19,8 @@ from common_lore_index.coordinator.local_lifecycle import (
     upgrade_coordinator_control,
 )
 from common_lore_index.runtime.maintenance import MaintenanceUnavailableError
-from repomap_test_support.cli_in_process import scrub_coverage_environment
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import scrub_coverage_environment
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

@@ -21,7 +21,7 @@ from common_lore_index.retrieval.lexical_policy import (
 )
 from common_lore_index.retrieval.query_contracts import FallbackDisclosure, QueryMode
 from common_lore_index.storage.lexical_query_sql import RawLexicalQueryRow
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,

@@ -7,15 +7,15 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_hygiene_policy import HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_hygiene_policy import HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     OperatorReclamationRequest,
     reclaim_run_population,
 )
-from repomap_test_support.resource_operator_records import read_operation_record
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_records import read_operation_record
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     PROJECT,
     add_monitoring_link,
     add_run,

@@ -189,7 +189,7 @@ def test_candidate_archive_binds_current_reader_and_publication_dependencies() -
         "tools/retrieval_evaluation_current_observations.py",
         "tools/retrieval_evaluation_correspondence_observation_records.py",
         "tools/retrieval_evaluation_correspondence_graph_scope.py",
-        "src/test/support/python/repomap_test_support/retrieval_evaluation_publication_readback.py",
+        "src/test/support/python/common_lore_index_test_support/retrieval_evaluation_publication_readback.py",
     ):
         assert captured[relative] == (root / relative).read_bytes()
     # Protect direct runtime imports of the current-read boundary, including

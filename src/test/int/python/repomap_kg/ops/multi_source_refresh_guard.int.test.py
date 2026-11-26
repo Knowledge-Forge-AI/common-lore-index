@@ -15,12 +15,12 @@ from common_lore_index.ops.ingestion.github_api import (
     load_github_api_source_config,
 )
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.source_ingestion_integration import (
+from common_lore_index_test_support.source_ingestion_integration import (
     IntFakeGitHubOpener,
     assert_public_path_readback,
     github_api_fixture_root,

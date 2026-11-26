@@ -6,17 +6,17 @@ from dataclasses import replace
 
 import pytest
 
-from repomap_test_support.scale28_adr2_frame_model import (
+from common_lore_index_test_support.scale28_adr2_frame_model import (
     OBSERVATION_TRANSFER_RESERVE_NS,
     encode_observation_acknowledgement,
     encode_observation_frame,
 )
-from repomap_test_support.scale28_adr2_freshness_model import (
+from common_lore_index_test_support.scale28_adr2_freshness_model import (
     AttemptGeneration,
     PreparationProtocolState,
     validate_reacquisition,
 )
-from repomap_test_support.scale28_adr2_model_fixtures import (
+from common_lore_index_test_support.scale28_adr2_model_fixtures import (
     FRAME_RECEIVED_NS,
     FRESHNESS_LEASE_MS,
     fixture_digest,
@@ -27,7 +27,7 @@ from repomap_test_support.scale28_adr2_model_fixtures import (
     fixture_receipt_payload,
     fixture_resource_baseline,
 )
-from repomap_test_support.scale28_adr2_receipt_model import (
+from common_lore_index_test_support.scale28_adr2_receipt_model import (
     encode_receipt,
     validate_preparation_receipt,
 )

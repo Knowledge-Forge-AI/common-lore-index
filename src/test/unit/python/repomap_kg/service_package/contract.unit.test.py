@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-from repomap_test_support.executable_authority import (
+from common_lore_index_test_support.executable_authority import (
     PSQL_NAME,
     approved_psql,
     private_bin_directory,

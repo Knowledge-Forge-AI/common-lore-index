@@ -17,10 +17,10 @@ import pytest
 
 import d12_native_python_observer as observer
 from common_lore_index.runtime import python_payload as payload
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support import d12_native_python_proof as proof
-from repomap_test_support.resource_docker_current import CurrentRunDockerContainers
-from repomap_test_support.resource_run import active_resource_run
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support import d12_native_python_proof as proof
+from common_lore_index_test_support.resource_docker_current import CurrentRunDockerContainers
+from common_lore_index_test_support.resource_run import active_resource_run
 
 REPO_ROOT = Path(__file__).resolve().parents[6]
 ARM_PLATFORM = "linux/arm64"

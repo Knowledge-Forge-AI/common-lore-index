@@ -8,16 +8,16 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support import resource_report_packet_file
-from repomap_test_support.resource_receipts import (
+from common_lore_index_test_support import resource_report_packet_file
+from common_lore_index_test_support.resource_receipts import (
     report_source_release,
     verify_appended_report_packet,
 )
-from repomap_test_support.resource_report_packet import (
+from common_lore_index_test_support.resource_report_packet import (
     MAX_PACKET_BYTES,
     ReportPacketError,
 )
-from repomap_test_support.resource_retention import RetentionError
+from common_lore_index_test_support.resource_retention import RetentionError
 
 
 _LINE = b"=" * 80

@@ -79,7 +79,7 @@
         "src/test/int/python/repomap_kg/runtime/cloe_installed_mcp.int.test.py",
         "src/test/int/python/repomap_kg/runtime/cloe_installed_migration.int.test.py",
         "src/test/int/python/repomap_kg/runtime/cloe_installed_server.int.test.py",
-        "src/test/support/python/repomap_test_support/installed_experience_fixture.py",
+        "src/test/support/python/common_lore_index_test_support/installed_experience_fixture.py",
         "tools/installed_experience_source_identity.py"
       ],
       "consumption_mode": "static_extraction",
@@ -96,7 +96,7 @@
         "src/test/int/python/repomap_kg/runtime/cloe_installed_mcp.int.test.py",
         "src/test/int/python/repomap_kg/runtime/cloe_installed_migration.int.test.py",
         "src/test/int/python/repomap_kg/runtime/cloe_installed_server.int.test.py",
-        "src/test/support/python/repomap_test_support/installed_experience_fixture.py",
+        "src/test/support/python/common_lore_index_test_support/installed_experience_fixture.py",
         "tools/installed_experience_source_identity.py"
       ],
       "consumption_mode": "static_extraction",

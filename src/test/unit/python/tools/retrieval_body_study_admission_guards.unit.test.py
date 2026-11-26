@@ -7,7 +7,7 @@ from retrieval_body_study_contracts import BodyStudyRefusal
 from retrieval_body_study_host_admission import validate_authority_record
 from retrieval_body_study_plan import validate_body_plan
 from retrieval_body_study_reservation import validate_reservation
-from repomap_test_support.retrieval_body_study_host_cases import (
+from common_lore_index_test_support.retrieval_body_study_host_cases import (
     body_plan, copy_case, mutate, reservation_record,
 )
 
@@ -70,7 +70,7 @@ def test_reservation_reuse_and_state_mismatch_refuse() -> None:
 
 def test_file_backed_operator_receipt_hash_is_distinct_from_decision_hash(tmp_path):
     from retrieval_body_study_host_admission import read_parent_admission
-    from repomap_test_support.retrieval_body_study_host_cases import write_physical_authority_case
+    from common_lore_index_test_support.retrieval_body_study_host_cases import write_physical_authority_case
 
     plan, path, digest = write_physical_authority_case(tmp_path / "authority")
     admitted = read_parent_admission(path, expected_sha256=digest, plan=plan)
@@ -83,7 +83,7 @@ def test_file_backed_operator_receipt_hash_is_distinct_from_decision_hash(tmp_pa
 
 def test_file_backed_wrong_decision_is_refused_despite_valid_receipt_bytes(tmp_path):
     from retrieval_body_study_host_admission import read_parent_admission
-    from repomap_test_support.retrieval_body_study_host_cases import write_physical_authority_case
+    from common_lore_index_test_support.retrieval_body_study_host_cases import write_physical_authority_case
 
     plan, path, digest = write_physical_authority_case(tmp_path / "wrong", wrong_decision=True)
     with pytest.raises(BodyStudyRefusal, match="body operator decision"):

@@ -9,8 +9,8 @@ from unittest.mock import patch
 import run_tests
 import pytest
 
-from repomap_test_support.resource_hygiene_policy import HygieneConfig, HygieneProfile
-from repomap_test_support.resource_runner_profile import (
+from common_lore_index_test_support.resource_hygiene_policy import HygieneConfig, HygieneProfile
+from common_lore_index_test_support.resource_runner_profile import (
     RunnerProfileError,
     resolve_runner_profile,
 )

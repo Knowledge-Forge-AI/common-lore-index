@@ -2,13 +2,13 @@ import os
 import json
 import unittest
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
 
-from repomap_test_support.storage_publication import load_file_observations
+from common_lore_index_test_support.storage_publication import load_file_observations
 from common_lore_index.storage import (
     apply_migrations,
     default_rdbms_root,
@@ -19,7 +19,7 @@ from common_lore_index.storage.readback_driver import (
     READBACK_DRIVER_ENV,
 )
 
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     _psycopg5_summary_parity_observations,
     _restore_environment_variable,
     _select_readback_driver_for_postgres,

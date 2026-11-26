@@ -12,7 +12,7 @@ from common_lore_index.ops.config_loading import load_ops_config_home
 from common_lore_index.ops.config_records import OpsPostgresStatus
 from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.server.http import RepoMapLocalRequestHandler, RepoMapLocalServer, serve_local_http
-from repomap_test_support.cli_integration import OPS_CONFIG_TEMPLATE
+from common_lore_index_test_support.cli_integration import OPS_CONFIG_TEMPLATE
 
 
 class _TestHandler(RepoMapLocalRequestHandler):

@@ -14,7 +14,7 @@ for path in (REPO_ROOT, TOOLS_ROOT, TEST_SUPPORT_ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from repomap_test_support.unit_purity import require_live_resource_allowed  # noqa: E402
+from common_lore_index_test_support.unit_purity import require_live_resource_allowed  # noqa: E402
 from test_sandbox import ensure_sandbox_image, run_in_sandbox  # noqa: E402
 from test_sandbox_entrypoint import (  # noqa: E402
     INFRASTRUCTURE_PROBE_FLAG,

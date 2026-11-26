@@ -18,8 +18,8 @@ import pytest
 import common_lore_index.artifacts._source_sealing_io as sealing_io
 from common_lore_index.artifacts._source_sealing_io import open_source_body
 from common_lore_index.cli.main import main
-from repomap_test_support.resource_report_cli_files import private_directory, report_payload
-from repomap_test_support.sqlite_local_fixtures import SHELL_LIB, graph_toml, write_sqlite_home
+from common_lore_index_test_support.resource_report_cli_files import private_directory, report_payload
+from common_lore_index_test_support.sqlite_local_fixtures import SHELL_LIB, graph_toml, write_sqlite_home
 
 DEPTH = ("alpha", "beta", "gamma", "delta")
 

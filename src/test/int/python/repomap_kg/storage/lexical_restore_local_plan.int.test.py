@@ -18,18 +18,18 @@ from common_lore_index.storage.lexical_driver import (
     execute_fetchone,
     lexical_connection_scope,
 )
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     connect_real_postgres,
     setup_real_backup_home,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
 )
 
@@ -178,12 +178,12 @@ def test_d12_round_trip_probe_observes_btree_and_gin_across_pg_dump_restore(
     import json
     import os
     import sys
-    from repomap_test_support.cli_in_process import module_process_environment
-    from repomap_test_support.d12_image_probes import (
+    from common_lore_index_test_support.cli_in_process import module_process_environment
+    from common_lore_index_test_support.d12_image_probes import (
         ROUND_TRIP_PY,
         restore_replay_shim_source,
     )
-    from repomap_test_support.postgres_harness import postgres_bin_dir
+    from common_lore_index_test_support.postgres_harness import postgres_bin_dir
     from runner_coverage import get_active_bootstrap_capability
     from runner_coverage_observer import launch_observed_process
     from tools.system.d12_candidate_assessment import ACCEPTED_INDEX_ACCESS_METHODS, _verify_round_trip

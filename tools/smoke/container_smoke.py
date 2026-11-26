@@ -9,7 +9,7 @@ import sys
 import time
 from typing import Any, Callable, TextIO
 
-from repomap_test_support.resource_docker_current import (
+from common_lore_index_test_support.resource_docker_current import (
     CurrentRunDockerBaselineError,
     CurrentRunDockerCleanupError,
     CurrentRunDockerContainers,

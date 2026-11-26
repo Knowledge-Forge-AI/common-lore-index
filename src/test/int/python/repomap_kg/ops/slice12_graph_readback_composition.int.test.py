@@ -41,7 +41,7 @@ from common_lore_index.storage.source_readback import (
     query_ingested_source_records,
     query_source_run_records,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 VALID_RAW_OBSERVATION = {

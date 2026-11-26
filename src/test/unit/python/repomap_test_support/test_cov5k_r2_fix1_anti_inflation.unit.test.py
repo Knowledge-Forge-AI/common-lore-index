@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import replace
 import pytest
-from repomap_test_support.test_cov5k_r2_fix1_qualification import DraftManifest, IntegrityError, build_result, create_draft, freeze_manifest, open_observations, parameter_digest, validate_draft, verify_frozen, verify_result
+from common_lore_index_test_support.test_cov5k_r2_fix1_qualification import DraftManifest, IntegrityError, build_result, create_draft, freeze_manifest, open_observations, parameter_digest, validate_draft, verify_frozen, verify_result
 
 @pytest.fixture
 def frozen():

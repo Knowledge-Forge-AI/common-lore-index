@@ -5,10 +5,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_integration import (
+from common_lore_index_test_support.cli_integration import (
     CliIntegrationTestCase,
 )
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     maybe_provenance_runner_result,
     unit_maintenance_window_patch,
 )

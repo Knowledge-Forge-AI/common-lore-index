@@ -36,7 +36,7 @@ DEFAULT_PHASE = "REPOMAP-PRODUCT2-HOST-MCP-NATIVE1-HOST1"
 PHASE_PATTERN = re.compile(r"[A-Z0-9][A-Z0-9-]{2,95}")
 DEFAULT_OUTBOX = Path.home() / "Documents" / "agent" / "outbox" / "repo-map_dev"
 MIN_FREE_BYTES = 1 << 30
-KIT_MODULE_PREFIXES = ("smoke", "repomap_test_support", "runner_", "test_sandbox", "host_mcp_native_qualify")
+KIT_MODULE_PREFIXES = ("smoke", "common_lore_index_test_support", "runner_", "test_sandbox", "host_mcp_native_qualify")
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 
@@ -156,7 +156,7 @@ def _parent(pre: Prerequisites, checkout: Path, kit_root: Path) -> None:
 
 
 def _docker(pre: Prerequisites, runner: Runner) -> None:
-    from repomap_test_support.postgres_container import TEST_POSTGRES_IMAGE
+    from common_lore_index_test_support.postgres_container import TEST_POSTGRES_IMAGE
 
     def docker(*args: str) -> subprocess.CompletedProcess[str] | None:
         try:

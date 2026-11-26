@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
 from retrieval_evaluation_admission import validate_admitted_input_manifest
 from retrieval_evaluation_attempts import admit_attempt
 from retrieval_evaluation_criteria_v2 import (

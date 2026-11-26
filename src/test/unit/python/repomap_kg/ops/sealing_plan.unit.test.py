@@ -16,7 +16,7 @@ from common_lore_index.artifacts.sealing_governance import SealingBudget
 from common_lore_index.ops.sealing_plan import (
     MAX_PLAN_BYTES, PLAN_SCHEMA, SealingPlanRefusal, build_sealing_plan, render_plan_text,
 )
-from repomap_test_support.sealing_governance_fixtures import (
+from common_lore_index_test_support.sealing_governance_fixtures import (
     GRAPH_ID, binding_for, expectation_for, graph_for, record_opens, write_tree,
 )
 

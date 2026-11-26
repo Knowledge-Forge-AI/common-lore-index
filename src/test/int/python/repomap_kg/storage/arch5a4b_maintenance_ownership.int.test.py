@@ -9,7 +9,7 @@ from common_lore_index.runtime.maintenance import (
     maintenance_window,
 )
 from common_lore_index.storage import apply_migrations
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

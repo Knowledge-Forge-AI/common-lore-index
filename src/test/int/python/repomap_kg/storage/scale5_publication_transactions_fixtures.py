@@ -1,6 +1,6 @@
 from __future__ import annotations
 import psycopg
-from repomap_test_support.publication_fixtures import (
+from common_lore_index_test_support.publication_fixtures import (
     PublicationFixture,
 )
 

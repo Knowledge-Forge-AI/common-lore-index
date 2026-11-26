@@ -25,7 +25,7 @@ from common_lore_index.graph.multi_source_capture import (
 )
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
 from common_lore_index.ops.config_records import OpsGraphConfig
-from repomap_test_support.capture_cancellation_fixtures import observe_capture_io
+from common_lore_index_test_support.capture_cancellation_fixtures import observe_capture_io
 
 
 def _binding(root: Path, alias: str) -> OpsGraphSourceBindingConfig:

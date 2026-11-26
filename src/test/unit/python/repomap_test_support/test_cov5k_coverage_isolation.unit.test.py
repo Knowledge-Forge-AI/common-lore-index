@@ -14,22 +14,22 @@ from unittest.mock import MagicMock, patch
 
 import coverage
 from common_lore_index.coordinator.protocol import WorkerLaunchSpec, run_worker_spec
-from repomap_test_support.synthetic_worker_adapter import run_synthetic_worker
+from common_lore_index_test_support.synthetic_worker_adapter import run_synthetic_worker
 import runner_coverage
 from runner_coverage_execution import prepare_child_coverage_environment
-from repomap_test_support.scale28_preparation_worker_fixtures import (
+from common_lore_index_test_support.scale28_preparation_worker_fixtures import (
     exit_with_synthetic_descendant,
 )
-from repomap_test_support.test_cov5k_r2_fix1_executor_preparation import (
+from common_lore_index_test_support.test_cov5k_r2_fix1_executor_preparation import (
     _enact_forced_tail,
 )
-from repomap_test_support.test_cov5k_r2_fix2_preparation import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation import (
     _forced_tail_for_observations,
 )
-from repomap_test_support.test_cov5k_r2_fix2_preparation_conditions import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation_conditions import (
     _condition_activity,
 )
-from repomap_test_support.test_cov5k_r2_fix2_preparation_execution import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation_execution import (
     _warm_preparation_worker_imports,
 )
 
@@ -206,7 +206,7 @@ class Cov5kCoverageIsolationUnitTests(unittest.TestCase):
                 "from unittest.mock import patch",
                 "import coverage",
                 "from runner_coverage import ChildCoverageSession",
-                "from repomap_test_support import synthetic_async_worker as worker",
+                "from common_lore_index_test_support import synthetic_async_worker as worker",
                 "real_popen = worker.subprocess.Popen",
                 "def observed(*args, **kwargs):",
                 "    process = real_popen(*args, **kwargs)",

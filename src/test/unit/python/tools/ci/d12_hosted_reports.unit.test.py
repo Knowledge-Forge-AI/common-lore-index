@@ -17,7 +17,7 @@ from common_lore_index.runtime import python_payload as payload
 from common_lore_index.runtime.release import (
     GO_RELEASE_IMAGE, POSTGRES_RELEASE_IMAGE, PRODUCT_MINIMUM_LIBPQ_VERSION, PYTHON_RELEASE_IMAGE,
 )
-from repomap_test_support import d12_core_image
+from common_lore_index_test_support import d12_core_image
 from src.test.unit.python.tools.ci.d12_hosted_fixtures import make_positive_amd64_closure
 import test_sandbox_images
 

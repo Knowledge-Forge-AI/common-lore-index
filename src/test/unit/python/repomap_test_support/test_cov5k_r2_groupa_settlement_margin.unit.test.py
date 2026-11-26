@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_fix2_preparation import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation import (
     _policy,
     execute_preparation_state_path,
 )

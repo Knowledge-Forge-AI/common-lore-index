@@ -4,14 +4,14 @@ from dataclasses import replace
 
 import pytest
 
-from repomap_test_support import test_cov5k_r2_fix2_preparation as preparation
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_fix2_evidence import (
+from common_lore_index_test_support import test_cov5k_r2_fix2_preparation as preparation
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import (
     ExecutorEvidenceError,
     bind_executor_evidence,
     verify_executor_evidence,
 )
-from repomap_test_support.test_cov5k_r2_fix2_registry import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_registry import (
     build_executor_registry,
 )
 

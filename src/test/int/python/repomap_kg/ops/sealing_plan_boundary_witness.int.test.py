@@ -16,9 +16,9 @@ import psycopg
 import pytest
 
 from common_lore_index.cli.main import main
-from repomap_test_support.retrieval_evaluation_fixture import write_mixed_v1_postgres_home
-from repomap_test_support.sealing_governance_fixtures import write_tree
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
+from common_lore_index_test_support.retrieval_evaluation_fixture import write_mixed_v1_postgres_home
+from common_lore_index_test_support.sealing_governance_fixtures import write_tree
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
 
 GRAPH = "plan-boundary-proof"
 CORE = {"a.py": b"a=1\n", "deep/b.txt": b"metadata only\n"}

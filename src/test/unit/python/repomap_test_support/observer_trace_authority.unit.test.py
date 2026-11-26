@@ -2,10 +2,10 @@ from dataclasses import fields, make_dataclass, replace
 
 import pytest
 
-import repomap_test_support.observer_trace as trace_module
-import repomap_test_support.observer_trace_context as trace_context_module
+import common_lore_index_test_support.observer_trace as trace_module
+import common_lore_index_test_support.observer_trace_context as trace_context_module
 
-from repomap_test_support.observer_trace import (
+from common_lore_index_test_support.observer_trace import (
     ObserverCaller,
     ObserverTraceEvent,
     ObserverTraceEvidenceError,

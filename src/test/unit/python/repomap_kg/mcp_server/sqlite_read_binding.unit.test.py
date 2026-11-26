@@ -35,26 +35,26 @@ from common_lore_index.server.sqlite_read_binding import (
 from common_lore_index.storage import CanonicalStorageSummaryRecord
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     PG_BINDING_TRIPWIRES,
     fail_if_reached,
     patched_guards,
     setup_owned_config,
 )
-from repomap_test_support.sqlite_local_feed_corpus import (
+from common_lore_index_test_support.sqlite_local_feed_corpus import (
     RSS,
     acquire_feed_runs,
     feed_bundle,
     generation_observations,
 )
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.sqlite_local_fixtures import (
     generation_bundle,
     graph_toml,
     local_binding,
     publication_for,
     write_sqlite_home,
 )
-from repomap_test_support.sqlite_local_read_corpus import CorpusRow, read_corpus_bundle
+from common_lore_index_test_support.sqlite_local_read_corpus import CorpusRow, read_corpus_bundle
 
 # The tripwires patch ``resolve_ops_config`` by module attribute, and selection
 # lazily imports ``runtime.plan``, which binds that name at import time. Importing

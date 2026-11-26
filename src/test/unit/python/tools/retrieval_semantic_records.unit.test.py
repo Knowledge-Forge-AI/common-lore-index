@@ -8,7 +8,7 @@ from typing import cast
 
 import pytest
 
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import (
     make_w5_policy,
     make_w5_readback_adapter,
     make_w5_receipt,

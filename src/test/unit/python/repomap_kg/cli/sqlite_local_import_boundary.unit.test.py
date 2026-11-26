@@ -29,10 +29,10 @@ from common_lore_index import cli
 from common_lore_index.cli import _postgres_facade
 from common_lore_index.coordinator import local_mode
 from common_lore_index.ops import refresh as ops_refresh
-from repomap_test_support import sqlite_local_guard
-from repomap_test_support.host_read_store_config import setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, remove_database, tool
+from common_lore_index_test_support import sqlite_local_guard
+from common_lore_index_test_support.host_read_store_config import setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, remove_database, tool
 
 POSTGRES_IMPLEMENTATION = {
     "common_lore_index.coordinator.local_mode",
@@ -222,8 +222,8 @@ def test_facade_names_resolve_to_their_source_objects(monkeypatch: pytest.Monkey
 
 
 def test_navigation_search_over_existing_driver_free_stdio_path(tmp_path: Path) -> None:
-    from repomap_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
-    from repomap_test_support.sqlite_local_harness import structured
+    from common_lore_index_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
+    from common_lore_index_test_support.sqlite_local_harness import structured
 
     home, _ = navigation_home(tmp_path)
     harness = LocalHarness(tmp_path / "navigation-stdio", block_psycopg=True)
@@ -246,7 +246,7 @@ def test_navigation_search_over_existing_driver_free_stdio_path(tmp_path: Path) 
 
 
 def test_context_pack_and_select_run_without_the_postgres_driver(tmp_path: Path) -> None:
-    from repomap_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
+    from common_lore_index_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
 
     home, _ = navigation_home(tmp_path)
     harness = LocalHarness(tmp_path / "context-driver-free", block_psycopg=True)

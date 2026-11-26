@@ -7,18 +7,18 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import (
     ALLOWED_READINESS,
     build_closed_catalog,
 )
-from repomap_test_support.test_cov5k_r2_fix2_encoding import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_encoding import (
     CanonicalEncodingError,
     canonical_digest,
 )
-from repomap_test_support.test_cov5k_r2_fix2_gate_executor import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_gate_executor import (
     _cleanup_complete,
 )
-from repomap_test_support.test_cov5k_r2_fix2_receipt import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_receipt import (
     GateBinding,
     QualificationReceiptDraft,
     QualificationReceiptError,
@@ -28,7 +28,7 @@ from repomap_test_support.test_cov5k_r2_fix2_receipt import (
     finalize_receipt,
     verify_final_receipt,
 )
-from repomap_test_support.test_cov5k_r2_fix2_registry import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_registry import (
     build_executor_registry,
     readiness_counts,
 )

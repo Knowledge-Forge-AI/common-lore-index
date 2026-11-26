@@ -14,8 +14,8 @@ from common_lore_index.server.ops import (
 )
 from common_lore_index.storage import StorageSchemaError
 
-from repomap_test_support.host_read_store_config import patched_guards, setup_owned_home
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.host_read_store_config import patched_guards, setup_owned_home
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 ROWS = [{"path": "src/main.py"}, {"path": "src/other.py"}]
 # Lifecycle, source-traversal and container attempts that NO_FALLBACK_GUARDS

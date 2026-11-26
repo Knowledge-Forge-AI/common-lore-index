@@ -135,7 +135,7 @@ def test_source_drift_and_arbitrary_role_or_duplicate_launch_refused():
 
 def test_go_observer_records_real_supervisor_termination_and_restores_owners(tmp_path):
     from common_lore_index.extractors.languages import go_protocol as owner
-    from repomap_test_support.staging_abrupt_launch import observe_go_hang
+    from common_lore_index_test_support.staging_abrupt_launch import observe_go_hang
     from runner_integration_obligations import GO_HANG_NODE
     ctx = AbruptRunnerContext(nodeids=(GO_HANG_NODE,), invocation_id="b" * 32,
         source_sha256=SOURCE, verify_source=lambda: None)
@@ -171,7 +171,7 @@ def test_spawn_configuration_restores_ambient_values_after_launch_failure(monkey
 
 
 def test_declared_conformance_fault_bypasses_only_its_prelaunch_registration(tmp_path):
-    from repomap_test_support.portable_worker_conformance import run_portable_worker_conformance
+    from common_lore_index_test_support.portable_worker_conformance import run_portable_worker_conformance
     from runner_integration_obligations import SEAM_NODE
     ctx = AbruptRunnerContext(nodeids=(SEAM_NODE,), invocation_id="b" * 32,
         source_sha256=SOURCE, verify_source=lambda: None)
@@ -226,7 +226,7 @@ def test_two_sessions_restore_the_enclosing_collector(tmp_path):
 
 
 def test_old_descendant_artifact_refuses_before_any_launch(tmp_path):
-    from repomap_test_support.staging_abrupt_launch import observe_scale28_crash
+    from common_lore_index_test_support.staging_abrupt_launch import observe_scale28_crash
     (tmp_path / "descendant.launch.json").write_text('{}')
     with pytest.raises(RuntimeError, match="predates"):
         with observe_scale28_crash(tmp_path):
@@ -237,8 +237,8 @@ def test_sqlite_local_guard_abrupt_kill_settlement_produces_complete_receipt_and
     """Prove _settle_terminal_receipt produces complete .exit, valid shard, and clean combine on SIGKILL."""
     import sqlite3
     from runner_coverage_execution import read_registered_children
-    from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-    from repomap_test_support.sqlite_local_harness import LocalHarness, await_ready, kill_paused_child
+    from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+    from common_lore_index_test_support.sqlite_local_harness import LocalHarness, await_ready, kill_paused_child
 
     source = write_shell_source(tmp_path / "sources" / "vault")
     home = write_sqlite_home(tmp_path / "home", graph_toml("vault", source, privacy="private-ops"))
@@ -298,8 +298,8 @@ def test_sqlite_local_guard_abrupt_kill_settlement_produces_complete_receipt_and
 
 def test_abrupt_child_unexpectedly_released_invalidates_receipt_and_raises(tmp_path: Path) -> None:
     """Prove an abrupt-registered child that is released instead of killed cannot be falsely finalized."""
-    from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-    from repomap_test_support.sqlite_local_harness import LocalHarness, await_ready, release
+    from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+    from common_lore_index_test_support.sqlite_local_harness import LocalHarness, await_ready, release
 
     source = write_shell_source(tmp_path / "sources" / "vault")
     home = write_sqlite_home(tmp_path / "home", graph_toml("vault", source, privacy="private-ops"))
@@ -340,7 +340,7 @@ def test_abrupt_child_unexpectedly_released_invalidates_receipt_and_raises(tmp_p
 def test_abrupt_settlement_error_propagates_attributable_diagnostic(tmp_path: Path) -> None:
     """Prove a settlement error writes barrier/settlement_error and fails await_ready."""
     from unittest.mock import MagicMock
-    from repomap_test_support.sqlite_local_harness import await_ready
+    from common_lore_index_test_support.sqlite_local_harness import await_ready
     barrier = tmp_path / "barrier"; barrier.mkdir()
     (barrier / "settlement_error").write_text("OSError: disk full", encoding="utf-8")
     with pytest.raises(AssertionError, match="paused writer settlement error: OSError: disk full"):

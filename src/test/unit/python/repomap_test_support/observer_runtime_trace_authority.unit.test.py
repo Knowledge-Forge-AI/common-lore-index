@@ -5,8 +5,8 @@ import pytest
 
 import scale28_backend_observer_session as session_module
 import scale28_observer_deadlines as deadline_module
-import repomap_test_support.observer_trace as trace_module
-from repomap_test_support.observer_trace import (
+import common_lore_index_test_support.observer_trace as trace_module
+from common_lore_index_test_support.observer_trace import (
     ObserverCaller,
     ObserverTraceKind,
     ObserverTraceRecorder,

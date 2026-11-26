@@ -30,7 +30,7 @@ from common_lore_index.storage.staging_resource_observability import (
     capture_staging_resources,
     emit_staging_resource_measurements,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

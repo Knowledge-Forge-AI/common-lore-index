@@ -5,10 +5,10 @@ from pathlib import Path
 import subprocess
 import sys
 import pytest
-from repomap_test_support import resource_test_image_commands as commands
-from repomap_test_support import resource_test_images as images_module
-from repomap_test_support.resource_test_image_records import read_project_runtime_dependencies
-from repomap_test_support.resource_test_images import (
+from common_lore_index_test_support import resource_test_image_commands as commands
+from common_lore_index_test_support import resource_test_images as images_module
+from common_lore_index_test_support.resource_test_image_records import read_project_runtime_dependencies
+from common_lore_index_test_support.resource_test_images import (
     DEPLOYMENT_IMAGE_PREFIX,
     RUNTIME_MATERIALIZATION_PROOF_RECIPE_SCHEMA,
     TestImageError as ImageLifecycleError,

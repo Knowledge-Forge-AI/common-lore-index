@@ -15,21 +15,21 @@ for candidate in (TOOLS_ROOT, SUPPORT_ROOT):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-from repomap_test_support.resource_deletion_gc import (
+from common_lore_index_test_support.resource_deletion_gc import (
     DeletionResult,
     public_deletion_projection,
 )
-from repomap_test_support.resource_index_maintenance import (
+from common_lore_index_test_support.resource_index_maintenance import (
     CompactionResult,
     InventoryResult,
 )
-from repomap_test_support.resource_index_mode_migration import IndexParentHardeningResult
-from repomap_test_support.resource_index_recovery import RecoveryResult
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_index_mode_migration import IndexParentHardeningResult
+from common_lore_index_test_support.resource_index_recovery import RecoveryResult
+from common_lore_index_test_support.resource_operator_reclamation import (
     OperatorReclamationResult,
     public_operator_projection,
 )
-from repomap_test_support.resource_quarantine_gc import (
+from common_lore_index_test_support.resource_quarantine_gc import (
     QuarantineResult,
     public_projection,
 )

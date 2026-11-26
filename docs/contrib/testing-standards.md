@@ -40,7 +40,7 @@ with zero host source mounts. The retired `--suite all` is rejected.
 Canonical `unit`, `int`, and `staging` never execute real Docker builds. The exact
 visible build-required debt is the twelve-node
 `DEFERRED_BUILD_PROFILE_NODE_IDS` registry in
-`src/test/support/python/repomap_test_support/build_profile_debt.py`. Every
+`src/test/support/python/common_lore_index_test_support/build_profile_debt.py`. Every
 registered node carries `requires_build_profile`; whole-population collection
 must agree with that registry in both directions. The runner reports the
 deselected count, while direct execution fails closed until a separately
@@ -51,7 +51,7 @@ source-text grep, or a mutable local selection list.
 The one approved exception is the ADR 0087 D12-A owner,
 `src/test/int/python/repomap_kg/runtime/d12_core_image_refresh.int.test.py::test_d12_core_image_refresh_candidate_round_trip`.
 It carries its own `requires_d12_core_image_profile` marker and one-node
-registry in `repomap_test_support.d12_core_image`, never
+registry in `common_lore_index_test_support.d12_core_image`, never
 `requires_build_profile`, and the twelve-node registry is unchanged. Every
 ordinary population deselects it visibly and the pytest summary reports the
 count, node ID and reason. A population whose path arguments cover its file

@@ -10,10 +10,10 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.node_location_fixtures import (
+from common_lore_index_test_support.node_location_fixtures import (
     DOC, GRAPH, SYMBOL, locator_home, publish_locator_generation,
 )
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
 
 
 def test_node_locations_over_guarded_sqlite_stdio(tmp_path: Path) -> None:

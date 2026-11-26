@@ -17,11 +17,11 @@ from common_lore_index.server.mcp import (
     cloe_search_observations,
 )
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class Slice14GraphReadbackCompositionIntegrationTests(unittest.TestCase):

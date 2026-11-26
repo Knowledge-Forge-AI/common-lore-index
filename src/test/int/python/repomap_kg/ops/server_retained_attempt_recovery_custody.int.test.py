@@ -16,8 +16,8 @@ from common_lore_index.ops import _retained_attempt_record as records
 from common_lore_index.ops._retained_attempt_record import BACKUP_NAME
 from common_lore_index.ops._server_retention_lock import ServerRetentionLock
 from common_lore_index.storage.readback_driver import _psycopg_connection_params_from_psql_args
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.server_retained_recovery_fixture import (
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.server_retained_recovery_fixture import (
     home_files, prepare_retained_server, publish_unsettled,
 )
 

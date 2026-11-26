@@ -19,7 +19,7 @@ from common_lore_index.retrieval.query_contracts import (
     FallbackDisclosure, MatchSurface, OmissionRecord, QUERY_CONTRACT_VERSION,
     QueryEnvelope, QueryHit, QueryMode, QueryScope, refused_envelope, unavailable_envelope,
 )
-from repomap_test_support.retrieval_evaluation_fixture import binding_id_for_alias
+from common_lore_index_test_support.retrieval_evaluation_fixture import binding_id_for_alias
 from portable_handoff import recheck as handoff_recheck
 from retrieval_evaluation_accounting import ByteLayerAccounting, EvaluatorByteBreakdownV1
 from retrieval_evaluation_grading import ExecutionState

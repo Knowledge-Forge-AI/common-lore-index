@@ -14,7 +14,7 @@ from common_lore_index.artifacts.store import (
     ArtifactErrorCode, ArtifactIntegrityError, FileSystemArtifactStore, MemoryArtifactStore,
 )
 from common_lore_index.coordinator._portable_materialization import MaterializedWorkspace
-from repomap_test_support.materialization_fixtures import (
+from common_lore_index_test_support.materialization_fixtures import (
     BINDING_ID, CHUNK_BYTES, FaultSource, copy_case, manifest_for,
 )
 

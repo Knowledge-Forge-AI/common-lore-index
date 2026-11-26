@@ -18,13 +18,13 @@ from common_lore_index.server import mcp
 from common_lore_index.server.mcp_core import RepoMapMcpError
 from common_lore_index.storage.sqlite_local.connection import read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     NO_FALLBACK_GUARDS, PG_BINDING_TRIPWIRES, patched_guards, setup_owned_config,
 )
-from repomap_test_support.node_location_fixtures import (
+from common_lore_index_test_support.node_location_fixtures import (
     BINDING, DOC, GRAPH, SYMBOL, locator_home, publish_locator_generation,
 )
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, publication_for
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, publication_for
 
 
 @pytest.fixture
@@ -344,7 +344,7 @@ def test_node_location_pages_decode_only_selected_and_historical_results(
 ) -> None:
     from common_lore_index.storage.node_locations import NodeLocationsQuery
     from common_lore_index.storage.sqlite_local import node_location_queries
-    from repomap_test_support.sqlite_local_fixtures import local_binding
+    from common_lore_index_test_support.sqlite_local_fixtures import local_binding
 
     _, database = locator_home(tmp_path)
     for generation in (2, 3):
@@ -371,7 +371,7 @@ def test_node_location_reuses_vector_across_adjacent_rows(tmp_path, monkeypatch)
 
     from common_lore_index.storage.node_locations import NodeLocationsQuery
     from common_lore_index.storage.sqlite_local import node_location_queries
-    from repomap_test_support.sqlite_local_fixtures import local_binding
+    from common_lore_index_test_support.sqlite_local_fixtures import local_binding
 
     _, database = locator_home(tmp_path)
     publish_locator_generation(database, 2, start_line=40, alternatives=True)

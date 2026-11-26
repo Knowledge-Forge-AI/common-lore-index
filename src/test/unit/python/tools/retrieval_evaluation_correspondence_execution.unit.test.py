@@ -24,8 +24,8 @@ from common_lore_index.retrieval.query_contracts import (
     QueryScope,
     QUERY_CONTRACT_VERSION,
 )
-from repomap_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
+from common_lore_index_test_support.w5_semantic_support import (
     InMemoryStoreReadbackCell,
     make_w5_calibration_task,
     make_w5_readback_adapter,

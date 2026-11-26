@@ -46,7 +46,7 @@ from common_lore_index.coordinator.startup_recovery import (
     recover_startup,
 )
 from common_lore_index.ops.source_generation import SourceGenerationResult
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 class _MinimalPollingSnapshot:

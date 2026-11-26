@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_body_study_fixtures import PIN, quality_inputs
+from common_lore_index_test_support.retrieval_body_study_fixtures import PIN, quality_inputs
 from retrieval_body_study_attempt_journal import BodyAttemptJournal, read_attempt_journal
 from retrieval_body_study_journal_io import JournalRefusal, digest
 from retrieval_body_study_observation import build_body_failure_envelope, write_body_failure_envelope
@@ -164,7 +164,7 @@ def test_controller_retains_cancelled_failure_and_lost_authority_without_reuse(
 
 def test_physical_authority_roundtrip_preserves_both_hash_joins(tmp_path: Path) -> None:
     from retrieval_body_study_host_admission import read_parent_admission
-    from repomap_test_support.retrieval_body_study_host_cases import write_physical_authority_case
+    from common_lore_index_test_support.retrieval_body_study_host_cases import write_physical_authority_case
 
     plan, path, digest = write_physical_authority_case(tmp_path / "authority")
     admitted = read_parent_admission(path, expected_sha256=digest, plan=plan)

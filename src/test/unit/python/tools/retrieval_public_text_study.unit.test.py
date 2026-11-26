@@ -14,9 +14,9 @@ from typing import Any
 
 import pytest
 
-import repomap_test_support.w5_public_text_study as study
-from repomap_test_support.w5_public_text_journal import FAILURE_NAME
-from repomap_test_support.w5_public_text_postgres import CleanupResult
+import common_lore_index_test_support.w5_public_text_study as study
+from common_lore_index_test_support.w5_public_text_journal import FAILURE_NAME
+from common_lore_index_test_support.w5_public_text_postgres import CleanupResult
 from retrieval_public_text_request import ARM_PTX, ARM_V1
 
 REPO = Path(__file__).resolve().parents[5]

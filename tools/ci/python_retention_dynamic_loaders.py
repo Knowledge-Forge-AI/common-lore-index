@@ -15,8 +15,8 @@ CASES: dict[str, dict[str, Any]] = {
     "helper_contract_probe": {
         "symbol": "_load_contract_module",
         "runtime_names": ["repomap_helper_contract_Selected", "repomap_helper_contract_Missing"],
-        "module_name": "repomap_test_support.contract_loader_fixtures.nested.probe",
-        "target_path": "src/test/support/python/repomap_test_support/contract_loader_fixtures/nested/probe.py",
+        "module_name": "common_lore_index_test_support.contract_loader_fixtures.nested.probe",
+        "target_path": "src/test/support/python/common_lore_index_test_support/contract_loader_fixtures/nested/probe.py",
         "target_symbol": "Selected",
         "refusal": False,
     },
@@ -130,7 +130,7 @@ def file_loader_spec(
         raise ValueError("loader chain declaration differs from actual operations")
 
     if case == "helper_contract_probe":
-        helper = repo_root / "src/test/support/python/repomap_test_support/policy_helper_branches.py"
+        helper = repo_root / "src/test/support/python/common_lore_index_test_support/policy_helper_branches.py"
         helper_tree = ast.parse(helper.read_bytes())
         definitions = [n for n in helper_tree.body if isinstance(n, ast.FunctionDef)
                        and n.name == "load_unit_contract_class"]

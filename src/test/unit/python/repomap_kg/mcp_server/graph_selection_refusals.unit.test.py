@@ -8,13 +8,13 @@ from unittest.mock import patch
 
 from common_lore_index.server.graph_selection import McpOpsError, select_graph
 from common_lore_index.server.mcp import RepoMapMcpError, handle_tool_call
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     INVALID_PSQL_COMMAND,
     PG_BINDING_TRIPWIRES,
     fail_if_reached,
     patched_guards,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 G = "repo-map"
 

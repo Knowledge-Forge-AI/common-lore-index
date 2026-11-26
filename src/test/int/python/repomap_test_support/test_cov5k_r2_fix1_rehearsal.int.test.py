@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix1_qualification import (
+from common_lore_index_test_support.test_cov5k_r2_fix1_qualification import (
     create_draft,
     freeze_manifest,
     open_observations,
     validate_draft,
     verify_rehearsal,
 )
-from repomap_test_support.test_cov5k_r2_fix1_rehearsal import (
+from common_lore_index_test_support.test_cov5k_r2_fix1_rehearsal import (
     bounded_rehearsal_case_ids,
     run_bounded_rehearsal,
 )

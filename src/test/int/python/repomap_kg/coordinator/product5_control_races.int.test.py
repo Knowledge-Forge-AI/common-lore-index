@@ -9,7 +9,7 @@ import pytest
 from common_lore_index.coordinator.core import SyntheticCoordinator
 from common_lore_index.coordinator.startup_recovery import StartupRecoveryReport
 from common_lore_index.coordinator.storage import ControlStoreError
-from repomap_test_support.startup_recovery_scenarios import _harness, _req
+from common_lore_index_test_support.startup_recovery_scenarios import _harness, _req
 
 
 @pytest.mark.parametrize("boundary", ["before-running", "after-running"])

@@ -19,20 +19,20 @@ from common_lore_index.coordinator._control_schema import discover_control_migra
 from common_lore_index.storage import discover_migrations
 from installed_experience_pins import TE_DISTRIBUTION, TE_VERSION
 from installed_experience_rules import classify_environment, label_refusal
-from repomap_test_support.installed_candidate import (
+from common_lore_index_test_support.installed_candidate import (
     DIST_INFO, ROOT, candidate_wheel, expected_entry_points, expected_inventory, expected_requires,
     input_names, inventory_sha256, license_bytes_match, license_members, listed_inputs, rows_sha256,
     wheel_inventory,
 )
-from repomap_test_support.installed_environment import (
+from common_lore_index_test_support.installed_environment import (
     create_environment, include_system_site_packages, install_wheel, pip_check, run_child,
 )
-from repomap_test_support.installed_experience_driver import Observed, OwnerRun, intent_for, json_object, preparation
-from repomap_test_support.installed_origin import (
+from common_lore_index_test_support.installed_experience_driver import Observed, OwnerRun, intent_for, json_object, preparation
+from common_lore_index_test_support.installed_origin import (
     base_interpreter_has_product, checkout_refusal, closure, distributions_text, inspect_wrappers,
     observe_origin, wrappers_hold,
 )
-from repomap_test_support.installed_projection import (
+from common_lore_index_test_support.installed_projection import (
     ProjectionRefused, copy_source_distribution, project_sdk_distribution, requirement_from_wheel,
     target_listing,
 )

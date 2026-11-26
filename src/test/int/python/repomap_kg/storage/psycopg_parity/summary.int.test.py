@@ -8,16 +8,16 @@ from common_lore_index.storage import (
     default_rdbms_root,
     query_canonical_storage_summary,
 )
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     _psycopg5_summary_parity_observations,
     _select_readback_driver_for_postgres,
 )
-from repomap_test_support.storage_publication import load_file_observations
+from common_lore_index_test_support.storage_publication import load_file_observations
 
 
 class StoragePsycopgSummaryParityIntegrationTests(unittest.TestCase):

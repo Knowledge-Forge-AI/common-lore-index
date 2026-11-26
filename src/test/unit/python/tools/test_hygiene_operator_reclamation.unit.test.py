@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 
 import test_hygiene_maintenance as maintenance_tool
-import repomap_test_support.resource_operator_reclamation as reclamation
-from repomap_test_support.resource_operator_reclamation import CONFIRMATION_LITERAL
-from repomap_test_support.resource_operator_reclamation_test_support import (
+import common_lore_index_test_support.resource_operator_reclamation as reclamation
+from common_lore_index_test_support.resource_operator_reclamation import CONFIRMATION_LITERAL
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     add_run,
     private_root,
 )

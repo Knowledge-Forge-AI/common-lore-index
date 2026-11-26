@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from repomap_test_support.executable_authority import approved_psql
+from common_lore_index_test_support.executable_authority import approved_psql
 from common_lore_index.coordinator import _publication_phase
 from common_lore_index.coordinator.configured_refresh import (
     ConfiguredRefreshResolver, _executable_search_path,

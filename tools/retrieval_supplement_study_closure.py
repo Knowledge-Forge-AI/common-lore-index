@@ -108,13 +108,13 @@ STUDY_RUNNER_HOOK_OWNERS: tuple[str, ...] = (
 STUDY_SUPPORT_AND_TEST_OWNERS: tuple[str, ...] = (
     "src/test/conftest.py",
     "src/test/int/python/tools/retrieval_supplement_native.int.test.py",
-    "src/test/support/python/repomap_test_support/retrieval_supplement_study.py",
-    "src/test/support/python/repomap_test_support/retrieval_supplement_study_driver.py",
-    "src/test/support/python/repomap_test_support/retrieval_supplement_study_pg.py",
-    "src/test/support/python/repomap_test_support/retrieval_supplement_study_pg_lifecycle.py",
-    "src/test/support/python/repomap_test_support/retrieval_supplement_study_setup.py",
-    "src/test/support/python/repomap_test_support/retrieval_supplement_study_slots.py",
-    "src/test/support/python/repomap_test_support/retrieval_supplement_runtime_fixture.py",
+    "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study.py",
+    "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_driver.py",
+    "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_pg.py",
+    "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_pg_lifecycle.py",
+    "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_setup.py",
+    "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_slots.py",
+    "src/test/support/python/common_lore_index_test_support/retrieval_supplement_runtime_fixture.py",
 )
 SUPPLEMENT_CORE_OWNERS: tuple[str, ...] = tuple(
     f"tools/retrieval_supplement_{name}.py"

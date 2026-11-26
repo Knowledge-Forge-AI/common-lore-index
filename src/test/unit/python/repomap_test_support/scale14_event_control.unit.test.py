@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.scale14_event_control import TestEventControlChannel
+from common_lore_index_test_support.scale14_event_control import TestEventControlChannel
 
 
 class _Channel:
@@ -80,7 +80,7 @@ def test_product_source_has_no_test_support_import_or_control() -> None:
         for path in sorted(product_root.rglob("*.py"))
     )
 
-    assert "repomap_test_support" not in source
+    assert "common_lore_index_test_support" not in source
     assert "scale14_event_control" not in source
     assert "SCALE14_CANCEL" not in source
 
@@ -91,8 +91,8 @@ def test_test_blocker_preserves_interrupt_at_condition_release_window(monkeypatc
     import time
     from types import SimpleNamespace
 
-    from repomap_test_support import scale14_actual_refresh_child as child
-    from repomap_test_support import scale14_event_control as control
+    from common_lore_index_test_support import scale14_actual_refresh_child as child
+    from common_lore_index_test_support import scale14_event_control as control
 
     event = threading.Event()
     condition = getattr(event, "_cond")

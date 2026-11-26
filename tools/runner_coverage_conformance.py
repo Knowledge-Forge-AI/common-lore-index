@@ -6,7 +6,7 @@ import re
 
 from runner_coverage_capability import CapabilityValidationError
 
-CONFORMANCE_COMMAND = ("-m", "repomap_test_support.portable_worker_conformance")
+CONFORMANCE_COMMAND = ("-m", "common_lore_index_test_support.portable_worker_conformance")
 _KINDS = frozenset({
     "authority", "failure", "receipt", "receipt-cancel", "cancel", "crash",
     "heartbeat-failure", "terminal-validation", "progress-failure", "parent-wait",

@@ -12,14 +12,14 @@ from common_lore_index.runtime.release import (
     POSTGRES_RELEASE_IMAGE, PYTHON_RELEASE_IMAGE,
 )
 from common_lore_index.runtime.release_manifest import D12_CANDIDATE_LIBPQ_VERSION
-from repomap_test_support import d12_core_image as d12, d12_dynamic_linkage as linkage
-from repomap_test_support.d12_complete_inventory import complete_inventory
-from repomap_test_support.d12_image_probes import (
+from common_lore_index_test_support import d12_core_image as d12, d12_dynamic_linkage as linkage
+from common_lore_index_test_support.d12_complete_inventory import complete_inventory
+from common_lore_index_test_support.d12_image_probes import (
     ADVISORIES, CLIENTS, PACKAGING_PY, ROUND_TRIP_PY, SERVER,
     _classify, _create, _hashes, _inventory, _libpq_findings, _run_once, _start_server, _version,
 )
-from repomap_test_support.resource_docker_current import CurrentRunDockerContainers
-from repomap_test_support.resource_run import active_resource_run
+from common_lore_index_test_support.resource_docker_current import CurrentRunDockerContainers
+from common_lore_index_test_support.resource_run import active_resource_run
 from tools.system import d12_glibc_risk as glibc_risk
 from tools.system.config import SystemTestConfig, SystemTestError
 from tools.system.d12_debian_policy import assess_debian_delta

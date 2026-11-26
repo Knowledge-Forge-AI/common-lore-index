@@ -8,11 +8,11 @@ from typing import Any, cast
 
 import pytest
 
-import repomap_test_support.w5_public_text_learned as learned
+import common_lore_index_test_support.w5_public_text_learned as learned
 from common_lore_index.storage.semantic_candidates import CandidatePublication, EmbeddingProfile
-from repomap_test_support.w5_experiment_postgres import PostgresHandle
-from repomap_test_support.w5_public_text_learned import LearnedGeneration, learned_cells, old_batch_status, profiles
-from repomap_test_support.w5_public_text_postgres import StudyRead
+from common_lore_index_test_support.w5_experiment_postgres import PostgresHandle
+from common_lore_index_test_support.w5_public_text_learned import LearnedGeneration, learned_cells, old_batch_status, profiles
+from common_lore_index_test_support.w5_public_text_postgres import StudyRead
 from retrieval_evaluation_execution import TaskOutcome
 from retrieval_public_text_census import PublicTextCensus
 from retrieval_public_text_contracts import PrivateMarkerScope

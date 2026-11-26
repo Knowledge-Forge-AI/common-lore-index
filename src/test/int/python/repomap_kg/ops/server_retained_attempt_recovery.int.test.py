@@ -16,9 +16,9 @@ import subprocess
 import sys
 import time
 
-from repomap_test_support.cli_in_process import module_process_environment
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
-from repomap_test_support.sqlite_managed_child import ManagedChild, cleanup_after_failure
+from common_lore_index_test_support.cli_in_process import module_process_environment
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
+from common_lore_index_test_support.sqlite_managed_child import ManagedChild, cleanup_after_failure
 from runner_coverage_observer import popen_observed_process
 
 
@@ -33,8 +33,8 @@ from common_lore_index.ops._retained_attempt_record import read_retained_record
 from common_lore_index.ops._retained_attempt_artifacts import RetainedArtifactError, read_retained_artifacts
 from common_lore_index.ops.retained_attempt_recovery import RetainedAttemptRecovery, recover_server_retained_attempt
 from common_lore_index.storage.readback_driver import _psycopg_connection_params_from_psql_args
-from repomap_test_support.postgres_harness import PostgresCluster, require_postgres_binaries, temporary_postgres
-from repomap_test_support.server_retained_recovery_fixture import (
+from common_lore_index_test_support.postgres_harness import PostgresCluster, require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.server_retained_recovery_fixture import (
     direct_authority, home_files, prepare_retained_server, publish_unsettled,
 )
 

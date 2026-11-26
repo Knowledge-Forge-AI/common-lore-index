@@ -8,7 +8,7 @@ from common_lore_index.artifacts.store import FileSystemArtifactStore
 from common_lore_index.coordinator._portable_capability import create_portable_capability
 from common_lore_index.coordinator._portable_worker_launch import run_portable_worker
 from common_lore_index.coordinator.limits import CoordinatorLimits
-from repomap_test_support.run25_portable_workflows import create_run25_test_capability
+from common_lore_index_test_support.run25_portable_workflows import create_run25_test_capability
 
 
 @pytest.mark.parametrize("damage", ["empty", "oversize", "permissions", "nonobject", "extra-field", "missing-field"])

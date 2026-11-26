@@ -18,11 +18,11 @@ from common_lore_index.server.mcp_core import RepoMapMcpError
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
 from common_lore_index.storage.sqlite_local.navigation_queries import navigation_candidates
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.navigation_search_fixtures import (
+from common_lore_index_test_support.navigation_search_fixtures import (
     ALPHA_DOC, BINDING, GRAPH, navigation_bundle, navigation_home, publish_navigation_generation,
 )
-from repomap_test_support.sqlite_local_fixtures import publication_for
-from repomap_test_support.host_read_store_config import NO_FALLBACK_GUARDS, patched_guards, setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import publication_for
+from common_lore_index_test_support.host_read_store_config import NO_FALLBACK_GUARDS, patched_guards, setup_owned_config
 
 
 @pytest.fixture
@@ -272,7 +272,7 @@ def test_schema_discovery_and_new_tool_default_equivalence(store: Path) -> None:
 
 def test_canonical_dispatch_replays_frozen_entry_cases(tmp_path: Path,
                                                               monkeypatch: pytest.MonkeyPatch) -> None:
-    from repomap_test_support.node_location_fixtures import captured_navigation_response, entry_response_differences, locator_home
+    from common_lore_index_test_support.node_location_fixtures import captured_navigation_response, entry_response_differences, locator_home
 
     home, _ = locator_home(tmp_path)
     monkeypatch.setenv("CLOE_HOME", str(home))

@@ -9,7 +9,7 @@ from common_lore_index.storage import (
     SourceRunRecord,
     SourceSummaryRecord,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 class McpServerStorageSourceFeedToolUnitTests(McpServerTestSupport):
     def test_source_feed_mcp_tools_are_read_only_and_project_scoped(self):

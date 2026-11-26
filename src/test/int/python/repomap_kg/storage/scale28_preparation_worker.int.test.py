@@ -11,8 +11,8 @@ import pytest
 import psutil
 
 import scale28_preparation_worker
-from repomap_test_support.staging_abrupt_launch import observe_scale28_crash
-from repomap_test_support.scale28_preparation_worker_fixtures import (
+from common_lore_index_test_support.staging_abrupt_launch import observe_scale28_crash
+from common_lore_index_test_support.scale28_preparation_worker_fixtures import (
     DelayedExitPreparer,
     ObservedPreparationWorkerAttempt,
     exit_with_synthetic_descendant,

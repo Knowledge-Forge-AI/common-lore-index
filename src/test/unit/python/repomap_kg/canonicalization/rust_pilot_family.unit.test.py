@@ -16,7 +16,7 @@ from common_lore_index.canonicalization.rust_pilot_family import (
 from common_lore_index.extractors.contracts.vocabulary import ContractError
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.staged_rows import build_staged_rows
-from repomap_test_support.rust_pilot_semantic_fixtures import live_pilot
+from common_lore_index_test_support.rust_pilot_semantic_fixtures import live_pilot
 
 
 def test_positive_witness_is_bound_to_exact_controller_and_tuple(

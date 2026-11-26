@@ -4,19 +4,19 @@ from dataclasses import replace
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_fix2_encoding import canonical_digest
-from repomap_test_support.test_cov5k_r2_fix2_evidence import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_encoding import canonical_digest
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import (
     ExecutorEvidenceError,
     verify_executor_evidence,
 )
-from repomap_test_support.test_cov5k_r2_fix2_runtime import execute_terminal_read
-from repomap_test_support.test_cov5k_r2_fix4_psycopg import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_runtime import execute_terminal_read
+from common_lore_index_test_support.test_cov5k_r2_fix4_psycopg import (
     PsycopgOwnerObservation,
     PsycopgTaxonomyError,
     classify_psycopg_observation,
 )
-from repomap_test_support.test_cov5k_r2_fix4_terminal_contexts import (
+from common_lore_index_test_support.test_cov5k_r2_fix4_terminal_contexts import (
     verify_terminal_context_distinctions,
 )
 

@@ -27,20 +27,20 @@ from installed_experience_pins import (
     CODE_KIND, GRAPH_ID, POSTGRES_BIN, PSYCOPG_IMPL, PSYCOPG_VERSION, RELEASED_CLOE_COMMIT,
 )
 from installed_experience_rules import classify_environment
-from repomap_test_support.installed_candidate import (
+from common_lore_index_test_support.installed_candidate import (
     ROOT, candidate_wheel, installed_graph_parser_digest, released_cloe_wheel,
 )
-from repomap_test_support.installed_environment import InstalledEnvironment, include_system_site_packages, run_child
-from repomap_test_support.installed_experience_driver import (
+from common_lore_index_test_support.installed_environment import InstalledEnvironment, include_system_site_packages, run_child
+from common_lore_index_test_support.installed_experience_driver import (
     Observed, OwnerRun, intent_for, json_object, preparation, pure_environment,
 )
-from repomap_test_support.installed_experience_fixture import (
+from common_lore_index_test_support.installed_experience_fixture import (
     expectations, provisioned_postgres_home, write_tiny_material,
 )
-from repomap_test_support.installed_mcp_session import result_digest, useful_question
-from repomap_test_support.installed_origin import classify, closure, observe_origin
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.installed_mcp_session import result_digest, useful_question
+from common_lore_index_test_support.installed_origin import classify, closure, observe_origin
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,

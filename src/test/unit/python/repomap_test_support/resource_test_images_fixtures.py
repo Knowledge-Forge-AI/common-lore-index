@@ -6,11 +6,11 @@ from typing import TypedDict
 
 import pytest
 
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_docker_boundary import RunWideDockerBoundary
-from repomap_test_support.resource_docker_mediation import CanonicalDockerAuthority
-from repomap_test_support.resource_docker_operations import DockerOperationJournal
-from repomap_test_support.resource_test_images import (
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_docker_boundary import RunWideDockerBoundary
+from common_lore_index_test_support.resource_docker_mediation import CanonicalDockerAuthority
+from common_lore_index_test_support.resource_docker_operations import DockerOperationJournal
+from common_lore_index_test_support.resource_test_images import (
     TestImageManager as ImageManager,
 )
 

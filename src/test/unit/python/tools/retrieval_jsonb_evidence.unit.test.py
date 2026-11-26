@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any, cast
 import pytest
 
-from repomap_test_support.w5_jsonb_support import (
+from common_lore_index_test_support.w5_jsonb_support import (
     make_synthetic_explain_json,
     make_synthetic_node_locations_raw_payload,
 )

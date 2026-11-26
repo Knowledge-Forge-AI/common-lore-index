@@ -31,7 +31,7 @@ from common_lore_index.extractors.rust_pilot.helper_protocol import (
 )
 from common_lore_index.extractors.rust_pilot.observations import build_file_observations
 from common_lore_index.extractors.rust_pilot.readback import decode_readback, verify_install_tree
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import (
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import (
     NOTICES,
     build_wheel,
     guest_text,

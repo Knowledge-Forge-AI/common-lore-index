@@ -5,18 +5,18 @@ import socket
 from threading import Event, Thread
 from types import SimpleNamespace
 import pytest
-import repomap_test_support.scale15_runtime_campaign as runtime_campaign
+import common_lore_index_test_support.scale15_runtime_campaign as runtime_campaign
 from common_lore_index.storage.staging_event_transport import (
     StagingEventChannel,
     StagingEventFrame,
 )
-from repomap_test_support.scale15_runtime_campaign import (
+from common_lore_index_test_support.scale15_runtime_campaign import (
     _InjectedChannel,
     _InjectedResources,
 )
 from scale15_terminal_contracts import ControlFailure, ControlFailureCode
 from actual_refresh_failure_causality import FailureCausalityAuthority
-from repomap_test_support.scale15_runtime_campaign import (
+from common_lore_index_test_support.scale15_runtime_campaign import (
     _InjectedBackend,
 )
 from scale14_backend_monitor import BackendMonitorError

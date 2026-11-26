@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class ConfiguredStorageIdentityTests(McpServerTestSupport):

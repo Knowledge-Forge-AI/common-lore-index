@@ -20,7 +20,7 @@ from common_lore_index.storage.readback_driver import (
     execute_json_readback,
     selected_json_readback_driver,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class Slice13GraphReadbackCompositionIntegrationTests(unittest.TestCase):

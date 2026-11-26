@@ -32,7 +32,7 @@ from common_lore_index.ops.direct_publication import publish_observation_generat
 from common_lore_index.ops.refresh_sql import build_graph_summary_sql, build_refresh_status_sql
 from common_lore_index.runtime.database_roles import READ_STATUS_ROLE
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 from smoke.host_mcp_native_checks import STATUS_COUNTS
 from smoke.host_mcp_native_evidence import EvidenceWriter
 from smoke.host_mcp_native_fixture import configured_publication, stage_native_config, stored_repository_facts

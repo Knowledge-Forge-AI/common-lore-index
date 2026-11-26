@@ -20,7 +20,7 @@ import pytest
 
 from common_lore_index.runtime import python_payload as payload
 from common_lore_index.runtime import release_manifest as historical
-from repomap_test_support.python_payload_probes import make_stdlib_import_probe_runner
+from common_lore_index_test_support.python_payload_probes import make_stdlib_import_probe_runner
 from runner_coverage_execution import launch_unified_coverage_process
 
 DYN = payload.DYNLOAD

@@ -12,8 +12,8 @@ from types import SimpleNamespace
 import coverage
 import pytest
 
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support.test_scratch import establish_run
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support.test_scratch import establish_run
 from runner_coverage import ChildCoverageSession
 from runner_integration_population import LegPartitionPytestPlugin
 import runner_staging_discovery as discovery
@@ -162,7 +162,7 @@ def test_stdlib_contract_pins_exactly_the_test_support_registry_and_versions_rec
     assert DISCOVERY_RECEIPT_SCHEMA == "repomap-staging-discovery-receipt-v2", DISCOVERY_RECEIPT_SCHEMA
     imports = [line for line in Path(discovery_contract.__file__).read_text(encoding="utf-8").splitlines()
                if line.startswith(("import ", "from "))]
-    assert not [line for line in imports if "repomap_test_support" in line], imports
+    assert not [line for line in imports if "common_lore_index_test_support" in line], imports
 
 
 def test_real_discovery_rebases_the_optional_record_past_profile_deselection(tmp_path, monkeypatch):
@@ -185,7 +185,7 @@ def test_real_discovery_rebases_the_optional_record_past_profile_deselection(tmp
     monkeypatch.setenv("REPOMAP_TEST_PG_PROFILE", "core")
     partition = discovery.discover_staging_population(
         SimpleNamespace(suite="int", report_dir=root / "reports"),
-        [str(test), "--rootdir=" + str(root), "-p", "repomap_test_support.pgvector_profile"],
+        [str(test), "--rootdir=" + str(root), "-p", "common_lore_index_test_support.pgvector_profile"],
         repo_root=root, source_root=source, test_support_root=SUPPORT, invocation_id="fixture-invocation",
         candidate_identity={"commit": "a" * 40, "source_sha256": "b" * 64}, scoped=True,
     )

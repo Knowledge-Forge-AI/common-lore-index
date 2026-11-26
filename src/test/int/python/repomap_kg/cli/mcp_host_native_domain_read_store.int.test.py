@@ -31,17 +31,17 @@ import pytest
 from common_lore_index.runtime.database_roles import READ_STATUS_ROLE
 from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.server.mcp_schemas import tool_definitions
-from repomap_test_support.host_mcp_domain_publication import (
+from common_lore_index_test_support.host_mcp_domain_publication import (
     ABSENT_DATABASE, FEED_URL, domain_snapshot, publish_domain_fixture, write_domain_config,
 )
-from repomap_test_support.host_mcp_domain_reads import build_domain_plan, twelve_tool_requests, verify_domain_plan
-from repomap_test_support.host_mcp_publication import (
+from common_lore_index_test_support.host_mcp_domain_reads import build_domain_plan, twelve_tool_requests, verify_domain_plan
+from common_lore_index_test_support.host_mcp_publication import (
     RESTORE_LOGIN_SQL, assert_least_privilege, await_no_read_role_backends,
 )
-from repomap_test_support.host_mcp_stdio import (
+from common_lore_index_test_support.host_mcp_stdio import (
     HostMcpHarness, forbidden_env_keys, initialize_request, tool_request, tools_list_request,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 CATALOG_SHA256 = "2c2a37e9b510e564431e5c26d00d19adee436543fce309355a6f38c058f42a78"  # 31 read tools
 CANARY_KEY = "REPOMAP_ENV_CANARY_PASSWORD_PROBE"

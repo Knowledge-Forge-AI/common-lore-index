@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 import retrieval_semantic_component_dossier_io as io_module
-from repomap_test_support.w5_component_artifacts import make_component_pair
+from common_lore_index_test_support.w5_component_artifacts import make_component_pair
 from retrieval_semantic_component_dossier import build_component_dossier, main
 from retrieval_semantic_component_dossier_io import read_component_dossier, write_component_dossier
 from retrieval_semantic_pair_artifacts import PairReportRefusal

@@ -14,11 +14,11 @@ import pytest
 
 from common_lore_index.server import mcp
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.node_location_fixtures import (
+from common_lore_index_test_support.node_location_fixtures import (
     BINDING, DOC, GRAPH, SYMBOL, locator_home, publish_locator_generation,
 )
-from repomap_test_support.host_read_store_config import NO_FALLBACK_GUARDS, patched_guards, setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, publication_for
+from common_lore_index_test_support.host_read_store_config import NO_FALLBACK_GUARDS, patched_guards, setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, publication_for
 
 assert Path(consumer_module.__file__).resolve() == Path(__file__).resolve().parents[5] / "tools/source_navigation_consumer.py"
 navigate = vars(consumer_module)["navigate"]

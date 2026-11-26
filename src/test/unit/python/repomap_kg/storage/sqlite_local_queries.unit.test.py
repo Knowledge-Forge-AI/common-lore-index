@@ -23,8 +23,8 @@ from common_lore_index.storage.sqlite_local import investigation_queries, querie
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
-from repomap_test_support.sqlite_local_read_corpus import CORPUS_ROWS, read_corpus_bundle
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
+from common_lore_index_test_support.sqlite_local_read_corpus import CORPUS_ROWS, read_corpus_bundle
 
 BINDING = local_binding()
 BUNDLE = generation_bundle(1)

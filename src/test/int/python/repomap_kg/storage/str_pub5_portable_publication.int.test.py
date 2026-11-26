@@ -31,14 +31,14 @@ from common_lore_index.storage.staged_publication import reconcile_commit_unknow
 from common_lore_index.storage.staging_copy import STAGING_COPY_TABLES
 from common_lore_index.storage.staging_observability import StagingMeasurements
 from common_lore_index.storage.staging_operation_events import StagingOperationEvent
-from repomap_test_support.portable_publication_fixtures import (
+from common_lore_index_test_support.portable_publication_fixtures import (
     _authority,
     _binding,
     _bundle,
     _seven_family_bundle,
     assert_successor_family_rows,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
 def _fetch(

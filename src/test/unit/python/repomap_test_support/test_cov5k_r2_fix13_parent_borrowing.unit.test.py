@@ -19,21 +19,21 @@ from unittest.mock import patch
 import pytest
 import run_tests
 
-from repomap_test_support.resource_retention import TerminalOutcome
-from repomap_test_support.resource_run import (
+from common_lore_index_test_support.resource_retention import TerminalOutcome
+from common_lore_index_test_support.resource_run import (
     ENV_RESOURCE_LEDGER,
     TestResourceRun,
     active_resource_run,
 )
-from repomap_test_support.resource_run_test_support import (
+from common_lore_index_test_support.resource_run_test_support import (
     admitted_host_signals,
     preserve_resource_run_process_state,
 )
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_fix2_observer import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_observer import (
     execute_owning_area_execution,
 )
-from repomap_test_support.test_scratch import (
+from common_lore_index_test_support.test_scratch import (
     ENV_PHASE,
     ENV_PROJECT,
     ENV_RUN_ROOT,

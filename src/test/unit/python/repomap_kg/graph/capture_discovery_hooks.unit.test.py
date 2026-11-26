@@ -16,7 +16,7 @@ from common_lore_index.graph._capture_discovery import (
 from common_lore_index.graph.multi_source import MultiSourceIdentityError, SnapshotManifestEntry
 from common_lore_index.graph.multi_source_capture import _capture_inventory
 from common_lore_index.graph.multi_source_pipeline import capture_multi_source_candidate
-from repomap_test_support.portable_publication_fixtures import create_single_source_graph_config
+from common_lore_index_test_support.portable_publication_fixtures import create_single_source_graph_config
 
 if TYPE_CHECKING:
     from common_lore_index.artifacts._sealing_meter import SealingMeter

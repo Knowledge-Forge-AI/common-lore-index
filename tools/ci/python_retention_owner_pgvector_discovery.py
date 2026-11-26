@@ -115,7 +115,7 @@ def harmless_child_case(tmp_path: Path) -> None:
 def optional_report_case(tmp_path: Path, monkeypatch: Any, case: str) -> None:
     import test_sandbox_execution
     from runner_pgvector_sandbox import OfflineSandbox
-    from repomap_test_support.pgvector_prebuilt_budget_cases import allocation
+    from common_lore_index_test_support.pgvector_prebuilt_budget_cases import allocation
     budget = allocation(tmp_path)
     context: Any = SimpleNamespace(fixed=lambda: None, allocation=lambda: budget)
     observed = []
@@ -147,7 +147,7 @@ def optional_report_case(tmp_path: Path, monkeypatch: Any, case: str) -> None:
 
 def nested_lineage_case(tmp_path: Path, monkeypatch: Any, case: str) -> None:
     import runner_pgvector_recovery as recovery
-    from repomap_test_support.pgvector_prebuilt_recovery_cases import fixture
+    from common_lore_index_test_support.pgvector_prebuilt_recovery_cases import fixture
     source, declaration, previous, session, _frozen = fixture(tmp_path, monkeypatch, 'none')
     document = json.loads(declaration.read_bytes())
     selection = document['authority']['corrective_selection_sha256']
@@ -233,7 +233,7 @@ def lost_authority_case(tmp_path: Path, monkeypatch: Any, marker: str) -> None:
         assert not calls
 
 def canonical_request_case(tmp_path: Path, monkeypatch: Any) -> None:
-    from repomap_test_support.test_scratch_layout import TestScratchLayout
+    from common_lore_index_test_support.test_scratch_layout import TestScratchLayout
     from runner_arguments import build_pytest_args
     import runner_integration_execution as integration
     plan, request = request_fixture()
@@ -254,7 +254,7 @@ def canonical_request_case(tmp_path: Path, monkeypatch: Any) -> None:
 
 def maximal_capture_export_case(tmp_path: Path, monkeypatch: Any) -> None:
     import runner_pgvector_discovery_capture as capture
-    from repomap_test_support.pgvector_prebuilt_test_fixtures import tar_bytes
+    from common_lore_index_test_support.pgvector_prebuilt_test_fixtures import tar_bytes
     from test_sandbox_contract import MAX_REPORT_CONTENT_BYTES, MAX_REPORT_MEMBERS
     from test_sandbox_report import export_sandbox_report
     report = tmp_path / 'inner/report'
@@ -272,7 +272,7 @@ def maximal_capture_export_case(tmp_path: Path, monkeypatch: Any) -> None:
 
 def partial_optional_report_case(tmp_path: Path, monkeypatch: Any) -> None:
     import runner_pgvector_sandbox as sandbox
-    from repomap_test_support.pgvector_prebuilt_budget_cases import allocation
+    from common_lore_index_test_support.pgvector_prebuilt_budget_cases import allocation
     budget = allocation(tmp_path)
     real_popen = subprocess.Popen
 

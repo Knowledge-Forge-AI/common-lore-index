@@ -2,7 +2,7 @@ from dataclasses import replace
 
 import pytest
 
-from repomap_test_support.observer_trace import (
+from common_lore_index_test_support.observer_trace import (
     ObserverCaller,
     ObserverTraceEvidenceError,
     ObserverTraceKind,

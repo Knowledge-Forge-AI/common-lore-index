@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.w5_component_functional_experiment import run_functional_proof
+from common_lore_index_test_support.w5_component_functional_experiment import run_functional_proof
 
 
 @pytest.mark.requires_pgvector

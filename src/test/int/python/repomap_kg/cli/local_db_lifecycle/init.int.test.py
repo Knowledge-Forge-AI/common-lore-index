@@ -5,10 +5,10 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_integration import (
+from common_lore_index_test_support.cli_integration import (
     CliIntegrationTestCase,
 )
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     baseline_toc_bytes,
     maybe_provenance_runner_result,
 )

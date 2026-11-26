@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.ops_refresh import (
+from common_lore_index_test_support.ops_refresh import (
     OpsRefreshUnitTestCase,
     VALID_REFRESH_CONFIG,
 )

@@ -14,7 +14,7 @@ from unittest.mock import patch
 import coverage
 import common_lore_index.coordinator._portable_worker_launch as pwl
 from common_lore_index.coordinator._worker_launch import WorkerLaunchSpec
-from repomap_test_support.run25_portable_workflows import (
+from common_lore_index_test_support.run25_portable_workflows import (
     TINY_PORTABLE_CHILD_CODE,
     build_run25_worker_limits,
 )

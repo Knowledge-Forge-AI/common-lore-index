@@ -24,7 +24,7 @@ from common_lore_index.runtime.release import (
     GO_RELEASE_IMAGE, POSTGRES_RELEASE_IMAGE, PRODUCT_MINIMUM_LIBPQ_VERSION, PYTHON_RELEASE_IMAGE,
     DebPackage, PlatformPackages, validate_package_manifest,
 )
-from repomap_test_support import d12_core_image
+from common_lore_index_test_support import d12_core_image
 import test_sandbox_images
 
 APPLICATION_BUILD_COUNT_KEYS: tuple[str, ...] = (

@@ -23,7 +23,7 @@ import zipfile
 
 import pytest
 
-from repomap_test_support import postgres_container
+from common_lore_index_test_support import postgres_container
 from smoke import host_mcp_native as cli
 from smoke.host_mcp_native_backend import OwnedContainerBackend
 from smoke.host_mcp_native_evidence import EvidenceWriter

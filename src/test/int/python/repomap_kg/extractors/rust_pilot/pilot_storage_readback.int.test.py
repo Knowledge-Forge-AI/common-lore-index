@@ -24,12 +24,12 @@ from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage import staged_ingestion
 from common_lore_index.storage.staged_ingestion import IngestionAuthority, new_direct_authority
 from common_lore_index.storage.staged_prepared_refresh import run_staged_prepared_refresh
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.rust_pilot_inline_guest import InlineGuestExecutor
-from repomap_test_support.rust_pilot_semantic_fixtures import live_pilot
+from common_lore_index_test_support.rust_pilot_inline_guest import InlineGuestExecutor
+from common_lore_index_test_support.rust_pilot_semantic_fixtures import live_pilot
 
 
 def test_live_witness_staged_rows_publish_and_read_back_without_direct_inserts(

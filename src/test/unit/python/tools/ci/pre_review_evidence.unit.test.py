@@ -38,7 +38,7 @@ class FakeResult:
 
 
 def _sample_source_doc(status: str = "passed") -> dict:
-    from repomap_test_support.retention_evidence_fixture import evidence_source
+    from common_lore_index_test_support.retention_evidence_fixture import evidence_source
     return evidence_source(status=status, file_count=1, cohort_count=1)
 
 
@@ -241,7 +241,7 @@ def test_normal19pass1policy_finalizes(tmp_path: Path, capped_logs: bool) -> Non
             "x" * LOG_CAP_BYTES if capped_logs else f"log for {name}\n", encoding="utf-8"
         )
 
-    from repomap_test_support.retention_evidence_fixture import evidence_source
+    from common_lore_index_test_support.retention_evidence_fixture import evidence_source
     ret_payload = compact_retention_evidence(evidence_source(
         status="failed", file_count=1500, cohort_count=1125
     ))

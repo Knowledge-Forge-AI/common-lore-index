@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from repomap_test_support.related_context_fixtures import (
+from common_lore_index_test_support.related_context_fixtures import (
     GRAPH, GUIDE, OTHER, START, CapturedCalls, related_home,
 )
 

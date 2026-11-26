@@ -40,16 +40,16 @@ _SUPPORT_ROOT = Path(__file__).resolve().parent / "support" / "python"
 if str(_SUPPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(_SUPPORT_ROOT))
 
-from repomap_test_support.test_scratch import (  # noqa: E402
+from common_lore_index_test_support.test_scratch import (  # noqa: E402
     ENV_RUN_ROOT,
     establish_run,
     finalize_run,
 )
-from repomap_test_support.build_profile_debt import (  # noqa: E402
+from common_lore_index_test_support.build_profile_debt import (  # noqa: E402
     DEFERRED_BUILD_PROFILE_NODE_IDS,
     enforce_build_profile_authority,
 )
-from repomap_test_support.resource_run_test_support import (  # noqa: E402
+from common_lore_index_test_support.resource_run_test_support import (  # noqa: E402
     preserve_resource_run_process_state,
 )
 # Reuses an inherited REPOMAP_TEST_RUN_ROOT when the runner already allocated
@@ -69,12 +69,12 @@ def isolate_cloe_home():
 
 
 def pytest_configure(config):
-    from repomap_test_support import d12_core_image as d12
-    from repomap_test_support import retrieval_supplement_study as study
+    from common_lore_index_test_support import d12_core_image as d12
+    from common_lore_index_test_support import retrieval_supplement_study as study
 
     config.addinivalue_line("markers", f"{d12.MARKER}: {d12.DESELECTION_REASON}")
     config.addinivalue_line("markers", f"{study.MARKER}: {study.DESELECTION_REASON}")
-    from repomap_test_support import retrieval_body_study as body_study
+    from common_lore_index_test_support import retrieval_body_study as body_study
     config.addinivalue_line("markers", f"{body_study.MARKER}: {body_study.DESELECTION_REASON}")
 
 
@@ -89,7 +89,7 @@ def pytest_collection_modifyitems(session, config, items):
     excluded IDs, their count and the exact reason are recorded for runner
     discovery, separately from the deferred build-profile registry.
     """
-    from repomap_test_support import d12_core_image as d12
+    from common_lore_index_test_support import d12_core_image as d12
 
     raw = [item.nodeid for item in items]
     optional = set(d12.OPTIONAL_NODE_IDS)
@@ -121,7 +121,7 @@ def pytest_collection_modifyitems(session, config, items):
 
 
 def _reconcile_body_study(config, items):
-    from repomap_test_support import retrieval_body_study as body_study
+    from common_lore_index_test_support import retrieval_body_study as body_study
     body_study.reconcile_body_study(
         config, items, deferred_build_node_ids=DEFERRED_BUILD_PROFILE_NODE_IDS,
     )
@@ -129,7 +129,7 @@ def _reconcile_body_study(config, items):
 
 def _reconcile_supplement_study(config, items):
     """Visibly deselect the actual-study owner unless authenticated alone inside the study SDK."""
-    from repomap_test_support import retrieval_supplement_study as study
+    from common_lore_index_test_support import retrieval_supplement_study as study
 
     study.reconcile_supplement_study(
         config, items, deferred_build_node_ids=DEFERRED_BUILD_PROFILE_NODE_IDS,
@@ -138,7 +138,7 @@ def _reconcile_supplement_study(config, items):
 
 def _record_optional_population(config, raw, excluded_ids):
     """Each exclusion keeps its raw collection index, so raw collected IDs can be rebuilt exactly."""
-    from repomap_test_support import d12_core_image as d12
+    from common_lore_index_test_support import d12_core_image as d12
 
     excluded = [{"nodeid": nodeid, "raw_index": index}
                 for index, nodeid in enumerate(raw) if nodeid in excluded_ids]
@@ -151,7 +151,7 @@ def _covers_d12_owner(config):
     """Whether a path argument (not a node selection) contains the optional owner file."""
     root = Path(getattr(config, "rootpath", Path.cwd()))
     base = Path(getattr(getattr(config, "invocation_params", None), "dir", root))
-    from repomap_test_support.d12_core_image import NODE_FILE
+    from common_lore_index_test_support.d12_core_image import NODE_FILE
 
     node = (root / NODE_FILE).resolve()
     paths = [(base / arg).resolve() for arg in getattr(config, "args", ()) if "::" not in str(arg)]
@@ -159,8 +159,8 @@ def _covers_d12_owner(config):
 
 
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
-    from repomap_test_support import d12_core_image as d12
-    from repomap_test_support import retrieval_supplement_study as study
+    from common_lore_index_test_support import d12_core_image as d12
+    from common_lore_index_test_support import retrieval_supplement_study as study
 
     record = getattr(config, d12.POPULATION_ATTR, {})
     ids = [entry["nodeid"] for entry in record.get("excluded", ())]
@@ -176,7 +176,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
             f"Supplement study actual owner deselected: {len(study_ids)} "
             f"{', '.join(study_ids)} ({study.DESELECTION_REASON})"
         )
-    from repomap_test_support import retrieval_body_study as body_study
+    from common_lore_index_test_support import retrieval_body_study as body_study
     body_record = getattr(config, body_study.POPULATION_ATTR, {})
     body_ids = [entry["nodeid"] for entry in body_record.get("excluded", ())]
     if body_ids:
@@ -199,7 +199,7 @@ def isolate_test_resource_run_process_state():
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
-    from repomap_test_support.test_scratch_cleanup import (
+    from common_lore_index_test_support.test_scratch_cleanup import (
         TestScratchCleanupError, clean_test_node_scratch, record_test_report,
     )
 
@@ -226,17 +226,17 @@ def pytest_runtest_setup(item):
     """Refuse direct execution of visible build debt without build authority."""
     if item.get_closest_marker("requires_build_profile") is not None:
         enforce_build_profile_authority()
-    from repomap_test_support import d12_core_image as d12
+    from common_lore_index_test_support import d12_core_image as d12
 
     if item.get_closest_marker(d12.MARKER) is not None:
         _require_d12_admission(d12, item.nodeid)
-    from repomap_test_support import retrieval_supplement_study as study
+    from common_lore_index_test_support import retrieval_supplement_study as study
 
     if item.get_closest_marker(study.MARKER) is not None:
         if item.nodeid != study.NODE_ID:
             raise study.SupplementStudyProfileError("study marker on foreign node")
         study.require_study_admission()
-    from repomap_test_support import retrieval_body_study as body_study
+    from common_lore_index_test_support import retrieval_body_study as body_study
     if item.get_closest_marker(body_study.MARKER) is not None:
         if item.nodeid != body_study.NODE_ID:
             raise body_study.BodyStudyProfileError("body-study marker on foreign node")

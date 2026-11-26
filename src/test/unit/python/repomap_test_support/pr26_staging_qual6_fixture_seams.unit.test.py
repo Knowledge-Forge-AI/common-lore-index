@@ -14,8 +14,8 @@ import pytest
 
 from common_lore_index.runtime.local import LocalRuntimeIdentity, setup_local_runtime
 from common_lore_index.ops.config_sections import parse_server_memory_section
-from repomap_test_support import cli_integration
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support import cli_integration
+from common_lore_index_test_support.local_db_backup import (
     LocalDbBackupUnitTestCase,
     maybe_provenance_runner_result,
     unit_maintenance_window_patch,

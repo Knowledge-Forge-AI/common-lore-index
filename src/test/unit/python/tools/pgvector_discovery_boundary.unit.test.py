@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.pgvector_prebuilt_discovery_cases import (
+from common_lore_index_test_support.pgvector_prebuilt_discovery_cases import (
     environment_mismatch_case, harmless_child_case, nested_lineage_case,
     optional_report_case, projection_case, refusal_case, lost_authority_case,
     canonical_request_case, maximal_capture_export_case,

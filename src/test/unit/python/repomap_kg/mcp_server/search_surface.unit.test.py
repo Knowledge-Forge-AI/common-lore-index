@@ -18,10 +18,10 @@ from common_lore_index.server import mcp
 from common_lore_index.ops.config_local import LocalSqliteConfig, load_graph_registry_config_home
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.navigation_search_fixtures import (
+from common_lore_index_test_support.navigation_search_fixtures import (
     BINDING, GRAPH, navigation_bundle,
 )
-from repomap_test_support.sqlite_local_fixtures import graph_toml, local_binding, publication_for, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, local_binding, publication_for, write_sqlite_home
 
 BODY_SOURCE = '''__all__ = ["normalize_label"]
 public_labels = []

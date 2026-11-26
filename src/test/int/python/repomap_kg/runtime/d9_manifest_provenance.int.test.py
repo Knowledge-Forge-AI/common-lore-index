@@ -40,12 +40,12 @@ from common_lore_index.storage import (
     run_psql,
 )
 from common_lore_index.storage.main import _migration_script
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     connect_real_postgres as _connect,
     setup_real_backup_home as _setup_real_home,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 def _pick_contrib_extension(postgres: Any) -> str:

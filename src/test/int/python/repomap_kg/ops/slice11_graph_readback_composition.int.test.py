@@ -33,12 +33,12 @@ from common_lore_index.ops.config_records import OpsGraphConfig
 from common_lore_index.server.mcp import cloe_search_nodes, cloe_search_observations
 from common_lore_index.server.ops import like_escape
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class Slice11GraphReadbackCompositionIntegrationTests(unittest.TestCase):

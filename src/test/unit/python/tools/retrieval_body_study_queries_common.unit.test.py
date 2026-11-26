@@ -6,7 +6,7 @@ from typing import Any, cast
 
 import pytest
 
-from repomap_test_support.retrieval_body_study_fixtures import study_reports
+from common_lore_index_test_support.retrieval_body_study_fixtures import study_reports
 from retrieval_body_study_common import CommonPositiveSet, select_common_positives
 from retrieval_body_study_join import select_body_study_matrix
 from retrieval_body_study_queries import (

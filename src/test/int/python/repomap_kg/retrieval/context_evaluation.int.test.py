@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from repomap_test_support.context_assertions import build_postgres_context_fixture
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.context_assertions import build_postgres_context_fixture
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

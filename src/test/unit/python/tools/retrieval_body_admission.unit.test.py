@@ -8,8 +8,8 @@ from typing import Any, cast
 
 import pytest
 
-from repomap_test_support.retrieval_body_admission_fixtures import make_body_publication
-from repomap_test_support.retrieval_body_fixtures import make_body_bindings, make_body_catalog_payload, make_body_identity, make_body_policy
+from common_lore_index_test_support.retrieval_body_admission_fixtures import make_body_publication
+from common_lore_index_test_support.retrieval_body_fixtures import make_body_bindings, make_body_catalog_payload, make_body_identity, make_body_policy
 from retrieval_body_admission import BodyTaskAdmission, admit_body_task
 from retrieval_body_admission_rules import complete_policy_identity, evaluate_body_case
 from retrieval_body_catalog import parse_functional_catalog

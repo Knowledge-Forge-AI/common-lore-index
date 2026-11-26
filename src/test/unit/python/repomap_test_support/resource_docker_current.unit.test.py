@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support.resource_docker_current import CurrentRunDockerContainers
-from repomap_test_support.resource_ledger import ResourceKind, ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_docker_current import CurrentRunDockerContainers
+from common_lore_index_test_support.resource_ledger import ResourceKind, ResourceLedger, RunIdentity
 
 
 class NotFound(Exception):

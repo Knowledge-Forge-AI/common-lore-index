@@ -15,14 +15,14 @@ from typing import Any
 from unittest.mock import patch
 
 from common_lore_index.storage import StorageSchemaError
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     NO_FALLBACK_GUARDS,
     fail_if_reached,
     patched_guards,
     setup_owned_config,
     setup_owned_home,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 ITEM_KEY = "feed.item:feed.channel%3Afeed.document%253Afile%25253Arss.xml%3Aself:item-1"
 MISSING_DB = 'psql failed: FATAL: database "repomap_x" does not exist'

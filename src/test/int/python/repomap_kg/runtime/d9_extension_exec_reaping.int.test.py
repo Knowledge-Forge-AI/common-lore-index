@@ -37,10 +37,10 @@ from common_lore_index.runtime._extension_restore_native import run_bounded_ext_
 from common_lore_index.runtime.backup_records import LocalDbBackupError
 from common_lore_index.runtime.local import build_local_runtime_plan
 from common_lore_index.runtime.release import PACKAGED_PSQL
-from repomap_test_support.d9_extension_restore import engine_container_id, owned_d9_postgres_cluster, postmaster_crash_lines
-from repomap_test_support.local_db_backup import connect_real_postgres as _connect
-from repomap_test_support.postgres_harness import require_postgres_binaries
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.d9_extension_restore import engine_container_id, owned_d9_postgres_cluster, postmaster_crash_lines
+from common_lore_index_test_support.local_db_backup import connect_real_postgres as _connect
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 GRAPH = "d9b_reap_graph"
 LOCK_KEY = 4_242_017

@@ -9,16 +9,16 @@ from typing import Any, cast
 
 import pytest
 
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_body_fixtures import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_body_fixtures import (
     make_body_bindings, make_body_catalog_payload, make_body_corpus_payload, make_body_identity,
     make_body_policy,
 )
-from repomap_test_support.retrieval_body_pin_fixtures import (
+from common_lore_index_test_support.retrieval_body_pin_fixtures import (
     make_body_input_files as make_functional_input_files,
     materialize_body_inputs, materialize_body_predecessors,
 )
-from repomap_test_support.retrieval_body_publication_fixture import BodyStoreFixture, materialize_body_home
+from common_lore_index_test_support.retrieval_body_publication_fixture import BodyStoreFixture, materialize_body_home
 from retrieval_body_admission import admit_body_task
 from retrieval_body_admission_rules import evaluate_body_case
 from retrieval_body_catalog import parse_functional_catalog

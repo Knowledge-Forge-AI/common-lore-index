@@ -18,8 +18,8 @@ for extra_path in (
         sys.path.insert(0, str(extra_path))
 
 from common_lore_index.storage.errors import StorageSchemaError
-from repomap_test_support import semantic_candidate_cleanup as cleanup_module
-from repomap_test_support.semantic_candidate_restore import (
+from common_lore_index_test_support import semantic_candidate_cleanup as cleanup_module
+from common_lore_index_test_support.semantic_candidate_restore import (
     ENRICHMENT_CLEANUP_SQL,
     VECTOR_CLEANUP_SQL,
     cleanup_optional_sql_fixture,

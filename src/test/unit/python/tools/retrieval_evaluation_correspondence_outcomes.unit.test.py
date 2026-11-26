@@ -11,12 +11,12 @@ import pytest
 from common_lore_index.retrieval.query_contracts import (
     QueryEnvelope, QueryMode, QueryScope, refused_envelope, unavailable_envelope,
 )
-from repomap_test_support.w5_experiment_vector import baseline_file_metrics_with_correspondence
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_experiment_vector import baseline_file_metrics_with_correspondence
+from common_lore_index_test_support.w5_semantic_support import (
     make_w5_calibration_task, make_w5_policy, make_w5_readback_adapter, make_w5_verified_pin,
 )
-import repomap_test_support.w5_generator_support as generator
-from repomap_test_support.retrieval_evaluation_publication import PublishedCorpusState
+import common_lore_index_test_support.w5_generator_support as generator
+from common_lore_index_test_support.retrieval_evaluation_publication import PublishedCorpusState
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_evaluation_schema import EvaluationTask
 from retrieval_semantic_baseline_capture import BaselinePinSnapshot, IssuedBaselineCapture, execute_with_live_baseline_pins

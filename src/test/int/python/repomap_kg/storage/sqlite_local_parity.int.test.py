@@ -51,18 +51,18 @@ from common_lore_index.storage.sqlite_local.publisher import FAMILY_ORDER, Local
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
 from common_lore_index.storage.staging_family_rows import StageFamily
 from common_lore_index.storage.staged_ingestion import run_staged_portable_refresh, stage_id_for_authority
-from repomap_test_support.cli_in_process import FIXTURE_ROOT
-from repomap_test_support.host_mcp_publication import RESTORE_LOGIN_SQL, provision_roles, role_secrets
-from repomap_test_support.host_mcp_stdio import HostMcpHarness
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.cli_in_process import FIXTURE_ROOT
+from common_lore_index_test_support.host_mcp_publication import RESTORE_LOGIN_SQL, provision_roles, role_secrets
+from common_lore_index_test_support.host_mcp_stdio import HostMcpHarness
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.sqlite_local_fixtures import (
     SERVICE_TOML,
     graph_toml,
     multi_graph_toml,
     write_sqlite_home,
 )
-from repomap_test_support.sqlite_local_read_corpus import write_polyglot_source
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, structured, tool
+from common_lore_index_test_support.sqlite_local_read_corpus import write_polyglot_source
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, structured, tool
 
 ONE, MULTI = "sqlite-one", "sqlite-multi"
 CONSTELLATION = FIXTURE_ROOT / "multi_source_nix_constellation"

@@ -5,16 +5,16 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_ledger_io import write_private_json
-from repomap_test_support.resource_run import TestResourceRun
-from repomap_test_support.resource_test_image_base import (
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_ledger_io import write_private_json
+from common_lore_index_test_support.resource_run import TestResourceRun
+from common_lore_index_test_support.resource_test_image_base import (
     TestImageError as ImageLifecycleError,
 )
-from repomap_test_support.resource_test_image_cleanup import (
+from common_lore_index_test_support.resource_test_image_cleanup import (
     MaterializationCleanupError,
 )
-from repomap_test_support.resource_test_image_materialization import (
+from common_lore_index_test_support.resource_test_image_materialization import (
     MaterializationContainerOwner,
     materialization_manifest_path,
     recover_interrupted_runtime_materialization,
@@ -66,7 +66,7 @@ def test_materialization_manifest_lives_under_project_root_scratch(tmp_path):
 
     source = (
         Path(__file__).parents[3]
-        / "support/python/repomap_test_support"
+        / "support/python/common_lore_index_test_support"
         / "resource_test_image_materialization.py"
     ).read_text(encoding="utf-8")
     assert '"/tmp"' not in source

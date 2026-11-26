@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 
-from repomap_test_support.storage_rows_contracts import (
+from common_lore_index_test_support.storage_rows_contracts import (
 CRITICAL_WRITE_ROW_FIELDS,
 PURE_HELPER_EXPORT_NAMES,
 FILE_INDEX_ROW_EXPORT_NAMES,

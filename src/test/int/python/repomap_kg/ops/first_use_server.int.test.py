@@ -23,22 +23,22 @@ from common_lore_index.ops.resource_view._projections import project_compact_con
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
 from common_lore_index.retrieval.query_contracts import CapabilityState
 from common_lore_index.storage import apply_migrations, default_rdbms_root, staged_ingestion
-from repomap_test_support.context_assertions import assert_valid_context_packet
-from repomap_test_support.governance3_first_use_sealing import (
+from common_lore_index_test_support.context_assertions import assert_valid_context_packet
+from common_lore_index_test_support.governance3_first_use_sealing import (
     assert_planned_refusal, assert_v2_sealing_counts, manifest_for_pin, mixed_inventory,
 )
-from repomap_test_support.first_use_workflow import (
+from common_lore_index_test_support.first_use_workflow import (
     first_use_expectations,
     guard_first_use_root,
 )
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.postgres_harness import temporary_postgres
 
 
 def _resource_payload(

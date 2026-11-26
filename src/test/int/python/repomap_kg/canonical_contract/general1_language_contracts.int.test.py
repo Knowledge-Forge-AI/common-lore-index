@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 
-from repomap_test_support.cli_integration import CliIntegrationTestCase
+from common_lore_index_test_support.cli_integration import CliIntegrationTestCase
 
 from common_lore_index.observations import RawObservation, write_observations_jsonl
 

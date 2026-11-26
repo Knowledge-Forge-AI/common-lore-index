@@ -4,16 +4,16 @@ import json
 
 import pytest
 
-from repomap_test_support.scale28_adr2_frame_model import (
+from common_lore_index_test_support.scale28_adr2_frame_model import (
     MAX_SIGNED_INT,
     OBSERVATION_TRANSFER_RESERVE_NS,
 )
-from repomap_test_support.scale28_adr2_model_fixtures import (
+from common_lore_index_test_support.scale28_adr2_model_fixtures import (
     fixture_frame_and_acknowledgement,
     fixture_receipt_expectations,
     fixture_receipt_payload,
 )
-from repomap_test_support.scale28_adr2_receipt_model import (
+from common_lore_index_test_support.scale28_adr2_receipt_model import (
     MAX_RECEIPT_BYTES,
     encode_receipt,
     validate_preparation_receipt,

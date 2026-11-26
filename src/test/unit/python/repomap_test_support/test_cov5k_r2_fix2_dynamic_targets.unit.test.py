@@ -9,18 +9,18 @@ from pathlib import Path
 import sys
 
 import pytest
-import repomap_test_support.test_cov5k_r2_fix2_evidence as evidence_module
+import common_lore_index_test_support.test_cov5k_r2_fix2_evidence as evidence_module
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import (
     OwnerBinding,
     build_closed_catalog,
 )
-import repomap_test_support.test_cov5k_r2_fix2_dynamic_targets as dynamic_targets_module
-from repomap_test_support.test_cov5k_r2_fix2_dynamic_targets import (
+import common_lore_index_test_support.test_cov5k_r2_fix2_dynamic_targets as dynamic_targets_module
+from common_lore_index_test_support.test_cov5k_r2_fix2_dynamic_targets import (
     EXTERNAL_TARGETS,
     PYTHON_TARGETS,
 )
-from repomap_test_support.test_cov5k_r2_fix2_evidence import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import (
     ExecutorEvidenceError,
     OwnerEntryEvidence,
     _code_object_identity,
@@ -89,12 +89,12 @@ def test_supported_resolutions_independently_succeed() -> None:
     supported_pure_targets = (
         ("run_tests", "main"),
         ("common_lore_index.cli.dispatch", "dispatch_command"),
-        ("repomap_test_support.test_cov5k_r2_fix2_administrative", "execute_backup"),
+        ("common_lore_index_test_support.test_cov5k_r2_fix2_administrative", "execute_backup"),
         ("scale15_actual_path_readback", "read_scale15_terminal_state"),
         ("scale15_actual_path_readback", "read_terminal_backend_summary"),
-        ("repomap_test_support.test_cov5k_r2_fix2_gate_executor", "execute_complete_gate"),
+        ("common_lore_index_test_support.test_cov5k_r2_fix2_gate_executor", "execute_complete_gate"),
         (
-            "repomap_test_support.test_cov5k_r2_fix2_process_recorder",
+            "common_lore_index_test_support.test_cov5k_r2_fix2_process_recorder",
             "execute_zero_process_boundary",
         ),
         (
@@ -294,24 +294,24 @@ def test_preserves_independent_re_resolution_and_identities() -> None:
 
 _ACCEPTED_PREP_DIGEST = "124e1c7d05016c601739f946a6a4fd69646c794b0168e80444a612bb4189ef30"
 _PRIOR_PREP_DIGEST = "c3eb4a85bc29f9e1eb2275c0ac16d21f3539eff0ef6db99ee30ddf8f117c2c53"
-_PREP_PATH = "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_preparation.py"
+_PREP_PATH = "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_preparation.py"
 _ACCEPTED_RESOURCE_DIGEST = "958fb547b2b7b78b45872dffcd2175823da66d842bfccf0bf057736f0fc99a84"
 _PRIOR_RESOURCE_DIGEST = "8f81a75e0fb8164390de910e49ccc024fcd68eceac987a4a6918603ea00c8a25"
-_RESOURCE_PATH = "src/test/support/python/repomap_test_support/resource_test_images.py"
+_RESOURCE_PATH = "src/test/support/python/common_lore_index_test_support/resource_test_images.py"
 _RESOURCE_SYM = "TestImageManager.build_ephemeral_image"
 
 
 def test_preparation_targets_resolve_accepted_digest_and_local_code_identities() -> None:
     for symbol in ("execute_preparation_condition", "execute_preparation_state_path"):
         module_name, qualified, file_digest, code_id = _python_identity(_PREP_PATH, symbol)
-        assert module_name == "repomap_test_support.test_cov5k_r2_fix2_preparation"
-        assert qualified == f"repomap_test_support.test_cov5k_r2_fix2_preparation.{symbol}"
+        assert module_name == "common_lore_index_test_support.test_cov5k_r2_fix2_preparation"
+        assert qualified == f"common_lore_index_test_support.test_cov5k_r2_fix2_preparation.{symbol}"
         assert file_digest == _ACCEPTED_PREP_DIGEST and len(code_id) == 64
         resolved = _resolve_symbol(module_name, symbol)
         assert resolved.__code__ is not None and code_id == _code_object_identity(resolved.__code__)
     rmod, rqual, rdig, rcid = _python_identity(_RESOURCE_PATH, _RESOURCE_SYM)
-    assert rmod == "repomap_test_support.resource_test_images"
-    assert rqual == f"repomap_test_support.resource_test_images.{_RESOURCE_SYM}"
+    assert rmod == "common_lore_index_test_support.resource_test_images"
+    assert rqual == f"common_lore_index_test_support.resource_test_images.{_RESOURCE_SYM}"
     assert rdig == _ACCEPTED_RESOURCE_DIGEST and len(rcid) == 64
     rfn = _resolve_symbol(rmod, _RESOURCE_SYM)
     assert rfn.__code__ is not None and rcid == _code_object_identity(rfn.__code__)

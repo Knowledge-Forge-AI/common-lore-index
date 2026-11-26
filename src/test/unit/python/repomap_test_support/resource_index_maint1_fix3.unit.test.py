@@ -10,12 +10,12 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support import resource_index_physical_membership as records
-from repomap_test_support import resource_index_recovery as recovery
-from repomap_test_support.resource_index import AdvisoryIndex
-from repomap_test_support.resource_index_bootstrap import filesystem_identity
-from repomap_test_support.resource_index_maintenance import _snapshot_entries
-from repomap_test_support.resource_index_records import (
+from common_lore_index_test_support import resource_index_physical_membership as records
+from common_lore_index_test_support import resource_index_recovery as recovery
+from common_lore_index_test_support.resource_index import AdvisoryIndex
+from common_lore_index_test_support.resource_index_bootstrap import filesystem_identity
+from common_lore_index_test_support.resource_index_maintenance import _snapshot_entries
+from common_lore_index_test_support.resource_index_records import (
     ADMISSION_SCHEMA,
     CLOSE_SCHEMA,
     INVENTORY_MEMBERSHIP_SCHEMA,
@@ -23,15 +23,15 @@ from repomap_test_support.resource_index_records import (
     validate_inventory_membership,
     validate_recovery_inventory_membership,
 )
-from repomap_test_support.resource_index_recovery_records import (
+from common_lore_index_test_support.resource_index_recovery_records import (
     IndexRecoveryError,
     plan_recovery_records,
 )
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_ledger_io import write_private_json
-from repomap_test_support.resource_retention import RetentionClass, TerminalOutcome
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_ledger_io import write_private_json
+from common_lore_index_test_support.resource_retention import RetentionClass, TerminalOutcome
 from typing import TypedDict
-from repomap_test_support.resource_validation import HygieneValidationError
+from common_lore_index_test_support.resource_validation import HygieneValidationError
 
 
 class PhysicalEntryDict(TypedDict):

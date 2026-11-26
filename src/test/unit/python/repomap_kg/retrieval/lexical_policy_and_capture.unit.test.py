@@ -25,7 +25,7 @@ from common_lore_index.retrieval.lexical_policy import (
     resolve_graph_privacy_for_lexical,
 )
 from common_lore_index.retrieval.projection_policy import ExclusionReason
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     build_mixed_v1_projection_policy,

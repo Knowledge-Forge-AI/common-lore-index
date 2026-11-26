@@ -6,7 +6,7 @@ from typing import cast
 
 import pytest
 
-import repomap_test_support.w5_generator_support as generator_support
+import common_lore_index_test_support.w5_generator_support as generator_support
 from common_lore_index.ops.config import (
     OpsGraphConfig,
     OpsServerMemoryConfig,
@@ -14,13 +14,13 @@ from common_lore_index.ops.config import (
     OpsSourcesConfig,
 )
 from common_lore_index.ops.config_local import LocalSqliteConfig
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_GRAPH_ID
-from repomap_test_support.retrieval_evaluation_publication import PublishedCorpusState
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_GRAPH_ID
+from common_lore_index_test_support.retrieval_evaluation_publication import PublishedCorpusState
+from common_lore_index_test_support.w5_semantic_support import (
     BIND_CORE, BIND_PRIVATE, make_w5_calibration_task, make_w5_policy,
     make_w5_sample_nodes_and_evidence, make_w5_verified_pin,
 )
-from repomap_test_support.w5_generator_support import GeneratorFixtureReader
+from common_lore_index_test_support.w5_generator_support import GeneratorFixtureReader
 from retrieval_semantic_generator_inputs import build_worker_request, prepare_public_generation_input
 from retrieval_semantic_generator_kernel import SemanticMode
 from retrieval_semantic_provenance import RepresentationValidationError

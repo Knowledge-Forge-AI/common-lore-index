@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support.w5_public_text_evidence import (
+from common_lore_index_test_support.w5_public_text_evidence import (
     private_generation_inputs, read_private_file, retain_raw_members, write_private_file,
 )
 from retrieval_semantic_raw_component_anchors import MEMBER_ROLES

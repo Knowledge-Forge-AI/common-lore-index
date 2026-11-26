@@ -28,7 +28,7 @@ from common_lore_index.coordinator.windows_security import (
     apply_owner_private_acl,
     validate_owner_private_acl,
 )
-from repomap_test_support.synthetic_worker_adapter import run_synthetic_worker
+from common_lore_index_test_support.synthetic_worker_adapter import run_synthetic_worker
 
 
 pytestmark = pytest.mark.skipif(

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from common_lore_index.retrieval.query_contracts import QueryEnvelope
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
 from retrieval_evaluation_historical_evidence import verify_completed_attempt
 from retrieval_evaluation_criteria_v2 import (
     FutureCriteriaProposalV2,

@@ -10,8 +10,8 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support import retrieval_supplement_study as study_support
-from repomap_test_support.retrieval_supplement_study_fixtures import make_study_plan
+from common_lore_index_test_support import retrieval_supplement_study as study_support
+from common_lore_index_test_support.retrieval_supplement_study_fixtures import make_study_plan
 from retrieval_supplement_study_contracts import STUDY_NODE_ID, STUDY_SELECTOR
 from retrieval_supplement_study_plan import (
     admission_file_for_plan,
@@ -171,7 +171,7 @@ def test_sandbox_dispatch_requires_ownership_for_study_and_forbids_for_native(
 
     monkeypatch.setattr("test_sandbox.run_in_sandbox", fake_run)
     monkeypatch.setattr("runner_pgvector_context.require_native_host", lambda: None)
-    monkeypatch.setattr("repomap_test_support.unit_purity.require_live_resource_allowed", lambda _b: None)
+    monkeypatch.setattr("common_lore_index_test_support.unit_purity.require_live_resource_allowed", lambda _b: None)
 
     args = SimpleNamespace(suite="int", pg_test_profile="pgvector", d12_system_proof_json=None)
     study_offline = SimpleNamespace(plan={"role": "study", "sdk_image": SDK_IMAGE})

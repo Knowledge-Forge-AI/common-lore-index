@@ -143,7 +143,7 @@ production import or new subprocess module target was introduced.
 
 The synthetic-worker module, test-support search path, mode allowlist, and
 fixture-selecting coordinator factory now live outside production in
-`repomap_test_support`.
+`common_lore_index_test_support`.
 
 ## ARCH1G CLI And Server Consumer Inventory
 
@@ -205,7 +205,7 @@ framing, environment normalization, Windows containment, cancellation, and
 the existing `protocol.launch_managed_process` patch target remain production
 responsibilities.
 
-`repomap_test_support.synthetic_worker_adapter` now owns the synthetic mode
+`common_lore_index_test_support.synthetic_worker_adapter` now owns the synthetic mode
 allowlist, fixture module target, support search path, and coordinator factory
 that selects a test fixture. Tests import that outward adapter directly. No
 production module imports or names test support, no production factory selects

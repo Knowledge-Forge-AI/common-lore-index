@@ -1,4 +1,4 @@
-from repomap_test_support.observer_trace import (
+from common_lore_index_test_support.observer_trace import (
     SUPERVISED_CYCLE_TRACE_CAPACITY,
     ObserverTraceKind,
     ObserverTraceRecorder,

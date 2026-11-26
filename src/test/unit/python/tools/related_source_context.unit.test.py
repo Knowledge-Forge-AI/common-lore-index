@@ -14,8 +14,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from common_lore_index.server import mcp
-from repomap_test_support.navigation_search_fixtures import navigation_bundle
-from repomap_test_support.related_context_fixtures import (
+from common_lore_index_test_support.navigation_search_fixtures import navigation_bundle
+from common_lore_index_test_support.related_context_fixtures import (
     BINDING, EXPECTED_IMPORTS, EXPECTED_LINKS, GRAPH, GUIDE, IMPORTED, MODULE,
     OTHER, REPOSITORY, SOURCES, START, CapturedCalls, related_home,
 )

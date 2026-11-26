@@ -20,7 +20,7 @@ from common_lore_index.retrieval.publication_binding import (
     CorrespondenceRefusal,
     ProjectionInputs,
 )
-from repomap_test_support.w5_publication_validation_fixtures import (
+from common_lore_index_test_support.w5_publication_validation_fixtures import (
     build_validation_projection,
     publication_tree,
 )

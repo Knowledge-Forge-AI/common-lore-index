@@ -40,8 +40,8 @@ from common_lore_index.storage.sqlite_local.investigation_queries import observa
 from common_lore_index.storage.sqlite_local.migrations import SchemaState, classify
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
 from common_lore_index.storage.sqlite_local.upgrade import upgrade_graph_database
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
-from repomap_test_support.sqlite_local_read_corpus import read_corpus_bundle
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
+from common_lore_index_test_support.sqlite_local_read_corpus import read_corpus_bundle
 
 BINDING = local_binding()
 ROOT = BINDING.root_path

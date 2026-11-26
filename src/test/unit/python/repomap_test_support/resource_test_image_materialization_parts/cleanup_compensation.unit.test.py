@@ -7,24 +7,24 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_docker_boundary import RunWideDockerBoundary
-from repomap_test_support.resource_docker_mediation import CanonicalDockerAuthority
-from repomap_test_support.resource_docker_operations import DockerOperationJournal
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_docker_boundary import RunWideDockerBoundary
+from common_lore_index_test_support.resource_docker_mediation import CanonicalDockerAuthority
+from common_lore_index_test_support.resource_docker_operations import DockerOperationJournal
+from common_lore_index_test_support.resource_ledger import (
     ResourceKind,
     ResourceLedger,
     RunIdentity,
 )
-from repomap_test_support.resource_test_image_base import (
+from common_lore_index_test_support.resource_test_image_base import (
     TestImageError as ImageLifecycleError,
 )
-from repomap_test_support.resource_test_image_cleanup import (
+from common_lore_index_test_support.resource_test_image_cleanup import (
     MaterializationCleanupError,
 )
-from repomap_test_support.resource_test_image_materialization import (
+from common_lore_index_test_support.resource_test_image_materialization import (
     RuntimeMaterializationError,
 )
-from repomap_test_support.resource_test_images import TestImageManager as ImageManager
+from common_lore_index_test_support.resource_test_images import TestImageManager as ImageManager
 from src.test.unit.python.repomap_test_support.resource_test_image_materialization_parts.fixtures import (
     BASE_ID,
     BASE_REFERENCE,

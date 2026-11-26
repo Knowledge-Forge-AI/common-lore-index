@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support import d12_core_image as d12, d12_image_probes as probes
-from repomap_test_support.d12_core_image_cleanup import run_candidate_cleanup
+from common_lore_index_test_support import d12_core_image as d12, d12_image_probes as probes
+from common_lore_index_test_support.d12_core_image_cleanup import run_candidate_cleanup
 from tools.system.config import SystemDeadline
 from tools.system.d12_exec import wrap_create_with_bounded_exec
 from tools.system.d12_system_evidence import _finish_probe_owner

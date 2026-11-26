@@ -9,7 +9,7 @@ from common_lore_index.storage import (
     identity_metadata_hash,
 )
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 

@@ -9,7 +9,7 @@ from common_lore_index.service_package.artifacts import ServiceArtifactError
 from common_lore_index.service_package.launchd import LaunchdUserAdapter
 from common_lore_index.service_package.operations import CoordinatorServiceOperations, ServiceActionResult, ServicePackageError
 from common_lore_index.service_package.systemd import SystemdUserAdapter
-from repomap_test_support.executable_authority import controlled_service_authority
+from common_lore_index_test_support.executable_authority import controlled_service_authority
 
 
 @pytest.mark.parametrize("adapter_type", [LaunchdUserAdapter, SystemdUserAdapter])

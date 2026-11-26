@@ -25,12 +25,12 @@ from common_lore_index.storage.semantic_candidates import (
 from common_lore_index.storage.semantic_candidate_import import build_embedding_import_sql, candidate_schema_sql
 from common_lore_index.storage.semantic_candidate_readback import query_semantic_candidates
 from common_lore_index.storage.staged_ingestion import run_staged_portable_refresh
-from repomap_test_support.portable_publication_fixtures import _authority, _binding
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
-from repomap_test_support.semantic_candidate_publication import candidate_bundle
+from common_lore_index_test_support.portable_publication_fixtures import _authority, _binding
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
+from common_lore_index_test_support.semantic_candidate_publication import candidate_bundle
 from retrieval_semantic_ann_sql import build_hnsw_query_sql
-from repomap_test_support.semantic_candidate_restore import (
+from common_lore_index_test_support.semantic_candidate_restore import (
     execute_candidate_dump_restore,
     optional_database_cleanup,
     optional_sql_fixture_cleanup,

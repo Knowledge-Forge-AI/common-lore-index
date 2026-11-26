@@ -30,7 +30,7 @@ from common_lore_index.retrieval.query_contracts import (
     refused_envelope,
     unavailable_envelope,
 )
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     binding_id_for_alias,
     build_mixed_v1_projection_policy,
 )

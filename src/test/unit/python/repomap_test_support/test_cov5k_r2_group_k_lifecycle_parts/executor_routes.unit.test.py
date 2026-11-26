@@ -4,11 +4,11 @@ from types import SimpleNamespace
 from typing import Any
 import subprocess
 import pytest
-from repomap_test_support.resource_docker import ownership_labels
-from repomap_test_support.test_cov5k_r2_group_k_container import execute_group_k_docker
+from common_lore_index_test_support.resource_docker import ownership_labels
+from common_lore_index_test_support.test_cov5k_r2_group_k_container import execute_group_k_docker
 from contextlib import contextmanager
-from repomap_test_support.test_cov5k_r2_fix1_catalog import _group_k
-from repomap_test_support.test_cov5k_r2_fix1_executors import _execution_receipt_digest, execute_group_k
+from common_lore_index_test_support.test_cov5k_r2_fix1_catalog import _group_k
+from common_lore_index_test_support.test_cov5k_r2_fix1_executors import _execution_receipt_digest, execute_group_k
 
 from src.test.unit.python.repomap_test_support.test_cov5k_r2_group_k_lifecycle_parts.fixtures import FakeContainer, FakeDockerClient, _make_resource_run, _make_entry
 
@@ -17,7 +17,7 @@ def test_group_k_setup_timeout_cleans_up_owned_container_and_preserves_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     fake_client = FakeDockerClient()
     cid = "timeout-container-id-77778888"
@@ -32,7 +32,7 @@ def test_group_k_setup_timeout_cleans_up_owned_container_and_preserves_timeout(
 
     monkeypatch.setattr("docker.from_env", lambda: fake_client)
     monkeypatch.setattr(
-        "repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup",
+        "common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup",
         timeout_setup,
     )
 
@@ -58,7 +58,7 @@ def test_group_k_cleanup_error_surfaces_secondary_cleanup_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     fake_client = FakeDockerClient()
     cid = "cleanup-fail-id-88889999"
@@ -77,7 +77,7 @@ def test_group_k_cleanup_error_surfaces_secondary_cleanup_failure(
 
     monkeypatch.setattr("docker.from_env", lambda: fake_client)
     monkeypatch.setattr(
-        "repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup",
+        "common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup",
         failing_setup,
     )
 
@@ -103,7 +103,7 @@ def test_group_k_client_closed_on_every_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     fake_client = FakeDockerClient()
     monkeypatch.setattr("docker.from_env", lambda: fake_client)
@@ -111,7 +111,7 @@ def test_group_k_client_closed_on_every_path(
     def fatal_setup(*a: Any, **kw: Any) -> Any:
         raise KeyboardInterrupt("simulated operator interrupt")
 
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup", fatal_setup)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup", fatal_setup)
 
     case_root = tmp_path / "k09"
     case_root.mkdir()
@@ -149,7 +149,7 @@ def test_group_k_outer_executor_all_routes_parameterized(
         run_k_calls.append({"cmd": list(cmd), "cwd": cwd, "env": dict(env)})
         return subprocess.CompletedProcess(cmd, 0, stdout="ok\n", stderr="")
 
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_fix1_executors._run_k", fake_run_k)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_fix1_executors._run_k", fake_run_k)
 
     @contextmanager
     def fake_database():
@@ -157,7 +157,7 @@ def test_group_k_outer_executor_all_routes_parameterized(
             host="127.0.0.1", port=5432, user="test_user", database="test_db", password="test_pw"
         )
 
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_fix1_executors._database", fake_database)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_fix1_executors._database", fake_database)
 
     ephemeral_called = False
 
@@ -166,7 +166,7 @@ def test_group_k_outer_executor_all_routes_parameterized(
         ephemeral_called = True
         return shape, subprocess.CompletedProcess(list(shape), 0, stdout="ok\n", stderr="")
 
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_fix1_executors.execute_group_k_ephemeral", fake_ephemeral)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_fix1_executors.execute_group_k_ephemeral", fake_ephemeral)
 
     docker_called = False
 
@@ -176,8 +176,8 @@ def test_group_k_outer_executor_all_routes_parameterized(
         s = kw["shape"]
         return s, subprocess.CompletedProcess(list(s), 0, stdout="ok\n", stderr="")
 
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_fix1_executors.execute_group_k_docker", fake_docker)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_fix1_executors._free_loopback_port", lambda: 54321)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_fix1_executors.execute_group_k_docker", fake_docker)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_fix1_executors._free_loopback_port", lambda: 54321)
     monkeypatch.setattr("shutil.which", lambda name: f"/mock/bin/{name}")
 
     repo_root = tmp_path / "repo"
@@ -251,7 +251,7 @@ def test_group_k_combined_operation_failure_plus_cleanup_failure_preserves_prima
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     fake_client = FakeDockerClient()
     cid = "comb-fail-id-11112222"
@@ -269,7 +269,7 @@ def test_group_k_combined_operation_failure_plus_cleanup_failure_preserves_prima
         return subprocess.CompletedProcess([], 0, stdout=f"{cid}\n", stderr="")
 
     monkeypatch.setattr("docker.from_env", lambda: fake_client)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup", ok_setup)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup", ok_setup)
 
     def failing_runner(cmd: list[str], cwd: Path, env: dict[str, str]) -> Any:
         raise RuntimeError("primary operation crashed")

@@ -10,8 +10,8 @@ import pytest
 from common_lore_index.storage.authority import GraphRunId
 from common_lore_index.storage.publication_readback import RunPublicationRecord
 from common_lore_index.storage.semantic_candidates import CandidatePublication
-from repomap_test_support.semantic_candidate_fixtures import candidate_query
-from repomap_test_support.w5_semantic_support import make_w5_verified_pin
+from common_lore_index_test_support.semantic_candidate_fixtures import candidate_query
+from common_lore_index_test_support.w5_semantic_support import make_w5_verified_pin
 from retrieval_semantic_ann import (
     HnswEvaluationError,
     HnswEvaluationQuery,

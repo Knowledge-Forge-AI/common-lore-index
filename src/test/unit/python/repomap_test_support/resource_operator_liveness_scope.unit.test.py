@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import stat
 
-from repomap_test_support.resource_lifecycle_claim import ProcessLiveness
-from repomap_test_support.resource_operator_scope import ScopeEntry, classify_liveness
-from repomap_test_support.resource_safe_tree_delete import RunEntryInspection
+from common_lore_index_test_support.resource_lifecycle_claim import ProcessLiveness
+from common_lore_index_test_support.resource_operator_scope import ScopeEntry, classify_liveness
+from common_lore_index_test_support.resource_safe_tree_delete import RunEntryInspection
 
 
 INSPECTION = RunEntryInspection(1, 2, stat.S_IFDIR | 0o700, 0, 1)

@@ -15,7 +15,7 @@ import tomllib
 
 from ci.pre_review_checks import checks
 from ci.pre_review_records import ROOT
-from repomap_test_support import d12_native_python_proof as proof
+from common_lore_index_test_support import d12_native_python_proof as proof
 
 CONFIG = Path("tools/ci/betterleaks.toml")
 CONFIG_SHA256 = "8bdcf25ee360db68a0646353d05ab2df34832412f78db3dc3f2257ff392f5fbb"

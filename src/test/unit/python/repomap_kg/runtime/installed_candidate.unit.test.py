@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.installed_candidate import (
+from common_lore_index_test_support.installed_candidate import (
     DIST_INFO, BuiltWheel, expected_entry_points, expected_inventory, expected_requires, input_digest,
     input_names, installed_graph_parser_digest, inventory_sha256, license_bytes_match, license_members,
     rows_sha256, wheel_inventory,
@@ -148,7 +148,7 @@ def test_inventory_digest_ignores_only_optional_top_level() -> None:
 def test_material_refuses_an_unreviewed_message_body(tmp_path: Path) -> None:
     import shutil
 
-    from repomap_test_support.installed_experience_fixture import FIXTURE_ROOT, write_tiny_material
+    from common_lore_index_test_support.installed_experience_fixture import FIXTURE_ROOT, write_tiny_material
 
     fixture = tmp_path / "fixture"
     shutil.copytree(FIXTURE_ROOT, fixture)
@@ -167,7 +167,7 @@ def test_candidate_pins_follow_current_release_and_keep_incumbent_frozen() -> No
         CANDIDATE_DISTRIBUTION, CANDIDATE_VERSION, CANDIDATE_WHEEL_PREFIX,
         INCUMBENT_COMMIT, INCUMBENT_DISTRIBUTION, INCUMBENT_WHEEL_PREFIX,
     )
-    from repomap_test_support.installed_candidate import ROOT
+    from common_lore_index_test_support.installed_candidate import ROOT
 
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
     assert CANDIDATE_DISTRIBUTION == project["name"] == "common-lore-index"
@@ -179,7 +179,7 @@ def test_candidate_pins_follow_current_release_and_keep_incumbent_frozen() -> No
 
 
 def test_released_wheel_uses_exact_source_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    import repomap_test_support.installed_candidate as installed
+    import common_lore_index_test_support.installed_candidate as installed
 
     factory = object()
     recorded = object()
@@ -201,7 +201,7 @@ def test_released_wheel_uses_exact_source_only(monkeypatch: pytest.MonkeyPatch, 
 def test_archive_memo_distinguishes_wheel_prefix_and_input_paths(
     monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory, tmp_path: Path,
 ) -> None:
-    import repomap_test_support.installed_candidate as installed
+    import common_lore_index_test_support.installed_candidate as installed
 
     root = tmp_path / "repository"
     root.mkdir()
@@ -293,7 +293,7 @@ def test_source_archive_rejects_changed_or_unowned_members(tmp_path: Path, fault
     import tarfile
 
     from installed_experience_pins import CANDIDATE_VERSION
-    from repomap_test_support.installed_sdist import SDIST_FILENAME, verify_sdist
+    from common_lore_index_test_support.installed_sdist import SDIST_FILENAME, verify_sdist
 
     archive = tmp_path / SDIST_FILENAME
     stem = SDIST_FILENAME.removesuffix(".tar.gz")

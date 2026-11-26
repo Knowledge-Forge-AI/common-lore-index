@@ -18,7 +18,7 @@ from first_use_workload_records import (
     decode_index, decode_intent, decode_observation, decode_verdict, encode_index,
     encode_observation, index_payload, verdict_payload,
 )
-from repomap_test_support.first_use_workload_samples import (
+from common_lore_index_test_support.first_use_workload_samples import (
     ATTEMPT, SAMPLE_RECIPE, observation, sample_facts, sample_intent,
 )
 

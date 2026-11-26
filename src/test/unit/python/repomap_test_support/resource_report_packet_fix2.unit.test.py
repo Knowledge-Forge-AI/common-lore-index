@@ -6,8 +6,8 @@ import hashlib
 from typing import Any
 import pytest
 
-from repomap_test_support import resource_report_packet
-from repomap_test_support.resource_report_packet import (
+from common_lore_index_test_support import resource_report_packet
+from common_lore_index_test_support.resource_report_packet import (
     ReportPacketError,
     verify_packet_record,
 )

@@ -279,18 +279,18 @@ def test_import_uncertainty_and_file_length_in_group(tmp_path: Path, source: str
 
 def test_cross_root_cycle_refused(tmp_path: Path) -> None:
     c_paths = _make_tree(tmp_path, {
-        "tools/tool.py": "from repomap_test_support.supp import y\nx = 1\n",
-        "src/test/support/python/repomap_test_support/supp.py": "from tools.tool import x\ny = 2\n",
+        "tools/tool.py": "from common_lore_index_test_support.supp import y\nx = 1\n",
+        "src/test/support/python/common_lore_index_test_support/supp.py": "from tools.tool import x\ny = 2\n",
     })
     cohorts = [
         {"id": "c_tl", "root": "tools", "governing_profile": "clean_tooling",
          "members": ["tools/tool.py"], "rationale": "tl", "admission": "admitted"},
         {"id": "c_sp", "root": "test_support", "governing_profile": "clean_test_support",
-         "members": ["src/test/support/python/repomap_test_support/supp.py"], "rationale": "sp", "admission": "admitted"},
+         "members": ["src/test/support/python/common_lore_index_test_support/supp.py"], "rationale": "sp", "admission": "admitted"},
     ]
     checks = {
         "tools": _make_check(["tools/tool.py"]),
-        "test_support": _make_check(["src/test/support/python/repomap_test_support/supp.py"]),
+        "test_support": _make_check(["src/test/support/python/common_lore_index_test_support/supp.py"]),
     }
     res = evaluate_cohorts(cohorts, checks, tmp_path, c_paths, [])
     assert res["cohort_results"]["c_tl"]["status"] == "failed"

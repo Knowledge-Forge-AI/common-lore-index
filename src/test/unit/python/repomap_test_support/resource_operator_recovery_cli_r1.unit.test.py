@@ -8,13 +8,13 @@ from pathlib import Path
 import pytest
 import test_hygiene_maintenance as maintenance_tool
 
-from repomap_test_support.resource_gc_ledger import GcLedger, GcLedgerError
-from repomap_test_support.resource_lifecycle_claim import ClaimRegistry
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger, GcLedgerError
+from common_lore_index_test_support.resource_lifecycle_claim import ClaimRegistry
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     PROJECT,
     private_root,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 def test_recover_parser_requires_pass_id() -> None:

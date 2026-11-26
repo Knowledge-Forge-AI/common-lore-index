@@ -15,11 +15,11 @@ from common_lore_index.storage.readback_driver import (
 from common_lore_index.storage.staging_operation_contracts import (
     STAGING_OPERATION_DESCRIPTORS,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.scale12_supervision_policy import (
+from common_lore_index_test_support.scale12_supervision_policy import (
     OperationArmedElapsedMonitor,
     attribution_qualification_monitor,
 )

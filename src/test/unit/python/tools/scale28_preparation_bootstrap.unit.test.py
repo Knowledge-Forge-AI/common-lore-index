@@ -10,13 +10,13 @@ from unittest.mock import Mock
 
 import pytest
 
-from repomap_test_support.scale28_preparation_worker_fixtures import (
+from common_lore_index_test_support.scale28_preparation_worker_fixtures import (
     ObservedPreparationWorkerAttempt,
     prepare_synthetic_resources,
     SlowBootstrapPreparer,
     SlowSemanticPreparer,
 )
-from repomap_test_support.test_cov5k_r2_fix2_preparation import _policy
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation import _policy
 from scale28_preparation_resources import PreparationResourceSpecification
 from scale28_preparation_values import (
     BINDING_FIELDS,

@@ -14,7 +14,7 @@ from __future__ import annotations
 import subprocess
 from typing import Any
 
-from repomap_test_support.postgres_container import (
+from common_lore_index_test_support.postgres_container import (
     PostgresContainerConfig,
     PostgresContainerDatabase,
     PostgresContainerSession,

@@ -10,11 +10,11 @@ import pytest
 
 from installed_experience_records import decode_intent, decode_observation
 from installed_experience_source_identity import Preparation, owner_intent
-from repomap_test_support import installed_experience_driver as driver
-from repomap_test_support.installed_experience_driver import (
+from common_lore_index_test_support import installed_experience_driver as driver
+from common_lore_index_test_support.installed_experience_driver import (
     CleanupRegistry, Observed, OwnerRun, json_object, observed_code, remove_owned_root,
 )
-from repomap_test_support.installed_environment import ChildExecutionFailure
+from common_lore_index_test_support.installed_environment import ChildExecutionFailure
 
 SOURCE = {"S02": {"graph_catalog_sha256": "a" * 64, "control_catalog_sha256": "b" * 64},
           "S04": {"tools_sha256": "c" * 64}}

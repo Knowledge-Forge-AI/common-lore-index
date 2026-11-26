@@ -27,13 +27,13 @@ from common_lore_index.storage.staging_observability import (
 )
 from common_lore_index.storage.staging_operation_events import StagingOperationEvent
 from common_lore_index.storage.staging_phase_events import StagingPhaseEvent
-from repomap_test_support.performance_baseline import (
+from common_lore_index_test_support.performance_baseline import (
     close_phase_spans,
     measurement_index,
     reconcile_families,
     reconcile_replays,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

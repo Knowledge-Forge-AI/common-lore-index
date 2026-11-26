@@ -9,7 +9,7 @@ import pytest
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.staged_publication import execute_final_transaction
 from common_lore_index.storage.staging_ownership import StageOwnershipError
-from repomap_test_support.publication_fixtures import PublicationFixture
+from common_lore_index_test_support.publication_fixtures import PublicationFixture
 
 
 class _MergeReached(Exception):

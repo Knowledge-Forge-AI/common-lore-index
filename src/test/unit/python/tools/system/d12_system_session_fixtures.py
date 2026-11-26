@@ -13,7 +13,7 @@ from ci.d12_system_grant import (
     DEFAULT_CANDIDATE_RELPATH, DEFAULT_GRANT_RELPATH, EXPECTED_BASE_SHA, build_system_admission_proof,
     load_and_validate_system_build_grant, write_system_admission_proof,
 )
-from repomap_test_support.d12_recipe import frozen_identity
+from common_lore_index_test_support.d12_recipe import frozen_identity
 from common_lore_index.runtime.release import GO_RELEASE_IMAGE, POSTGRES_RELEASE_IMAGE, PYTHON_RELEASE_IMAGE
 from common_lore_index.runtime.release_manifest import D12_CANDIDATE_LIBPQ_VERSION, D12_CANDIDATE_PACKAGE_MANIFEST
 from tools.system import d12_system_session as session_mod

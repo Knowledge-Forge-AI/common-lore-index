@@ -25,7 +25,7 @@ from common_lore_index.coordinator.local_mode import (
     run_coordinator_refresh,
     serve_configured_coordinator,
 )
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 def test_authenticated_native_endpoint_blocks_container_start(monkeypatch):

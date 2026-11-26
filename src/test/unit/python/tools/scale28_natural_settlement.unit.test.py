@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import signal
 
-from repomap_test_support.scale28_settlement_helpers import hanging_child, slow_exit_child
+from common_lore_index_test_support.scale28_settlement_helpers import hanging_child, slow_exit_child
 from scale28_preparation_values import PreparationDeadlinePolicy
 from scale28_preparation_worker_process import settle_failed_process
 

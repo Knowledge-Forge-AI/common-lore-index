@@ -19,7 +19,7 @@ from common_lore_index.coordinator.local_lifecycle import (
 )
 from common_lore_index.storage.authority import RequestId
 from common_lore_index.coordinator.storage import ControlStore
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 from common_lore_index.runtime.maintenance import (
     MaintenanceUnavailableError,
     maintenance_activity,
@@ -27,7 +27,7 @@ from common_lore_index.runtime.maintenance import (
     maintenance_window,
     require_transaction_admission,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

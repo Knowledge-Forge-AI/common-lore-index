@@ -23,12 +23,12 @@ from common_lore_index.storage.staged_validation import validate_stage
 from common_lore_index.storage.staging_copy import CopyContractError, STAGING_COPY_TABLES, copy_stage_rows
 from common_lore_index.storage.staging_family_contracts import STAGING_FAMILY_DESCRIPTORS
 from common_lore_index.storage.staging_observability import StagingMeasurements
-from repomap_test_support.canonical_merge_reference import (
+from common_lore_index_test_support.canonical_merge_reference import (
     copy_diagnostic_fixture,
     create_repository_run_stage,
     observe_staged_statement,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
 @pytest.mark.parametrize("invalid_metadata", [{1: "invalid-key"}, {"nested": [{"bad": object()}]}],

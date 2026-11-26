@@ -8,7 +8,7 @@ import json
 import statistics
 from typing import SupportsIndex, SupportsInt
 
-from repomap_test_support.performance_baseline import (
+from common_lore_index_test_support.performance_baseline import (
     overhead_summary,
     require_output_equivalence,
     spool_threshold_decision,

@@ -25,7 +25,7 @@ def main(argv: list[str] | None = None) -> int:
 
     import docker
 
-    from repomap_test_support.resource_test_images import TestImageManager
+    from common_lore_index_test_support.resource_test_images import TestImageManager
 
     client = docker.from_env()
     try:

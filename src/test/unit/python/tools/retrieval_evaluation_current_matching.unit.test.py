@@ -79,7 +79,7 @@ def test_graph_cannot_credit_a_reader_that_widens_directory_scope(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, relative_path: str,
 ) -> None:
     import retrieval_evaluation_graph as graph
-    from repomap_test_support.retrieval_evaluation_fixture import binding_id_for_alias
+    from common_lore_index_test_support.retrieval_evaluation_fixture import binding_id_for_alias
     from retrieval_evaluation_schema import load_task_catalog
 
     root = Path(__file__).resolve().parents[5]

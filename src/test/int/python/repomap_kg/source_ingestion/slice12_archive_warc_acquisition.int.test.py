@@ -27,8 +27,8 @@ from common_lore_index.ops.ingestion.source import (
     warc_observations_from_manifest,
 )
 from common_lore_index.storage.canonical_rows import prepare_canonical_load
-from repomap_test_support.source_ingestion_integration import fixed_clock
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.source_ingestion_integration import fixed_clock
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class Slice12ArchiveWarcAcquisitionIntegrationTests(unittest.TestCase):

@@ -7,7 +7,7 @@ from ci.python_retention_evidence_source import (
     validate_source_document,
 )
 
-from repomap_test_support.retention_evidence_fixture import evidence_source as _make_source
+from common_lore_index_test_support.retention_evidence_fixture import evidence_source as _make_source
 
 
 def test_valid_synthetic_source_passes() -> None:

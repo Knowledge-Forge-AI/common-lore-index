@@ -22,12 +22,12 @@ from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage import staged_ingestion
 from common_lore_index.storage.staging_observability import StagingMeasurementCategory, StagingMeasurements
 from common_lore_index.storage.staging_resource_observability import StagingResourceSnapshot
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.resource_report_cli_files import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.resource_report_cli_files import (
     limit, metric, private_directory, report_leftovers, report_payload, run_cloe,
 )
-from repomap_test_support.retrieval_evaluation_publication import read_postgres_accepted_publication
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_publication import read_postgres_accepted_publication
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,

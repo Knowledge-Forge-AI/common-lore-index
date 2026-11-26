@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     CLAIM_LEASE_SECONDS,
     ClaimError,
     ClaimPurpose,
@@ -19,8 +19,8 @@ from repomap_test_support.resource_lifecycle_claim import (
     process_owner_matches,
     register_protection,
 )
-from repomap_test_support.resource_ledger_io import write_private_json_exclusive
-from repomap_test_support.resource_run_cleanup import process_start_evidence
+from common_lore_index_test_support.resource_ledger_io import write_private_json_exclusive
+from common_lore_index_test_support.resource_run_cleanup import process_start_evidence
 
 
 def _root(tmp_path: Path) -> Path:

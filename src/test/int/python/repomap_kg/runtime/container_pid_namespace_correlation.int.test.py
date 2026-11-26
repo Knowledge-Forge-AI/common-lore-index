@@ -13,7 +13,7 @@ import uuid
 
 import pytest
 
-from repomap_test_support.unit_purity import unit_purity_guard_active
+from common_lore_index_test_support.unit_purity import unit_purity_guard_active
 from runner_coverage_bootstrap import (
     BOOTSTRAP_TEMPLATE,
     BootstrapCapabilityRecord,

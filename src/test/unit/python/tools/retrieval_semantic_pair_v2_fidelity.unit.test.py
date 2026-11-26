@@ -10,7 +10,7 @@ from typing import cast
 import pytest
 
 import retrieval_semantic_pair_v2_report as report_module
-from repomap_test_support.w5_pair_fixtures import make_pair_artifacts
+from common_lore_index_test_support.w5_pair_fixtures import make_pair_artifacts
 from retrieval_semantic_experiment_contracts import canonical_json_bytes
 from retrieval_semantic_pair_artifacts import JournalArtifact, PairReportRefusal, load_journal
 from retrieval_semantic_pair_v2_cost import component_counts

@@ -14,11 +14,11 @@ from common_lore_index.coordinator.job_listing import (
     encode_job_cursor,
 )
 from common_lore_index.coordinator.storage import ControlStore
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.startup_recovery_scenarios import (
+from common_lore_index_test_support.startup_recovery_scenarios import (
     _make_refresh_fixture, _refresh_harness, _req_norm,
 )
 

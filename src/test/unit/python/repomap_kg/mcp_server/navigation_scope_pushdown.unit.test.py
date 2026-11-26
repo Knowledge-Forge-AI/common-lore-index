@@ -15,9 +15,9 @@ from common_lore_index.server._navigation_groups import group_page, location_in_
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
 from common_lore_index.storage.sqlite_local import navigation_queries as queries
 from common_lore_index.storage.sqlite_local.connection import read_transaction
-from repomap_test_support.navigation_pushdown_fixtures import add_alternatives, fixture_oracle, pushdown_home
-from repomap_test_support.navigation_search_fixtures import BINDING, GRAPH
-from repomap_test_support.sqlite_local_fixtures import local_binding
+from common_lore_index_test_support.navigation_pushdown_fixtures import add_alternatives, fixture_oracle, pushdown_home
+from common_lore_index_test_support.navigation_search_fixtures import BINDING, GRAPH
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding
 
 
 def call(**options):
@@ -224,8 +224,8 @@ def test_exact_component_and_case_scope(tmp_path, monkeypatch, prefix, expected)
 
 def test_newest_history_chosen_before_source_not_older_convenient_path(tmp_path, monkeypatch):
     from common_lore_index.storage.sqlite_local.publisher import publish_generation
-    from repomap_test_support.navigation_search_fixtures import navigation_bundle, navigation_home
-    from repomap_test_support.sqlite_local_fixtures import publication_for
+    from common_lore_index_test_support.navigation_search_fixtures import navigation_bundle, navigation_home
+    from common_lore_index_test_support.sqlite_local_fixtures import publication_for
 
     home, database = navigation_home(tmp_path)
     activate(monkeypatch, home)

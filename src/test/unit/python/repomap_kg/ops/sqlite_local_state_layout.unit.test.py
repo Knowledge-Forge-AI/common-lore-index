@@ -30,8 +30,8 @@ from common_lore_index.ops.local_cleanup import cleanup_local_graph
 from common_lore_index.ops.local_readiness import probe_local_graphs
 from common_lore_index.server import sqlite_read_binding
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.host_read_store_config import fail_if_reached
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
+from common_lore_index_test_support.host_read_store_config import fail_if_reached
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
 
 GRAPH = "one"
 LAYOUT = "local-state-layout-invalid: a Local state level is not a private directory"

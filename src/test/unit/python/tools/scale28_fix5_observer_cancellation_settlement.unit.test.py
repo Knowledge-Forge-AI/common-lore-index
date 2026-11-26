@@ -6,7 +6,7 @@ from threading import Event, Thread
 import psycopg
 import pytest
 
-from repomap_test_support.test_cov5c_qualification import build_evidence
+from common_lore_index_test_support.test_cov5c_qualification import build_evidence
 from scale28_backend_observer_session import (
     BackendMonitorError,
     BackendObserverSession,

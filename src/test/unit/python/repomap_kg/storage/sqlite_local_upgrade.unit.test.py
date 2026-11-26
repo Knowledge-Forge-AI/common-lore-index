@@ -43,8 +43,8 @@ from common_lore_index.storage.sqlite_local.publisher import (
 from common_lore_index.storage.sqlite_local.restore import verify_backup
 from common_lore_index.storage.sqlite_local.schema import LocalGraphBinding, LocalStoreError
 from common_lore_index.storage.sqlite_local.upgrade import UpgradeResult, upgrade_graph_database
-from repomap_test_support.host_read_store_config import fail_if_reached
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
+from common_lore_index_test_support.host_read_store_config import fail_if_reached
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
 
 BINDING = local_binding()
 CREATED_AT = "2026-09-30T00:00:00Z"

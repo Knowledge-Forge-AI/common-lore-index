@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_deletion_records import (
+from common_lore_index_test_support.resource_deletion_records import (
     DeletionRecordError,
     DeletionRecordStore,
     DeletionRecoveryState,
     MAX_TIMESTAMP_SECONDS,
     quarantine_ttl_elapsed,
 )
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimError,
     ClaimPurpose,
     ClaimRegistry,

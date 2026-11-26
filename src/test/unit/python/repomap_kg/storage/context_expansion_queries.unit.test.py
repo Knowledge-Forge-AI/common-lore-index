@@ -20,7 +20,7 @@ from common_lore_index.storage.sqlite_local.context_expansion_queries import (
 )
 from common_lore_index.storage.sqlite_local.navigation_queries import evidence_sql, navigation_candidates
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
-from repomap_test_support.context_fixture import build_sqlite_context_fixture
+from common_lore_index_test_support.context_fixture import build_sqlite_context_fixture
 
 
 def test_read_sqlite_context_publication_full_identity(tmp_path: Path) -> None:

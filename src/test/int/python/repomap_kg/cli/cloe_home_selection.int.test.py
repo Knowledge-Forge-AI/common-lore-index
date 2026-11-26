@@ -7,9 +7,9 @@ import stat
 
 import pytest
 
-from repomap_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
-from repomap_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, tool
+from common_lore_index_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, tool
 from common_lore_index.runtime.plan import LOCAL_RUNTIME_ENV_FILE
 
 

@@ -8,12 +8,12 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_body_fixtures import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_body_fixtures import (
     make_body_bindings, make_body_catalog_payload, make_body_corpus_payload,
     make_body_identity, make_body_policy,
 )
-from repomap_test_support.retrieval_body_publication_fixture import (
+from common_lore_index_test_support.retrieval_body_publication_fixture import (
     BodyStoreFixture, materialize_body_home,
 )
 from retrieval_body_catalog import parse_functional_catalog

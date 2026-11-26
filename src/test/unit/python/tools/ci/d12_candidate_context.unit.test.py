@@ -10,7 +10,7 @@ from ci.d12_system_grant import (
     DEFAULT_GRANT_RELPATH,
     validate_system_build_grant,
 )
-from repomap_test_support.d12_recipe import frozen_identity
+from common_lore_index_test_support.d12_recipe import frozen_identity
 
 
 def test_current_candidate_and_grant_bind_the_actual_build_context() -> None:

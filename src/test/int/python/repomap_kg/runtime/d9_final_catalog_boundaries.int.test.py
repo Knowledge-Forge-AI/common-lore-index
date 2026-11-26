@@ -21,9 +21,9 @@ from common_lore_index.runtime.backup_records import LocalDbBackupError
 from common_lore_index.runtime.local import build_local_runtime_plan
 from common_lore_index.runtime.maintenance import MAINTENANCE_LOCK_KEY, maintenance_window
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.local_db_backup import connect_real_postgres, setup_real_backup_home
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.local_db_backup import connect_real_postgres, setup_real_backup_home
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 @pytest.mark.parametrize("case,conditions", [(0, [None]), (1, []), (2, ["", "extra"]), (3, [" WHERE value > 0 "])])

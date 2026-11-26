@@ -120,7 +120,7 @@ def test_host_integration_suites_auto_dispatch_with_exact_argv(suite, raw_argv):
         patch("test_sandbox.active_sandbox", return_value=False),
         patch("test_sandbox.ensure_sandbox_image", return_value="sha256:" + "a" * 64),
         patch("test_sandbox.run_in_sandbox", return_value=19) as run_in_sandbox,
-        patch("repomap_test_support.unit_purity.require_live_resource_allowed"),
+        patch("common_lore_index_test_support.unit_purity.require_live_resource_allowed"),
     ):
         assert run_tests.integration_sandbox_dispatch(args, raw_argv) == 19
 
@@ -150,7 +150,7 @@ def test_direct_integration_conftest_import_refuses_before_fixture_setup():
     spec = importlib.util.spec_from_file_location('conftest', conftest_path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
-    with patch('test_sandbox.active_sandbox', return_value=False), patch('repomap_test_support.postgres_harness.postgres_container_session') as postgres, pytest.raises(pytest.exit.Exception, match='authenticated container sandbox'):
+    with patch('test_sandbox.active_sandbox', return_value=False), patch('common_lore_index_test_support.postgres_harness.postgres_container_session') as postgres, pytest.raises(pytest.exit.Exception, match='authenticated container sandbox'):
         spec.loader.exec_module(module)
     postgres.assert_not_called()
 
@@ -160,7 +160,7 @@ def test_unit_inspection_import_of_integration_conftest_does_not_activate_guard(
     spec = importlib.util.spec_from_file_location('repomap_int_conftest_inspection', conftest_path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
-    with patch('test_sandbox.active_sandbox', return_value=False) as active, patch('repomap_test_support.postgres_harness.postgres_container_session') as postgres:
+    with patch('test_sandbox.active_sandbox', return_value=False) as active, patch('common_lore_index_test_support.postgres_harness.postgres_container_session') as postgres:
         spec.loader.exec_module(module)
     assert module.__name__ == "repomap_int_conftest_inspection"
     active.assert_not_called()

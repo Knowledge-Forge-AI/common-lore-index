@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 import pytest
 
-from repomap_test_support.portable_handoff_fixtures import (
+from common_lore_index_test_support.portable_handoff_fixtures import (
     NATIVE_TEXT, routed_locator, selected_record, write_native,
 )
 
@@ -278,5 +278,5 @@ assert not (workspace/'NEVER_EXECUTE').exists()
 '''
     subprocess.run([sys.executable, "-I", "-S", "-B", "-c", script,
                     str(ROOT / "tools/portable_handoff.py"),
-                    str(ROOT / "src/test/support/python/repomap_test_support/portable_handoff_fixtures.py"),
+                    str(ROOT / "src/test/support/python/common_lore_index_test_support/portable_handoff_fixtures.py"),
                     str(tmp_path / "isolated")], check=True, capture_output=True, text=True)

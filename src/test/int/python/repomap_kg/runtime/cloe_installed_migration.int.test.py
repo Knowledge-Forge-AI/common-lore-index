@@ -18,16 +18,16 @@ from typing import Any
 from common_lore_index.ops.config_migration_fs import OPERATION_DIRECTORY
 from common_lore_index.server._mcp_dispatch import MCP_PROTOCOL_VERSION
 from installed_experience_pins import CODE_KIND, GRAPH_ID, INCUMBENT_DISTRIBUTION, TE_DISTRIBUTION, TE_VERSION
-from repomap_test_support.installed_candidate import ROOT, candidate_wheel, expected_requires, incumbent_wheel
-from repomap_test_support.installed_environment import run_child
-from repomap_test_support.installed_experience_driver import (
+from common_lore_index_test_support.installed_candidate import ROOT, candidate_wheel, expected_requires, incumbent_wheel
+from common_lore_index_test_support.installed_environment import run_child
+from common_lore_index_test_support.installed_experience_driver import (
     Observed, OwnerRun, intent_for, json_object, preparation, pure_environment,
 )
-from repomap_test_support.installed_experience_fixture import (
+from common_lore_index_test_support.installed_experience_fixture import (
     LEGACY_BASE, expectations, legacy_tiny_home, write_tiny_material,
 )
-from repomap_test_support.installed_mcp_session import useful_question
-from repomap_test_support.installed_experience_witnesses import (
+from common_lore_index_test_support.installed_mcp_session import useful_question
+from common_lore_index_test_support.installed_experience_witnesses import (
     incumbent_origin_witness, origin_source_values, pure_local_origin_witness,
 )
 

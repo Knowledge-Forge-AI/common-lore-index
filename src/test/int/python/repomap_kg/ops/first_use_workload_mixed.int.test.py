@@ -18,12 +18,12 @@ from first_use_workload_census import load_census
 from first_use_workload_cli_views import EXIT_ACCEPTED, run
 from first_use_workload_reconcile import check_bundle
 from first_use_workload_source_identity import current_intent
-from repomap_test_support.first_use_workload_driver import BUNDLE_CHILD
-from repomap_test_support.first_use_workload_mixed_steps import build_mixed_plans
-from repomap_test_support.first_use_workload_mutations import (
+from common_lore_index_test_support.first_use_workload_driver import BUNDLE_CHILD
+from common_lore_index_test_support.first_use_workload_mixed_steps import build_mixed_plans
+from common_lore_index_test_support.first_use_workload_mutations import (
     drop_member, flip_byte, mutated_categories, other_attempt, reencode_intent, reencode_observation,
 )
-from repomap_test_support.first_use_workload_session import execute_scenario
+from common_lore_index_test_support.first_use_workload_session import execute_scenario
 
 
 def _facts(rows: list[dict[str, Any]], step: int) -> dict[str, Any]:

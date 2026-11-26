@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from repomap_test_support.scale28_fix11_characterization import (
+from common_lore_index_test_support.scale28_fix11_characterization import (
     ACCEPTED_TRACE_SUMMARY,
     COMPONENT_AGGREGATES,
     CORRECTED_PATCH_SHA256,

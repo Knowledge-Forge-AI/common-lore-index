@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from repomap_test_support.awk import (
+from common_lore_index_test_support.awk import (
     FAKE_SECRET_MARKERS,
     FIXTURE_ROOT,
     RUNTIME_PROOF_KINDS,

@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import pytest
 from common_lore_index.coordinator import _publication_phase as phase
-from repomap_test_support.startup_recovery_scenarios import _harness, _req
+from common_lore_index_test_support.startup_recovery_scenarios import _harness, _req
 
 
 @pytest.mark.parametrize("corruption", [

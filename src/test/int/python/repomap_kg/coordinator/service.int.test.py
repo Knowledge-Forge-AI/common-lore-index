@@ -16,7 +16,7 @@ from common_lore_index.coordinator.startup_recovery import (
     StartupRecoveryReport,
 )
 from common_lore_index.coordinator.transport import validate_public_result
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 class _IntegrationCoordinator(StartupRecoveryMixin):

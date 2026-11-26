@@ -26,7 +26,7 @@ from common_lore_index.storage.staged_ingestion import (
     run_staged_full_refresh,
 )
 from common_lore_index.storage.staged_publication import _DIRECT_LOCK_CLASS
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

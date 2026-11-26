@@ -2,8 +2,8 @@ import hashlib
 import json
 import unittest
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -21,12 +21,12 @@ from common_lore_index.storage import (
     query_canonical_node_records,
     query_js_summary,
 )
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     archive_source_fixture,
     fixed_source_clock,
     source_ingestion_fixture_root,
 )
-from repomap_test_support.source_ingestion_integration import (
+from common_lore_index_test_support.source_ingestion_integration import (
     publish_acquisition_summary,
 )
 

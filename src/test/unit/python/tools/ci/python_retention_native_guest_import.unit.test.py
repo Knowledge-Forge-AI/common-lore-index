@@ -36,9 +36,17 @@ def _write(root: Path, records: list[dict]) -> None:
 def _fixture(tmp_path: Path) -> tuple[list[str], list[dict]]:
     source_root = Path(__file__).resolve().parents[6]
     inventory = json.loads((source_root / "tools/ci/python_retention_inventory.json").read_bytes())
-    records = [copy.deepcopy(item) for item in active_boundaries(inventory)
+    from ci.python_retention_support_projection import verify_support_namespace
+
+    support = verify_support_namespace(source_root)
+    assert support is not None
+    records = [copy.deepcopy(item) for item in active_boundaries(inventory, support=support)
                if item["recipe"] == "external_native_guest_import"]
     assert len(records) == 2
+    for record in records:
+        # The isolated fixture starts a separate synthetic authority history.
+        record["id"] = record["id"].removesuffix(".cloe-support")
+        record["supersedes"] = None
     paths = [*OWNERS, LOCK, TEST]
     for path in paths:
         destination = tmp_path / path

@@ -8,8 +8,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from repomap_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor, scan_maintained_scope
-from repomap_test_support.sqlite_local_harness import kill_paused_child
+from common_lore_index_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor, scan_maintained_scope
+from common_lore_index_test_support.sqlite_local_harness import kill_paused_child
 
 
 @pytest.mark.parametrize("termination", [
@@ -20,7 +20,7 @@ def test_new_owner_outside_old_glob_fails_static_owner(tmp_path: Path, terminati
     owner = tmp_path / "src/test/support/python/added_owner/arbitrary.py"
     owner.parent.mkdir(parents=True)
     owner.write_text(
-        "from repomap_test_support.sqlite_local_lock_children import start_holder\n"
+        "from common_lore_index_test_support.sqlite_local_lock_children import start_holder\n"
         "def new_case():\n    proc, ready = start_holder(db, env, abrupt=False)\n"
         f"    {termination}\n"
     )
@@ -32,7 +32,7 @@ def test_new_owner_outside_old_glob_fails_static_owner(tmp_path: Path, terminati
 
 def test_aliases_and_fake_helper_name_do_not_exempt_direct_kill() -> None:
     code = """
-from repomap_test_support.sqlite_local_lock_children import start_holder as spawn
+from common_lore_index_test_support.sqlite_local_lock_children import start_holder as spawn
 def kill_holder():
     target, ready = spawn(db, env, abrupt=True)
     target.kill()
@@ -44,7 +44,7 @@ def kill_holder():
 
 def test_named_harness_return_and_process_alias_are_related() -> None:
     code = """
-from repomap_test_support.sqlite_local_harness import LocalHarness as Harness
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness as Harness
 def owner():
     rig = Harness(scratch)
     proc = rig.start('ops')
@@ -105,7 +105,7 @@ def test_abrupt_cleanup_cannot_stamp_missing_or_incomplete_receipt_as_success(
 
 def test_omission_proof_ast_scanner_verifies_whole_maintained_scope() -> None:
     """Prove all intentional SIGKILL pause sites across whole maintained scope opt in via abrupt=True and use central helpers."""
-    from repomap_test_support.sqlite_abrupt_ownership import scan_maintained_scope
+    from common_lore_index_test_support.sqlite_abrupt_ownership import scan_maintained_scope
 
     repo_root = Path(__file__).resolve().parents[5]
     kills, launches, bypasses = scan_maintained_scope(repo_root)
@@ -123,7 +123,7 @@ def test_omission_proof_ast_scanner_verifies_whole_maintained_scope() -> None:
 
 def test_ast_scanner_detects_four_illegal_patterns_and_related_process_aliases() -> None:
     """Prove the AST scanner rejects each of the 4 illegal patterns across launchers and related aliases."""
-    from repomap_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
+    from common_lore_index_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
 
     cases = [
         # Pattern 1: explicit abrupt=False on paused_env and start_holder
@@ -154,7 +154,7 @@ def test_ast_scanner_detects_four_illegal_patterns_and_related_process_aliases()
 
 def test_ast_scanner_does_not_false_positive_on_unrelated_cleanups() -> None:
     """Prove the AST scanner does not false-positive on unrelated subprocess cleanups or signal 0 probes."""
-    from repomap_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
+    from common_lore_index_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
 
     safe_cases = [
         "def f():\n unrelated = subprocess.Popen(['ls'])\n unrelated.kill()\n",
@@ -235,7 +235,7 @@ def test_ast_scanner_detects_variable_guard_path() -> None:
             ".p.kill() bypass",
         ),
         (
-            "def f():\n from repomap_test_support import sqlite_local_guard\n"
+            "def f():\n from common_lore_index_test_support import sqlite_local_guard\n"
             " cmd = [sys.executable, sqlite_local_guard.__file__]\n"
             " p = subprocess.Popen(cmd)\n p.kill()\n",
             ".p.kill() bypass",

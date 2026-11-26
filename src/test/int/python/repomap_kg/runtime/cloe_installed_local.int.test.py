@@ -21,20 +21,20 @@ from common_lore_index.graph.multi_source import graph_source_binding_id
 from common_lore_index.retrieval.context_contracts import DEFAULT_BUDGET_BYTES
 from common_lore_index.server._mcp_dispatch import MCP_PROTOCOL_VERSION
 from installed_experience_pins import CODE_KIND, GRAPH_ID
-from repomap_test_support.installed_candidate import ROOT, candidate_wheel
-from repomap_test_support.installed_environment import ChildResult, run_child
-from repomap_test_support.installed_experience_driver import (
+from common_lore_index_test_support.installed_candidate import ROOT, candidate_wheel
+from common_lore_index_test_support.installed_environment import ChildResult, run_child
+from common_lore_index_test_support.installed_experience_driver import (
     Observed, OwnerRun, blocker_probe, guard_events, guard_extra, guarded_argv, intent_for,
     json_object, observed_code, preparation, pure_environment,
 )
-from repomap_test_support.installed_experience_fixture import (
+from common_lore_index_test_support.installed_experience_fixture import (
     current_config_name, driverless_postgres_home, expectations, message_is_reviewed_public,
     tiny_home, write_tiny_material,
 )
-from repomap_test_support.installed_mcp_session import McpSession, stderr_class, structured, useful_question
-from repomap_test_support.installed_origin import observe_origin
-from repomap_test_support.installed_experience_witnesses import origin_source_values, pure_local_origin_witness
-from repomap_test_support.source_ingestion_integration import copy_warc_fixture_root, source_ingestion_fixture_root
+from common_lore_index_test_support.installed_mcp_session import McpSession, stderr_class, structured, useful_question
+from common_lore_index_test_support.installed_origin import observe_origin
+from common_lore_index_test_support.installed_experience_witnesses import origin_source_values, pure_local_origin_witness
+from common_lore_index_test_support.source_ingestion_integration import copy_warc_fixture_root, source_ingestion_fixture_root
 
 OUT, EXIT, FS, MCP, GUARD = "child-stdout", "child-exit", "filesystem", "mcp-reply", "guard-log"
 

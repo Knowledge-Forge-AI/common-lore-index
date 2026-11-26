@@ -23,7 +23,7 @@ import stat
 
 from retrieval_semantic_generator_worker_contracts import WORKER_SOURCE_FILES
 
-_SUPPORT = "src/test/support/python/repomap_test_support/"
+_SUPPORT = "src/test/support/python/common_lore_index_test_support/"
 PUBLIC_TEXT_EVALUATOR_PATHS: tuple[str, ...] = tuple(
     [f"tools/retrieval_public_text_{name}.py" for name in (
         "admission", "allocation", "allocation_io", "capture", "census", "contracts", "descriptors", "excerpt",

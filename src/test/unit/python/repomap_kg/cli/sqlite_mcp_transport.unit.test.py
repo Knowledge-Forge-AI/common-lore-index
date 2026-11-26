@@ -11,13 +11,13 @@ from unittest import mock
 
 import pytest
 
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, tool
-from repomap_test_support.sqlite_mcp_transport import run_mcp_session
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, tool
+from common_lore_index_test_support.sqlite_mcp_transport import run_mcp_session
 
 
 def _patch_child_script(monkeypatch: pytest.MonkeyPatch, script: str) -> None:
     """Redirect popen_observed_process to launch a controlled Python child script."""
-    import repomap_test_support.sqlite_mcp_transport as transport_mod
+    import common_lore_index_test_support.sqlite_mcp_transport as transport_mod
     from runner_coverage_observer import popen_observed_process as real_popen
 
     def _custom_popen(command: list[str], **kwargs: Any) -> Any:

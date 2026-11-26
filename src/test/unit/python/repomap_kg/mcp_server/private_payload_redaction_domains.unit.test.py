@@ -13,12 +13,12 @@ from common_lore_index.storage import (
     TerraformSummaryRecord,
 )
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 @pytest.fixture
 def endpoint_home(tmp_path, monkeypatch):
-    from repomap_test_support.related_context_fixtures import related_home
+    from common_lore_index_test_support.related_context_fixtures import related_home
 
     home, _, _ = related_home(tmp_path)
     monkeypatch.setenv("CLOE_HOME", str(home))

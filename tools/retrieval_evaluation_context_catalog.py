@@ -9,7 +9,7 @@ import json
 from typing import Any
 
 from common_lore_index.retrieval.intent_policy import NAVIGATION_INTENTS, NavigationIntent
-from repomap_test_support.context_fixture import BINDING_CORE, BINDING_DOCS
+from common_lore_index_test_support.context_fixture import BINDING_CORE, BINDING_DOCS
 
 CONTEXT_CATALOG_SCHEMA_VERSION = "cloe-context-task-catalog-v1"
 CONTEXT_FREEZE_SCHEMA_VERSION = "cloe-context-freeze-v1"

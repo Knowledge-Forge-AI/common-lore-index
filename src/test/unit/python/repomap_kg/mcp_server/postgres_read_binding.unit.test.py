@@ -22,13 +22,13 @@ from common_lore_index.server.graph_selection import select_graph
 from common_lore_index.server.investigation_read_store import PostgresInvestigationReadStore
 from common_lore_index.server.postgres_read_binding import PostgresGraphStores, PostgresInvestigationStores
 from common_lore_index.server.source_read_store import PostgresSourceReadStore
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     INVALID_PSQL_COMMAND,
     NO_FALLBACK_GUARDS,
     PG_BINDING_TRIPWIRES,
     patched_guards,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 PSQL = "/opt/pg/bin/psql"
 FAMILY_TOOLS: tuple[tuple[str, dict[str, Any]], ...] = (

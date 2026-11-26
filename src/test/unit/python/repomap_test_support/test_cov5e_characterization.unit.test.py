@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 
 import scale14_backend_monitor
-from repomap_test_support.test_cov5d_qualification import SEMANTIC_GROUPS
-from repomap_test_support.test_cov5e_characterization import (
+from common_lore_index_test_support.test_cov5d_qualification import SEMANTIC_GROUPS
+from common_lore_index_test_support.test_cov5e_characterization import (
     ACCEPTED_PRODUCT_TUPLE,
     CALLER_CONTEXTS,
     CANDIDATE_C120_420,

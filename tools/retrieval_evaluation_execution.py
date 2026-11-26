@@ -18,8 +18,8 @@ from common_lore_index.retrieval.query_contracts import (
     OmissionRecord, QUERY_CONTRACT_VERSION, QueryEnvelope, QueryMode, QueryScope,
     refused_envelope,
 )
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     read_postgres_accepted_publication, read_sqlite_accepted_publication,
 )
 from retrieval_evaluation_accounting import (

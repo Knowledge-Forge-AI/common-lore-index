@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_supplement_study_fixtures import (
+from common_lore_index_test_support.retrieval_supplement_study_fixtures import (
     FAKE_SHA,
     fake_build_request,
     fake_make_inputs,

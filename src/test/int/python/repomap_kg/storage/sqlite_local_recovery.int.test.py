@@ -37,8 +37,8 @@ from common_lore_index.ops.config_local import LocalSqliteConfig, load_graph_reg
 from common_lore_index.storage.sqlite_local import investigation_queries, publisher
 from common_lore_index.storage.sqlite_local.connection import read_transaction, sidecar_paths
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import (
     CHILD_DEADLINE_SECONDS,
     LocalHarness,
     await_ready,

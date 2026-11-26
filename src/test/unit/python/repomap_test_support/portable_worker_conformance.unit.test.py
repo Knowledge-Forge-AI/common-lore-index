@@ -7,7 +7,7 @@ import unittest
 from unittest import mock
 
 from common_lore_index.coordinator._portable_semantic_adapter import PortableExecutionError
-from repomap_test_support.portable_worker_conformance import _exercise_authority
+from common_lore_index_test_support.portable_worker_conformance import _exercise_authority
 
 
 class TestPortableWorkerConformanceProbes(unittest.TestCase):

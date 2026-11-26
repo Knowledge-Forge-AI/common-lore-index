@@ -221,12 +221,12 @@ def test_source_distribution_rebuilds_an_equivalent_installed_wheel(
     from hashlib import sha256
 
     from installed_experience_pins import CANDIDATE_VERSION
-    from repomap_test_support.installed_candidate import (
+    from common_lore_index_test_support.installed_candidate import (
         DIST_INFO, candidate_sdist_wheel, candidate_wheel, expected_inventory, wheel_inventory,
     )
-    from repomap_test_support.installed_environment import run_child
-    from repomap_test_support.installed_experience_driver import pure_environment
-    from repomap_test_support.installed_origin import closure, observe_origin
+    from common_lore_index_test_support.installed_environment import run_child
+    from common_lore_index_test_support.installed_experience_driver import pure_environment
+    from common_lore_index_test_support.installed_origin import closure, observe_origin
 
     direct = candidate_wheel(tmp_path_factory)
     archive, rebuilt = candidate_sdist_wheel(direct, tmp_path / "source archive proof")

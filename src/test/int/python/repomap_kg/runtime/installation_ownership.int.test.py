@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.sqlite_local_harness import LocalHarness
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness
 
 
 @pytest.mark.parametrize(("names", "state"), [

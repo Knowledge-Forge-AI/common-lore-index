@@ -25,8 +25,8 @@ from common_lore_index.storage.staged_ingestion import (
 from common_lore_index.storage.staged_prepared_refresh import run_staged_prepared_refresh
 from common_lore_index.storage.staged_rows import build_staged_rows
 from common_lore_index.storage.canonical import query_canonical_edge_records, query_canonical_node_records
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.rust_pilot_semantic_fixtures import live_pilot
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.rust_pilot_semantic_fixtures import live_pilot
 
 
 LEGACY_EG = "eg1:" + "3" * 64

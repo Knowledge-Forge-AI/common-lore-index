@@ -12,7 +12,7 @@ import pytest
 from common_lore_index.coordinator.local_mode import (
     CoordinatorModeError, coordinator_runtime_paths, run_coordinator_refresh,
 )
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 @contextmanager

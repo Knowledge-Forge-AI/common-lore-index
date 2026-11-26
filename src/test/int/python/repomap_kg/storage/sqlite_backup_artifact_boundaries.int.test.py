@@ -18,7 +18,7 @@ from common_lore_index.storage.sqlite_local.connection import graph_database_uri
 from common_lore_index.storage.sqlite_local.migrations import MIGRATION_V1
 from common_lore_index.storage.sqlite_local.restore import install_backup, verify_backup
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError, accepted_identity
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.sqlite_local_fixtures import (
     local_binding,
     published_sqlite_database,
     sqlite_logical_dump,

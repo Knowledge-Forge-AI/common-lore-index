@@ -15,8 +15,8 @@ from ci.retained_python_contract import LineagePolicyError, RatchetContractError
 from ci.retained_python_projection_evidence import PROOFS_PATH
 from ci.retained_python_projection_proofs import load_projection_proofs
 from ci.retained_python_ratchet_lineage import audit_transition
-from repomap_test_support.retained_projection_fixture import ProjectionFixture, projection_fixture
-from repomap_test_support.retained_ratchet_fixture import BASELINE_PATH, SCOPE_PATH, commit_all, git
+from common_lore_index_test_support.retained_projection_fixture import ProjectionFixture, projection_fixture
+from common_lore_index_test_support.retained_ratchet_fixture import BASELINE_PATH, SCOPE_PATH, commit_all, git
 
 AUTHOR = re.compile(rb"^author [^<>\n]+ <[^<>\n]*>( [0-9]+ [+-][0-9]{4})$", re.MULTILINE)
 

@@ -6,8 +6,8 @@ import re
 from typing import Any
 
 from common_lore_index.runtime.release import POSTGRES_RELEASE_VERSION, PSYCOPG_RELEASE_VERSION, PYTHON_RELEASE_VERSION
-from repomap_test_support import d12_dynamic_linkage as linkage
-from repomap_test_support.d12_image_probes import CLIENTS, NOTICES, SERVER
+from common_lore_index_test_support import d12_dynamic_linkage as linkage
+from common_lore_index_test_support.d12_image_probes import CLIENTS, NOTICES, SERVER
 from tools.system.config import SystemTestError
 from common_lore_index.runtime.release import DebPackage, POSTGRES_RELEASE_IMAGE, PlatformPackages
 from common_lore_index.runtime.release_manifest import D12_CANDIDATE_LIBPQ_VERSION, D12_CANDIDATE_PACKAGE_MANIFEST

@@ -6,7 +6,7 @@ import socket
 import struct
 import unittest
 
-from repomap_test_support.staging_transport_test_harness import (
+from common_lore_index_test_support.staging_transport_test_harness import (
     BoundedTestPeer,
     HarnessTruncatedFrameError,
 )

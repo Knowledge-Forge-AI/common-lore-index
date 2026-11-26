@@ -27,23 +27,23 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_supplement_fixtures import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_supplement_fixtures import (
     make_test_bindings,
     make_test_catalog_payload,
     make_test_corpus_payload,
     make_test_identity,
     make_test_policy,
 )
-from repomap_test_support.retrieval_supplement_report_fixture import (
+from common_lore_index_test_support.retrieval_supplement_report_fixture import (
     make_report_declaration,
 )
-from repomap_test_support.retrieval_supplement_study_fixtures import (
+from common_lore_index_test_support.retrieval_supplement_study_fixtures import (
     make_preparation,
     make_study_plan,
 )
-from repomap_test_support.retrieval_supplement_study_pg import disposable_socket_postgres, publish_study_stores
-from repomap_test_support.retrieval_supplement_study_slots import execute_baseline_slot
+from common_lore_index_test_support.retrieval_supplement_study_pg import disposable_socket_postgres, publish_study_stores
+from common_lore_index_test_support.retrieval_supplement_study_slots import execute_baseline_slot
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_public_text_contracts import PrivateMarkerScope
 from retrieval_semantic_generator_inputs import prepare_public_generation_input
@@ -187,7 +187,7 @@ def test_real_sqlite_and_postgres_maintained_study_seam(
         from common_lore_index.storage.authority import GraphRunId
         from common_lore_index.storage.publication_readback import RunPublicationRecord
         from common_lore_index.storage.semantic_candidates import CandidatePublication
-        from repomap_test_support import w5_public_text_postgres as pg
+        from common_lore_index_test_support import w5_public_text_postgres as pg
         from retrieval_public_text_study_queries import StudyQuery
         pin = stores.postgres_store.pin
         publication = CandidatePublication(pin.repository_identity, RunPublicationRecord(GraphRunId(pin.run_id), pin.receipt))

@@ -12,14 +12,14 @@ from common_lore_index.ops.lexical_service import build_graph_lexical_generation
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
 from common_lore_index.retrieval.query_contracts import QueryEnvelope
 from common_lore_index.storage.lexical_driver import LexicalStorageError
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_body_fixtures import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_body_fixtures import (
     make_body_bindings, make_body_corpus_payload, make_body_identity, make_body_policy,
 )
-from repomap_test_support.retrieval_body_publication_fixture import (
+from common_lore_index_test_support.retrieval_body_publication_fixture import (
     BodyStoreFixture, publish_body_fixture, write_body_home,
 )
-from repomap_test_support.retrieval_body_study_runtime_fixtures import functional_body_catalog
+from common_lore_index_test_support.retrieval_body_study_runtime_fixtures import functional_body_catalog
 from retrieval_body_corpus import materialize_body_corpus, parse_body_corpus
 from retrieval_body_values import canonical_bytes
 from retrieval_body_catalog import BodyCase

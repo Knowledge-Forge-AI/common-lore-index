@@ -8,12 +8,12 @@ from typing import Any
 
 import pytest
 
-import repomap_test_support.installed_mcp_session as mcp_session_module
-from repomap_test_support.installed_environment import ChildExecutionFailure, InstalledEnvironment
-from repomap_test_support.installed_mcp_session import (
+import common_lore_index_test_support.installed_mcp_session as mcp_session_module
+from common_lore_index_test_support.installed_environment import ChildExecutionFailure, InstalledEnvironment
+from common_lore_index_test_support.installed_mcp_session import (
     McpSession, McpTranscript, result_digest, stderr_class, structured,
 )
-from repomap_test_support.installed_mcp_session import _hint_path, _member
+from common_lore_index_test_support.installed_mcp_session import _hint_path, _member
 
 
 

@@ -3,8 +3,8 @@ from typing import NotRequired, TypedDict
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.storage_integration import (
     discovery_fixture,
     terraform_hcl_fixture,
 )

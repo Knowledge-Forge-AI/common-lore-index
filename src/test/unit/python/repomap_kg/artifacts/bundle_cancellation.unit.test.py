@@ -14,7 +14,7 @@ from common_lore_index.artifacts._bundle_stream_encode import StreamingBundleEnc
 from common_lore_index.artifacts._bundle_stream_sort import BoundedExternalRowSorter
 from common_lore_index.artifacts._bundle_cancellation import BundleEncodingCancelled, closing_bundle_resource
 from common_lore_index.artifacts._canonical import canonical_json
-from repomap_test_support.portable_publication_fixtures import _bundle
+from common_lore_index_test_support.portable_publication_fixtures import _bundle
 
 
 @pytest.mark.parametrize("buffer_bytes", [1, 4096])

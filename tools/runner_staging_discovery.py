@@ -13,7 +13,7 @@ import tempfile
 import time
 from typing import Any
 
-from repomap_test_support.test_scratch import establish_run
+from common_lore_index_test_support.test_scratch import establish_run
 from runner_failure_evidence import (
     CHILD_SCHEMA, DISCOVERY_SCHEMA, candidate_at_start, diagnostic_path, error_record,
     persist_diagnostic, print_diagnostic, read_diagnostic,

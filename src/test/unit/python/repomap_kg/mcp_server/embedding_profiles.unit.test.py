@@ -17,9 +17,9 @@ from common_lore_index.storage.semantic_candidates import (
     EmbeddingProfilesQuery, EmbeddingProfilesResult, profiles_unavailable, validated_profile_entry,
 )
 from common_lore_index.storage.errors import StorageSchemaError
-from repomap_test_support.host_read_store_config import fail_if_reached, patched_guards
-from repomap_test_support.mcp_server import McpServerTestSupport
-from repomap_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
+from common_lore_index_test_support.host_read_store_config import fail_if_reached, patched_guards
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
 
 
 class EmbeddingProfilesMcpTests(McpServerTestSupport):

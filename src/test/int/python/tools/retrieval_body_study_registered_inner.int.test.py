@@ -20,8 +20,8 @@ from common_lore_index.retrieval.query_contracts import (
     QueryScope,
     unavailable_envelope,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_body_study_pg import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_body_study_pg import (
     BodySocketPostgresHandle, publish_registered_body_stores,
 )
 from retrieval_body_admission import BodyTaskAdmission
@@ -46,8 +46,8 @@ from retrieval_public_text_contracts import PrivateMarkerScope
 
 def _assert_captured_vector_admission(preparation: Any, pin: Any, policy: Any,
                                       scope: PrivateMarkerScope, monkeypatch: Any) -> None:
-    from repomap_test_support import w5_public_text_postgres
-    from repomap_test_support.retrieval_body_study_slots import _admission_terminal, _vector
+    from common_lore_index_test_support import w5_public_text_postgres
+    from common_lore_index_test_support.retrieval_body_study_slots import _admission_terminal, _vector
     from retrieval_body_study_slots import captured_v2_slot_matches
     from retrieval_body_study_values import V1_ARM
     from retrieval_public_text_request import ARM_PTX
@@ -180,7 +180,7 @@ def _unavailable_slot(
 def _assert_owned_preparation_handshake(
     requests: Any, root: Path, repo_root: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from repomap_test_support.retrieval_body_study_host_cases import body_plan
+    from common_lore_index_test_support.retrieval_body_study_host_cases import body_plan
     import retrieval_body_study_exchange as exchange
     from retrieval_body_study_epoch import (
         await_acknowledgement, prepare_epoch, publish_acknowledgement,

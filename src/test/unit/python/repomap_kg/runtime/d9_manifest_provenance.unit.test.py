@@ -38,7 +38,7 @@ from common_lore_index.runtime.backup_restore_sets import (
     COORDINATED_SCOPE, STABLE_RECOVERY_POINT, restore_coordinated_backup,
 )
 from common_lore_index.runtime.local import LocalRuntimeIdentity, build_local_runtime_plan, setup_local_runtime
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     baseline_toc_bytes, default_baseline_database_catalog,
     default_baseline_server_provenance, maybe_provenance_runner_result,
 )

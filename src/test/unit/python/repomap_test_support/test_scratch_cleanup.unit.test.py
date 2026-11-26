@@ -17,8 +17,8 @@ from unittest.mock import patch
 
 import pytest
 
-from repomap_test_support.test_scratch import TestScratchLayout
-from repomap_test_support.test_scratch_cleanup import (
+from common_lore_index_test_support.test_scratch import TestScratchLayout
+from common_lore_index_test_support.test_scratch_cleanup import (
     OwnershipGuardError,
     ScratchOwnershipError,
     TestScratchCleanupError,

@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from repomap_test_support.canonical_contract import (
+from common_lore_index_test_support.canonical_contract import (
     DISCOVERY_FIXTURE_ROOT,
     observations_by_kind as _observations_by_kind,
 )

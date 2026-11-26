@@ -2,24 +2,24 @@
 
 from __future__ import annotations
 
-import repomap_test_support.resource_index_recovery as resource_index_recovery_owner
+import common_lore_index_test_support.resource_index_recovery as resource_index_recovery_owner
 
 import os
 from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_hygiene_policy import GIB, HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
-from repomap_test_support.resource_index_maintenance import (
+from common_lore_index_test_support.resource_hygiene_policy import GIB, HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
+from common_lore_index_test_support.resource_index_maintenance import (
     compact_index,
     rebuild_inventory,
 )
-from repomap_test_support.resource_ledger_io import (
+from common_lore_index_test_support.resource_ledger_io import (
     read_private_json,
     write_private_json_exclusive,
 )
-from repomap_test_support.resource_lifecycle_claim import ClaimRegistry
+from common_lore_index_test_support.resource_lifecycle_claim import ClaimRegistry
 
 
 OWNER = "b" * 32

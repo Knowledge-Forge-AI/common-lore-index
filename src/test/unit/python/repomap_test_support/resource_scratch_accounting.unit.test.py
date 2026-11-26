@@ -8,14 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_scratch import (
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_scratch import (
     ScratchAccountingError,
     ScratchRunOwner,
     classify_historical_scratch,
     measure_scratch,
 )
-from repomap_test_support.test_scratch import establish_run
+from common_lore_index_test_support.test_scratch import establish_run
 
 
 def _identity(run_id: str) -> RunIdentity:

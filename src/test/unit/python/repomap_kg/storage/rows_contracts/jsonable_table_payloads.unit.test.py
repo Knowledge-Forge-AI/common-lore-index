@@ -4,7 +4,7 @@ from collections import Counter
 
 import pytest
 
-from repomap_test_support.storage_rows_contracts import (
+from common_lore_index_test_support.storage_rows_contracts import (
 JSONABLE_ROW_EXPORT_NAMES,
 TABLE_ROW_EXPORT_NAMES,
 )
@@ -150,7 +150,7 @@ def test_storage_sql_facing_active_row_surfaces_remain_available() -> None:
 @pytest.mark.parametrize("invalid", [False, True])
 def test_prepare_load_preserves_raw_rows_and_withholds_failed_canonical_rows(invalid: bool) -> None:
     from common_lore_index.storage import canonicalization_error_message, prepare_canonical_load
-    from repomap_test_support.storage_rows_contracts import _file_observation
+    from common_lore_index_test_support.storage_rows_contracts import _file_observation
 
     observations = [_file_observation("README.md")]
     if invalid:

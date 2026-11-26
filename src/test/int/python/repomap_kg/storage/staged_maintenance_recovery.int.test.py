@@ -24,7 +24,7 @@ from common_lore_index.storage.staged_ingestion import (
 from common_lore_index.storage.staging_cleanup import (
     CleanupRequest, execute_stage_cleanup,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     PostgresContainerDatabase, require_postgres_binaries, temporary_postgres,
 )
 

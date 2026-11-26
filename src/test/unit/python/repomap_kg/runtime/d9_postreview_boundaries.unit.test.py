@@ -38,7 +38,7 @@ from common_lore_index.runtime.maintenance import (
     held_maintenance_custody_for,
     runtime_maintenance_namespace,
 )
-from repomap_test_support.local_db_backup import baseline_observation_json_bytes
+from common_lore_index_test_support.local_db_backup import baseline_observation_json_bytes
 
 
 def _plan(home: Path) -> Any:

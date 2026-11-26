@@ -16,7 +16,7 @@ from typing import Any
 from ci.retained_python_contract import RatchetContractError
 from ci.retained_python_git import blob, git, git_required
 from ci.retained_python_projection_evidence import read_file
-from ci.python_retention_support_dynamic import derive_support_dynamic_records, project_source
+from ci.python_retention_support_dynamic import derive_support_dynamic_records, project_witness
 
 LEGACY_MODULE = "repomap_test_support"
 CANONICAL_MODULE = "common_lore_index_test_support"
@@ -210,7 +210,7 @@ def verify_support_namespace(root: Path, *, exact_candidate: str | None = None) 
         mode, oid = expected[before]
         if oid.decode("ascii") != row["before_oid"]:
             raise ValueError("test-support predecessor Git blob differs")
-        if _hash(project_source(before_blobs[oid])) != row["after_sha256"]:
+        if _hash(project_witness(before, before_blobs[oid])) != row["after_sha256"]:
             raise ValueError("test-support successor exceeds the sealed import and path projection")
         if sealed is None:
             _verify_current_source(root, after, mode, row["after_sha256"])

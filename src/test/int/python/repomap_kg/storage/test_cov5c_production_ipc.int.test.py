@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from repomap_test_support.test_cov5c_qualification import (
+from common_lore_index_test_support.test_cov5c_qualification import (
     PROCESS_ACTIVATION_TIMEOUT_SECONDS,
     build_evidence,
     build_expectations,

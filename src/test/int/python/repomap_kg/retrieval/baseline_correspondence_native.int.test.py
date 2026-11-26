@@ -7,9 +7,9 @@ from pathlib import (Path)
 
 import pytest
 
-from repomap_test_support.retrieval_evaluation_fixture import (MIXED_V1_FIXTURE_ROOT, materialize_mixed_v1_working_copy, write_mixed_v1_sqlite_home)
+from common_lore_index_test_support.retrieval_evaluation_fixture import (MIXED_V1_FIXTURE_ROOT, materialize_mixed_v1_working_copy, write_mixed_v1_sqlite_home)
 
-from repomap_test_support.retrieval_evaluation_publication import (publish_and_load_sqlite_corpus)
+from common_lore_index_test_support.retrieval_evaluation_publication import (publish_and_load_sqlite_corpus)
 
 from retrieval_evaluation_accounting import (EVALUATOR_BYTE_BREAKDOWN_SCHEMA_V1)
 

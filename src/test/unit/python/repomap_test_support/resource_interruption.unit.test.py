@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from repomap_test_support.resource_interruption import (
+from common_lore_index_test_support.resource_interruption import (
     InterruptionOutcome,
     classify_interruption,
 )

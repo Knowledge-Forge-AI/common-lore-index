@@ -1,10 +1,10 @@
 from __future__ import annotations
 from dataclasses import replace
 import pytest
-from repomap_test_support.test_cov5k_r2_fix1_qualification import DraftManifest, IntegrityError, build_result, create_draft, freeze_manifest, open_observations, parameter_digest, validate_draft, verify_result
+from common_lore_index_test_support.test_cov5k_r2_fix1_qualification import DraftManifest, IntegrityError, build_result, create_draft, freeze_manifest, open_observations, parameter_digest, validate_draft, verify_result
 from pathlib import Path
-from repomap_test_support.test_cov5k_r2_fix1_qualification import verify_rehearsal
-from repomap_test_support.test_cov5k_r2_fix1_rehearsal import _run_group_k
+from common_lore_index_test_support.test_cov5k_r2_fix1_qualification import verify_rehearsal
+from common_lore_index_test_support.test_cov5k_r2_fix1_rehearsal import _run_group_k
 
 @pytest.fixture
 def frozen():

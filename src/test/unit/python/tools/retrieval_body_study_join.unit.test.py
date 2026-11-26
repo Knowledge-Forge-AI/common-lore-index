@@ -6,12 +6,12 @@ from typing import Any, cast
 
 import pytest
 
-from repomap_test_support.retrieval_body_study_fixtures import study_catalog, study_reports
+from common_lore_index_test_support.retrieval_body_study_fixtures import study_catalog, study_reports
 from retrieval_body_report import build_body_report
 from retrieval_body_study_join import prepare_bound_body_study, select_body_study_matrix
 from retrieval_body_study_values import ARMS, FUSION_ARM, NATIVE_ARM, BodyStudyError
-from repomap_test_support.retrieval_body_study_fixtures import study_decisions, PG_PUB
-from repomap_test_support.retrieval_body_fixtures import make_body_policy
+from common_lore_index_test_support.retrieval_body_study_fixtures import study_decisions, PG_PUB
+from common_lore_index_test_support.retrieval_body_fixtures import make_body_policy
 
 
 def test_selected_matrix_retains_both_reports_and_432_inert_slots():

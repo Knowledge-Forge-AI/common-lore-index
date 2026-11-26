@@ -22,7 +22,7 @@ from common_lore_index.retrieval.query_contracts import CapabilityState
 from common_lore_index.storage import lexical_population
 from common_lore_index.storage.lexical_driver import LexicalStorageError
 from common_lore_index.storage.lexical_lifecycle import publish_lexical_generation
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,

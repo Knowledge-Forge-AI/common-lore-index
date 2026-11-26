@@ -13,7 +13,7 @@ from common_lore_index.storage.readback_driver import _psycopg_connection_params
 from common_lore_index.storage.staging_copy import STAGING_COPY_TABLES, copy_stage_rows
 from common_lore_index.storage.staging_merge import MergeContext
 from common_lore_index.storage.staging_ownership import AttemptNumber, OperationId, StageOwner
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     PostgresContainerDatabase,
     require_postgres_binaries,
     temporary_postgres,

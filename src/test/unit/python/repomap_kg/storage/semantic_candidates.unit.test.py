@@ -9,8 +9,8 @@ import pytest
 from common_lore_index.storage.semantic_candidates import EmbeddingEntry, checked_vector
 from common_lore_index.storage.semantic_candidate_import import build_embedding_import_sql, candidate_schema_sql
 from common_lore_index.storage.semantic_candidate_sql import build_candidate_query_sql
-from repomap_test_support.semantic_candidate_fixtures import BINDING, PROFILE, candidate_query
-from repomap_test_support.semantic_candidate_publication import candidate_bundle
+from common_lore_index_test_support.semantic_candidate_fixtures import BINDING, PROFILE, candidate_query
+from common_lore_index_test_support.semantic_candidate_publication import candidate_bundle
 
 
 @pytest.mark.parametrize("vector", [

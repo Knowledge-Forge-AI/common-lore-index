@@ -25,8 +25,8 @@ from common_lore_index.ops.config_local import (
 )
 from common_lore_index.ops.config_records import OpsConfig, OpsConfigError
 from common_lore_index.storage.sqlite_local.connection import graph_database_uri
-from repomap_test_support.host_read_store_config import setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.host_read_store_config import setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import (
     graph_toml,
     multi_graph_toml,
     sqlite_home_toml,

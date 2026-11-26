@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.local_db_backup import LocalDbBackupUnitTestCase, maybe_provenance_runner_result
+from common_lore_index_test_support.local_db_backup import LocalDbBackupUnitTestCase, maybe_provenance_runner_result
 from common_lore_index.runtime.backup import LocalDbBackupError, format_init_result_table, init_database_from_dump, init_database_from_source
 from common_lore_index.runtime.local import LocalRuntimeIdentity, setup_local_runtime
 from common_lore_index.storage import StorageSchemaError, discover_migrations

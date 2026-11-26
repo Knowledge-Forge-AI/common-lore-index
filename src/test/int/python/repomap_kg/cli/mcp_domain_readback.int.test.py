@@ -9,18 +9,18 @@ import tempfile
 import unittest
 
 from runner_coverage_observer import launch_observed_process
-from repomap_test_support.cli_in_process import REPO_ROOT, module_process_environment
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import REPO_ROOT, module_process_environment
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
 from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.psql import run_psql
-from repomap_test_support.mcp_domain_rows import (
+from common_lore_index_test_support.mcp_domain_rows import (
     DOMAIN_ROWS_SQL,
     run_portable_publication_mcp_readback_scenario,
 )
-from repomap_test_support.mcp_response_assertions import (
+from common_lore_index_test_support.mcp_response_assertions import (
     McpResponse,
     assert_mcp_page,
     json_bool_field,

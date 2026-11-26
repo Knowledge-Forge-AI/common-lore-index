@@ -14,7 +14,7 @@ from common_lore_index.storage.staging_phase_events import (
     StagingPhaseEvent,
     StagingPhaseEventCategory,
 )
-from repomap_test_support.performance_baseline import (
+from common_lore_index_test_support.performance_baseline import (
     ClosedSpan,
     PerformanceEvidenceError,
     QuerySummary,

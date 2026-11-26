@@ -25,7 +25,7 @@ from common_lore_index.graph.multi_source import (
 )
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
 from common_lore_index.ops.config_records import OpsGraphConfig
-from repomap_test_support.portable_worker_conformance import (
+from common_lore_index_test_support.portable_worker_conformance import (
     run_portable_worker_conformance,
 )
 

@@ -4,7 +4,7 @@ import multiprocessing
 
 import pytest
 
-from repomap_test_support.postgres_protocol_faults import (
+from common_lore_index_test_support.postgres_protocol_faults import (
     run_startup_fault_probe,
 )
 

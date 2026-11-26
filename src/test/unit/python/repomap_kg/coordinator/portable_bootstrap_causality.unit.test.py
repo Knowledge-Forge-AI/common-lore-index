@@ -14,7 +14,7 @@ from common_lore_index.artifacts.store import FileSystemArtifactStore
 from common_lore_index.coordinator import _portable_authority as pa
 from common_lore_index.coordinator.protocol import SyntheticWorkerResult
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
-from repomap_test_support.run25_portable_workflows import (
+from common_lore_index_test_support.run25_portable_workflows import (
     WorkerLaunchSpec,
     build_clean_explicit_pythonpath,
     build_run25_worker_limits,

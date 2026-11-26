@@ -1,6 +1,6 @@
 from __future__ import annotations
 import pytest
-from repomap_test_support.resource_test_images import (
+from common_lore_index_test_support.resource_test_images import (
     DEPLOYMENT_IMAGE_PREFIX,
     RUNTIME_CACHE_IMAGE_PREFIX,
     TestImageError as ImageLifecycleError,

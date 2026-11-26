@@ -10,19 +10,19 @@ from typing import cast
 import pytest
 
 import test_hygiene_maintenance as maintenance_tool
-from repomap_test_support.resource_hygiene_policy import GIB, HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
-from repomap_test_support.resource_index_maintenance import (
+from common_lore_index_test_support.resource_hygiene_policy import GIB, HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
+from common_lore_index_test_support.resource_index_maintenance import (
     rebuild_inventory,
 )
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_ledger_io import (
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_ledger_io import (
     read_private_json,
     write_private_json,
     write_private_json_exclusive,
 )
-from repomap_test_support.resource_lifecycle_claim import ClaimRegistry, MaintenanceHandle
-from repomap_test_support import resource_index_recovery as recovery_owner
+from common_lore_index_test_support.resource_lifecycle_claim import ClaimRegistry, MaintenanceHandle
+from common_lore_index_test_support import resource_index_recovery as recovery_owner
 
 
 OWNER = "b" * 32

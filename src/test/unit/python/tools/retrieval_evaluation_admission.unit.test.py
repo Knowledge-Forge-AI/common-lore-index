@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import (
     BIND_COMP,
     BIND_CORE,
     BIND_PRIVATE,

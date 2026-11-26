@@ -5,7 +5,7 @@ from typing import Any, cast
 
 import pytest
 
-from repomap_test_support.retrieval_body_study_fixtures import quality_inputs, study_catalog
+from common_lore_index_test_support.retrieval_body_study_fixtures import quality_inputs, study_catalog
 from retrieval_body_capabilities import expected_capabilities
 from retrieval_body_records import BodyRecordError, build_body_query_records
 from retrieval_body_study_common import select_common_positives

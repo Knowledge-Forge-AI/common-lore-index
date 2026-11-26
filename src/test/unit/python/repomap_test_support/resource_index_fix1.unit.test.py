@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support import resource_index, resource_index_bootstrap
-from repomap_test_support.resource_hygiene_policy import GIB, HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
-from repomap_test_support.resource_ledger_io import PrivateJsonError
-from repomap_test_support.resource_retention import TerminalOutcome
+from common_lore_index_test_support import resource_index, resource_index_bootstrap
+from common_lore_index_test_support.resource_hygiene_policy import GIB, HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
+from common_lore_index_test_support.resource_ledger_io import PrivateJsonError
+from common_lore_index_test_support.resource_retention import TerminalOutcome
 
 
 def _index_root(tmp_path: Path) -> Path:

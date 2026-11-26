@@ -16,9 +16,9 @@ from first_use_workload_census import (
 )
 from first_use_workload_domains import ALIASES, MAX_CENSUS_BYTES, WorkloadError
 from first_use_workload_recipe import ALL_ALIASES, SERVER_ALIASES
-from repomap_test_support.first_use_workload_driver import StaleInput
-from repomap_test_support.first_use_workload_witness import census_facts, materialized_entries
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.first_use_workload_driver import StaleInput
+from common_lore_index_test_support.first_use_workload_witness import census_facts, materialized_entries
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_BINDINGS, MIXED_V1_FIXTURE_ROOT, materialize_mixed_v1_working_copy,
 )
 

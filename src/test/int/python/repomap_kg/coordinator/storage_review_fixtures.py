@@ -7,7 +7,7 @@ import psycopg
 
 from common_lore_index.coordinator import JobRequest, normalize_request
 from common_lore_index.coordinator.storage import ControlStore, SingletonActiveError
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
 class StorageReviewIntegrationBase(unittest.TestCase):

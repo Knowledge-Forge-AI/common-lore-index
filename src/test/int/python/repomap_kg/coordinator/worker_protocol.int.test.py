@@ -15,10 +15,10 @@ from common_lore_index.coordinator.protocol import (
     WorkerLaunchSpec,
     run_worker_spec,
 )
-from repomap_test_support.portable_worker_scenarios import (
+from common_lore_index_test_support.portable_worker_scenarios import (
     make_missing_manifest_reference,
 )
-from repomap_test_support.synthetic_worker_adapter import (
+from common_lore_index_test_support.synthetic_worker_adapter import (
     ALLOWED_SYNTHETIC_WORKER_MODES,
     run_synthetic_worker,
 )
@@ -148,7 +148,7 @@ def test_popen_boundary_receives_exact_argv_and_no_shell(monkeypatch):
     monkeypatch.setattr("common_lore_index.coordinator.protocol.subprocess.Popen", recording_popen)
     result = run_synthetic_worker("success", IDENTITY, LIMITS)
     expected = (
-        sys.executable, "-m", "repomap_test_support.synthetic_async_worker",
+        sys.executable, "-m", "common_lore_index_test_support.synthetic_async_worker",
         "--mode", "success", "--job-id", IDENTITY["job_id"],
         "--attempt", str(IDENTITY["attempt"]),
     )

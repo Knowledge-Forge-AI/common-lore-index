@@ -15,11 +15,13 @@ from ci.python_retention_operations import dynamic_operations
 LEGACY_MODULE = "repomap_test_support"
 CANONICAL_MODULE = "common_lore_index_test_support"
 NATIVE_GUEST_TEST = "src/test/unit/python/tools/ci/python_retention_native_guest_import.unit.test.py"
+GUARDED_DOMAIN = "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_dynamic_targets.py"
 NATIVE_GUEST_READER = (
     (
         b"    records = [copy.deepcopy(item) for item in active_boundaries(inventory)\n",
         b"    from ci.python_retention_support_projection import verify_support_namespace\n\n"
         b"    support = verify_support_namespace(source_root)\n"
+        b"    assert support is not None\n"
         b"    records = [copy.deepcopy(item) for item in active_boundaries(inventory, support=support)\n",
     ),
     (
@@ -81,9 +83,37 @@ def _digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _sort_guarded_domain(raw: bytes) -> bytes:
+    declarations = [
+        node.value for node in ast.parse(raw).body
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+        and node.target.id == "PYTHON_TARGETS"
+    ]
+    if len(declarations) != 1 or not isinstance(declarations[0], ast.Tuple):
+        raise ValueError("test-support guarded domain must have one literal tuple")
+    declared = declarations[0]
+    assert declared.end_lineno is not None
+    names = ast.literal_eval(declared)
+    if (not names or any(not isinstance(pair, tuple) or len(pair) != 2
+                        or any(not isinstance(value, str) for value in pair) for pair in names)
+            or len(set(names)) != len(names)):
+        raise ValueError("test-support guarded domain entries are malformed")
+    lines = raw.splitlines(keepends=True)
+    start, stop = declared.lineno, declared.end_lineno - 1
+    rows = lines[start:stop]
+    if len(rows) != len(names) or any(
+        node.lineno != start + index or node.end_lineno != node.lineno
+        for index, node in enumerate(declared.elts, start=1)
+    ):
+        raise ValueError("test-support guarded domain must use one literal per line")
+    return b"".join([*lines[:start], *(row for _, row in sorted(zip(names, rows, strict=True))), *lines[stop:]])
+
+
 def project_witness(path: str, raw: bytes) -> bytes:
     """Bind the one live witness that must read the projected authority."""
     raw = project_source(raw)
+    if path == GUARDED_DOMAIN:
+        return _sort_guarded_domain(raw)
     if path != NATIVE_GUEST_TEST:
         return raw
     for before, after in NATIVE_GUEST_READER:

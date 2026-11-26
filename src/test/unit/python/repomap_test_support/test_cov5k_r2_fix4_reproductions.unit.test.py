@@ -9,26 +9,26 @@ from unittest.mock import patch
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import (
     CatalogEntry,
     build_closed_catalog,
 )
-from repomap_test_support.test_cov5k_r2_fix2_encoding import canonical_digest
-from repomap_test_support.test_cov5k_r2_fix2_evidence import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_encoding import canonical_digest
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import (
     ExecutorEvidence,
     ExecutorEvidenceError,
     verify_executor_evidence,
 )
-from repomap_test_support import test_cov5k_r2_fix2_runtime as runtime
-from repomap_test_support.test_cov5k_r2_fix2_runtime import (
+from common_lore_index_test_support import test_cov5k_r2_fix2_runtime as runtime
+from common_lore_index_test_support.test_cov5k_r2_fix2_runtime import (
     execute_runtime_driver_read,
     execute_terminal_live_cohort,
     execute_terminal_read,
 )
-from repomap_test_support.test_cov5k_r2_fix4_psycopg import (
+from common_lore_index_test_support.test_cov5k_r2_fix4_psycopg import (
     public_expected_authority,
 )
-from repomap_test_support.test_cov5k_r2_fix4_terminal_contexts import (
+from common_lore_index_test_support.test_cov5k_r2_fix4_terminal_contexts import (
     TerminalResultContext,
     verify_terminal_context_distinctions,
 )

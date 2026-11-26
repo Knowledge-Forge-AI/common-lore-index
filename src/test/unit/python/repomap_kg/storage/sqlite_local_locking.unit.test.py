@@ -34,8 +34,8 @@ from common_lore_index.storage.sqlite_local.locking import (
     probe_graph_lock,
 )
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.cli_in_process import module_process_environment
-from repomap_test_support.sqlite_local_lock_children import (
+from common_lore_index_test_support.cli_in_process import module_process_environment
+from common_lore_index_test_support.sqlite_local_lock_children import (
     HOLD_AND_SPAWN,
     attempt,
     kill_holder,

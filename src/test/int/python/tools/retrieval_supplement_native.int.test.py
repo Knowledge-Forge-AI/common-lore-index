@@ -17,11 +17,11 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_supplement_study import (
+from common_lore_index_test_support.retrieval_supplement_study import (
     MARKER,
     require_study_admission,
 )
-from repomap_test_support.retrieval_supplement_study_driver import (
+from common_lore_index_test_support.retrieval_supplement_study_driver import (
     run_supplement_study_inner,
 )
 from retrieval_supplement_study_contracts import (

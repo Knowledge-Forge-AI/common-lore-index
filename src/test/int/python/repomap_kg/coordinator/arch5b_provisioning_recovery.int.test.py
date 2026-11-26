@@ -19,11 +19,11 @@ from common_lore_index.coordinator.refresh_adapter import (
 )
 from common_lore_index.coordinator.storage import ControlStore
 from common_lore_index.graph.multi_source import graph_source_binding_id
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 class _FailingOnceStore:

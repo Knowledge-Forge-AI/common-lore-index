@@ -17,7 +17,7 @@ import test_sandbox as sandbox
 import test_sandbox_ownership as ownership
 from retrieval_supplement_ownership_wire import decode_control, decode_receipt, encode_control, scope_sha256
 from retrieval_supplement_study_contracts import SDK_IMAGE_SHA256, STUDY_SELECTOR
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 def control(root: Path) -> dict:

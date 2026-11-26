@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_body_study_driver import run_authenticated_body_study
-from repomap_test_support.retrieval_body_study_runtime_fixtures import (
+from common_lore_index_test_support.retrieval_body_study_driver import run_authenticated_body_study
+from common_lore_index_test_support.retrieval_body_study_runtime_fixtures import (
     BodyTransportDouble,
     functional_body_catalog,
     functional_body_identity,
     publish_functional_body,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.postgres_harness import temporary_postgres
 
 
 def test_functional_body_identity_cannot_enter_registered_driver() -> None:

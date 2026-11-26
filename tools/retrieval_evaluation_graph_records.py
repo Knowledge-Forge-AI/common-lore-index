@@ -4,7 +4,7 @@ from collections.abc import Mapping
 import json
 from typing import Any
 import common_lore_index.retrieval.query_contracts as qc
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_BINDING_IDS
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_BINDING_IDS
 
 def _parse_prefixed_graph_path(graph_path: str) -> tuple[str, str] | None:
     if "/" not in graph_path:

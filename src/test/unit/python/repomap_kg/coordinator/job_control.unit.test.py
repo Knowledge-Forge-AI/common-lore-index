@@ -13,7 +13,7 @@ from common_lore_index.coordinator.job_control import (
 )
 from common_lore_index.coordinator.job_listing import JobListCursor, encode_job_cursor
 from common_lore_index.coordinator.local_mode import CoordinatorModeError
-from repomap_test_support.coordinator_control_fixtures import (
+from common_lore_index_test_support.coordinator_control_fixtures import (
     CustomPageClient,
     FakeCoordinatorClient as FakeClient,
     ItemClient,

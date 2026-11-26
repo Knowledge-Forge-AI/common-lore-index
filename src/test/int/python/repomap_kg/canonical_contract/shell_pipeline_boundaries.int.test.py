@@ -37,9 +37,9 @@ from common_lore_index.graph.discovery_extractors import (
 from common_lore_index.graph.keys import bash_script_key
 from common_lore_index.graph.readback.bash import summarize_bash_evidence
 from common_lore_index.observations.raw import RawObservation
-from repomap_test_support.portable_publication_fixtures import create_single_source_graph_config
-from repomap_test_support.portable_worker_scenarios import coordinator_test_limits
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.portable_publication_fixtures import create_single_source_graph_config
+from common_lore_index_test_support.portable_worker_scenarios import coordinator_test_limits
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class ShellPipelineBoundariesIntegrationTests(unittest.TestCase):

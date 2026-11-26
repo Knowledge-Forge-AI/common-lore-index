@@ -12,9 +12,9 @@ import pytest
 from common_lore_index import PREFERRED_CLI, __version__
 from common_lore_index.runtime.project_identity import PROJECT_IDENTITY
 from common_lore_index.server.mcp_schemas import tool_definitions
-from repomap_test_support.cli_in_process import REPO_ROOT, module_process_environment
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import initialize
+from common_lore_index_test_support.cli_in_process import REPO_ROOT, module_process_environment
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import initialize
 from runner_coverage_observer import launch_observed_process
 
 CANONICAL_MODULE = "python -m common_lore_index"
@@ -211,7 +211,7 @@ def test_mcp_module_and_console_commands_share_read_only_stdio(tmp_path: Path) -
 
 
 def test_system_consumer_accepts_real_canonical_mcp_across_recreated_processes(tmp_path: Path) -> None:
-    from repomap_test_support.sqlite_local_harness import LocalHarness
+    from common_lore_index_test_support.sqlite_local_harness import LocalHarness
     from tools.system.scenario import MonotonicTimer
     from tools.system.scenario_mcp import run_mcp_public_readback
     from unittest.mock import MagicMock

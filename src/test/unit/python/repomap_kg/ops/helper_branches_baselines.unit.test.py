@@ -1,4 +1,4 @@
-from repomap_test_support.ops_helper_branches_baselines import (
+from common_lore_index_test_support.ops_helper_branches_baselines import (
     OpsBaselineHelperBranchContract as _OpsBaselineHelperBranchContract,
 )
 

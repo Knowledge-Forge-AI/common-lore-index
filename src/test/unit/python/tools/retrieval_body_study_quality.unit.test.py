@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.retrieval_body_study_fixtures import quality_inputs
+from common_lore_index_test_support.retrieval_body_study_fixtures import quality_inputs
 import retrieval_body_study_quality as quality_module
 from retrieval_body_study_quality import (
     classify_successor,

@@ -32,7 +32,7 @@ from common_lore_index.extractors.contracts.receipt_codec import (
     store_receipt,
 )
 from common_lore_index.extractors.contracts.vocabulary import ContractError
-from repomap_test_support.extractor_contracts.receipt_fixtures import (
+from common_lore_index_test_support.extractor_contracts.receipt_fixtures import (
     canonical,
     declared_receipt,
     receipt,

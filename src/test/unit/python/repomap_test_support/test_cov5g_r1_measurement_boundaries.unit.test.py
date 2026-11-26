@@ -11,9 +11,9 @@ if str(_TOOLS_DIR) not in sys.path:
 from psycopg.conninfo import conninfo_to_dict
 import pytest
 
-from repomap_test_support import test_cov5g_r1_measurement as measurement
-from repomap_test_support import test_cov5g_r1_process as process
-from repomap_test_support.test_cov5g_r1_characterization import Condition
+from common_lore_index_test_support import test_cov5g_r1_measurement as measurement
+from common_lore_index_test_support import test_cov5g_r1_process as process
+from common_lore_index_test_support.test_cov5g_r1_characterization import Condition
 
 
 class _ConnectionIntercepted(Exception):

@@ -7,7 +7,7 @@ import importlib.util
 import json
 
 from common_lore_index.runtime import commands, release
-from repomap_test_support import d12_core_image as d12
+from common_lore_index_test_support import d12_core_image as d12
 
 
 def test_candidate_header_matches_native_ci144_package_observation() -> None:
@@ -58,9 +58,9 @@ def test_release_py_remains_unpromoted_in_candidate_only_mode() -> None:
 
 def test_d12_recipe_renders_dockerfile_from_candidate_release_manifest() -> None:
     assert importlib.util.find_spec("common_lore_index.runtime.release_manifest") is not None
-    assert importlib.util.find_spec("repomap_test_support.d12_recipe") is not None
+    assert importlib.util.find_spec("common_lore_index_test_support.d12_recipe") is not None
     from common_lore_index.runtime import release_manifest
-    from repomap_test_support import d12_recipe
+    from common_lore_index_test_support import d12_recipe
 
     rendered = d12_recipe.recipe_text()
     assert d12.recipe_text() == rendered

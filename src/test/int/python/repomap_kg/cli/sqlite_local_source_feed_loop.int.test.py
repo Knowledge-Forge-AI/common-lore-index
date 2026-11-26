@@ -38,7 +38,7 @@ from common_lore_index.server.mcp_schemas import tool_definitions
 from common_lore_index.storage.sqlite_local import source_feed_queries
 from common_lore_index.storage.sqlite_local.connection import read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.sqlite_local_feed_corpus import (
+from common_lore_index_test_support.sqlite_local_feed_corpus import (
     ATOM,
     RSS,
     SECRET,
@@ -47,8 +47,8 @@ from repomap_test_support.sqlite_local_feed_corpus import (
     feed_bundle,
     generation_observations,
 )
-from repomap_test_support.sqlite_local_fixtures import graph_toml, local_binding, publication_for, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, local_binding, publication_for, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import (
     LocalHarness,
     initialize,
     refusal,

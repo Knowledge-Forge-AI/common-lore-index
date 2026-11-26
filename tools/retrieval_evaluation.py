@@ -9,7 +9,7 @@ import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
 from retrieval_evaluation_criteria import derive_future_criteria_proposal
 from retrieval_evaluation_criteria_v2 import derive_future_criteria_proposal_v2
 from retrieval_evaluation_harness import (

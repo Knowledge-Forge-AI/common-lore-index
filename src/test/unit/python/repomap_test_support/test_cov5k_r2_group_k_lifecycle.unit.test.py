@@ -4,8 +4,8 @@ from typing import Any
 import json
 import subprocess
 import pytest
-from repomap_test_support.resource_docker import ownership_labels
-from repomap_test_support.test_cov5k_r2_group_k_container import execute_group_k_docker
+from common_lore_index_test_support.resource_docker import ownership_labels
+from common_lore_index_test_support.test_cov5k_r2_group_k_container import execute_group_k_docker
 
 from src.test.unit.python.repomap_test_support.test_cov5k_r2_group_k_lifecycle_parts.fixtures import FakeContainer, FakeDockerClient, _make_resource_run, _make_entry
 
@@ -14,7 +14,7 @@ def test_group_k_clean_creation_registers_and_cleans_up(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     fake_client = FakeDockerClient()
     monkeypatch.setattr("docker.from_env", lambda: fake_client)
@@ -30,7 +30,7 @@ def test_group_k_clean_creation_registers_and_cleans_up(
         return subprocess.CompletedProcess([], 0, stdout=f"{cid}\n", stderr="")
 
     monkeypatch.setattr(
-        "repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup",
+        "common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup",
         setup_creates,
     )
 
@@ -66,7 +66,7 @@ def test_group_k_no_object_on_refusal_raises_primary_error_and_closes_client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     fake_client = FakeDockerClient()
     monkeypatch.setattr("docker.from_env", lambda: fake_client)
@@ -74,7 +74,7 @@ def test_group_k_no_object_on_refusal_raises_primary_error_and_closes_client(
     def failing_setup(*a: Any, **kw: Any) -> Any:
         raise RuntimeError("Group K disposable setup failed (image_unavailable, exit 125)")
 
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup", failing_setup)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup", failing_setup)
 
     case_root = tmp_path / "k09"
     case_root.mkdir()
@@ -98,7 +98,7 @@ def test_group_k_partial_creation_cleans_up_owned_container_and_raises_primary_e
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     fake_client = FakeDockerClient()
     monkeypatch.setattr("docker.from_env", lambda: fake_client)
@@ -113,7 +113,7 @@ def test_group_k_partial_creation_cleans_up_owned_container_and_raises_primary_e
         fake_client.containers.register(name, partial_container)
         raise RuntimeError("Group K disposable setup failed (setup_failed, exit 1)")
 
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup", partial_failure_setup)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup", partial_failure_setup)
 
     case_root = tmp_path / "k09"
     case_root.mkdir()
@@ -137,7 +137,7 @@ def test_group_k_foreign_name_collision_protects_foreign_container(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     name = "repomap-fix1-k09-colliding"
     # Container exists before run starts (preexisting baseline)
@@ -149,7 +149,7 @@ def test_group_k_foreign_name_collision_protects_foreign_container(
     def collision_setup(*a: Any, **kw: Any) -> Any:
         raise RuntimeError("Group K disposable setup failed (setup_failed, exit 125)")
 
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup", collision_setup)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup", collision_setup)
 
     case_root = tmp_path / "k09"
     case_root.mkdir()
@@ -177,7 +177,7 @@ def test_group_k_owner_mismatch_protects_foreign_container(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     name = "repomap-fix1-k09-mismatch"
     fake_client = FakeDockerClient()
@@ -189,7 +189,7 @@ def test_group_k_owner_mismatch_protects_foreign_container(
         fake_client.containers.register(name, mismatched_container)
         raise RuntimeError("Group K disposable setup failed (setup_failed, exit 1)")
 
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup", mismatch_setup)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup", mismatch_setup)
 
     case_root = tmp_path / "k09"
     case_root.mkdir()
@@ -217,7 +217,7 @@ def test_group_k_malformed_id_output_handles_cleanup_and_raises_malformed_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     fake_client = FakeDockerClient()
     name = "repomap-fix1-k09-malformed"
@@ -233,7 +233,7 @@ def test_group_k_malformed_id_output_handles_cleanup_and_raises_malformed_error(
         return subprocess.CompletedProcess([], 0, stdout="   \n", stderr="")
 
     monkeypatch.setattr(
-        "repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup",
+        "common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup",
         malformed_setup,
     )
 
@@ -259,7 +259,7 @@ def test_group_k_registration_refusal_rolls_back_and_raises(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     run = _make_resource_run(tmp_path)
-    monkeypatch.setattr("repomap_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
+    monkeypatch.setattr("common_lore_index_test_support.test_cov5k_r2_group_k_container.active_resource_run", lambda: run)
 
     fake_client = FakeDockerClient()
     cid = "refused-volume-container-66667777"
@@ -274,7 +274,7 @@ def test_group_k_registration_refusal_rolls_back_and_raises(
         return subprocess.CompletedProcess([], 0, stdout=f"{cid}\n", stderr="")
 
     monkeypatch.setattr(
-        "repomap_test_support.test_cov5k_r2_group_k_container._run_checked_setup",
+        "common_lore_index_test_support.test_cov5k_r2_group_k_container._run_checked_setup",
         refused_setup,
     )
 

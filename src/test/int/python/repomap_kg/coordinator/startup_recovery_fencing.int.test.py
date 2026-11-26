@@ -10,7 +10,7 @@ from common_lore_index.coordinator.core import SyntheticCoordinator
 from common_lore_index.coordinator.startup_recovery import StartupRecoveryReport
 
 
-from repomap_test_support.startup_recovery_scenarios import (
+from common_lore_index_test_support.startup_recovery_scenarios import (
     _harness, _make_refresh_fixture, _refresh_harness, _req, _req_norm,
     _run_real_refresh_attempt,
 )
@@ -160,7 +160,7 @@ def test_connected_startup_recovery_closes_superseded_fenced_dead_attempt() -> N
                     "SELECT count(*) FROM runs WHERE status = 'complete'"
                 ).fetchone() == (0,)
 
-            from repomap_test_support.startup_recovery_scenarios import _assert_retry_waiting_and_advance
+            from common_lore_index_test_support.startup_recovery_scenarios import _assert_retry_waiting_and_advance
             _assert_retry_waiting_and_advance(store, connect, claim, "inst-new-owner", coord._require_started())
             # Replacement attempt claims the eligible job, executes, and publishes cleanly
             claim2 = store.claim_next("inst-new-owner", coord._require_started(), timedelta(seconds=30))

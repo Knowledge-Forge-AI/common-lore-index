@@ -15,8 +15,8 @@ from common_lore_index.retrieval.query_contracts import (
     CapabilityState, EvaluationLocator, MatchSurface, QueryEnvelope, QueryHit, QueryMode, QueryScope,
 )
 from common_lore_index.storage.lexical_revoke import LexicalRevocationOutcome
-from repomap_test_support.resource_report_cli_files import metric, private_directory, report_payload
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.resource_report_cli_files import metric, private_directory, report_payload
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID, binding_id_for_alias, materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
 )

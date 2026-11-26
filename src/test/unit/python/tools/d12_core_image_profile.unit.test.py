@@ -14,9 +14,9 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support.build_profile_debt import DEFERRED_BUILD_PROFILE_NODE_IDS
-from repomap_test_support.resource_ledger import CleanupResult, FinalPresence
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support.build_profile_debt import DEFERRED_BUILD_PROFILE_NODE_IDS
+from common_lore_index_test_support.resource_ledger import CleanupResult, FinalPresence
 import d12_dependency_preflight as preflight
 import runner_arguments
 from runner_unit_environment import pytest_environment_for
@@ -351,8 +351,8 @@ def test_report_parts_stay_bound_and_under_the_aggregate_evidence_ceiling(tmp_pa
 
 
 def test_run_boundary_binding_refuses_unbound_or_ambiguous_identity(monkeypatch):
-    from repomap_test_support import resource_docker_mediation, resource_run
-    from repomap_test_support.resource_docker_boundary import RunWideDockerBoundary
+    from common_lore_index_test_support import resource_docker_mediation, resource_run
+    from common_lore_index_test_support.resource_docker_boundary import RunWideDockerBoundary
 
     with pytest.raises(d12.D12ProfileError, match="unbound identity"):
         d12.locate_run_boundary()

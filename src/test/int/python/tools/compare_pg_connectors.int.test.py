@@ -4,7 +4,7 @@ import json
 import os
 import compare_pg_connectors as tool
 
-from repomap_test_support.postgres_harness import require_postgres_binaries
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries
 
 from common_lore_index.storage.readback_driver import READBACK_DRIVER_ENV
 

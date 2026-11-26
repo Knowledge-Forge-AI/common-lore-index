@@ -41,7 +41,7 @@ from common_lore_index.storage.staged_ingestion import (
     new_direct_authority,
     stage_id_for_authority,
 )
-from repomap_test_support.semantic_seed_publication import (
+from common_lore_index_test_support.semantic_seed_publication import (
     SEED_KEY,
     SeedPublicationContext,
     build_seed_graph_config,
@@ -174,8 +174,8 @@ def test_publish_portable_seed_graph_mocks_db_publication(tmp_path: Path) -> Non
     fake_record.receipt.public_mapping.return_value = {"run_id": 42}
 
     with (
-        patch("repomap_test_support.semantic_seed_publication.run_staged_portable_refresh") as mock_refresh,
-        patch("repomap_test_support.semantic_seed_publication.read_latest_publication", return_value=fake_record),
+        patch("common_lore_index_test_support.semantic_seed_publication.run_staged_portable_refresh") as mock_refresh,
+        patch("common_lore_index_test_support.semantic_seed_publication.read_latest_publication", return_value=fake_record),
     ):
         ctx = publish_portable_seed_graph(
             mock_postgres,

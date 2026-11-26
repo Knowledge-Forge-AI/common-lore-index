@@ -13,7 +13,7 @@ from common_lore_index.runtime.backup_records import LocalDbBackupError
 from common_lore_index.runtime.backup_restore_sets import restore_coordinated_backup
 from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.runtime.plan import build_local_runtime_plan
-from repomap_test_support.local_db_backup import baseline_toc_bytes
+from common_lore_index_test_support.local_db_backup import baseline_toc_bytes
 
 
 @pytest.fixture(autouse=True)

@@ -18,7 +18,7 @@ from common_lore_index.retrieval.query_contracts import (
     QueryScope,
     unavailable_envelope,
 )
-from repomap_test_support.w5_semantic_support import BIND_CORE, make_w5_verified_pin
+from common_lore_index_test_support.w5_semantic_support import BIND_CORE, make_w5_verified_pin
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_semantic_arm_validation import _verify_envelope_against_pin
 

@@ -12,7 +12,7 @@ from common_lore_index.storage import (
     CanonicalStorageSummaryRecord,
 )
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 @pytest.mark.parametrize("center,direction,expected", [
@@ -26,7 +26,7 @@ def test_public_neighborhood_real_endpoints_and_unchanged_sanitization(
 ):
     from common_lore_index.server import mcp, ops, _ops_summaries
     from common_lore_index.server._ops_sanitization import sanitize_jsonable
-    from repomap_test_support.related_context_fixtures import (
+    from common_lore_index_test_support.related_context_fixtures import (
         EXPECTED_IMPORTS, EXPECTED_LINKS, GRAPH, related_home,
     )
 
@@ -86,7 +86,7 @@ def test_legacy_canonical_routes_preserve_existing_endpoint_policy(
     tmp_path, monkeypatch, privacy, tool, schema,
 ):
     from common_lore_index.server import mcp, _ops_summaries
-    from repomap_test_support.related_context_fixtures import (
+    from common_lore_index_test_support.related_context_fixtures import (
         EXPECTED_IMPORTS, GRAPH, MODULE, related_home,
     )
 

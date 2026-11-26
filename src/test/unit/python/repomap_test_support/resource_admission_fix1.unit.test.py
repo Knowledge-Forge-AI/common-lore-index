@@ -7,14 +7,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support.resource_admission import (
+from common_lore_index_test_support.resource_admission import (
     HostSignals,
     MemoryPressure,
     collect_host_signals,
     decide_host_admission,
     read_memory_pressure_reading,
 )
-from repomap_test_support.resource_hygiene_policy import GIB, HygieneConfig, HygieneProfile
+from common_lore_index_test_support.resource_hygiene_policy import GIB, HygieneConfig, HygieneProfile
 
 
 def test_tool_free_percentage_is_explicitly_degraded(monkeypatch):

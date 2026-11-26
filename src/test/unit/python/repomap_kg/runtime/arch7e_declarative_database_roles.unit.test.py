@@ -23,7 +23,7 @@ from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.runtime.plan import build_local_runtime_plan
 from common_lore_index.server.http import load_config_for_server
 from common_lore_index.server.ops import load_mcp_ops_config
-from repomap_test_support.local_db_backup import maybe_provenance_runner_result
+from common_lore_index_test_support.local_db_backup import maybe_provenance_runner_result
 
 
 def _env_values(text: str) -> dict[str, str]:

@@ -8,12 +8,12 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from repomap_test_support.policy_helper_branches import load_unit_contract_class, raw_observation, write_api_fixture
+from common_lore_index_test_support.policy_helper_branches import load_unit_contract_class, raw_observation, write_api_fixture
 from common_lore_index.ops.ingestion import api
 from common_lore_index.ops.ingestion import bulk
 from common_lore_index.ops import config as ops_config
 from common_lore_index.extractors.languages import python as python_extractor
-FIXTURE_ROOT = Path(__file__).resolve().parents[4] / 'support' / 'python' / 'repomap_test_support' / 'contract_loader_fixtures'
+FIXTURE_ROOT = Path(__file__).resolve().parents[4] / 'support' / 'python' / 'common_lore_index_test_support' / 'contract_loader_fixtures'
 
 def _load_contract_module(name: str, path: Path) -> ModuleType:
     """Exercise real file loading only at the loader-control test boundary."""
@@ -27,7 +27,7 @@ def _load_contract_module(name: str, path: Path) -> ModuleType:
 class ApiBulkPythonOpsConfigHelperBranchUnitTests(unittest.TestCase):
 
     def test_observation_leaf_preserves_facade_identity_and_loader_resolution(self):
-        from repomap_test_support import policy_helper_branches, policy_observations
+        from common_lore_index_test_support import policy_helper_branches, policy_observations
         self.assertIs(raw_observation, policy_observations.raw_observation)
         nested_root = FIXTURE_ROOT / 'nested'
         with patch.object(policy_helper_branches, 'UNIT_REPOMAP_TEST_ROOT', nested_root):
@@ -43,7 +43,7 @@ class ApiBulkPythonOpsConfigHelperBranchUnitTests(unittest.TestCase):
                 load_unit_contract_class('probe.py', 'Selected', load_module=_load_contract_module)
 
     def test_contract_loader_accepts_caller_binding_and_resolves_paths_before_loading(self):
-        from repomap_test_support import policy_helper_branches
+        from common_lore_index_test_support import policy_helper_branches
 
         class ArbitraryOwner:
             pass

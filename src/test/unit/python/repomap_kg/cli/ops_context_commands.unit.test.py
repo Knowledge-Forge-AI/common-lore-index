@@ -7,11 +7,11 @@ from pathlib import Path
 import pytest
 
 from common_lore_index.cli.main import main
-from repomap_test_support.context_assertions import (
+from common_lore_index_test_support.context_assertions import (
     assert_valid_budget_error,
     assert_valid_context_packet,
 )
-from repomap_test_support.context_fixture import BINDING_CORE, build_sqlite_context_fixture
+from common_lore_index_test_support.context_fixture import BINDING_CORE, build_sqlite_context_fixture
 
 
 def _run_cli(argv: list[str], capfd: pytest.CaptureFixture[str]) -> tuple[int, str, str]:

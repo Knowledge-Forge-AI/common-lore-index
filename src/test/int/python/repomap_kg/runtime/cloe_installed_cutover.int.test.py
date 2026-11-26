@@ -47,7 +47,7 @@ def catalog_bytes(wheel: Path, prefix: str) -> dict[str, str]:
 @pytest.fixture(scope="module")
 def wheels(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Path]:
     # Immutable predecessor objects and the exact candidate, shared per pytest process.
-    from repomap_test_support.installed_candidate import candidate_wheel, incumbent_wheel
+    from common_lore_index_test_support.installed_candidate import candidate_wheel, incumbent_wheel
 
     old_build, new_build = incumbent_wheel(tmp_path_factory, ROOT), candidate_wheel(tmp_path_factory, ROOT)
     incumbent = old_build.source

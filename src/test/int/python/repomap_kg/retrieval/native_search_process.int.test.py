@@ -17,14 +17,14 @@ from common_lore_index.retrieval.query_contracts import (
     CapabilityState,
     EvaluationLocator,
 )
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_sqlite_corpus,
 )
 from retrieval_evaluation_grading import ExecutionState
@@ -204,7 +204,7 @@ def test_git_grep_timeout_process_group_cleanup_and_cli_validate_subprocess(
         os.kill(gc_pid, 0)
 
     # Also verify real CLI subprocess execution via launch_observed_process with owned timeout cleanup
-    from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+    from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
     from runner_coverage_observer import launch_observed_process
 
     repo_root = MIXED_V1_FIXTURE_ROOT.parents[4]
@@ -241,7 +241,7 @@ def test_retrieval_mcp_navigation_session_and_post_deletion_projection_separatio
     """Guarded SQLite MCP navigation session over mixed-v1 and post-working-copy-deletion projection build."""
     import shutil
 
-    from repomap_test_support.sqlite_local_harness import (
+    from common_lore_index_test_support.sqlite_local_harness import (
         LocalHarness,
         initialize,
         structured,

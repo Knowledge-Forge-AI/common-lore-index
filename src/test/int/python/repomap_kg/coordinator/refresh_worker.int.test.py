@@ -5,8 +5,8 @@ from datetime import timedelta
 import psycopg
 import pytest
 
-from repomap_test_support.executable_authority import controlled_psql_copy
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.executable_authority import controlled_psql_copy
+from common_lore_index_test_support.test_scratch import short_test_directory
 from common_lore_index.ops.config import load_ops_config
 from common_lore_index.ops.refresh import refresh_graph
 from common_lore_index.runtime.postgres_route import effective_postgres_route
@@ -21,7 +21,7 @@ from common_lore_index.storage import (
     default_rdbms_root,
     read_run_publication,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

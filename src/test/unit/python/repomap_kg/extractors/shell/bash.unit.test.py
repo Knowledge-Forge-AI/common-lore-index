@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.bash import (
+from common_lore_index_test_support.bash import (
     BASH_FIXTURE_ROOT as FIXTURE_ROOT,
     FAKE_SECRET_MARKERS,
     observations_by_kind,

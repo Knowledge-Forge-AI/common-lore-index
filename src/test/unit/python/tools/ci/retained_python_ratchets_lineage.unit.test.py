@@ -12,7 +12,7 @@ from ci.retained_python_ratchet_lineage import (
 )
 from ci.retained_python_ratchets import compare_snapshot, main
 from ci.retained_python_records import BaselineDocument, baseline_document
-from repomap_test_support.retained_ratchet_fixture import (
+from common_lore_index_test_support.retained_ratchet_fixture import (
     BASELINE_PATH,
     MODULE_PATH,
     SCOPE_PATH,

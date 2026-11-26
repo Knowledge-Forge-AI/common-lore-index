@@ -19,9 +19,9 @@ from common_lore_index.graph.multi_source_pipeline import capture_multi_source_c
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage import staged_rows as preparation_module
 from common_lore_index.storage.row_spool import RowSpool
-from repomap_test_support.portable_spool_case import spool_case as _setup
-from repomap_test_support.portable_worker_equivalence import reference_bytes, publication_expectation
-from repomap_test_support.bundle_sort_fixtures import SortIOWitness, observe_sort_directory_cleanup
+from common_lore_index_test_support.portable_spool_case import spool_case as _setup
+from common_lore_index_test_support.portable_worker_equivalence import reference_bytes, publication_expectation
+from common_lore_index_test_support.bundle_sort_fixtures import SortIOWitness, observe_sort_directory_cleanup
 
 
 @pytest.mark.parametrize("limit", ["bytes", "records"])

@@ -1,7 +1,7 @@
 from typing import Callable, TypedDict
 from unittest.mock import patch
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class _Case(TypedDict):

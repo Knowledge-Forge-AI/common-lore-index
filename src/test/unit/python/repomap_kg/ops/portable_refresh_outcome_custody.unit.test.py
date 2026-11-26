@@ -6,7 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
 
-from repomap_test_support.ops_refresh import OpsRefreshUnitTestCase
+from common_lore_index_test_support.ops_refresh import OpsRefreshUnitTestCase
 
 from common_lore_index.ops import portable_refresh
 from common_lore_index.ops.portable_refresh import execute_portable_refresh

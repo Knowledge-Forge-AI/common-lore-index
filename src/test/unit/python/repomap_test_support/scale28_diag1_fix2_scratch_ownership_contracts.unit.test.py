@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_scratch import (
+from common_lore_index_test_support.test_scratch import (
     DEFAULT_PROJECT,
     ENV_PHASE,
     ENV_PROJECT,

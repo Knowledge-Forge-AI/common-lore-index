@@ -13,7 +13,7 @@ from common_lore_index.ops.resolved_config import resolve_ops_config
 from common_lore_index.ops.config import load_ops_config
 from common_lore_index.coordinator.configured_refresh import ConfiguredRefreshResolver
 from common_lore_index.runtime.plan import build_local_runtime_plan
-from repomap_test_support.ops_refresh import (
+from common_lore_index_test_support.ops_refresh import (
     OpsRefreshUnitTestCase,
     VALID_REFRESH_CONFIG,
 )

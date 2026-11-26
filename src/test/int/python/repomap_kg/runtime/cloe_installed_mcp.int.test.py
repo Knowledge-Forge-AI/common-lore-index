@@ -17,18 +17,18 @@ from typing import Any
 from common_lore_index.server._mcp_dispatch import MCP_PROTOCOL_VERSION
 from common_lore_index.server.mcp_schemas import tool_definitions
 from installed_experience_pins import CODE_KIND, GRAPH_ID
-from repomap_test_support.installed_candidate import ROOT, candidate_wheel
-from repomap_test_support.installed_environment import run_child
-from repomap_test_support.installed_experience_driver import (
+from common_lore_index_test_support.installed_candidate import ROOT, candidate_wheel
+from common_lore_index_test_support.installed_environment import run_child
+from common_lore_index_test_support.installed_experience_driver import (
     Observed, OwnerRun, intent_for, preparation, publish_tiny, pure_environment,
 )
-from repomap_test_support.installed_experience_fixture import (
+from common_lore_index_test_support.installed_experience_fixture import (
     current_config_name, expectations, tiny_home, write_tiny_material,
 )
-from repomap_test_support.installed_mcp_session import (
+from common_lore_index_test_support.installed_mcp_session import (
     McpSession, result_digest, stderr_class, useful_question,
 )
-from repomap_test_support.installed_experience_witnesses import origin_source_values, pure_local_origin_witness
+from common_lore_index_test_support.installed_experience_witnesses import origin_source_values, pure_local_origin_witness
 
 OUT, MCP, FS = "child-stdout", "mcp-reply", "filesystem"
 

@@ -9,7 +9,7 @@ from typing import Any
 from common_lore_index.retrieval.context_work import WorkLedger
 from common_lore_index.server.context_read_sqlite import SqliteContextReadAdapter
 from common_lore_index.storage.row_helpers import identity_metadata_hash
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_fixture import (
     DEFAULT_VECTOR,
     build_sqlite_context_fixture,
 )

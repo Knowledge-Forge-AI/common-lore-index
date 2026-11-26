@@ -8,7 +8,7 @@ import pytest
 
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.staged_rows import build_staged_rows
-from repomap_test_support.rust_pilot_semantic_fixtures import live_pilot
+from common_lore_index_test_support.rust_pilot_semantic_fixtures import live_pilot
 
 
 def test_witnessed_rows_retain_continuous_ordinals_and_rust_families(

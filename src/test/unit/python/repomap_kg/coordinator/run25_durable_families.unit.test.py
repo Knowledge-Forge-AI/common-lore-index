@@ -11,8 +11,8 @@ import pytest
 
 from common_lore_index.artifacts.bundle import PUBLICATION_FAMILIES
 from common_lore_index.storage.staging_family_contracts import StageFamily
-from repomap_test_support.portable_publication_fixtures import _seven_family_bundle
-from repomap_test_support.run25_durable_families import (
+from common_lore_index_test_support.portable_publication_fixtures import _seven_family_bundle
+from common_lore_index_test_support.run25_durable_families import (
     ConflictingPayloadError,
     DuplicateIdentityError,
     DurableFamilyVerificationError,

@@ -12,20 +12,20 @@ from common_lore_index.retrieval.projection_query import (
     query_captured_text,
 )
 from common_lore_index.retrieval.query_contracts import CapabilityState
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     PublishedCorpusState,
     publish_and_load_postgres_corpus,
     publish_and_load_sqlite_corpus,
 )
-from repomap_test_support.w5_publication_privacy_fixtures import (
+from common_lore_index_test_support.w5_publication_privacy_fixtures import (
     assert_correspondence_mismatch_matrix,
     policy_with_resolution,
     publication_tree,

@@ -8,7 +8,7 @@ import pytest
 from common_lore_index.coordinator._portable_capability import PortableExecutionCapability
 from common_lore_index.coordinator._protocol_core import SyntheticWorkerResult
 from common_lore_index.ops import portable_refresh
-from repomap_test_support.portable_publication_context import publication_backend as _backend, accepted_pin as _pin
+from common_lore_index_test_support.portable_publication_context import publication_backend as _backend, accepted_pin as _pin
 
 @contextmanager
 def _bounded_worker(

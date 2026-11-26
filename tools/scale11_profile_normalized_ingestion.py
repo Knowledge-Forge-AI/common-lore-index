@@ -37,7 +37,7 @@ from common_lore_index.storage.staging_observability import (
     StagingMeasurements,
 )
 from common_lore_index.storage.staging_operation_events import StagingOperationEvent
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     DEFAULT_TEST_POSTGRES_PORT,
     DEFAULT_TEST_POSTGRES_RUNTIME,
     require_postgres_binaries,

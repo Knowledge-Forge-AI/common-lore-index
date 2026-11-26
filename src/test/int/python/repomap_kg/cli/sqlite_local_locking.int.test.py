@@ -23,12 +23,12 @@ from __future__ import annotations
 import json
 import os
 import signal
-from repomap_test_support.sqlite_managed_child import ManagedChild
+from common_lore_index_test_support.sqlite_managed_child import ManagedChild
 from pathlib import Path
 from typing import Any
 
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import (
     LocalHarness,
     await_ready,
     initialize,
@@ -37,7 +37,7 @@ from repomap_test_support.sqlite_local_harness import (
     structured,
     tool,
 )
-from repomap_test_support.sqlite_local_lock_children import (
+from common_lore_index_test_support.sqlite_local_lock_children import (
     HOLD_AND_SPAWN,
     attempt,
     kill_holder,

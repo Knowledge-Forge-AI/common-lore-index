@@ -6,32 +6,32 @@ import subprocess
 import sys
 
 
-from repomap_test_support.test_cov5k_r2_fix2_administrative import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_administrative import (
     execute_administrative_operation,
 )
-from repomap_test_support.test_cov5k_r2_fix2_catalog import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import (
     CatalogEntry,
     build_closed_catalog,
 )
-from repomap_test_support.test_cov5k_r2_fix2_encoding import canonical_digest
-from repomap_test_support.test_cov5k_r2_fix2_evidence import verify_executor_evidence
-from repomap_test_support.test_cov5k_r2_fix2_observer import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_encoding import canonical_digest
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import verify_executor_evidence
+from common_lore_index_test_support.test_cov5k_r2_fix2_observer import (
     execute_fresh_public_rehearsal,
     execute_mixed_configured_campaign,
     execute_observer_schedule,
     execute_observer_request,
     execute_prior_state_preservation,
 )
-from repomap_test_support.test_cov5k_r2_fix2_preparation import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation import (
     execute_preparation_condition,
     execute_preparation_state_path,
 )
-from repomap_test_support.test_cov5k_r2_fix2_process_recorder import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_process_recorder import (
     _command_shape,
     _host_executable,
     record_process_boundary,
 )
-from repomap_test_support.test_cov5k_r2_fix2_runtime import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_runtime import (
     execute_container_rss,
     execute_container_rss_equivalence,
     execute_failure_causality,
@@ -42,7 +42,7 @@ from repomap_test_support.test_cov5k_r2_fix2_runtime import (
     execute_terminal_read,
     execute_terminal_stage_matrix,
 )
-from repomap_test_support.test_cov5k_r2_fix4_psycopg import (
+from common_lore_index_test_support.test_cov5k_r2_fix4_psycopg import (
     public_expected_authority,
 )
 

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.cli_integration import run_cli_module
-from repomap_test_support.sqlite_local_harness import LocalHarness
+from common_lore_index_test_support.cli_integration import run_cli_module
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness
 
 
 def snapshot(home: Path) -> dict[str, bytes]:

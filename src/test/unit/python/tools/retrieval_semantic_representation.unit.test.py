@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from common_lore_index.storage.semantic_candidates import EmbeddingEntry
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import (
     BIND_COMP,
     BIND_CORE,
     BIND_INHERIT,

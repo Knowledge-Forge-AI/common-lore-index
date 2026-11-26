@@ -19,7 +19,7 @@ from common_lore_index.extractors.rust_pilot.observations import (
     decode_name,
 )
 from common_lore_index.observations.raw import RawObservation
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import frame, frames, item_frame
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import frame, frames, item_frame
 
 NONCE = "a" * 64
 FIXTURES = Path(__file__).resolve().parents[5] / "fixtures" / "rust_pilot"

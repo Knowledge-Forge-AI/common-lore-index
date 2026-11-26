@@ -17,11 +17,11 @@ from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.semantic_candidate_import import candidate_schema_sql
 from common_lore_index.storage.semantic_candidates import EmbeddingProfile
 from common_lore_index.storage.sql_core import sql_literal
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.semantic_candidate_restore import (
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.semantic_candidate_restore import (
     optional_sql_fixture_cleanup,
 )
-from repomap_test_support.semantic_seed_publication import (
+from common_lore_index_test_support.semantic_seed_publication import (
     SEED_KEY, import_seed_embeddings, publish_portable_seed_graph,
     run_mcp_stdio_requests, write_seed_mcp_config,
 )

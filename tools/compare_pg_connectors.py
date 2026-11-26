@@ -55,7 +55,7 @@ from common_lore_index.storage.readback_driver import (
     PG_CONNECTOR_ENV,
     READBACK_DRIVER_ENV,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     DEFAULT_TEST_POSTGRES_PORT,
     DEFAULT_TEST_POSTGRES_RUNTIME,
     temporary_postgres,

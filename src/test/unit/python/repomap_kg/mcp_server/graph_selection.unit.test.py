@@ -53,14 +53,14 @@ from common_lore_index.storage import (
     SourceSummaryRecord,
     identity_metadata_hash,
 )
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     INVALID_PSQL_COMMAND,
     PG_BINDING_TRIPWIRES,
     fail_if_reached,
     patched_guards,
     setup_owned_config,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 from common_lore_index.storage.semantic_candidates import CandidateResult, unavailable
 from common_lore_index.storage.semantic_seed import SimilarNodesQuery
 
@@ -341,7 +341,7 @@ class NeutralSelectionFakeStoreRoutingTests(McpServerTestSupport):
         import tempfile
 
         from common_lore_index.server.mcp import handle_tool_call
-        from repomap_test_support.related_context_fixtures import GRAPH, IMPORTED, related_home
+        from common_lore_index_test_support.related_context_fixtures import GRAPH, IMPORTED, related_home
 
         with tempfile.TemporaryDirectory() as directory:
             home, _, _ = related_home(Path(directory))

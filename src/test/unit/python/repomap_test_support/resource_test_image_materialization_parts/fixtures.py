@@ -17,12 +17,12 @@ from docker.types.daemon import CancellableStream
 if TYPE_CHECKING:
     from docker._types import JSON, WaitContainerResponse
 
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_ledger import (
     ResourceLedger,
     RunIdentity,
 )
-from repomap_test_support.resource_run import TestResourceRun
-from repomap_test_support.resource_test_image_materialization import (
+from common_lore_index_test_support.resource_run import TestResourceRun
+from common_lore_index_test_support.resource_test_image_materialization import (
     RuntimeImageMaterializer,
 )
 

@@ -319,7 +319,7 @@ class ReportTestCase(unittest.TestCase):
                 patch.object(integration_execution, "ChildCoverageSession", FakeSession),
                 patch.object(integration_execution, "AbruptRunnerContext", FakeAbruptContext),
                 patch.object(integration_execution, "coverage_diagnostics", return_value=()),
-                patch("repomap_test_support.test_scratch.establish_run", return_value=layout),
+                patch("common_lore_index_test_support.test_scratch.establish_run", return_value=layout),
             ):
                 exit_code = run_tests.main(
                     [

@@ -19,7 +19,7 @@ LOADER_TEMPLATES = {
     spec = importlib.util.spec_from_file_location('conftest', conftest_path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
-    with patch('test_sandbox.active_sandbox', return_value=False), patch('repomap_test_support.postgres_harness.postgres_container_session') as postgres, pytest.raises(pytest.exit.Exception, match='authenticated container sandbox'):
+    with patch('test_sandbox.active_sandbox', return_value=False), patch('common_lore_index_test_support.postgres_harness.postgres_container_session') as postgres, pytest.raises(pytest.exit.Exception, match='authenticated container sandbox'):
         spec.loader.exec_module(module)
     postgres.assert_not_called()''',
 'conftest_inspection': r'''def test_unit_inspection_import_of_integration_conftest_does_not_activate_guard():
@@ -27,7 +27,7 @@ LOADER_TEMPLATES = {
     spec = importlib.util.spec_from_file_location('repomap_int_conftest_inspection', conftest_path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
-    with patch('test_sandbox.active_sandbox', return_value=False) as active, patch('repomap_test_support.postgres_harness.postgres_container_session') as postgres:
+    with patch('test_sandbox.active_sandbox', return_value=False) as active, patch('common_lore_index_test_support.postgres_harness.postgres_container_session') as postgres:
         spec.loader.exec_module(module)
     assert module.__name__ == "repomap_int_conftest_inspection"
     active.assert_not_called()

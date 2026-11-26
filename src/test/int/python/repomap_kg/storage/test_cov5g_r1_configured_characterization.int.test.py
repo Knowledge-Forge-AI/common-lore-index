@@ -10,27 +10,27 @@ import warnings
 import psycopg
 import pytest
 
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     active_or_new_postgres_session,
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.test_cov5g_r1_characterization import (
+from common_lore_index_test_support.test_cov5g_r1_characterization import (
     Condition,
     PROTOCOL,
     RequestObservation,
     aggregate,
     verify_source_freeze,
 )
-from repomap_test_support.test_cov5g_r1_load import (
+from common_lore_index_test_support.test_cov5g_r1_load import (
     BoundedConditionLoad,
     ExactContainerHandle,
 )
-from repomap_test_support.test_cov5g_r1_measurement import (
+from common_lore_index_test_support.test_cov5g_r1_measurement import (
     run_configured_observation,
     run_direct_observation,
 )
-from repomap_test_support.test_cov5k_r2_observer_protocol import (
+from common_lore_index_test_support.test_cov5k_r2_observer_protocol import (
     ADR_0046_EXPECTATIONS,
     FROZEN_THRESHOLDS_MS,
     POLICY_DIGEST,
@@ -42,7 +42,7 @@ from repomap_test_support.test_cov5k_r2_observer_protocol import (
     verify_qualification_plan,
     verify_source_freeze as verify_successor_source_freeze,
 )
-from repomap_test_support.test_cov5k_r2_timing_qualification import (
+from common_lore_index_test_support.test_cov5k_r2_timing_qualification import (
     TimingQualificationReceipt,
     build_non_success_manifest,
     capture_timing_runtime_identity,

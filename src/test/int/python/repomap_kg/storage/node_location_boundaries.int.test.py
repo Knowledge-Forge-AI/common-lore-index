@@ -12,14 +12,14 @@ from typing import Any
 from common_lore_index.storage.node_locations import NodeLocationsQuery
 from common_lore_index.storage.sqlite_local.connection import read_transaction
 from common_lore_index.storage.sqlite_local.node_location_queries import node_locations
-from repomap_test_support.node_location_fixtures import (
+from common_lore_index_test_support.node_location_fixtures import (
     DOC,
     GRAPH,
     SYMBOL,
     locator_home,
 )
-from repomap_test_support.sqlite_local_fixtures import local_binding
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
 
 
 def test_node_locations_multi_binding_and_absent_relative_path(tmp_path: Path) -> None:

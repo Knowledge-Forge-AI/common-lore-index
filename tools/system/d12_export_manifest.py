@@ -9,7 +9,7 @@ import re
 from typing import Any
 
 from ci.d12_system_grant import loads_strict_json_object, validate_system_admission_proof
-from repomap_test_support import d12_image_probes as d12
+from common_lore_index_test_support import d12_image_probes as d12
 from test_sandbox_contract import MAX_REPORT_ARCHIVE_BYTES, MAX_REPORT_CONTENT_BYTES, MAX_REPORT_MEMBERS
 from test_sandbox_report import _report_members
 from tools.system.d12_system_reports import write_exclusive_0600_json

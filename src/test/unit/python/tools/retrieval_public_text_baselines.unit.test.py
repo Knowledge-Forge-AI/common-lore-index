@@ -10,10 +10,10 @@ from typing import Any, cast
 
 import pytest
 
-import repomap_test_support.w5_public_text_baselines as baselines
+import common_lore_index_test_support.w5_public_text_baselines as baselines
 from common_lore_index.retrieval.query_contracts import CapabilityState
-from repomap_test_support.w5_public_text_baselines import FileGrading, incumbent_cell, run_incumbent_cells, safe_code
-from repomap_test_support.w5_public_text_generation import GenerationResources
+from common_lore_index_test_support.w5_public_text_baselines import FileGrading, incumbent_cell, run_incumbent_cells, safe_code
+from common_lore_index_test_support.w5_public_text_generation import GenerationResources
 from retrieval_evaluation_attempts import AttemptJournal, admit_attempt
 from retrieval_evaluation_execution import failed_outcome
 from retrieval_evaluation_grading import ExecutionState
@@ -141,7 +141,7 @@ def test_correspondence_errors_are_never_silently_replaced_with_gaps(
 @pytest.mark.parametrize("error", [RuntimeError("unexpected grading defect"), KeyError("private key"),
                                  TypeError("unexpected type")])
 def test_actual_correspondence_helper_propagates_unexpected_errors(task, monkeypatch, error) -> None:
-    import repomap_test_support.w5_experiment_vector as vector
+    import common_lore_index_test_support.w5_experiment_vector as vector
     from retrieval_semantic_experiment_scope import CorrespondenceCostSample
 
     sidecar = SimpleNamespace(captured_gap_cost=lambda *args: CorrespondenceCostSample())
@@ -155,7 +155,7 @@ def test_actual_correspondence_helper_propagates_unexpected_errors(task, monkeyp
 
 
 def test_actual_correspondence_helper_preserves_a_known_refusal_as_gap(task, monkeypatch) -> None:
-    import repomap_test_support.w5_experiment_vector as vector
+    import common_lore_index_test_support.w5_experiment_vector as vector
     from retrieval_semantic_experiment_contracts import ExperimentRefusal
     from retrieval_semantic_experiment_scope import CorrespondenceCostSample
 

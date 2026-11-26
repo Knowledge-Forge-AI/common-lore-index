@@ -33,7 +33,7 @@ from common_lore_index.storage.sqlite_local.connection import (
 )
 from common_lore_index.storage.sqlite_local.durability import DURABILITY_FAILED, DURABILITY_UNAVAILABLE
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.sqlite_local_fixtures import local_binding
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding
 
 BINDING = local_binding()
 PRE_INSTALL = ("init:temporary-created", "init:schema-applied", "init:before-install")

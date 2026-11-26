@@ -10,8 +10,8 @@ from typing import Any, cast
 import pytest
 
 from scale28_observer_deadlines import DEFAULT_OBSERVER_DEADLINE_POLICY
-import repomap_test_support.test_cov5k_r2_observer_protocol as observer_protocol
-from repomap_test_support.test_cov5k_r2_observer_protocol import (
+import common_lore_index_test_support.test_cov5k_r2_observer_protocol as observer_protocol
+from common_lore_index_test_support.test_cov5k_r2_observer_protocol import (
     ADR_0046_EXPECTATIONS,
     FROZEN_SUCCESSOR_SOURCE_DIGESTS,
     POLICY_DIGEST,
@@ -33,12 +33,12 @@ from repomap_test_support.test_cov5k_r2_observer_protocol import (
 _ROOT = Path(__file__).resolve().parents[5]
 _MEASUREMENT = (
     _ROOT
-    / "src/test/support/python/repomap_test_support"
+    / "src/test/support/python/common_lore_index_test_support"
     / "test_cov5g_r1_measurement.py"
 )
 _PROCESS = (
     _ROOT
-    / "src/test/support/python/repomap_test_support"
+    / "src/test/support/python/common_lore_index_test_support"
     / "test_cov5g_r1_process.py"
 )
 _CHANGED_OBSERVER_PATHS = (

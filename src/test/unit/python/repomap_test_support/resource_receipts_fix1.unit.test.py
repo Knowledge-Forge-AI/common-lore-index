@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support import resource_receipts
-from repomap_test_support.resource_retention import RetentionError
+from common_lore_index_test_support import resource_receipts
+from common_lore_index_test_support.resource_retention import RetentionError
 
 
 def test_early_close_receipt_cannot_release_report_source(tmp_path: Path):

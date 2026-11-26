@@ -19,7 +19,7 @@ from common_lore_index.extractors.rust_pilot.helper_protocol import decode_frame
 from common_lore_index.extractors.rust_pilot.observations import build_file_observations
 from common_lore_index.extractors.rust_pilot.prepared_profile import VerifiedProfile, profile_bytes
 from common_lore_index.extractors.rust_pilot.witness_state import FileRecord, RunState
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import frames, item_frame, synthetic_wheel
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import frames, item_frame, synthetic_wheel
 
 RUN_NONCE = b"\x07" * 32
 DATA = b"struct S;\n"

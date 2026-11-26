@@ -9,7 +9,7 @@ import common_lore_index.storage.readback_driver as storage_readback
 from common_lore_index.ops.config import load_ops_config
 from common_lore_index.ops.report_records import OpsPsqlExecution
 from common_lore_index.storage.errors import StorageSchemaError
-from repomap_test_support.ops_refresh import VALID_REFRESH_CONFIG
+from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
 
 
 class _RecordingConnector:

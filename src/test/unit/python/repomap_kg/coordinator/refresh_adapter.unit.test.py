@@ -7,8 +7,8 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 import pytest
 
-from repomap_test_support.executable_authority import approved_psql, search_path_for
-from repomap_test_support.portable_worker_scenarios import coordinator_test_limits
+from common_lore_index_test_support.executable_authority import approved_psql, search_path_for
+from common_lore_index_test_support.portable_worker_scenarios import coordinator_test_limits
 from common_lore_index.ops.report_records import OpsRefreshError
 from common_lore_index.coordinator.limits import HARD_MAX_LIMITS, CoordinatorLimits
 from common_lore_index.coordinator.refresh_adapter import (

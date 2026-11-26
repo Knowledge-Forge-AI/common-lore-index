@@ -6,38 +6,38 @@ import subprocess
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_administrative import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_administrative import (
     execute_administrative_operation,
 )
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_fix2_evidence import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import (
     ExecutorEvidenceError,
     bind_executor_evidence,
     verify_executor_evidence,
 )
-from repomap_test_support.test_cov5k_r2_fix2_observer import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_observer import (
     execute_observer_request,
     execute_observer_schedule,
 )
-from repomap_test_support.test_cov5k_r2_fix2_preparation import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation import (
     execute_preparation_state_path,
 )
-from repomap_test_support.test_cov5k_r2_fix2_runtime import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_runtime import (
     _SOURCE_CODES,
     execute_container_rss_equivalence,
     execute_failure_causality,
     execute_runtime_driver_read,
     execute_terminal_read,
 )
-from repomap_test_support.test_cov5k_r2_fix3_owner_binding import (
+from common_lore_index_test_support.test_cov5k_r2_fix3_owner_binding import (
     exact_callable_matches,
 )
-from repomap_test_support.test_cov5k_r2_fix3_sibling_oracle import (
+from common_lore_index_test_support.test_cov5k_r2_fix3_sibling_oracle import (
     SiblingCampaignOracleError,
     validate_sibling_campaign_oracle,
 )
-from repomap_test_support.test_cov5k_r2_fix4_psycopg import public_expected_authority
-import repomap_test_support.test_cov5k_r2_fix2_runtime as runtime
+from common_lore_index_test_support.test_cov5k_r2_fix4_psycopg import public_expected_authority
+import common_lore_index_test_support.test_cov5k_r2_fix2_runtime as runtime
 
 
 class EnactmentMutationError(AssertionError):

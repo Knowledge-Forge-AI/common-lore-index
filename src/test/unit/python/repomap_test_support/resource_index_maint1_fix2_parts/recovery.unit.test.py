@@ -8,24 +8,24 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support import resource_index_recovery as recovery_module
-from repomap_test_support import resource_ledger_io as ledger_io_module
-from repomap_test_support.resource_hygiene_policy import HygieneProfile
-from repomap_test_support.resource_index import (
+from common_lore_index_test_support import resource_index_recovery as recovery_module
+from common_lore_index_test_support import resource_ledger_io as ledger_io_module
+from common_lore_index_test_support.resource_hygiene_policy import HygieneProfile
+from common_lore_index_test_support.resource_index import (
     AdvisoryIndex,
     HostAdmissionRefused,
     IndexError,
     lifecycle_record_capacity,
 )
-from repomap_test_support.resource_index_maintenance import compact_index
-from repomap_test_support.resource_index_recovery import (
+from common_lore_index_test_support.resource_index_maintenance import compact_index
+from common_lore_index_test_support.resource_index_recovery import (
     MaintenanceIndexBinding,
     RecordCapUnresolved,
     recover_index,
 )
-from repomap_test_support.resource_ledger_io import write_private_json_exclusive
-from repomap_test_support.resource_lifecycle_claim import ClaimRegistry, MaintenanceHandle
-from repomap_test_support.resource_retention import TerminalOutcome
+from common_lore_index_test_support.resource_ledger_io import write_private_json_exclusive
+from common_lore_index_test_support.resource_lifecycle_claim import ClaimRegistry, MaintenanceHandle
+from common_lore_index_test_support.resource_retention import TerminalOutcome
 
 
 CAP = 512

@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support import scale15_runtime_campaign as runtime_campaign
+from common_lore_index_test_support import scale15_runtime_campaign as runtime_campaign
 
 
 def test_runtime_start_failure_stops_exact_started_runtime(

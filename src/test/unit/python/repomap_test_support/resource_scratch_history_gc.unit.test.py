@@ -7,18 +7,18 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_ledger import (
     ResourceKind,
     ResourceLedger,
     RetainedReason,
     RunIdentity,
 )
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimPurpose,
     register_protection,
 )
-from repomap_test_support.resource_retention import DAY_SECONDS
-from repomap_test_support.resource_scratch_history import (
+from common_lore_index_test_support.resource_retention import DAY_SECONDS
+from common_lore_index_test_support.resource_scratch_history import (
     discover_historical_gc,
     revalidate_historical_candidate,
 )

@@ -15,7 +15,7 @@ from ci.python_retention_reporting import build_profile_progress
 from ci.pre_review_evaluation import evaluate
 from ci.pre_review_records import Check
 from ci import python_retention_inventory as inventory
-from repomap_test_support.retention_pipeline_fixture import (
+from common_lore_index_test_support.retention_pipeline_fixture import (
     retention_candidate as retention_candidate, candidate_context,
 )
 

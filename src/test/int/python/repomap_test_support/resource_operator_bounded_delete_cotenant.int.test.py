@@ -10,33 +10,33 @@ from pathlib import Path
 import pytest
 import test_hygiene_maintenance as maintenance_tool
 
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_hygiene_policy import HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_hygiene_policy import HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimPurpose,
     ClaimRegistry,
     ProcessLiveness,
     process_owner_matches,
     register_protection,
 )
-from repomap_test_support.resource_ledger_io import read_private_json
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_ledger_io import read_private_json
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     OperatorReclamationRequest,
     reclaim_run_population,
 )
-from repomap_test_support.resource_operator_records import read_operation_record
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_records import read_operation_record
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     PHASE,
     PROJECT,
     add_monitoring_link,
     add_run,
     private_root,
 )
-from repomap_test_support.resource_protection_authority import observe_protections
-from repomap_test_support.resource_retention import RetentionClass, TerminalOutcome
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.resource_protection_authority import observe_protections
+from common_lore_index_test_support.resource_retention import RetentionClass, TerminalOutcome
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 @pytest.mark.skipif(

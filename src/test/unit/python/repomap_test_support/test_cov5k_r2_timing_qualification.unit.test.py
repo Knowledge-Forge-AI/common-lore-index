@@ -4,12 +4,12 @@ from dataclasses import FrozenInstanceError, replace
 
 import pytest
 
-from repomap_test_support.test_cov5g_r1_characterization import (
+from common_lore_index_test_support.test_cov5g_r1_characterization import (
     Condition,
     RequestObservation,
     RequestOutcome,
 )
-from repomap_test_support.test_cov5k_r2_timing_qualification import (
+from common_lore_index_test_support.test_cov5k_r2_timing_qualification import (
     CANCELLATION_REQUEST_TIMING_CLAIM,
     NON_SUCCESS_MANIFEST_LIMIT,
     TimingQualificationDisposition,

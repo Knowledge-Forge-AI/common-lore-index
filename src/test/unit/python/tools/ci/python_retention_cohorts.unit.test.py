@@ -34,7 +34,7 @@ def _valid_inventory() -> dict[str, Any]:
         "files": [
             _file("tools/ci/tool_a.py", "tools", "clean_tooling"),
             _file("tools/ci/tool_b.py", "tools", "clean_tooling"),
-            _file("src/test/support/python/repomap_test_support/helper.py", "test_support", "clean_test_support"),
+            _file("src/test/support/python/common_lore_index_test_support/helper.py", "test_support", "clean_test_support"),
             _file("src/test/unit/python/test_owner.unit.test.py", "test_owners", "clean_test_owners"),
             _file("src/main/python/common_lore_index/core.py", "product", "retained_python_ratchets"),
         ],
@@ -51,7 +51,7 @@ def _valid_inventory() -> dict[str, Any]:
                 "id": "test_support_core",
                 "root": "test_support",
                 "governing_profile": "clean_test_support",
-                "members": ["src/test/support/python/repomap_test_support/helper.py"],
+                "members": ["src/test/support/python/common_lore_index_test_support/helper.py"],
                 "rationale": "Test support helpers",
                 "admission": "admitted",
             },

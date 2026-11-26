@@ -4,22 +4,22 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support.resource_docker_boundary import (
+from common_lore_index_test_support.resource_docker_boundary import (
     PROJECTION_FIELDS,
     RunWideDockerBoundary,
     RunWideDockerResidueError,
 )
-from repomap_test_support.resource_docker_mediation import CanonicalDockerAuthority
-from repomap_test_support.resource_docker_operations import (
+from common_lore_index_test_support.resource_docker_mediation import CanonicalDockerAuthority
+from common_lore_index_test_support.resource_docker_operations import (
     DERIVED_OPERATION_FIELDS,
     DockerOperationJournal,
 )
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_ledger import (
     ResourceKind,
     ResourceLedger,
     RunIdentity,
 )
-from repomap_test_support.resource_test_image_base import (
+from common_lore_index_test_support.resource_test_image_base import (
     BaseImageProvenance,
     parse_immutable_image_authority,
 )

@@ -57,7 +57,7 @@ from common_lore_index.graph.multi_source_routing import (
     _validate_provenance,
 )
 from common_lore_index.observations.raw import RawObservation
-from repomap_test_support.sealing_governance_fixtures import binding_for
+from common_lore_index_test_support.sealing_governance_fixtures import binding_for
 
 
 def _source(

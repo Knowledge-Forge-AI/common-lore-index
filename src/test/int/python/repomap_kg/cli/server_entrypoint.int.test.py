@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_in_process import REPO_ROOT, module_process_environment
-from repomap_test_support.cli_integration import (
+from common_lore_index_test_support.cli_in_process import REPO_ROOT, module_process_environment
+from common_lore_index_test_support.cli_integration import (
     CliIntegrationTestCase,
     OPS_CONFIG_TEMPLATE,
 )

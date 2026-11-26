@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support import resource_run
-from repomap_test_support.resource_hygiene_policy import GIB, HygieneProfile, QuotaExceeded
-from repomap_test_support.resource_interruption import operator_marker_path
-from repomap_test_support.resource_ledger_io import write_private_json_exclusive
-from repomap_test_support.resource_run import ResourceRunError, TestResourceRun
-from repomap_test_support.resource_run_test_support import admitted_host_signals
-from repomap_test_support.resource_scratch import ScratchAccountingError
-from repomap_test_support.test_scratch import establish_run
+from common_lore_index_test_support import resource_run
+from common_lore_index_test_support.resource_hygiene_policy import GIB, HygieneProfile, QuotaExceeded
+from common_lore_index_test_support.resource_interruption import operator_marker_path
+from common_lore_index_test_support.resource_ledger_io import write_private_json_exclusive
+from common_lore_index_test_support.resource_run import ResourceRunError, TestResourceRun
+from common_lore_index_test_support.resource_run_test_support import admitted_host_signals
+from common_lore_index_test_support.resource_scratch import ScratchAccountingError
+from common_lore_index_test_support.test_scratch import establish_run
 
 pytestmark = pytest.mark.usefixtures("isolate_test_resource_run_process_state")
 

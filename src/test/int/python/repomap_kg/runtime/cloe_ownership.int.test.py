@@ -5,7 +5,7 @@ import shutil
 
 from common_lore_index.coordinator import _control_schema as control
 from common_lore_index.storage import _schema_migrations as graph
-from repomap_test_support.cli_integration import run_cli_module
+from common_lore_index_test_support.cli_integration import run_cli_module
 
 ROOT = Path(__file__).resolve().parents[6]
 

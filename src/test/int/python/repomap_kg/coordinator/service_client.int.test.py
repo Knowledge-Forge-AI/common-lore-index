@@ -11,7 +11,7 @@ from common_lore_index.coordinator._control_types import (
 )
 from common_lore_index.coordinator.contracts import JobRequest
 from common_lore_index.coordinator.startup_recovery import StartupRecoveryReport
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 from common_lore_index.coordinator.client import CoordinatorClientError, LocalCoordinatorClient
 from common_lore_index.coordinator.configured_refresh import (
     ConfiguredRefreshResolver,
@@ -20,11 +20,11 @@ from common_lore_index.coordinator.configured_refresh import (
 from common_lore_index.coordinator.service import CoordinatorService
 from common_lore_index.coordinator.storage import ControlStore
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.synthetic_worker_adapter import (
+from common_lore_index_test_support.synthetic_worker_adapter import (
     build_synthetic_coordinator,
 )
 

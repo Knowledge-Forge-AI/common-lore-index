@@ -94,8 +94,8 @@ def test_sandbox_report_arguments_rewrites_gate_request_without_report(tmp_path)
 
 def _parse_and_validate_runner_argv(raw_argv: list[str], repo_root: Path):
     import argparse
-    from repomap_test_support import d12_core_image
-    from repomap_test_support.resource_hygiene_policy import HygieneProfile
+    from common_lore_index_test_support import d12_core_image
+    from common_lore_index_test_support.resource_hygiene_policy import HygieneProfile
     import runner_arguments
 
     runner_argv, forwarded = runner_arguments.split_forwarded_args(raw_argv)
@@ -120,7 +120,7 @@ def _parse_and_validate_runner_argv(raw_argv: list[str], repo_root: Path):
 
 
 def test_d12_preflight_argv_admits_and_transports_report_dir_without_html(tmp_path: Path) -> None:
-    from repomap_test_support import d12_core_image
+    from common_lore_index_test_support import d12_core_image
 
     module = sandbox_owner
     repo_root = tmp_path / "repo"
@@ -168,7 +168,7 @@ def test_d12_preflight_argv_admits_and_transports_report_dir_without_html(tmp_pa
 
 
 def test_d12_profile_only_or_forwarded_preflight_does_not_activate_report_export(tmp_path: Path) -> None:
-    from repomap_test_support import d12_core_image
+    from common_lore_index_test_support import d12_core_image
 
     module = sandbox_owner
     repo_root = tmp_path / "repo"

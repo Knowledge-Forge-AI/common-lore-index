@@ -317,7 +317,7 @@ def evaluate_go_integration_gate(
     expected_dir = expected_gocoverdir
     if expected_dir is None:
         try:
-            from repomap_test_support.test_scratch import establish_run
+            from common_lore_index_test_support.test_scratch import establish_run
 
             expected_dir = establish_run().go_tmp / "gocoverdir"
         except (ImportError, AttributeError, RuntimeError, OSError):

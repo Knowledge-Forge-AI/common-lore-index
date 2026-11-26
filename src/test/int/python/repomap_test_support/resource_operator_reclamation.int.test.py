@@ -11,28 +11,28 @@ from pathlib import Path
 import pytest
 
 import test_hygiene_maintenance as maintenance_tool
-from repomap_test_support.resource_hygiene_policy import HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex
-from repomap_test_support.resource_interruption import (
+from common_lore_index_test_support.resource_hygiene_policy import HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex
+from common_lore_index_test_support.resource_interruption import (
     InterruptionOutcome,
     classify_interruption,
     operator_marker_path,
 )
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimPurpose,
     ProcessLiveness,
     register_protection,
 )
-from repomap_test_support.resource_operator_reclamation import CONFIRMATION_LITERAL
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_reclamation import CONFIRMATION_LITERAL
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     PHASE,
     PROJECT,
     add_monitoring_link,
     add_run,
     private_root,
 )
-from repomap_test_support.resource_protection_authority import observe_protections
-from repomap_test_support.resource_retention import RetentionClass, TerminalOutcome
+from common_lore_index_test_support.resource_protection_authority import observe_protections
+from common_lore_index_test_support.resource_retention import RetentionClass, TerminalOutcome
 
 
 @pytest.mark.skipif(

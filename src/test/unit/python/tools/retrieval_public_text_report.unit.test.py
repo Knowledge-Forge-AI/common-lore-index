@@ -19,7 +19,7 @@ from typing import Any, cast
 import pytest
 
 from common_lore_index.storage.semantic_candidates import digest_json
-from repomap_test_support.w5_public_text_artifacts import (
+from common_lore_index_test_support.w5_public_text_artifacts import (
     ARTIFACT_PROFILE, SyntheticStudy, component_journal, synthetic_raw_component,
 )
 from retrieval_public_text_contracts import PrivateMarkerScope

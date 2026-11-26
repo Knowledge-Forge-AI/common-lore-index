@@ -6,7 +6,7 @@ import json
 import pytest
 
 from common_lore_index.ops.ingestion.api import ApiPolicyError, acquire_api_source
-from repomap_test_support.policy_helper_branches import write_api_fixture
+from common_lore_index_test_support.policy_helper_branches import write_api_fixture
 
 
 def _two_endpoint_fixture(root: Path):

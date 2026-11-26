@@ -42,7 +42,7 @@ from common_lore_index.ops.source_generation import (
     scan_source_generation,
 )
 from common_lore_index.storage.authority import RefreshResult
-from repomap_test_support.ops_refresh import VALID_REFRESH_CONFIG
+from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
 
 
 def test_s15_b07_ops_config_payload_merging_matrix(tmp_path: Path) -> None:

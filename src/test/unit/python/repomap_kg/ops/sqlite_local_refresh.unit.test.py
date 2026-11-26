@@ -27,9 +27,9 @@ from common_lore_index.ops.local_refresh import LocalRefreshResult, refresh_loca
 from common_lore_index.storage.sqlite_local.connection import publisher_lock
 from common_lore_index.storage.sqlite_local.publisher import FAMILY_ORDER
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.host_read_store_config import fail_if_reached, setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml, write_sqlite_home
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.host_read_store_config import fail_if_reached, setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml, write_sqlite_home
 
 PG_WRITE_TRIPWIRES = (
     "common_lore_index.ops.portable_refresh.run_staged_portable_refresh",

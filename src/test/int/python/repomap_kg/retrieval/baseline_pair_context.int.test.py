@@ -10,9 +10,9 @@ from typing import cast
 
 import pytest
 
-from repomap_test_support.w5_experiment_journal import record_cell
-from repomap_test_support.w5_experiment_results import ResultV2Run
-from repomap_test_support.w5_pair_fixtures import ARMS
+from common_lore_index_test_support.w5_experiment_journal import record_cell
+from common_lore_index_test_support.w5_experiment_results import ResultV2Run
+from common_lore_index_test_support.w5_pair_fixtures import ARMS
 from retrieval_evaluation_attempts import admit_attempt
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_semantic_baseline_result_frames import decode_result_frames

@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_buildx import (
+from common_lore_index_test_support.resource_buildx import (
     BuildCacheOwnershipUnproved,
     DedicatedBuildxOwner,
 )
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
 
 
 class FakeRunner:

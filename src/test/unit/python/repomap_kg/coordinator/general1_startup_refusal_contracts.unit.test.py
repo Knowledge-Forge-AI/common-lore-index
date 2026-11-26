@@ -10,7 +10,7 @@ from common_lore_index.coordinator.core import SyntheticCoordinator
 from common_lore_index.coordinator.startup_recovery import (
     PublicationRouteChangedError, StartupRecoveryReport, recover_startup,
 )
-from repomap_test_support.coordinator_core_fakes import FakeStore, terminal
+from common_lore_index_test_support.coordinator_core_fakes import FakeStore, terminal
 
 
 class ClosureStore(FakeStore):

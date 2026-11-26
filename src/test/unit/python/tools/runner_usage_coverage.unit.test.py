@@ -51,7 +51,7 @@ def _observer(tmp_path: Path):
         session=session, capability=cap, token="a" * 32,
         environment={"PYTHONPATH": "/support:/main", "COVERAGE_CHILD_TEST_OWNER": "b" * 64},
         identity={"job_id": "job", "attempt": 1},
-        job_context={"argv": (sys.executable, "-m", "repomap_test_support.usage_worker")},
+        job_context={"argv": (sys.executable, "-m", "common_lore_index_test_support.usage_worker")},
     )
     return observer, session, cap
 
@@ -88,7 +88,7 @@ class _SubjectCapability(ChildCoverageCapability):
         return value
 
     def paths_for_command(self, command: tuple[str, ...]) -> tuple[Path, ...]:
-        if command == ("-m", "repomap_test_support.usage_worker"):
+        if command == ("-m", "common_lore_index_test_support.usage_worker"):
             return (Path("/support"), Path("/main"))
         return (Path("/main"),)
 
@@ -111,7 +111,7 @@ def test_native_callback_settlement_is_strict_and_preserves_metadata(tmp_path: P
     assert cap.launched_pids == {"a" * 32: 41}
     launch = session.process_observer.calls[0]
     assert launch["host_pid"] == 41 and launch["ppid"] == os.getpid()
-    assert tuple(launch["argv"])[1:3] == ("-m", "repomap_test_support.usage_worker")
+    assert tuple(launch["argv"])[1:3] == ("-m", "common_lore_index_test_support.usage_worker")
     assert launch["env"]["PYTHONPATH"] == "/support:/main"
 
 
@@ -194,7 +194,7 @@ def test_adapter_subject_forwards_native_observer_without_factory(monkeypatch, t
         return SimpleNamespace(returncode=0, waited=True, process_group_cleaned=True)
     adapter = make_portable_worker_spec_adapter(original, cap, session)
     spec = WorkerLaunchSpec(
-        argv=(sys.executable, "-m", "repomap_test_support.usage_worker", "--case", "nominal", "--capability", "/cap", "--job-id", "job", "--attempt", "1"),
+        argv=(sys.executable, "-m", "common_lore_index_test_support.usage_worker", "--case", "nominal", "--capability", "/cap", "--job-id", "job", "--attempt", "1"),
         environment={"PYTHONPATH": "/support:/main"},
         cwd=tmp_path,
     )
@@ -235,7 +235,7 @@ def test_adapter_subject_accepts_existing_production_collect_usage_opt_in(monkey
 
 def test_real_command_gate_requires_committed_test_authority_and_exact_roots(tmp_path: Path) -> None:
     _, cap = _subject(tmp_path)
-    command = ("-m", "repomap_test_support.usage_worker")
+    command = ("-m", "common_lore_index_test_support.usage_worker")
     # Exercise the actual gate, rather than the subject's routing override.
     select = ChildCoverageCapability.paths_for_command
     with pytest.raises(CapabilityRefusalError, match="test-conformance authority"):
@@ -265,7 +265,7 @@ def test_closed_fixture_context_keeps_exact_refusal_and_collector_lifetime() -> 
     root = Path(__file__).resolve().parents[5]
     validate_owner_context(owner, ast.parse((root / owner).read_text()))
     for changed in (
-        SOURCE.replace("repomap_test_support.usage_worker", "arbitrary.module"),
+        SOURCE.replace("common_lore_index_test_support.usage_worker", "arbitrary.module"),
         SOURCE.replace("cov.stop()", "pass"),
     ):
         with pytest.raises(ValueError, match="owner context differs"):

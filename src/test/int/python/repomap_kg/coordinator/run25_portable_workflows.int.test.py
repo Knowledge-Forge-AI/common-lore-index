@@ -47,8 +47,8 @@ from common_lore_index.coordinator.semantics import (
     reconcile_publication,
     should_persist_progress,
 )
-from repomap_test_support.portable_worker_scenarios import make_missing_manifest_reference
-from repomap_test_support.run25_portable_workflows import (
+from common_lore_index_test_support.portable_worker_scenarios import make_missing_manifest_reference
+from common_lore_index_test_support.run25_portable_workflows import (
     RUN25_MANDATORY_LIMITS,
     build_clean_explicit_pythonpath,
     create_run25_test_capability,
