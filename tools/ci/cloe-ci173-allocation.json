@@ -1,0 +1,48 @@
+{
+  "approval": {
+    "candidate_source_checkpoint": "598173178ac1b0fe1a3c5c7888ee5d4667b5d2d3",
+    "hosted_capacity": "AVAILABLE",
+    "operator_request": "AVAILABLE \u2014 authorize one Checkpoint A campaign",
+    "phase": "CLOE-RC010-CHECKPOINT-A",
+    "schema": "cloe-ci173-approval-v1",
+    "scope": "One fast-forward staging push and one fresh draft staging-to-main pull request."
+  },
+  "ledger_before": {
+    "application_starts": 76,
+    "attempt": 1,
+    "component_runtime_executions": 46,
+    "intervening_campaign": {
+      "attempt": 1,
+      "counted_executions": 0,
+      "ordinal": 172,
+      "run_id": 45505704464
+    },
+    "native_report_sha256": "6b51b960e347f04f1c35ec79cf932bada2b45a11cb7fe4945bfadc40c0209a40",
+    "preceding_qualified_campaign": 171,
+    "rust_intent_sha256": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+    "rust_qualifier_entries": 50,
+    "rust_report_sha256": "0cdba12598f802434737737771af7cae298fc774528babc30184fe24aca784f3",
+    "schema": "cloe-ci173-ledger-before-v1",
+    "staging_smoke_report_sha256": "2828f8e563404e439458431889c16371dd856e15c9474fb74dafe5208b929ac8",
+    "system_admission_proof_sha256": "0fb2f15f059d95101b16249039f225ff5916ae48571b5b4da0517c74048cbbc0",
+    "system_report_sha256": "9d908a2fe63d762ce8e917cd3fe4007eff7a15e3a67826f4cd9c18c31a5f522a",
+    "wheel_transfers": 94
+  },
+  "reservation": {
+    "application_start": 77,
+    "approval_sha256": "f2aaaca233ee16763bb9467de8ca9efac48d531ce92f74b7614e1b6d3c46995e",
+    "base": "a6e771434564e86f1ff4f1a59ddfbd7148915003",
+    "before": "a6e771434564e86f1ff4f1a59ddfbd7148915003",
+    "component_runtime_cumulative": 47,
+    "event_action": "opened",
+    "ledger_before_sha256": "6b105451cec4e8afc0553d7d850ecdfc1a7a21cd7f4dd016205aa29832463b94",
+    "nonce": "d8313dfeb0d8072c3dfd84dbbd9c0091",
+    "pull_request": 29,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 51,
+    "schema": "cloe-ci173-reservation-v1",
+    "wheel_transfers_cumulative": 96,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 173
+  }
+}
