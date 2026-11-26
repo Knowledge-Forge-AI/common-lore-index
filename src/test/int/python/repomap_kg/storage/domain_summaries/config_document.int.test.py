@@ -374,7 +374,7 @@ class StorageConfigDocumentDomainSummaryIntegrationTests(unittest.TestCase):
             },
         )
         self.assertIn(
-            "env:CLOE_MCP_CONFIG",
+            "env:REPOMAP_MCP_CONFIG",
             {record["target_key"] for record in reference_edges},
         )
         self.assertIn(

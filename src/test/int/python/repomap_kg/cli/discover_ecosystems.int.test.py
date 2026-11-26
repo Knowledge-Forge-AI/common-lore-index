@@ -226,7 +226,7 @@ class CliDiscoverEcosystemsIntegrationTests(CliIntegrationTestCase):
         })
         reference_targets = {obs["target"] for obs in observations if obs["kind"] == "config.reference"}
         self.assertTrue({
-            "tool:repomap-kg", "tool:python3", "dynamic:tool:config-command-fragment", "env:CLOE_MCP_CONFIG",
+            "tool:repomap-kg", "tool:python3", "dynamic:tool:config-command-fragment", "env:REPOMAP_MCP_CONFIG",
             "env:CODEX_HOME", "env:TOKEN", "env:API_KEY", "env:PASSWORD", "file:codex/config.toml",
             "file:mcp/repo-map/config.json", "file:src/main/python", "file:projects/repo-map",
             "file:bin/repomap", "external.url:https%3A%2F%2Fexample.com%2Frepo-map",
