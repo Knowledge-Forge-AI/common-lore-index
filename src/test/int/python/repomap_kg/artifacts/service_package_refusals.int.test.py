@@ -305,8 +305,8 @@ class ServicePackageRefusalsIntegrationTests(unittest.TestCase):
         from common_lore_index.runtime.local import setup_local_runtime
 
         def native_home(home: Path) -> None:
-            setup_local_runtime(home, config_format="legacy")
-            config = home / "repomap.rpl.toml"
+            setup_local_runtime(home)
+            config = home / "repomap.local.cloe.toml"
             config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
 
         repomap_home = self.tmpdir / "service_coord_home"

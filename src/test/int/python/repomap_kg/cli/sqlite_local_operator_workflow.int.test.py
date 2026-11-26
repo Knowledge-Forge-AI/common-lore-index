@@ -218,7 +218,7 @@ def test_blocker_engages_on_the_real_postgres_path(tmp_path: Path) -> None:
     harness = LocalHarness(tmp_path / "scratch", block_psycopg=True)
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     completed = harness.run("ops", "graphs", "--repo-map-home", str(home))
     assert completed.returncode == 1, completed.stderr
     assert "postgresql-driver-unavailable" in completed.stderr, completed.stderr

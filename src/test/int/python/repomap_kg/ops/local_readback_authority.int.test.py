@@ -56,7 +56,7 @@ def test_setup_owned_local_readback_uses_read_role_without_password_export(
             psql_command=postgres.psql_command,
         )
         home = tmp_path / "repo-map-home"
-        setup_local_runtime(home, config_format="legacy")
+        setup_local_runtime(home)
         env_file = home / "runtime" / ".env"
         env_text = env_file.read_text(encoding="utf-8")
         env_values = _env_values(env_text)
@@ -162,7 +162,7 @@ def test_setup_owned_local_readback_uses_read_role_without_password_export(
 
 
 def _write_local_config(home: Path, host_port: int, database: str) -> None:
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         f'''schema_version = 1
 [service]
 mode = "local"

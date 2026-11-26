@@ -171,7 +171,7 @@ def test_sqlite_home_config_errors_are_reported_directly(
 ) -> None:
     home = tmp_path / "home"
     home.mkdir()
-    (home / "repomap.rp.toml").write_text(
+    (home / "repomap.cloe.toml").write_text(
         sqlite_home_toml('[postgres]\nhost = "h"\n' + graph_toml("one", tmp_path)), encoding="utf-8"
     )
     code, _, stderr = run_repo_map_in_process("ops", command, "--repo-map-home", str(home))
@@ -182,7 +182,7 @@ def test_sqlite_home_config_errors_are_reported_directly(
 def test_postgres_home_keeps_the_postgres_projection(tmp_path: Path) -> None:
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     with patch.object(_ops_sqlite_dispatch, "probe_local_graphs", fail_if_reached):
         payload = _json("ops", "config-check", "--repo-map-home", str(home))
     assert PG_KEYS <= set(payload) and "storage" not in payload, sorted(payload)

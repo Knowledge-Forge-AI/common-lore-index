@@ -37,7 +37,7 @@ def _sanitize_db_name(raw: str, max_length: int = 55) -> str:
 
 def test_explicit_control_lifecycle_creates_replays_and_rejects_incompatible_state(monkeypatch):
     require_postgres_binaries()
-    with short_test_directory("async10-", "incompatible/configured.rp.toml") as directory:
+    with short_test_directory("async10-", "incompatible/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("ASYNC10_TEST_PASSWORD", postgres.password)
@@ -108,7 +108,7 @@ def test_explicit_control_lifecycle_creates_replays_and_rejects_incompatible_sta
 
 def _config_home(path: Path, postgres, graph_database: str) -> Path:
     path.mkdir(mode=0o700)
-    (path / "configured.rp.toml").write_text(
+    (path / "configured.cloe.toml").write_text(
         f'''schema_version = 1
 
 [service]
@@ -146,7 +146,7 @@ mode = "read_only"
 
 def test_coordinator_maintenance_windows_and_activities(monkeypatch):
     require_postgres_binaries()
-    with short_test_directory("async10-maint-", "ready/configured.rp.toml") as directory:
+    with short_test_directory("async10-maint-", "ready/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("ASYNC10_TEST_PASSWORD", postgres.password)
@@ -206,7 +206,7 @@ def test_coordinator_maintenance_windows_and_activities(monkeypatch):
 
 def test_coordinator_control_upgrade_lifecycle_refusals_and_dry_run(monkeypatch):
     require_postgres_binaries()
-    with short_test_directory("async10-upg-", "ready/configured.rp.toml") as directory:
+    with short_test_directory("async10-upg-", "ready/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("ASYNC10_TEST_PASSWORD", postgres.password)
@@ -250,7 +250,7 @@ def test_coordinator_control_upgrade_lifecycle_refusals_and_dry_run(monkeypatch)
 def test_coordinator_control_lifecycle_reuse_and_formatting(monkeypatch):
     require_postgres_binaries()
 
-    with short_test_directory("async10-reuse-", "ready/configured.rp.toml") as directory:
+    with short_test_directory("async10-reuse-", "ready/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("ASYNC10_TEST_PASSWORD", postgres.password)
@@ -295,7 +295,7 @@ def test_coordinator_control_lifecycle_reuse_and_formatting(monkeypatch):
 
 def test_coordinator_control_upgrade_rejections(monkeypatch):
     require_postgres_binaries()
-    with short_test_directory("async10-rej-", "ready/configured.rp.toml") as directory:
+    with short_test_directory("async10-rej-", "ready/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("ASYNC10_TEST_PASSWORD", postgres.password)
@@ -331,7 +331,7 @@ def test_local_direct_route_control_lifecycle(tmp_path, monkeypatch, credential_
     import common_lore_index
     from common_lore_index.runtime.local import setup_local_runtime
     home = tmp_path / "native-home"
-    setup_local_runtime(home, config_format="legacy")
+    setup_local_runtime(home)
     assert home.stat().st_mode & 0o777 == 0o700
     values = dict(line.split("=", 1) for line in
                   (home / "runtime/.env").read_text().splitlines() if "=" in line)
@@ -345,7 +345,7 @@ def test_local_direct_route_control_lifecycle(tmp_path, monkeypatch, credential_
                               password=postgres.password, autocommit=True) as bootstrap:
             bootstrap.execute(sql.SQL("CREATE ROLE {} LOGIN SUPERUSER PASSWORD {}").format(
                 sql.Identifier(role), sql.Literal(secret)))
-            path = home / "repomap.rpl.toml"
+            path = home / "repomap.local.cloe.toml"
             path.write_text(path.read_text().replace(
                 "direct_host_port_enabled = false", "direct_host_port_enabled = true"
             ).replace("host_port = 55432", f"host_port = {postgres.port}").replace(
@@ -389,8 +389,8 @@ def test_custom_credential_does_not_use_generated_admin(tmp_path, monkeypatch):
     from common_lore_index.runtime.local import setup_local_runtime
 
     home = tmp_path / "custom-home"
-    setup_local_runtime(home, config_format="legacy")
-    path = home / "repomap.rpl.toml"
+    setup_local_runtime(home)
+    path = home / "repomap.local.cloe.toml"
     path.write_text(path.read_text().replace(
         'password_env = "REPOMAP_PG_PASSWORD"', 'password_env = "CUSTOM_ADMIN_PASSWORD"'
     ))

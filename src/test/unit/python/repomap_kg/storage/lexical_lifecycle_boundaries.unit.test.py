@@ -224,7 +224,7 @@ def test_privacy_refusals_require_body_authorization_and_selected_bindings(
     assert refused_graph.result == "refused"
     assert refused_graph.refusal_code == "graph_privacy_not_authorized"
 
-    config_path = home / "repomap.rpl.toml"
+    config_path = home / "repomap.local.cloe.toml"
     public_graph = config_path.read_text().replace('privacy = "private-memory"', 'privacy = "public-dev"', 1)
     config_path.write_text(public_graph)
     retention_refusal = build_graph_lexical_generation(

@@ -220,7 +220,7 @@ def build_sqlite_context_fixture(
     extra_edges: Sequence[tuple[str, str, str]] = (),
     include_private_binding: bool = False,
 ) -> tuple[Path, LocalSqliteConfig, OpsGraphConfig, LocalGraphBinding, SqliteContextReadAdapter]:
-    """Create a populated SQLite Local database, repomap.rpl.toml, and source roots for context tests."""
+    """Create a populated SQLite Local database, repomap.local.cloe.toml, and source roots for context tests."""
     core_root, bindings, markers, cfg_bindings, toml_bindings = _prepare_polyglot_bindings(
         tmp_path, graph_id, include_private_binding
     )
@@ -231,7 +231,7 @@ def build_sqlite_context_fixture(
     )
     mem_dir = tmp_path / "memory"
     mem_dir.mkdir(parents=True, exist_ok=True)
-    (tmp_path / "repomap.rpl.toml").write_text(
+    (tmp_path / "repomap.local.cloe.toml").write_text(
         f'schema_version = 1\n\n[storage]\nbackend = "sqlite"\n\n'
         f'[service]\nmode = "local"\nmcp_transport = "stdio"\nlog_level = "info"\n\n'
         f'[server_memory]\nenabled = false\npath = "{mem_dir.resolve().as_posix()}"\nmode = "read_only"\n\n'
@@ -247,8 +247,8 @@ def build_sqlite_context_fixture(
         explicit_source_bindings=True,
     )
     config = LocalSqliteConfig(
-        config_path=str(tmp_path / "repomap.rpl.toml"), config_home=str(tmp_path),
-        config_files=("repomap.rpl.toml",), schema_version=1,
+        config_path=str(tmp_path / "repomap.local.cloe.toml"), config_home=str(tmp_path),
+        config_files=("repomap.local.cloe.toml",), schema_version=1,
         service=OpsServiceConfig(mode="local", mcp_transport="stdio", log_level="info"),
         graphs=(graph,),
         server_memory=OpsServerMemoryConfig(

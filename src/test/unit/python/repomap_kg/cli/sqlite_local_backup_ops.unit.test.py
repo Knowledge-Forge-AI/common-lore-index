@@ -137,7 +137,7 @@ def test_text_summaries(tmp_path: Path) -> None:
 def test_postgres_home_refuses_both_commands_without_side_effects(tmp_path: Path) -> None:
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     (tmp_path / "bk").mkdir()
     before = sorted(path.name for path in home.rglob("*"))
     for command, option in (("sqlite-backup", "--output"), ("sqlite-restore", "--backup")):

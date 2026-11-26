@@ -45,7 +45,7 @@ def _container_internal_config(tmp_path: Path):
     root = tmp_path / "repo"
     home.mkdir(parents=True)
     root.mkdir()
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=root, private_root=root / "private")
         + "\n[runtime]\n"
         + 'container_runtime = "docker"\n'

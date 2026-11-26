@@ -81,7 +81,7 @@ def test_postgres_home_reports_the_bounded_missing_driver_error(tmp_path: Path) 
     harness = LocalHarness(tmp_path / "pg-scratch", block_psycopg=True)
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     completed = harness.run("ops", "config-check", "--repo-map-home", str(home), "--json")
     assert completed.returncode == 1, completed.stderr
     assert "postgresql-driver-unavailable" in completed.stderr, completed.stderr

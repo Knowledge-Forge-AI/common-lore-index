@@ -89,7 +89,7 @@ def real_backup_seed() -> Iterator[_RealBackupSeed]:
     assert pg_restore_bin is not None and pg_dump_bin is not None
     with (
         pytest.MonkeyPatch.context() as mp,
-        short_test_directory("bpb-real-", "home/repomap.rpl.toml") as directory,
+        short_test_directory("bpb-real-", "home/repomap.local.cloe.toml") as directory,
         temporary_postgres() as postgres,
     ):
         mp.setattr(sup_mod, "PACKAGED_PG_RESTORE", pg_restore_bin)

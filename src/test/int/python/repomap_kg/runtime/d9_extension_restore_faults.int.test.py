@@ -89,7 +89,7 @@ def _is_replay(cmd: list[str]) -> bool:
 
 def test_d9b_fault_matrix_custody_and_cooperating_actor_exclusion(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-flt-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-flt-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         home = root / "home"
         reference = clean_template_reference(root)

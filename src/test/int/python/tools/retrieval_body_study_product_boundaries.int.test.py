@@ -266,7 +266,7 @@ def test_real_pg_lexical_revision_and_enabled_drift_are_explicitly_refused(
             hit.locator.source_relative_path == "pkg/pipeline.py" for hit in initial.hits
         )
 
-        config_file = home / "repomap.rpl.toml"
+        config_file = home / "repomap.local.cloe.toml"
         original = config_file.read_text(encoding="utf-8")
         try:
             config_file.write_text(

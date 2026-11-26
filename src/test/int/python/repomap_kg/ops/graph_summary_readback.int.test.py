@@ -316,7 +316,7 @@ FROM repositories WHERE name = 'public-repository';
 
 
 def _write_config(home: Path, *, postgres) -> Path:
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         f'''schema_version = 1
 [service]
 mode = "local"

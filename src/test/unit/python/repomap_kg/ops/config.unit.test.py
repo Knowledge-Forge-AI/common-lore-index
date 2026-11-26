@@ -72,11 +72,11 @@ class OpsConfigUnitTests(unittest.TestCase):
     def test_config_home_discovers_rp_and_rpl_files_with_overlay(self):
         home = self.write_home_config(
             {
-                "00-project.rp.toml": VALID_CONFIG.replace(
+                "00-project.cloe.toml": VALID_CONFIG.replace(
                     'root_path = "/placeholder/repo-map"',
                     'root_path = "./project-repo"',
                 ),
-                "90-local.rpl.toml": """\
+                "90-local.local.cloe.toml": """\
 schema_version = 1
 
 [[graphs]]
@@ -104,14 +104,14 @@ path = "./memory.jsonl"
 mode = "read_only"
 """,
                 "ignored.toml": "not = 'loaded'\n",
-                "nested/99-local.rpl.toml": "schema_version = 1\n",
+                "nested/99-local.local.cloe.toml": "schema_version = 1\n",
             }
         )
 
         config = load_ops_config_home(home)
 
         self.assertEqual(config.config_path, str(home))
-        self.assertEqual(config.config_files, ("00-project.rp.toml", "90-local.rpl.toml"))
+        self.assertEqual(config.config_files, ("00-project.cloe.toml", "90-local.local.cloe.toml"))
         self.assertEqual([graph.id for graph in config.graphs], ["repo-map", "codex-vc"])
         repo_graph = config.graphs[0]
         self.assertEqual(repo_graph.root_path, "./local-repo-map")
@@ -125,25 +125,25 @@ mode = "read_only"
     def test_config_home_merge_order_is_deterministic(self):
         home = self.write_home_config(
             {
-                "10-project.rp.toml": VALID_CONFIG.replace(
+                "10-project.cloe.toml": VALID_CONFIG.replace(
                     'root_path = "/placeholder/repo-map"',
                     'root_path = "./ten"',
                 ),
-                "00-project.rp.toml": """\
+                "00-project.cloe.toml": """\
 schema_version = 1
 
 [[graphs]]
 id = "repo-map"
 root_path = "./zero"
 """,
-                "80-local.rpl.toml": """\
+                "80-local.local.cloe.toml": """\
 schema_version = 1
 
 [[graphs]]
 id = "repo-map"
 root_path = "./local-eighty"
 """,
-                "90-local.rpl.toml": """\
+                "90-local.local.cloe.toml": """\
 schema_version = 1
 
 [[graphs]]
@@ -158,10 +158,10 @@ root_path = "./local-ninety"
         self.assertEqual(
             config.config_files,
             (
-                "00-project.rp.toml",
-                "10-project.rp.toml",
-                "80-local.rpl.toml",
-                "90-local.rpl.toml",
+                "00-project.cloe.toml",
+                "10-project.cloe.toml",
+                "80-local.local.cloe.toml",
+                "90-local.local.cloe.toml",
             ),
         )
         self.assertEqual(config.graphs[0].root_path, "./local-ninety")
@@ -169,7 +169,7 @@ root_path = "./local-ninety"
     def test_config_home_reports_duplicate_graphs_and_sources(self):
         home = self.write_home_config(
             {
-                "00-project.rp.toml": VALID_CONFIG
+                "00-project.cloe.toml": VALID_CONFIG
                 + """
 
 [[graphs]]
@@ -189,7 +189,7 @@ graph_id = "repo-map"
 url = "https://example.invalid/other.xml"
 enabled = false
 """,
-                "90-local.rpl.toml": """\
+                "90-local.local.cloe.toml": """\
 schema_version = 1
 
 [[sources.feed]]
@@ -209,12 +209,12 @@ enabled = true
 
     def test_config_home_rejects_missing_and_unsupported_schema_versions(self):
         with self.assertRaises(OpsConfigError) as missing:
-            load_ops_config_home(self.write_home_config({"00-project.rp.toml": "[service]\n"}))
+            load_ops_config_home(self.write_home_config({"00-project.cloe.toml": "[service]\n"}))
         self.assertEqual(missing.exception.diagnostics[0].code, "missing-schema-version")
 
         with self.assertRaises(OpsConfigError) as unsupported:
             load_ops_config_home(
-                self.write_home_config({"00-project.rp.toml": "schema_version = 2\n"})
+                self.write_home_config({"00-project.cloe.toml": "schema_version = 2\n"})
             )
         self.assertEqual(unsupported.exception.diagnostics[0].code, "unsupported-schema-version")
 
@@ -374,7 +374,7 @@ bind_host = "0.0.0.0"
         config = load_ops_config_home(Path("docs") / "examples" / "repo-map-home")
 
         self.assertEqual(config.schema_version, 1)
-        self.assertEqual(config.config_files, ("00-project.rp.toml", "90-local.rpl.toml"))
+        self.assertEqual(config.config_files, ("00-project.cloe.toml", "90-local.local.cloe.toml"))
         self.assertEqual([graph.id for graph in config.graphs], ["repo-map", "private-ops", "private-notes", "private-config"])
         self.assertFalse(config.graphs[1].enabled)
         self.assertGreater(len(config.graphs[0].exclude_paths), 0)

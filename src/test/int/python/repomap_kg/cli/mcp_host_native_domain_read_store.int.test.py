@@ -224,9 +224,9 @@ def _postgres_absent_sessions(tmp_path: Path, harness: HostMcpHarness, item_key:
         ("container-internal-psql", "false", 55439, {"CLOE_STORAGE_READBACK_DRIVER": "psql"}),
     ):
         home = tmp_path / f"absent-{label}"
-        setup_local_runtime(home, config_format="legacy")
+        setup_local_runtime(home)
         write_domain_config(home, port, "repomap_absent_mixed", "repomap_absent_feed", tmp_path / "missing-sources")
-        config = home / "repomap.rpl.toml"
+        config = home / "repomap.local.cloe.toml"
         config.write_text(config.read_text(encoding="utf-8").replace(
             "direct_host_port_enabled = true", f"direct_host_port_enabled = {direct}"), encoding="utf-8")
         started = time.monotonic()

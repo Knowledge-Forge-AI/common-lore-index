@@ -153,23 +153,23 @@ def graphs(home: Path) -> list[str]:
 def test_real_cli_apply_load_rollback_reapply_finalize_lifecycle(tmp_path: Path, backend: str) -> None:
     home = make_home(tmp_path, backend)
     original = tree(home)
-    configured = graphs(home)
+    configured = ["one"] if backend == "sqlite" else ["repo-map"]
     assert cli(home, "apply")["result"] == "would-apply" and tree(home) == original
     applied = cli(home, "apply", "--yes")
     assert applied["result"] == "applied" and applied["rollback_available"] and applied["finalize_pending"]
     assert sorted(p.name for p in home.iterdir()) == [OPERATION, "00-project.cloe.toml", "90-machine.local.cloe.toml"]
     assert graphs(home) == configured
     assert cli(home, "apply", "--yes")["result"] == "already-applied"
-    assert cli(home, "rollback", "--yes")["result"] == "rolled-back"
-    assert tree(home) == original and graphs(home) == configured
+    assert cli(home, "rollback", "--yes")["result"] == "rolled-back" and tree(home) == original
+    check = run_cli_module("ops", "config-check", "--repo-map-home", str(home), "--json")
+    assert check.returncode == 1 and "config-migration-plan" in check.stderr
     assert cli(home, "apply", "--yes")["result"] == "applied"
     assert cli(home, "finalize", "--dry-run")["result"] == "would-finalize"
     finalized = cli(home, "finalize", "--yes")
     assert finalized["result"] == "finalized" and not finalized["rollback_available"]
     assert not (home / OPERATION).exists() and graphs(home) == configured
-    assert {p.name: p.stat().st_mode & 0o777 for p in home.iterdir()} == {
-        "00-project.cloe.toml": 0o644, "90-machine.local.cloe.toml": 0o644,
-    }
+    expected_modes = dict.fromkeys(("00-project.cloe.toml", "90-machine.local.cloe.toml"), 0o644)
+    assert {p.name: p.stat().st_mode & 0o777 for p in home.iterdir()} == expected_modes
     assert cli(home, "finalize", "--yes")["result"] == "nothing-to-finalize"
     assert cli(home, "rollback", "--yes")["result"] == "nothing-to-recover"
     assert cli(home, "apply", "--yes")["result"] == "already-converted"

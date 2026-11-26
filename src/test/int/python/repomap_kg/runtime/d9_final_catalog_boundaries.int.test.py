@@ -31,7 +31,7 @@ def test_real_extcondition_arrays_are_not_padded_or_truncated(
     monkeypatch: pytest.MonkeyPatch, case: int, conditions: list[Any],
 ) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9-final-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9-final-", "home/repomap.local.cloe.toml") as directory:
         home = Path(directory) / "home"
         with temporary_postgres() as postgres:
             monkeypatch.setenv("REPOMAP_PG_PASSWORD", postgres.password)

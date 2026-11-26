@@ -53,7 +53,7 @@ class CliServerEntrypointIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             (home).mkdir()
-            (home / "repomap.rpl.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
+            (home / "repomap.local.cloe.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
             port = self.local_server_test_port()
             process = popen_observed_process(
                 [
@@ -128,7 +128,7 @@ class CliServerEntrypointIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             home.mkdir()
-            (home / "repomap.rpl.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
+            (home / "repomap.local.cloe.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
 
             health = build_health_payload(home)
             with patch(

@@ -280,7 +280,7 @@ def _config(tmp_path: Path, **extra: Any) -> SimpleNamespace:
         )
 
     return SimpleNamespace(
-        config_home=str(tmp_path / "home"), config_path=str(tmp_path / "home" / "repomap.rp.toml"),
+        config_home=str(tmp_path / "home"), config_path=str(tmp_path / "home" / "repomap.cloe.toml"),
         graphs=(graph("a", tmp_path / "src-a"), graph("b", tmp_path / "src-b", tmp_path / "src-b2")),
         **extra,
     )

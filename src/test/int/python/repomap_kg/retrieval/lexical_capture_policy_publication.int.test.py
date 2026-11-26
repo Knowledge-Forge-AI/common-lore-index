@@ -68,7 +68,7 @@ def _public_fixture(tmp_path: Path, pg_db: Any) -> tuple[Path, OpsConfig, str, s
 
 
 def _companion_privacy_edit(text: str) -> str:
-    """Reclassify only the temporary companion binding in repomap.rpl.toml."""
+    """Reclassify only the temporary companion binding in repomap.local.cloe.toml."""
     header, *blocks = text.split("[[graphs.source_bindings]]")
     for index, block in enumerate(blocks):
         if 'alias = "companion"' in block:
@@ -328,7 +328,7 @@ def test_real_binding_privacy_reclassification_refuses_body_scope(tmp_path: Path
         )
         assert built.result == "published"
         assert built.published is not None
-        config_path = home / "repomap.rpl.toml"
+        config_path = home / "repomap.local.cloe.toml"
         original = config_path.read_text(encoding="utf-8")
         try:
             config_path.write_text(_companion_privacy_edit(original), encoding="utf-8")

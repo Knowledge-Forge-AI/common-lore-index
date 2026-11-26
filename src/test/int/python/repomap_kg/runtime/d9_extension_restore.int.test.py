@@ -68,7 +68,7 @@ def _refused(
 
 def test_d9b_multilevel_synthetic_extension_restore_and_refusals(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-core-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-core-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         graph_db, ctrl_db, home = "d9b_graph", "d9b_graph_control", root / "home"
         reference = clean_template_reference(root)
@@ -188,7 +188,7 @@ def test_d9b_multilevel_synthetic_extension_restore_and_refusals(monkeypatch: py
 
 def test_d9b_backup_first_upgrade_and_drop_consumers_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-upg-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-upg-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         graph_db, ctrl_db, home = "d9b_upg_graph", "d9b_upg_graph_control", root / "home"
         reference = clean_template_reference(root)
@@ -283,7 +283,7 @@ def _exact_trixie_container(container: str) -> dict[str, str]:
 def test_d12_trixie_backup_restore_and_collation_refusals(monkeypatch: pytest.MonkeyPatch) -> None:
     """ADR 0091 D9 compatibility on the exact Trixie release server, separate disposable clusters only."""
     require_postgres_binaries()
-    with short_test_directory("d12t-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d12t-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         graph_db, home = "d12t_graph", root / "home"
         reference = clean_template_reference(root, image=POSTGRES_RELEASE_IMAGE)

@@ -85,16 +85,16 @@ def test_longest_coordinator_path_fits_owned_short_directory():
     """Private phase roots still support the longest coordinator path."""
     layout = establish_run()
     with short_test_directory(
-        "async10-", "incompatible/configured.rp.toml", layout=layout
+        "async10-", "incompatible/configured.cloe.toml", layout=layout
     ) as directory:
-        candidate = directory / "incompatible/configured.rp.toml"
+        candidate = directory / "incompatible/configured.cloe.toml"
         assert len(os.fsencode(str(candidate))) <= MAX_SOCKET_PATH_BYTES
         assert directory.parent == layout.socket_directories
 
     assert not directory.exists()
 
 def test_safety3_former_104_byte_shape_has_a_fitting_owned_component() -> None:
-    suffix = "incompatible/configured.rp.toml"
+    suffix = "incompatible/configured.cloe.toml"
     fixed = Path("/private/tmp")
     one_character_shape = fixed / "r" / "a000" / suffix
     padding = "r" * (
@@ -151,7 +151,7 @@ def test_safety3_impossible_socket_budget_refuses_before_workload() -> None:
 
 @pytest.mark.parametrize(
     "suffix",
-    ["coordinator/coordinator.sock", "incompatible/configured.rp.toml"],
+    ["coordinator/coordinator.sock", "incompatible/configured.cloe.toml"],
 )
 def test_safety3_unit_and_integration_layouts_share_budget_owner(
     tmp_path: Path,

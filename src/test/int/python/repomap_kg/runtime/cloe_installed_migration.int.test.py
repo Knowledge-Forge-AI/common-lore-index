@@ -24,7 +24,7 @@ from common_lore_index_test_support.installed_experience_driver import (
     Observed, OwnerRun, intent_for, json_object, preparation, pure_environment,
 )
 from common_lore_index_test_support.installed_experience_fixture import (
-    LEGACY_BASE, expectations, legacy_tiny_home, write_tiny_material,
+    LEGACY_BASE, LEGACY_LOCAL, expectations, legacy_tiny_home, write_tiny_material,
 )
 from common_lore_index_test_support.installed_mcp_session import useful_question
 from common_lore_index_test_support.installed_experience_witnesses import (
@@ -100,8 +100,8 @@ def test_installed_config_migration_lifecycle(tmp_path_factory, tmp_path: Path) 
                     if item.get("graph_id", item.get("id")) == GRAPH_ID), {})
         return (row.get("storage_status") or {}).get("accepted_generation")
 
-    def identity() -> tuple[str, Any]:
-        return hashlib.sha256(database.read_bytes()).hexdigest(), generation(env, "cloe")
+    def identity(environment: Any = env, wrapper: str = "cloe") -> tuple[str, Any]:
+        return hashlib.sha256(database.read_bytes()).hexdigest(), generation(environment, wrapper)
 
     def digests() -> Any:
         answer = useful_question(env, (cloe, "mcp", "serve", "--repo-map-home", str(home)), graph_id=GRAPH_ID,
@@ -115,12 +115,22 @@ def test_installed_config_migration_lifecycle(tmp_path_factory, tmp_path: Path) 
         return (json_object(result.stdout) or {}).get("valid") if result.returncode == 0 else None
 
     def r01() -> Observed:
-        init = run_child(env, (cloe, "ops", "sqlite-init", "--repo-map-home", str(home), "--graph", GRAPH_ID, "--json"))
-        if init.exit != 0:
-            return Observed(failure_code="prerequisite-failed")
-        refreshed = run_child(env, (cloe, "ops", "refresh-graph", "--repo-map-home", str(home), "--graph", GRAPH_ID,
-                                    "--json"))
-        state.update(identity=identity(), config=_config_snapshot(home), mcp=digests())
+        # Bootstrap with the candidate's supported names, then recreate the
+        # same owned legacy fixture before exercising migration.
+        layers = {LEGACY_BASE: "repomap.cloe.toml", LEGACY_LOCAL: "zz-local.local.cloe.toml"}
+        for legacy, canonical in layers.items():
+            (home / legacy).rename(home / canonical)
+        try:
+            init = run_child(env, (cloe, "ops", "sqlite-init", "--repo-map-home", str(home), "--graph", GRAPH_ID, "--json"))
+            if init.exit != 0:
+                return Observed(failure_code="prerequisite-failed")
+            refreshed = run_child(env, (cloe, "ops", "refresh-graph", "--repo-map-home", str(home), "--graph", GRAPH_ID,
+                                        "--json"))
+            state.update(identity=identity(), mcp=digests())
+        finally:
+            for legacy, canonical in layers.items():
+                (home / canonical).rename(home / legacy)
+        state["config"] = _config_snapshot(home)
         return Observed({"accepted_generation": ((json_object(refreshed.stdout) or {}).get("accepted_generation"),
                                                  OUT)}, exit=refreshed.exit)
 
@@ -160,7 +170,7 @@ def test_installed_config_migration_lifecycle(tmp_path_factory, tmp_path: Path) 
         return Observed({"result": (result.get("result"), OUT),
                          "names_bytes_restored": (_config_snapshot(home) == state.get("config"), FS),
                          "incumbent_valid": (valid(old, "repomap-kg") is True, OUT),
-                         "identity_unchanged": (identity() == state.get("identity"), FS)})
+                         "identity_unchanged": (identity(old, "repomap-kg") == state.get("identity"), FS)})
 
     def r06() -> Observed:
         applied, finalized = migrate("apply", "confirmed"), migrate("finalize", "confirmed")

@@ -130,7 +130,7 @@ def test_real_postgresql_unsupported_callable_falls_back(environment: tuple, tmp
     _, _, options = environment
     home = tmp_path / "unsupported-home"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     monkeypatch.setenv("CLOE_HOME", str(home))
     options["graph_id"] = "host-one"
     with patched_guards(NO_FALLBACK_GUARDS):

@@ -54,7 +54,7 @@ path = "~/.codex/codex-vc/mcp/server-memory"
 mode = "read_only"
 """
                 config_path.write_text(config_text, encoding="utf-8")
-                (repo_map_home / "repomap.rpl.toml").write_text(config_text, encoding="utf-8")
+                (repo_map_home / "repomap.local.cloe.toml").write_text(config_text, encoding="utf-8")
 
                 def _run(*args: str) -> tuple[int, str, str]:
                     return run_repo_map_in_process("ops", *args)

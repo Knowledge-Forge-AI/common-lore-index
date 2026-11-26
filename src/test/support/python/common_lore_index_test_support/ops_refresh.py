@@ -84,7 +84,7 @@ class OpsRefreshUnitTestCase(unittest.TestCase):
     ):
         private = private_root or repo_root / "private"
         home.mkdir(parents=True)
-        (home / "repomap.rpl.toml").write_text(
+        (home / "repomap.local.cloe.toml").write_text(
             VALID_REFRESH_CONFIG.format(repo_root=repo_root, private_root=private)
             .replace('host = "127.0.0.1"', 'host = "postgres"'),
             encoding="utf-8",

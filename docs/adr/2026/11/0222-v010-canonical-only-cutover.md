@@ -27,6 +27,11 @@ ownership and collection reconciliation. Update current clients and
 installed validation together. This supersedes the legacy interface
 promises in ADRs 0109 and 0123 for v0.1.0.
 
+Ordinary home and single-file loaders refuse the legacy configuration
+suffixes. The explicit configuration migration commands retain that
+input, including for rollback and predecessor recovery. Runtime setup
+creates only the canonical overlay.
+
 Classify legacy spellings by active interface, one-time conversion input,
 immutable identity or historical evidence, and negative test or third-party
 attribution. Analyze first-party Go naming and current tool/CI artifacts

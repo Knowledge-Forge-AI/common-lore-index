@@ -118,7 +118,7 @@ def test_planner_honors_new_home_without_storage_dispatch_or_source_reads(
 def test_fresh_guarded_server_planning_never_imports_driver(tmp_path: Path) -> None:
     home = tmp_path / "server home"
     home.mkdir()
-    (home / "00.rp.toml").write_text(OPS_CONFIG_TEMPLATE)
+    (home / "00.cloe.toml").write_text(OPS_CONFIG_TEMPLATE)
     before = _snapshot(home)
     harness = LocalHarness(tmp_path / "guarded", block_psycopg=True)
     result = harness.run(
@@ -220,8 +220,9 @@ def test_mcp_refuses_retired_connection_selectors_before_configuration_access(tm
 
 
 @pytest.mark.parametrize("invalid", ['schema_version = "private-error-sentinel"\n', 'password = "private-error-sentinel\n'])
-def test_invalid_input_stderr_never_echoes_values_or_home(tmp_path: Path, invalid: str) -> None:
-    (tmp_path / "00.rp.toml").write_text(invalid)
+@pytest.mark.parametrize("suffix", [".rp.toml", ".cloe.toml"])
+def test_invalid_input_stderr_never_echoes_values_or_home(tmp_path: Path, invalid: str, suffix: str) -> None:
+    (tmp_path / ("00" + suffix)).write_text(invalid)
     result = run_cli_module("ops", "config-migration-plan", "--repo-map-home", str(tmp_path), "--json")
     assert result.returncode == 1 and result.stdout == ""
     assert "private-error-sentinel" not in result.stderr
@@ -277,3 +278,21 @@ def test_runtime_setup_refusal_preserves_cloe_home(tmp_path: Path) -> None:
     assert _snapshot(home) == before
     assert sorted(p.name for p in home.iterdir()) == ["00.cloe.toml"]
     assert not harness.forbidden_events() and not harness.shim_invocations()
+
+
+@pytest.mark.parametrize("explicit", [True, False])
+def test_legacy_home_requires_migration_before_ordinary_config_readback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, explicit: bool,
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("CLOE_HOME", raising=False)
+    home = tmp_path / ".cloe"
+    home.mkdir(mode=0o700)
+    (home / "old.rp.toml").write_text(OPS_CONFIG_TEMPLATE)
+    before = _snapshot(tmp_path)
+    flags = ("--repo-map-home", str(home), "--json") if explicit else ("--json",)
+    checked = run_cli_module("ops", "config-check", *flags)
+    assert checked.returncode == 1 and "config-migration-plan" in checked.stderr
+    planned = run_cli_module("ops", "config-migration-plan", *flags)
+    assert planned.returncode == 0 and json.loads(planned.stdout)["conversion_required"]
+    assert _snapshot(tmp_path) == before

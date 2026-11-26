@@ -127,7 +127,7 @@ def test_bounded_selection_refusals_precede_store(bounded_home, graph, message):
 def test_unsupported_postgres_refuses_bounded_but_default_read_stays_exact(tmp_path, monkeypatch):
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config())
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config())
     monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     config = ops.load_mcp_ops_config()
@@ -159,7 +159,7 @@ def test_complete_empty_scope_and_missing_center(bounded_home):
 def test_bounded_mixed_kinds_and_private_endpoints_stay_sanitized(bounded_home, monkeypatch, private, candidate):
     home, _ = bounded_home
     if private:
-        path = home / "repomap.rp.toml"
+        path = home / "repomap.cloe.toml"
         path.write_text(path.read_text().replace('privacy = "public-dev"', 'privacy = "private-ops"'))
     raw = dict(center=dict(canonical_key=CENTER, graph_key_version=1),
         nodes=[] if candidate == "python.module:unseen" else [dict(canonical_key=candidate, graph_key_version=1)],

@@ -385,15 +385,15 @@ def test_unreadable_or_conflicting_state_refuses_and_preserves_the_pending_attem
 def test_implicit_postgres_home_with_sqlite_overlay_refuses_both_commands_directly(tmp_path: Path) -> None:
     home = tmp_path / "pg-home"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
-    (home / "zz-local.rpl.toml").write_text('schema_version = 1\n[storage]\nbackend = "sqlite"\n', encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "zz-local.local.cloe.toml").write_text('schema_version = 1\n[storage]\nbackend = "sqlite"\n', encoding="utf-8")
     harness = LocalHarness(tmp_path / "harness")
     for command in ("sqlite-init", "refresh-graph"):
         completed = harness.run("ops", command, "--repo-map-home", str(home), "--graph", "host-one")
         assert completed.returncode == 1 and completed.stdout == "", (command, completed.returncode, completed.stdout)
         assert "storage-backend-conflict: " in completed.stderr, (command, completed.stderr)
-        assert "conflicts with the postgresql backend of repomap.rpl.toml" in completed.stderr, completed.stderr
+        assert "conflicts with the postgresql backend of repomap.local.cloe.toml" in completed.stderr, completed.stderr
         _bounded(completed.stderr, tmp_path)
-    assert sorted(item.name for item in home.iterdir()) == ["repomap.rpl.toml", "zz-local.rpl.toml"]
+    assert sorted(item.name for item in home.iterdir()) == ["repomap.local.cloe.toml", "zz-local.local.cloe.toml"]
     assert harness.forbidden_events() == [], harness.forbidden_events()
     assert harness.shim_invocations() == ""

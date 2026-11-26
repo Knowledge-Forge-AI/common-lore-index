@@ -46,10 +46,10 @@ from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
 
 
 def test_s15_b07_ops_config_payload_merging_matrix(tmp_path: Path) -> None:
-    (tmp_path / "base.rp.toml").write_text(
+    (tmp_path / "base.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=tmp_path, private_root=tmp_path / "private")
     )
-    (tmp_path / "overlay.rpl.toml").write_text(
+    (tmp_path / "overlay.local.cloe.toml").write_text(
         'schema_version = 1\n[service]\nlog_level = "debug"\n'
         '[postgres]\nport = 5433\n'
     )
@@ -57,13 +57,13 @@ def test_s15_b07_ops_config_payload_merging_matrix(tmp_path: Path) -> None:
     assert config.service.mode == "local"
     assert config.service.log_level == "debug"
     assert config.postgres.port == 5433
-    assert config.config_files == ("base.rp.toml", "overlay.rpl.toml")
+    assert config.config_files == ("base.cloe.toml", "overlay.local.cloe.toml")
     codes = {diagnostic.code for diagnostic in config.diagnostics}
     assert {"service-overlay", "postgres-overlay"} <= codes
     payload = ops_config_status_to_jsonable(config)
     assert payload["service"]["log_level"] == "debug"
     assert payload["postgres"]["port"] == 5433
-    (tmp_path / "overlay.rpl.toml").unlink()
+    (tmp_path / "overlay.local.cloe.toml").unlink()
     restored = load_ops_config_home(tmp_path)
     assert restored.service.log_level == "info"
     assert restored.postgres.port == 5432
@@ -76,7 +76,7 @@ def test_config_storage_graphs_loading_records_status_and_file_records(tmp_path:
     """Layered config homes, graph storage readback, and file readback compose over TOML files and psql."""
     sqlite_home = tmp_path / "sqlite_home"
     sqlite_home.mkdir()
-    (sqlite_home / "base.rp.toml").write_text(
+    (sqlite_home / "base.cloe.toml").write_text(
         'schema_version = 1\n[storage]\nbackend = "sqlite"\nextra = 1\n'
         f'[[graphs]]\nid = "g1"\nname = "G1"\nroot_path = "{tmp_path}"\nrepository_name = "g1"\n',
         encoding="utf-8",
@@ -87,11 +87,11 @@ def test_config_storage_graphs_loading_records_status_and_file_records(tmp_path:
 
     conflict_home = tmp_path / "conflict_home"
     conflict_home.mkdir()
-    (conflict_home / "base.rp.toml").write_text(
+    (conflict_home / "base.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=tmp_path, private_root=tmp_path / "private"),
         encoding="utf-8",
     )
-    (conflict_home / "overlay.rpl.toml").write_text(
+    (conflict_home / "overlay.local.cloe.toml").write_text(
         'schema_version = 1\n[storage]\nbackend = "sqlite"\n',
         encoding="utf-8",
     )
@@ -99,7 +99,7 @@ def test_config_storage_graphs_loading_records_status_and_file_records(tmp_path:
         load_ops_config_home(conflict_home)
     assert any(d.code == "storage-backend-conflict" for d in conf_err.value.diagnostics)
 
-    diag_file = tmp_path / "diag_single.rp.toml"
+    diag_file = tmp_path / "diag_single.cloe.toml"
     diag_file.write_text(
         'schema_version = 1\n'
         '[storage]\nbackend = "other"\n'
@@ -126,14 +126,14 @@ def test_config_storage_graphs_loading_records_status_and_file_records(tmp_path:
 
     warn_home = tmp_path / "warn_home"
     warn_home.mkdir()
-    (warn_home / "base.rp.toml").write_text(
+    (warn_home / "base.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=tmp_path, private_root=tmp_path / "private")
         + '\n[runtime.postgres]\nport = 5432\n'
         + '[[sources.github]]\nid = "s1"\ngraph_id = "repo-map_dev"\nenabled = true\nurl = "https://example.invalid/a"\n'
         + '[[sources.github]]\nid = "s1"\ngraph_id = "repo-map_dev"\nenabled = true\nurl = "https://example.invalid/b"\n',
         encoding="utf-8",
     )
-    (warn_home / "over.rpl.toml").write_text(
+    (warn_home / "over.local.cloe.toml").write_text(
         'schema_version = 1\n'
         '[runtime.postgres]\nport = 5433\n'
         '[[sources.github]]\nid = "s1"\ngraph_id = "repo-map_dev"\nenabled = true\nurl = "https://example.invalid/c"\n',
@@ -145,7 +145,7 @@ def test_config_storage_graphs_loading_records_status_and_file_records(tmp_path:
 
     pg_home = tmp_path / "pg_home"
     pg_home.mkdir()
-    (pg_home / "base.rp.toml").write_text(
+    (pg_home / "base.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=tmp_path, private_root=tmp_path / "private"),
         encoding="utf-8",
     )
@@ -193,7 +193,7 @@ def test_config_storage_graphs_loading_records_status_and_file_records(tmp_path:
 
 def test_baselines_reports_and_source_generation_edge_contracts(tmp_path: Path) -> None:
     """Baselines save/prune/drift, reports formatting, and source generation enforce filesystem and scan limits."""
-    (tmp_path / "base.rp.toml").write_text(
+    (tmp_path / "base.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=tmp_path, private_root=tmp_path / "private")
     )
     config = load_ops_config_home(tmp_path)

@@ -66,14 +66,14 @@ def test_single_file_sqlite_config_uses_its_parent_as_control_root(tmp_path: Pat
 def test_postgres_homes_are_unchanged_and_default_to_postgresql(tmp_path: Path) -> None:
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     loaded = load_graph_registry_config_home(home)
     assert isinstance(loaded, OpsConfig) and loaded == load_ops_config_home(home)
     assert declared_storage_backend(repo_map_home=str(home), config_path=None) == "postgresql"
     explicit = setup_owned_config().replace(
         "schema_version = 1\n", 'schema_version = 1\n[storage]\nbackend = "postgresql"\n', 1
     )
-    (home / "repomap.rpl.toml").write_text(explicit, encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(explicit, encoding="utf-8")
     assert load_ops_config_home(home).postgres.database == "repomap"
 
 
@@ -98,7 +98,7 @@ def test_postgres_loaders_refuse_sqlite_home_before_postgres_parsing(tmp_path: P
 def test_sqlite_home_rejects_postgres_only_sections(tmp_path: Path, text: str, code: str) -> None:
     home = tmp_path / "home"
     home.mkdir()
-    (home / "repomap.rp.toml").write_text(
+    (home / "repomap.cloe.toml").write_text(
         sqlite_home_toml(text + graph_toml("one", tmp_path / "src")), encoding="utf-8"
     )
     with pytest.raises(OpsConfigError) as caught:
@@ -113,7 +113,7 @@ def test_sqlite_home_rejects_graph_database_and_unknown_backend(tmp_path: Path) 
     with pytest.raises(OpsConfigError) as caught:
         load_graph_registry_config_home(home)
     assert _codes(caught.value) == ["sqlite-local-graph-database-unsupported"]
-    (home / "repomap.rp.toml").write_text(
+    (home / "repomap.cloe.toml").write_text(
         sqlite_home_toml(graph_toml("one", tmp_path / "src"), storage='[storage]\nbackend = "mysql"\n'),
         encoding="utf-8",
     )
@@ -142,25 +142,25 @@ def _overlay(storage: str = "", body: str = "") -> str:
     return "schema_version = 1\n" + storage + body
 
 
-# (LOCAL2 A1) The first file in load order (*.rp.toml, then *.rpl.toml, by
+# (LOCAL2 A1) The first file in load order (*.cloe.toml, then *.local.cloe.toml, by
 # name) fixes the backend: explicit [storage], or PostgreSQL when absent. A
 # later file may omit [storage] or repeat the same backend; a later file with
 # PostgreSQL-only sections and no [storage] declares PostgreSQL implicitly.
 REFUSED_LAYERS = {
     "implicit-pg-base+sqlite-overlay": {
-        "repomap.rpl.toml": setup_owned_config(), "zz-local.rpl.toml": _overlay(_SQLITE_STORAGE)},
+        "repomap.local.cloe.toml": setup_owned_config(), "zz-local.local.cloe.toml": _overlay(_SQLITE_STORAGE)},
     "setup-pg-home+sorts-first-sqlite": {
-        "repomap.rpl.toml": setup_owned_config(), "00-local.rp.toml": _overlay(_SQLITE_STORAGE)},
+        "repomap.local.cloe.toml": setup_owned_config(), "00-local.cloe.toml": _overlay(_SQLITE_STORAGE)},
     "explicit-pg-base+sqlite-overlay": {
-        "repomap.rpl.toml": _explicit_pg(), "zz-local.rpl.toml": _overlay(_SQLITE_STORAGE)},
+        "repomap.local.cloe.toml": _explicit_pg(), "zz-local.local.cloe.toml": _overlay(_SQLITE_STORAGE)},
     "sqlite-base+pg-overlay": {
-        "repomap.rp.toml": sqlite_home_toml(""), "zz-local.rpl.toml": _overlay(_PG_STORAGE)},
+        "repomap.cloe.toml": sqlite_home_toml(""), "zz-local.local.cloe.toml": _overlay(_PG_STORAGE)},
     "sqlite-base+pg-only-sections-overlay": {
-        "repomap.rp.toml": sqlite_home_toml(""),
-        "zz-local.rpl.toml": _overlay(body='[runtime]\ncontainer_runtime = "docker"\n')},
+        "repomap.cloe.toml": sqlite_home_toml(""),
+        "zz-local.local.cloe.toml": _overlay(body='[runtime]\ncontainer_runtime = "docker"\n')},
     "graph-only-first-rp+sqlite-second-rp": {
-        "00-base.rp.toml": _overlay(body=graph_toml("one", "/public/one")),
-        "10-x.rp.toml": _overlay(_SQLITE_STORAGE)},
+        "00-base.cloe.toml": _overlay(body=graph_toml("one", "/public/one")),
+        "10-x.cloe.toml": _overlay(_SQLITE_STORAGE)},
 }
 
 
@@ -181,8 +181,8 @@ def test_implicit_postgres_home_keeps_postgres_routing_under_a_sqlite_overlay(tm
     with pytest.raises(OpsConfigError) as caught:
         load_ops_config_home(home)
     conflict = next(item for item in caught.value.diagnostics if item.code == "storage-backend-conflict")
-    assert conflict.path == "zz-local.rpl.toml:storage.backend", conflict
-    assert "repomap.rpl.toml" in conflict.message and "no [storage] table" in conflict.message
+    assert conflict.path == "zz-local.local.cloe.toml:storage.backend", conflict
+    assert "repomap.local.cloe.toml" in conflict.message and "no [storage] table" in conflict.message
     # LOCAL3: the code reaches CLI stderr, which prints messages without codes.
     assert conflict.message.startswith("storage-backend-conflict: "), conflict.message
     assert "storage-backend-conflict: " in str(caught.value), str(caught.value)
@@ -191,16 +191,16 @@ def test_implicit_postgres_home_keeps_postgres_routing_under_a_sqlite_overlay(tm
 @pytest.mark.parametrize(
     "layers",
     (
-        {"repomap.rpl.toml": setup_owned_config(), "zz-local.rpl.toml": _overlay(_PG_STORAGE)},
-        {"repomap.rpl.toml": _explicit_pg(), "zz-local.rpl.toml": _overlay(_PG_STORAGE)},
-        {"repomap.rpl.toml": _explicit_pg(), "zz-local.rpl.toml": _overlay()},
+        {"repomap.local.cloe.toml": setup_owned_config(), "zz-local.local.cloe.toml": _overlay(_PG_STORAGE)},
+        {"repomap.local.cloe.toml": _explicit_pg(), "zz-local.local.cloe.toml": _overlay(_PG_STORAGE)},
+        {"repomap.local.cloe.toml": _explicit_pg(), "zz-local.local.cloe.toml": _overlay()},
     ),
     ids=("implicit-pg+explicit-pg", "explicit-pg+explicit-pg", "explicit-pg+omitted"),
 )
 def test_same_backend_postgres_overlays_are_allowed(tmp_path: Path, layers: dict[str, str]) -> None:
     alone = tmp_path / "alone"
     alone.mkdir()
-    (alone / "repomap.rpl.toml").write_text(layers["repomap.rpl.toml"], encoding="utf-8")
+    (alone / "repomap.local.cloe.toml").write_text(layers["repomap.local.cloe.toml"], encoding="utf-8")
     layered = load_graph_registry_config_home(_layered_home(tmp_path, layers))
     assert isinstance(layered, OpsConfig), type(layered)
     baseline = load_ops_config_home(alone)
@@ -212,11 +212,11 @@ def test_same_backend_postgres_overlays_are_allowed(tmp_path: Path, layers: dict
 @pytest.mark.parametrize(
     ("layers", "enabled"),
     (
-        ({"repomap.rp.toml": sqlite_home_toml(graph_toml("one", "/public/one")),
-          "zz-local.rpl.toml": _overlay(_SQLITE_STORAGE)}, True),
-        ({"repomap.rp.toml": sqlite_home_toml(graph_toml("one", "/public/one")),
-          "zz-local.rpl.toml": _overlay(body='[[graphs]]\nid = "one"\nenabled = false\n')}, False),
-        ({"repomap.rpl.toml": sqlite_home_toml(graph_toml("one", "/public/one"))}, True),
+        ({"repomap.cloe.toml": sqlite_home_toml(graph_toml("one", "/public/one")),
+          "zz-local.local.cloe.toml": _overlay(_SQLITE_STORAGE)}, True),
+        ({"repomap.cloe.toml": sqlite_home_toml(graph_toml("one", "/public/one")),
+          "zz-local.local.cloe.toml": _overlay(body='[[graphs]]\nid = "one"\nenabled = false\n')}, False),
+        ({"repomap.local.cloe.toml": sqlite_home_toml(graph_toml("one", "/public/one"))}, True),
     ),
     ids=("sqlite+sqlite", "sqlite+omitted-storage-overlay", "rpl-only-sqlite"),
 )
@@ -232,13 +232,13 @@ def test_sqlite_base_is_preserved_by_same_or_omitted_overlays(
 
 def test_invalid_overlay_backend_is_reported_with_its_source(tmp_path: Path) -> None:
     home = _layered_home(tmp_path, {
-        "repomap.rpl.toml": setup_owned_config(),
-        "zz-local.rpl.toml": _overlay('[storage]\nbackend = "mysql"\n'),
+        "repomap.local.cloe.toml": setup_owned_config(),
+        "zz-local.local.cloe.toml": _overlay('[storage]\nbackend = "mysql"\n'),
     })
     with pytest.raises(OpsConfigError) as caught:
         load_graph_registry_config_home(home)
     paths = {item.path for item in caught.value.diagnostics if item.code == "unsupported-storage-backend"}
-    assert paths == {"zz-local.rpl.toml:storage.backend"}, caught.value.diagnostics
+    assert paths == {"zz-local.local.cloe.toml:storage.backend"}, caught.value.diagnostics
 
 
 def test_legacy_single_file_postgres_config_is_unchanged(tmp_path: Path) -> None:

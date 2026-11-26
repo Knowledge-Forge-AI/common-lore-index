@@ -89,7 +89,7 @@ class StorageFilesEntrypointsCliIntegrationTests(unittest.TestCase):
                 psql_command=postgres.psql_command,
             )
             home = Path(tmpdir)
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 f'''schema_version = 1
 [service]
 mode = "local"
@@ -184,7 +184,7 @@ mode = "read_only"
                 "exit 2\n"
             )
             failing_psql.chmod(0o755)
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 '''schema_version = 1
 [service]
 mode = "local"

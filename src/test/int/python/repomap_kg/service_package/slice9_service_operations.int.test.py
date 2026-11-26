@@ -53,8 +53,8 @@ class Slice9ServiceOperationsIntegrationTests(unittest.TestCase):
 
         home = root / "home"
         home.mkdir(mode=0o700, exist_ok=True)
-        setup_local_runtime(home, config_format="legacy")
-        config = home / "repomap.rpl.toml"
+        setup_local_runtime(home)
+        config = home / "repomap.local.cloe.toml"
         config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
         spec = build_service_package_spec(home)
         adapter = SystemdUserAdapter(user_home=root / "user", uid=os.getuid())

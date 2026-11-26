@@ -154,7 +154,7 @@ def build_postgres_context_fixture(
         pw_file.write_text(str(postgres.password), encoding="utf-8")
         os.chmod(pw_file, 0o600)
         pw_line = f'password_file = "{pw_file.resolve().as_posix()}"\n'
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         f'schema_version = 1\n\n[storage]\nbackend = "postgresql"\n\n'
         f'[service]\nmode = "local"\nmcp_transport = "stdio"\nlog_level = "info"\n\n'
         f'[postgres]\nhost = "{postgres.host}"\nport = {postgres.port}\n'

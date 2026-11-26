@@ -168,7 +168,7 @@ class Arch1BResolvedConfigUnitTests(OpsRefreshUnitTestCase):
             config = self.config_home_for_roots(home, repository, private)
             graph = config.graphs[0]
             resolver = ConfiguredRefreshResolver(
-                home / "repomap.rpl.toml",
+                home / "repomap.local.cloe.toml",
                 root / "psql",
             )
 

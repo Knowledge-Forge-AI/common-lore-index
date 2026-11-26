@@ -66,7 +66,7 @@ def _refused(
 @pytest.mark.requires_pgvector
 def test_original_backup_restores_on_later_qualified_independent_engine_image(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-rq-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-rq-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         home, target_home = root / "home", root / "target_home"
         core_reference = clean_template_reference(root, profile="core")

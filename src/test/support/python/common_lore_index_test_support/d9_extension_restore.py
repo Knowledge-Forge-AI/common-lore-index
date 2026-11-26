@@ -84,7 +84,7 @@ class OwnedD9PostgresHarness(PostgresContainerHarness):
 def setup_d9_backup_home(home: Path, postgres: Any, *, graph_db: str = "repomap") -> LocalRuntimeIdentity:
     """Configure a local backup/restore home bound to a real owned container."""
     home.mkdir(mode=0o700, parents=True, exist_ok=True)
-    setup_local_runtime(home, config_format="legacy")
+    setup_local_runtime(home)
     home.chmod(0o700)
     (home / "runtime").chmod(0o700)
     toml_text = (
@@ -98,7 +98,7 @@ def setup_d9_backup_home(home: Path, postgres: Any, *, graph_db: str = "repomap"
         f'enabled = false\nmcp_visible = false\nextractor_profile = "default"\nrefresh_policy = "manual"\nexclude_paths = []\n'
         f'[server_memory]\nenabled = false\npath = "./server-memory"\nmode = "read_only"\n'
     )
-    (home / "repomap.rpl.toml").write_text(toml_text, encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(toml_text, encoding="utf-8")
     identity = LocalRuntimeIdentity.from_home(home)
     env_file = home / "runtime" / ".env"
     env_lines = [

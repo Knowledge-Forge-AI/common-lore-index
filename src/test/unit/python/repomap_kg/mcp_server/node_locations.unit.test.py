@@ -279,7 +279,7 @@ def test_postgres_helper_routes_via_read_status_and_refuses_missing_credentials(
 ) -> None:
     unauth = tmp_path / "unauth-home"
     unauth.mkdir()
-    (unauth / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (unauth / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     monkeypatch.setenv("CLOE_HOME", str(unauth))
     monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     with (
@@ -291,8 +291,8 @@ def test_postgres_helper_routes_via_read_status_and_refuses_missing_credentials(
         assert str(tmp_path) not in str(exc_info.value) and "REPOMAP_READ_STATUS_PASSWORD" not in str(exc_info.value)
 
     home = tmp_path / "postgres-home"
-    setup_local_runtime(home, config_format="legacy")
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    setup_local_runtime(home)
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     secret = read_role_secrets(home / "runtime" / ".env").read_status
     monkeypatch.setenv("CLOE_HOME", str(home))
     calls: list[tuple[str, dict[str, Any]]] = []

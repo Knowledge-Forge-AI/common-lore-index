@@ -27,7 +27,7 @@ def test_actual_refresh_launcher_uses_argv_no_shell_and_suppressed_output() -> N
         "ops",
         "refresh-graph",
         "--config",
-        "/public/config.rp.toml",
+        "/public/config.cloe.toml",
         "--graph",
         "public-fixture",
     )

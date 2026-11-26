@@ -100,7 +100,7 @@ def test_scale13_direct_dispatch_constructs_actual_path_measurements() -> None:
         )
 
     with tempfile.TemporaryDirectory() as directory:
-        Path(directory, "repo.rp.toml").write_text(_CONFIG, encoding="utf-8")
+        Path(directory, "repo.cloe.toml").write_text(_CONFIG, encoding="utf-8")
         with (
             patch(
                 "common_lore_index.cli.staging_event_channel_from_inherited_fd",
@@ -151,7 +151,7 @@ def test_scale13_dispatch_closes_channel_when_config_loading_fails() -> None:
                 "ops",
                 "refresh-graph",
                 "--config",
-                "/missing/config.rp.toml",
+                "/missing/config.cloe.toml",
                 "--graph",
                 "fixture",
                 "--staging-event-fd",

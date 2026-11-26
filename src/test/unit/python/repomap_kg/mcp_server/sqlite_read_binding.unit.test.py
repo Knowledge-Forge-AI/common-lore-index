@@ -356,7 +356,7 @@ def test_bindings_follow_the_declared_backend(home: Path, tmp_path: Path) -> Non
         graph_context(GRAPH)
     pg_home = tmp_path / "pg"
     pg_home.mkdir()
-    (pg_home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (pg_home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     postgres = load_mcp_ops_config(pg_home)
     assert not isinstance(postgres, LocalSqliteConfig)
     assert isinstance(mcp.graph_stores(postgres), PostgresGraphStores)

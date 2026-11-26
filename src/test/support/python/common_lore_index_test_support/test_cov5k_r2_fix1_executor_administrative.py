@@ -144,7 +144,7 @@ def execute_group_k_administrative(
     environment = os.environ.copy()
     repomap_home = case_root / "home"
     repomap_home.mkdir()
-    repomap_home.joinpath("rehearsal.rp.toml").write_text(
+    repomap_home.joinpath("rehearsal.cloe.toml").write_text(
         _k_rehearsal_config(case_root),
         encoding="utf-8",
     )

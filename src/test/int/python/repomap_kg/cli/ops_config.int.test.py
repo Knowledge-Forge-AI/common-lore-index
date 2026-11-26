@@ -172,10 +172,10 @@ class CliOpsConfigIntegrationTests(CliIntegrationTestCase):
             home = Path(tmpdir) / "repo-map-home"
             home.mkdir()
             self.write_fixture(
-                home / "00-project.rp.toml",
+                home / "00-project.cloe.toml",
                 OPS_CONFIG_TEMPLATE.replace('log_level = "info"', 'log_level = "info"\nunknown_flag = true') + p_extra,
             )
-            self.write_fixture(home / "90-local.rpl.toml", l_toml)
+            self.write_fixture(home / "90-local.local.cloe.toml", l_toml)
             self.write_fixture(home / "ignored.toml", "schema_version = 1\n")
             exit_code, stdout, stderr = self.run_module_entrypoint(
                 "ops", "config-check", "--repo-map-home", str(home), "--json"
@@ -184,7 +184,7 @@ class CliOpsConfigIntegrationTests(CliIntegrationTestCase):
         self.assertEqual(exit_code, 0, stderr)
         payload = json.loads(stdout)
         codes = {diagnostic["code"] for diagnostic in payload["diagnostics"]}
-        self.assertEqual(payload["config_files"], ["00-project.rp.toml", "90-local.rpl.toml"])
+        self.assertEqual(payload["config_files"], ["00-project.cloe.toml", "90-local.local.cloe.toml"])
         self.assertEqual(payload["runtime"]["postgres_host_port"], 55433)
         self.assertEqual(payload["graphs"][0]["root_path"], "./local")
         self.assertEqual(payload["graphs"][0]["exclude_paths_count"], 3)
@@ -224,8 +224,7 @@ class CliOpsConfigIntegrationTests(CliIntegrationTestCase):
         self.assertEqual((m_exit, f_exit, e_exit), (1, 1, 1))
         self.assertIn("CLOE_HOME does not exist", m_err)
         self.assertIn("CLOE_HOME must be a directory", f_err)
-        self.assertIn("contains no *.rp.toml or *.rpl.toml files", e_err)
-        self.assertIn("CLOE (*.cloe.toml) files", e_err)
+        self.assertIn("contains no *.cloe.toml or *.local.cloe.toml files", e_err)
 
     def test_ops_config_check_reports_config_home_schema_and_runtime_errors(self):
         bad_runtime = OPS_CONFIG_TEMPLATE + '\n[runtime]\ncontainer_runtime = "launchd"\npostgres_host_port = 80\nserver_host_port = 70000\nbind_host = "0.0.0.0"\n'
@@ -233,13 +232,13 @@ class CliOpsConfigIntegrationTests(CliIntegrationTestCase):
             base = Path(tmpdir)
             missing_schema_home = base / "missing-schema"
             missing_schema_home.mkdir()
-            self.write_fixture(missing_schema_home / "00-project.rp.toml", "[service]\n")
+            self.write_fixture(missing_schema_home / "00-project.cloe.toml", "[service]\n")
             unsupported_schema_home = base / "unsupported-schema"
             unsupported_schema_home.mkdir()
-            self.write_fixture(unsupported_schema_home / "00-project.rp.toml", "schema_version = 2\n")
+            self.write_fixture(unsupported_schema_home / "00-project.cloe.toml", "schema_version = 2\n")
             bad_runtime_home = base / "bad-runtime"
             bad_runtime_home.mkdir()
-            self.write_fixture(bad_runtime_home / "00-project.rp.toml", bad_runtime)
+            self.write_fixture(bad_runtime_home / "00-project.cloe.toml", bad_runtime)
 
             m_exit, _, m_err = self.run_module_entrypoint("ops", "config-check", "--repo-map-home", str(missing_schema_home), "--json")
             u_exit, _, u_err = self.run_module_entrypoint("ops", "config-check", "--repo-map-home", str(unsupported_schema_home), "--json")
@@ -257,7 +256,7 @@ class CliOpsConfigIntegrationTests(CliIntegrationTestCase):
             home = Path(tmpdir) / "repo-map-home"
             home.mkdir()
             self.write_fixture(
-                home / "00-project.rp.toml",
+                home / "00-project.cloe.toml",
                 OPS_CONFIG_TEMPLATE.replace(
                     'refresh_policy = "manual"',
                     'refresh_policy = "manual"\nexclude_paths = ["../outside", "/tmp/secret"]',

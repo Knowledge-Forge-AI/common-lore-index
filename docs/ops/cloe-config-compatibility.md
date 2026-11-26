@@ -1,6 +1,6 @@
 # CLOE configuration compatibility
 
-Common Lore Index can read an explicitly selected predecessor home for data recovery and migration.
+Use the configuration migration commands to convert or recover an explicitly selected predecessor home.
 
 ## Home selection
 
@@ -18,17 +18,11 @@ homes or fence independently running older binaries. See [ADR0118](../adr/2026/1
 
 ## Supported files and order
 
-A home uses exactly one family:
-
-| Family | Base files, loaded first | Local overlays, loaded second |
-|---|---|---|
-| Legacy | `*.rp.toml` | `*.rpl.toml` |
-| CLOE | `*.cloe.toml`, excluding local overlays | `*.local.cloe.toml` |
-
-Files sort alphabetically within each group. A local overlay is selected once.
-Discovery remains top-level only. A home mixing both families is refused;
-previously ignored CLOE-suffixed files now belong to an active family, so a
-legacy home containing them must resolve that mixture before loading.
+Normal home loading reads only top-level `*.cloe.toml` base files and
+`*.local.cloe.toml` overlays. Files sort alphabetically within each layer
+and the base precedes the overlay. Legacy `*.rp.toml` and `*.rpl.toml`
+filenames can be read by the migration commands. A home mixing families
+is refused.
 Unrelated TOML files retain ignored-file diagnostics. File suffixes do not
 grant permission to publish private configuration.
 
@@ -51,14 +45,9 @@ cloe local setup --repo-map-home ./new-home --dry-run --json
 cloe local setup --repo-map-home ./new-home --json
 ```
 
-Fresh homes default to CLOE filenames, including homes selected with
-`--repo-map-home` or `CLOE_HOME`. The explicit legacy format remains available
-for conversion and recovery rehearsals.
-An existing home's active family is detected automatically. An explicit format
-must match it; this command does not convert a legacy home. Legacy setup creates
-`repomap.rpl.toml`; CLOE setup creates `repomap.local.cloe.toml`, with the same
-template payload and stable runtime/graph/database naming. Loaded CLOE files
-are mounted by their actual names for the container runtime.
+Setup creates `repomap.local.cloe.toml` and mounts loaded CLOE files by
+their actual names. For an existing predecessor home, run the migration
+plan and apply commands before setup.
 
 Setup never overwrites an existing generated target. Its default overlay uses
 the same bootstrap precedence as legacy setup: it can override base-file values,

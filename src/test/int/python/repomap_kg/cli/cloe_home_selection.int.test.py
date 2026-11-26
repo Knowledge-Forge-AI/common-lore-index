@@ -31,7 +31,7 @@ def test_explicit_legacy_plan_and_mcp_readback_preserve_existing_sqlite_state(tm
     harness = LocalHarness(tmp_path / "guarded with spaces", block_psycopg=True)
     home = harness.user_home / ".repo-map"
     home.mkdir(mode=0o700)
-    (home / "00.rp.toml").write_text(sqlite_home_toml(graph_toml("one", "/not-read/source")))
+    (home / "00.cloe.toml").write_text(sqlite_home_toml(graph_toml("one", "/not-read/source")))
     initialized = harness.run("ops", "sqlite-init", "--repo-map-home", str(home), "--graph", "one", "--json")
     assert initialized.returncode == 0, initialized.stderr
     current = harness.user_home / ".cloe"
@@ -198,7 +198,7 @@ def test_mcp_explicit_config_environment_survives_foreign_default(tmp_path: Path
     harness = LocalHarness(tmp_path / "explicit-config", block_psycopg=True)
     home = harness.scratch / "selected-home"
     home.mkdir(mode=0o700)
-    config = home / "00.rp.toml"
+    config = home / "00.cloe.toml"
     config.write_text(sqlite_home_toml(graph_toml("one", "/not-read/source")))
     initialized = harness.run("ops", "sqlite-init", "--repo-map-home", str(home), "--graph", "one", "--json")
     assert initialized.returncode == 0, initialized.stderr
@@ -243,6 +243,9 @@ def test_config_and_runtime_share_canonical_defaults_and_explicit_legacy_selecti
     assert local.resolve_repo_map_home is config.resolve_repo_map_home is config_loading.resolve_repo_map_home
     assert local.resolve_repo_map_home() == current
     assert local.resolve_repo_map_home(legacy) == legacy
-    loaded = config.load_ops_config_home(legacy)
-    assert loaded.config_home == str(legacy)
+    with pytest.raises(config.OpsConfigError) as refused:
+        config.load_ops_config_home(legacy)
+    assert refused.value.diagnostics[0].code == "legacy-config-filenames"
+    plan = run_cli_module("ops", "config-migration-plan", "--repo-map-home", str(legacy), "--json")
+    assert plan.returncode == 0 and json.loads(plan.stdout)["conversion_required"]
     assert snapshot(legacy) == before and not current.exists()

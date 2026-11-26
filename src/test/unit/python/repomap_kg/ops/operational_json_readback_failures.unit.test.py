@@ -38,7 +38,7 @@ def _internal_config(tmp_path: Path) -> OpsConfig:
     root = tmp_path / "repo"
     home.mkdir()
     root.mkdir()
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=root, private_root=root / "private")
         .replace('host = "127.0.0.1"', 'host = "postgres"'),
         encoding="utf-8",

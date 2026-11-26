@@ -90,7 +90,7 @@ def start_scale15_runtime(
     selected.setup_local_runtime(home)
     plan = selected.build_plan(home)
     password = selected.read_runtime_password(plan.env_file)
-    config_path = root / "actual.rp.toml"
+    config_path = root / "actual.cloe.toml"
     config_path.write_text(
         selected.actual_config(graph_ids, repository, server_port),
         encoding="utf-8",

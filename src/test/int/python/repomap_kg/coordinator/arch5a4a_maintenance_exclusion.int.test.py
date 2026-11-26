@@ -208,7 +208,7 @@ def test_lifecycle_maintenance_windows_and_database_ownership_validation(
     monkeypatch,
 ) -> None:
     require_postgres_binaries()
-    with short_test_directory("arch5a-", "ops/configured.rp.toml") as directory:
+    with short_test_directory("arch5a-", "ops/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("ARCH5A_TEST_PASSWORD", postgres.password)
@@ -216,7 +216,7 @@ def test_lifecycle_maintenance_windows_and_database_ownership_validation(
             home.mkdir(mode=0o700, exist_ok=True)
             repository = root / "repository"
             repository.mkdir()
-            (home / "configured.rp.toml").write_text(
+            (home / "configured.cloe.toml").write_text(
                 f'''schema_version = 1
 
 [service]

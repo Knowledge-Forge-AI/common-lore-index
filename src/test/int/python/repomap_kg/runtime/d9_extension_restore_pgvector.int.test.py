@@ -111,7 +111,7 @@ def _seed_two_publications(handle: Any) -> Any:
 @pytest.mark.requires_pgvector
 def test_first_proof_unchanged_pgcustom_private_derived_toc_stdin_transport(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-proof-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-proof-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         src_db, dst_db, home = "d9b_src_graph", "d9b_dst_graph", root / "home"
         reference = clean_template_reference(root)
@@ -157,7 +157,7 @@ def test_first_proof_unchanged_pgcustom_private_derived_toc_stdin_transport(monk
 @pytest.mark.requires_pgvector
 def test_pgvector_d9b_end_to_end_single_and_coordinated_restore_and_role_reconciliation(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-vec-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-vec-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         graph_db, home = "d9b_vec_graph", root / "home"
         ctrl_db = f"{graph_db}_control"

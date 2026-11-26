@@ -56,7 +56,7 @@ def publish_fixture(tmp_path: Path, postgres: Any, multi_db: Any) -> HostPublica
     for database in databases.values():
         apply_migrations(default_rdbms_root(), database.psql_args, psql_command=database.psql_command)
     home, sources = tmp_path / "home", tmp_path / "sources"
-    setup_local_runtime(home, config_format="legacy")
+    setup_local_runtime(home)
     secrets = role_secrets(home)
     for name, text in (("one/run.sh", SHELL_MAIN), ("alpha/lib.sh", SHELL_LIB),
                        ("alpha/run.sh", SHELL_MAIN), ("beta/lib.sh", SHELL_LIB)):
@@ -149,7 +149,7 @@ def write_config(home: Path, host_port: int, one_db: str, multi_db: str, sources
                 'evidence_retention = "inherit"\nextractor_profile = "default"\n'
                 'resolution_policy = "isolated"\nrole = "source"\nenabled = true\n')
 
-    (home / "repomap.rpl.toml").write_text(f'''schema_version = 1
+    (home / "repomap.local.cloe.toml").write_text(f'''schema_version = 1
 [service]
 mode = "local"
 mcp_transport = "stdio"

@@ -34,7 +34,7 @@ def test_native_route_is_bound_and_worker_rejects_route_change(tmp_path, monkeyp
     (repository / "README.md").write_text("# Fixture\n")
     home = tmp_path / "home"
     home.mkdir(mode=0o700)
-    config_path = home / "repomap.rpl.toml"
+    config_path = home / "repomap.local.cloe.toml"
     write_config(config_path, repository)
     config_path.write_text(config_path.read_text().replace('host = "localhost"', 'host = "postgres"') +
                            '\n[runtime.postgres]\ndirect_host_port_enabled = true\nhost_port = 55891\n')

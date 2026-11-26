@@ -209,7 +209,7 @@ def test_postgres_lexical_build_query_styles_fence_reclassification_revoke_and_r
         assert ref_empty_tsq.refusal_code == "empty_lexical_tsquery"
 
         # 8. Live on-disk config reload + policy reclassification check inside single-statement fence
-        cfg_file = pg_home / "repomap.rpl.toml"
+        cfg_file = pg_home / "repomap.local.cloe.toml"
         orig_cfg_text = cfg_file.read_text(encoding="utf-8")
         try:
             cfg_file.write_text(

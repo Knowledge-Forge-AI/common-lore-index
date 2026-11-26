@@ -201,7 +201,7 @@ WHERE canonical_nodes.repository_id = (
 
 
 def _write_config(home: Path, *, postgres) -> None:
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         f'''schema_version = 1
 [service]
 mode = "local"

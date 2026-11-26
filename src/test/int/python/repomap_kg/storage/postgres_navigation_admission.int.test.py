@@ -220,7 +220,7 @@ def test_read_status_role_can_use_public_navigation_without_lexical_schema_or_ow
             tmp_path / "read-status-home", working, host="postgres", port=5432,
             database=postgres.database, user="repomap",
         )
-        config_text = (read_home / "repomap.rpl.toml").read_text(encoding="utf-8")
+        config_text = (read_home / "repomap.local.cloe.toml").read_text(encoding="utf-8")
         config_text = config_text.replace("host_port = 5432", f"host_port = {postgres.port}", 1)
         config_text = config_text.replace(
             '[runtime.postgres]\ndirect_host_port_enabled = true\n'
@@ -232,8 +232,8 @@ def test_read_status_role_can_use_public_navigation_without_lexical_schema_or_ow
         config_text = config_text.replace(
             'user = "repomap"\n', 'user = "repomap"\npassword_env = "REPOMAP_PG_PASSWORD"\n', 1
         )
-        (read_home / "repomap.rpl.toml").write_text(config_text, encoding="utf-8")
-        setup_local_runtime(read_home, config_format="legacy")
+        (read_home / "repomap.local.cloe.toml").write_text(config_text, encoding="utf-8")
+        setup_local_runtime(read_home)
         env = {
             line.split("=", 1)[0]: line.split("=", 1)[1]
             for line in (read_home / "runtime" / ".env").read_text(encoding="utf-8").splitlines()

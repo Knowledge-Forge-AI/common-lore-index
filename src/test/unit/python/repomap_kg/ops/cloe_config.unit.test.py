@@ -345,3 +345,18 @@ def test_mcp_connection_uses_canonical_environment_defaults(
         "public-fixture", "55489", "readonly", "fixture_db"
     )
     assert connection.psql_command == "/fixture/bin/psql"
+
+
+@pytest.mark.parametrize("suffix", [".rp.toml", ".rpl.toml"])
+def test_normal_config_owners_refuse_legacy_before_reading(tmp_path: Path, suffix: str) -> None:
+    from common_lore_index.ops.config_loading import load_ops_config
+    from common_lore_index.ops.config_local import load_graph_registry_config
+
+    legacy = tmp_path / ("config" + suffix)
+    legacy.write_text("malformed private content")
+    for loader in (load_ops_config, load_graph_registry_config):
+        for selected in (tmp_path, legacy):
+            with pytest.raises(OpsConfigError) as raised:
+                loader(selected)
+            assert raised.value.diagnostics[0].code == "legacy-config-filenames"
+            assert "malformed private content" not in str(raised.value)

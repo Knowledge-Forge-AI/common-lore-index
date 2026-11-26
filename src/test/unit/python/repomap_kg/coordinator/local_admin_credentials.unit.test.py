@@ -19,8 +19,8 @@ from common_lore_index.runtime.maintenance import MaintenanceUnavailableError
 def local_config(tmp_path, monkeypatch):
     monkeypatch.delenv("REPOMAP_PG_PASSWORD", raising=False)
     home = tmp_path / "home"
-    setup_local_runtime(home, config_format="legacy")
-    path = home / "repomap.rpl.toml"
+    setup_local_runtime(home)
+    path = home / "repomap.local.cloe.toml"
     path.write_text(path.read_text().replace("direct_host_port_enabled = false", "direct_host_port_enabled = true"))
     return home, load_ops_config_home(home)
 

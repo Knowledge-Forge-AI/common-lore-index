@@ -230,7 +230,7 @@ def test_failed_attempt_cleanup_preserves_ready_authority_and_removes_owned_rows
             authorize_body=True,
         )
         assert first.published is not None and first.plan is not None
-        config_path = home / "repomap.rpl.toml"
+        config_path = home / "repomap.local.cloe.toml"
         original = config_path.read_text(encoding="utf-8")
         config_path.write_text(_disable_companion(original), encoding="utf-8")
         changed_config = load_graph_registry_config_home(home)

@@ -80,7 +80,7 @@ def test_neighborhood_actual_private_selection_keeps_endpoints_withheld(
 ):
     from common_lore_index.server._ops_sanitization import sanitize_jsonable
 
-    config = endpoint_home / "repomap.rp.toml"
+    config = endpoint_home / "repomap.cloe.toml"
     config.write_text(config.read_text().replace('privacy = "public-dev"', f'privacy = "{privacy}"'))
     raw = _endpoint_fixture()
     assert _endpoint_call(monkeypatch, raw) == sanitize_jsonable(raw)

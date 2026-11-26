@@ -25,7 +25,8 @@ def test_setup_refuses_undecodable_config_before_writing_runtime(tmp_path: Path,
     harness = LocalHarness(tmp_path / "guard")
     result = harness.run("local", "setup", "--repo-map-home", str(home), "--json")
     assert result.returncode == 1
-    assert "runtime-config-unavailable" in result.stderr
+    expected = "legacy-config-filenames" if name == "repomap.rpl.toml" else "runtime-config-unavailable"
+    assert expected in result.stderr
     assert "fixture-confidential-marker" not in result.stderr + result.stdout
     assert snapshot(home) == before
     assert not harness.forbidden_events() and not harness.shim_invocations()
@@ -135,8 +136,10 @@ def test_cli_format_conflicts_leave_existing_home_unchanged(tmp_path: Path, name
     before = snapshot(home)
     harness = LocalHarness(tmp_path / "guard")
     result = harness.run("local", "setup", "--repo-map-home", str(home), "--config-format", requested, "--json")
-    assert result.returncode == 1, result.stderr
-    assert "runtime-config-format-conflict" in result.stderr
+    if requested == "legacy":
+        assert result.returncode == 2 and "invalid choice" in result.stderr
+    else:
+        assert result.returncode == 1 and "legacy-config-filenames" in result.stderr
     assert snapshot(home) == before and not (home / "runtime").exists()
     assert not harness.forbidden_events() and not harness.shim_invocations()
 

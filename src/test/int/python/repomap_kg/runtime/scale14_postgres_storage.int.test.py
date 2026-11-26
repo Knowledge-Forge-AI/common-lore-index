@@ -60,14 +60,14 @@ def test_scale14_exact_pgdata_authority_on_disposable_local_runtime(
     tmp_path: Path,
 ) -> None:
     home = tmp_path / "public-safe-runtime"
-    setup_local_runtime(home, config_format="legacy")
+    setup_local_runtime(home)
     repository = home / "repo-map"
     repository.mkdir()
     repository.joinpath("app.py").write_text(
         "def public_fixture() -> int:\n    return 1\n",
         encoding="utf-8",
     )
-    config_path = home / "repomap.rpl.toml"
+    config_path = home / "repomap.local.cloe.toml"
     config = config_path.read_text(encoding="utf-8")
     config = re.sub(
         r"^server_host_port = \d+",
@@ -82,7 +82,7 @@ def test_scale14_exact_pgdata_authority_on_disposable_local_runtime(
         flags=re.MULTILINE,
     )
     config_path.write_text(config, encoding="utf-8")
-    setup_local_runtime(home, config_format="legacy")
+    setup_local_runtime(home)
     started = False
     try:
         result = up_local_runtime(home)

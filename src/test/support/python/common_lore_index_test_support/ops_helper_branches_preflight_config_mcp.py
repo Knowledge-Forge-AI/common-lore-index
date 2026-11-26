@@ -211,9 +211,9 @@ class OpsPreflightConfigMcpHelperBranchContract(unittest.TestCase):
             database="repomap_hidden",
         )
         config_for_mcp = ops_config.OpsConfig(
-            config_path="/tmp/repomap.rpl.toml",
+            config_path="/tmp/repomap.local.cloe.toml",
             config_home="/tmp",
-            config_files=("/tmp/repomap.rpl.toml",),
+            config_files=("/tmp/repomap.local.cloe.toml",),
             schema_version=1,
             service=ops_config.OpsServiceConfig(
                 mode="local",

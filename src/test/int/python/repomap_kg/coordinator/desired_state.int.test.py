@@ -326,7 +326,7 @@ class TestDesiredStateControlIntegration:
             try:
                 apply_migrations(default_rdbms_root(), graph_pg.psql_args,
                                  psql_command=graph_pg.psql_command)
-                config_path = root / "configured.rp.toml"
+                config_path = root / "configured.cloe.toml"
                 config_path.write_text(f'''schema_version = 1
 [service]
 mode = "local"

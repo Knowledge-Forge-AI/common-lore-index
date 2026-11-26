@@ -91,7 +91,7 @@ def test_legacy_canonical_routes_preserve_existing_endpoint_policy(
     )
 
     home, _, _ = related_home(tmp_path)
-    config = home / "repomap.rp.toml"
+    config = home / "repomap.cloe.toml"
     config.write_text(config.read_text().replace('privacy = "public-dev"', f'privacy = "{privacy}"'))
     monkeypatch.setenv("CLOE_HOME", str(home))
     monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)

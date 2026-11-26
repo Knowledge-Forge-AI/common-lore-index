@@ -365,7 +365,7 @@ def test_portable_and_refresh_worker_startup_refusals_and_materialization(tmp_pa
     f_not_dir.write_text("x", encoding="utf-8")
     with pytest.raises(RuntimeError, match="not an owned directory"):
         _directory_identity(f_not_dir)
-    psql_bin, cfg_file = tmp_path / "psql", tmp_path / "repomap.rp.toml"
+    psql_bin, cfg_file = tmp_path / "psql", tmp_path / "repomap.cloe.toml"
     psql_bin.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
     psql_bin.chmod(0o700)
     cfg_file.write_text("schema_version = 1\n", encoding="utf-8")

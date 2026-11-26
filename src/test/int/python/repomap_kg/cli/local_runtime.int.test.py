@@ -18,7 +18,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
             home = Path(tmpdir) / "repo-map-home"
 
             exit_code, stdout, stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json",
             )
 
         self.assertEqual(exit_code, 0, stderr)
@@ -40,7 +40,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
             home = Path(tmpdir) / "repo-map-home"
 
             exit_code, stdout, stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--dry-run", "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--dry-run", "--json",
             )
 
             self.assertFalse(home.exists())
@@ -60,14 +60,14 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
             runtime.mkdir(parents=True)
             home.chmod(0o700)
             runtime.chmod(0o700)
-            config_file = home / "repomap.rpl.toml"
+            config_file = home / "repomap.local.cloe.toml"
             config_file.write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
             config_file.chmod(0o600)
             env_file = runtime / ".env"
             env_file.write_text("POSTGRES_PASSWORD=fake-existing-secret\nREPOMAP_PG_PASSWORD=fake-existing-secret\n", encoding="utf-8")
             env_file.chmod(0o600)
 
-            exit_code, stdout, stderr = self.run_module_entrypoint("local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json")
+            exit_code, stdout, stderr = self.run_module_entrypoint("local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json")
 
         self.assertEqual(exit_code, 0, stderr)
         payload = json.loads(stdout)
@@ -83,7 +83,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
             home = Path(tmpdir) / "repo-map-home"
 
             exit_code, stdout, stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home),
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home),
             )
 
         self.assertEqual(exit_code, 0, stderr)
@@ -102,7 +102,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_exit, _setup_stdout, setup_stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json",
             )
             self.assertEqual(setup_exit, 0, setup_stderr)
             self.write_runtime_server_port(home, self.local_runtime_test_port(1))
@@ -135,7 +135,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
             home = Path(tmpdir) / "repo-map-home"
             setup_exit, _setup_stdout, setup_stderr = self.run_module_entrypoint(
                 "local",
-                "setup", "--config-format", "legacy",
+                "setup", "--config-format", "cloe",
                 "--repo-map-home",
                 str(home),
                 "--json",
@@ -170,7 +170,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_exit, _setup_stdout, setup_stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json",
             )
             self.assertEqual(setup_exit, 0, setup_stderr)
 
@@ -196,7 +196,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_exit, _setup_stdout, setup_stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json",
             )
             self.assertEqual(setup_exit, 0, setup_stderr)
 
@@ -220,7 +220,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_exit, _setup_stdout, setup_stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json",
             )
             self.assertEqual(setup_exit, 0, setup_stderr)
             home_hash = LocalRuntimeIdentity.from_home(home).home_hash
@@ -262,11 +262,11 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_exit, _setup_stdout, setup_stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json",
             )
             self.assertEqual(setup_exit, 0, setup_stderr)
             self.write_runtime_server_port(home, self.local_runtime_test_port(3))
-            config_path = home / "repomap.rpl.toml"
+            config_path = home / "repomap.local.cloe.toml"
             config_path.write_text(
                 config_path.read_text(encoding="utf-8").replace(
                     "direct_host_port_enabled = false",
@@ -299,7 +299,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_exit, _setup_stdout, setup_stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json",
             )
             self.assertEqual(setup_exit, 0, setup_stderr)
 
@@ -344,7 +344,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_exit, _setup_stdout, setup_stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json",
             )
             self.assertEqual(setup_exit, 0, setup_stderr)
             (home / "runtime" / "compose.yaml").unlink()
@@ -362,7 +362,7 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_exit, _setup_stdout, setup_stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json",
             )
             self.assertEqual(setup_exit, 0, setup_stderr)
 
@@ -381,10 +381,10 @@ class CliLocalRuntimeIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_exit, _setup_stdout, setup_stderr = self.run_module_entrypoint(
-                "local", "setup", "--config-format", "legacy", "--repo-map-home", str(home), "--json",
+                "local", "setup", "--config-format", "cloe", "--repo-map-home", str(home), "--json",
             )
             self.assertEqual(setup_exit, 0, setup_stderr)
-            config_path = home / "repomap.rpl.toml"
+            config_path = home / "repomap.local.cloe.toml"
             config_path.write_text(config_path.read_text(encoding="utf-8").replace('bind_host = "127.0.0.1"', 'bind_host = "0.0.0.0"'), encoding="utf-8")
 
             exit_code, stdout, stderr = self.run_module_entrypoint(

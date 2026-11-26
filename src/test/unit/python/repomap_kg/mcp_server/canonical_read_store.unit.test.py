@@ -228,7 +228,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
         ), encoding="utf-8")
         # `--config F` is not setup-owned even when F lives in the home, so the
         # admin-shaped default keeps its explicit credential and no projection.
-        config_file = home / "repomap.rpl.toml"
+        config_file = home / "repomap.local.cloe.toml"
         cases: tuple[tuple[Path, dict[str, str], str, str], ...] = (
             (custom, {}, "custom_reader", "custom-secret"),
             (config_file, {"REPOMAP_PG_PASSWORD": "operator-secret"}, "repomap", "operator-secret"),

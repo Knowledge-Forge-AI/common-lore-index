@@ -40,7 +40,7 @@ navigation (`cloe-intent-rank-v1`, `cloe-intent-tiebreak-v1`,
 ### Create a Reusable Source Selection (`cloe ops context-select`)
 
 ```bash
-cloe ops context-select --config /path/to/repomap.rpl.toml \
+cloe ops context-select --config /path/to/repomap.local.cloe.toml \
   --graph <graph-id> \
   --binding <binding-id> \
   --path-prefix <binding-id>=src/pkg \
@@ -68,7 +68,7 @@ cloe ops context-select --config /path/to/repomap.rpl.toml \
 ### Assemble a Bounded Compact Context Packet (`cloe ops context-pack`)
 
 ```bash
-cloe ops context-pack --config /path/to/repomap.rpl.toml \
+cloe ops context-pack --config /path/to/repomap.local.cloe.toml \
   --graph <graph-id> \
   --mode ranked_discovery \
   --query "InvoiceService" \
@@ -127,7 +127,7 @@ or `--query`:
 #### Opt-In Advisory Source Freshness (`--freshness check`)
 
 ```bash
-cloe ops context-pack --config /path/to/repomap.rpl.toml \
+cloe ops context-pack --config /path/to/repomap.local.cloe.toml \
   --graph <graph-id> \
   --mode exact_identity \
   --canonical-key "py:pkg.billing.InvoiceService" \

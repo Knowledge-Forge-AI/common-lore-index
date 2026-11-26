@@ -10,8 +10,8 @@ from common_lore_index.runtime.plan import LocalRuntimeError, build_local_runtim
 
 
 def plan_for(tmp_path, enabled=True):
-    setup_local_runtime(tmp_path, config_format="legacy")
-    path = tmp_path / "repomap.rpl.toml"
+    setup_local_runtime(tmp_path)
+    path = tmp_path / "repomap.local.cloe.toml"
     if enabled:
         path.write_text(path.read_text().replace("direct_host_port_enabled = false", "direct_host_port_enabled = true"))
     return build_local_runtime_plan(tmp_path)

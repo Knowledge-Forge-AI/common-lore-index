@@ -41,7 +41,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_live_ops5_local_runtime_json_omits_low_level_commands_and_private_paths(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             self.write_runtime_server_port(home, 55981)
             result = up_local_runtime(home, dry_run=True)
             payload = result.to_jsonable()
@@ -102,7 +102,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_generated_runtime_uses_long_running_server_mode(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             compose_text = (home / "runtime" / "compose.yaml").read_text(encoding="utf-8")
             for token in ('command: ["server", "serve"', '"--repo-map-home", "/repo-map-home"',
                           '"--port", "55880"', '"--container-internal-bind"', "127.0.0.1:55880:55880",
@@ -119,7 +119,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
             (source_root / "README.md").write_text("# fixture\n", encoding="utf-8")
             home = Path(tmpdir) / "repo-map-home"
             with patch.dict("os.environ", {"CLOE_SOURCE_ROOT": str(source_root)}):
-                result = setup_local_runtime(home, config_format="legacy")
+                result = setup_local_runtime(home)
             compose_text = (home / "runtime" / "compose.yaml").read_text(encoding="utf-8")
             self.assertEqual(resolve_runtime_source_root(source_root), source_root.resolve())
             self.assertIn(f'context: "{source_root}"', compose_text)
@@ -140,7 +140,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_setup_dry_run_does_not_create_repo_map_home(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            result = setup_local_runtime(home, dry_run=True, config_format="legacy")
+            result = setup_local_runtime(home, dry_run=True)
             payload = result.to_jsonable()
             self.assertEqual(payload["result"], "dry_run")
             self.assertFalse(home.exists())
@@ -153,11 +153,11 @@ class LocalRuntimeUnitTests(unittest.TestCase):
             runtime = home / "runtime"
             home.mkdir(mode=0o700)
             runtime.mkdir(mode=0o700)
-            config, env_file = home / "repomap.rpl.toml", runtime / ".env"
+            config, env_file = home / "repomap.local.cloe.toml", runtime / ".env"
             config.write_text("schema_version = 1\n# keep me\n", encoding="utf-8")
             env_file.write_text("POSTGRES_PASSWORD=keep-existing\n", encoding="utf-8")
             env_file.chmod(0o600)
-            result = setup_local_runtime(home, config_format="legacy")
+            result = setup_local_runtime(home)
             payload = result.to_jsonable()
             for f in (config, env_file): self.assertNotIn(f, result.created_files)
             self.assertEqual(config.read_text(encoding="utf-8"), "schema_version = 1\n# keep me\n")
@@ -172,7 +172,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_status_reports_not_running_without_invoking_container_runtime(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             status = query_local_runtime_status(home, check_containers=False)
             payload = status.to_jsonable()
             self.assertEqual(payload["command"], "status")
@@ -186,7 +186,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_status_can_report_unavailable_container_runtime_without_failing(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             with patch("common_lore_index.runtime.local.shutil.which", return_value=None):
                 status = query_local_runtime_status(home, check_containers=True)
         payload = status.to_jsonable()
@@ -198,7 +198,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_status_check_containers_reports_server_health(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             home_hash = LocalRuntimeIdentity.from_home(home).home_hash
             with (
                 patch("common_lore_index.runtime.local.shutil.which", return_value="/usr/bin/docker"),
@@ -218,7 +218,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_rendered_compose_server_labels_are_accepted_by_status(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             server = (home / "runtime/compose.yaml").read_text().split("\n  http:\n", 1)[1].split("\n  mcp:\n", 1)[0]
             labels = dict(line.strip().split(":", 1) for line in server.split("    labels:\n", 1)[1].splitlines())
             inspect = _fake_docker_inspect(labels["org.repomap.home_hash"].strip().strip('"'), labels["org.repomap.component"].strip().strip('"'))
@@ -233,7 +233,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_status_table_includes_container_and_server_health(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             home_hash = LocalRuntimeIdentity.from_home(home).home_hash
             with (
                 patch("common_lore_index.runtime.local.shutil.which", return_value="/usr/bin/docker"),
@@ -249,7 +249,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_status_rejects_wrong_home_or_service_labels(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             home_hash = LocalRuntimeIdentity.from_home(home).home_hash
             for observed_home, service in (("unrelated", "http"), (home_hash, "coordinator")):
                 with (
@@ -266,7 +266,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_up_dry_run_renders_compose_command_without_starting_containers(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             self.write_runtime_server_port(home, 55981)
             result = up_local_runtime(home, dry_run=True)
         payload = result.to_jsonable()
@@ -279,9 +279,9 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_up_dry_run_reflects_enabled_direct_db_port_mapping(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             self.write_runtime_server_port(home, 55982)
-            config = home / "repomap.rpl.toml"
+            config = home / "repomap.local.cloe.toml"
             config.write_text(config.read_text(encoding="utf-8").replace("direct_host_port_enabled = false", "direct_host_port_enabled = true"), encoding="utf-8")
             with patch("common_lore_index.runtime.local.is_local_port_open", return_value=False):
                 result = up_local_runtime(home, dry_run=True)
@@ -297,7 +297,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_up_non_dry_run_invokes_compose_without_host_postgres(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             self.write_runtime_server_port(home, 55983)
             with patch("common_lore_index.runtime.local.shutil.which", return_value="/usr/bin/docker"), patch("common_lore_index.runtime.local.subprocess.run") as run, patch("common_lore_index.runtime.local.inspect_container", return_value=LocalContainerStatus("postgres", "postgres", postgres_host_binding_valid=True)):
                 result = up_local_runtime(home)
@@ -314,7 +314,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
         private_value = "/private/source-derived/runtime-detail"
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             self.write_runtime_server_port(home, 55984)
             failure = subprocess.CalledProcessError(17, (private_value, "compose", "up"), output=private_value, stderr=private_value)
             with (
@@ -331,7 +331,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_down_dry_run_preserves_volume_by_default(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             result = down_local_runtime(home, dry_run=True)
         payload = result.to_jsonable()
         self.assertEqual(payload["command"], "down")
@@ -343,7 +343,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_down_non_dry_run_does_not_delete_volumes(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             with patch("common_lore_index.runtime.local.shutil.which", return_value="/usr/bin/docker"), patch("common_lore_index.runtime.local.subprocess.run") as run:
                 result = down_local_runtime(home)
         payload = result.to_jsonable()
@@ -358,7 +358,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_up_rejects_missing_runtime_files(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
+            setup_local_runtime(home)
             (home / "runtime" / "compose.yaml").unlink()
             with self.assertRaises(LocalRuntimeError) as error:
                 up_local_runtime(home, dry_run=True)
@@ -367,8 +367,8 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_up_rejects_invalid_config_instead_of_using_host_defaults(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
-            (home / "repomap.rpl.toml").write_text("schema_version = 1\n# intentionally incomplete\n", encoding="utf-8")
+            setup_local_runtime(home)
+            (home / "repomap.local.cloe.toml").write_text("schema_version = 1\n# intentionally incomplete\n", encoding="utf-8")
             with self.assertRaises(LocalRuntimeError) as error:
                 up_local_runtime(home, dry_run=True)
         self.assertIn("missing-section", [item.code for item in error.exception.diagnostics])
@@ -376,8 +376,8 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_up_reports_local_port_conflict_before_runtime_invocation(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            setup_local_runtime(home, config_format="legacy")
-            config = home / "repomap.rpl.toml"
+            setup_local_runtime(home)
+            config = home / "repomap.local.cloe.toml"
             config.write_text(config.read_text(encoding="utf-8").replace(f"postgres_host_port = {DEFAULT_POSTGRES_HOST_PORT}", "postgres_host_port = 55433"), encoding="utf-8")
             with patch("common_lore_index.runtime.local.is_local_port_open", return_value=True), patch("common_lore_index.runtime.local.inspect_container", return_value=LocalContainerStatus("server", "server")):
                 with self.assertRaises(LocalRuntimeError) as error:
@@ -387,7 +387,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
     def test_table_output_reports_redacted_dbeaver_info_and_safety(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
-            result = setup_local_runtime(home, config_format="legacy")
+            result = setup_local_runtime(home)
             table = format_local_runtime_table(result)
         for token in ("Common Lore Index local runtime setup", "direct_db=disabled", "Direct DB access disabled",
                       "graph_roots_read=false", "destructive_db_actions=false"):
@@ -396,5 +396,5 @@ class LocalRuntimeUnitTests(unittest.TestCase):
             self.assertNotIn(token, table)
 
     def write_runtime_server_port(self, home: Path, port: int) -> None:
-        config = home / "repomap.rpl.toml"
+        config = home / "repomap.local.cloe.toml"
         config.write_text(config.read_text(encoding="utf-8").replace(f"server_host_port = {DEFAULT_SERVER_HOST_PORT}", f"server_host_port = {port}"), encoding="utf-8")

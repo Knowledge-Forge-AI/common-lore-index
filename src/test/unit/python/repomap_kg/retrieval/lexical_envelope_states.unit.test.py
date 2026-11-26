@@ -54,8 +54,8 @@ def _mixed_policies(tmp_path: Path) -> tuple[LexicalGenerationPolicy, LexicalGen
     private_graph = resolve_ops_graph(config, MIXED_V1_GRAPH_ID)
     private_policy = build_lexical_generation_policy(private_graph)
 
-    config_text = (home / "repomap.rpl.toml").read_text(encoding="utf-8")
-    (home / "repomap.rpl.toml").write_text(
+    config_text = (home / "repomap.local.cloe.toml").read_text(encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(
         config_text.replace('privacy = "private-memory"', 'privacy = "public-dev"', 1),
         encoding="utf-8",
     )

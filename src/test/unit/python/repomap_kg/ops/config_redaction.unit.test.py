@@ -91,6 +91,16 @@ EXPECTED_CONFIG_LOADING_PUBLIC_NAMES = frozenset(
     """.split()
 )
 
+# Selector owners introduced at the canonical MCP cutover live in the loader only.
+EXPECTED_CONFIG_LOADING_ONLY_NAMES = frozenset(
+    {
+        "MCP_CONFIG_ENV",
+        "OPS_CONFIG_ENV",
+        "legacy_mcp_selector_error",
+        "require_canonical_mcp_selectors",
+    }
+)
+
 EXPECTED_CONFIG_EXTRA_PUBLIC_NAMES = frozenset(
     {
         "StorageSchemaError",
@@ -116,12 +126,15 @@ class OpsConfigRedactionUnitTests(unittest.TestCase):
             name for name in vars(config) if not name.startswith("_")
         }
 
-        self.assertEqual(loading_public_names, EXPECTED_CONFIG_LOADING_PUBLIC_NAMES)
+        self.assertEqual(
+            loading_public_names,
+            EXPECTED_CONFIG_LOADING_PUBLIC_NAMES | EXPECTED_CONFIG_LOADING_ONLY_NAMES,
+        )
         self.assertEqual(
             config_public_names,
             EXPECTED_CONFIG_LOADING_PUBLIC_NAMES | EXPECTED_CONFIG_EXTRA_PUBLIC_NAMES,
         )
-        for name in sorted(loading_public_names):
+        for name in sorted(EXPECTED_CONFIG_LOADING_PUBLIC_NAMES):
             self.assertIs(getattr(config, name), getattr(loading, name))
 
     def write_config(self, content: str) -> Path:
@@ -135,7 +148,7 @@ class OpsConfigRedactionUnitTests(unittest.TestCase):
         tmpdir = tempfile.TemporaryDirectory()
         self.addCleanup(tmpdir.cleanup)
         home = Path(tmpdir.name)
-        (home / "00-project.rp.toml").write_text(content, encoding="utf-8")
+        (home / "00-project.cloe.toml").write_text(content, encoding="utf-8")
         return home
 
     def test_status_outputs_redact_local_config_and_private_graph_fields(self):
@@ -191,7 +204,7 @@ class OpsConfigRedactionUnitTests(unittest.TestCase):
 
         self.assertEqual(status["config_path"], "[local-config]")
         self.assertEqual(status["config_home"], "[local-config]")
-        self.assertEqual(status["config_files"], ["00-project.rp.toml"])
+        self.assertEqual(status["config_files"], ["00-project.cloe.toml"])
         self.assertEqual(registry["config_path"], "[local-config]")
         self.assertEqual(registry["config_home"], "[local-config]")
         self.assertNotIn(str(home), json.dumps((status, registry), sort_keys=True))

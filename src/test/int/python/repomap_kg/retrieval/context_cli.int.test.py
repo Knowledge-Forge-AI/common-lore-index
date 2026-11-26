@@ -169,7 +169,7 @@ def test_cli_context_select_and_pack_over_sqlite_and_postgres_homes(
                 "ops",
                 "context-select",
                 "--config",
-                str(pg_dir / "repomap.rpl.toml"),
+                str(pg_dir / "repomap.local.cloe.toml"),
                 "--graph",
                 CTX_GRAPH_ID,
                 "--binding",
@@ -189,7 +189,7 @@ def test_cli_context_select_and_pack_over_sqlite_and_postgres_homes(
                 "ops",
                 "context-pack",
                 "--config",
-                str(pg_dir / "repomap.rpl.toml"),
+                str(pg_dir / "repomap.local.cloe.toml"),
                 "--graph",
                 CTX_GRAPH_ID,
                 "--mode",
@@ -212,7 +212,7 @@ def test_cli_context_select_and_pack_over_sqlite_and_postgres_homes(
 
         rc_pg_fallback, raw_pg_fallback, err_pg_fallback = _invoke_cli(
             [
-                "ops", "context-pack", "--config", str(pg_dir / "repomap.rpl.toml"),
+                "ops", "context-pack", "--config", str(pg_dir / "repomap.local.cloe.toml"),
                 "--graph", CTX_GRAPH_ID, "--mode", "graph_investigation",
                 "--canonical-key", "py:pkg.billing.InvoiceService", "--query", "InvoiceService",
                 "--fallback-to", "ranked_discovery", "--allow-partial",

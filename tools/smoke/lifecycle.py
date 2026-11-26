@@ -226,7 +226,7 @@ def run_lifecycle(
             _write_fixture(target_fixture, "target")
             _write_fixture(control_fixture, "control")
             _write_config(home, config.pg_container_port, target_fixture, control_fixture)
-            (home / "repomap.rpl.toml").chmod(0o600)
+            (home / "repomap.local.cloe.toml").chmod(0o600)
             private = _private_env(home / "runtime/.env")
             password = private["REPOMAP_PG_PASSWORD"]
             identity = LocalRuntimeIdentity.from_home(home)

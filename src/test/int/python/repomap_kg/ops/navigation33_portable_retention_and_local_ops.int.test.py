@@ -92,7 +92,7 @@ def _local_sqlite_config(root: Path, src_dir: Path) -> LocalSqliteConfig:
             }],
             "server_memory": {"enabled": False, "path": str(root / "mem"), "mode": "read_only"},
         },
-        config_path=str(root), config_home=str(root), config_files=("base.rp.toml",),
+        config_path=str(root), config_home=str(root), config_files=("base.cloe.toml",),
         diagnostics=(OpsConfigDiagnostic("warning", "w1", "service", "warn"),),
     )
 
@@ -219,7 +219,7 @@ def test_portable_refresh_worker_references_and_overlap_refusals(tmp_path: Path)
             _worker_references(terminal)
         assert exc_info.value.category == expected_cat
 
-    (tmp_path / "base.rp.toml").write_text(
+    (tmp_path / "base.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=tmp_path, private_root=tmp_path / "private")
     )
     config = load_ops_config_home(tmp_path)
@@ -339,7 +339,7 @@ def test_readback_container_hints_and_host_error_augmentation(tmp_path: Path, mo
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         closed_port = s.getsockname()[1]
-    (tmp_path / "base.rp.toml").write_text(
+    (tmp_path / "base.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=tmp_path, private_root=tmp_path / "private").replace("port = 5432", f"port = {closed_port}")
     )
     monkeypatch.setenv("PATH", str(tmp_path))

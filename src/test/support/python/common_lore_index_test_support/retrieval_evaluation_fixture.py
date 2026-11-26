@@ -270,7 +270,7 @@ def write_mixed_v1_sqlite_home(
         f'enabled = true\nmcp_visible = true\nrefresh_policy = "manual"\n\n'
         f"{_render_source_bindings_toml(working_copy_root, graph_id, declared_aliases=declared_aliases)}"
     )
-    (home_root / "repomap.rpl.toml").write_text(toml_text, encoding="utf-8")
+    (home_root / "repomap.local.cloe.toml").write_text(toml_text, encoding="utf-8")
     return home_root
 
 
@@ -306,7 +306,7 @@ def write_mixed_v1_postgres_home(
         f'database = "{database}"\nenabled = true\nmcp_visible = true\nrefresh_policy = "manual"\n\n'
         f"{_render_source_bindings_toml(working_copy_root, graph_id, declared_aliases=declared_aliases)}"
     )
-    (home_root / "repomap.rpl.toml").write_text(toml_text, encoding="utf-8")
+    (home_root / "repomap.local.cloe.toml").write_text(toml_text, encoding="utf-8")
     return home_root
 
 

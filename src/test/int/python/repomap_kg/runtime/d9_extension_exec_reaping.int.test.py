@@ -150,7 +150,7 @@ def test_d9b_child_of_a_stopped_leader_is_never_left_for_the_pid1_postmaster(
 ) -> None:
     """Settlement never signals a leader whose child it cannot see reaped, nor a child its parent cannot reap."""
     require_postgres_binaries()
-    with short_test_directory("d9b-rp-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-rp-", "home/repomap.local.cloe.toml") as directory:
         home = Path(directory) / "home"
         with owned_d9_postgres_cluster(home, graph_db=GRAPH) as (identity, postgres, _runner):
             monkeypatch.setenv("REPOMAP_PG_PASSWORD", str(postgres.password))
@@ -213,7 +213,7 @@ def _adopted_orphan(container: str, token: str) -> _Proc:
 def test_d9b_recorded_leader_adopted_by_pid1_is_never_signalled(monkeypatch: pytest.MonkeyPatch, externally_stopped: bool) -> None:
     """A SIGKILLed or SIGSTOPped-then-killed PID 1 child would make the postmaster crash-restart every session."""
     require_postgres_binaries()
-    with short_test_directory("d9b-ra-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-ra-", "home/repomap.local.cloe.toml") as directory:
         with owned_d9_postgres_cluster(Path(directory) / "home", graph_db=GRAPH) as (identity, postgres, _runner):
             monkeypatch.setenv("REPOMAP_PG_PASSWORD", str(postgres.password))
             container, token = identity.postgres_container, uuid.uuid4().hex

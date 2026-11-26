@@ -81,7 +81,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "home"
             home.mkdir()
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 self.visible_ops_config().replace(
                     'host = "127.0.0.1"',
                     'host = "postgres"',

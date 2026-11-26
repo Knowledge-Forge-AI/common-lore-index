@@ -20,7 +20,7 @@ from common_lore_index.runtime.postgres_route import readback_postgres_authority
 def _local_config(tmp_path: Path):
     home = tmp_path / "home"
     setup_local_runtime(home)
-    config_path = next(home.glob("*.rpl.toml"))
+    config_path = next(home.glob("*.local.cloe.toml"))
     config_path.write_text(
         config_path.read_text(encoding="utf-8").replace(
             "direct_host_port_enabled = false",

@@ -36,7 +36,7 @@ def test_authenticated_native_endpoint_blocks_container_start(monkeypatch):
 
     with short_test_directory("mode-", "coordinator/coordinator.sock") as directory:
         home = Path(directory)
-        local.setup_local_runtime(home, config_format="legacy")
+        local.setup_local_runtime(home)
         _, endpoint, credential = coordinator_runtime_paths(home, create=True)
         credential.write_text("synthetic-transition-token")
         credential.chmod(0o600)
@@ -62,7 +62,7 @@ def test_authenticated_native_endpoint_blocks_container_start(monkeypatch):
 def test_packaged_container_mode_rejected_before_runtime_factory(tmp_path):
     from common_lore_index.runtime.local import setup_local_runtime
 
-    setup_local_runtime(tmp_path, config_format="legacy")
+    setup_local_runtime(tmp_path)
     calls: list[object] = []
     def forbidden_start(_home, *, psql_path=None):
         pytest.fail("ownership attempted")
@@ -168,8 +168,8 @@ def test_local_mode_serve_retry_psql_resolution_and_client_submission_errors(tmp
     from common_lore_index.runtime.local import setup_local_runtime
 
     tmp_path.chmod(0o700)
-    setup_local_runtime(tmp_path, config_format="legacy")
-    cfg = tmp_path / "repomap.rpl.toml"
+    setup_local_runtime(tmp_path)
+    cfg = tmp_path / "repomap.local.cloe.toml"
     cfg.write_text(cfg.read_text(encoding="utf-8").replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'), encoding="utf-8")
 
     attempts = 0

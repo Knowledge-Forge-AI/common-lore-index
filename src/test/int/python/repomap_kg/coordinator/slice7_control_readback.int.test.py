@@ -210,7 +210,7 @@ class Slice7ControlReadbackIntegrationTests(unittest.TestCase):
             repo = tmp_root / "repo"
             home.mkdir()
             repo.mkdir()
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 VALID_REFRESH_CONFIG.format(repo_root=repo, private_root=repo / "priv")
                 .replace('host = "127.0.0.1"', 'host = "postgres"'),
                 encoding="utf-8",

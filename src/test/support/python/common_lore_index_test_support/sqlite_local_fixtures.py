@@ -66,7 +66,7 @@ def sqlite_home_toml(graphs: str, *, storage: str = '[storage]\nbackend = "sqlit
     return f"schema_version = 1\n{storage}{SERVICE_TOML}{graphs}{MEMORY_TOML}"
 
 
-def write_sqlite_home(home: Path, graphs: str, *, name: str = "repomap.rp.toml") -> Path:
+def write_sqlite_home(home: Path, graphs: str, *, name: str = "repomap.cloe.toml") -> Path:
     home.mkdir(parents=True, exist_ok=True)
     (home / name).write_text(sqlite_home_toml(graphs), encoding="utf-8")
     return home

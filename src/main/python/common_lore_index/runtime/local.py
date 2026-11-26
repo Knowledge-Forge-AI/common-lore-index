@@ -62,7 +62,7 @@ def setup_local_runtime(
     home = _resolve_runtime_home(repo_map_home)
     config_path = _prepare_setup_config(home, config_format=config_format, dry_run=dry_run)
     identity = LocalRuntimeIdentity.from_home(home)
-    config_format = "cloe" if config_path.name.endswith(".cloe.toml") else "legacy"
+    config_format = "cloe"
     diagnostics = [LocalRuntimeDiagnostic(
         "info", f"setup-config-format-{config_format}", "config-home",
         f"setup uses {config_path.name}",

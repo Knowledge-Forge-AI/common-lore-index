@@ -183,7 +183,7 @@ def test_cli_context_select_and_context_pack_exit_codes(
     assert c_allow == 0
 
     # Early refusal on a PostgreSQL config reports backend="postgresql" and consistency_mode="per_statement_identity_checked"
-    pg_toml = tmp_path / "pg.rpl.toml"
+    pg_toml = tmp_path / "pg.local.cloe.toml"
     mem_dir = tmp_path / "mem"
     mem_dir.mkdir(exist_ok=True)
     pg_toml.write_text(

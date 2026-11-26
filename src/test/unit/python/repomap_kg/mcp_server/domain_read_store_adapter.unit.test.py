@@ -109,7 +109,7 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
         compose = self.write_ops_config(setup_owned_config())
         cases = (
             ({"CLOE_OPS_CONFIG": str(custom)}, "custom_reader", "custom-secret"),
-            ({"CLOE_OPS_CONFIG": str(home / "repomap.rpl.toml"), "REPOMAP_PG_PASSWORD": "operator-secret"},
+            ({"CLOE_OPS_CONFIG": str(home / "repomap.local.cloe.toml"), "REPOMAP_PG_PASSWORD": "operator-secret"},
              "repomap", "operator-secret"),
             ({"CLOE_OPS_CONFIG": str(compose), "REPOMAP_READ_STATUS_PASSWORD": "compose-read-secret"},
              "repomap_read_status", "compose-read-secret"),

@@ -180,7 +180,7 @@ def _assert_native_settlement_branches(container: str) -> None:
 
 def test_d9b_container_command_custody_settles_or_retains_native_outcomes(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-exc-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-exc-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         home = root / "home"
         reference = clean_template_reference(root)
@@ -371,7 +371,7 @@ def test_d9b_shell_descendants_and_inherited_sessions_are_settled_natively(monke
     the child and its session. Observed in the running container before cleanup, with no crash-restart.
     """
     require_postgres_binaries()
-    with short_test_directory("d9b-dsc-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-dsc-", "home/repomap.local.cloe.toml") as directory:
         home = Path(directory) / "home"
         with owned_d9_postgres_cluster(home, graph_db=GRAPH) as (identity, postgres, _runner):
             monkeypatch.setenv("REPOMAP_PG_PASSWORD", str(postgres.password))

@@ -153,10 +153,10 @@ def setup_real_backup_home(
     assert session is not None
     real_container = session.harness.container_name
     home.mkdir(mode=0o700, parents=True, exist_ok=True)
-    setup_local_runtime(home, config_format="legacy")
+    setup_local_runtime(home)
     home.chmod(0o700)
     (home / "runtime").chmod(0o700)
-    toml_path = home / "repomap.rpl.toml"
+    toml_path = home / "repomap.local.cloe.toml"
     toml_text = (
         f'schema_version = 1\n[service]\nmode = "local"\nmcp_transport = "stdio"\nlog_level = "info"\n'
         f'[runtime]\ncontainer_runtime = "docker"\nserver_host_port = 8080\nbind_host = "127.0.0.1"\n'

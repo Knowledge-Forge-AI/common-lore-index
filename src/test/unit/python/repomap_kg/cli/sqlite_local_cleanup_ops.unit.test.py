@@ -125,7 +125,7 @@ def test_refused_and_incomplete_cleanups_exit_one_with_their_payload(
 def test_postgres_home_and_unknown_graph_refuse_before_any_action(tmp_path: Path) -> None:
     pg = tmp_path / "pg"
     pg.mkdir()
-    (pg / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (pg / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     before = sorted(path.name for path in pg.rglob("*"))
     code, stdout, stderr = run_repo_map_in_process(
         "ops", "sqlite-cleanup", "--repo-map-home", str(pg), "--graph", "host-one", "--yes"

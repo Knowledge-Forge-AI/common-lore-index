@@ -53,8 +53,8 @@ def prepare_setup_config(
     home: Path, *, config_format: str | None = None, dry_run: bool = False,
 ) -> Path:
     """Select without changing configuration; actual setup validates home custody first."""
-    if config_format not in (None, "legacy", "cloe"):
-        _refuse("runtime-config-format-invalid", "choose legacy or cloe")
+    if config_format not in (None, "cloe"):
+        _refuse("runtime-config-format-invalid", "choose cloe; use config migration for an existing legacy home")
     try:
         (home / OPERATION_DIRECTORY).lstat()
     except (FileNotFoundError, NotADirectoryError):
@@ -78,11 +78,7 @@ def prepare_setup_config(
                 _refuse("repo-map-home-unsafe", "home must be an ordinary directory")
             entries = list(home.iterdir())
         files, _ignored = discover_home_config_files(home) if entries else ([], [])
-        family = ("cloe" if files[0].name.endswith(".cloe.toml") else "legacy") if files else None
-        if family is not None and config_format is not None and family != config_format:
-            _refuse("runtime-config-format-conflict", "requested format conflicts with the existing home")
-        selected = config_format or family or "cloe"
-        target = home / ("repomap.local.cloe.toml" if selected == "cloe" else "repomap.rpl.toml")
+        target = home / "repomap.local.cloe.toml"
         portable = unicodedata.normalize("NFC", target.name).casefold()
         if any(p.name != target.name and unicodedata.normalize("NFC", p.name).casefold() == portable for p in entries):
             _refuse("runtime-config-target-collision", "generated target has an occupied portable alias")
@@ -93,12 +89,10 @@ def prepare_setup_config(
             except OpsConfigError as error:
                 if isinstance(error.__cause__, UnicodeDecodeError):
                     _refuse("runtime-config-unavailable", "configuration preflight could not decode the selected home")
-                # Preserve legacy bootstrap tolerance; the new CLOE producer fails closed.
-                if selected == "cloe" or any(d.code == "config-home-mixed-format" for d in error.diagnostics):
-                    _config_refusal(error)
+                _config_refusal(error)
             else:
                 refuse_sqlite_home(payload.get("storage"), diagnostics)
-                if selected == "cloe" and any(d.severity == "error" for d in diagnostics):
+                if any(d.severity == "error" for d in diagnostics):
                     _config_refusal(OpsConfigError(diagnostics))
         return target
     except OpsConfigError as error:

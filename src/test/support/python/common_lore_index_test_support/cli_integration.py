@@ -162,7 +162,7 @@ class CliIntegrationTestCase(unittest.TestCase):
         return 56080 + ((os.getpid() + offset) % 1000)
 
     def write_runtime_server_port(self, home: Path, port: int) -> None:
-        config_path = home / "repomap.rpl.toml"
+        config_path = home / "repomap.local.cloe.toml"
         config_path.write_text(
             config_path.read_text(encoding="utf-8").replace(
                 "server_host_port = 55880",

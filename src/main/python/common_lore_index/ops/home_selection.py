@@ -74,7 +74,7 @@ def _read_config(directory: int, name: str) -> bytes:
         os.close(descriptor)
 
 
-def _classify(path: Path, recognize: PayloadRecognizer) -> str:
+def _classify(path: Path, recognize: PayloadRecognizer, *, migration: bool = False) -> str:
     try:
         info = path.lstat()
     except FileNotFoundError:
@@ -101,9 +101,12 @@ def _classify(path: Path, recognize: PayloadRecognizer) -> str:
                         if (classification := classify_config_filename(name)) is not None]
             if not selected or len({value[0][0] for value in selected}) != 1:
                 return "foreign"
-            payloads = [(name, _read_config(descriptor, name))
-                        for _classification, name in sorted(selected, key=lambda value: (value[0][1], value[1]))]
-            state = "recognized" if recognize(payloads) else "foreign"
+            if not migration and selected[0][0][0] == "legacy":
+                state = "legacy"
+            else:
+                payloads = [(name, _read_config(descriptor, name))
+                            for _classification, name in sorted(selected, key=lambda value: (value[0][1], value[1]))]
+                state = "recognized" if recognize(payloads) else "foreign"
         return state if _directory_identity(path.lstat()) == identity else "unsafe"
     except (OSError, ValueError, UnicodeError, RecursionError):
         return "unsafe"
@@ -112,7 +115,9 @@ def _classify(path: Path, recognize: PayloadRecognizer) -> str:
             os.close(descriptor)
 
 
-def select_home(value: str | Path | None, *, recognize: PayloadRecognizer) -> HomeSelection:
+def select_home(
+    value: str | Path | None, *, recognize: PayloadRecognizer, migration: bool = False,
+) -> HomeSelection:
     """Inspect the canonical default without creating files or opening a database."""
     if value == "":
         raise OpsConfigError((OpsConfigDiagnostic(
@@ -124,11 +129,16 @@ def select_home(value: str | Path | None, *, recognize: PayloadRecognizer) -> Ho
     if selected:
         return HomeSelection(Path(selected).expanduser(), "CLOE_HOME")
     current = Path(DEFAULT_CLOE_HOME).expanduser()
-    current_state = _classify(current, recognize)
+    current_state = _classify(current, recognize, migration=migration)
     if current_state == "recognized":
         return HomeSelection(current, "cloe-default")
     if current_state == "unsafe":
         _refuse("default-home-unsafe")
+    if current_state == "legacy":
+        raise OpsConfigError((OpsConfigDiagnostic(
+            "error", "legacy-config-filenames", "config-home",
+            "convert the existing configuration with ops config-migration-plan and config-migration-apply",
+        ),))
     if current_state in ("absent", "empty"):
         return HomeSelection(current, "fresh-default")
     _refuse("default-home-unrecognized")

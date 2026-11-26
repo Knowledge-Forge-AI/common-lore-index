@@ -54,7 +54,7 @@ def test_control_provision_failure_removes_target_and_retry_is_idempotent(
     monkeypatch,
 ):
     require_postgres_binaries()
-    with short_test_directory("arch5b-", "recovery/configured.rp.toml") as directory:
+    with short_test_directory("arch5b-", "recovery/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("ARCH5B_TEST_PASSWORD", postgres.password)
@@ -86,7 +86,7 @@ def test_control_provision_failure_removes_target_and_retry_is_idempotent(
 
 def test_control_init_does_not_adopt_preexisting_empty_database(monkeypatch):
     require_postgres_binaries()
-    with short_test_directory("arch5b-", "recovery/configured.rp.toml") as directory:
+    with short_test_directory("arch5b-", "recovery/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("ARCH5B_TEST_PASSWORD", postgres.password)
@@ -125,7 +125,7 @@ def test_control_init_does_not_adopt_preexisting_empty_database(monkeypatch):
 
 def _config_home(path: Path, postgres, graph_database: str) -> Path:
     path.mkdir(mode=0o700)
-    (path / "configured.rp.toml").write_text(
+    (path / "configured.cloe.toml").write_text(
         f'''schema_version = 1
 
 [service]
@@ -163,7 +163,7 @@ mode = "read_only"
 
 def test_control_lifecycle_validates_config_and_credential_paths_where_maintained_entry_exists():
     require_postgres_binaries()
-    with short_test_directory("arch5b-", "sec/configured.rp.toml") as directory:
+    with short_test_directory("arch5b-", "sec/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             home = root / "sec"
@@ -179,7 +179,7 @@ def test_control_lifecycle_validates_config_and_credential_paths_where_maintaine
             with pytest.raises(CoordinatorControlError, match="coordinator_control_init_failed"):
                 initialize_coordinator_control(absent_config_home)
 
-            config_file = home / "configured.rp.toml"
+            config_file = home / "configured.cloe.toml"
             config_file.write_text(
                 f'''schema_version = 1
 
@@ -304,7 +304,7 @@ def test_configured_refresh_adapter_refuses_generation_drift_and_missing_source(
         (repository / "entry.py").write_text("print('v1')\n", encoding="utf-8")
         with temporary_postgres() as postgres:
             monkeypatch.setenv("ARCH5B_REFRESH_PASSWORD", postgres.password)
-            config_path = root / "configured.rp.toml"
+            config_path = root / "configured.cloe.toml"
             config_path.write_text(
                 _configured_refresh_text(postgres, repository, repository),
                 encoding="utf-8",

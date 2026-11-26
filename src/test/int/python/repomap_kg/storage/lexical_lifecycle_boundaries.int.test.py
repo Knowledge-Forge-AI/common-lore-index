@@ -45,7 +45,7 @@ from common_lore_index_test_support.retrieval_evaluation_publication import (
 
 
 def _disable_companion(text: str) -> str:
-    """Edit only the maintained companion binding block in repomap.rpl.toml."""
+    """Edit only the maintained companion binding block in repomap.local.cloe.toml."""
     header, *blocks = text.split("[[graphs.source_bindings]]")
     for index, block in enumerate(blocks):
         if 'alias = "companion"' in block:
@@ -81,7 +81,7 @@ def test_lexical_lifecycle_boundaries_use_retained_publication_reload_and_acl(
         params = lexical_connection_parameters(config, graph)
         core_id = binding_id_for_alias("core")
         companion_id = binding_id_for_alias("companion")
-        config_path = home / "repomap.rpl.toml"
+        config_path = home / "repomap.local.cloe.toml"
         original_config = config_path.read_text(encoding="utf-8")
 
         first = build_graph_lexical_generation(
@@ -182,7 +182,7 @@ def test_lexical_lifecycle_boundaries_use_retained_publication_reload_and_acl(
         finally:
             config_path.write_text(original_config, encoding="utf-8")
 
-        # Missing and malformed repomap.rpl.toml fail before any DB connection opens.
+        # Missing and malformed repomap.local.cloe.toml fail before any DB connection opens.
         try:
             config_path.unlink()
             with pytest.raises(OpsConfigError) as missing:

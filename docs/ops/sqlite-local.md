@@ -98,7 +98,7 @@ switches a home:
 - a `postgresql` overlay on a SQLite home;
 - a later file without `[storage]` that carries `[postgres]` or `[runtime]`
   (PostgreSQL-only settings) in a SQLite home. This includes a SQLite file
-  added so that it sorts ahead of an existing PostgreSQL `repomap.rpl.toml`.
+  added so that it sorts ahead of an existing PostgreSQL `repomap.local.cloe.toml`.
 
 ```toml
 # ~/.repo-map-local/repomap.rp.toml

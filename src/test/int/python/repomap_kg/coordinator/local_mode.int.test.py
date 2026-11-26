@@ -63,7 +63,7 @@ def test_explicit_local_mode_launches_and_replays_configured_refresh(
                     graph_postgres.psql_args,
                     psql_command=graph_postgres.psql_command,
                 )
-                (home / "configured.rp.toml").write_text(
+                (home / "configured.cloe.toml").write_text(
                     _configured_ops_text(graph_postgres, repository), encoding="utf-8"
                 )
                 monkeypatch.setenv("ASYNC9_TEST_PASSWORD", postgres.password)
@@ -231,7 +231,7 @@ def test_local_mode_boundary_refusals_and_orderly_serve_lifecycle(
                     graph_postgres.psql_args,
                     psql_command=graph_postgres.psql_command,
                 )
-                (home / "configured.rp.toml").write_text(
+                (home / "configured.cloe.toml").write_text(
                     _configured_ops_text(graph_postgres, repository), encoding="utf-8"
                 )
                 monkeypatch.setenv("ASYNC9_TEST_PASSWORD", postgres.password)

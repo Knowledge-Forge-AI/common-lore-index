@@ -307,16 +307,12 @@ configuration, inspect the partial home, then resume with
 `local setup --repo-map-home ~/.cloe --config-format cloe`. The explicit format
 preserves CLOE filenames during recovery.
 
-The config home is a folder, not one giant config file. Common Lore Index loads TOML files
-matching:
-
-- `*.rp.toml` for project/shareable configuration.
-- `*.rpl.toml` for local/private machine configuration.
-
-`*.rp.toml` files load first in lexicographic order. `*.rpl.toml` files load
-second and overlay local/private values. Legacy setup generates `repomap.rpl.toml`.
-CLOE homes use `*.cloe.toml` followed by `*.local.cloe.toml`; fresh implicit setup
-generates `repomap.local.cloe.toml`. Each home uses one family.
+Common Lore Index loads `*.cloe.toml` project files first and
+`*.local.cloe.toml` machine overlays second. Files sort alphabetically
+within each layer. Setup creates `repomap.local.cloe.toml` in a fresh
+home. For a predecessor home with `*.rp.toml` or `*.rpl.toml` files, use
+the [configuration migration procedure](docs/ops/cloe-config-compatibility.md)
+before starting the runtime.
 
 Do not commit a real local config home, generated runtime secrets, backups,
 status artifacts, or private graph data.

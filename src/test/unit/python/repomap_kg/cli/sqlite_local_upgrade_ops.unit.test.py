@@ -150,7 +150,7 @@ def test_behind_database_is_reported_and_refused_by_ordinary_commands(
 def test_postgres_home_refuses_before_any_action(tmp_path: Path) -> None:
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     before = sorted(path.name for path in home.rglob("*"))
     message = _refused(tmp_path, home, "sqlite-upgrade", "--graph", "host-one", "--backup-output", str(tmp_path / "bk"))
     assert "sqlite-local-home-required" in message, message

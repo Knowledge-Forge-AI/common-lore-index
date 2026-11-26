@@ -107,8 +107,8 @@ def setup_owned_home(test_case: unittest.TestCase, config: str | None = None) ->
     tmpdir = tempfile.TemporaryDirectory()
     test_case.addCleanup(tmpdir.cleanup)
     home = Path(tmpdir.name) / "home"
-    setup_local_runtime(home, config_format="legacy")
-    (home / "repomap.rpl.toml").write_text(
+    setup_local_runtime(home)
+    (home / "repomap.local.cloe.toml").write_text(
         setup_owned_config() if config is None else config, encoding="utf-8"
     )
     return home

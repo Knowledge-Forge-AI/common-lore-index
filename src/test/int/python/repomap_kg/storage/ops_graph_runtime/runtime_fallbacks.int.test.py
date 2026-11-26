@@ -23,7 +23,7 @@ class StorageOpsRuntimeFallbackIntegrationTests(unittest.TestCase):
             home.mkdir()
             graph_root.mkdir()
             identity = LocalRuntimeIdentity.from_home(home)
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 f"""\
 schema_version = 1
 
@@ -170,7 +170,7 @@ mode = "read_only"
             graph_root = Path(tmpdir) / "repo-map"
             home.mkdir()
             graph_root.mkdir()
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 f"""\
 schema_version = 1
 
@@ -273,7 +273,7 @@ mode = "read_only"
             graph_root = Path(tmpdir) / "repo-map"
             home.mkdir()
             graph_root.mkdir()
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 f"""\
 schema_version = 1
 

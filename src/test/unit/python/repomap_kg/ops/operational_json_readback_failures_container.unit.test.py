@@ -39,7 +39,7 @@ def _loopback_config(
     home.mkdir(parents=True)
     root.mkdir()
     direct_host_port = "true" if direct_host_port_enabled else "false"
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=root, private_root=root / "private").replace(
             'host = "127.0.0.1"',
             f'host = "{host}"',

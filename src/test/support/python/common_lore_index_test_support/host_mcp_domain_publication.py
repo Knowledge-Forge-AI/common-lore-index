@@ -67,7 +67,7 @@ def publish_domain_fixture(tmp_path: Path, mixed_db: Any, feed_db: Any) -> HostD
     for database in databases.values():
         apply_migrations(default_rdbms_root(), database.psql_args, psql_command=database.psql_command)
     home, sources = tmp_path / "home", tmp_path / "sources"
-    setup_local_runtime(home, config_format="legacy")
+    setup_local_runtime(home)
     secrets = role_secrets(home)
     for name, fixture in MIXED_TREE:
         shutil.copytree(fixture, sources / "mixed" / name)
@@ -110,7 +110,7 @@ def write_domain_config(home: Path, host_port: int, mixed_db: str, feed_db: str,
                 f'enabled = true\nmcp_visible = {"true" if visible else "false"}\n'
                 'extractor_profile = "default"\nrefresh_policy = "manual"\n')
 
-    (home / "repomap.rpl.toml").write_text(f'''schema_version = 1
+    (home / "repomap.local.cloe.toml").write_text(f'''schema_version = 1
 [service]
 mode = "local"
 mcp_transport = "stdio"

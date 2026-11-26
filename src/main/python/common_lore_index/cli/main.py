@@ -295,9 +295,9 @@ def _preflight_cli_home(args: argparse.Namespace) -> None:
         if legacy_mcp_selector_error() or os.environ.get(OPS_CONFIG_ENV):
             return  # The stdio owner handles the legacy refusal and single-file selection.
     if args.command == "ops" and getattr(args, "ops_command", None) in (
-        "config-migration-apply", "config-migration-rollback", "config-migration-finalize",
+        "config-migration-plan", "config-migration-apply", "config-migration-rollback", "config-migration-finalize",
     ):
-        return  # Their explicit-home requirement is independent authority.
+        return  # Migration owners validate their own read or mutation authority.
     _resolve_home_selection(args.repo_map_home)
 
 

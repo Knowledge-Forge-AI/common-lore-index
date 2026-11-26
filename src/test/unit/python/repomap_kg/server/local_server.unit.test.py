@@ -314,7 +314,7 @@ class LocalServerUnitTests(unittest.TestCase):
         import signal
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"; home.mkdir()
-            (home / "repomap.rpl.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
+            (home / "repomap.local.cloe.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
             calls: list[tuple[str, object]] = []
 
             class FakeServer:
@@ -342,7 +342,7 @@ class LocalServerUnitTests(unittest.TestCase):
         repo_root = Path(__file__).resolve().parents[6]
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"; home.mkdir()
-            (home / "repomap.rpl.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
+            (home / "repomap.local.cloe.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
             with socket.socket() as s:
                 s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]
             session = ChildCoverageSession(
@@ -353,8 +353,10 @@ class LocalServerUnitTests(unittest.TestCase):
                 runner = session.create_coverage(coverage); runner.start()
                 cmd = [sys.executable, "-m", "common_lore_index", "server", "serve",
                        "--repo-map-home", str(home), "--host", "127.0.0.1", "--port", str(port)]
+                env = os.environ.copy()
+                env["PYTHONPATH"] = os.pathsep.join((env["PYTHONPATH"], str(session.source_root)))
                 process = subprocess.Popen(
-                    cmd, cwd=repo_root, env=os.environ.copy(),
+                    cmd, cwd=repo_root, env=env,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                 )
                 try:

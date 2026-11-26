@@ -101,8 +101,8 @@ def _graphs(sources: dict[str, Path], databases: dict[str, str] | None = None) -
 
 
 def _write_pg_home(home: Path, port: int, databases: dict[str, str], sources: dict[str, Path]) -> None:
-    setup_local_runtime(home, config_format="legacy")
-    (home / "repomap.rpl.toml").write_text(
+    setup_local_runtime(home)
+    (home / "repomap.local.cloe.toml").write_text(
         "schema_version = 1\n" + SERVICE_TOML
         + '[runtime]\ncontainer_runtime = "docker"\nserver_host_port = 18080\nbind_host = "127.0.0.1"\n'
         + f'[runtime.postgres]\ndirect_host_port_enabled = true\nhost_port = {port}\nbind_host = "127.0.0.1"\n'

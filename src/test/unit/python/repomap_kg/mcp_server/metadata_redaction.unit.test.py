@@ -16,7 +16,7 @@ class McpServerMetadataRedactionUnitTests(McpServerTestSupport):
                 "mcp_visible = false",
             )
         )
-        config_path = config_path.rename(config_path.with_name("local.rpl.toml"))
+        config_path = config_path.rename(config_path.with_name("local.local.cloe.toml"))
 
         with patch.dict(
             "os.environ",

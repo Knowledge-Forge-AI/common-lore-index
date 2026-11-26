@@ -206,7 +206,7 @@ def test_graph_repository_and_optional_backend_boundaries(store: Path, tmp_path:
         call()
     unauth = tmp_path / "pg-unauth"
     unauth.mkdir()
-    (unauth / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (unauth / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     monkeypatch.setenv("CLOE_HOME", str(unauth))
     with patched_guards(NO_FALLBACK_GUARDS), patch(
         "common_lore_index.storage.postgres_navigation_search.execute_json_readback", side_effect=AssertionError("io"),
@@ -215,8 +215,8 @@ def test_graph_repository_and_optional_backend_boundaries(store: Path, tmp_path:
             call(graph_id="host-one")
         assert str(tmp_path) not in str(exc_info.value) and "REPOMAP_READ_STATUS_PASSWORD" not in str(exc_info.value)
     home = tmp_path / "pg-home"
-    setup_local_runtime(home, config_format="legacy")
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    setup_local_runtime(home)
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     secret = read_role_secrets(home / "runtime" / ".env").read_status
     monkeypatch.setenv("CLOE_HOME", str(home))
     calls: list[tuple[str, dict[str, Any]]] = []

@@ -220,4 +220,4 @@ enabled = false
 path = "./server-memory"
 mode = "read_only"
 '''
-    (home / "repomap.rpl.toml").write_text(text, encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(text, encoding="utf-8")
