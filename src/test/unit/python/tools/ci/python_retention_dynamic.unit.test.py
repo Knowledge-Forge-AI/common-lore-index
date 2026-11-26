@@ -294,7 +294,8 @@ def test_current_coverage_owners_resolve_every_declared_operation() -> None:
     assert support is not None
     records = active_boundaries(inventory, support=support)
     dispatch = next(record for record in records if record["id"] ==
-                    "cloe.preview004.cloe.server-parity1.dispatch.v1.cloe-support")
+                    "cloe.rc010.ci173.dynamic-targets.v1")
+    assert dispatch["supersedes"] == "cloe.preview004.cloe.server-parity1.dispatch.v1.cloe-support"
     dispatch_owner = dispatch["owner"]
     assert dispatch_owner not in graph["errors"], graph["errors"].get(dispatch_owner)
     assert dispatch_owner not in graph["dynamic_uncertainty"]

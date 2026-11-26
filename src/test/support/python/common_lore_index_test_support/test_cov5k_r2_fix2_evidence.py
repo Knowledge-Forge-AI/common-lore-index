@@ -121,6 +121,7 @@ def _code_object_identity(code: CodeType) -> str:
 def _python_identity(source_path: str, symbol: str) -> tuple[str, str, str, str]:
     module_name = _module_name(source_path)
     path = _repository_root() / source_path
+    # Bind the current source bytes even when a namespace move preserves the code.
     source_digest = _digest_bytes(path.read_bytes())
     callable_owner = _resolve_symbol(module_name, symbol)
     code = getattr(callable_owner, "__code__", None)

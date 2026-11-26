@@ -34303,6 +34303,313 @@
       ],
       "test": "src/test/unit/python/tools/scale28_r1_psutil_readers.unit.test.py",
       "test_sha256": "510a66622c92efc4a501ac46b8c10813830796434abbf2a8dfa78004960d2a60"
+    },
+    {
+      "fingerprint": "7b44a9a7b5e3e0b6f8a705d21cfd659fa2ab97019d785636742f5aaf5c48848f",
+      "id": "cloe.rc010.ci173.dynamic-targets.v1",
+      "kind": "import_module",
+      "owner": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_evidence.py",
+      "owner_sha256": "c1211e0cd182ef2f2b1a2634105c05d0be1c68f38cec47922252244ca970b312",
+      "parameters": {
+        "domain_module": "common_lore_index_test_support.test_cov5k_r2_fix2_dynamic_targets",
+        "domain_path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_dynamic_targets.py",
+        "domain_sha256": "45925dd00bcc6cb6c3323b117001fdfaa47f3a39dd6872b39091886a8838e16d"
+      },
+      "recipe": "guarded_symbol_import",
+      "supersedes": "cloe.preview004.cloe.server-parity1.dispatch.v1.cloe-support",
+      "symbol": "_resolve_symbol",
+      "targets": [
+        {
+          "module": "actual_refresh_failure_causality",
+          "path": "tools/actual_refresh_failure_causality.py",
+          "sha256": "f88ad8e0a518c522bc42022bc645f6852f4779a3edb9771a9600bccc4ad3767f",
+          "symbol": "FailureCausalityAuthority.record_code"
+        },
+        {
+          "module": "process_rss_monitor",
+          "path": "tools/process_rss_monitor.py",
+          "sha256": "621ba5ee6587890399e2a505139c08e8cee36a533a62d537443f2a30267b991a",
+          "symbol": "ProcessRssMonitor.run"
+        },
+        {
+          "module": "common_lore_index.cli.dispatch",
+          "path": "src/main/python/common_lore_index/cli/dispatch.py",
+          "sha256": "805d96cd1a22c635f4066527b51c76eda6c47eb906bcdeb40e650d38f0e00e16",
+          "symbol": "dispatch_command"
+        },
+        {
+          "module": "common_lore_index_test_support.resource_test_images",
+          "path": "src/test/support/python/common_lore_index_test_support/resource_test_images.py",
+          "sha256": "39d65d9f02ca85d109700c6c8371c42255541a7ebc433085bb3ab71cd2070f0d",
+          "symbol": "TestImageManager.build_ephemeral_image"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_backup"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_container_build"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_container_removal"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_container_start"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_container_stop"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_database_initialization"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_database_removal"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_docker_stats_diagnostic"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_psql_native_load"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_restore"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_schema_migration"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_administrative",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+          "sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+          "symbol": "execute_test_harness"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_gate_executor",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_gate_executor.py",
+          "sha256": "6f4ffa7db270575033a3570eb607f4c130c708972971333129c9c5c5534b9b7a",
+          "symbol": "execute_complete_gate"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_gate_executor",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_gate_executor.py",
+          "sha256": "6f4ffa7db270575033a3570eb607f4c130c708972971333129c9c5c5534b9b7a",
+          "symbol": "execute_focused_selection"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_gate_executor",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_gate_executor.py",
+          "sha256": "6f4ffa7db270575033a3570eb607f4c130c708972971333129c9c5c5534b9b7a",
+          "symbol": "execute_former_failure_node"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_observer",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_observer.py",
+          "sha256": "71a9b977b2975b6e2074b282f8383c0115b9bcc7464b140858a3b4f3071023b7",
+          "symbol": "execute_fresh_public_rehearsal"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_observer",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_observer.py",
+          "sha256": "71a9b977b2975b6e2074b282f8383c0115b9bcc7464b140858a3b4f3071023b7",
+          "symbol": "execute_mixed_configured_campaign"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_observer",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_observer.py",
+          "sha256": "71a9b977b2975b6e2074b282f8383c0115b9bcc7464b140858a3b4f3071023b7",
+          "symbol": "execute_observer_request"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_observer",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_observer.py",
+          "sha256": "71a9b977b2975b6e2074b282f8383c0115b9bcc7464b140858a3b4f3071023b7",
+          "symbol": "execute_observer_schedule"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_observer",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_observer.py",
+          "sha256": "71a9b977b2975b6e2074b282f8383c0115b9bcc7464b140858a3b4f3071023b7",
+          "symbol": "execute_owning_area_execution"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_observer",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_observer.py",
+          "sha256": "71a9b977b2975b6e2074b282f8383c0115b9bcc7464b140858a3b4f3071023b7",
+          "symbol": "execute_prior_state_preservation"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_preparation",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_preparation.py",
+          "sha256": "ef113ce0e950e7ad555b77417bd4c9baba7f8468be823b4580e0877384c84c13",
+          "symbol": "execute_preparation_condition"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_preparation",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_preparation.py",
+          "sha256": "ef113ce0e950e7ad555b77417bd4c9baba7f8468be823b4580e0877384c84c13",
+          "symbol": "execute_preparation_state_path"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_process_recorder",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_process_recorder.py",
+          "sha256": "aa5d4ec5497eac49577643d26a548660a61105fd3686264bc3a649c0e80e217e",
+          "symbol": "ProcessBoundaryRecorder.run"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_process_recorder",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_process_recorder.py",
+          "sha256": "aa5d4ec5497eac49577643d26a548660a61105fd3686264bc3a649c0e80e217e",
+          "symbol": "execute_zero_process_boundary"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_runtime",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py",
+          "sha256": "971fb92bf8d19f3d582c9c4627f400e648da2c21b6e3719c9914a9b0c4fd488e",
+          "symbol": "execute_container_rss"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_runtime",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py",
+          "sha256": "971fb92bf8d19f3d582c9c4627f400e648da2c21b6e3719c9914a9b0c4fd488e",
+          "symbol": "execute_container_rss_equivalence"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_runtime",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py",
+          "sha256": "971fb92bf8d19f3d582c9c4627f400e648da2c21b6e3719c9914a9b0c4fd488e",
+          "symbol": "execute_failure_causality"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_runtime",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py",
+          "sha256": "971fb92bf8d19f3d582c9c4627f400e648da2c21b6e3719c9914a9b0c4fd488e",
+          "symbol": "execute_process_containment_companion"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_runtime",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py",
+          "sha256": "971fb92bf8d19f3d582c9c4627f400e648da2c21b6e3719c9914a9b0c4fd488e",
+          "symbol": "execute_process_rss"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_runtime",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py",
+          "sha256": "971fb92bf8d19f3d582c9c4627f400e648da2c21b6e3719c9914a9b0c4fd488e",
+          "symbol": "execute_runtime_driver_read"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_runtime",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py",
+          "sha256": "971fb92bf8d19f3d582c9c4627f400e648da2c21b6e3719c9914a9b0c4fd488e",
+          "symbol": "execute_terminal_live_cohort"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_runtime",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py",
+          "sha256": "971fb92bf8d19f3d582c9c4627f400e648da2c21b6e3719c9914a9b0c4fd488e",
+          "symbol": "execute_terminal_read"
+        },
+        {
+          "module": "common_lore_index_test_support.test_cov5k_r2_fix2_runtime",
+          "path": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py",
+          "sha256": "971fb92bf8d19f3d582c9c4627f400e648da2c21b6e3719c9914a9b0c4fd488e",
+          "symbol": "execute_terminal_stage_matrix"
+        },
+        {
+          "module": "run_tests",
+          "path": "tools/run_tests.py",
+          "sha256": "3dc5eb4003719510aad709e44cdb3f0cab076062220752a1f3b44492134be51b",
+          "symbol": "main"
+        },
+        {
+          "module": "scale14_actual_refresh_supervisor",
+          "path": "tools/scale14_actual_refresh_supervisor.py",
+          "sha256": "baefb5662e5e0bcd481ef62cf7bf9c7d0ebfbd1508a6b1c1fd9cb9b7fff3a6e0",
+          "symbol": "ActualRefreshSupervisor"
+        },
+        {
+          "module": "scale15_actual_path_readback",
+          "path": "tools/scale15_actual_path_readback.py",
+          "sha256": "0d672b01f8ea519968b6dd9fc7e9bc3e971312500ace89898a5c4cc64102b417",
+          "symbol": "read_scale15_terminal_state"
+        },
+        {
+          "module": "scale15_actual_path_readback",
+          "path": "tools/scale15_actual_path_readback.py",
+          "sha256": "0d672b01f8ea519968b6dd9fc7e9bc3e971312500ace89898a5c4cc64102b417",
+          "symbol": "read_terminal_backend_summary"
+        },
+        {
+          "module": "scale28_backend_observer_session",
+          "path": "tools/scale28_backend_observer_session.py",
+          "sha256": "5a82b9053cf9305cddb927c904f7571079a7ba875ffefb238861f0016f380fce",
+          "symbol": "BackendObserverSession.run"
+        },
+        {
+          "module": "scale28_hybrid_startup",
+          "path": "tools/scale28_hybrid_startup.py",
+          "sha256": "a16ff7d8ac592db2cdb6d01b4686b6bd3b224b946beeed1cdec1b973481a1c3b",
+          "symbol": "prepare_parent_startup_authorities"
+        },
+        {
+          "module": "scale28_hybrid_startup",
+          "path": "tools/scale28_hybrid_startup.py",
+          "sha256": "a16ff7d8ac592db2cdb6d01b4686b6bd3b224b946beeed1cdec1b973481a1c3b",
+          "symbol": "prepare_startup_resources"
+        },
+        {
+          "module": "scale28_preparation_authority",
+          "path": "tools/scale28_preparation_authority.py",
+          "sha256": "7cc7c1945ce3bb75f63281d5b50b7f063bea5f6534e917e5f2b59e7b26587685",
+          "symbol": "HybridPreparationAuthority.prepare"
+        },
+        {
+          "module": "scale28_preparation_worker",
+          "path": "tools/scale28_preparation_worker.py",
+          "sha256": "053a531e49231da9923456c4bafcabda79d1807c1cac80b8795cf39cb3db62c3",
+          "symbol": "PreparationWorkerAttempt"
+        },
+        {
+          "module": "scale28_runtime_identity",
+          "path": "tools/scale28_runtime_identity.py",
+          "sha256": "7aca851bc41b76bf931a9c576f8d74ae9c0af36ff76c575ab934de998f1e9c46",
+          "symbol": "capture_runtime_identity"
+        }
+      ],
+      "test": "src/test/unit/python/repomap_test_support/test_cov5k_r2_fix2_dynamic_targets.unit.test.py",
+      "test_sha256": "cb57883fc40795c8a6176762dbd5d682cbe244234290aded252f7d3edff92da1"
     }
   ],
   "dynamic_schema": "repomap-python-retention-dynamic-v1",
