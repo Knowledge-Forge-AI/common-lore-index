@@ -95,7 +95,7 @@ jobs:
 
       - name: Retain bounded sanitized pre-review evidence
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: repomap-pre-review-evidence
           path: ${{ runner.temp }}/repomap-pre-review-evidence
@@ -215,7 +215,7 @@ jobs:
 
       - name: Upload native D12 qualification evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: repomap-d12-native-amd64-${{ github.run_id }}-a${{ github.run_attempt }}-${{ github.sha }}
           path: ${{ runner.temp }}/d12-native-amd64-evidence
@@ -235,7 +235,7 @@ jobs:
 
       - name: Upload Rust parser component evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: repomap-rust-pilot-amd64-${{ github.run_id }}-a${{ github.run_attempt }}-${{ github.sha }}
           path: ${{ runner.temp }}/rust-pilot-amd64-report
@@ -266,7 +266,7 @@ jobs:
         run: python3 tools/ci/hosted_staging.py run smoke "${RUNNER_TEMP}/staging-part"
 
       - name: Upload staging smoke evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cloe-staging-${{ github.run_id }}-a${{ github.run_attempt }}-smoke
           path: ${{ runner.temp }}/staging-part
@@ -303,7 +303,7 @@ jobs:
         run: python3 tools/ci/hosted_staging.py run "${PART}" "${RUNNER_TEMP}/staging-part"
 
       - name: Upload staging integration evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cloe-staging-${{ github.run_id }}-a${{ github.run_attempt }}-${{ matrix.part }}
           path: ${{ runner.temp }}/staging-part
@@ -349,7 +349,7 @@ jobs:
 
       - name: Upload the staging test report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: repomap-staging-gate-report
           path: ${{ runner.temp }}/ci-staging-report
@@ -450,7 +450,7 @@ jobs:
 
       - name: Upload the system test report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: repomap-main-system-gate-report
           path: |
@@ -516,7 +516,7 @@ jobs:
           severity-cutoff: "high"
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: repomap-sbom
           path: sbom.spdx.json
