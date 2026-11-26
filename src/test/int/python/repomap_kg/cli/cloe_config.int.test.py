@@ -13,10 +13,10 @@ from typing import Any
 import pytest
 
 from common_lore_index.cli.main import main as cli_main
-from repomap_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, structured, tool
+from common_lore_index_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, structured, tool
 
 
 def _snapshot(root: Path) -> dict[str, bytes]:
@@ -118,7 +118,7 @@ def test_planner_honors_new_home_without_storage_dispatch_or_source_reads(
 def test_fresh_guarded_server_planning_never_imports_driver(tmp_path: Path) -> None:
     home = tmp_path / "server home"
     home.mkdir()
-    (home / "00.rp.toml").write_text(OPS_CONFIG_TEMPLATE)
+    (home / "00.cloe.toml").write_text(OPS_CONFIG_TEMPLATE)
     before = _snapshot(home)
     harness = LocalHarness(tmp_path / "guarded", block_psycopg=True)
     result = harness.run(
@@ -147,9 +147,82 @@ def test_cloe_home_owns_local_state_with_driver_unavailable(tmp_path: Path) -> N
     assert not harness.forbidden_events() and not harness.shim_invocations()
 
 
+def test_mcp_config_selectors_use_independent_canonical_defaults(tmp_path: Path) -> None:
+    harness = LocalHarness(tmp_path / "guarded", block_psycopg=True)
+    home = tmp_path / "graph home"
+    home.mkdir(mode=0o700)
+    content = sqlite_home_toml(graph_toml("home-graph", "/not-read/source"))
+    (home / "00.cloe.toml").write_text(content)
+    (home / "mcp.json").write_text("home-relative project registry must never be opened")
+    old_registry = harness.user_home / ".codex/codex-vc/mcp/repo-map/config.json"
+    old_registry.parent.mkdir(parents=True)
+    old_registry.write_text("old default must never be opened")
+    alternate_config = tmp_path / "alt.cloe.toml"
+    alternate_config.write_text(content.replace("home-graph", "alternate-graph"))
+    def create_registry(path: Path, name: str) -> None:
+        project = {"root_path": "/not-read/source", "pg_database": "unused"}
+        path.write_text(json.dumps({"default_project": name, "projects": {name: project}}))
+
+    requests = [initialize(), tool(2, "cloe_projects", {})]
+    optional = structured(harness.mcp(home, requests, extra_env={"CLOE_MCP_CONFIG": ""}), 2)
+    assert optional["default_project"] is None and optional["projects"] == []
+    canonical = harness.user_home / ".config/common-lore-index/mcp.json"
+    canonical.parent.mkdir(parents=True, mode=0o700)
+    create_registry(canonical, "canonical-default")
+    alternate_registry = tmp_path / "alternate mcp.json"
+    create_registry(alternate_registry, "canonical-explicit")
+    before = _snapshot(harness.user_home), _snapshot(home)
+    for extra, expected_project, expected_graph in (
+        ({"CLOE_MCP_CONFIG": ""}, "canonical-default", "home-graph"),
+        ({"CLOE_MCP_CONFIG": "", "CLOE_OPS_CONFIG": str(alternate_config)}, "canonical-default", "alternate-graph"),
+        ({"CLOE_MCP_CONFIG": str(alternate_registry)}, "canonical-explicit", "home-graph"),
+    ):
+        observed = structured(harness.mcp(home, requests, extra_env=extra), 2)
+        assert observed["default_project"] == expected_project
+        assert [graph["graph_id"] for graph in observed["graphs"]] == [expected_graph]
+    payload = "".join(json.dumps(item) + "\n" for item in requests)
+    without_graph_home = harness.run("mcp", "serve", input_text=payload, extra_env={"CLOE_MCP_CONFIG": ""})
+    assert without_graph_home.returncode == 0, without_graph_home.stderr
+    replies = {item["id"]: item for item in map(json.loads, without_graph_home.stdout.splitlines())}
+    registry_only = structured(replies, 2)
+    assert registry_only["default_project"] == "canonical-default"
+    assert registry_only["graph_registry_available"] is False
+    assert (_snapshot(harness.user_home), _snapshot(home)) == before
+    assert not harness.forbidden_events() and not harness.shim_invocations()
+
+
+@pytest.mark.parametrize("selector", ["REPOMAP_OPS_CONFIG", "REPOMAP_MCP_CONFIG"])
+def test_mcp_refuses_nonempty_legacy_config_selectors_without_disclosing_values(tmp_path: Path, selector: str) -> None:
+    harness = LocalHarness(tmp_path / "guarded", block_psycopg=True)
+    private_value = str(tmp_path / "must-not-leak")
+    for argv in (("mcp", "serve"), ("mcp", "serve", "--config", str(tmp_path / "wrong.toml"))):
+        refused = harness.run(*argv, extra_env={selector: private_value})
+        assert refused.returncode == 1 and not refused.stdout
+        assert refused.stderr == (
+            "legacy-mcp-config-selector: migrate MCP selectors to CLOE_OPS_CONFIG or CLOE_MCP_CONFIG\n"
+        )
+        assert private_value not in refused.stderr
+    assert not harness.forbidden_events() and not harness.shim_invocations()
+
+
+@pytest.mark.parametrize("selector", [
+    "REPOMAP_PSQL_COMMAND", "REPOMAP_PG_HOST", "REPOMAP_PG_PORT", "REPOMAP_PG_USER", "REPOMAP_PG_DATABASE",
+])
+def test_mcp_refuses_retired_connection_selectors_before_configuration_access(tmp_path: Path, selector: str) -> None:
+    harness = LocalHarness(tmp_path / "guarded", block_psycopg=True)
+    result = harness.run("mcp", "serve", "--config", str(tmp_path / "unread registry"),
+                         extra_env={selector: "private-connection-sentinel"})
+    assert result.returncode == 1 and result.stdout == ""
+    assert result.stderr == (
+        "legacy-mcp-connection-selector: migrate connection settings to CLOE_PSQL_COMMAND and CLOE_PG_*\n"
+    )
+    assert not harness.forbidden_events() and not harness.shim_invocations()
+
+
 @pytest.mark.parametrize("invalid", ['schema_version = "private-error-sentinel"\n', 'password = "private-error-sentinel\n'])
-def test_invalid_input_stderr_never_echoes_values_or_home(tmp_path: Path, invalid: str) -> None:
-    (tmp_path / "00.rp.toml").write_text(invalid)
+@pytest.mark.parametrize("suffix", [".rp.toml", ".cloe.toml"])
+def test_invalid_input_stderr_never_echoes_values_or_home(tmp_path: Path, invalid: str, suffix: str) -> None:
+    (tmp_path / ("00" + suffix)).write_text(invalid)
     result = run_cli_module("ops", "config-migration-plan", "--repo-map-home", str(tmp_path), "--json")
     assert result.returncode == 1 and result.stdout == ""
     assert "private-error-sentinel" not in result.stderr
@@ -177,7 +250,7 @@ def test_explicit_mcp_home_wins_in_a_fresh_driver_free_process(tmp_path: Path) -
     (home / "00.cloe.toml").write_text(sqlite_home_toml(graph_toml("one", "/not-read/source")))
     harness = LocalHarness(tmp_path / "guarded", block_psycopg=True)
     responses = harness.mcp(
-        home, [initialize(1), tool(2, "repomap_list_graphs", {})],
+        home, [initialize(1), tool(2, "cloe_list_graphs", {})],
         extra_env={"CLOE_HOME": str(tmp_path / "wrong ambient")},
     )
     payload = structured(responses, 2)
@@ -205,3 +278,21 @@ def test_runtime_setup_refusal_preserves_cloe_home(tmp_path: Path) -> None:
     assert _snapshot(home) == before
     assert sorted(p.name for p in home.iterdir()) == ["00.cloe.toml"]
     assert not harness.forbidden_events() and not harness.shim_invocations()
+
+
+@pytest.mark.parametrize("explicit", [True, False])
+def test_legacy_home_requires_migration_before_ordinary_config_readback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, explicit: bool,
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("CLOE_HOME", raising=False)
+    home = tmp_path / ".cloe"
+    home.mkdir(mode=0o700)
+    (home / "old.rp.toml").write_text(OPS_CONFIG_TEMPLATE)
+    before = _snapshot(tmp_path)
+    flags = ("--repo-map-home", str(home), "--json") if explicit else ("--json",)
+    checked = run_cli_module("ops", "config-check", *flags)
+    assert checked.returncode == 1 and "config-migration-plan" in checked.stderr
+    planned = run_cli_module("ops", "config-migration-plan", *flags)
+    assert planned.returncode == 0 and json.loads(planned.stdout)["conversion_required"]
+    assert _snapshot(tmp_path) == before

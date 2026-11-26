@@ -20,7 +20,7 @@ from common_lore_index.runtime.plan import LocalContainerStatus, build_local_run
 def _home(tmp_path, mode="container"):
     home = tmp_path / "home"
     local.setup_local_runtime(home)
-    config = home / "repomap.rpl.toml"
+    config = home / "repomap.local.cloe.toml"
     config.write_text(config.read_text().replace('[runtime]', f'[runtime]\ncoordinator_mode = "{mode}"'))
     return home
 
@@ -63,7 +63,7 @@ def test_native_owner_refuses_before_compose_or_render(tmp_path, state, code):
 
 def test_inactive_default_container_proceeds(tmp_path):
     home = _home(tmp_path)
-    config = home / "repomap.rpl.toml"
+    config = home / "repomap.local.cloe.toml"
     config.write_text(config.read_text().replace('coordinator_mode = "container"\n', ""))
     with _runtime_mocks(), patch.object(local, "_run_container_runtime") as run:
         result = local.up_local_runtime(home)
@@ -136,7 +136,7 @@ def test_packaged_mode_gate_precedes_singleton_and_foreground_is_unchanged(tmp_p
     assert not (home / "coordinator").exists()
     serve_configured_coordinator(home, Mock(), runtime_factory=factory, stop_event=stop)
     factory.assert_called_once_with(home)
-    config = home / "repomap.rpl.toml"
+    config = home / "repomap.local.cloe.toml"
     config.write_text(config.read_text().replace('coordinator_mode = "container"', 'coordinator_mode = "native"'))
     serve_configured_coordinator(home, Mock(), service_package=True, runtime_factory=factory, stop_event=stop)
     assert factory.call_count == 2

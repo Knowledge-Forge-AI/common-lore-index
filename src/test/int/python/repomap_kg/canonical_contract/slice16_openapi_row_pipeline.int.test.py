@@ -5,7 +5,7 @@ import pytest
 from common_lore_index.canonicalization.main import canonicalize_observations
 from common_lore_index.graph.multi_source_pipeline import capture_multi_source_candidate
 from common_lore_index.storage.staged_rows import build_staged_rows
-from repomap_test_support.composition_extraction_fixtures import create_composition_graph_config
+from common_lore_index_test_support.composition_extraction_fixtures import create_composition_graph_config
 
 
 @pytest.mark.parametrize("reference,scope,redacted,reason,target_prefix", [

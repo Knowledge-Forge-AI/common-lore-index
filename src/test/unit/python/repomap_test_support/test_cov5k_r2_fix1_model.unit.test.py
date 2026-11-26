@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.scale28_fix9_failure_inventory import FORMER_FAILURES
-from repomap_test_support.test_cov5k_r2_fix1_catalog import (
+from common_lore_index_test_support.scale28_fix9_failure_inventory import FORMER_FAILURES
+from common_lore_index_test_support.test_cov5k_r2_fix1_catalog import (
     REQUIRED_MANIFEST_GROUPS,
     build_closed_catalog,
 )
-from repomap_test_support.test_cov5k_r2_fix1_executors import execute_group_a
-from repomap_test_support.test_cov5k_r2_fix1_qualification import (
+from common_lore_index_test_support.test_cov5k_r2_fix1_executors import execute_group_a
+from common_lore_index_test_support.test_cov5k_r2_fix1_qualification import (
     IntegrityError,
     LifecycleState,
     build_result,
@@ -23,7 +23,7 @@ from repomap_test_support.test_cov5k_r2_fix1_qualification import (
     validate_draft,
     verify_frozen,
 )
-from repomap_test_support.test_cov5k_r2_fix1_rehearsal import (
+from common_lore_index_test_support.test_cov5k_r2_fix1_rehearsal import (
     build_runner_registry,
     verify_static_bindings,
 )
@@ -225,7 +225,7 @@ def test_runner_builders_are_independently_authored_executors():
 def test_freeze_binds_test_owned_executor_source(monkeypatch, executor_name):
     before = freeze_manifest(validate_draft(create_draft()))
     executor_path = REPOSITORY_ROOT.joinpath(
-        "src/test/support/python/repomap_test_support/",
+        "src/test/support/python/common_lore_index_test_support/",
         executor_name
     ).resolve()
     original = Path.read_bytes

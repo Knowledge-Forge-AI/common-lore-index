@@ -20,8 +20,8 @@ from common_lore_index.storage.node_locations import NodeLocationsQuery
 from common_lore_index.storage.sqlite_local.context_expansion_queries import expand_seed_incident_edges
 from common_lore_index.storage.sqlite_local.navigation_queries import navigation_candidates
 from common_lore_index.storage.sqlite_local.node_location_queries import node_locations
-from repomap_test_support.context_assertions import assert_valid_context_packet
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_assertions import assert_valid_context_packet
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE,
     BINDING_DOCS,
     CTX_GRAPH_ID,

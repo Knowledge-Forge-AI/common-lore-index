@@ -11,10 +11,10 @@ import textwrap
 import typing_extensions
 
 from common_lore_index.runtime import python_payload, release
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support.portable_worker_scenarios import package_worker_code
-from repomap_test_support.resource_docker_current import CurrentRunDockerContainers
-from repomap_test_support.resource_run import active_resource_run
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support.portable_worker_scenarios import package_worker_code
+from common_lore_index_test_support.resource_docker_current import CurrentRunDockerContainers
+from common_lore_index_test_support.resource_run import active_resource_run
 
 PROGRAM = textwrap.dedent('''
     import json, os, pathlib, re, sys
@@ -22,7 +22,7 @@ PROGRAM = textwrap.dedent('''
     from common_lore_index.artifacts.store import FileSystemArtifactStore
     from common_lore_index.coordinator._portable_capability import create_portable_capability
     from common_lore_index.coordinator._portable_worker_launch import run_portable_worker
-    from repomap_test_support.portable_worker_scenarios import create_test_sealed_capability, coordinator_test_limits
+    from common_lore_index_test_support.portable_worker_scenarios import create_test_sealed_capability, coordinator_test_limits
     from common_lore_index.extractors.languages import go_helper
     tag = go_helper.platform_tag()
     binaries = pathlib.Path(go_helper.__file__).resolve().parents[2] / '_bin'
@@ -64,11 +64,11 @@ TRACE = textwrap.dedent('''
 
 
 def _archive(code: Path) -> bytes:
-    support = Path(__file__).resolve().parents[6] / 'src/test/support/python/repomap_test_support'
+    support = Path(__file__).resolve().parents[6] / 'src/test/support/python/common_lore_index_test_support'
     buffer = io.BytesIO()
     with tarfile.open(fileobj=buffer, mode='w') as archive:
         archive.add(code, arcname='probe/code', filter=lambda item: None if '__pycache__' in item.name else item)
-        archive.add(support, arcname='probe/support/repomap_test_support',
+        archive.add(support, arcname='probe/support/common_lore_index_test_support',
                     filter=lambda item: None if '__pycache__' in item.name else item)
         archive.add(typing_extensions.__file__, arcname='probe/code/src/main/python/typing_extensions.py')
         raw = TRACE.encode(); member = tarfile.TarInfo('probe/code/src/main/python/sitecustomize.py')

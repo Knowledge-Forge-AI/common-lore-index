@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_scratch import (
+from common_lore_index_test_support.test_scratch import (
     DEFAULT_PROJECT,
     ENV_PHASE,
     ENV_PROJECT,
@@ -69,7 +69,7 @@ def test_darwin_shared_root_is_not_created_by_test_code(tmp_path, monkeypatch):
     monkeypatch.delenv(ENV_SCRATCH_ROOT, raising=False)
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setattr(
-        "repomap_test_support.test_scratch.DARWIN_SHARED_ROOT",
+        "common_lore_index_test_support.test_scratch.DARWIN_SHARED_ROOT",
         tmp_path / "absent-shared-root",
     )
     monkeypatch.setattr(tempfile, "gettempdir", lambda: str(tmp_path))

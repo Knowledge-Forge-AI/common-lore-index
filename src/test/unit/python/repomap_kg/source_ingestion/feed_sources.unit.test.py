@@ -6,7 +6,7 @@ import tempfile
 import urllib.error
 from pathlib import Path
 
-from repomap_test_support.source_ingestion import (
+from common_lore_index_test_support.source_ingestion import (
     ATOM_BODY,
     FakeOpener,
     FakeResponse,

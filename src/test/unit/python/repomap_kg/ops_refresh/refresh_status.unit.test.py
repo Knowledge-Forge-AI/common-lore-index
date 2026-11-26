@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.ops_refresh import OpsRefreshUnitTestCase
+from common_lore_index_test_support.ops_refresh import OpsRefreshUnitTestCase
 
 from common_lore_index.ops.refresh import (
     OpsRefreshError,

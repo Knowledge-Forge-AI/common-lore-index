@@ -28,7 +28,7 @@ from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.staging_operation_contracts import (
     STAGING_OPERATION_DESCRIPTORS,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

@@ -9,8 +9,8 @@ import zipfile
 
 import pytest
 
-from repomap_test_support.w5_component_artifacts import encoded, make_component_pair
-from repomap_test_support.w5_pair_fixtures import make_pair_artifacts
+from common_lore_index_test_support.w5_component_artifacts import encoded, make_component_pair
+from common_lore_index_test_support.w5_pair_fixtures import make_pair_artifacts
 from retrieval_semantic_pair_artifacts import PairReportRefusal, digest_bytes, load_journal
 from retrieval_semantic_raw_component import read_raw_component, verify_raw_component
 from retrieval_semantic_raw_component_anchors import COMPONENT_ROLES, MEMBER_ROLES

@@ -1,4 +1,4 @@
-from repomap_test_support.github_api_ingestion_config import (
+from common_lore_index_test_support.github_api_ingestion_config import (
     GitHubApiIngestionConfigContract as _GitHubApiIngestionConfigContract,
 )
 

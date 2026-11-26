@@ -6,22 +6,22 @@ import json
 from pathlib import Path
 
 import pytest
-import repomap_test_support.resource_operator_reclamation as reclamation
+import common_lore_index_test_support.resource_operator_reclamation as reclamation
 
 import test_hygiene_maintenance as maintenance_tool
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     PREFLIGHT_CATEGORIES,
     OperatorReclamationPreflightError,
     OperatorReclamationRequest,
     reclaim_run_population,
 )
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     add_run,
     dead,
     private_root,
 )
-from repomap_test_support.resource_operator_scope import OperatorScopeIdentityError
+from common_lore_index_test_support.resource_operator_scope import OperatorScopeIdentityError
 
 
 EXPECTED_CATEGORIES = frozenset(

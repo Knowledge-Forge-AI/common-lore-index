@@ -8,7 +8,11 @@ import tomllib as tomllib
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from common_lore_index.ops.home_selection import HomeSelection as _HomeSelection, select_home as _select_home
+from common_lore_index.ops.home_selection import (
+    DEFAULT_CLOE_HOME as DEFAULT_CLOE_HOME,
+    HomeSelection as _HomeSelection,
+    select_home as _select_home,
+)
 
 from common_lore_index.ops.config_helpers import (
     KNOWN_POSTGRES_FIELDS as KNOWN_POSTGRES_FIELDS,
@@ -92,6 +96,7 @@ from common_lore_index.ops.config_status import (
 )
 from common_lore_index.ops.config_storage import refuse_sqlite_home as _refuse_sqlite_home
 from common_lore_index.ops.config_layout import discover_home_config_files as _discover_home_config_files
+from common_lore_index.ops.config_layout import require_canonical_config_filename as _require_canonical_config_filename
 from common_lore_index.ops.resolved_config import resolve_ops_config
 from common_lore_index.ops.config_loading_records import (
     SUPPORTED_SCHEMA_VERSION as SUPPORTED_SCHEMA_VERSION,
@@ -99,15 +104,32 @@ from common_lore_index.ops.config_loading_records import (
 )
 from common_lore_index.storage import parse_psql_json as parse_psql_json, run_psql as run_psql
 
-DEFAULT_REPOMAP_HOME = "~/.repo-map"
+OPS_CONFIG_ENV = "CLOE_OPS_CONFIG"
+MCP_CONFIG_ENV = "CLOE_MCP_CONFIG"
+
+
+def legacy_mcp_selector_error() -> str | None:
+    """Refuse stale explicit authority without reading or disclosing its values."""
+    if os.environ.get("REPOMAP_OPS_CONFIG") or os.environ.get("REPOMAP_MCP_CONFIG"):
+        return "legacy-mcp-config-selector: migrate MCP selectors to CLOE_OPS_CONFIG or CLOE_MCP_CONFIG"
+    if any(os.environ.get(name) for name in (
+        "REPOMAP_PSQL_COMMAND", "REPOMAP_PG_HOST", "REPOMAP_PG_PORT", "REPOMAP_PG_USER", "REPOMAP_PG_DATABASE"
+    )):
+        return "legacy-mcp-connection-selector: migrate connection settings to CLOE_PSQL_COMMAND and CLOE_PG_*"
+    return None
+
+
+def require_canonical_mcp_selectors() -> None:
+    if message := legacy_mcp_selector_error():
+        raise ValueError(message)
 
 
 def resolve_repo_map_home(value: str | Path | None = None) -> Path:
     return _resolve_home_selection(value).path
 
 
-def _resolve_home_selection(value: str | Path | None = None) -> _HomeSelection:
-    return _select_home(value, recognize=_recognize_home_payloads)
+def _resolve_home_selection(value: str | Path | None = None, *, migration: bool = False) -> _HomeSelection:
+    return _select_home(value, recognize=_recognize_home_payloads, migration=migration)
 
 
 def _recognize_home_payloads(files: Sequence[tuple[str, bytes]]) -> bool:
@@ -133,9 +155,7 @@ def _recognize_home_payloads(files: Sequence[tuple[str, bytes]]) -> bool:
 
 
 def load_ops_config_home(config_home: str | Path | None = None) -> OpsConfig:
-    home, merged_payload, config_files, diagnostics = _read_ops_config_home_payload(
-        config_home
-    )
+    home, merged_payload, config_files, diagnostics = _read_ops_config_home_payload(config_home)
     return build_ops_config_from_payload(
         merged_payload,
         config_path=str(home),
@@ -146,34 +166,11 @@ def load_ops_config_home(config_home: str | Path | None = None) -> OpsConfig:
 
 
 def _read_ops_config_home_payload(
-    config_home: str | Path | None = None,
+    config_home: str | Path | None = None, *, migration: bool = False,
 ) -> tuple[Path, dict[str, Any], tuple[str, ...], list[OpsConfigDiagnostic]]:
     """Read and merge a home's config files without interpreting any backend."""
-    home = resolve_repo_map_home(config_home)
-    if not home.exists():
-        raise OpsConfigError(
-            (
-                OpsConfigDiagnostic(
-                    "error",
-                    "config-home-missing",
-                    str(home),
-                    "REPOMAP_HOME does not exist; MCP-RUNTIME1 validates existing config homes only",
-                ),
-            )
-        )
-    if not home.is_dir():
-        raise OpsConfigError(
-            (
-                OpsConfigDiagnostic(
-                    "error",
-                    "config-home-not-directory",
-                    str(home),
-                    "REPOMAP_HOME must be a directory",
-                ),
-            )
-        )
-
-    ordered_files, ignored_files = _discover_home_config_files(home)
+    home = _resolve_home_selection(config_home, migration=migration).path
+    ordered_files, ignored_files = _discover_home_config_files(home, migration=migration)
     diagnostics: list[OpsConfigDiagnostic] = [
         OpsConfigDiagnostic(
             "warning",
@@ -191,15 +188,15 @@ def _read_ops_config_home_payload(
                     "error",
                     "config-home-empty",
                     str(home),
-                    "configuration home contains no *.rp.toml or *.rpl.toml files "
-                    "and no CLOE (*.cloe.toml) files",
+                    "configuration home contains no recognized TOML files" if migration else
+                    "configuration home contains no *.cloe.toml or *.local.cloe.toml files",
                 ),
             )
         )
 
     file_payloads: list[tuple[str, Mapping[str, Any]]] = []
     for path in ordered_files:
-        payload = read_toml_payload(path)
+        payload = _read_toml_payload(path)
         validate_file_schema(payload, path.name)
         diagnostics.extend(unknown_top_level_diagnostics(payload, source=path.name))
         diagnostics.extend(unknown_file_field_diagnostics(payload, path.name))
@@ -223,8 +220,8 @@ def load_ops_config(config_path: str | Path) -> OpsConfig:
                     str(path),
                     (
                         "JSON ops/MCP registry config is removed from the local "
-                        "operations target; use REPOMAP_HOME with *.rp.toml "
-                        "and *.rpl.toml files"
+                        "operations target; use CLOE_HOME with *.cloe.toml "
+                        "and *.local.cloe.toml files"
                     ),
                 ),
             )
@@ -241,6 +238,11 @@ def load_ops_config(config_path: str | Path) -> OpsConfig:
 
 
 def read_toml_payload(path: Path) -> Mapping[str, Any]:
+    _require_canonical_config_filename(path)
+    return _read_toml_payload(path)
+
+
+def _read_toml_payload(path: Path) -> Mapping[str, Any]:
     try:
         payload = tomllib.loads(path.read_text(encoding="utf-8"))
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as error:

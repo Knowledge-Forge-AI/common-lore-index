@@ -11,9 +11,9 @@ from common_lore_index.artifacts.store import ArtifactIntegrityError, FileSystem
 from common_lore_index.artifacts.validator import PublisherBundleValidator
 from common_lore_index.coordinator import _portable_semantic_adapter as adapter
 from common_lore_index.graph.multi_source_pipeline import capture_multi_source_candidate
-from repomap_test_support.materialization_fixtures import CHUNK_BYTES, FaultSource, SourceProbe, WitnessStore, patch_copy_os
-from repomap_test_support.portable_spool_case import spool_case
-from repomap_test_support.portable_worker_equivalence import reference_bytes, publication_expectation
+from common_lore_index_test_support.materialization_fixtures import CHUNK_BYTES, FaultSource, SourceProbe, WitnessStore, patch_copy_os
+from common_lore_index_test_support.portable_spool_case import spool_case
+from common_lore_index_test_support.portable_worker_equivalence import reference_bytes, publication_expectation
 
 
 def test_streamed_real_source_keeps_exact_reference_bundle_bytes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_runtime import (
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_runtime import (
     RuntimeOwnershipError,
     RuntimeResourceOwner,
 )

@@ -12,14 +12,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from repomap_test_support.sqlite_local_harness import await_ready
-from repomap_test_support.sqlite_local_lock_children import (
+from common_lore_index_test_support.sqlite_local_harness import await_ready
+from common_lore_index_test_support.sqlite_local_lock_children import (
     attempt,
     HOLD,
     read_line,
     start_holder,
 )
-from repomap_test_support.sqlite_managed_child import (
+from common_lore_index_test_support.sqlite_managed_child import (
     AbruptOwnershipError,
     ManagedChild,
 )
@@ -168,7 +168,7 @@ def test_failure_helper_releases_real_lock_and_reaps_group(tmp_path, monkeypatch
         operation = lambda: read_line(child)
         diagnostic = "lock child produced no line"
     else:
-        monkeypatch.setattr("repomap_test_support.sqlite_local_harness.BARRIER_DEADLINE_SECONDS", 0)
+        monkeypatch.setattr("common_lore_index_test_support.sqlite_local_harness.BARRIER_DEADLINE_SECONDS", 0)
         operation = lambda: await_ready(tmp_path / "missing-barrier", child)
         diagnostic = "paused writer never reached its barrier"
     with pytest.raises(AssertionError, match=diagnostic):

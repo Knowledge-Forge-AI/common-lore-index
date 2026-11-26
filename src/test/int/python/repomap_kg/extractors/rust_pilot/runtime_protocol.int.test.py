@@ -45,7 +45,7 @@ from common_lore_index.extractors.rust_pilot.readback import (
     verify_confinement,
     verify_install_tree,
 )
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import NOTICES, guest_text, payload, stand_in_wheels
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import NOTICES, guest_text, payload, stand_in_wheels
 
 FIXTURES = Path(__file__).resolve().parents[5] / "fixtures" / "rust_pilot"
 NATIVE_ONLY = {"q04_malformed_scopes.rs"}

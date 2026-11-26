@@ -9,7 +9,7 @@ import pytest
 
 from common_lore_index.ops.resource_reports import _admission as admission
 from common_lore_index.ops.resource_reports._delivery import admit_destination
-from repomap_test_support.resource_report_cli_files import private_directory
+from common_lore_index_test_support.resource_report_cli_files import private_directory
 
 
 def _config(tmp_path: Path) -> tuple[SimpleNamespace, Path, Path]:

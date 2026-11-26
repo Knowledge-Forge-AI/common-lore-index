@@ -17,7 +17,7 @@ from common_lore_index.storage.authority import RefreshResult
 class CliLocalOpsRefreshUnitTests(unittest.TestCase):
     def test_ops_refresh_graph_prints_json_result(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = Path(tmpdir) / "repo.rp.toml"
+            config_path = Path(tmpdir) / "repo.cloe.toml"
             config_path.write_text(
                 """\
 schema_version = 1

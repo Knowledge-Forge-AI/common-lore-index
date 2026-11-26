@@ -14,7 +14,7 @@ from typing import Any
 import pytest
 
 from common_lore_index.storage.semantic_candidates import digest_json
-from repomap_test_support.w5_public_text_artifacts import SyntheticStudy, synthetic_raw_component
+from common_lore_index_test_support.w5_public_text_artifacts import SyntheticStudy, synthetic_raw_component
 from retrieval_public_text_report_contracts import (
     PublicTextReportRefusal, disclosures, validate_census, validate_cleanup, validate_fences, validate_imports,
     validate_indexes, validate_preparation, validate_request, validate_seal, validate_source,

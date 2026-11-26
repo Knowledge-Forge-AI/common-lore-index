@@ -20,8 +20,8 @@ from common_lore_index.runtime.release import (
     PYTHON_RELEASE_IMAGE,
 )
 from common_lore_index.runtime.release_manifest import D12_CANDIDATE_LIBPQ_VERSION, D12_CANDIDATE_PACKAGE_MANIFEST
-from repomap_test_support import resource_run as resource_run_mod
-from repomap_test_support.d12_image_probes import CLIENTS, SERVER
+from common_lore_index_test_support import resource_run as resource_run_mod
+from common_lore_index_test_support.d12_image_probes import CLIENTS, SERVER
 from tools.system import d12_system_evidence as evidence_mod, d12_system_session as session_mod
 from tools.system.config import SystemDeadline, SystemTestConfig, SystemTestError, SystemTimeoutError
 from tools.system.d12_system_evidence import (

@@ -27,7 +27,7 @@ def test_actual_refresh_launcher_uses_argv_no_shell_and_suppressed_output() -> N
         "ops",
         "refresh-graph",
         "--config",
-        "/public/config.rp.toml",
+        "/public/config.cloe.toml",
         "--graph",
         "public-fixture",
     )
@@ -64,7 +64,7 @@ def test_actual_refresh_launcher_accepts_only_closed_test_support_child() -> Non
     arguments = (
         "/public/python",
         "-m",
-        "repomap_test_support.scale14_actual_refresh_child",
+        "common_lore_index_test_support.scale14_actual_refresh_child",
         "--cancel-code",
         "merge.files",
         "--",
@@ -207,7 +207,7 @@ def test_scale14_child_bootstrap_module_binding_in_isolated_process() -> None:
         [
             sys.executable,
             "-m",
-            "repomap_test_support.scale14_actual_refresh_child",
+            "common_lore_index_test_support.scale14_actual_refresh_child",
             "--cancel-code",
             "test.cancel",
             "--",

@@ -32,7 +32,7 @@ from common_lore_index.extractors.contracts.witness import (
     refuse_capability_admission,
 )
 from common_lore_index.observations.raw import RawObservation
-from repomap_test_support.extractor_contracts.receipt_fixtures import receipt
+from common_lore_index_test_support.extractor_contracts.receipt_fixtures import receipt
 
 SECRET = "PRIVATE-PAYLOAD-VALUE"
 

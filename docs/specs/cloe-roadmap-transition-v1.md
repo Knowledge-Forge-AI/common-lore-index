@@ -8,10 +8,18 @@ The operator authorized advancing the reviewed remaining-roadmap proposal on
 default `~/.cloe`, and base/local configuration suffixes `.cloe.toml`
 and `.local.cloe.toml`. These are target surfaces, not a claim that the full
 rename has shipped. ADR0118 selects `common_lore_index` and installed ownership;
-ADR0123 defines their coordinated source cutover and finite compatibility. Preserve the current license and
+ADR0123 defines their coordinated source cutover and historical compatibility.
+[ADR 0222](../adr/2026/11/0222-v010-canonical-only-cutover.md) supersedes
+that compatibility scope for the v0.1.0 source cutover. Preserve the current license and
 Samuel Leighton Lair <sam.lair@knowledge-forge.ai> as public commit identity.
 
-## Latest qualified milestone
+## Current qualification and acceptance
+
+The [v0.1.0 acceptance ledger](cloe-v010-release-readiness.md) supersedes this
+page's checkpoint summaries for release status and outstanding acceptance.
+It records CI171, the v0.0.5 preview and subsequent website update.
+
+## Historical CI162 and successor checkpoints
 
 Public main is released Common Lore Index v0.0.4 at `39cb2b3`. Public staging
 `d5ab2373` qualifies the combined W8 installed-upgrade and source archive

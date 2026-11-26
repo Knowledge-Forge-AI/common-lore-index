@@ -14,13 +14,13 @@ from typing import Any, Callable, Iterator
 
 from common_lore_index.runtime.local import LocalRuntimeIdentity
 from common_lore_index.runtime.release import POSTGRES_RELEASE_IMAGE
-from repomap_test_support.resource_docker import (
+from common_lore_index_test_support.resource_docker import (
     DockerBaseline,
     DockerResourceOwner,
     ownership_labels,
 )
-from repomap_test_support.resource_docker_engine import DockerSdkApi
-from repomap_test_support.resource_ledger import ResourceKind
+from common_lore_index_test_support.resource_docker_engine import DockerSdkApi
+from common_lore_index_test_support.resource_ledger import ResourceKind
 
 from . import lifecycle_reporting as _lifecycle_reporting
 from .lifecycle_reporting import (
@@ -226,7 +226,7 @@ def run_lifecycle(
             _write_fixture(target_fixture, "target")
             _write_fixture(control_fixture, "control")
             _write_config(home, config.pg_container_port, target_fixture, control_fixture)
-            (home / "repomap.rpl.toml").chmod(0o600)
+            (home / "repomap.local.cloe.toml").chmod(0o600)
             private = _private_env(home / "runtime/.env")
             password = private["REPOMAP_PG_PASSWORD"]
             identity = LocalRuntimeIdentity.from_home(home)

@@ -7,7 +7,7 @@ import urllib.request
 from dataclasses import replace
 from pathlib import Path
 
-from repomap_test_support.source_ingestion_integration import (
+from common_lore_index_test_support.source_ingestion_integration import (
     IntFakeGitHubOpener,
     api_fixture_root,
     bulk_fixture_root,

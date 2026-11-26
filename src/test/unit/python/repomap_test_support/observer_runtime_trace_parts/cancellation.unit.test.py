@@ -3,7 +3,7 @@ from threading import Event, Thread
 import psycopg
 import pytest
 
-from repomap_test_support.observer_trace import (
+from common_lore_index_test_support.observer_trace import (
     ObserverCaller,
     ObserverTraceKind,
     ObserverTraceRecorder,

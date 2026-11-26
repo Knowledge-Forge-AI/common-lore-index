@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
+
+if TYPE_CHECKING:
+    from ci.python_retention_support_projection import SupportNamespaceProjection
 
 
 SCHEMA = "repomap-python-retention-dynamic-v1"
@@ -10,9 +13,14 @@ KEYS = {"id", "owner", "owner_sha256", "test", "test_sha256", "kind",
         "symbol", "fingerprint", "recipe", "targets", "parameters", "supersedes"}
 
 
-def active_boundaries(document: Mapping[str, Any]) -> list[dict[str, Any]]:
+def active_boundaries(
+    document: Mapping[str, Any], *, support: SupportNamespaceProjection | None = None,
+) -> list[dict[str, Any]]:
     """Validate a closed schema and return the active heads without erasing history."""
+    expected = support.dynamic_by_id if support is not None else {}
     if "dynamic_boundaries" not in document and "dynamic_schema" not in document:
+        if expected:
+            raise ValueError("verified test-support dynamic replacements are missing")
         return []
     if document.get("dynamic_schema") != SCHEMA:
         raise ValueError("invalid dynamic boundary schema")
@@ -36,16 +44,23 @@ def active_boundaries(document: Mapping[str, Any]) -> list[dict[str, Any]]:
         if not isinstance(record["parameters"], dict):
             raise ValueError("invalid dynamic parameters")
         previous = record["supersedes"]
+        approved = expected.get(record["id"])
+        if record["id"].endswith(".cloe-support") and approved is None:
+            raise ValueError("test-support dynamic replacement requires verified lineage")
+        if approved is not None and record != approved:
+            raise ValueError("test-support dynamic replacement differs from the verified projection")
         if previous is not None:
             if not isinstance(previous, str) or previous not in by_id or previous in retired:
                 raise ValueError("invalid dynamic predecessor")
             old = by_id[previous]
-            if (old["owner"] != record["owner"] or old["test"] != record["test"]
-                    or old["owner_sha256"] == record["owner_sha256"]
-                    or old["test_sha256"] == record["test_sha256"]):
+            if approved is None and (old["owner"] != record["owner"] or old["test"] != record["test"]
+                                     or old["owner_sha256"] == record["owner_sha256"]
+                                     or old["test_sha256"] == record["test_sha256"]):
                 raise ValueError("dynamic replacement requires changed owner and test evidence")
             retired.add(previous)
         by_id[record["id"]] = record
+    if not set(expected) <= set(by_id):
+        raise ValueError("verified test-support dynamic replacements are incomplete")
     active = [record for key, record in by_id.items() if key not in retired]
     identities = [(r["owner"], r["symbol"], r["kind"], r["fingerprint"]) for r in active]
     if len(set(identities)) != len(identities):
@@ -53,10 +68,16 @@ def active_boundaries(document: Mapping[str, Any]) -> list[dict[str, Any]]:
     return sorted(active, key=lambda r: r["id"])
 
 
-def validate_dynamic_transition(older: Mapping[str, Any], newer: Mapping[str, Any]) -> None:
+def validate_dynamic_transition(
+    older: Mapping[str, Any],
+    newer: Mapping[str, Any],
+    *,
+    older_support: SupportNamespaceProjection | None = None,
+    newer_support: SupportNamespaceProjection | None = None,
+) -> None:
     """Published declaration bytes remain an exact prefix, including retired records."""
-    active_boundaries(older)
-    active_boundaries(newer)
+    active_boundaries(older, support=older_support)
+    active_boundaries(newer, support=newer_support)
     old = older.get("dynamic_boundaries", [])
     new = newer.get("dynamic_boundaries", [])
     if "dynamic_schema" in older and newer.get("dynamic_schema") != older["dynamic_schema"]:

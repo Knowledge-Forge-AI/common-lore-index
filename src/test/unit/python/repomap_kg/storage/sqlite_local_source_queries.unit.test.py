@@ -29,7 +29,7 @@ from common_lore_index.storage.sqlite_local import source_feed_queries, source_q
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.sqlite_local_feed_corpus import (
+from common_lore_index_test_support.sqlite_local_feed_corpus import (
     ATOM,
     RSS,
     SECRET,
@@ -39,7 +39,7 @@ from repomap_test_support.sqlite_local_feed_corpus import (
     feed_bundle,
     generation_observations,
 )
-from repomap_test_support.sqlite_local_fixtures import local_binding, publication_for
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding, publication_for
 
 GRAPH = "feed-unit"
 BINDING = local_binding(GRAPH)

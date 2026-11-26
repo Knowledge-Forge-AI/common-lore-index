@@ -18,11 +18,11 @@ import pytest
 import common_lore_index.cli._ops_sqlite_dispatch as sqlite_dispatch
 from common_lore_index.cli.main import main
 from common_lore_index.ops.local_refresh import refresh_local_graph
-from repomap_test_support.resource_report_cli_files import (
+from common_lore_index_test_support.resource_report_cli_files import (
     limit, metric, private_directory, report_leftovers, report_payload,
 )
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import (
     CHILD_DEADLINE_SECONDS, LocalHarness, await_ready, cleanup_after_failure, cleanup_child,
     interrupt_paused_child,
 )

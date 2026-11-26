@@ -20,7 +20,7 @@ from common_lore_index.ops.source_generation import (
     SourceGenerationLimits, SourceGenerationResult, scan_source_generation,
 )
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -326,7 +326,7 @@ class TestDesiredStateControlIntegration:
             try:
                 apply_migrations(default_rdbms_root(), graph_pg.psql_args,
                                  psql_command=graph_pg.psql_command)
-                config_path = root / "configured.rp.toml"
+                config_path = root / "configured.cloe.toml"
                 config_path.write_text(f'''schema_version = 1
 [service]
 mode = "local"

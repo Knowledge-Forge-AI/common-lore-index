@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.w5_public_text_artifacts import SyntheticStudy
-from repomap_test_support.w5_public_text_functional import FunctionalDeliveryRefusal, SyntheticDelivery
+from common_lore_index_test_support.w5_public_text_artifacts import SyntheticStudy
+from common_lore_index_test_support.w5_public_text_functional import FunctionalDeliveryRefusal, SyntheticDelivery
 import retrieval_semantic_bridge_transport as transport
 import retrieval_semantic_bridge_transport_io as transport_io
 import retrieval_semantic_experiment_bridge as bridge

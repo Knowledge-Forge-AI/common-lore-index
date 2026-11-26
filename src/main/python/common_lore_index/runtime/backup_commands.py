@@ -47,7 +47,7 @@ def read_runtime_password(env_file: Path) -> str:
                     "error",
                     "runtime-env-missing",
                     str(env_file),
-                    "runtime env file is missing; run repomap-kg local setup",
+                    "runtime env file is missing; run cloe local setup",
                 ),
             )
         )

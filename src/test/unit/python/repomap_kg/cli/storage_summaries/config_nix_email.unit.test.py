@@ -8,7 +8,7 @@ from common_lore_index.cli import main
 from common_lore_index.storage import (
     EmailSummaryRecord,
 )
-from repomap_test_support.cli_storage_summaries import (
+from common_lore_index_test_support.cli_storage_summaries import (
     nix_summary_fixture,
     python_summary_fixture,
     terraform_summary_fixture,

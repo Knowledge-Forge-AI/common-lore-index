@@ -14,9 +14,9 @@ from common_lore_index.storage.publication_readback import RunPublicationRecord
 from common_lore_index.storage.semantic_candidates import (
     CandidatePublication, CandidateQuery, CandidateResult, EmbeddingProfile,
 )
-from repomap_test_support import w5_experiment_postgres as postgres_support
-from repomap_test_support.w5_experiment_postgres import HnswObservation
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support import w5_experiment_postgres as postgres_support
+from common_lore_index_test_support.w5_experiment_postgres import HnswObservation
+from common_lore_index_test_support.w5_semantic_support import (
     BIND_COMP, BIND_CORE, SNAP_CORE_G1,
     make_w5_calibration_task, make_w5_verified_pin,
 )
@@ -34,8 +34,8 @@ from retrieval_semantic_observed_operation_capture import (
     _hnsw_binding_work, make_exact_operation, make_hnsw_operation, make_hybrid_operation,
 )
 from retrieval_semantic_observed_operation import _validate_plan
-from repomap_test_support.w5_experiment_journal import record_cell
-from repomap_test_support.w5_experiment_support import combine_scoped_cells
+from common_lore_index_test_support.w5_experiment_journal import record_cell
+from common_lore_index_test_support.w5_experiment_support import combine_scoped_cells
 from retrieval_semantic_provenance import VerifiedPublicationPin
 from retrieval_evaluation_schema import EvaluationTask
 

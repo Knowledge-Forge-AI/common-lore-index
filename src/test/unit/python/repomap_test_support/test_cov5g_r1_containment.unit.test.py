@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from repomap_test_support.test_cov5g_fix1_projection import (
+from common_lore_index_test_support.test_cov5g_fix1_projection import (
     PublicationOrder,
     RequestResult,
     run_projection_schedule,
 )
-from repomap_test_support.test_cov5g_r1_containment import (
+from common_lore_index_test_support.test_cov5g_r1_containment import (
     ParentAction,
     ProcessRequestMode,
     process_containment_cases,

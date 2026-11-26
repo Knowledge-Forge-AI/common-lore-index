@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 import test_hygiene_maintenance as maintenance_tool
-from repomap_test_support.resource_deletion_gc import (
+from common_lore_index_test_support.resource_deletion_gc import (
     DELETION_MAX_BYTES,
     DELETION_MAX_RUNS,
     DeletionAuthorityMode,
@@ -18,13 +18,13 @@ from repomap_test_support.resource_deletion_gc import (
     discover_quarantine_deletions,
     select_deletion_batch,
 )
-from repomap_test_support.resource_index import AdvisoryIndex
-from repomap_test_support.resource_deletion_records import (
+from common_lore_index_test_support.resource_index import AdvisoryIndex
+from common_lore_index_test_support.resource_deletion_records import (
     DeletionRecordStore,
     DeletionRecoveryState,
 )
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_deletion_gc_test_support import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_deletion_gc_test_support import (
     NOW,
     PHASE,
     delete as _delete,
@@ -188,7 +188,7 @@ def test_batch_order_limits_and_single_oversized_exception() -> None:
 def test_facade_patch_seams_reach_batch_implementation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    import repomap_test_support.resource_deletion_gc as deletion_gc
+    import common_lore_index_test_support.resource_deletion_gc as deletion_gc
 
     root = _root(tmp_path)
     registry, maintenance = _owners(root)
@@ -213,7 +213,7 @@ def test_facade_patch_seams_reach_batch_implementation(
     assert selected.stop_reason == "facade_selection"
 
     monkeypatch.setattr(
-        "repomap_test_support.resource_deletion_gc.DELETION_MAX_SECONDS", 0
+        "common_lore_index_test_support.resource_deletion_gc.DELETION_MAX_SECONDS", 0
     )
     limited = _delete(root, registry, maintenance)
     assert limited.stop_reason == "wall_time_limit"

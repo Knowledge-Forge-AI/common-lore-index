@@ -82,7 +82,7 @@ def test_runtime_env_symlink_refused_before_config_creation(tmp_path):
     with pytest.raises(LocalRuntimeError):
         setup_local_runtime(home)
     assert target.read_text() == "unchanged"
-    assert not (home / "repomap.rpl.toml").exists()
+    assert not (home / "repomap.local.cloe.toml").exists()
 
 
 def test_windows_acl_error_is_bounded(tmp_path, monkeypatch):

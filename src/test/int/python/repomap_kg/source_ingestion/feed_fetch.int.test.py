@@ -7,7 +7,7 @@ import unittest
 import urllib.error
 from pathlib import Path
 
-from repomap_test_support.source_ingestion_integration import (
+from common_lore_index_test_support.source_ingestion_integration import (
     FakeOpener,
     FakeResponse,
     fixed_clock,

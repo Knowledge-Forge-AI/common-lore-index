@@ -16,7 +16,7 @@ from common_lore_index.graph.multi_source_records import (
 )
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
 from common_lore_index.ops.config_records import OpsGraphConfig
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class Slice14StagingLifecycleIntegrationTests(unittest.TestCase):

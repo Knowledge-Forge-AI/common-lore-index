@@ -11,7 +11,7 @@ import pytest
 from common_lore_index.ops.resource_reports._codec import decode_report, encode_report
 from common_lore_index.ops.resource_reports._files import read_report_file
 from common_lore_index.ops.resource_view._context_projection import unfinished_compact_context
-from repomap_test_support.resource_report_cli_files import private_directory, run_cloe
+from common_lore_index_test_support.resource_report_cli_files import private_directory, run_cloe
 
 
 ROOT = Path(__file__).resolve().parents[6]

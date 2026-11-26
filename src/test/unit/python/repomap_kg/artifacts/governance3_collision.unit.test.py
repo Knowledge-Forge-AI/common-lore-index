@@ -10,7 +10,7 @@ import common_lore_index.artifacts._store_metered as metered_store
 import common_lore_index.artifacts._store_stream as stream_store
 from common_lore_index.artifacts._sealing_meter import SealingMeter
 from common_lore_index.artifacts._store_common import ArtifactIntegrityError
-from repomap_test_support.sealing_governance_fixtures import open_descriptor_count
+from common_lore_index_test_support.sealing_governance_fixtures import open_descriptor_count
 
 
 def _details(path: Path, *, owner_uid: int) -> os.stat_result:

@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from common_lore_index.canonicalization.main import canonicalize_observations as _canonicalize
 else:
     from common_lore_index.canonicalization import canonicalize_observations as _canonicalize
-from repomap_test_support.go_canonicalization import (
+from common_lore_index_test_support.go_canonicalization import (
     accounting,
     observation,
     package_observation,

@@ -9,10 +9,10 @@ from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.ops.lexical_service import build_graph_lexical_generation
 from common_lore_index.retrieval.query_contracts import QueryMode
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_body_fixtures import make_body_identity
-from repomap_test_support.retrieval_body_publication_fixture import BodyStoreFixture, publish_body_fixture, write_body_home
-from repomap_test_support.retrieval_w5_matched_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_body_fixtures import make_body_identity
+from common_lore_index_test_support.retrieval_body_publication_fixture import BodyStoreFixture, publish_body_fixture, write_body_home
+from common_lore_index_test_support.retrieval_w5_matched_fixture import (
     EVALUATOR, GRADE, make_synthetic_archives, ready_fit, synthetic_policy, synthetic_result,
 )
 from retrieval_evaluation_grading import ExecutionState

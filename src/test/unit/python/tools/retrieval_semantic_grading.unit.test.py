@@ -6,7 +6,7 @@ import pytest
 
 from common_lore_index.graph.multi_source import graph_source_binding_id
 from common_lore_index.retrieval.query_contracts import EvaluationLocator
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import (
     BIND_COMP,
     BIND_CORE,
     SNAP_COMP_G1,

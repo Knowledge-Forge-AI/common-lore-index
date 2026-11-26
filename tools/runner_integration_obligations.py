@@ -53,7 +53,7 @@ MAINTAINED_ABRUPT_DECLARATIONS = (
         "::test_sigkill_still_yields_rusage_and_a_negative_return_code",
         "usage-self-sigkill", -9, "pre_hello",
         "common_lore_index.coordinator._portable_worker_launch.run_worker_spec",
-        "repomap_test_support.usage_worker._prepare",
+        "common_lore_index_test_support.usage_worker._prepare",
         "common_lore_index.coordinator._usage_reaper.ChildUsageReaper",
         "common_lore_index.coordinator._protocol_execution._run_protocol_worker",
         "sigkill",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_ALIAS_BY_BINDING_ID,
     MIXED_V1_FIXTURE_ROOT,
     compute_working_copy_digests,

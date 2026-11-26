@@ -18,25 +18,25 @@ from common_lore_index.server import mcp
 from common_lore_index.server.mcp_core import RepoMapMcpError
 from common_lore_index.storage.sqlite_local.connection import read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     NO_FALLBACK_GUARDS, PG_BINDING_TRIPWIRES, patched_guards, setup_owned_config,
 )
-from repomap_test_support.node_location_fixtures import (
+from common_lore_index_test_support.node_location_fixtures import (
     BINDING, DOC, GRAPH, SYMBOL, locator_home, publish_locator_generation,
 )
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, publication_for
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, publication_for
 
 
 @pytest.fixture
 def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home, database = locator_home(tmp_path)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.setenv("CLOE_HOME", str(home))
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     return database
 
 
 def call(key: str = SYMBOL, *, graph: str = GRAPH, limit: object = 10) -> dict[str, Any]:
-    return mcp.handle_tool_call("repomap_node_locations", {
+    return mcp.handle_tool_call("cloe_node_locations", {
         "graph_id": graph, "canonical_key": key, "limit": limit,
     })["structuredContent"]
 
@@ -50,10 +50,10 @@ def test_symbol_evidence_bounds_and_legacy_search_are_source_blind(store: Path, 
     stored_digest = hashlib.sha256(store.read_bytes()).hexdigest()
     arguments: dict[str, Any] = {"graph_id": GRAPH, "query": "sample.service", "limit": 1}
     with patched_guards(PG_BINDING_TRIPWIRES):
-        before = mcp.repomap_search_nodes(**arguments)
+        before = mcp.cloe_search_nodes(**arguments)
         first, every = call(limit=1), call()
-        after = mcp.repomap_search_nodes(**arguments)
-        second = mcp.repomap_search_nodes(**arguments, offset=1)
+        after = mcp.cloe_search_nodes(**arguments)
+        second = mcp.cloe_search_nodes(**arguments, offset=1)
     assert before == after
     assert hashlib.sha256(store.read_bytes()).hexdigest() == stored_digest
     assert set(before) == {"server", "version", "read_only", "graph", "target", "query", "kind",
@@ -160,17 +160,17 @@ def test_limit_validation_precedes_io(store: Path, limit: object) -> None:
 
 def test_search_literal_order_and_pages_are_unchanged(store: Path) -> None:
     args: dict[str, Any] = {"graph_id": GRAPH, "query": "root"}
-    before = mcp.repomap_search_nodes(**args, limit=100)
+    before = mcp.cloe_search_nodes(**args, limit=100)
     call()
-    assert mcp.repomap_search_nodes(**args, limit=100) == before
+    assert mcp.cloe_search_nodes(**args, limit=100) == before
     keys = [row["canonical_key"] for row in before["results"]]
     assert len(keys) >= 3 and keys == sorted(keys)
-    first = mcp.repomap_search_nodes(**args, limit=2)
-    second = mcp.repomap_search_nodes(**args, limit=2, offset=2)
+    first = mcp.cloe_search_nodes(**args, limit=2)
+    second = mcp.cloe_search_nodes(**args, limit=2, offset=2)
     assert first["results"] + second["results"] == before["results"][:4]
     assert first["total"] == 2 and first["has_more"] is True
     assert second["total"] == min(4, len(keys))
-    assert mcp.repomap_search_nodes(graph_id=GRAPH, query="sample%service")["results"] == []
+    assert mcp.cloe_search_nodes(graph_id=GRAPH, query="sample%service")["results"] == []
 
 
 def test_node_search_lookahead_does_not_transfer_metadata(store: Path) -> None:
@@ -279,9 +279,9 @@ def test_postgres_helper_routes_via_read_status_and_refuses_missing_credentials(
 ) -> None:
     unauth = tmp_path / "unauth-home"
     unauth.mkdir()
-    (unauth / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
-    monkeypatch.setenv("REPOMAP_HOME", str(unauth))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    (unauth / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
+    monkeypatch.setenv("CLOE_HOME", str(unauth))
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     with (
         patched_guards(NO_FALLBACK_GUARDS),
         patch("common_lore_index.storage.postgres_node_locations.execute_json_readback", side_effect=AssertionError("io")),
@@ -292,9 +292,9 @@ def test_postgres_helper_routes_via_read_status_and_refuses_missing_credentials(
 
     home = tmp_path / "postgres-home"
     setup_local_runtime(home)
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     secret = read_role_secrets(home / "runtime" / ".env").read_status
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     calls: list[tuple[str, dict[str, Any]]] = []
 
     def fake_exec(sql: str, **kwargs: Any) -> dict[str, Any]:
@@ -344,7 +344,7 @@ def test_node_location_pages_decode_only_selected_and_historical_results(
 ) -> None:
     from common_lore_index.storage.node_locations import NodeLocationsQuery
     from common_lore_index.storage.sqlite_local import node_location_queries
-    from repomap_test_support.sqlite_local_fixtures import local_binding
+    from common_lore_index_test_support.sqlite_local_fixtures import local_binding
 
     _, database = locator_home(tmp_path)
     for generation in (2, 3):
@@ -371,7 +371,7 @@ def test_node_location_reuses_vector_across_adjacent_rows(tmp_path, monkeypatch)
 
     from common_lore_index.storage.node_locations import NodeLocationsQuery
     from common_lore_index.storage.sqlite_local import node_location_queries
-    from repomap_test_support.sqlite_local_fixtures import local_binding
+    from common_lore_index_test_support.sqlite_local_fixtures import local_binding
 
     _, database = locator_home(tmp_path)
     publish_locator_generation(database, 2, start_line=40, alternatives=True)

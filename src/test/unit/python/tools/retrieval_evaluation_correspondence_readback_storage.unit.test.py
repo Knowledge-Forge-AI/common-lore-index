@@ -22,7 +22,7 @@ from common_lore_index.storage.publication_readback import (
     read_latest_receipt_bearing_publication,
     read_run_publication,
 )
-from repomap_test_support.w5_publication_readback import (
+from common_lore_index_test_support.w5_publication_readback import (
     all_null_receipt_mapping,
     legacy_receipt_mapping,
     mapping_process,

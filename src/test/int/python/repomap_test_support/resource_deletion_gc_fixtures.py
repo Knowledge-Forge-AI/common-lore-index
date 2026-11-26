@@ -10,16 +10,16 @@ from pathlib import Path
 import pytest
 
 import test_hygiene_maintenance as maintenance_tool
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_hygiene_policy import GIB, HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_hygiene_policy import GIB, HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimRegistry,
     ProcessLiveness,
 )
-from repomap_test_support.resource_quarantine_gc import quarantine_batch
-from repomap_test_support.resource_scratch_history import discover_historical_gc
+from common_lore_index_test_support.resource_quarantine_gc import quarantine_batch
+from common_lore_index_test_support.resource_scratch_history import discover_historical_gc
 
 
 ELIGIBLE_NOW = int(time.time())
@@ -27,10 +27,10 @@ BASE = ELIGIBLE_NOW - 604_800
 PHASE = "TEST-HYGIENE3B2"
 
 
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     MaintenanceHandle, ClaimError, ClaimPurpose, register_protection,
 )
-from repomap_test_support.resource_deletion_records import DeletionRecordStore
+from common_lore_index_test_support.resource_deletion_records import DeletionRecordStore
 
 def _run(root: Path, run_id: str, *, nested: bool) -> Path:
     run = root / "r" / run_id

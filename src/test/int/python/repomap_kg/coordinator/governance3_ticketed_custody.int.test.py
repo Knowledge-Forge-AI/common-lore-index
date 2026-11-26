@@ -31,8 +31,8 @@ from common_lore_index.coordinator.refresh_adapter import (
 )
 from common_lore_index.ops.config import load_ops_config
 from common_lore_index.runtime.postgres_route import effective_postgres_route
-from repomap_test_support.portable_worker_scenarios import coordinator_test_limits
-from repomap_test_support.startup_recovery_scenarios import (
+from common_lore_index_test_support.portable_worker_scenarios import coordinator_test_limits
+from common_lore_index_test_support.startup_recovery_scenarios import (
     _make_refresh_fixture,
     _refresh_harness,
     _req_norm,

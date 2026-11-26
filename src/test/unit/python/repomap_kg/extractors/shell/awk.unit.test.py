@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.awk import (
+from common_lore_index_test_support.awk import (
     FAKE_SECRET_MARKERS,
     FIXTURE_ROOT,
     first_observation,

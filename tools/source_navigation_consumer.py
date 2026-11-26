@@ -152,11 +152,11 @@ def navigate(
         if canonical_key is None:
             if not query:
                 return finish("subject_unresolved", False)
-            found = read("repomap_search_nodes", {"graph_id": graph_id, "query": query, "limit": 2})
+            found = read("cloe_search_nodes", {"graph_id": graph_id, "query": query, "limit": 2})
             if found["has_more"] or len(found["results"]) != 1:
                 return finish(branch, False)
             canonical_key = found["results"][0]["canonical_key"]
-        lead = read("repomap_node_locations", {
+        lead = read("cloe_node_locations", {
             "graph_id": graph_id, "canonical_key": canonical_key,
             "evidence_role": "direct", "detail": "compact", "limit": 2,
         })

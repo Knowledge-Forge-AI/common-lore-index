@@ -15,9 +15,9 @@ from common_lore_index.retrieval.projection_query import (
     query_captured_text,
 )
 from common_lore_index.retrieval.query_contracts import CapabilityState
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
-from repomap_test_support.retrieval_evaluation_query_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_query_fixture import (
     build_fixture_projection,
 )
 from retrieval_evaluation_criteria_v2 import (

@@ -10,7 +10,7 @@ from ci.retained_python_ratchet_lineage import (
     audit_candidate_lineage,
     document_sha256,
 )
-from repomap_test_support.retained_ratchet_fixture import (
+from common_lore_index_test_support.retained_ratchet_fixture import (
     BASELINE_PATH,
     MODULE_PATH,
     SCOPE_PATH,

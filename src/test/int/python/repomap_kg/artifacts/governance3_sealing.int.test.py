@@ -18,7 +18,7 @@ from common_lore_index.artifacts.sealing_governance import (
 )
 from common_lore_index.artifacts.store import FileSystemArtifactStore
 from common_lore_index.graph._capture_contracts import MultiSourceCaptureError
-from repomap_test_support.sealing_governance_fixtures import (
+from common_lore_index_test_support.sealing_governance_fixtures import (
     binding_for,
     expectation_for,
     graph_for,

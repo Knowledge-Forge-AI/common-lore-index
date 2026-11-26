@@ -16,7 +16,7 @@ from common_lore_index.ops.refresh import (
 )
 from common_lore_index.storage import StorageSchemaError
 import common_lore_index.storage.readback_driver as storage_readback
-from repomap_test_support.ops_refresh import VALID_REFRESH_CONFIG
+from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
 from smoke.lifecycle import validate_target_database_absent
 
 _LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
@@ -37,7 +37,7 @@ def _loopback_config(
     home.mkdir(parents=True)
     root.mkdir()
     direct_host_port = "true" if direct_host_port_enabled else "false"
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=root, private_root=root / "private").replace(
             'host = "127.0.0.1"',
             f'host = "{host}"',

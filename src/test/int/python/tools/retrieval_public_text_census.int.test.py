@@ -14,19 +14,19 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     binding_id_for_alias, write_mixed_v1_postgres_home, write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     PublishedCorpusState, publish_and_load_postgres_corpus, publish_and_load_sqlite_corpus,
 )
-from repomap_test_support.w5_public_text_readback import load_postgres_span_rows, load_sqlite_span_rows
-from repomap_test_support.w5_semantic_store_support import (
+from common_lore_index_test_support.w5_public_text_readback import load_postgres_span_rows, load_sqlite_span_rows
+from common_lore_index_test_support.w5_semantic_store_support import (
     load_postgres_accepted_nodes_and_evidence, load_sqlite_accepted_nodes_and_evidence,
     make_postgres_readback_adapter, make_sqlite_readback_adapter,
 )
-from repomap_test_support.w5_semantic_support import make_w5_calibration_task
+from common_lore_index_test_support.w5_semantic_support import make_w5_calibration_task
 from retrieval_evaluation_admission_w5 import admit_w5_task
 from retrieval_public_text_contracts import PUBLICATION_REVALIDATION_FAILED, PrivateMarkerScope, PublicTextRefusal
 from retrieval_public_text_census import build_public_text_census, retained_task_sha256

@@ -7,8 +7,8 @@ from unittest.mock import patch
 from common_lore_index.graph import _discovery_classify
 from common_lore_index.graph.discovery import discover_repository
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
 def _graph(

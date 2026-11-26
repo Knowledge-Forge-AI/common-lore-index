@@ -68,7 +68,7 @@ def _toml_string(value: str) -> str:
 
 def _write_config(home: Path, root: Path, postgres) -> None:
     home.mkdir()
-    home.joinpath("repo.rp.toml").write_text(
+    home.joinpath("repo.cloe.toml").write_text(
         f"""\
 schema_version = 1
 
@@ -118,7 +118,7 @@ def _actual_refresh_argv(
         "ops",
         "refresh-graph",
         "--config",
-        str(home / "repo.rp.toml"),
+        str(home / "repo.cloe.toml"),
         "--graph",
         "public-fixture",
         "--psql-command",
@@ -150,7 +150,7 @@ def _actual_refresh_argv(
     return (
         sys.executable,
         "-m",
-        "repomap_test_support.scale14_actual_refresh_child",
+        "common_lore_index_test_support.scale14_actual_refresh_child",
         "--cancel-code",
         test_control_code,
         "--wait-seconds",

@@ -15,32 +15,32 @@ from typing import Any
 from unittest.mock import patch
 
 from common_lore_index.storage import StorageSchemaError
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     NO_FALLBACK_GUARDS,
     fail_if_reached,
     patched_guards,
     setup_owned_config,
     setup_owned_home,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 ITEM_KEY = "feed.item:feed.channel%3Afeed.document%253Afile%25253Arss.xml%3Aself:item-1"
 MISSING_DB = 'psql failed: FATAL: database "repomap_x" does not exist'
 UNRESOLVED = 'could not translate host name "postgres" to address'
 TWELVE_TOOL_CALLS: tuple[tuple[str, dict[str, Any], str], ...] = (
-    ("repomap_python_summary", {"graph_id": "host-one"}, "python summary"),
-    ("repomap_terraform_summary", {"graph_id": "host-multi"}, "terraform summary"),
-    ("repomap_openapi_summary", {"graph_id": "host-one"}, "openapi summary"),
-    ("repomap_js_framework_summary", {"graph_id": "host-multi"}, "js framework summary"),
-    ("repomap_nix_summary", {"graph_id": "host-one"}, "nix summary"),
-    ("repomap_ingested_sources", {"project": "host-one"}, "ingested source records"),
-    ("repomap_source_summary", {"project": "host-multi", "source_id": "feed"}, "source summary"),
-    ("repomap_source_runs", {"project": "host-one", "source_id": "feed"}, "source run records"),
-    ("repomap_source_feed_items", {"project": "host-one", "source_id": "feed"}, "source feed item records"),
-    ("repomap_explain_source_feed_item", {"project": "host-multi", "item_key": ITEM_KEY},
+    ("cloe_python_summary", {"graph_id": "host-one"}, "python summary"),
+    ("cloe_terraform_summary", {"graph_id": "host-multi"}, "terraform summary"),
+    ("cloe_openapi_summary", {"graph_id": "host-one"}, "openapi summary"),
+    ("cloe_js_framework_summary", {"graph_id": "host-multi"}, "js framework summary"),
+    ("cloe_nix_summary", {"graph_id": "host-one"}, "nix summary"),
+    ("cloe_ingested_sources", {"project": "host-one"}, "ingested source records"),
+    ("cloe_source_summary", {"project": "host-multi", "source_id": "feed"}, "source summary"),
+    ("cloe_source_runs", {"project": "host-one", "source_id": "feed"}, "source run records"),
+    ("cloe_source_feed_items", {"project": "host-one", "source_id": "feed"}, "source feed item records"),
+    ("cloe_explain_source_feed_item", {"project": "host-multi", "item_key": ITEM_KEY},
      "source feed item explanation"),
-    ("repomap_source_references", {"project": "host-one", "source_id": "feed"}, "source reference records"),
-    ("repomap_status", {"project": "host-multi"}, "canonical storage summary"),
+    ("cloe_source_references", {"project": "host-one", "source_id": "feed"}, "source reference records"),
+    ("cloe_status", {"project": "host-multi"}, "canonical storage summary"),
 )
 RECORDED = "recorded readback"
 
@@ -63,7 +63,7 @@ def _patched_driver(recorder: _Recorder):
 
 class DomainReadStoreAuthorityTests(McpServerTestSupport):
     def _env(self, **env: str):
-        return patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()), **env}, clear=True)
+        return patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()), **env}, clear=True)
 
     def _run_twelve(self, **env: str) -> list[str]:
         from common_lore_index.server.mcp import RepoMapMcpError, handle_tool_call
@@ -83,9 +83,9 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
         ambient = {"PGPASSWORD": "ambient-admin", "REPOMAP_PG_PASSWORD": "ambient-admin"}
         recorder = _Recorder()
         with _patched_driver(recorder), patched_guards(), \
-                patch.dict("os.environ", {"REPOMAP_HOME": str(home), **ambient}, clear=True):
+                patch.dict("os.environ", {"CLOE_HOME": str(home), **ambient}, clear=True):
             before = dict(os.environ)
-            refusals = self._run_twelve(REPOMAP_HOME=str(home), **ambient)
+            refusals = self._run_twelve(CLOE_HOME=str(home), **ambient)
             self.assertEqual(dict(os.environ), before)
         self.assertEqual(refusals, [RECORDED] * 12)
         self.assertEqual([call["label"] for call in recorder.calls], [label for _n, _a, label in TWELVE_TOOL_CALLS])
@@ -108,10 +108,10 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
         ), encoding="utf-8")
         compose = self.write_ops_config(setup_owned_config())
         cases = (
-            ({"REPOMAP_OPS_CONFIG": str(custom)}, "custom_reader", "custom-secret"),
-            ({"REPOMAP_OPS_CONFIG": str(home / "repomap.rpl.toml"), "REPOMAP_PG_PASSWORD": "operator-secret"},
+            ({"CLOE_OPS_CONFIG": str(custom)}, "custom_reader", "custom-secret"),
+            ({"CLOE_OPS_CONFIG": str(home / "repomap.local.cloe.toml"), "REPOMAP_PG_PASSWORD": "operator-secret"},
              "repomap", "operator-secret"),
-            ({"REPOMAP_OPS_CONFIG": str(compose), "REPOMAP_READ_STATUS_PASSWORD": "compose-read-secret"},
+            ({"CLOE_OPS_CONFIG": str(compose), "REPOMAP_READ_STATUS_PASSWORD": "compose-read-secret"},
              "repomap_read_status", "compose-read-secret"),
         )
         for env, user, password in cases:
@@ -132,7 +132,7 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
             "pg_port": "6543", "pg_user": "reader"}}})
         recorder = _Recorder()
         source_and_status = [(name, {**args, "project": "legacy"}) for name, args, _label in TWELVE_TOOL_CALLS[5:]]
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(legacy), "PGPASSWORD": "ambient"}, clear=True), \
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(legacy), "PGPASSWORD": "ambient"}, clear=True), \
                 _patched_driver(recorder), \
                 patch("common_lore_index.server.canonical_read_store.readback_postgres_authority", fail_if_reached):
             for name, args in source_and_status:
@@ -151,7 +151,7 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
         for error, expected in ((StorageSchemaError(UNRESOLVED), UNRESOLVED), (OSError("psql missing"), "psql missing")):
             recorder = _Recorder(error)
             with self.subTest(error=type(error).__name__), patched_guards(), _patched_driver(recorder):
-                refusals = self._run_twelve(REPOMAP_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql")
+                refusals = self._run_twelve(CLOE_HOME=str(home), CLOE_STORAGE_READBACK_DRIVER="psql")
             self.assertEqual(refusals, [expected] * 12)
             self.assertEqual(len(recorder.calls), 12)
             self.assertNotIn("docker", str(refusals))
@@ -170,7 +170,7 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
             "direct_host_port_enabled = true", "direct_host_port_enabled = false"
         ))
         recorder = _Recorder(StorageSchemaError(UNRESOLVED))
-        with self._env(REPOMAP_HOME=str(home), REPOMAP_STORAGE_READBACK_DRIVER="psql"), \
+        with self._env(CLOE_HOME=str(home), CLOE_STORAGE_READBACK_DRIVER="psql"), \
                 patch("common_lore_index.storage.readback_driver.run_psql", recorder), \
                 patched_guards(), self.assertRaisesRegex(AssertionError, "container, or subprocess path"):
             context = graph_context("host-one")
@@ -188,7 +188,7 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
 
         env = self.patch_mcp_and_ops_config(self.write_empty_mcp_config(), self.write_visible_ops_config())
         with env, patch("common_lore_index.server.ops.query_python_summary", lambda *_a, **_k: _PrivateSummary()):
-            payload = handle_tool_call("repomap_python_summary", {"graph_id": "private-visible"})["structuredContent"]
+            payload = handle_tool_call("cloe_python_summary", {"graph_id": "private-visible"})["structuredContent"]
         serialized = json.dumps(payload, sort_keys=True)
         self.assertNotIn(private_root, serialized)
         self.assertNotIn(Path.home().name, serialized)
@@ -212,7 +212,7 @@ class DomainReadStoreAuthorityTests(McpServerTestSupport):
                      "common_lore_index.storage.staged_ingestion", "common_lore_index.coordinator", "common_lore_index.server.ops",
                      "common_lore_index.server.mcp", "common_lore_index.ingestion")
         self.assertFalse({name for name in imported if name and name.startswith(forbidden)})
-        with self._env(REPOMAP_OPS_CONFIG=str(self.write_visible_ops_config())):
+        with self._env(CLOE_OPS_CONFIG=str(self.write_visible_ops_config())):
             connection: Any = storage_connection(project="repo-map")
         with patched_guards(("common_lore_index.server.canonical_read_store.readback_postgres_authority",
                              "common_lore_index.storage.readback_driver.execute_json_readback_with_driver",
@@ -229,8 +229,8 @@ class DomainReadDriverRefusalTextContrastTests(McpServerTestSupport):
     def _refusal(self, tool: str, args: dict[str, Any], env: dict[str, str], run_psql=None, psycopg=None) -> str:
         from common_lore_index.server.mcp import RepoMapMcpError, handle_tool_call
 
-        env = {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()),
-               "REPOMAP_OPS_CONFIG": str(self.write_visible_ops_config()), **env}
+        env = {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()),
+               "CLOE_OPS_CONFIG": str(self.write_visible_ops_config()), **env}
         with patch.dict("os.environ", env, clear=True), patched_guards(), \
                 patch("common_lore_index.storage.readback_driver.run_psql", run_psql or fail_if_reached), \
                 patch("common_lore_index.storage.readback_driver._import_psycopg", psycopg or fail_if_reached), \
@@ -252,12 +252,12 @@ class DomainReadDriverRefusalTextContrastTests(McpServerTestSupport):
             def connect(**_kwargs):
                 raise OperationalError("database does not exist")
 
-        psql = {"REPOMAP_STORAGE_READBACK_DRIVER": "psql"}
+        psql = {"CLOE_STORAGE_READBACK_DRIVER": "psql"}
         password = {"REPOMAP_PG_PASSWORD": "synthetic-secret"}
         for tool, args, label in (
-            ("repomap_python_summary", {"graph_id": "repo-map"}, "python summary"),
-            ("repomap_source_summary", {"project": "repo-map", "source_id": "feed"}, "source summary"),
-            ("repomap_status", {"project": "repo-map"}, "canonical storage summary"),
+            ("cloe_python_summary", {"graph_id": "repo-map"}, "python summary"),
+            ("cloe_source_summary", {"project": "repo-map", "source_id": "feed"}, "source summary"),
+            ("cloe_status", {"project": "repo-map"}, "canonical storage summary"),
         ):
             with self.subTest(tool=tool):
                 self.assertIn("missing or not initialized", self._refusal(tool, args, psql, missing))
@@ -267,6 +267,6 @@ class DomainReadDriverRefusalTextContrastTests(McpServerTestSupport):
                 self.assertEqual(message, f"psycopg readback failed for {label}")
                 self.assertNotIn("synthetic-secret", message)
         # Contrast: configured search maps Psycopg SQLSTATE 3D000 (unchanged).
-        search = self._refusal("repomap_search_files", {"graph_id": "repo-map", "query": "a"}, password,
+        search = self._refusal("cloe_search_files", {"graph_id": "repo-map", "query": "a"}, password,
                                psycopg=lambda: FakePsycopg)
         self.assertIn("missing or not initialized", search)

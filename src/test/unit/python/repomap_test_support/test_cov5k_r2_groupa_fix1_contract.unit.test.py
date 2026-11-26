@@ -5,22 +5,22 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_fix2_encoding import canonical_digest
-from repomap_test_support.test_cov5k_r2_fix2_evidence import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_encoding import canonical_digest
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import (
     ExecutorEvidenceError,
     verify_executor_evidence,
 )
-from repomap_test_support.test_cov5k_r2_groupa_contract import (
+from common_lore_index_test_support.test_cov5k_r2_groupa_contract import (
     GROUP_A_CONTRACTS,
     derive_expected_group_a_state_history,
     derive_observed_group_a_contract_category,
 )
-from repomap_test_support.test_cov5k_r2_fix2_preparation import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation import (
     _EnactedAttempt,
     execute_preparation_state_path,
 )
-from repomap_test_support.test_cov5k_r2_fix2_preparation_observations import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation_observations import (
     AttemptObservation,
 )
 from scale28_preparation_worker import (
@@ -380,7 +380,7 @@ def test_all_real_group_a_histories_remain_accepted(
 
 
 def test_scoped_assertions_retain_public_safe_group_a_context() -> None:
-    root = Path("src/test/unit/python/repomap_test_support")
+    root = Path(__file__).resolve().parent
     sources = (
         (root / "test_cov5k_r2_fix3_enactment.unit.test.py").read_text(),
         (root / "test_cov5k_r2_fix3_review2_reproductions.unit.test.py").read_text(),

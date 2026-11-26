@@ -19,12 +19,12 @@ from ci.retained_python_ratchet_lineage import (
 )
 from ci.retained_python_records import BaselineDocument, render_document
 from ci.retained_python_selection import selection_digest
-from repomap_test_support.retained_projection_fixture import (
+from common_lore_index_test_support.retained_projection_fixture import (
     ProjectionFixture,
     add_chain_alternative,
     projection_fixture,
 )
-from repomap_test_support.retained_ratchet_fixture import (
+from common_lore_index_test_support.retained_ratchet_fixture import (
     BASELINE_PATH,
     SCOPE_PATH,
     commit_all,
@@ -269,6 +269,7 @@ FORWARD_ADMISSIONS = (
     "REPOMAP-CLOE-RESOURCE-GOVERNANCE8",
     "REPOMAP-CLOE-RESOURCE-GOVERNANCE9",
     "CLOE-PRODUCT256-READ2",
+    "CLOE-RC010-M1F",
 )
 
 

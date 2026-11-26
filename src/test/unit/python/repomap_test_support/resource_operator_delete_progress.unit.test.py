@@ -5,28 +5,28 @@ from __future__ import annotations
 from pathlib import Path
 import pytest
 
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_hygiene_policy import HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex
-from repomap_test_support.resource_index_maintenance import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_hygiene_policy import HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex
+from common_lore_index_test_support.resource_index_maintenance import (
     recover_stale_admission_lock,
 )
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimPurpose,
     ClaimRegistry,
     ProcessLiveness,
     register_protection,
 )
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     OperatorReclamationRequest,
     reclaim_run_population,
 )
-import repomap_test_support.resource_operator_reclamation as reclamation
-from repomap_test_support.resource_operator_records import (
+import common_lore_index_test_support.resource_operator_reclamation as reclamation
+from common_lore_index_test_support.resource_operator_records import (
     read_operation_record,
 )
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     PHASE,
     PROJECT,
     add_monitoring_link,
@@ -35,8 +35,8 @@ from repomap_test_support.resource_operator_reclamation_test_support import (
     dead,
     private_root,
 )
-from repomap_test_support.resource_retention import RetentionClass, TerminalOutcome
-from repomap_test_support.resource_safe_tree_delete import (
+from common_lore_index_test_support.resource_retention import RetentionClass, TerminalOutcome
+from common_lore_index_test_support.resource_safe_tree_delete import (
     SafeTreeDeleteResult,
 )
 

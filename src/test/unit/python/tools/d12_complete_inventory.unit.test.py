@@ -6,8 +6,8 @@ import subprocess
 
 import pytest
 
-from repomap_test_support import d12_image_probes as legacy
-from repomap_test_support.d12_complete_inventory import (
+from common_lore_index_test_support import d12_image_probes as legacy
+from common_lore_index_test_support.d12_complete_inventory import (
     D12InventoryError,
     MAX_SECTION_ROWS,
     MD5_LOOKUP_AWK,

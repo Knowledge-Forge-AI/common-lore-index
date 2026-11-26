@@ -6,7 +6,7 @@ from dataclasses import replace
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix1_qualification import (
+from common_lore_index_test_support.test_cov5k_r2_fix1_qualification import (
     IntegrityError,
     build_result,
     create_draft,

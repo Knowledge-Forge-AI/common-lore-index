@@ -14,7 +14,7 @@ import pytest
 
 from common_lore_index.extractors.rust_pilot.construction import encode_setup_stream
 from common_lore_index.extractors.rust_pilot.guest import setup_writer
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import (
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import (
     NOTICES,
     build_wheel,
     payload,

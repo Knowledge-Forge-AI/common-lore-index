@@ -5,7 +5,7 @@ from typing import cast
 from collections.abc import Mapping
 from pathlib import PurePosixPath
 
-from repomap_test_support.canonical_contract import FIXTURE_ROOT
+from common_lore_index_test_support.canonical_contract import FIXTURE_ROOT
 from common_lore_index.canonicalization.records import (
     CanonicalEdge, CanonicalEdgeEvidenceLink, CanonicalEvidence,
     CanonicalGraph, CanonicalNode, CanonicalNodeEvidenceLink,

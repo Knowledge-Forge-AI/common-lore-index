@@ -27,7 +27,7 @@ from common_lore_index.artifacts.store import (
     ArtifactIntegrityError,
     FileSystemArtifactStore,
 )
-from repomap_test_support.sealing_governance_fixtures import (
+from common_lore_index_test_support.sealing_governance_fixtures import (
     binding_for,
     graph_for,
     open_descriptor_count,

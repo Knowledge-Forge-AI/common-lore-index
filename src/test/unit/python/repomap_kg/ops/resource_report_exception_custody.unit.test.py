@@ -17,8 +17,8 @@ import common_lore_index.ops.resource_reports._delivery as delivery
 from common_lore_index.cli.main import main
 from common_lore_index.ops.resource_reports._delivery import DeliveryError
 from common_lore_index.ops.resource_view import begin, finish_local
-from repomap_test_support.resource_report_cli_files import private_directory, report_leftovers
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.resource_report_cli_files import private_directory, report_leftovers
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
 
 
 GRAPH = "report-exception"

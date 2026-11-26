@@ -741,7 +741,7 @@
   },
   "ownership": {
     "manifest_path": "tools/ci/python_type_ownership.json",
-    "sha256": "fcf53151c8c4e2703f7da60902b60e45b29522d34c922a26c4f689cb5c49391c"
+    "sha256": "703963f361985f9f7c7d86fe77992a54e89899b95be0575ece6268cfc73a4379"
   },
   "ruff": {
     "findings": [
@@ -19086,42 +19086,6 @@
         "module": "common_lore_index.storage.table_rows",
         "ownership_class": "python_retained",
         "path": "src/main/python/common_lore_index/storage/table_rows.py",
-        "tier": "T1-future"
-      },
-      {
-        "module": "repomap_kg",
-        "ownership_class": "python_retained",
-        "path": "src/main/python/repomap_kg/__init__.py",
-        "tier": "T1-future"
-      },
-      {
-        "module": "repomap_kg.__main__",
-        "ownership_class": "python_retained",
-        "path": "src/main/python/repomap_kg/__main__.py",
-        "tier": "T1-future"
-      },
-      {
-        "module": "repomap_kg.ops",
-        "ownership_class": "python_retained",
-        "path": "src/main/python/repomap_kg/ops/__init__.py",
-        "tier": "T1-future"
-      },
-      {
-        "module": "repomap_kg.ops.config_migration",
-        "ownership_class": "python_retained",
-        "path": "src/main/python/repomap_kg/ops/config_migration.py",
-        "tier": "T1-future"
-      },
-      {
-        "module": "repomap_kg.server",
-        "ownership_class": "python_retained",
-        "path": "src/main/python/repomap_kg/server/__init__.py",
-        "tier": "T1-future"
-      },
-      {
-        "module": "repomap_kg.server.mcp",
-        "ownership_class": "python_retained",
-        "path": "src/main/python/repomap_kg/server/mcp.py",
         "tier": "T1-future"
       }
     ],

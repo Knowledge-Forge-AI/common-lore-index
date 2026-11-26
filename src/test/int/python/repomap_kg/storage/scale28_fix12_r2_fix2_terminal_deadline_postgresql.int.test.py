@@ -7,7 +7,7 @@ from time import monotonic, sleep
 import psycopg
 import pytest
 
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

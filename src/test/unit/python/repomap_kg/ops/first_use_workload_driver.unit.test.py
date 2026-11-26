@@ -15,12 +15,12 @@ import pytest
 from first_use_workload_bundle import read_bundle
 from first_use_workload_census import Census, load_census
 from first_use_workload_records import decode_observation
-from repomap_test_support.first_use_workload_driver import (
+from common_lore_index_test_support.first_use_workload_driver import (
     BUNDLE_CHILD, CallOutcome, CleanupFailure, CleanupRegistry, Clocks, Observed, RuntimeUnavailable,
     ScenarioRun,
     StaleInput, StepPlan, Unbounded, UnsafeBundleBase, run_rows, select_bundle_base, write_bundle,
 )
-from repomap_test_support.first_use_workload_samples import (
+from common_lore_index_test_support.first_use_workload_samples import (
     ATTEMPT, SAMPLE_RECIPE, pack_fact, sample_facts, sample_intent,
 )
 

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 import retrieval_evaluation_context as context_evaluation
-from repomap_test_support.context_fixture import build_sqlite_context_fixture
+from common_lore_index_test_support.context_fixture import build_sqlite_context_fixture
 from retrieval_evaluation_context import (
     verify_context_v1_freeze,
     write_context_v1_freeze_artifacts,
@@ -86,8 +86,8 @@ def test_native_arm_never_substitutes_graph_navigation(
 def test_execution_closure_binds_corpus_and_measurement_owners() -> None:
     files = context_evaluation.context_candidate_source_files()
     assert {
-        "src/test/support/python/repomap_test_support/context_fixture.py",
-        "src/test/support/python/repomap_test_support/context_assertions.py",
+        "src/test/support/python/common_lore_index_test_support/context_fixture.py",
+        "src/test/support/python/common_lore_index_test_support/context_assertions.py",
         "tools/retrieval_evaluation_attempts.py",
         "tools/retrieval_evaluation_admission.py",
         "tools/retrieval_evaluation_native.py",

@@ -30,7 +30,7 @@ from common_lore_index.storage.sqlite_local.publisher import (
     read_accepted_generation,
 )
 from common_lore_index.storage.sqlite_local.schema import AcceptedIdentity, LocalStoreError
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.sqlite_local_fixtures import (
     generation_bundle,
     local_binding,
     publication_for,

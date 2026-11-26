@@ -13,13 +13,13 @@ from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.lexical_service import build_graph_lexical_generation
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
 from common_lore_index.retrieval.projection_text import REPRESENTATION_VERSION
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_FIXTURE_ROOT, MIXED_V1_GRAPH_ID, binding_id_for_alias, build_mixed_v1_projection_policy,
     compute_working_copy_digests, materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home, write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus, publish_and_load_sqlite_corpus,
 )
 from retrieval_evaluation_admission import (

@@ -11,8 +11,8 @@ from typing import Any, Callable
 import pytest
 
 from common_lore_index.runtime import python_payload as payload
-from repomap_test_support import d12_native_python_proof as proof
-from repomap_test_support import d12_python31216 as older
+from common_lore_index_test_support import d12_native_python_proof as proof
+from common_lore_index_test_support import d12_python31216 as older
 from src.test.unit.python.tools.d12_native_python_fixture_helpers import (
     AMD, ARM, ARM_TK, ROOT, capture, image_attrs, raw_and_inner,
 )

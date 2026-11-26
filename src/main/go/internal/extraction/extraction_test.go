@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lair001/repo-map-go-helper/internal/protocol"
+	"github.com/Knowledge-Forge-AI/common-lore-index/src/main/go/internal/protocol"
 )
 
 func TestParseFileExtractsGO3DeclarationsInSourceOrder(t *testing.T) {

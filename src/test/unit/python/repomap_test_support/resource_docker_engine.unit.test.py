@@ -7,8 +7,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from repomap_test_support.resource_docker_engine import DockerSdkApi
-from repomap_test_support.resource_ledger import ResourceKind
+from common_lore_index_test_support.resource_docker_engine import DockerSdkApi
+from common_lore_index_test_support.resource_ledger import ResourceKind
 
 
 def test_sdk_container_cleanup_does_not_remove_unregistered_volumes():

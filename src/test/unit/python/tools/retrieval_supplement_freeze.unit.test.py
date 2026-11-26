@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.retrieval_supplement_fixtures import (
+from common_lore_index_test_support.retrieval_supplement_fixtures import (
     make_test_bindings,
     make_test_catalog_payload,
     make_test_corpus_payload,
@@ -274,7 +274,7 @@ def test_final_freeze_rejects_membership_fixtures_test_support_and_predecessor_d
     with pytest.raises(SupplementError, match="fixture_path_in_sources"):
         build(EXPLICIT + [OLD_FIXTURE], _sources(repo, BUILDER + EXPLICIT + [OLD_FIXTURE]))
     bad = "tools/retrieval_supplement_bad.py"
-    (repo / bad).write_bytes(b"from repomap_test_support.thing import x\n")
+    (repo / bad).write_bytes(b"from common_lore_index_test_support.thing import x\n")
     with pytest.raises(SupplementError, match="tool_imports_test_support"):
         build(EXPLICIT + [bad], _sources(repo, BUILDER + EXPLICIT + [bad]))
     with pytest.raises(SupplementError, match="predecessor_manifest_mismatch"):

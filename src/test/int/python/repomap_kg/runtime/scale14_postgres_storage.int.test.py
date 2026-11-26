@@ -67,7 +67,7 @@ def test_scale14_exact_pgdata_authority_on_disposable_local_runtime(
         "def public_fixture() -> int:\n    return 1\n",
         encoding="utf-8",
     )
-    config_path = home / "repomap.rpl.toml"
+    config_path = home / "repomap.local.cloe.toml"
     config = config_path.read_text(encoding="utf-8")
     config = re.sub(
         r"^server_host_port = \d+",

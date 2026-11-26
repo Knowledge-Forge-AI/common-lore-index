@@ -10,7 +10,7 @@ import pytest
     "def f():\n MC = ManagedChild\n p = MC(raw)\n object.__setattr__(p, unknown, True)\n",
 ])
 def test_uncertain_or_aliased_protected_names_are_refused(code):
-    from repomap_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
+    from common_lore_index_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
 
     visitor = AbruptOwnershipVisitor("synth_shadowed_names.py")
     visitor.visit(ast.parse(code))
@@ -19,7 +19,7 @@ def test_uncertain_or_aliased_protected_names_are_refused(code):
 
 def test_ast_scanner_detects_reflection_bypasses_and_aliases() -> None:
     """Prove the AST scanner rejects object.__setattr__, object.__getattribute__, and aliases."""
-    from repomap_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
+    from common_lore_index_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
 
     cases = [
         # Direct object.__setattr__ on _abrupt and abrupt
@@ -67,7 +67,7 @@ def test_ast_scanner_detects_reflection_bypasses_and_aliases() -> None:
 
 def test_ast_scanner_detects_slot_descriptor_bypasses_and_aliases() -> None:
     """Prove the AST scanner rejects slot descriptor calls (__set__, __get__, __delete__) and aliases."""
-    from repomap_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
+    from common_lore_index_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
 
     descriptor_cases = [
         # Direct ManagedChild slot descriptors
@@ -86,7 +86,7 @@ def test_ast_scanner_detects_slot_descriptor_bypasses_and_aliases() -> None:
         ("def f():\n s1 = ManagedChild._abrupt.__set__\n s2 = s1\n s2(child, True)\n", "descriptor bypass"),
         # Class aliases
         ("def f():\n MC = ManagedChild\n MC._abrupt.__set__(child, True)\n", "descriptor bypass"),
-        ("from repomap_test_support.sqlite_managed_child import ManagedChild as MC\ndef f():\n MC._abrupt.__set__(child, True)\n", "descriptor bypass"),
+        ("from common_lore_index_test_support.sqlite_managed_child import ManagedChild as MC\ndef f():\n MC._abrupt.__set__(child, True)\n", "descriptor bypass"),
         ("def f():\n MC = ManagedChild\n C = MC\n C._abrupt.__set__(child, True)\n", "descriptor bypass"),
         # Dynamic class access
         ("def f():\n child = harness.start('ops')\n type(child)._abrupt.__set__(child, True)\n", "descriptor bypass"),
@@ -113,7 +113,7 @@ def test_ast_scanner_detects_slot_descriptor_bypasses_and_aliases() -> None:
 
 def test_ast_scanner_allows_unrelated_reflection_and_approved_child_api() -> None:
     """Prove the AST scanner does not reject unrelated object reflection or approved ManagedChild APIs."""
-    from repomap_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
+    from common_lore_index_test_support.sqlite_abrupt_ownership import AbruptOwnershipVisitor
 
     safe_cases = [
         # Unrelated object reflection

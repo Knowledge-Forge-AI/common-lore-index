@@ -49,10 +49,15 @@ def path_violations(
     return sorted(set(reasons))
 
 
-def module_violations(env_class: str, modules: Mapping[str, str], resource_root: str) -> list[str]:
+def module_violations(
+    env_class: str, modules: Mapping[str, str], resource_root: str, *, legacy_facade: bool = False,
+) -> list[str]:
     """Product, facade and dependency modules and the resource root of an installed env."""
     reasons: list[str] = []
-    for name in ("common_lore_index", "repomap_kg", "typing_extensions"):
+    facade_class = PURE_MODULE_CLASS if legacy_facade else "absent"
+    if modules.get("repomap_kg") != facade_class:
+        reasons.append("module-origin")
+    for name in ("common_lore_index", "typing_extensions"):
         observed = modules.get(name)
         if env_class == "provisioned-server" and name == "typing_extensions":
             if observed not in ("env-purelib", "system-site"):
@@ -87,7 +92,7 @@ def closure_holds(
     modules: Mapping[str, str],
     resource_root: str,
     customize: Mapping[str, str],
-    absent_families: bool,
+    absent_families: bool, *, legacy_facade: bool = False,
 ) -> bool:
     """All section-6 conditions for one environment's two probe runs."""
     if path_violations(env_class, normal, isolated=False):
@@ -99,7 +104,7 @@ def closure_holds(
     if {key: value for key, value in expected.items() if value} != {
             key: value for key, value in isolated.items() if value}:
         return False
-    if module_violations(env_class, modules, resource_root):
+    if module_violations(env_class, modules, resource_root, legacy_facade=legacy_facade):
         return False
     if any(value not in CUSTOMIZE_CLASSES for value in customize.values()):
         return False

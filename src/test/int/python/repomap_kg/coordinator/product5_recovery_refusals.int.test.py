@@ -12,7 +12,7 @@ from common_lore_index.coordinator import _publication_phase
 from common_lore_index.coordinator._restart_fencing import FencingContentionError
 from common_lore_index.coordinator.configured_refresh import ConfiguredRefreshResolver
 from common_lore_index.coordinator.startup_recovery import recover_startup
-from repomap_test_support.startup_recovery_scenarios import (
+from common_lore_index_test_support.startup_recovery_scenarios import (
     _make_refresh_fixture,
     _refresh_harness,
     _req_norm,

@@ -109,7 +109,7 @@ mode = "read_only"
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             home.mkdir()
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 """\
 schema_version = 1
 
@@ -199,7 +199,7 @@ mode = "read_only"
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             home.mkdir()
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 """\
 schema_version = 1
 

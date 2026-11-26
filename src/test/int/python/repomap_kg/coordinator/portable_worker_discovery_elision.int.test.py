@@ -18,9 +18,9 @@ from common_lore_index.coordinator._portable_semantic_adapter import PortableExe
 from common_lore_index.coordinator._portable_worker_launch import run_portable_worker
 from common_lore_index.graph import _discovery_classify, multi_source_capture
 from common_lore_index.graph.multi_source_pipeline import capture_multi_source_candidate
-from repomap_test_support.portable_publication_fixtures import create_single_source_graph_config
-from repomap_test_support.portable_worker_scenarios import coordinator_test_limits
-from repomap_test_support.portable_worker_equivalence import reference_bytes, publication_expectation
+from common_lore_index_test_support.portable_publication_fixtures import create_single_source_graph_config
+from common_lore_index_test_support.portable_worker_scenarios import coordinator_test_limits
+from common_lore_index_test_support.portable_worker_equivalence import reference_bytes, publication_expectation
 
 
 @pytest.mark.parametrize("detach_source", [False, True], ids=["live-source-unused", "removed-source"])

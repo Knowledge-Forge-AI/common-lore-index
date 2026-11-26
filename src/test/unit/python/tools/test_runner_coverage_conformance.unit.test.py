@@ -11,7 +11,7 @@ import pytest
 
 from common_lore_index.coordinator import _portable_worker_launch as launch
 from common_lore_index.coordinator._worker_launch import WorkerLaunchSpec
-from repomap_test_support.portable_worker_conformance import run_portable_worker_conformance
+from common_lore_index_test_support.portable_worker_conformance import run_portable_worker_conformance
 from runner_coverage import ChildCoverageSession
 from runner_coverage_capability import CapabilityContainmentError, CapabilityValidationError
 from runner_coverage_conformance import CONFORMANCE_COMMAND

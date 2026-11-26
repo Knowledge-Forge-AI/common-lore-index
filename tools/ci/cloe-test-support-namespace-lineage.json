@@ -1,0 +1,2793 @@
+{
+  "authority": "ADR0223",
+  "dynamic_successor_sha256": "8791ad9501d81b0e8bcdfb260541e630235977b41c1cecd05c1f31155c094170",
+  "inventory_sha256": "b5e9fdfdae761bcb431095e44fa8b2629ff45e1ae5f481587728f01ce9dc2b73",
+  "members": [
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/__init__.py",
+      "after_sha256": "e60c8680307d81d9ca2e11d6048b6d3a68adcd42a0adc9a92dafe13ba581a039",
+      "before": "src/test/support/python/repomap_test_support/__init__.py",
+      "before_oid": "109c974f19499e32a7c651b507340613f5459856"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/awk.py",
+      "after_sha256": "bd8b247c8bba6c71b8eb8e24b33ff24494a5c1d1ab7eaa016f9be38b2192eca3",
+      "before": "src/test/support/python/repomap_test_support/awk.py",
+      "before_oid": "a1f44d9748a40e6a4ce0d5b9c041f18c4608cd2a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/backup_provenance_boundaries.py",
+      "after_sha256": "90804626fce63d634ef3e264c754ade8ff395b33a2626634bd571dd886ec7824",
+      "before": "src/test/support/python/repomap_test_support/backup_provenance_boundaries.py",
+      "before_oid": "d026f89652005ee33011009aa5a7308f65f5fd87"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/bash.py",
+      "after_sha256": "ca968a3376e2a68a828176ce04114bf7b30de38d8bc5ab1e1326a4beefacc672",
+      "before": "src/test/support/python/repomap_test_support/bash.py",
+      "before_oid": "6ce285ebcca5849ef5baa58ea9cbbd8e3d640aa7"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/bats.py",
+      "after_sha256": "ba64aa7f066e03c7f16df00dbea22109b1a59b67e0184ca0ca397862a2ba0ea1",
+      "before": "src/test/support/python/repomap_test_support/bats.py",
+      "before_oid": "7f9e092d40cfc8050224df3105ac270d036777b2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/build_profile_debt.py",
+      "after_sha256": "673f848528bf7f39eb14d0309e3a19d4591e406cb9bfcb5611213ae584db43be",
+      "before": "src/test/support/python/repomap_test_support/build_profile_debt.py",
+      "before_oid": "effa3fb7a53960c76488992b2c6ceb256db9660f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/bundle_sort_fixtures.py",
+      "after_sha256": "0d86ad9758753e417e769f33322ef0cd3bf745338873497a86e12180f8974ab2",
+      "before": "src/test/support/python/repomap_test_support/bundle_sort_fixtures.py",
+      "before_oid": "2d27d0441efc2d1c60d1dc21b19b4952c2a5365c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/canonical_contract.py",
+      "after_sha256": "560bba05be18520078edf53a8559213c8f0f0547a5252148809774a34f8e3846",
+      "before": "src/test/support/python/repomap_test_support/canonical_contract.py",
+      "before_oid": "aefe602e59a0a59ab2c5b38b2b6886267543b2b3"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/canonical_merge_reference.py",
+      "after_sha256": "07a4a9681295467f6cb08ab312f57b559447fb467921de5d9a4bed7a6eb390c1",
+      "before": "src/test/support/python/repomap_test_support/canonical_merge_reference.py",
+      "before_oid": "51331ee6c0414fba1f4b38ea61dd578b671555c5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/canonicalization.py",
+      "after_sha256": "0154c7bf13fd0965dc8e2cd273ed52a21eeb92d8268919abfe0e78d2b233e4d5",
+      "before": "src/test/support/python/repomap_test_support/canonicalization.py",
+      "before_oid": "21630b3b556503b2072b12041729589cdc291329"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/capture_cancellation_fixtures.py",
+      "after_sha256": "579409496e77cd6c8fefde7baeb1138e8dbc2cc47f61433fd837aa296a608085",
+      "before": "src/test/support/python/repomap_test_support/capture_cancellation_fixtures.py",
+      "before_oid": "e55a8457ac2c65f5cbe45f4c497ae4debb4cc1c0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/cli.py",
+      "after_sha256": "db2bfc60817d1f7ff499de1343cae416bfa6edd3f5b085681e6f187b6d5f989b",
+      "before": "src/test/support/python/repomap_test_support/cli.py",
+      "before_oid": "419e4a245f5b002c6e39f04318dc17096465dd90"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/cli_in_process.py",
+      "after_sha256": "60e1fb2300bc69374906d021edb6b52ea4f0dce63b9c972f14ea2a9a7e94f73f",
+      "before": "src/test/support/python/repomap_test_support/cli_in_process.py",
+      "before_oid": "2f82c14a232e0f6951584f030b7ccd01360b1753"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/cli_integration.py",
+      "after_sha256": "5c735f9d6974678d6dbd7f1e67d0eb8479bc570ef4bab4636dc7bf457f121639",
+      "before": "src/test/support/python/repomap_test_support/cli_integration.py",
+      "before_oid": "c353c907833372afb8658791e9fc123e0ef9a47e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/cli_storage_summaries.py",
+      "after_sha256": "5e121fe77cfb433fdb732c8b63ed7163cbe7dee3efb3144fd0370ce7ccb73eef",
+      "before": "src/test/support/python/repomap_test_support/cli_storage_summaries.py",
+      "before_oid": "9dcdb92693d7c0e42da2a98baee22468a3b0d5c6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/composition_extraction_fixtures.py",
+      "after_sha256": "dc5b8d4b6f834c665c99b312f2ab10748f2df6a25798c9306f5e90813586e153",
+      "before": "src/test/support/python/repomap_test_support/composition_extraction_fixtures.py",
+      "before_oid": "44d266f125138514202b4c437a39861cea9c6a07"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/config_extractor.py",
+      "after_sha256": "d1e0b90280aea5eee8f4d671a23e0b586f2d197ed8d51158e55cda185a6064ba",
+      "before": "src/test/support/python/repomap_test_support/config_extractor.py",
+      "before_oid": "932f27554502a45d84a4c723419ad80a2cab04ef"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/context_assertions.py",
+      "after_sha256": "7b44b9c24a5c92a8af16fa96ca0742af8adc28f8baaac0a4bca4080a04e6b834",
+      "before": "src/test/support/python/repomap_test_support/context_assertions.py",
+      "before_oid": "58de8ee82aa7154a17db4e7b64b6c02cca4ee73d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/context_fixture.py",
+      "after_sha256": "8f6ed1301935934cc476b3524ee4dea607694e4924f8d683341f766e6f854d24",
+      "before": "src/test/support/python/repomap_test_support/context_fixture.py",
+      "before_oid": "fd3e66bd7998aae6353fe691a1ea4b8f12fcaf8e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/contract_loader_fixtures/nested/probe.py",
+      "after_sha256": "09913384abbe3a8baccf02b10b432466602b6fab8b256f33d2377edc27b08099",
+      "before": "src/test/support/python/repomap_test_support/contract_loader_fixtures/nested/probe.py",
+      "before_oid": "eb78b9a2a49f82ab45088275b0497189f26c0a21"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/contract_loader_fixtures/second/probe.py",
+      "after_sha256": "641ac048cebdb0f669b1f2dc88f1cb5202af2fd24a7e1d4a1b41ae473334ef81",
+      "before": "src/test/support/python/repomap_test_support/contract_loader_fixtures/second/probe.py",
+      "before_oid": "55dbe8360f3b2c1e0193b6d8343c2ab993d616cf"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/control_db_fakes.py",
+      "after_sha256": "237425935cb52e3058a7cf4190da8643269f8dd85e7022148edffbcd686f32df",
+      "before": "src/test/support/python/repomap_test_support/control_db_fakes.py",
+      "before_oid": "190dc3f2a9974065e8d0057407c3070ed48c270f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/coordinator_client_fixtures.py",
+      "after_sha256": "463f772a923553acaf2fdf7df048dff4c3be04c941222aa0576dee6156baee1d",
+      "before": "src/test/support/python/repomap_test_support/coordinator_client_fixtures.py",
+      "before_oid": "1757556e81190738a913bb086ac3b108f5680f4b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/coordinator_control_fixtures.py",
+      "after_sha256": "86a4522c1c8564d462f5fa1e876d01f808cd79b3d3b255ed40b9ea7425b5ddd8",
+      "before": "src/test/support/python/repomap_test_support/coordinator_control_fixtures.py",
+      "before_oid": "5aa8b540717308bfef62be310c5b03a3a6b5ff47"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/coordinator_core_fakes.py",
+      "after_sha256": "c1f5afa89abc46f816e02cea0fe679f852d07fd7192eb643be0ba3899f93a347",
+      "before": "src/test/support/python/repomap_test_support/coordinator_core_fakes.py",
+      "before_oid": "8f0e550c5e2aced7e337c003d07c5bcccdb024a9"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d12_complete_inventory.py",
+      "after_sha256": "5fcbf6fe02a5a42cc8bdcc6ac37a904a6f63ec309a2de6c404dec9818cab85cd",
+      "before": "src/test/support/python/repomap_test_support/d12_complete_inventory.py",
+      "before_oid": "181326070411a6a272584546ca5c81ab7d0d87a6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d12_core_image.py",
+      "after_sha256": "5f48306b055f2b4a927b0f1cc936e34dcecd27e1c60e7544bdbc6c86310e770d",
+      "before": "src/test/support/python/repomap_test_support/d12_core_image.py",
+      "before_oid": "16f0d0d98087f5bf444d9113515d32aceb9a0b8c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d12_core_image_cleanup.py",
+      "after_sha256": "3818adecc8ed352b771c9b996d2f2f03e0617aa8a9ab7b3a8976a2262a4eca70",
+      "before": "src/test/support/python/repomap_test_support/d12_core_image_cleanup.py",
+      "before_oid": "fe4cb4649cafac814a275c48b16472fafcbd5607"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d12_dynamic_linkage.py",
+      "after_sha256": "b4d19b58605955e7fc3919102826badb55c57067b3d38e9eeb65a03f258576e5",
+      "before": "src/test/support/python/repomap_test_support/d12_dynamic_linkage.py",
+      "before_oid": "e3ad4d271dfaca3406378a7a6e34e8924f1f2aa6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d12_image_probes.py",
+      "after_sha256": "12936e11d87b2c87e3906c2ef339765bd66bf420eae3fcb9e740a567bc07f965",
+      "before": "src/test/support/python/repomap_test_support/d12_image_probes.py",
+      "before_oid": "6a07142048e14bb6aeaa0758262937cd29549266"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d12_native_python_proof.py",
+      "after_sha256": "e4d6f2f5a89af29ca1d3978fc19c8b9fe140f4a1827a01ef3dddc64bcbd76856",
+      "before": "src/test/support/python/repomap_test_support/d12_native_python_proof.py",
+      "before_oid": "484bb50e013e4e0f3de3335771dc14c0404731aa"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d12_python31216.py",
+      "after_sha256": "7b2c4df65086c34bcae79b04c44be5f7fa17df536c2aef5af3ace6b065bdb5ef",
+      "before": "src/test/support/python/repomap_test_support/d12_python31216.py",
+      "before_oid": "cec57bbecf72731cca48e9a1b65b4cf5e302a23d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d12_recipe.py",
+      "after_sha256": "fcc7cca1448d54fea7319b44f2e5d982b313db8283d6f322aedf323615c64dd2",
+      "before": "src/test/support/python/repomap_test_support/d12_recipe.py",
+      "before_oid": "0b6844842c469b725c581b57503e533c850bf21b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d12_system_test_children.py",
+      "after_sha256": "9234f3eec7e0384b530e81c5ce68c95d96c98c219aa0d66eb6bbed296013698e",
+      "before": "src/test/support/python/repomap_test_support/d12_system_test_children.py",
+      "before_oid": "4f459d3396b9971254969805c1299c5ab0e7fca5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d9_extension_policies.py",
+      "after_sha256": "a04318f67064e752fa7143970e691f4da0c78fe678e363f93a098568c128d753",
+      "before": "src/test/support/python/repomap_test_support/d9_extension_policies.py",
+      "before_oid": "0972f53df361e0fabd7ca9ea66ed8a07e100d57d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/d9_extension_restore.py",
+      "after_sha256": "6c58a781f104314eb8432f4ec4913e84754c7a457db9ac3fa24788aa24fb0822",
+      "before": "src/test/support/python/repomap_test_support/d9_extension_restore.py",
+      "before_oid": "0f9a434d573c959639f0a841dd4c1ec716a68412"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/executable_authority.py",
+      "after_sha256": "a3c465a244fc3869ad3cfd28105fd9aba75e7ab97c4f146187d87875c9f06f42",
+      "before": "src/test/support/python/repomap_test_support/executable_authority.py",
+      "before_oid": "e7c4a1ed07c9b2c59d68ef47e10b2adee6823d6b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/extractor_contracts/__init__.py",
+      "after_sha256": "6e5a4b3399f6f14cfa3f82bb851136a6cb48656480f1e346db4acaebc78744f0",
+      "before": "src/test/support/python/repomap_test_support/extractor_contracts/__init__.py",
+      "before_oid": "56b659412556a0c925fb00e8321326aafc8a6320"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/extractor_contracts/legacy_source.py",
+      "after_sha256": "5760123ebc762b0f2e32b0f9b6c028f3024664b7980ebca2e24afb633210d556",
+      "before": "src/test/support/python/repomap_test_support/extractor_contracts/legacy_source.py",
+      "before_oid": "090b46dbe6d23f1effff1f3e1beefabb995e12a6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/extractor_contracts/receipt_fixtures.py",
+      "after_sha256": "f433756a1f10a1b3dd14108c10b0a9464db3816203f1e5379a101bcac4c1d2f2",
+      "before": "src/test/support/python/repomap_test_support/extractor_contracts/receipt_fixtures.py",
+      "before_oid": "349767755e93e41817c8956dd5a78b7e3c5d5af7"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/fencing_control_fakes.py",
+      "after_sha256": "a869a976e124b564d391a4d5e2ae2a2aafd80f3ebe4a3487d7ea04c028e40f2a",
+      "before": "src/test/support/python/repomap_test_support/fencing_control_fakes.py",
+      "before_oid": "35d6774e23c7ce976b76e557479026d48fdbce97"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workflow.py",
+      "after_sha256": "ee3e698c5675a82161d532120806664f3d553acf4083519c671f4f5726814a07",
+      "before": "src/test/support/python/repomap_test_support/first_use_workflow.py",
+      "before_oid": "d26002adf78571450ff132b13001974055db247e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_call_results.py",
+      "after_sha256": "2a81439b904e12b25c153a95b2132e7d5292b0df8eff7f3fb77fb2581474ef59",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_call_results.py",
+      "before_oid": "a1fb24d51f8e0244d453464fd8ae00629cf354f4"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_cleanup.py",
+      "after_sha256": "eb325299b9f068db93d956312b971eedce13abe31d8291266c013a6afbe4314c",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_cleanup.py",
+      "before_oid": "3d71fd67d1e7d79cd22968d6982a0574bbbc1490"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_driver.py",
+      "after_sha256": "335d43d9f8e94489f6ff71fc810427f2c5cb33c1a20e1a03eaeb4ecedd12ce6c",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_driver.py",
+      "before_oid": "14aa83a2069e1e3316e1e467e2a15213007a24b1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_local_steps.py",
+      "after_sha256": "b84271b51209467a65884771af318b5e14921d0665d916272347cb1a144a3486",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_local_steps.py",
+      "before_oid": "7b6dfd4251e2d4831057e1e58d148fb9b11e9380"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_mixed_steps.py",
+      "after_sha256": "0e5674df7d11aeb93f799954624dacda9ace531e21bb2094cfed58303210a2f9",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_mixed_steps.py",
+      "before_oid": "5a8e47e5c03f7bf92e3f3ad050718761445378d1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_mutations.py",
+      "after_sha256": "c6ad0a31220bc45487d8b9318d8c7c522f4414503058e7d32e6bfd2d401d2bb1",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_mutations.py",
+      "before_oid": "a36c2fcecfbe7b3d230a120095c891212a90d65b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_rows.py",
+      "after_sha256": "0f8c5bc2262b3fa33323a9e8d928ad500c59b4bc2ec62b96b1fdf6c5538fbbf9",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_rows.py",
+      "before_oid": "df8d5a855b06215624f0f9fec3c5729197dcaf9f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_samples.py",
+      "after_sha256": "0e42addccb4d21eed24aec24c9d66200cfcaab0ee776a86dcd3dbaf7a2993144",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_samples.py",
+      "before_oid": "090c59e9f28f4444285134cb96ce76e031a2f45e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_server_steps.py",
+      "after_sha256": "34fa001120ddb837e7a92f5bcc485392fdc58bac456c7b06d86c2c9f4fad5709",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_server_steps.py",
+      "before_oid": "34a0d32f410ff2562d368bcbb7d9270d7c609832"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_session.py",
+      "after_sha256": "81bbca37625b1e785e10d264749fff094a4a79f900f3fcd268fae18144aa9ac6",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_session.py",
+      "before_oid": "9ba2ed10628ff2549dd3ed0fe19ae50b040a7c36"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/first_use_workload_witness.py",
+      "after_sha256": "5ef3e27fd368efc577670f3748bff6dc76556185b6fa5584eb32c16e5d76913b",
+      "before": "src/test/support/python/repomap_test_support/first_use_workload_witness.py",
+      "before_oid": "19d4bd9c31b0cf82437034cbb0633fcf9dd65252"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/generated_lock_fixtures.py",
+      "after_sha256": "498444ed4a13115d82669c5dab4644e1fd6ae25f2131153eed0c4d785b8c252a",
+      "before": "src/test/support/python/repomap_test_support/generated_lock_fixtures.py",
+      "before_oid": "cd155c41b4bd812598e05993bb46a6529d041e35"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/github_api_ingestion.py",
+      "after_sha256": "600dfbe0ca94141edb2427e4dfd7665c53b2e819358b95ce4e1e3ed400d6f910",
+      "before": "src/test/support/python/repomap_test_support/github_api_ingestion.py",
+      "before_oid": "14a7a93c076007c4a4ce8ce1f460c761a49c7f46"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/github_api_ingestion_acquisition.py",
+      "after_sha256": "d69fb3124e670952272c2062d417471d529f128e5b2ea12c23cfd0c9d309290d",
+      "before": "src/test/support/python/repomap_test_support/github_api_ingestion_acquisition.py",
+      "before_oid": "0a9044c58386c8395a7fe7a01fec6d79aac9e8a6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/github_api_ingestion_config.py",
+      "after_sha256": "56c0a879d6baa31fb622d60012084d4f47178ff2afa2236d4af95107048aa166",
+      "before": "src/test/support/python/repomap_test_support/github_api_ingestion_config.py",
+      "before_oid": "b21e4542bb12dd6501389491b6d9b09239812723"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/github_api_ingestion_transport.py",
+      "after_sha256": "51d7d327709f2b3f212683f8b128c6791d867d4da2b5740360a987e85c72c76e",
+      "before": "src/test/support/python/repomap_test_support/github_api_ingestion_transport.py",
+      "before_oid": "889bc80e5ce685ba0aa9639bfe94825d59fcbcab"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/go_canonicalization.py",
+      "after_sha256": "a47a07c2d92690a4378f138f6d5f3fc9975c9ffd0d2e080f386f87b4759e3f56",
+      "before": "src/test/support/python/repomap_test_support/go_canonicalization.py",
+      "before_oid": "77dfb53599a2b4baeb3ff7cfe774931c5a035059"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/governance3_first_use_sealing.py",
+      "after_sha256": "4981605d0cab07d0a1a96d1f398c0dc3731ce723e9244d13c5e2b81f13d3f3dc",
+      "before": "src/test/support/python/repomap_test_support/governance3_first_use_sealing.py",
+      "before_oid": "e56f8e3b1c42d51fae6a4a5d1b13a59a52b269fa"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/host_mcp_domain_publication.py",
+      "after_sha256": "1631d80fc0fdd374f39e958393372f20eba3ff493b8e2aafe4ecd951e4fda4ab",
+      "before": "src/test/support/python/repomap_test_support/host_mcp_domain_publication.py",
+      "before_oid": "3609a34cc1880ba73ea5b72f536589f06a562dd5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/host_mcp_domain_reads.py",
+      "after_sha256": "a1cd8c855e93847e36368ce7e8816f1407b60d9903e03a1924e99c7352192880",
+      "before": "src/test/support/python/repomap_test_support/host_mcp_domain_reads.py",
+      "before_oid": "f42de3b08a4fa9ff7b6fa019c5cae378627ac680"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/host_mcp_investigation.py",
+      "after_sha256": "4ebe6a1a6412f024770de259aa392f67546bfdbab446ddc93afca4461088ab63",
+      "before": "src/test/support/python/repomap_test_support/host_mcp_investigation.py",
+      "before_oid": "fad152bc22f74eb3523bbc52081647e866bd0cbf"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/host_mcp_publication.py",
+      "after_sha256": "f1ed84c8557d437a2b0fe6ad5fe9f21b9e7260ddefd179e4226743dd8683ddc7",
+      "before": "src/test/support/python/repomap_test_support/host_mcp_publication.py",
+      "before_oid": "77131a672449132c99fbe4bba9e8414aac94785a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/host_mcp_stdio.py",
+      "after_sha256": "81ad435ad25f01534d18eb86a3d15973c19b38fae52577613ff2ea99f3e38b23",
+      "before": "src/test/support/python/repomap_test_support/host_mcp_stdio.py",
+      "before_oid": "2deb5cb5138e32764723f7afbe1a762be71409a6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/host_read_store_config.py",
+      "after_sha256": "5f4f97d1b5d7a43bae6a8648d8cb0a18e3adeccbcd9c1a583e7d0a47f8c6e111",
+      "before": "src/test/support/python/repomap_test_support/host_read_store_config.py",
+      "before_oid": "30bb070176c33822f5f88cb0a8366556dd95ef4b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/installed_candidate.py",
+      "after_sha256": "4a708d7f1515ee3b2ffe75061e7df035587506c52693b07a11370c6cbfbeee84",
+      "before": "src/test/support/python/repomap_test_support/installed_candidate.py",
+      "before_oid": "12e9a9cc549ceae87d21c3c0acbe1e06a08586dc"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/installed_environment.py",
+      "after_sha256": "027f259916b6a420b2784dfae1e98c1ee44dedd1383e471cad30b75ec0c3c201",
+      "before": "src/test/support/python/repomap_test_support/installed_environment.py",
+      "before_oid": "6ac75b705265798dc9d740729025e2dd97aeb064"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/installed_experience_driver.py",
+      "after_sha256": "e37812d6b4ac6f9794863fd9130c07d2bc9a34a0d1a466b483d16959e07a75af",
+      "before": "src/test/support/python/repomap_test_support/installed_experience_driver.py",
+      "before_oid": "f19cabc003c30d92537f73e2ee27699fc26d329a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/installed_experience_fixture.py",
+      "after_sha256": "8662f81d5f5ee474728cbe1b32dec24955741d05638f5da2ba704ea3fcfe35c6",
+      "before": "src/test/support/python/repomap_test_support/installed_experience_fixture.py",
+      "before_oid": "7a88a3831388cf81d30218a6eb94a8b12694441b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/installed_experience_witnesses.py",
+      "after_sha256": "a0e47a7693594a2a9e1b0fac9b7f8dbef7d992e9b0435054eb39324dbb3a1e1c",
+      "before": "src/test/support/python/repomap_test_support/installed_experience_witnesses.py",
+      "before_oid": "cb191b5e1279e838d179946f6dd09588480b9824"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/installed_mcp_session.py",
+      "after_sha256": "08949ec0e5430aacf94a3817d2616d749a83af45231ac151906fe1f44d4f7826",
+      "before": "src/test/support/python/repomap_test_support/installed_mcp_session.py",
+      "before_oid": "aff99a81587a95d329d4920c36306e8bb8bc1b77"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/installed_origin.py",
+      "after_sha256": "e24d34017f41aeab85e77ba6bf5938ebfa92bbbca79b2f8c94edc7895ab17c29",
+      "before": "src/test/support/python/repomap_test_support/installed_origin.py",
+      "before_oid": "30e2aad0f2ad641afbd29d7b43ed0c2c2b0fccf3"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/installed_projection.py",
+      "after_sha256": "227563e59512ff188c9cf2b0724eadae693d031eb971b3dd6faf98770badb728",
+      "before": "src/test/support/python/repomap_test_support/installed_projection.py",
+      "before_oid": "0304714fef060ab0139ccefd150c1788936d178d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/installed_sdist.py",
+      "after_sha256": "aeb3681adc90e8694b7b10ab1a0e231db5dbc41e674e8bc83bb21858473ae984",
+      "before": "src/test/support/python/repomap_test_support/installed_sdist.py",
+      "before_oid": "56becb6af727bdec2ce84fccfd919ee00bec650d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/local_db_backup.py",
+      "after_sha256": "243043e011a0a72003cb500976375db13a15d1d5ca73a768133df98398131f6f",
+      "before": "src/test/support/python/repomap_test_support/local_db_backup.py",
+      "before_oid": "01e703e6a76265ad373531c2b765bb2e622051a5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/materialization_fixtures.py",
+      "after_sha256": "313f51eaf377404b0c499c59762b97fd4e2af334ec41dbf1b6771f4b79cb5071",
+      "before": "src/test/support/python/repomap_test_support/materialization_fixtures.py",
+      "before_oid": "f6f10c86850be53f5f25bcc8db2a8f9428cd0bfc"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/mcp_domain_rows.py",
+      "after_sha256": "c7296e8abd7c259408cd440f866b52c46761aaca1c12514c32c3d9115c348660",
+      "before": "src/test/support/python/repomap_test_support/mcp_domain_rows.py",
+      "before_oid": "b2b9f2b700c5f1d11b86c28d968c36fd1344b26c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/mcp_response_assertions.py",
+      "after_sha256": "7fd76c3fc80c354d3c783fcea361db85b9392951922b94dc294ae190bcdb259e",
+      "before": "src/test/support/python/repomap_test_support/mcp_response_assertions.py",
+      "before_oid": "d1d2277d5b8eff21e1dc37c87000cab0eb896826"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/mcp_server.py",
+      "after_sha256": "846f0a141bdeb8678b8369a000b636b74668d36bb885833d82376a598202fc44",
+      "before": "src/test/support/python/repomap_test_support/mcp_server.py",
+      "before_oid": "ec88444c9103e2648b4b268529d2be1eae3852f9"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/mcp_server_requests.py",
+      "after_sha256": "db87ac803e797a03718a3a5ebdf3d5c815feb772fefb200dfcee6e71bebd2bb5",
+      "before": "src/test/support/python/repomap_test_support/mcp_server_requests.py",
+      "before_oid": "646719a5b9250ed0de3989b9fd4866f46300f5dc"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/metered_store_custody_fixtures.py",
+      "after_sha256": "1106963c3a6fe4349fc70cc4292c248cb72e4383f43245d034e9f04c3ec1f6d7",
+      "before": "src/test/support/python/repomap_test_support/metered_store_custody_fixtures.py",
+      "before_oid": "a65682618627735d6a59372b57a36167db5617b6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/namespace_projection_fixture.py",
+      "after_sha256": "7296bea8d104135c33d6ec43e4ea5b85c1ba7b14c5018d061e0c86e5b5d451ec",
+      "before": "src/test/support/python/repomap_test_support/namespace_projection_fixture.py",
+      "before_oid": "8d05a533da72721c892213ab6cae219b6a1b8bbb"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/navigation_pushdown_fixtures.py",
+      "after_sha256": "b1791f5e6da03e01412086221807d7e52e7b05d56120166c19f15b96d2d56820",
+      "before": "src/test/support/python/repomap_test_support/navigation_pushdown_fixtures.py",
+      "before_oid": "47f5318215f13c36a063a223812ed3a176584ef6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/navigation_search_fixtures.py",
+      "after_sha256": "7d4711dbf5080d2769470bd92751b91fa4a3d5a5fb3e69353636544fb91f96da",
+      "before": "src/test/support/python/repomap_test_support/navigation_search_fixtures.py",
+      "before_oid": "18ccac41ca9b4e00fb07f4459c0750c0fb5e8b37"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/nix_extractor.py",
+      "after_sha256": "88fc7575c519e949e7a87ced34d12b67446b2576e05c927a640b05404ef7450b",
+      "before": "src/test/support/python/repomap_test_support/nix_extractor.py",
+      "before_oid": "a7ae9093ce81c3e03c238120144bd6809bfeb558"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/node_location_fixtures.py",
+      "after_sha256": "b8110629c3ad1ea9a537d80c3baf4205e03c1e5b618cac8963c9e19bda3c9843",
+      "before": "src/test/support/python/repomap_test_support/node_location_fixtures.py",
+      "before_oid": "70db21d885fa69609f1c8031977a63738e4d9721"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_schedule.py",
+      "after_sha256": "c23c401d00ae9e089c73ca8af9060a8d61194804f198c463b9488ab4e9fe7e31",
+      "before": "src/test/support/python/repomap_test_support/observer_schedule.py",
+      "before_oid": "52f5b5a268727f220ab6b7748c69883426ac62e5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace.py",
+      "after_sha256": "cd98d0eee8e79cc5b2d4bb37f1f80f50bd946e246bd41da727fdc61239eba578",
+      "before": "src/test/support/python/repomap_test_support/observer_trace.py",
+      "before_oid": "3b2b32aefeef76c89bad073d085f8a744cfead42"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_boundary.py",
+      "after_sha256": "3eef34f4e5cb07ecf1a5494fefdc750448909c450f9082407c8e0f4c567fb5e8",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_boundary.py",
+      "before_oid": "0d63fc0a4000099192dda3aed5b5b261dafc8173"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_cleanup.py",
+      "after_sha256": "902c9fea600b06c1b152636a40127123c853de080ff3073d5ecccd5c1038feca",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_cleanup.py",
+      "before_oid": "2235cd144aef948c064a7243ce8d6e0f0d712152"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_context.py",
+      "after_sha256": "9da187132bff583d59afb9177836e1a993bf5003b3707ee293ea252aca2f368f",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_context.py",
+      "before_oid": "8fc8efb4e09a6ef93b1b94fa27814c748e1d9450"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_event_factory.py",
+      "after_sha256": "fbf17db91a7436594a155b1979fc0927fc61afd4ad3c4ba61c398ee4d571c7fa",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_event_factory.py",
+      "before_oid": "1d85428d8dbf5781b456911884ef384349aa0411"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_evidence.py",
+      "after_sha256": "d1cf86ac1261fdea748583bbce334daf72eba0336b461b4d47d03431315810da",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_evidence.py",
+      "before_oid": "3457e6d6db9c5cdd6d26a6bc1be5086f056345f6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_instrumentation.py",
+      "after_sha256": "8e713e97f60719fe4ff6cff12a81cbc3ae1a8f948a060c4e4b6f4702c32e2b1a",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_instrumentation.py",
+      "before_oid": "b505e144431b8610a84ba3ff830cd91806aca76b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_lifecycle.py",
+      "after_sha256": "15079084665d09102b643596484b2b5252fe38d298d252efeb779aabd910af1c",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_lifecycle.py",
+      "before_oid": "f0486cc6218670c46c4218364b3b094ac2e3cbc1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_models.py",
+      "after_sha256": "f24d223cd44b88f606afde647bd409221a2749ae8309d93fb1f0a06f13ff1e7a",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_models.py",
+      "before_oid": "6cee1685238a892404206e43acabfd60cd563bb6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_monitor.py",
+      "after_sha256": "62629512cacc56061942391ded07ce1b396de8af30121d321ca510a670e0dfa0",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_monitor.py",
+      "before_oid": "1c3eaab09ad41a48ee1b87486ad1837aa2b582fc"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_recorder.py",
+      "after_sha256": "6ff96e706cc907d2aa1e7f0238873505b854ee391fb2826c9eae425ec0ed1860",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_recorder.py",
+      "before_oid": "c5e0602b6f3df9d83bcdbeb6217c0124369ea520"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_validation.py",
+      "after_sha256": "56dafef19bef7af0701a0f533540cb32411fa3170b6c7821074c58cf1c6376b6",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_validation.py",
+      "before_oid": "90903db77556468cd2160c1e5da83f4c0aedb7f5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/observer_trace_vocabulary.py",
+      "after_sha256": "ac16f52854a7020a3a43ad776563e6b285cd46dcc30c17df5c595deda21531da",
+      "before": "src/test/support/python/repomap_test_support/observer_trace_vocabulary.py",
+      "before_oid": "fa5df25314861b1633da2bcff390501dd59b0296"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/ops_helper_branches.py",
+      "after_sha256": "c4f42b799bef518ce0c7f3d3916f198ca686a9b129fe0f7bffcaaabfcfb5c598",
+      "before": "src/test/support/python/repomap_test_support/ops_helper_branches.py",
+      "before_oid": "c07341c0ce82c26db43fd664713ee24a8ed5e376"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/ops_helper_branches_baselines.py",
+      "after_sha256": "f61054a2b8724360c7e24a1839807e4cbbc7eb311f8e19805d08df549557d1ae",
+      "before": "src/test/support/python/repomap_test_support/ops_helper_branches_baselines.py",
+      "before_oid": "f7f734cb4e4a14b5ac789ec0e0b3779f6cb206fc"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/ops_helper_branches_mcp_validators.py",
+      "after_sha256": "6b089952e39ae422644e2fa596ad70ed801cafe5870254be6f795f0255139f88",
+      "before": "src/test/support/python/repomap_test_support/ops_helper_branches_mcp_validators.py",
+      "before_oid": "9135f4a21be52376faf4de474674753a1640f357"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/ops_helper_branches_preflight_config_mcp.py",
+      "after_sha256": "621fefcaadae5a3db40a1a248710b6aaf5c244ccd36a678daec44dcb645ab6a2",
+      "before": "src/test/support/python/repomap_test_support/ops_helper_branches_preflight_config_mcp.py",
+      "before_oid": "daf978f5db6e19e740c04593ec716cd66f6d9bcb"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/ops_helper_branches_runtime_backup_mcp.py",
+      "after_sha256": "330e22f4f470de8f3a4254962136b6d9bb91de081645938659014cfd4dfe7dce",
+      "before": "src/test/support/python/repomap_test_support/ops_helper_branches_runtime_backup_mcp.py",
+      "before_oid": "1717a267cd59b23c5ed1a6f06581db992f918b0c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/ops_mcp_validation_cases.py",
+      "after_sha256": "8676897045ec89fd037acdeeeb6b8407551f7e0152fd1a53d0b2aa9165cb07a3",
+      "before": "src/test/support/python/repomap_test_support/ops_mcp_validation_cases.py",
+      "before_oid": "672040bef5d72464d983b2a304c1e27c525e9183"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/ops_refresh.py",
+      "after_sha256": "f62db388f5bda5742ad6f7c926f80c6470704b6d599299b705e65acd9c6e2a0b",
+      "before": "src/test/support/python/repomap_test_support/ops_refresh.py",
+      "before_oid": "e48cc137311bdd4a7ed54aea047f765dacdd3191"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/performance_baseline.py",
+      "after_sha256": "5953cb95e3a5883659de5825faace7d5361bd8b6a2cb841605f6a9c00b65c303",
+      "before": "src/test/support/python/repomap_test_support/performance_baseline.py",
+      "before_oid": "732abb1cd2124aa0a454d45fb8dd62d2ec8ace3e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/performance_baseline_values.py",
+      "after_sha256": "712fddbd7b86ed44a40f61addc310fd5b6ae9820567d7b6d6fa683b91ece78e8",
+      "before": "src/test/support/python/repomap_test_support/performance_baseline_values.py",
+      "before_oid": "1a51f4f0b8966b48d2f9ca2f626d8b3d0f24c670"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_budget_cases.py",
+      "after_sha256": "06bd2ec186532820d28a78d6a1d1a4489729ce657c8587bc7a223198ef121587",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_budget_cases.py",
+      "before_oid": "632ebceaebd15deb468e491faf1878021e6bc9a5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_discovery_cases.py",
+      "after_sha256": "60db22e621ac68c274faed4d79db4db06a74cb79a537d4b8bfabe88c84c251ea",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_discovery_cases.py",
+      "before_oid": "ee68bbe335e71a8feb253ada661e1d6b95e60487"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_export_cases.py",
+      "after_sha256": "e724035d53b2a77c55d6fcd4a3d801b6a32b73b9176644c6bf629b1e1470944c",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_export_cases.py",
+      "before_oid": "dd612679b7f5d7deca76a677ebd808c1b4d39b26"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_facade_cases.py",
+      "after_sha256": "20bf4874193d119f1403f85a1cc2b4bd0bac2f4af6a371a10b0ffd623233351e",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_facade_cases.py",
+      "before_oid": "b920320553da70c1fd82a7f56ca0fdb7a9b85a74"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_launch_cases.py",
+      "after_sha256": "aa01c725ba2e38f48c931906d98181e28053be57bf38ef713c746e40aa8f64ff",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_launch_cases.py",
+      "before_oid": "53aaf2f092b790c6fe1fe460af83c286b4f62550"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_native_seam_cases.py",
+      "after_sha256": "50c200533d67d74de4795423c7c8ef2387e8f91adc59436fe965eee8a4c29658",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_native_seam_cases.py",
+      "before_oid": "c7a4f39e3522bfd6264e4e4a4194b46837863a29"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_recovery_cases.py",
+      "after_sha256": "4563927fcacfd1b1b3e5545e60ff4766c1c8d48eaabf32a538e78d4374fd3a0c",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_recovery_cases.py",
+      "before_oid": "d388d6b3d297b3de828a3b49655fd59b4dc624e3"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_runner_cases.py",
+      "after_sha256": "11399e0df6e3c1d4f33c1c9e6932f1238d90c4de4b7f163e17b257c658fcab7f",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_runner_cases.py",
+      "before_oid": "d8df99f4364e4fea1ff50b62d29b68e13e63e00a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_sandbox_cases.py",
+      "after_sha256": "b27ddc569698001c453b7f7e8d5d63768814f8563c1c3b50ac09563d9711afd3",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_sandbox_cases.py",
+      "before_oid": "77f9aca0930cdc77fa8234c19b948c6b838f6a9f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_stream_cases.py",
+      "after_sha256": "62a1fc658d749ef59a1323ab79201871290271ce6d7729e58789866fea1df566",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_stream_cases.py",
+      "before_oid": "069160b526815ddb85604c78169faa24b185a66c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_prebuilt_test_fixtures.py",
+      "after_sha256": "1f147842ede94aa748e939d9aa80efa3c4d080ad9e93d42fff40523ccd56086a",
+      "before": "src/test/support/python/repomap_test_support/pgvector_prebuilt_test_fixtures.py",
+      "before_oid": "284f3bf3e54a9f22bc0aed03b7f1c1903b4cd404"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/pgvector_profile.py",
+      "after_sha256": "3ee111b0b10a8697c1969073ba4982fd98f401f47001e4e252d541fad477f700",
+      "before": "src/test/support/python/repomap_test_support/pgvector_profile.py",
+      "before_oid": "ec7f808f9bfe2ddada93eb6ee0d8bec2fd818a78"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/policy_helper_branches.py",
+      "after_sha256": "0126c2641e586766c3551124d4ccef88c80f86b2f2b59926baed492c46580859",
+      "before": "src/test/support/python/repomap_test_support/policy_helper_branches.py",
+      "before_oid": "772bb0a0e7ea818cdbb1362bc026d31b52a7949b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/policy_observations.py",
+      "after_sha256": "8ec782a89cd579318941dc86ece829e3b9f699068626a7fd4cd1af2aec35d212",
+      "before": "src/test/support/python/repomap_test_support/policy_observations.py",
+      "before_oid": "50ffc952baea44257c9479fe41d2b9dcb76a9583"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/portable_handoff_fixtures.py",
+      "after_sha256": "71dd3d88b17aa3e2f62ca334bdb62f7557ce2e06c7741b3d7193aa29a1e0376f",
+      "before": "src/test/support/python/repomap_test_support/portable_handoff_fixtures.py",
+      "before_oid": "d95bd7a3fbb3e431e6a711f0d2c18bb4de73f47d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/portable_publication_context.py",
+      "after_sha256": "ebd25cbca836c162e6d68b0cb019d1c8602d801c91d66371fedcad0bd8a80591",
+      "before": "src/test/support/python/repomap_test_support/portable_publication_context.py",
+      "before_oid": "1fa61cf149a4da1433caefd65fef0e828d8acf7b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/portable_publication_fixtures.py",
+      "after_sha256": "550a9aaf9ee129871a2b2fb7f231182ad08a4786c176b0e58c8a7cf51189911d",
+      "before": "src/test/support/python/repomap_test_support/portable_publication_fixtures.py",
+      "before_oid": "a764e3e7666975c73d804549afb936c8599e49f4"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/portable_spool_case.py",
+      "after_sha256": "fcde86b98686be0cf6727f0b53c0503b87d52e2e877029d0e634efa7112b1824",
+      "before": "src/test/support/python/repomap_test_support/portable_spool_case.py",
+      "before_oid": "6b1befad02a91d2249c2ffbc305e14d1faf51098"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/portable_worker_conformance.py",
+      "after_sha256": "b8e0b667cce54b21c0bd65084f99f806d66d979bf0e2150bdec22220c2498c5d",
+      "before": "src/test/support/python/repomap_test_support/portable_worker_conformance.py",
+      "before_oid": "e92aeb310cd57acb095e553d32d5ac71fe896d18"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/portable_worker_equivalence.py",
+      "after_sha256": "2509d574c73807ab37c1a76950d963fc9c1e663cfdf48b40d3efc1744d3bbb75",
+      "before": "src/test/support/python/repomap_test_support/portable_worker_equivalence.py",
+      "before_oid": "3239d8cb67e24fd7d6fa4943985f3a092c287e09"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/portable_worker_scenarios.py",
+      "after_sha256": "2e0d80e03b04310b52cdcabb3674bb8684d197cecfa3f2e12a46174f10ae0460",
+      "before": "src/test/support/python/repomap_test_support/portable_worker_scenarios.py",
+      "before_oid": "9a36a894644e5e52b5e460e6125d3fff3df19462"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/postgres_container.py",
+      "after_sha256": "b5d9908af2a921a22b2eb3dfc83ee7286facc07afee4eef9e1d15b7cea85e9cb",
+      "before": "src/test/support/python/repomap_test_support/postgres_container.py",
+      "before_oid": "e145b8905cf3c6210a21751b00845bddf2e8be5b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/postgres_container_config.py",
+      "after_sha256": "ab004fc02a8289fa5a0aaee915b4787801893c37133af203c05224ae867464e7",
+      "before": "src/test/support/python/repomap_test_support/postgres_container_config.py",
+      "before_oid": "c7941e405ee105877f5a5601243bf30e4651ccd2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/postgres_harness.py",
+      "after_sha256": "a88efbd3d36477ad132e34e87b6c7d995bd1e52cb17ac55b4e79ba723c0c94ee",
+      "before": "src/test/support/python/repomap_test_support/postgres_harness.py",
+      "before_oid": "ac09ed0dde21a3154f05671e86da4a857055707f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/postgres_harness_readiness.py",
+      "after_sha256": "a0889f4bd8fd4882f14f5e8babf37780a0422c715855b15ffd46e0bb44f96381",
+      "before": "src/test/support/python/repomap_test_support/postgres_harness_readiness.py",
+      "before_oid": "83ef2d14b0dff0cf3b18656ec4f98dacccb9dac2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/postgres_logical_backup.py",
+      "after_sha256": "b7a9826ded58e19661c14fc6dc719956abd7b4b5c2c74877376fa3e4df7421a2",
+      "before": "src/test/support/python/repomap_test_support/postgres_logical_backup.py",
+      "before_oid": "f7415aa6c47a1e68924d253b2cb971a18d2571f1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/postgres_protocol_faults.py",
+      "after_sha256": "7d92ced5f7ba503920d7fad6078ee733f70282d86084eb42c12191437d1be6ce",
+      "before": "src/test/support/python/repomap_test_support/postgres_protocol_faults.py",
+      "before_oid": "5e4d8548e43e02b349d77232a698e335461a0593"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/postgres_shared_memory.py",
+      "after_sha256": "e8d9f178bab7c411d2df2e3d2105034f5b76797ee17de00826da9f85103341e7",
+      "before": "src/test/support/python/repomap_test_support/postgres_shared_memory.py",
+      "before_oid": "369887588fd02b58b0d42078d22662923d93b97d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/powershell.py",
+      "after_sha256": "5cdf2bbf8c766344d95066ab758d91b993012f01b7538a38e300300b78e136c3",
+      "before": "src/test/support/python/repomap_test_support/powershell.py",
+      "before_oid": "6be611d530dce2144f2e32727796facccd115cdc"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/process_boundary.py",
+      "after_sha256": "52a6efb9dc515e1252eb29b6a9d0ad488badece25a0215ad0eabf7f05e8b925a",
+      "before": "src/test/support/python/repomap_test_support/process_boundary.py",
+      "before_oid": "1b949f8de0eef69a7ed131a0e1c41b91a29362c7"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/public_branch_contracts.py",
+      "after_sha256": "20bde7eeeb0d1413c3a5b7998523f9da445ab9393c779f9ff38e89e13e928bc6",
+      "before": "src/test/support/python/repomap_test_support/public_branch_contracts.py",
+      "before_oid": "71b4ff8f29e9b38256fb3aadd9006045c75befcf"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/publication_fixtures.py",
+      "after_sha256": "65f2717ada5874d47e0934ee83ee4a20cebaa77f8049eebb963b31e8b7529238",
+      "before": "src/test/support/python/repomap_test_support/publication_fixtures.py",
+      "before_oid": "c6ccda673cfe711dbd7e72ab2bcb67e6a0e2dd55"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/python_payload_probes.py",
+      "after_sha256": "de890ca063b4d03781fc5643ad19bdfc4875be10bda4af6ea220267e24e1b518",
+      "before": "src/test/support/python/repomap_test_support/python_payload_probes.py",
+      "before_oid": "c3c8880559c259318a4706d78b7f8ea0dfa255a3"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/related_context_fixtures.py",
+      "after_sha256": "90b1c31b0e4dab2f020d9642f95c89c894c0986bd825e90f589e4cd61de18d9f",
+      "before": "src/test/support/python/repomap_test_support/related_context_fixtures.py",
+      "before_oid": "1bb62125e74193ef982942f488fc7edd64d45fa3"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_admission.py",
+      "after_sha256": "9314c13d7aa26f0f12e04aa6251bec78f710d3ffdea6019b8fbcc794cbc731ed",
+      "before": "src/test/support/python/repomap_test_support/resource_admission.py",
+      "before_oid": "71996c4b6e7c5529db4abccf08a6ca02e01f154c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_atomic_rename.py",
+      "after_sha256": "443f0d6ec1d8fd62cbba96db4f134a7dee23d135e9055c30f68f18c7d7bf2aa6",
+      "before": "src/test/support/python/repomap_test_support/resource_atomic_rename.py",
+      "before_oid": "d3188900e926dfe8b41b7cd80ce1356c06528fef"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_buildx.py",
+      "after_sha256": "c4bf69d59ebe3373cd9a8d1f2369c7680bb15efdc8ef8257a769a0bef31cf7d7",
+      "before": "src/test/support/python/repomap_test_support/resource_buildx.py",
+      "before_oid": "e043d182a02b5034fa20d50063717b9827036431"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_candidates.py",
+      "after_sha256": "501790b8dba144b2ef0e7de3a5d6b46e0f529bb546212d7281d8e72c89836b93",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_candidates.py",
+      "before_oid": "89cbc73d7d583f6f4b375e220e9ba49446acaf08"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_gc.py",
+      "after_sha256": "1e2d8cbde50bf8442988bcbf81cd9d9cd7c3adee66d299aa4b4cb23201f7e45a",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_gc.py",
+      "before_oid": "a84f606a3cffc1fa451b3e326103bda13bd54de1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_gc_batch.py",
+      "after_sha256": "5f5258bd8bff458adbb446c6ab08c4d1dfd587aaa3c30b8a57484f65cb82aff5",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_gc_batch.py",
+      "before_oid": "b72a79f50b9e06d78858e9cbaed0b33e83f2ff6d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_gc_execution.py",
+      "after_sha256": "0119b785e824c3bf9b3b56ffa9d08ea9fbb1d1632c7ed5500fa59422186c5de8",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_gc_execution.py",
+      "before_oid": "0cbad0efa002af5081e0510f301ceee1c198afc2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_gc_revalidation.py",
+      "after_sha256": "25449ce8195655fbdb80622e0050abc0b6afb2fd25a697bdacaa3cff78d42c68",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_gc_revalidation.py",
+      "before_oid": "5f037491e452c30b0aa8716e2e3a948f4456ed01"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_gc_test_support.py",
+      "after_sha256": "8fcd0c135f771f41b20f414027c9670da938257eda8c291a540debc019935df5",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_gc_test_support.py",
+      "before_oid": "72947c6e7c8bbdf091de565a20d54faf63f64e9c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_gc_types.py",
+      "after_sha256": "f8ed0c0b3179b863547eb77a404ad9fbf06d9a224bdfe012b43c8374000b1400",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_gc_types.py",
+      "before_oid": "1d886eec7884de8d49d77ceb2a31a0d9cf789e9b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_record_authority.py",
+      "after_sha256": "c5d1264f39783523e7941f352b909d948e8022cfa3a9c92dc4bee1fda53e13af",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_record_authority.py",
+      "before_oid": "f38799cdf1f9f4db8a95831ea2b69f1586b79fa0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_record_io.py",
+      "after_sha256": "c58baa52783fa453d739cfc864421b67bb03b93b9e7faf48c1a8822f76d561f8",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_record_io.py",
+      "before_oid": "4871749f3fd2409b9d94e1d163261cfb6fef92f2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_record_persistence.py",
+      "after_sha256": "6a1984d673d5aa85bda53c3722c23db3794458588f631787f06a5b0b85afd9bb",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_record_persistence.py",
+      "before_oid": "aa892bc7cf16d245e6f56c5e2b84ba87be46164a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_record_store.py",
+      "after_sha256": "62f5421d2e362ec7a545ea7b8ea75ccac3834630e8a0f009bcd0ae8c596c3a75",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_record_store.py",
+      "before_oid": "045d1ae89f7815268efe7ab0635297ffae0afa07"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_record_types.py",
+      "after_sha256": "fb7df5af5bbde0cae6e0dbc64c21c05bed3ce78c807221faaf79a670cd61a48f",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_record_types.py",
+      "before_oid": "05c77a2b8a82d3d172facbbd9fb538d04e7dc77a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_record_validation.py",
+      "after_sha256": "649f38c5d4568dd6728a713aabfea835c1431710b511ae6bcfd6258c6fc8dc23",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_record_validation.py",
+      "before_oid": "f7b9319ed0fb60cf44b6b6d58c33d765b42eb8e0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_deletion_records.py",
+      "after_sha256": "b5ddef239470d4350c542c9ab84f2790ad40e41329da5a4d10327fd7cd382edf",
+      "before": "src/test/support/python/repomap_test_support/resource_deletion_records.py",
+      "before_oid": "0426096b51da2c73dcb6797e151ec0ed27d111f0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_docker.py",
+      "after_sha256": "a2f99a05e7ceeea5c36798a33f14c6d81510b2418c38f67b98a4ed9a09dbe891",
+      "before": "src/test/support/python/repomap_test_support/resource_docker.py",
+      "before_oid": "ff31e43ea9d627ce12d05ce65963a3d8f263610b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_docker_boundary.py",
+      "after_sha256": "7ef1fb6314aadd4a5fc1d6601709ff8b002d648b921e103b26fffa6db24a4643",
+      "before": "src/test/support/python/repomap_test_support/resource_docker_boundary.py",
+      "before_oid": "713555ce9049f9cb42aecd36f99a72f0412164ae"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_docker_boundary_ownership.py",
+      "after_sha256": "fe5fc9ca2f088674fab5bb3b144457e6ed509cf53b6b87f4ea0daeb0c0acb64d",
+      "before": "src/test/support/python/repomap_test_support/resource_docker_boundary_ownership.py",
+      "before_oid": "73b1d0c2aec15428717c0cf6139a88a419d95144"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_docker_boundary_records.py",
+      "after_sha256": "394a71b00227357d209607ee16000cc709c0f633fabd842e3fc475ad0c70a5e0",
+      "before": "src/test/support/python/repomap_test_support/resource_docker_boundary_records.py",
+      "before_oid": "79f934b168ea12e91d120c3ec182796b176d550e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_docker_current.py",
+      "after_sha256": "3a1e7cd92d91f9aa461127ab52695d27f18c739c21c76d454d0d2593fe40c2d3",
+      "before": "src/test/support/python/repomap_test_support/resource_docker_current.py",
+      "before_oid": "b30b9b7cf2174dc87d07e1ea271783674f720390"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_docker_engine.py",
+      "after_sha256": "bb44c92d965ced9dce509b9ca1f8afe9e69a4a85759aca6283d1b59111e0f909",
+      "before": "src/test/support/python/repomap_test_support/resource_docker_engine.py",
+      "before_oid": "e24f6828d47209c3ab046263612b7277f6a12e29"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_docker_mediation.py",
+      "after_sha256": "513f1d75a3e80957a29f3f2da7f4b674ccec6ca4be3d270f4b9fbeaf6143bcc7",
+      "before": "src/test/support/python/repomap_test_support/resource_docker_mediation.py",
+      "before_oid": "4d1f5e4e2edbda974575269a50da41eee9521c83"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_docker_mediation_isolation.py",
+      "after_sha256": "20941b469cc9e9205666de042900352665dea216c4ef6069cb7f3f2453cc721c",
+      "before": "src/test/support/python/repomap_test_support/resource_docker_mediation_isolation.py",
+      "before_oid": "a523974f048322010d5f3d4191e3c6bb1d38d918"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_docker_operation_records.py",
+      "after_sha256": "4dabf1a5ebdb1dcbe2bf8d3fcb929381b88accbc6d14bc94e779b81182871ae7",
+      "before": "src/test/support/python/repomap_test_support/resource_docker_operation_records.py",
+      "before_oid": "eb889b663e739f99ca0dc0f1f865121b193ae0ec"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_docker_operations.py",
+      "after_sha256": "c62f6435391d521c972d642ec08729ba0f75ee9b18b5edb426d883ea10aa9196",
+      "before": "src/test/support/python/repomap_test_support/resource_docker_operations.py",
+      "before_oid": "3e0cfb044d4dee03e1ec6e8f40be5bcc9734b77d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_gc_ledger.py",
+      "after_sha256": "d3f057b9b3924db9ddc393a8761c1649a931ae2438e9b7052d37b4d9a9c61024",
+      "before": "src/test/support/python/repomap_test_support/resource_gc_ledger.py",
+      "before_oid": "aea8fa00b7f0123c875d102f4cde5e8db958e62b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_hygiene_policy.py",
+      "after_sha256": "157a119ee96261a3f8703e24d1b0dc18d2f9f9387f44039dcc7cd0530a6cf65c",
+      "before": "src/test/support/python/repomap_test_support/resource_hygiene_policy.py",
+      "before_oid": "32ed677fb7c6c8ee2cdf4fa5fdbfb877fcda2c4c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index.py",
+      "after_sha256": "52ef99998906017096588051a69c417598784bd1f903292baa3f0c7736fe8dcb",
+      "before": "src/test/support/python/repomap_test_support/resource_index.py",
+      "before_oid": "4a499ecdbd04c769ba41bd1b8a399bb37332b497"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_bootstrap.py",
+      "after_sha256": "72f30822dba0790e3080d77b4af538196c2d1e71fdfc3899786e7b73f8efc4b7",
+      "before": "src/test/support/python/repomap_test_support/resource_index_bootstrap.py",
+      "before_oid": "2969c2e2a3db5531e1304e335c94612510ace14f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_layout.py",
+      "after_sha256": "0447eff851ec3ba49712439bfe6049863608d5ddd4e5af1bbee8e1cf5b15f4b7",
+      "before": "src/test/support/python/repomap_test_support/resource_index_layout.py",
+      "before_oid": "e2dad6c3a59f8296ee6d6c8009390417c79d16cb"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_maintenance.py",
+      "after_sha256": "68541a061dca0654c48463e22bb09a79cb3d9ec0ec56218b2490bdb92f055339",
+      "before": "src/test/support/python/repomap_test_support/resource_index_maintenance.py",
+      "before_oid": "734ccb0b4b588417adcd4f601827d24528b18748"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_mode_migration.py",
+      "after_sha256": "4073bebb3c61fbfafd16c1c5d531587e08b903954b26614dffc810197dbcc4e5",
+      "before": "src/test/support/python/repomap_test_support/resource_index_mode_migration.py",
+      "before_oid": "c040031d7f1307b60847b61d73ace6438fa5e751"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_operations.py",
+      "after_sha256": "59105184d04e22ced9df91d8fbdcf0fa3ac4fbb87bbfab43f69de077df25b9ea",
+      "before": "src/test/support/python/repomap_test_support/resource_index_operations.py",
+      "before_oid": "95b68cc4b12a0cab838de474705a047478eaf486"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_physical_membership.py",
+      "after_sha256": "6a6206d1335a94b590032aa4ac5c0bd3d51522d737a5a2aba6a918c797c12d59",
+      "before": "src/test/support/python/repomap_test_support/resource_index_physical_membership.py",
+      "before_oid": "59b3e5b2fc25754154307beec4242d021dabc01c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_reconciliation.py",
+      "after_sha256": "724e99504a3abff8e55e3beee7396dec67a84a7a4c0156413bfac27875f3b1fe",
+      "before": "src/test/support/python/repomap_test_support/resource_index_reconciliation.py",
+      "before_oid": "1b68a0d5e04ad316745981119ed4e200a801f5ac"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_records.py",
+      "after_sha256": "c72ff9acd3110b390b20bb5c10ce73ff6bfd0ef0dddac2f78658d58a74d5d65c",
+      "before": "src/test/support/python/repomap_test_support/resource_index_records.py",
+      "before_oid": "0d09dd1d0434eec1d2a381161452c6566f7b37d5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_recovery.py",
+      "after_sha256": "dfc49aec63d14fa23f2236fb2fd5762fd9a10339d1ea46eafe45d2566d0bb58a",
+      "before": "src/test/support/python/repomap_test_support/resource_index_recovery.py",
+      "before_oid": "982bbe706a687f40ef52be3556f059aaabb13a84"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_recovery_execution.py",
+      "after_sha256": "04e3f7b087eca307920b4910099219a16357e1433732a9c5c0327a609072a877",
+      "before": "src/test/support/python/repomap_test_support/resource_index_recovery_execution.py",
+      "before_oid": "2428db6852db80e76ffa04c896ff625c6993b1d9"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_index_recovery_records.py",
+      "after_sha256": "67fb37b0b2815a9d75f66942322268384e9ef0225277a1c9b43c98ffa19952fe",
+      "before": "src/test/support/python/repomap_test_support/resource_index_recovery_records.py",
+      "before_oid": "0664d7b705699c7ab0cbd2d2bfd91814c9b91af1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_interruption.py",
+      "after_sha256": "9b58890fab5cef54cb94f1894f9aaedac3ce15342c0ab9dcf6e9b86f89f9fc8a",
+      "before": "src/test/support/python/repomap_test_support/resource_interruption.py",
+      "before_oid": "a266a6ca64fcbc2da5cd5fc155e06009ee293f0d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_ledger.py",
+      "after_sha256": "6b2694586abd52e88633c4aa3b651cb083659db785097a3182d4d66a5a2461da",
+      "before": "src/test/support/python/repomap_test_support/resource_ledger.py",
+      "before_oid": "75950e0186f91aef58a7847a7adf2110a80e42d2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_ledger_codec.py",
+      "after_sha256": "e2976fef2a904c780cf46de48e2f49fa694265c4020eb4a01c9c6a7b1d48f5a4",
+      "before": "src/test/support/python/repomap_test_support/resource_ledger_codec.py",
+      "before_oid": "1c0750a34e90119818d256dbc8e38ab86f197757"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_ledger_io.py",
+      "after_sha256": "275fe1e5ba16583b50eac6d4d0db591c5d39e3ef9d4d811be0f9fcb741a9151e",
+      "before": "src/test/support/python/repomap_test_support/resource_ledger_io.py",
+      "before_oid": "5b849181323c69c05f7d950b35cf106b1b6f1366"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_ledger_records.py",
+      "after_sha256": "fc489af79e096f3bba0a2e407437b112499f613ab0bc51661033e83f5903eb08",
+      "before": "src/test/support/python/repomap_test_support/resource_ledger_records.py",
+      "before_oid": "71412badaf506ca672495f9c7a4168d74387fa30"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_lifecycle_claim.py",
+      "after_sha256": "f5021cec5991eb92ad9f2103329ae00f477c51a52346f5990d10051ffc697816",
+      "before": "src/test/support/python/repomap_test_support/resource_lifecycle_claim.py",
+      "before_oid": "286f1fc7f7e3b77ad44a246535a4277198a4364c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_lifecycle_claim_operations.py",
+      "after_sha256": "cf5bcf2d3812bcb627d42b37ab842a94ce2d7d9c1beed342ad60010794ae7816",
+      "before": "src/test/support/python/repomap_test_support/resource_lifecycle_claim_operations.py",
+      "before_oid": "723b64e58e188139c5d5d349299e7889cc7d69b4"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_local_runtime_test.py",
+      "after_sha256": "9830b3498ed4fc3369b81c2efa39463a6c50060702c908ba9e91761f9d4a928e",
+      "before": "src/test/support/python/repomap_test_support/resource_local_runtime_test.py",
+      "before_oid": "0cfbc2d2b2208f0e65aa90a9f859f66238ada782"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_maintenance_recovery.py",
+      "after_sha256": "e7f1fb979059009b33831582c75999f6d9f4441a7bcdda28724d9003337d28b6",
+      "before": "src/test/support/python/repomap_test_support/resource_maintenance_recovery.py",
+      "before_oid": "e3ac106b5fe9990c52cbf6b65a10c67295d72dea"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_operator_inventory.py",
+      "after_sha256": "2d55cddca9ed4f6995b4a4423d224de9fc1d4f0529b6ab073721db2235b80d34",
+      "before": "src/test/support/python/repomap_test_support/resource_operator_inventory.py",
+      "before_oid": "fd045bb5d6f38c557641037d7c3f1b194d2807e0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_operator_reclamation.py",
+      "after_sha256": "2dcade57bcf9759e008001700a0a99a30fc55eaccacc1fcbbfac3ba0aeaec6e4",
+      "before": "src/test/support/python/repomap_test_support/resource_operator_reclamation.py",
+      "before_oid": "a8785e7b078145242bc250d96a7f8900bedc52ff"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_operator_reclamation_evidence.py",
+      "after_sha256": "8c29074c793269653b5dd3bfc162a9e165cfeab203589ed10741bc4ed52a630a",
+      "before": "src/test/support/python/repomap_test_support/resource_operator_reclamation_evidence.py",
+      "before_oid": "dd08e6bdab84abb781672c2193bf796734a95bae"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_operator_reclamation_preflight.py",
+      "after_sha256": "0821d72517ba639e2ca46bf52d802e36e76d2c883011ee530e671cbc37d59f6d",
+      "before": "src/test/support/python/repomap_test_support/resource_operator_reclamation_preflight.py",
+      "before_oid": "7e2e5c267dce8717c3c2061da4d7fcd602785279"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_operator_reclamation_test_support.py",
+      "after_sha256": "17b91c63270b41be3d2eadb51473f48058b259fe663338dc9fabad36db8262ea",
+      "before": "src/test/support/python/repomap_test_support/resource_operator_reclamation_test_support.py",
+      "before_oid": "d5f9d1ea181e40acb04746d3576f0f13a3a9141b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_operator_reclamation_values.py",
+      "after_sha256": "4f42d6f5278ff755503f3d2fb4596a01209608dd146d711ae60a78c2e08f471e",
+      "before": "src/test/support/python/repomap_test_support/resource_operator_reclamation_values.py",
+      "before_oid": "a7af560506866adbb7cd4e6293300f5e505e15a5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_operator_records.py",
+      "after_sha256": "23856b7fc976e993808921a410966adb5141f6653fbed51d1bd9e640bfa44e15",
+      "before": "src/test/support/python/repomap_test_support/resource_operator_records.py",
+      "before_oid": "8c9e50ee3ff391210b1c66d658046602d8b8bfdf"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_operator_scope.py",
+      "after_sha256": "7ffb786c029131c437967082f533bd2208d6cbb24fc8bdbfff41bb4246d66b3a",
+      "before": "src/test/support/python/repomap_test_support/resource_operator_scope.py",
+      "before_oid": "3f7f0e170f49d3bd0f87dd4e42cc495498347367"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_projection.py",
+      "after_sha256": "9c164f30c760d5c4a11ec11eb969f1fa7d361b0ecc7d09a4b99bb64614cc9d0f",
+      "before": "src/test/support/python/repomap_test_support/resource_projection.py",
+      "before_oid": "449cc2b53ee1ade1389a22ae761fdf04674600e4"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_protection_authority.py",
+      "after_sha256": "835ee73be5a6b6da69006981a3d7ee3bbc00a73a9676cb12edf8a2722a74ce76",
+      "before": "src/test/support/python/repomap_test_support/resource_protection_authority.py",
+      "before_oid": "99ec2d917b22f313f139c5fab7b190df43e512d2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_quarantine_gc.py",
+      "after_sha256": "76d202f738f8eb45b13a73555665b931cd7f1ae708a7fbc0216203fc9d20db7e",
+      "before": "src/test/support/python/repomap_test_support/resource_quarantine_gc.py",
+      "before_oid": "3785b064950ebdfdd5409c3a3bed2bfa947d28ec"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_quarantine_records.py",
+      "after_sha256": "b80aee1ca2421f4b531569c7c2e0b9cc79d2d982f3fca035f11b7f63aa4acf3d",
+      "before": "src/test/support/python/repomap_test_support/resource_quarantine_records.py",
+      "before_oid": "0353de308a73a53a640152fdb9f0ad2f3513615e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_quarantine_records_recovery.py",
+      "after_sha256": "3d863c0d6e2c4109a4e1d21c83a37aa27bf3dcccf03f70fba909125ce36476fa",
+      "before": "src/test/support/python/repomap_test_support/resource_quarantine_records_recovery.py",
+      "before_oid": "1e9c98747f7afe525cbe71de207cc0434576ec29"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_quarantine_records_validation.py",
+      "after_sha256": "187f0605653d88fefa1e3084259f034a236c841c10e8952bb96ce2d5edbbbcf7",
+      "before": "src/test/support/python/repomap_test_support/resource_quarantine_records_validation.py",
+      "before_oid": "0a28fbfe3ea8ef6974eed2f68dec6b3edab60200"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_receipt_records.py",
+      "after_sha256": "c182596cd4da99f500557fe02b796c0acb9c34844130c70d5fc9c274fe4b23ab",
+      "before": "src/test/support/python/repomap_test_support/resource_receipt_records.py",
+      "before_oid": "63e1d98fb03033723a515b0ffa31d8934308373e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_receipts.py",
+      "after_sha256": "b6372339a8877744a9df5cea5cdc77f60bbc6d3227de39447e91d6975b9b3863",
+      "before": "src/test/support/python/repomap_test_support/resource_receipts.py",
+      "before_oid": "1540bda747b363b86e85805517cadb1a63e8ef83"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_report_cli_files.py",
+      "after_sha256": "f8c78c3318856e3187cf0a7238c44c5f17db9c21528cecd6e84b92b729f81dab",
+      "before": "src/test/support/python/repomap_test_support/resource_report_cli_files.py",
+      "before_oid": "2be79455e5e78d7f45a785fdc15dcde571e4a4b5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_report_packet.py",
+      "after_sha256": "13e24aa88217a985a28f1dc003ff380e3bdc45e30d61e834604c4db1eea2d9f0",
+      "before": "src/test/support/python/repomap_test_support/resource_report_packet.py",
+      "before_oid": "e034cd8b4b4abd425a972cb3b2f515e7b468b241"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_report_packet_file.py",
+      "after_sha256": "b7e215b4bfa20fe8a4f90357c5ee66607d3511a0baf7d919bc47aec160e99106",
+      "before": "src/test/support/python/repomap_test_support/resource_report_packet_file.py",
+      "before_oid": "31b33db8687df73d08a092de932dde02b5a3d71b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_retention.py",
+      "after_sha256": "48e984a2a16ea22f1d3b95b3b831fd09ec9501a9ecbc4ba1169197986217bf76",
+      "before": "src/test/support/python/repomap_test_support/resource_retention.py",
+      "before_oid": "10bb6cb8906f8a4fc62810e8f5ad3cf3b9c9652b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_run.py",
+      "after_sha256": "907a03b750118b0ed12185ecdc222f7cc611ff04dcb1545f7e3a297fde1e7104",
+      "before": "src/test/support/python/repomap_test_support/resource_run.py",
+      "before_oid": "c93de98383d8702e174856959c8c6ed9b9342d96"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_run_admission.py",
+      "after_sha256": "079b6f873e74171ff0a160679d055d3645997f99f9a078f0fa3298c0f18c4af9",
+      "before": "src/test/support/python/repomap_test_support/resource_run_admission.py",
+      "before_oid": "7f017beaceb36ca7b1427247d06df00a19783744"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_run_cleanup.py",
+      "after_sha256": "4ad1c5d7b2ed3e1e959fe577db291d95da52cd05db8e827f5604a8623682dcd0",
+      "before": "src/test/support/python/repomap_test_support/resource_run_cleanup.py",
+      "before_oid": "eb56456caaf208a8d88c1f9959f345f472359690"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_run_test_support.py",
+      "after_sha256": "fd9891268a49e800694cc0e4334f91de5745c9e53be8d5504dca7218e8ea26e3",
+      "before": "src/test/support/python/repomap_test_support/resource_run_test_support.py",
+      "before_oid": "97804aa83fb14e0a532295cca1a21ccf536f8b75"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_runner_profile.py",
+      "after_sha256": "def6e1b71da4212bc81f18ead87d70700ca8c370652251cef1bf6fb439805bdd",
+      "before": "src/test/support/python/repomap_test_support/resource_runner_profile.py",
+      "before_oid": "78327047a19fa19d40b75c428050a206210e1dd5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_runtime.py",
+      "after_sha256": "63dfabe0b4494d98baeb94f017289465bf3496fe142a844b87dc91515bb5fdd9",
+      "before": "src/test/support/python/repomap_test_support/resource_runtime.py",
+      "before_oid": "c7cf767dcaab7b9a2ff33a4c033d111e132c2c91"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_safe_tree_delete.py",
+      "after_sha256": "50ae23fc10003c684d078adc41313070acbc8e98e3da89bf7d0b5c04cc6f6ee4",
+      "before": "src/test/support/python/repomap_test_support/resource_safe_tree_delete.py",
+      "before_oid": "2da761e13f79a6f1b2f6a28e907047bea983b4be"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_safe_tree_delete_inspection.py",
+      "after_sha256": "ade7eefcff9ee19749d2f926909ebc361d53b73bc0723ec05744e2e631617611",
+      "before": "src/test/support/python/repomap_test_support/resource_safe_tree_delete_inspection.py",
+      "before_oid": "11858b28e03bf62054f4f54702b2a062b32559aa"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_safe_tree_delete_operations.py",
+      "after_sha256": "51459b097245afc3d9bf863b988b33c047773002d7350ff33b8c6d372499d132",
+      "before": "src/test/support/python/repomap_test_support/resource_safe_tree_delete_operations.py",
+      "before_oid": "3a162c2a31a309fe60605c70f53f28bd76d4874a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_safe_tree_delete_support.py",
+      "after_sha256": "806060973f7dad4778b54a608f5e56c83ebdf3884fca5fd4b239095a2ffe0132",
+      "before": "src/test/support/python/repomap_test_support/resource_safe_tree_delete_support.py",
+      "before_oid": "4e36b549633d892861f844a64bec890be8cb8506"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_safe_tree_failure.py",
+      "after_sha256": "765a968cbe8ffbaeb6861b86aeafec8d7d414cb1c5e2ec21df63f4e5aeec5dbf",
+      "before": "src/test/support/python/repomap_test_support/resource_safe_tree_failure.py",
+      "before_oid": "dcc38bbe11cb7d047b50be05de0d3817d0f514ad"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_safe_tree_pin.py",
+      "after_sha256": "e478b4ae5a2c49be556e27669b9e0a802aa32444826c409c307efe1948536a75",
+      "before": "src/test/support/python/repomap_test_support/resource_safe_tree_pin.py",
+      "before_oid": "0d0a8da80f71d3690a480115beb5fedd5c1f4edd"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_scratch.py",
+      "after_sha256": "778cc7b439cc3e27ab58a0a875d306645509bb217273ac6aa988c05d2b620e0e",
+      "before": "src/test/support/python/repomap_test_support/resource_scratch.py",
+      "before_oid": "aca5f766336a97ad09da388a79ba792f3a6316ea"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_scratch_history.py",
+      "after_sha256": "1ab95bf39199c1a12b0c8c473ee7819a4b17659f1d5a94143c288361b1682608",
+      "before": "src/test/support/python/repomap_test_support/resource_scratch_history.py",
+      "before_oid": "3864d0ad42c9a3a3ca5c97891a84fd7e5e53f65c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_scratch_history_gc.py",
+      "after_sha256": "f4d9e17a1b2fbdf6a47ad9a11c70decb25f41357aa913380be030a8e92e7b7eb",
+      "before": "src/test/support/python/repomap_test_support/resource_scratch_history_gc.py",
+      "before_oid": "fd087df72892b136d32e7b6ec3176247e88d641c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_base.py",
+      "after_sha256": "f3e8292362dd9697a2fcc0c84c49035fbda5a4ffe97c524469e688728d2541f2",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_base.py",
+      "before_oid": "4979609fa85b48bb126474cb123894d50f9f429d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_build_context.py",
+      "after_sha256": "b5b6b035c16f87beebb4975ef1dfc7dd020e5d685b146e1df211fd5490d72c48",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_build_context.py",
+      "before_oid": "2eee1cf766e8843e879be2299b063148ab05cbee"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_build_steps.py",
+      "after_sha256": "43215245a1808a5d917633dd792c0efbc53b0e160130de02cbd9ccc9532c1b25",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_build_steps.py",
+      "before_oid": "9e9e27080a1e2a597f64e2932aa70608aeb78b6c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_cache.py",
+      "after_sha256": "746cbac59c93a49a4ddb302071db304713f369986162e5d96cfa8bc7ef09b7b1",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_cache.py",
+      "before_oid": "1ab5d763d9182b08ce37e92704ce49657a1f9f62"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_cleanup.py",
+      "after_sha256": "44b2c0e2670b6b53c58010c18cc59437ddf807765169966286df0a4e2ef58016",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_cleanup.py",
+      "before_oid": "880bbcff923496285fd8a620bb5cc20c0e684404"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_commands.py",
+      "after_sha256": "3d4cf1cf7f988625e0aa2249b0f64c970eaaf452be8430e5d875de7300913cf7",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_commands.py",
+      "before_oid": "156dd5af37e7b8545538262251432a87c0544006"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_identity.py",
+      "after_sha256": "b74610243d2b39ce5d042dcdecbda8e3d26041ccd4a625e92669e50e52b3f3ce",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_identity.py",
+      "before_oid": "37b40a32382392e17f8aafdf1f33ccf1db3eff3c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_materialization.py",
+      "after_sha256": "d097502a07aca33d352fa4faad3a297a6bde3824e90d8c0b56abb46efd75c884",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_materialization.py",
+      "before_oid": "37788c302b6cfd4d6530c88aecacb19eb4be4d5a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_materialization_claim.py",
+      "after_sha256": "994a9c6787c42d8e72ab4ac00d572497a691bb9cbb69df4b58318d1fc8e82e2d",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_materialization_claim.py",
+      "before_oid": "7c5f42cf01e2741e176c229fa03acff8f1f1fedd"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_record_types.py",
+      "after_sha256": "294245b2d43d0318798ec8d7a508e62200a6ef5dfae2f0abe64a5dcbba887c23",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_record_types.py",
+      "before_oid": "59f4eab6007c03acd57d61ab4e299e8a70930982"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_records.py",
+      "after_sha256": "4e82ebcdb93a5683647fff65d368a7cb47937b15f4474270ee6ae87465ab0f59",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_records.py",
+      "before_oid": "9ade7eaf3eb7679bb83362bec2b01e1cc7250276"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_image_types.py",
+      "after_sha256": "071fc262292f2f3d91fbb17c15116219d135bb455f71c1913cf9515a838fce37",
+      "before": "src/test/support/python/repomap_test_support/resource_test_image_types.py",
+      "before_oid": "9db4a0ca0626397148c4b47fff651638f8557a4b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_test_images.py",
+      "after_sha256": "39d65d9f02ca85d109700c6c8371c42255541a7ebc433085bb3ab71cd2070f0d",
+      "before": "src/test/support/python/repomap_test_support/resource_test_images.py",
+      "before_oid": "27ead32537855f4d3c19a7fda5583346c6a50cd3"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/resource_validation.py",
+      "after_sha256": "ca3d7826eb86bee54c6a85aa54d02a17f198a765e3f4606a50b80ea6e2172e1e",
+      "before": "src/test/support/python/repomap_test_support/resource_validation.py",
+      "before_oid": "ae48e58748fa047eb8ea9313c6be95d806be8a5c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retained_projection_fixture.py",
+      "after_sha256": "516d1222998d2d93e73ea24e13856d8f40ef7a747a39899e64eef9a8642fe7da",
+      "before": "src/test/support/python/repomap_test_support/retained_projection_fixture.py",
+      "before_oid": "92abf407b4c9cb5ac385e76c1ee032a4057daa47"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retained_ratchet_fixture.py",
+      "after_sha256": "0160e00a493566fc88b1c5f895c794c01342d9a64ff00af2ae7d3a3f7cf438fd",
+      "before": "src/test/support/python/repomap_test_support/retained_ratchet_fixture.py",
+      "before_oid": "5bf03476940ad467a25e854665f8e7b991b80892"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retention_evidence_fixture.py",
+      "after_sha256": "529beebcf2262efc1151d9f13141fe527fae692fba3703d5a9a7d80b78245968",
+      "before": "src/test/support/python/repomap_test_support/retention_evidence_fixture.py",
+      "before_oid": "0ed59b54bc4b0516919edf5962d0ed9993f0f8fc"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retention_pipeline_fixture.py",
+      "after_sha256": "acbfca0620cb816532b673363a6280b0c3460fd8ffe2144dab4c7c1539e97448",
+      "before": "src/test/support/python/repomap_test_support/retention_pipeline_fixture.py",
+      "before_oid": "bfdad9911fde8a2644e8e4d86c1ef58c2ad2178f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_admission_fixtures.py",
+      "after_sha256": "4c89cbfa744268595e1e463b6fade39e38adb1eb35743658cb2981053676ad12",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_admission_fixtures.py",
+      "before_oid": "8dc88362782c6315defa459265bef7cb7984017e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_fixtures.py",
+      "after_sha256": "b306b7e3a06700b4f55aff92896ef56078c4c482765f603ebbfbfe0dfe530d4e",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_fixtures.py",
+      "before_oid": "68da828048a0f9f9a172b7210df4be945e3e8b73"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_pin_fixtures.py",
+      "after_sha256": "a11441a138732f26130b70b7fee99269390e3dd77e95b7edf90fea948f4ebf5c",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_pin_fixtures.py",
+      "before_oid": "ca35002328275d4a5c92d616f41193efe981ae4b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_publication_fixture.py",
+      "after_sha256": "753f84936678b9301ef195238039890393e6717b52fe966ea548cf349f52c8fb",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_publication_fixture.py",
+      "before_oid": "e424fe8c12ce8165aeb9c3320d6ac7240f359a54"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_source.py",
+      "after_sha256": "5fd9bc741a94978d1df953638e1cc3880078a4bf072f0de31ac3ed4aa29dc3a2",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_source.py",
+      "before_oid": "b416e4adb8ec73ae74c972c31ca9a1c303d656c5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study.py",
+      "after_sha256": "9ab7805b13bbb5b3f0507d06ec3f0e2c7121552f735fd65b9182fb1d96300867",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study.py",
+      "before_oid": "e820a3f2ed036c253c0d4cf58dba6b668265998f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_driver.py",
+      "after_sha256": "faf6be8c324b0d84da74cf7adbbbf178efc2f520e797575b938524853a3de97e",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_driver.py",
+      "before_oid": "840a3bc5de4c0b7848aff71e66f356586abb31ec"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_fixtures.py",
+      "after_sha256": "ef02d62850d1638eba723a9371f9e14fd73da6cd1b4323a0bc2eb4c807d9eb20",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_fixtures.py",
+      "before_oid": "5236001ea4a01f2789ea902d712c8c8f29fc979f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_host_cases.py",
+      "after_sha256": "a96a41a001304fb0fc8a8cf7da65b8502faaa9a124b31074ac805bd147582447",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_host_cases.py",
+      "before_oid": "77f061372f5db4007cad00c2972d3700118fde4d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_pg.py",
+      "after_sha256": "b1032294d07fd30cd6042b1e94f770c67f91762a80ab0ecfaf0b0dbaa2f8f5cd",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_pg.py",
+      "before_oid": "89b12ef678f4234ea102199070a6318dbe24177c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_pg_lifecycle.py",
+      "after_sha256": "918beb13326022923a97e60d98c651a8c6afedc8f0dc3dee716800c65c360932",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_pg_lifecycle.py",
+      "before_oid": "776743c2fc50cb48efb918c4af24cc676cf20fb0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_pg_publication.py",
+      "after_sha256": "4ea0d959b5be65e6c676c2c8565185f207eaa4d4b2f78d350313afbaabcf4931",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_pg_publication.py",
+      "before_oid": "15d072c56bfbd182e38c7749b3703af721d732a9"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_requests.py",
+      "after_sha256": "dd1774d39e79e6894e73bd68fd5b7f7caf0512533405e5b7f5525fdb5bd39054",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_requests.py",
+      "before_oid": "9249523e856a66674b92003700dc2733a8a7589b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_runner_cases.py",
+      "after_sha256": "c125c439f3d5bdee77383ca5e8ff9ec9aa835aa5ddd02f439fad78454d7e828f",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_runner_cases.py",
+      "before_oid": "a60802fda7bad3c94db70dcd55374a44b1c1e8fe"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_runtime_fixtures.py",
+      "after_sha256": "b8e7b0fc8b8e1382972c3f8f65378d89a9bfe44be7b27d3ae19047d061a22e38",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_runtime_fixtures.py",
+      "before_oid": "3edf0980857a5d21b77dd31be4043bb021e65f98"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_setup.py",
+      "after_sha256": "10c0897b967e461680cdb78370243abdb93b93ddc870e00d1fbeb97b2f5ba80f",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_setup.py",
+      "before_oid": "14665370ff1364d077f89296110e097ed36f3313"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_slots.py",
+      "after_sha256": "402f039ccde392252f6a0e99e1ae8c0bfb34395ad9bd52e8c3dae3b86f1cb31a",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_slots.py",
+      "before_oid": "c1be0f330d7d8e93a68c7cbd47df4c1b922594e7"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_body_study_snapshot_driver.py",
+      "after_sha256": "9901be27ca485f3a794a2936f208131c5b4f4fb177d3abc78492eda01786cbf8",
+      "before": "src/test/support/python/repomap_test_support/retrieval_body_study_snapshot_driver.py",
+      "before_oid": "273d087cc09c6d04a8458453a6bdc097652f1d0a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_evaluation_canaries.py",
+      "after_sha256": "4f71ec412c9d568449a98387e7bd524361911c2c4f81df3d01670367d3337c71",
+      "before": "src/test/support/python/repomap_test_support/retrieval_evaluation_canaries.py",
+      "before_oid": "379822e213244a2053e2c21819805513dbcd23a7"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_evaluation_fixture.py",
+      "after_sha256": "3ac9dc1902a3657c75719780288da75e02a54aff55553648a6d93e573c9376db",
+      "before": "src/test/support/python/repomap_test_support/retrieval_evaluation_fixture.py",
+      "before_oid": "811543ee33371b8b6a21113a8d1d20deb71a0318"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_evaluation_publication.py",
+      "after_sha256": "7d3f6ae07e6a6da8e782867e8000a37b3864fe7fe7ac4734a8ce4230861af494",
+      "before": "src/test/support/python/repomap_test_support/retrieval_evaluation_publication.py",
+      "before_oid": "ebc89fe8b2619613e3483a1dab5aaf7290f1ba32"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_evaluation_publication_readback.py",
+      "after_sha256": "301d3663f3ee50b63ef8b4b783b531f937cf437bb892252b16c0c381318f6670",
+      "before": "src/test/support/python/repomap_test_support/retrieval_evaluation_publication_readback.py",
+      "before_oid": "460b56e65889645ae32191b1a116dcca441b911d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_evaluation_query_fixture.py",
+      "after_sha256": "044b89d518978a7dcdd7e9ca5bcbe5e5131196ebefae814acb5e7e1cfd1a0b72",
+      "before": "src/test/support/python/repomap_test_support/retrieval_evaluation_query_fixture.py",
+      "before_oid": "df98c08ebccd4d4e1b6aa2b8fba0b56b4f94526b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_analysis_cost_fixtures.py",
+      "after_sha256": "ddcab3171527a946047b7d67270fd29929396cc082a43e9eb659b3245f88dcd6",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_analysis_cost_fixtures.py",
+      "before_oid": "07a2c02c99a027ec8e2131f2b36aeee9d2e1e426"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_analysis_fixtures.py",
+      "after_sha256": "9274a324e5a2e8e3890a2202c16e78f2b7711aabc2582206db28fa577c20e820",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_analysis_fixtures.py",
+      "before_oid": "79ce3f293728d3559a11822629670e9f43face02"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_fixtures.py",
+      "after_sha256": "6c702d52132f64ef7eaceafc209dbcceab775c77f5793ae2b0969bb7440f990b",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_fixtures.py",
+      "before_oid": "38399925831bfa9a65e6cc8608ab41f417509f23"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_prepare.py",
+      "after_sha256": "ba1a6ec2e635e77a2a990fc53ebd22db535569565702fe7528854a4e87620a81",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_prepare.py",
+      "before_oid": "8af4e568476604c818c0b27928e1c4ae119016d8"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_publication_fixture.py",
+      "after_sha256": "e1db262048512c2dc83ddeb6d269e2614b3f686287fbe6e79fc24c317f75c82d",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_publication_fixture.py",
+      "before_oid": "ed4b5c67addcb47c1b60191cbb89c7e746b184e7"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_report_fixture.py",
+      "after_sha256": "db7bf9201d8d341dd55a6921d852edaeb374f419f45f43345dd6f138f209a0d4",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_report_fixture.py",
+      "before_oid": "1840d6ef4b07508aa7d7a7004f9c5dfc23859c56"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_runtime_fixture.py",
+      "after_sha256": "feab5fafc983bb7ddae6b7b6c9a427626a9b74aef20797ea710c1cfce37dc011",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_runtime_fixture.py",
+      "before_oid": "0eed5c75246bf0273fb2ca31f963487a44175f4d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_source.py",
+      "after_sha256": "7ddb244208f03378ef70653320d1fcd29a1f8aed6e1b51bd8e30537f3845d1cb",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_source.py",
+      "before_oid": "9937f4efd415abcc89c768efa0e0fcc7f84ed9c8"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study.py",
+      "after_sha256": "edf43946d9c856b6828e0789617658826cd6335adbb487a07bf472ff2c2972e7",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_study.py",
+      "before_oid": "7f0a58868c6b9f7d6f4f7df9d08f5e6f0f213523"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_driver.py",
+      "after_sha256": "e9791ed8de061fa4931e067f0b117ccbbceec91ea0ccdf658a17c6258ec40411",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_study_driver.py",
+      "before_oid": "dfdcce67b14f1916606bf119234a37aaabbe097f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_fixtures.py",
+      "after_sha256": "ac558c2e31f95754afa9eaafb999255e99a4922f9d5e9866585d115431a2e2e4",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_study_fixtures.py",
+      "before_oid": "7a3c454e50125651da9759830a8f7460fa2779db"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_pg.py",
+      "after_sha256": "d61918b4f738d8d93aa14bb5648bef044b276bc997fd41c12dbde00999d2ad07",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_study_pg.py",
+      "before_oid": "b1a9f7bbf8a792ac96cb6b97e601b76573f48d7d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_pg_lifecycle.py",
+      "after_sha256": "9c9510f7fcadeac7ac4bfb914f91cb110242f9da89a57ff9c0597b1b31e9d68d",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_study_pg_lifecycle.py",
+      "before_oid": "35513beeee24b9741a9379c9f9ac8cd3e177daf3"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_setup.py",
+      "after_sha256": "608a9c57af9e664d6b45f89f87a5edc53622094e7b42245816c235c6ccdd7dac",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_study_setup.py",
+      "before_oid": "04a486325203fe353185933c5b6d9675f123fdad"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_supplement_study_slots.py",
+      "after_sha256": "63536e3387b038e3a5c6f55908ba76cb593f0b56cda31ffc8f4658224f2828b2",
+      "before": "src/test/support/python/repomap_test_support/retrieval_supplement_study_slots.py",
+      "before_oid": "1c5902788a65195443701cfb02daafc59d673200"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/retrieval_w5_matched_fixture.py",
+      "after_sha256": "f37121be90483391f67a888ea9e9a81d95be7a0ae73fb6f1f1ac387bf60b8457",
+      "before": "src/test/support/python/repomap_test_support/retrieval_w5_matched_fixture.py",
+      "before_oid": "adc555edbe05f3d954fff0d77be9f11a853f7bce"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/run25_acquisition_fixtures.py",
+      "after_sha256": "863a2a4372116e0bb43d27d5a80aa53ae8d51b9034ab938762faab8dbb7d1724",
+      "before": "src/test/support/python/repomap_test_support/run25_acquisition_fixtures.py",
+      "before_oid": "db9e109a0b78a8e06c50de219c8cbcec7be93bc6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/run25_durable_families.py",
+      "after_sha256": "acd6b8edb6b8c8275672eb5e8e7da054ba501b8853971b877fd0828580fe6ee8",
+      "before": "src/test/support/python/repomap_test_support/run25_durable_families.py",
+      "before_oid": "80c71ab5ff738cabe8ba5acea642d2358c92fbe2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/run25_portable_workflows.py",
+      "after_sha256": "b1e3ebf6426fe3e66bacf0f38670a01e441fb5ac12f5f84c9a4ee38bb329d92e",
+      "before": "src/test/support/python/repomap_test_support/run25_portable_workflows.py",
+      "before_oid": "cb73895903d386df4343bd1b310ea54518da476e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/run25_wave2_corpus.py",
+      "after_sha256": "8a3e48adb703ff6366f62ce81ca445a5adb1b1f6bc5a867e7d9b1500b3d7d3f4",
+      "before": "src/test/support/python/repomap_test_support/run25_wave2_corpus.py",
+      "before_oid": "a853795bd823b099822d41ae817b9f24c23a710a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/runner_recovery_probe.py",
+      "after_sha256": "d819f84767a2401de69be2573c893c9c2a32d1f2707c687f87ec34351d82bf85",
+      "before": "src/test/support/python/repomap_test_support/runner_recovery_probe.py",
+      "before_oid": "40a8a6a332028e6262f480c0ba13bb47c9436571"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/rust_pilot_fake_docker.py",
+      "after_sha256": "607c694bb77c20c79ee73043e91b24319f75942e4cf61124e433cde40628f93a",
+      "before": "src/test/support/python/repomap_test_support/rust_pilot_fake_docker.py",
+      "before_oid": "d65502776476bc0c1dec8e49d0679396115b7bca"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/rust_pilot_fake_tree_sitter/__init__.py",
+      "after_sha256": "d92df1c8609cc4adf0e464a8cbf64f37892018d29bfee032a98e9b5074ae41df",
+      "before": "src/test/support/python/repomap_test_support/rust_pilot_fake_tree_sitter/__init__.py",
+      "before_oid": "fb8e5c2f61f57fbea87c328db798b38f0db4d98a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/rust_pilot_fake_tree_sitter/tree_sitter/__init__.py",
+      "after_sha256": "4b3afb909e8f3dc9780e3d5d6853ad07f588c04b6bfff4e92eca5749ee86b32e",
+      "before": "src/test/support/python/repomap_test_support/rust_pilot_fake_tree_sitter/tree_sitter/__init__.py",
+      "before_oid": "534cb213e870d71e376d434e4f94cbd8dca41aa4"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/rust_pilot_fake_tree_sitter/tree_sitter/_grammar.py",
+      "after_sha256": "0932ca53b47b0c422bceaef53663af80b44eee126ba9847d75c8ec6502522de8",
+      "before": "src/test/support/python/repomap_test_support/rust_pilot_fake_tree_sitter/tree_sitter/_grammar.py",
+      "before_oid": "2797045180ba79a901f6b7dec708e6968670b8ca"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/rust_pilot_fake_tree_sitter/tree_sitter/_lexer.py",
+      "after_sha256": "ef5d503d46ed63546076978afb72da15ce292c5f5ad6e5fc2a3fd606f1202162",
+      "before": "src/test/support/python/repomap_test_support/rust_pilot_fake_tree_sitter/tree_sitter/_lexer.py",
+      "before_oid": "2e019195587d4be42a3b12d1b3d2b62a4ac6b972"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/rust_pilot_fake_tree_sitter/tree_sitter_rust/__init__.py",
+      "after_sha256": "fe5523963a5a642545823669d910531242186325b8d71f23426df9b1ea01bf35",
+      "before": "src/test/support/python/repomap_test_support/rust_pilot_fake_tree_sitter/tree_sitter_rust/__init__.py",
+      "before_oid": "9301f23cb7ae692aa8637a07d576916a1aac3dc3"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/rust_pilot_fake_tree_sitter/wheels.py",
+      "after_sha256": "cf6fb486157b384bb51ab332f6740991dc2a7402e97d5f9260608b6288f48aac",
+      "before": "src/test/support/python/repomap_test_support/rust_pilot_fake_tree_sitter/wheels.py",
+      "before_oid": "495e2d53d161ad1d5c65327fbcc905f76170c3fa"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/rust_pilot_inline_guest.py",
+      "after_sha256": "33b0c42000a43e94f4b71901d6cfb2ef921f3fad560c36b61a95d7d3b26c68df",
+      "before": "src/test/support/python/repomap_test_support/rust_pilot_inline_guest.py",
+      "before_oid": "c89213c835e00e81d576769bb8058b295f5cdfce"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/rust_pilot_qualification_report.py",
+      "after_sha256": "334abb328b7cf7efc037b59a3096673f670380e442b5b3f7c72e24a7859fb1d5",
+      "before": "src/test/support/python/repomap_test_support/rust_pilot_qualification_report.py",
+      "before_oid": "0577b0d5b608e332989c1b3ee1ab3b0a82bf663e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/rust_pilot_semantic_fixtures.py",
+      "after_sha256": "9bcf6bb42f13e9adab70fbaa25b44dd639717fe48c1894179299da447a98eca5",
+      "before": "src/test/support/python/repomap_test_support/rust_pilot_semantic_fixtures.py",
+      "before_oid": "21fa1669dfb7c836b1c43918147bcc30a94b4484"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale12_supervision_policy.py",
+      "after_sha256": "794d1afae7a4234a51b69012b8c85f696814bec337e3f09744806f897cd6a1af",
+      "before": "src/test/support/python/repomap_test_support/scale12_supervision_policy.py",
+      "before_oid": "72ec8a2b1da0927d674c04893c7d3e5d56e2b5ce"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale14_actual_refresh_child.py",
+      "after_sha256": "3c087ed814c10abd81e7f4b84c7efab6293e709cced935e7fec213cc1ae67914",
+      "before": "src/test/support/python/repomap_test_support/scale14_actual_refresh_child.py",
+      "before_oid": "863dfb0e5811ed7a7fe54f2f64ed3525eee20e22"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale14_event_control.py",
+      "after_sha256": "4cf709162d71ba907589c963d1ae3f409d1d8eaff222d7a628f8518fc951df81",
+      "before": "src/test/support/python/repomap_test_support/scale14_event_control.py",
+      "before_oid": "a66a5d84db5cc2a3c4cbf70073e53734705b757d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale15_runtime_campaign.py",
+      "after_sha256": "486f9183dd2e52273f12983cb010eea9ec78086acc44cabef1bedee4c058a264",
+      "before": "src/test/support/python/repomap_test_support/scale15_runtime_campaign.py",
+      "before_oid": "da0ec863705b3ecc3821f6b7e81bed3c8738bdc4"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale15_runtime_environment.py",
+      "after_sha256": "155f31f243373e3680e107d6220c82fbc80a911338f4a75f26a0d59238acc396",
+      "before": "src/test/support/python/repomap_test_support/scale15_runtime_environment.py",
+      "before_oid": "a41a8da75319660479a29c82bb7f1fde595f3658"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale15_runtime_injection.py",
+      "after_sha256": "8d53112c5db1bbe8910999fa5955acdb9fb4eaa51ea4330cb30a6f973ff3faa2",
+      "before": "src/test/support/python/repomap_test_support/scale15_runtime_injection.py",
+      "before_oid": "8f371e90df86a77991285fdb251059b113512fcd"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale15_runtime_supervision.py",
+      "after_sha256": "c1c08082455deac9203f4472ef444115fa2b603b2d1f61def7a01b58ceea64df",
+      "before": "src/test/support/python/repomap_test_support/scale15_runtime_supervision.py",
+      "before_oid": "a39569512e3e0697fa6903e0393a588dcfb69b73"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale18_digest_campaign.py",
+      "after_sha256": "f5f913003a2c5fd692c77207b5611e5aca460c8455e42609c672a81d7cfb1a0d",
+      "before": "src/test/support/python/repomap_test_support/scale18_digest_campaign.py",
+      "before_oid": "3a2c6b62c40cdf73e712195cae03c889a6d64858"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale18_digest_fixtures.py",
+      "after_sha256": "c50833520e49ba698b2eb105ed32438f9b20c8022ae3b3e216492f111dcd807b",
+      "before": "src/test/support/python/repomap_test_support/scale18_digest_fixtures.py",
+      "before_oid": "3a2ce0edf10153c401e3d87233eff46222dbcc4e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr1_decision_model.py",
+      "after_sha256": "3b2285879acca6ed992609b3cbe6084d23e9e79e77b71c50b37756638d74ce59",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr1_decision_model.py",
+      "before_oid": "4715f0f5dde41be3e43c5dd63381a847b66798ca"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_accepted_evidence.py",
+      "after_sha256": "90f70e3c9401463b69d4b2c89413d6da7ce798c17572d86b03d3950d5749c3c7",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_accepted_evidence.py",
+      "before_oid": "ea7ebcc07e902c883c8c37936ce890fb09810d2b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_bounded_ipc.py",
+      "after_sha256": "cf2a93bc9bbdb28e07ea81276954a42a921f19cd76b4a0a5b5e191a88f41209a",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_bounded_ipc.py",
+      "before_oid": "296d4d12a91cee7de3d7cb07c1a8586c98d79509"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_campaign_results.py",
+      "after_sha256": "65f8db9b408d4e54fd20da257a8d4018ca23701592292a391f69dd4138dd9848",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_campaign_results.py",
+      "before_oid": "336c3e7a411b3a9bd2b9324e9b6fd3dda93786de"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_decision_model.py",
+      "after_sha256": "560d1faa7594c0b372e1055d74fe59c52afedc4091b7e30b015fa9cfac7c8854",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_decision_model.py",
+      "before_oid": "2e84ab00bd6c8c4c566280b30d458ee363f8aac4"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_frame_model.py",
+      "after_sha256": "40f0d1316e0efc14d1a44f083e1589e5113436bb1c1569ec43e55379faa755c0",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_frame_model.py",
+      "before_oid": "d68d63a52009f62db4f05d74c8706565075d9aaa"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_freshness_model.py",
+      "after_sha256": "2d7b796b00132d3977014a603a6b002b85e46362944c46ab28f7f4a2afac178a",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_freshness_model.py",
+      "before_oid": "659f8ac8d4090569c3fddb399026c9909421762f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_immutable_values.py",
+      "after_sha256": "8570b9ac3a35c7f88420473f9ff9279eea8d986522998e45f9109027d805b698",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_immutable_values.py",
+      "before_oid": "cb153dc2217b233b68108e5414136f7a9082250c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_model_fixtures.py",
+      "after_sha256": "2661921843e3a8cb9aaf319071c1e31006b358356992b7a6e7e3f639d7d5087b",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_model_fixtures.py",
+      "before_oid": "5d56c40c6522b97dd3b59da677934a9b5316b555"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_receipt_model.py",
+      "after_sha256": "dcab0cd2f8cde93e9a5e47a741ba2843cf68604da8a3362f96bc349efb1d2995",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_receipt_model.py",
+      "before_oid": "307634d4cfa6d4390e764851a1b4c330c3312901"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_scenarios.py",
+      "after_sha256": "541eafddd37947317e5e9f168c84111948e6d4f6fcc9345beaa6f1ede302c496",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_scenarios.py",
+      "before_oid": "b8fe5dd8ac5d82260cd16a18c5604aa14994645d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_adr2_successor_contracts.py",
+      "after_sha256": "4a56a25dae29228f5ac602df7c8976bfa1740cb8569421776d710f83ee8c46b4",
+      "before": "src/test/support/python/repomap_test_support/scale28_adr2_successor_contracts.py",
+      "before_oid": "cf14182760724ae9088f08fbea94af6c1c0ff9b8"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_fix10_candidate_receipt.py",
+      "after_sha256": "4caeeee73f5dbbeecd6f8677f9759a697b09f3282f658114dfff9fe1fa88ff1f",
+      "before": "src/test/support/python/repomap_test_support/scale28_fix10_candidate_receipt.py",
+      "before_oid": "fc59f56d51aac5677c179bd3c9e7fd106bfbbbb0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_fix10_preparation_trace.py",
+      "after_sha256": "c157e701cb46dcf68fe630c23857e99a095b3e8192cf862baed5db7ea644a6df",
+      "before": "src/test/support/python/repomap_test_support/scale28_fix10_preparation_trace.py",
+      "before_oid": "b11827e90b4b3f1a0bd9836d932d764fe731f867"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_fix11_characterization.py",
+      "after_sha256": "a615f46decd92c40e1c13a169c744251386b09afb2e203f45e6fc21626ec535f",
+      "before": "src/test/support/python/repomap_test_support/scale28_fix11_characterization.py",
+      "before_oid": "cfaae03824a9077c20d008cfe0a84c0fde226bc1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_fix11_patch_provenance.py",
+      "after_sha256": "5b17b7a14fa9bf6b8c7433e1af581bf4ae4b2c56f2d1b309342fba71a8265cc4",
+      "before": "src/test/support/python/repomap_test_support/scale28_fix11_patch_provenance.py",
+      "before_oid": "130444d17c631790453a5ba6285392b9ca3050d5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_fix11_preparation_trace.py",
+      "after_sha256": "29bc6ea5b08a5ceb06b0361d0286594ebc04a54c9401cd61779c411c0a076777",
+      "before": "src/test/support/python/repomap_test_support/scale28_fix11_preparation_trace.py",
+      "before_oid": "0b3ffc624484bc591f01546aeae33e022d4865b6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_fix11_trace_values.py",
+      "after_sha256": "02864c4e38ecf085476094cc88bd4dd05f67594befc606543dbba5cc4a68372a",
+      "before": "src/test/support/python/repomap_test_support/scale28_fix11_trace_values.py",
+      "before_oid": "dc57285c69ae5cf57e8d88e3950b5a16768a8d23"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_fix9_failure_inventory.py",
+      "after_sha256": "b11bbfc110422ccb6bfceae774f2667e2b3689b49743c66a15b9a1f1c01b8dcc",
+      "before": "src/test/support/python/repomap_test_support/scale28_fix9_failure_inventory.py",
+      "before_oid": "a5f2c5d6c19869b53baa718da699aad349b0652a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_preparation_worker_fixtures.py",
+      "after_sha256": "dbea506eed39a47fe9d30becb6305ac014b1307a81b1a9235a97e06989053dfd",
+      "before": "src/test/support/python/repomap_test_support/scale28_preparation_worker_fixtures.py",
+      "before_oid": "e17b68a780c5d9154518f18d7af4fdcd3e95e96c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/scale28_settlement_helpers.py",
+      "after_sha256": "d66c416c54aa96e98004c9377b8e998aa665e2333364980cd401230f40bc7c84",
+      "before": "src/test/support/python/repomap_test_support/scale28_settlement_helpers.py",
+      "before_oid": "2209a092b9fae3d3f79b697b685f9f53b002ca74"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/schema_history.py",
+      "after_sha256": "1fdb14aeec8c5fc67dce6522441d87dfbef059668f4587f4fedee60c1e6587f2",
+      "before": "src/test/support/python/repomap_test_support/schema_history.py",
+      "before_oid": "b05841627a339355eb633551e182d99a41e70c1b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sealing_governance_fixtures.py",
+      "after_sha256": "72f60194595be76ebcf4e59976fb7d9428152fd8a0431a004f6d6663aee7462b",
+      "before": "src/test/support/python/repomap_test_support/sealing_governance_fixtures.py",
+      "before_oid": "657d8fd37f89899fff475fca7c8dfb3ef073d6c1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/semantic_candidate_cleanup.py",
+      "after_sha256": "3a4f6eccdced3f49c89b4499fab4365e9687cf544f12931be497620a83444ea9",
+      "before": "src/test/support/python/repomap_test_support/semantic_candidate_cleanup.py",
+      "before_oid": "3149b45f09b129f42f024749f72ca15aaff51634"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/semantic_candidate_fixtures.py",
+      "after_sha256": "d7fdc30f23e48901c714a3206a04ab73876b8012acb797581333d5f0b1b026df",
+      "before": "src/test/support/python/repomap_test_support/semantic_candidate_fixtures.py",
+      "before_oid": "eabd842034da3026abacec88ad2f94e78b60c225"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/semantic_candidate_publication.py",
+      "after_sha256": "8b0e323b688d395175c8a7ae6b6f43c51cfa595ecd10576cfea440b815bc5a79",
+      "before": "src/test/support/python/repomap_test_support/semantic_candidate_publication.py",
+      "before_oid": "272cf0bdc66e1e5f08fb9953c7c1f595d6249eaa"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/semantic_candidate_restore.py",
+      "after_sha256": "afa407ba7cbdca3350e1c67c8f1f4d9c476447ed92d33f8080be3cc4f1cf3b65",
+      "before": "src/test/support/python/repomap_test_support/semantic_candidate_restore.py",
+      "before_oid": "f84d65d82accb08213fe08f27ba235310fa882ad"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/semantic_seed_publication.py",
+      "after_sha256": "e8396c725a6186742f218103a349f63fb0819bc28e67f1f6d2d124099cba49f9",
+      "before": "src/test/support/python/repomap_test_support/semantic_seed_publication.py",
+      "before_oid": "b8de51d66f9c321b1cd00577582a91455bdb87d0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/server_retained_recovery_fixture.py",
+      "after_sha256": "9c7f55dedb480ce7a46d7532f32f7d1b09583ba6d3cf69cd4ecf667537c6ecd4",
+      "before": "src/test/support/python/repomap_test_support/server_retained_recovery_fixture.py",
+      "before_oid": "390a9662b198fdd2a5fec1cd6264124f2d0b6243"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/service_publication_families.py",
+      "after_sha256": "2ae48af8b38fcf063d567a3b48acede5457ad50547b51da3bce72c8258caabe8",
+      "before": "src/test/support/python/repomap_test_support/service_publication_families.py",
+      "before_oid": "a4eac4c0eaf6219fc88b7bd7d3720b084b2f2eab"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/source_ingestion.py",
+      "after_sha256": "881730e6b81e56684e3c573e83e814ee24b14856b6fbe422ca538ef90154ddfc",
+      "before": "src/test/support/python/repomap_test_support/source_ingestion.py",
+      "before_oid": "0d4deb5475a0239e0e1c54cce979c80383ec5249"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/source_ingestion_integration.py",
+      "after_sha256": "b073004ef515d677db4bc1b5bd6dc85eb73fc030141bad5f9b853ea365c2b98f",
+      "before": "src/test/support/python/repomap_test_support/source_ingestion_integration.py",
+      "before_oid": "ff7fa73c06edfad9de4d919f5450650af6edc71f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/source_ingestion_records.py",
+      "after_sha256": "424646409b71456b171128da940d5e553d5b1a7818b310569fd091b482555b99",
+      "before": "src/test/support/python/repomap_test_support/source_ingestion_records.py",
+      "before_oid": "fde0f37f51f03471195bf85a64400d73c33c5ca9"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_abrupt_ownership.py",
+      "after_sha256": "6abc45ad587121417b3b7272b49b1d6512152f235dfced6c272ff28f345c814e",
+      "before": "src/test/support/python/repomap_test_support/sqlite_abrupt_ownership.py",
+      "before_oid": "d051134a22fff9145a195b3460e34dbfcc3fc350"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_abrupt_reflection.py",
+      "after_sha256": "e4ff52f468e089eb68ec198616e18da21a777e343844b1bcf42cee40c9cfd5a7",
+      "before": "src/test/support/python/repomap_test_support/sqlite_abrupt_reflection.py",
+      "before_oid": "6a2617160ecfbf6fcf68db517c5bb5eda4388968"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_abrupt_symbols.py",
+      "after_sha256": "96627e63ac927045f1727c5a8c33f6562404b6d11c1e41e3f77bceec13e5bfb4",
+      "before": "src/test/support/python/repomap_test_support/sqlite_abrupt_symbols.py",
+      "before_oid": "c2315d1f13a23c831b6023a61b6ad0df0607c6e2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_local_feed_corpus.py",
+      "after_sha256": "7b51d70632c7db90514cf0546b616ec4d45907000dcafd1c22d4eadbb26cbc47",
+      "before": "src/test/support/python/repomap_test_support/sqlite_local_feed_corpus.py",
+      "before_oid": "a5a66fc199d025b71b0659c7a40df2c8f82c2de7"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_local_fixtures.py",
+      "after_sha256": "4bfaa6c8ebdf2162e467089a83600b3327cb94ad2b7ccc4a350805f806b19ff8",
+      "before": "src/test/support/python/repomap_test_support/sqlite_local_fixtures.py",
+      "before_oid": "7528ad18595e9f88c31e99a11fbb7e35bd5b4b45"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_local_guard.py",
+      "after_sha256": "fc5d10ed4b2dbdd61684ae6361b4dbc78f3ceb9eb5d9bb0185e2c83ee1a3ecfe",
+      "before": "src/test/support/python/repomap_test_support/sqlite_local_guard.py",
+      "before_oid": "68cae59dad9da9b8ec1c06ce47fe472a485d127f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_local_harness.py",
+      "after_sha256": "762966dcdfb34fc51518203f6e2a76d223ca5f2ed42c00430f5ee0f7990cda79",
+      "before": "src/test/support/python/repomap_test_support/sqlite_local_harness.py",
+      "before_oid": "1e0ee1c8a542578b0f475d5eb79c1ef54c190985"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_local_lock_children.py",
+      "after_sha256": "30a555c91b1c2aab290d909dbe6d45bacc2756a5a254988f64ecabf535949fa7",
+      "before": "src/test/support/python/repomap_test_support/sqlite_local_lock_children.py",
+      "before_oid": "7329d545b10ceaa11c1d037944df6a5ce5544fd8"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_local_read_corpus.py",
+      "after_sha256": "dc12514e621279391abf34a88ed7a551810ceda90ca96d1408dc1ac75cbfa103",
+      "before": "src/test/support/python/repomap_test_support/sqlite_local_read_corpus.py",
+      "before_oid": "ef5454c76194e9bae4d11fd13a129a55bebca935"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_managed_child.py",
+      "after_sha256": "47328db5e8b0a97631984c1b6d2578519e43b324afc90f40215d75381d7c575a",
+      "before": "src/test/support/python/repomap_test_support/sqlite_managed_child.py",
+      "before_oid": "edd6585524f4c7399456ec7089baf50c1cc56e2d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/sqlite_mcp_transport.py",
+      "after_sha256": "e6d120b4f056d7d5c37619385df1184a3a39e059146e066aedf1e5661e08728d",
+      "before": "src/test/support/python/repomap_test_support/sqlite_mcp_transport.py",
+      "before_oid": "87dcadbce7324c9338bf6067bc742ed4cbee3fcc"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/staging_abrupt_launch.py",
+      "after_sha256": "13a518c12d8a628871e6742fc0a40e31f7d46071f76bef839fc4e33a56cc8ce2",
+      "before": "src/test/support/python/repomap_test_support/staging_abrupt_launch.py",
+      "before_oid": "2b641b19bfb62eefbb2eb97e230c878ccaf3bcc6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/staging_transport_test_harness.py",
+      "after_sha256": "63bc50c9a181f23924bf5294082e5333ff4dec0b74ad4f69ea3738df44742642",
+      "before": "src/test/support/python/repomap_test_support/staging_transport_test_harness.py",
+      "before_oid": "8b4ef44dff2a85983684b95a18f4251b7ab15bee"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/startup_recovery_scenarios.py",
+      "after_sha256": "a1e29e1cc44dff8fdfc0c9bc3eb743df20eb65d138565cd78e992a7783ab714f",
+      "before": "src/test/support/python/repomap_test_support/startup_recovery_scenarios.py",
+      "before_oid": "1d334a37b901578e631d98f8193d490cac465611"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/storage_integration.py",
+      "after_sha256": "1e1119362fb2ff192c23a31619bee7f0ef246e01a17ec8ab619bc00f1bc72786",
+      "before": "src/test/support/python/repomap_test_support/storage_integration.py",
+      "before_oid": "566e97a02236e4834315765de918c08e1f3be92e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/storage_publication.py",
+      "after_sha256": "2627b2471a197609872e3b86df94210354af4dcac0986d03c7bd5b71f99ed13f",
+      "before": "src/test/support/python/repomap_test_support/storage_publication.py",
+      "before_oid": "235a9aeb06c7f2f1ed2f0166e6729258c818645b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/storage_rows_contract_examples.py",
+      "after_sha256": "62b0ae92b09f5b584c11f9e8f83b76060c4d401e091acda5e97040e1ae73b879",
+      "before": "src/test/support/python/repomap_test_support/storage_rows_contract_examples.py",
+      "before_oid": "aecb65e3c508d157dd1d27bdb24c2d4e2d3624bd"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/storage_rows_contracts.py",
+      "after_sha256": "d7d9dd9940e3bfa1811ffd2eebe739a400e4ed8b1b6da4ea7b72f84b6df0d3ec",
+      "before": "src/test/support/python/repomap_test_support/storage_rows_contracts.py",
+      "before_oid": "651d723609115feb1248070b4a69fab4104f1925"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/synthetic_async_worker.py",
+      "after_sha256": "aeda685604f79b0500ec05433b9311b15350fd2abf6ca982b31dacff8a1a87e3",
+      "before": "src/test/support/python/repomap_test_support/synthetic_async_worker.py",
+      "before_oid": "27b8b6cea765bdc3592dbde466b6a127f453d06d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/synthetic_worker_adapter.py",
+      "after_sha256": "6ee7a68c316afe6c915d2b2f60a9ab2c6f36339a10d0b1f294f3e4c7b1a9386a",
+      "before": "src/test/support/python/repomap_test_support/synthetic_worker_adapter.py",
+      "before_oid": "4658b3e10cd83d412f07a3fd1f1de55713a0fb44"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/synthetic_worker_contracts.py",
+      "after_sha256": "57fcd86004c15971e22fc851d8056b2b6b86ef4d4b0af266e7031361ba847832",
+      "before": "src/test/support/python/repomap_test_support/synthetic_worker_contracts.py",
+      "before_oid": "b7ac16cd5d42e593863d937c1a1c4211d967cb65"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5a_startup_model.py",
+      "after_sha256": "8b4caa56d73484a1cd1a38018b9484b2bf9a353f364ff15bb69b72d23b687a09",
+      "before": "src/test/support/python/repomap_test_support/test_cov5a_startup_model.py",
+      "before_oid": "e1ed9390f93a01da8db0c663328c0a67f13b2dbf"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5b_decision_model.py",
+      "after_sha256": "781280cc6fea71f5acdc04282e9fa5597e474fb4f091ec5796ef01963585b15c",
+      "before": "src/test/support/python/repomap_test_support/test_cov5b_decision_model.py",
+      "before_oid": "4a62059deaa8a2e03c079ed1a22b214589a9dffe"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5c_qualification.py",
+      "after_sha256": "9e4c5954aacbd35153001e686b4c409c09bf0979ad3cf5687dbb3b6e6cf58ae2",
+      "before": "src/test/support/python/repomap_test_support/test_cov5c_qualification.py",
+      "before_oid": "6e2467fb0a67501791d9d83525a66f0ed7789f97"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5d_qualification.py",
+      "after_sha256": "88dd148681e3746d51d1e0da223b16196865058598e6127cab7369270c06e94e",
+      "before": "src/test/support/python/repomap_test_support/test_cov5d_qualification.py",
+      "before_oid": "3673bfb28d0c82f1cd9c6b818bc12f0918758ad0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5e_characterization.py",
+      "after_sha256": "29d6174f96938df18e2f58df9077df63f1e1795914ea7da276aca2aca59b49d4",
+      "before": "src/test/support/python/repomap_test_support/test_cov5e_characterization.py",
+      "before_oid": "bb84c9e4100f87a28fcbfc61065d2b1e08ebcc8e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5f_characterization.py",
+      "after_sha256": "b09f29c7321bacaf49efc7bba6282a9831e12f62793037c92017e51818f0cc60",
+      "before": "src/test/support/python/repomap_test_support/test_cov5f_characterization.py",
+      "before_oid": "354fbe8b31db82ec9d752e2e0116e004884f1ee0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5g_fix1_projection.py",
+      "after_sha256": "b6eb1031d47b133e48cd3ec4313c1f165e53bd01ae60d5e490129e5b5de3a87c",
+      "before": "src/test/support/python/repomap_test_support/test_cov5g_fix1_projection.py",
+      "before_oid": "3093bbe26f9821fab7265812e80efc297a2605e5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5g_r1_characterization.py",
+      "after_sha256": "7773378a869fccb8c41f0de978e7c1d5eacb921e1c353879cbf66d9e17ee210b",
+      "before": "src/test/support/python/repomap_test_support/test_cov5g_r1_characterization.py",
+      "before_oid": "3685dbff9dab60edf9edc01b6574eab41156bcbc"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5g_r1_containment.py",
+      "after_sha256": "e8203ab1ec85aa71bf17ab9b3feb3d36763b6cb4d607dfbc760a78c5876ec436",
+      "before": "src/test/support/python/repomap_test_support/test_cov5g_r1_containment.py",
+      "before_oid": "59cb5b577d94ece75a89c772ad79c7a4401d1a30"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5g_r1_load.py",
+      "after_sha256": "5204476fbc81ac1a3ef0fbe41aff27e2d213eb878da83f9bc0f8c49da0c9be12",
+      "before": "src/test/support/python/repomap_test_support/test_cov5g_r1_load.py",
+      "before_oid": "e45fe61f24c366e2ac1fbdcee29a2111b0c4ec18"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5g_r1_measurement.py",
+      "after_sha256": "e68f28d03c6e8b9ceb2df02513b794b7fc12b539101e0a3f2ff7a7748c8380ef",
+      "before": "src/test/support/python/repomap_test_support/test_cov5g_r1_measurement.py",
+      "before_oid": "98e28228b43e90f7c8c270a1a5505597e3e6d182"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5g_r1_process.py",
+      "after_sha256": "4106f9c63f5519ab99cc7d1fb3ce76a088f0eadbaa51685498faba7cdbcb59a9",
+      "before": "src/test/support/python/repomap_test_support/test_cov5g_r1_process.py",
+      "before_oid": "58ed6c42a3215ea10382e65784b74e8e476f36b6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5h_characterization.py",
+      "after_sha256": "5bf301f0cd3486f045ff1411def1ba84c5b14b5a58642ccb86e3aa92ef29aa4b",
+      "before": "src/test/support/python/repomap_test_support/test_cov5h_characterization.py",
+      "before_oid": "bb79a0b1170e482781bd0436e1f51bdb3e9a1f4a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5i_characterization.py",
+      "after_sha256": "63fcfe558ea02ad62a939614aaf5117351e789eb5b731e09f3142f07200a6186",
+      "before": "src/test/support/python/repomap_test_support/test_cov5i_characterization.py",
+      "before_oid": "ae23aa9d5e3f26d1e5039ecf6ac57d65361ea403"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5j_characterization.py",
+      "after_sha256": "d548b802df67a4a7de5ca64e246eb3f7d12d6deea0b731612a5f5e610932740e",
+      "before": "src/test/support/python/repomap_test_support/test_cov5j_characterization.py",
+      "before_oid": "8a532bf54d423530479f04cd4f2240336be541ca"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_contracts.py",
+      "after_sha256": "73a47c37ea23a39be54f818d94ec49c2df5c51bf87a55b741589daa0280a7e1f",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_contracts.py",
+      "before_oid": "d7b41085f54c46e4f1359b5b76b45b73039c4c90"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_catalog.py",
+      "after_sha256": "10ae6e404d32b8924b9f4cfab05ef64cf5b69a7e87787be0f4dbac1a44e3afb4",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_catalog.py",
+      "before_oid": "d8f9ab77b235df79b6aac558720bf45404be7201"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_catalog_administrative.py",
+      "after_sha256": "61cea5bec0044edc24a9a530da99750eceeb84ac45d3c8f3894004bcad6ed2b4",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_catalog_administrative.py",
+      "before_oid": "06e9775519621325770f34092682753a962f9926"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_catalog_runtime.py",
+      "after_sha256": "c359824a0353e592f8ad5c13d4a207055ca56effafa5facdbfa46253e5088855",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_catalog_runtime.py",
+      "before_oid": "0510817d97dd979c4b7221b1a3df53e86f69cf45"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_catalog_storage.py",
+      "after_sha256": "2a3537d29c7a9f30438c799f91c90c65c39d3d8822defb1bfeadad4aded886ff",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_catalog_storage.py",
+      "before_oid": "e12bcfdb0480df7c63da0ba2f7093aa725da706d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_catalog_values.py",
+      "after_sha256": "407ab98d8c018792283b82a79a8a9e57948f0a95c68fd0182939bf6665f03341",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_catalog_values.py",
+      "before_oid": "bb7e085926e542ed7ab42dbd95f5b993861f0483"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_executor_administrative.py",
+      "after_sha256": "44acae2d31868a75398103d7ecb14616969fb829bc3978db908eb2e80afeb5aa",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_executor_administrative.py",
+      "before_oid": "6d5179b0355480c49dd3af9c97a8888d935b432c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_executor_preparation.py",
+      "after_sha256": "33a8ef4d1921bfffb9782d9452842f2f7466e46fad17e0a2f0ec1f47656ff731",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_executor_preparation.py",
+      "before_oid": "0a951fdf67b26142c647559af2e10dedad65f592"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_executor_runtime.py",
+      "after_sha256": "54930d604a401efde48fec2d22430d271339bba10e64a967c787b34b10bd673d",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_executor_runtime.py",
+      "before_oid": "ca2d922498680ed33ab12bef163bec5637fcaa94"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_executors.py",
+      "after_sha256": "3474380764cbe5ff9c383ef6713339ea3e56d851e825263784d2da27370a6078",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_executors.py",
+      "before_oid": "2b50b5645f52a114bea77a36b8ce94647c86a6ca"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_qualification.py",
+      "after_sha256": "e15dbf0308bf5265253d9fc92a4643781401caaf853760244d65272992c212f8",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_qualification.py",
+      "before_oid": "a7a8d6b5c9f0044855a6da72c76645a152c1cbd6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_qualification_groups.py",
+      "after_sha256": "1270960c0d99666584c84daca16ce48b1638e210fd221047d6a1a3f9aa041795",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_qualification_groups.py",
+      "before_oid": "22deecec8d0084b74a5dd5df524ff432d2129c95"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_qualification_records.py",
+      "after_sha256": "b845da091e8f4a5697165a4c5792e8162872f657079673c81f487609b0a99b0e",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_qualification_records.py",
+      "before_oid": "1546a575a779c24705ef14c34014b087659d4e5a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix1_rehearsal.py",
+      "after_sha256": "d911f93b0170aadb56efafcc15f7a8428d1f312730e7d881c357ca1ec3425330",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix1_rehearsal.py",
+      "before_oid": "7fab46f12bf58da8704bd63b2a5a2431630a5a9a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_administrative.py",
+      "after_sha256": "454c3187531e738783078e6bfe9494260b75c6b378d0fcb7641ce5b1e5104354",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_administrative.py",
+      "before_oid": "be5caf8290113a59d83f1f2dbb65f0654d13afff"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_catalog.py",
+      "after_sha256": "4d82cecbbc9e2e34b8a912b52d0792e7364110859e392756a566cc79750af369",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_catalog.py",
+      "before_oid": "2f784b8e5346f7a6381f1b9f980b14f14c03cfb1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_dynamic_targets.py",
+      "after_sha256": "45925dd00bcc6cb6c3323b117001fdfaa47f3a39dd6872b39091886a8838e16d",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_dynamic_targets.py",
+      "before_oid": "d2b3d2e0b16701c5b7dffb6c105985f27e721d5a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_encoding.py",
+      "after_sha256": "bcb96f13a49147f29024d4320f749dee4f393dc93a5b7447941ce248eca9777d",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_encoding.py",
+      "before_oid": "c6857776b5d1235e61fd0d137fabbc4a7b3e4f1e"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_evidence.py",
+      "after_sha256": "9f75747d3780aa1fc25f831c3db6e6e6442c09527b74c7de5281230b47d9aee4",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_evidence.py",
+      "before_oid": "fc332429801aa49510f9da72c20d8681d1ebb7e7"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_gate_executor.py",
+      "after_sha256": "6f4ffa7db270575033a3570eb607f4c130c708972971333129c9c5c5534b9b7a",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_gate_executor.py",
+      "before_oid": "46d4f7d03470c7ba6a0fe1973dff78ae2d82d628"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_observer.py",
+      "after_sha256": "71a9b977b2975b6e2074b282f8383c0115b9bcc7464b140858a3b4f3071023b7",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_observer.py",
+      "before_oid": "8d20e16c1421d73d7de5c12c29ee50e6454e27f7"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_preparation.py",
+      "after_sha256": "ef113ce0e950e7ad555b77417bd4c9baba7f8468be823b4580e0877384c84c13",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_preparation.py",
+      "before_oid": "6f9a1e876ac64e6e7fbaa6ca062885668e515513"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_preparation_conditions.py",
+      "after_sha256": "5ed9015e5889075b5e4850efe48bc36fa7cf26ea6b7da5cc572b82b2ff6db570",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_preparation_conditions.py",
+      "before_oid": "2f5a441be1fdf138b1563b35aac7927a09d4d4d2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_preparation_execution.py",
+      "after_sha256": "5ba247c46fedc8a91c13c736465b88ea491917a33890bf4a886bbe760751e638",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_preparation_execution.py",
+      "before_oid": "1a54c19b91c225f418feb23a9ed56ab56d263aeb"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_preparation_observations.py",
+      "after_sha256": "4f32ad76d5780d61794ac1e35edf71df3538822fe3234f8dcb749e07c3b570a8",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_preparation_observations.py",
+      "before_oid": "e335e9385ea242490a214f9edb4e88998505b5e1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_process_recorder.py",
+      "after_sha256": "aa5d4ec5497eac49577643d26a548660a61105fd3686264bc3a649c0e80e217e",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_process_recorder.py",
+      "before_oid": "a876bcb38b6f260d47ef83e72d115f4fb38ba7eb"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_receipt.py",
+      "after_sha256": "e35f1766eca04ed43a3bbfa22cf863233b9a2e0b611426076fa041b1da5c664e",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_receipt.py",
+      "before_oid": "0490064c9ddc3f33999a10e1a85f82aab2f4b1fe"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_registry.py",
+      "after_sha256": "66359613c6f1dded762ac3a0a6adac8c10cfb878059cb9f6c02fee38976167c5",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_registry.py",
+      "before_oid": "4ebd0415e4c90b57be877e2e7a3ceff1ea83bad8"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py",
+      "after_sha256": "971fb92bf8d19f3d582c9c4627f400e648da2c21b6e3719c9914a9b0c4fd488e",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_runtime.py",
+      "before_oid": "31dbe41be855d6e82e6b2ca45af36f629430a7f2"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix3_container_pairs.py",
+      "after_sha256": "f4fde8465cd3b9da8748ff95f91cbb5de1cc3bee5bcd02bd2155b9ddbe0436f3",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix3_container_pairs.py",
+      "before_oid": "d1689685877202e6752e3d4c235aeca319b6b6c4"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix3_observer_programs.py",
+      "after_sha256": "7e4a2b83a3c5ec54f4f5057774a17a29e2bd6695a229bb7882a0365914388f55",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix3_observer_programs.py",
+      "before_oid": "7b3ae0e723d2c2a47459148643d82f7b1abf53cf"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix3_owner_binding.py",
+      "after_sha256": "e740c8155a5b863bb5a4bdc4e0065396fc28def6474fc65b84e88d422d911281",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix3_owner_binding.py",
+      "before_oid": "1dce99da50bdd98961d625ecc6709db9b741886a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix3_scenarios.py",
+      "after_sha256": "0c5430a677540d0018dbbc91a46e7c0d59b59ca763671d3c6199cfbb235bbb0a",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix3_scenarios.py",
+      "before_oid": "81a57c7c1f06c35694811c60baffb9b27c2f899d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix3_sibling_oracle.py",
+      "after_sha256": "75f20a36333738e84d4000f3964ef830160280edc7821177e1d0f42f05110a33",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix3_sibling_oracle.py",
+      "before_oid": "8e28cbe1c813394ae84cca8d06d580be31899d37"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix3_terminal_programs.py",
+      "after_sha256": "66430513996ac51c1915054edf58474f8c72a5361d038efc6fbcc6cc0500e57f",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix3_terminal_programs.py",
+      "before_oid": "54ed0b013470cf8058d17915839fea91623dfb54"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix4_psycopg.py",
+      "after_sha256": "a5bfde91cf7f7302cabf4475dbac45f20eab37480742d0f4cac923131940b5f0",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix4_psycopg.py",
+      "before_oid": "dd737aa000eb31bc29ec67aeb4c20f789e2d272a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix4_terminal_contexts.py",
+      "after_sha256": "c47c141edc7f55018a54e84d616a5d5f3408807a8b9f0b0a9c53d074b8f08fa0",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_fix4_terminal_contexts.py",
+      "before_oid": "1ba3d8bfce23b1655618738c78b21a9b44796b8d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_group_k_container.py",
+      "after_sha256": "81b18ed9515001888504483422d284e27b671c4b3aac3d0c2c4d63ed4602a8bc",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_group_k_container.py",
+      "before_oid": "00cc080acf561829cb51f82c47e0d104d003d3ba"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_groupa_contract.py",
+      "after_sha256": "233a029bd878c5181c33f91c6d0406916ec195da393ab295d76bf512fb4c1ccc",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_groupa_contract.py",
+      "before_oid": "579874713d5aa93ffedab327cfb4bbb7aa5992f0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_groupa_derivation.py",
+      "after_sha256": "0294178cdd67a3bdffef126785d7647f57b07ab06fa0325992ad3a764487a2e6",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_groupa_derivation.py",
+      "before_oid": "6f43002a3c421b1ec642338e036ee3c48b1d2be6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_image_route.py",
+      "after_sha256": "cbc1e4fdbf64a2d0921cb4c605f59c6e46d8b8e3c212b2349885822ca2cc0239",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_image_route.py",
+      "before_oid": "d4876e6c4fdef5bf336e7ebfe2486f46833d9e26"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_observer_protocol.py",
+      "after_sha256": "ecf188d8c24e1b3eae6d3dec07d94368089e13f53f95d6818953e45f4473287b",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_observer_protocol.py",
+      "before_oid": "b46f23c477aee43ad708f0f88b2fdb8ca7e16ec6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_timing_qualification.py",
+      "after_sha256": "44986995bf90947ebf85dce77cfcdf7d0888e28bc60aafdd2880ea13a8d993e6",
+      "before": "src/test/support/python/repomap_test_support/test_cov5k_r2_timing_qualification.py",
+      "before_oid": "c7d74a6f1abf42cad081b4be1d5dc5d42677890a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_scratch.py",
+      "after_sha256": "d0f201d52a7d4bcedd293e7d5706a8f490103a5f35a3c811eb539eca446e121a",
+      "before": "src/test/support/python/repomap_test_support/test_scratch.py",
+      "before_oid": "5e69dc843bb55afd8c8c08aa9672ef9aa9174f79"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_scratch_cleanup.py",
+      "after_sha256": "8f4a1b708b2bcb0d714186377419b52b8e0a01258c3ad79efbb026938f84d1c7",
+      "before": "src/test/support/python/repomap_test_support/test_scratch_cleanup.py",
+      "before_oid": "294ba2d99f8013c3783e1072fad51edf366527f3"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_scratch_contract.py",
+      "after_sha256": "d6b76a45c85a47b8fa640f3458f39e42e2c190994656475d13bbc3ecfd4fc126",
+      "before": "src/test/support/python/repomap_test_support/test_scratch_contract.py",
+      "before_oid": "22a82d5453b54fc395be556f2ae7567a0f50fb8d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/test_scratch_layout.py",
+      "after_sha256": "76700ac1d18d7d52952485bc42f7d6e3101b15d87747ee0a4bc0d349219fc124",
+      "before": "src/test/support/python/repomap_test_support/test_scratch_layout.py",
+      "before_oid": "be7a9e221a05215c85865e2bb7c93d4e02dbfe1f"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/unit_purity.py",
+      "after_sha256": "f2c35fdac53589fa90653a66422ae24bcd7958dfc877e8154ce321607c8f3136",
+      "before": "src/test/support/python/repomap_test_support/unit_purity.py",
+      "before_oid": "05a499eedf4ec20699ed8bf417a6bbe3090a98b5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/usage_worker.py",
+      "after_sha256": "da3faaa450833740eeb99118dff7f259059906ea2530644aa7a8e817e4152f50",
+      "before": "src/test/support/python/repomap_test_support/usage_worker.py",
+      "before_oid": "20b76e6f0aed5067fe5306464201ba970470f8d7"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_admission_native_bytework.py",
+      "after_sha256": "3e1ae787ffc94aabcb9238deaf5ecfe338d4686f5e4a73b535ede9a7243933a5",
+      "before": "src/test/support/python/repomap_test_support/w5_admission_native_bytework.py",
+      "before_oid": "d3a59b94f5e4a639906d5fa5ed4c3e967211953a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_component_artifacts.py",
+      "after_sha256": "f29161cc2b2be886e8a72c0872a42cddc55f39ed0e797928912dfa4c4a72cda5",
+      "before": "src/test/support/python/repomap_test_support/w5_component_artifacts.py",
+      "before_oid": "5656fe0951a4b86fae9ba34b7c694999b9879773"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_component_cli.py",
+      "after_sha256": "b0a440bdd8727071098179242ed111fdc93ff4dd6c7441ebe5ef064d37c68d70",
+      "before": "src/test/support/python/repomap_test_support/w5_component_cli.py",
+      "before_oid": "fce0315c0d11d41ed9396bd01f947f8feddacabf"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_component_functional_experiment.py",
+      "after_sha256": "2d574977a27cb5bf46b1ecfa0b311998d24c50ebc46a21899585dd0bb2ef534b",
+      "before": "src/test/support/python/repomap_test_support/w5_component_functional_experiment.py",
+      "before_oid": "651fbb6b92cd7af1046de61807196601fb5ff2c3"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_component_functional_supply.py",
+      "after_sha256": "fedc0b02565c34c55e70a4a6c8a96d173972c8e61d6ec5827939e88f807d8ba0",
+      "before": "src/test/support/python/repomap_test_support/w5_component_functional_supply.py",
+      "before_oid": "1ff9fee757e2dbb7ddee5c15b2e09cfa7a67da9b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_component_functional_transport.py",
+      "after_sha256": "6033fa00bda91b5a06f0112625d9876fc1e008b39079ef00fa9790d731dba09d",
+      "before": "src/test/support/python/repomap_test_support/w5_component_functional_transport.py",
+      "before_oid": "1e0b9d0f0fd09813cd00cfdd13b8cc2b91c29105"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_component_planner_adapter.py",
+      "after_sha256": "4ff59244fd85f519d052d8d43c597419fda1d8671950005b3cde429783e51e41",
+      "before": "src/test/support/python/repomap_test_support/w5_component_planner_adapter.py",
+      "before_oid": "940b9483469b33ad6fc86141775254fe706ca49c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_experiment_ann.py",
+      "after_sha256": "f7d27c407a0215e36b9e9e44a0666cf27fc24a7295d01cf717faf773c6e2bbd3",
+      "before": "src/test/support/python/repomap_test_support/w5_experiment_ann.py",
+      "before_oid": "26da48b626342930344f6855dc944aa2882dc677"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_experiment_ann_diagnostic.py",
+      "after_sha256": "d1df4fd7d71cfcedbb7bde0eb6ad925b53869c5ff58f558761002a72cdc36454",
+      "before": "src/test/support/python/repomap_test_support/w5_experiment_ann_diagnostic.py",
+      "before_oid": "1e7eea2d67917b569bb37568c783d01883473b5c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_experiment_hnsw.py",
+      "after_sha256": "cc5d42a0ef38980ee7438054347f2cd70a6325fbe4c51035aaf447ee186a9272",
+      "before": "src/test/support/python/repomap_test_support/w5_experiment_hnsw.py",
+      "before_oid": "ce2ffaf0bf9d2b257fb34b1585b39681e9a82086"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_experiment_journal.py",
+      "after_sha256": "36f35fe094c9cd45def8d3a0de82ed608c95a0415c9fe1313382ef8015b611dd",
+      "before": "src/test/support/python/repomap_test_support/w5_experiment_journal.py",
+      "before_oid": "300baa219b66302db7b5de2750078a68560665fb"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_experiment_postgres.py",
+      "after_sha256": "076221d3a53cfd417364fef17bd8bec9d3c681201868afb7af100d50a17d3dc4",
+      "before": "src/test/support/python/repomap_test_support/w5_experiment_postgres.py",
+      "before_oid": "e46eaa45a5a2615e78730b07af51a3dc29bef3b4"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_experiment_results.py",
+      "after_sha256": "5de55aa8739c304401eee23fad59bef12a1c618ea985e86bac18ef54f8447ce0",
+      "before": "src/test/support/python/repomap_test_support/w5_experiment_results.py",
+      "before_oid": "dd36a96fddb0d836d2ee6acf1b92f889922bd431"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_experiment_support.py",
+      "after_sha256": "5e470fc2457b9c4e1aab04dd40c12b7716d8b1785c1787ea8a4b46f79b2d6420",
+      "before": "src/test/support/python/repomap_test_support/w5_experiment_support.py",
+      "before_oid": "570f45370af8270e338318a709849728dd702bf9"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_experiment_vector.py",
+      "after_sha256": "3c6ae04ccb1e56f42ab84a576237653d97e02cd313f82fd462d28f8c3c2a74b9",
+      "before": "src/test/support/python/repomap_test_support/w5_experiment_vector.py",
+      "before_oid": "94dae48d846307142cf7a30a918b4b77a7ebab27"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_generator_support.py",
+      "after_sha256": "280b2d92bf793a8b1e53caa9824a0024986ffd135d6f6b9dac36ec8114d4732e",
+      "before": "src/test/support/python/repomap_test_support/w5_generator_support.py",
+      "before_oid": "7d941550dc215552bf0074a2e4acadc578dd98a1"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_jsonb_support.py",
+      "after_sha256": "6aae5089b654c4856fb162b0605f835026e24093720652ae72d4cb61f8d45c8d",
+      "before": "src/test/support/python/repomap_test_support/w5_jsonb_support.py",
+      "before_oid": "5bd62bf90d992206a7f80219d8065bd16c969bd4"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_matching_fixture.py",
+      "after_sha256": "c4fbca221548f99ebb1aa85715906ec2a1947a3ecd34e5e7f7a3ad0855f248ff",
+      "before": "src/test/support/python/repomap_test_support/w5_matching_fixture.py",
+      "before_oid": "d1a7c75a4db675649473dc1c01b6e51eecc5ca2a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_operation_orchestration.py",
+      "after_sha256": "d852c542b106feb405a6dde39012236dd7f0787c11a181bf204f277710d55a53",
+      "before": "src/test/support/python/repomap_test_support/w5_operation_orchestration.py",
+      "before_oid": "4f928b86ee1113d360ea4e17cacd1aeef41f821c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_pair_fixtures.py",
+      "after_sha256": "5c5db181654cf4e54c3917096c3e554231e268d2b4b60335e2b84897457911cd",
+      "before": "src/test/support/python/repomap_test_support/w5_pair_fixtures.py",
+      "before_oid": "e13dd6541a801746d6cc4f16ff881ebf52dd1f61"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_artifacts.py",
+      "after_sha256": "c3e02ca12508685415bb3c28a7bee0159c8900c01eb25d803e63e3e3fefb2488",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_artifacts.py",
+      "before_oid": "df9fbfd6fc25542efafdb9954ea70f300249f51d"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_baselines.py",
+      "after_sha256": "3d8ee5af5fb65ff2280202c61ade825cc2af352ddaa3fc3050d3c935a5225cba",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_baselines.py",
+      "before_oid": "c817f76d7050137a77c1274e85562dbd57e0c9a9"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_evidence.py",
+      "after_sha256": "ad9eb4768467cf1c4862c00084bfdb81ee4f93bc91c4cd77aa1ab3f8c0ff8277",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_evidence.py",
+      "before_oid": "1973ec253f1358d7242073776920e03b6d04202b"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_functional.py",
+      "after_sha256": "01df74ee3e88a01d503c7327bcc7205c3e8d050500bfd7d7d4b67f051e5bf8a0",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_functional.py",
+      "before_oid": "8140439892fecd7a72f53d4041e2e12153a41a64"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_generation.py",
+      "after_sha256": "c54a1c7b38653213b5e431793acd3a0a23212d066dd30fa296181f3faac32c34",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_generation.py",
+      "before_oid": "7dac65fca76e37b19f3ba6d83e68335b31a7e44a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_journal.py",
+      "after_sha256": "1f62e931163f99514fc5a117ee8fc0903e307b385d88465f4eb04ef243623404",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_journal.py",
+      "before_oid": "e0f7ac9629947a5776faaec9309275e91de1d276"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_learned.py",
+      "after_sha256": "236a5b060c6345667b1b4d1cb79154d7f55bc0c364fac37751fb488cbfe2fa8a",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_learned.py",
+      "before_oid": "7489b5d17a5abeeb1de5da984e0e9e0f3a876e4a"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_postgres.py",
+      "after_sha256": "e69e6da08c02b395ac49aa552c796947b4d39d4d0578f07e9b133a1669fa5190",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_postgres.py",
+      "before_oid": "32f79c40ba15cc2b8a30e1a98758671154594ba5"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_readback.py",
+      "after_sha256": "8a24acd946d8dd42d1379e7e2b8b70b65d7b353a053d34714856d7480e693b41",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_readback.py",
+      "before_oid": "b31d05dd850112c73fbc473cf0923760ae5db3a0"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_registered_fixture.py",
+      "after_sha256": "f8586399a7ecf8d428f39b7b3a51f79e9501d18ba5cf771479a4db5eca0f6e19",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_registered_fixture.py",
+      "before_oid": "f90635bb44a749446179db75554845d698573135"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_public_text_study.py",
+      "after_sha256": "f40229e216c3176af706229d99c233e1c8b5dbe2c94409cefe6a69806874cbee",
+      "before": "src/test/support/python/repomap_test_support/w5_public_text_study.py",
+      "before_oid": "5f1dc12a8115e23ef86fcaee6d81065a5c55e274"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_publication_privacy_fixtures.py",
+      "after_sha256": "bb2203f5fc0c969e7ca458e1b7b6cec631ef82adb2b724c0020848e3ca543561",
+      "before": "src/test/support/python/repomap_test_support/w5_publication_privacy_fixtures.py",
+      "before_oid": "1a15fa9a873d24e0ab7200fd5a525e4dd0d15b09"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_publication_readback.py",
+      "after_sha256": "584adf8464764284129e92c341f51a283a5b204d6a5202fd81f8bc21153fd486",
+      "before": "src/test/support/python/repomap_test_support/w5_publication_readback.py",
+      "before_oid": "77dc98b08b161236c39901efa68f58e9bf6449b6"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_publication_validation_fixtures.py",
+      "after_sha256": "6154d0bf5ba65960a956d52f597231289e1ce0b458e1aeb1e8152c9de8c558e1",
+      "before": "src/test/support/python/repomap_test_support/w5_publication_validation_fixtures.py",
+      "before_oid": "3d0b10dcf5d522a5e3e5050ea8d16ea5727e838c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_semantic_store_support.py",
+      "after_sha256": "5cffb3fa614091243897a0816c03af30ae32fbe63a5167f6a6ac736ab3119690",
+      "before": "src/test/support/python/repomap_test_support/w5_semantic_store_support.py",
+      "before_oid": "cf4438c2a5043abe50c823b726efff5baeac261c"
+    },
+    {
+      "after": "src/test/support/python/common_lore_index_test_support/w5_semantic_support.py",
+      "after_sha256": "99b338987af8088b570ad59b9bedb38d382e6a74205c275d11eb1002f0d05f49",
+      "before": "src/test/support/python/repomap_test_support/w5_semantic_support.py",
+      "before_oid": "d30f0171f2ea10a84a04dfc64851c9ea2f5ae52d"
+    }
+  ],
+  "predecessor": "39c2acdb8a0d2f4c7215ec8d56bad16f69dc8f48",
+  "schema": "cloe-test-support-namespace-lineage-v1"
+}

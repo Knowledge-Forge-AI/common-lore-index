@@ -4,15 +4,15 @@ def test_native_mode_observes_direct_postgres_binding(tmp_path):
     from common_lore_index.runtime.local import setup_local_runtime, query_local_runtime_status
     from common_lore_index.runtime.plan import build_local_runtime_plan
     from common_lore_index.runtime.compose import render_compose_yaml
-    from repomap_test_support.postgres_container import PostgresContainerHarness
-    from repomap_test_support.postgres_container_config import PostgresContainerConfig
+    from common_lore_index_test_support.postgres_container import PostgresContainerHarness
+    from common_lore_index_test_support.postgres_container_config import PostgresContainerConfig
 
     with socket.socket() as available:
         available.bind(("127.0.0.1", 0))
         port = available.getsockname()[1]
     home = tmp_path / "native-home"
     setup_local_runtime(home)
-    config = home / "repomap.rpl.toml"
+    config = home / "repomap.local.cloe.toml"
     config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"').replace(
         "direct_host_port_enabled = false", "direct_host_port_enabled = true"
     ).replace("host_port = 55432", f"host_port = {port}"))

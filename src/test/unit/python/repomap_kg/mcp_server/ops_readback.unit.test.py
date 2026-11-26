@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, cast
 from unittest.mock import patch
 
@@ -9,12 +10,12 @@ from common_lore_index.storage import (
     CanonicalNodeRecord,
     StorageSchemaError,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class McpServerOpsReadbackUnitTests(McpServerTestSupport):
     def test_ops_mcp_refresh_status_reads_existing_storage_only(self):
-        from common_lore_index.server.mcp import repomap_refresh_status
+        from common_lore_index.server.mcp import cloe_refresh_status
         from common_lore_index.ops.refresh import OpsRefreshGraphStatus
 
         config_path = self.write_visible_ops_config()
@@ -45,7 +46,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
                     ),
                 },
             ) as query:
-                payload = repomap_refresh_status()
+                payload = cloe_refresh_status()
 
         self.assertEqual(payload["graph_count"], 1)
         self.assertEqual(payload["graphs"][0]["graph_id"], "repo-map")
@@ -57,14 +58,14 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
         query.assert_called_once()
 
     def test_ops_mcp_refresh_status_leaves_default_psql_implicit(self):
-        from common_lore_index.server.mcp import repomap_refresh_status
+        from common_lore_index.server.mcp import cloe_refresh_status
 
         config_path = self.write_ops_config(self.visible_ops_config())
         with patch.dict(
             "os.environ",
             {
-                "REPOMAP_OPS_CONFIG": str(config_path),
-                "REPOMAP_PSQL_COMMAND": "psql",
+                "CLOE_OPS_CONFIG": str(config_path),
+                "CLOE_PSQL_COMMAND": "psql",
             },
             clear=True,
         ):
@@ -72,19 +73,19 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
                 "common_lore_index.server.ops.query_refresh_status",
                 return_value={},
             ) as query:
-                repomap_refresh_status(graph_id="repo-map")
+                cloe_refresh_status(graph_id="repo-map")
 
         self.assertIsNone(query.call_args.kwargs["psql_command"])
 
     def test_ops_mcp_direct_search_uses_operational_json_readback(self):
-        from common_lore_index.server.mcp import repomap_search_files
+        from common_lore_index.server.mcp import cloe_search_files
 
         config_path = self.write_ops_config(self.visible_ops_config())
         with patch.dict(
             "os.environ",
             {
-                "REPOMAP_OPS_CONFIG": str(config_path),
-                "REPOMAP_PSQL_COMMAND": "psql",
+                "CLOE_OPS_CONFIG": str(config_path),
+                "CLOE_PSQL_COMMAND": "psql",
             },
             clear=True,
         ):
@@ -92,7 +93,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
                 "common_lore_index.server.ops.query_mcp_search",
                 return_value={"results": [{"path": "src/main.py"}], "total": 1},
             ) as query:
-                payload = repomap_search_files(graph_id="repo-map", query="main")
+                payload = cloe_search_files(graph_id="repo-map", query="main")
 
         self.assertEqual(payload["results"], [{"path": "src/main.py"}])
         self.assertEqual(query.call_args.kwargs["database"], "repomap_repo_map")
@@ -100,7 +101,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
         self.assertEqual(query.call_args.kwargs["target"], "files")
 
     def test_ops_mcp_graph_status_and_neighborhood_use_stored_readback(self):
-        from common_lore_index.server.mcp import repomap_graph_status, repomap_neighborhood
+        from common_lore_index.server.mcp import cloe_graph_status, cloe_neighborhood
 
         config_path = self.write_visible_ops_config()
         neighborhood = CanonicalNeighborhoodRecord(
@@ -136,12 +137,12 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
                     )
                 },
             ):
-                status = repomap_graph_status(graph_id="repo-map")
+                status = cloe_graph_status(graph_id="repo-map")
             with patch(
                 "common_lore_index.server.ops.query_canonical_neighborhood",
                 return_value=neighborhood,
             ) as query:
-                payload = repomap_neighborhood(
+                payload = cloe_neighborhood(
                     graph_id="repo-map",
                     node="python.module:pkg.app",
                     direction="both",
@@ -183,7 +184,7 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
         self.assertEqual(like_escape(r"%pkg_app"), r"\%pkg\_app")
         with patch.dict("os.environ", {}, clear=True):
             self.assertIsNone(psql_command_from_environment())
-        with patch.dict("os.environ", {"REPOMAP_PSQL_COMMAND": "psql"}, clear=True):
+        with patch.dict("os.environ", {"CLOE_PSQL_COMMAND": "psql"}, clear=True):
             self.assertIsNone(psql_command_from_environment())
         with self.assertRaisesRegex(McpOpsError, "query is required"):
             validate_query("")
@@ -191,10 +192,10 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
             validate_limit(0)
         with self.assertRaisesRegex(McpOpsError, "non-negative"):
             validate_offset(-1)
-        with patch.dict("os.environ", {"REPOMAP_PSQL_COMMAND": "bad psql"}):
+        with patch.dict("os.environ", {"CLOE_PSQL_COMMAND": "bad psql"}):
             with self.assertRaisesRegex(McpOpsError, "whitespace"):
                 psql_command_from_environment()
-        with patch.dict("os.environ", {"REPOMAP_PSQL_COMMAND": "/bin/echo"}):
+        with patch.dict("os.environ", {"CLOE_PSQL_COMMAND": "/bin/echo"}):
             with self.assertRaisesRegex(McpOpsError, "psql executable"):
                 psql_command_from_environment()
 
@@ -246,20 +247,20 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
             )
 
     def test_ops_mcp_missing_config_unknown_graph_and_search_parse_are_safe(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_list_graphs
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_list_graphs
         from common_lore_index.server.ops import query_mcp_search
 
-        with patch.dict("os.environ", {}, clear=True):
-            with self.assertRaisesRegex(RepoMapMcpError, "REPOMAP_HOME"):
-                repomap_list_graphs()
+        with TemporaryDirectory() as isolated_home, patch.dict("os.environ", {"HOME": isolated_home}, clear=True):
+            with self.assertRaisesRegex(RepoMapMcpError, "CLOE_HOME does not exist"):
+                cloe_list_graphs()
 
         config_path = self.write_ops_config(self.visible_ops_config())
         config = load_ops_config(config_path)
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-            from common_lore_index.server.mcp import repomap_project_summary
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
+            from common_lore_index.server.mcp import cloe_project_summary
 
             with self.assertRaisesRegex(RepoMapMcpError, "unknown graph_id"):
-                repomap_project_summary(graph_id="missing")
+                cloe_project_summary(graph_id="missing")
 
         with patch(
             "common_lore_index.server.ops.execute_ops_json_readback",
@@ -300,8 +301,8 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
     def test_server_memory_mcp_tools_read_configured_jsonl_only(self):
         from common_lore_index.server.mcp import (
             handle_jsonrpc_message,
-            repomap_server_memory_search,
-            repomap_server_memory_summary,
+            cloe_server_memory_search,
+            cloe_server_memory_summary,
         )
 
         fixture = (
@@ -313,16 +314,16 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
         )
         config_path = self.write_ops_config(self.server_memory_ops_config(fixture))
 
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-            summary = repomap_server_memory_summary()
-            search = repomap_server_memory_search(query="RepoMap", limit=1)
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
+            summary = cloe_server_memory_summary()
+            search = cloe_server_memory_search(query="RepoMap", limit=1)
             jsonrpc = handle_jsonrpc_message(
                 {
                     "jsonrpc": "2.0",
                     "id": 45,
                     "method": "tools/call",
                     "params": {
-                        "name": "repomap_server_memory_search",
+                        "name": "cloe_server_memory_search",
                         "arguments": {"query": "RepoMap", "limit": 1},
                     },
                 }
@@ -343,12 +344,12 @@ class McpServerOpsReadbackUnitTests(McpServerTestSupport):
         self.assertNotIn("observations", serialized)
 
     def test_server_memory_mcp_disabled_config_returns_safe_diagnostic(self):
-        from common_lore_index.server.mcp import repomap_server_memory_summary
+        from common_lore_index.server.mcp import cloe_server_memory_summary
 
         config_path = self.write_ops_config(self.visible_ops_config())
 
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-            payload = repomap_server_memory_summary()
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
+            payload = cloe_server_memory_summary()
 
         self.assertFalse(payload["enabled"])
         self.assertEqual(

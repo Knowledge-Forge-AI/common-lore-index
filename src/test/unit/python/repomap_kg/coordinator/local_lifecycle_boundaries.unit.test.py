@@ -16,7 +16,7 @@ from common_lore_index.runtime.database_role_contract import (
     REFRESH_PUBLICATION_ROLE,
 )
 from common_lore_index.runtime.maintenance import MaintenanceUnavailableError
-from repomap_test_support.coordinator_control_fixtures import (
+from common_lore_index_test_support.coordinator_control_fixtures import (
     BareAuthority,
     CaptureConnection,
     OwnedMaintenanceAuthority,

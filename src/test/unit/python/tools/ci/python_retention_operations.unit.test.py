@@ -13,9 +13,9 @@ from ci.python_retention_operations import (
 )
 
 ENFORCED_DOCKER_RELOAD_PATHS = (
-    "src/test/support/python/repomap_test_support/resource_test_image_commands.py",
-    "src/test/support/python/repomap_test_support/resource_test_image_materialization.py",
-    "src/test/support/python/repomap_test_support/resource_test_image_build_context.py",
+    "src/test/support/python/common_lore_index_test_support/resource_test_image_commands.py",
+    "src/test/support/python/common_lore_index_test_support/resource_test_image_materialization.py",
+    "src/test/support/python/common_lore_index_test_support/resource_test_image_build_context.py",
 )
 
 

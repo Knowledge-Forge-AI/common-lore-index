@@ -12,8 +12,8 @@ import pytest
 from common_lore_index.extractors.rust_pilot.guest import parse_helper
 from common_lore_index.extractors.rust_pilot.guest.parse_helper import InputRefused
 from common_lore_index.extractors.rust_pilot.helper_protocol import ITEM_KINDS
-from repomap_test_support.rust_pilot_fake_tree_sitter.tree_sitter import Language, Parser, Tree
-from repomap_test_support.rust_pilot_fake_tree_sitter.tree_sitter_rust import language
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.tree_sitter import Language, Parser, Tree
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.tree_sitter_rust import language
 
 FIXTURES = Path(__file__).resolve().parents[5] / "fixtures" / "rust_pilot"
 NONCE = "a" * 64
@@ -114,7 +114,7 @@ def test_direct_walk_matches_source_bound_q01_gold_item_ranges() -> None:
 ])
 def test_stand_in_marks_only_modeled_missing_operands_and_field_types(
         data: bytes, expected_error: bool) -> None:
-    from repomap_test_support.rust_pilot_fake_tree_sitter.tree_sitter._grammar import parse_source
+    from common_lore_index_test_support.rust_pilot_fake_tree_sitter.tree_sitter._grammar import parse_source
 
     root = parse_source(data)
     assert root.has_error is expected_error

@@ -13,7 +13,7 @@ from typing import Any, cast
 import pytest
 
 import retrieval_supplement_host_controller as controller
-from repomap_test_support.retrieval_supplement_study_fixtures import make_study_plan
+from common_lore_index_test_support.retrieval_supplement_study_fixtures import make_study_plan
 from retrieval_supplement_host_meter import HostMeter
 from retrieval_supplement_study_contracts import StudyRefusal
 from retrieval_supplement_study_plan import create_reservation, plan_digest, read_reservation

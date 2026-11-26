@@ -5498,60 +5498,6 @@
       "match": "exact",
       "module_prefix": "common_lore_index.storage.table_rows",
       "ownership_class": "python_retained"
-    },
-    {
-      "architecture_box": "cloe_installed_compatibility",
-      "disposition": "retained_python_ratcheted",
-      "enforcement_tier": "T1-future",
-      "justification": "ADR0123 finite entrypoint or documented legacy reexport; one canonical implementation, zero added debt.",
-      "match": "exact",
-      "module_prefix": "repomap_kg",
-      "ownership_class": "python_retained"
-    },
-    {
-      "architecture_box": "cloe_installed_compatibility",
-      "disposition": "retained_python_ratcheted",
-      "enforcement_tier": "T1-future",
-      "justification": "ADR0123 finite entrypoint or documented legacy reexport; one canonical implementation, zero added debt.",
-      "match": "exact",
-      "module_prefix": "repomap_kg.__main__",
-      "ownership_class": "python_retained"
-    },
-    {
-      "architecture_box": "cloe_installed_compatibility",
-      "disposition": "retained_python_ratcheted",
-      "enforcement_tier": "T1-future",
-      "justification": "ADR0123 finite entrypoint or documented legacy reexport; one canonical implementation, zero added debt.",
-      "match": "exact",
-      "module_prefix": "repomap_kg.ops",
-      "ownership_class": "python_retained"
-    },
-    {
-      "architecture_box": "cloe_installed_compatibility",
-      "disposition": "retained_python_ratcheted",
-      "enforcement_tier": "T1-future",
-      "justification": "ADR0123 finite entrypoint or documented legacy reexport; one canonical implementation, zero added debt.",
-      "match": "exact",
-      "module_prefix": "repomap_kg.ops.config_migration",
-      "ownership_class": "python_retained"
-    },
-    {
-      "architecture_box": "cloe_installed_compatibility",
-      "disposition": "retained_python_ratcheted",
-      "enforcement_tier": "T1-future",
-      "justification": "ADR0123 finite entrypoint or documented legacy reexport; one canonical implementation, zero added debt.",
-      "match": "exact",
-      "module_prefix": "repomap_kg.server",
-      "ownership_class": "python_retained"
-    },
-    {
-      "architecture_box": "cloe_installed_compatibility",
-      "disposition": "retained_python_ratcheted",
-      "enforcement_tier": "T1-future",
-      "justification": "ADR0123 finite entrypoint or documented legacy reexport; one canonical implementation, zero added debt.",
-      "match": "exact",
-      "module_prefix": "repomap_kg.server.mcp",
-      "ownership_class": "python_retained"
     }
   ],
   "resolution": "longest-component-prefix-wins",

@@ -42,13 +42,13 @@ from common_lore_index.extractors.shell.powershell_manifest import (
     _resolve_manifest_reference,
 )
 from common_lore_index.graph.multi_source_pipeline import capture_multi_source_candidate
-from repomap_test_support.run25_wave2_corpus import (
+from common_lore_index_test_support.run25_wave2_corpus import (
     create_run25_wave2_graph_config,
     populate_run25_config_shell_project,
     restore_file_content,
     seal_and_verify_run25_artifacts,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class Run25ConfigShellWaveIntegrationTests(unittest.TestCase):

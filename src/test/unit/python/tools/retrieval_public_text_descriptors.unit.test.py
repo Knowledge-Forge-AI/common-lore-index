@@ -11,8 +11,8 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
-from repomap_test_support.w5_semantic_support import InMemoryStoreReadbackCell, make_w5_accepted_pub_mapping
+from common_lore_index_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
+from common_lore_index_test_support.w5_semantic_support import InMemoryStoreReadbackCell, make_w5_accepted_pub_mapping
 import retrieval_public_text_descriptors as descriptors_module
 from retrieval_public_text_contracts import (
     AGGREGATE_BUDGET_EXCEEDED, ARTIFACT_INTEGRITY_REFUSED, DESCRIPTOR_CONSTRUCTION_REFUSED, DESCRIPTOR_SET_CHANGED,

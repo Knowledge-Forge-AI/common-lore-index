@@ -11,7 +11,7 @@ from common_lore_index.artifacts._sealing_meter import SealingMeter
 from common_lore_index.artifacts.sealing_governance import SealingBudget, SealingBudgetExceeded
 from common_lore_index.graph._metered_discovery import MeteredDiscoveryHooks
 from common_lore_index.graph.discovery import discover_repository
-from repomap_test_support.sealing_governance_fixtures import (
+from common_lore_index_test_support.sealing_governance_fixtures import (
     binding_for, expectation_for, graph_for, open_descriptor_count, seal, write_tree,
 )
 

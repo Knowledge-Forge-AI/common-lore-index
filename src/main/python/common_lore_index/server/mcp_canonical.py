@@ -1,6 +1,6 @@
 """Implementation support for canonical RepoMap MCP tools.
 
-The four canonical tools and legacy ``repomap_status`` read through the named
+The four canonical tools and legacy ``cloe_status`` read through the named
 canonical read-store seam.
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Any, Callable
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.graph.keys import GRAPH_KEY_VERSION
 from common_lore_index.server.canonical_read_store import (
     CanonicalEdgeExplanationQuery,
@@ -66,7 +66,7 @@ def status_payload(
     )
     summary = dependencies.canonical_read_store(connection).canonical_storage_summary()
     payload = {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "root_path": summary.root_path,

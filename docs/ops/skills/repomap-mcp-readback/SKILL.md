@@ -19,31 +19,31 @@ to `repomap-mcp-configuration`.
 Storage-family tools accept `project` (or explicit `root_path`/`pg_*`
 development arguments):
 
-- `repomap_status`, `repomap_projects`
-- `repomap_canonical_nodes`, `repomap_canonical_edges`
-- `repomap_explain_canonical_edge`, `repomap_canonical_neighborhood`
-- `repomap_ingested_sources`, `repomap_source_summary`,
-  `repomap_source_runs`, `repomap_source_feed_items`,
-  `repomap_explain_source_feed_item`, `repomap_source_references`
+- `cloe_status`, `cloe_projects`
+- `cloe_canonical_nodes`, `cloe_canonical_edges`
+- `cloe_explain_canonical_edge`, `cloe_canonical_neighborhood`
+- `cloe_ingested_sources`, `cloe_source_summary`,
+  `cloe_source_runs`, `cloe_source_feed_items`,
+  `cloe_explain_source_feed_item`, `cloe_source_references`
 
 Graph-registry tools accept `graph_id` and serve only enabled, MCP-visible
 configured graphs:
 
-- `repomap_list_graphs`, `repomap_graph_status`
-- `repomap_search_nodes`, `repomap_search_observations`,
-  `repomap_search_files`
-- `repomap_neighborhood`, `repomap_project_summary`
-- `repomap_python_summary`, `repomap_terraform_summary`,
-  `repomap_openapi_summary`, `repomap_js_framework_summary`,
-  `repomap_nix_summary`
-- `repomap_refresh_status`
-- `repomap_node_locations` (opt-in selected-node stored evidence; SQLite Local,
+- `cloe_list_graphs`, `cloe_graph_status`
+- `cloe_search_nodes`, `cloe_search_observations`,
+  `cloe_search_files`
+- `cloe_neighborhood`, `cloe_project_summary`
+- `cloe_python_summary`, `cloe_terraform_summary`,
+  `cloe_openapi_summary`, `cloe_js_framework_summary`,
+  `cloe_nix_summary`
+- `cloe_refresh_status`
+- `cloe_node_locations` (opt-in selected-node stored evidence; SQLite Local,
   other backends return `backend_unsupported`; see [source navigation](../../source-navigation.md))
-- `repomap_similar_nodes` (experimental optional PostgreSQL stored-seed read;
+- `cloe_similar_nodes` (experimental optional PostgreSQL stored-seed read;
   requires imported rebuild/profile identities and explicit selection)
-- `repomap_embedding_profiles` (read-only current-publication tuple discovery;
+- `cloe_embedding_profiles` (read-only current-publication tuple discovery;
   explicit selection, public-safe optional PostgreSQL metadata only)
-- `repomap_server_memory_summary`, `repomap_server_memory_search`
+- `cloe_server_memory_summary`, `cloe_server_memory_search`
   (read-only server-memory bridge; available only when the bridge is
   configured)
 
@@ -55,9 +55,9 @@ graph contents when the tools are unavailable.
 ### SQLite Local Graphs
 
 For a SQLite Local home, all 24 graph-reading tools are supported: the four
-canonical tools, legacy `repomap_status` (with a graph-registry `project`),
-`repomap_graph_status`, `repomap_refresh_status`, `repomap_project_summary`,
-the three searches, `repomap_neighborhood`, the five language/framework
+canonical tools, legacy `cloe_status` (with a graph-registry `project`),
+`cloe_graph_status`, `cloe_refresh_status`, `cloe_project_summary`,
+the three searches, `cloe_neighborhood`, the five language/framework
 summaries, the six source/feed tools and the opt-in node locator (plus the configuration and
 server-memory tools). Source/feed answers come only from the graph's accepted
 publication. A graph published without acquired feed observations reads as
@@ -65,11 +65,11 @@ empty, not as missing capability, so do not retry against another backend.
 Content tools on an initialized but never-published graph return
 `graph-publication-absent`.
 
-The catalog also advertises `repomap_similar_nodes` and `repomap_embedding_profiles`. SQLite returns
+The catalog also advertises `cloe_similar_nodes` and `cloe_embedding_profiles`. SQLite returns
 `sqlite_unsupported` when selected and `disabled` otherwise, without database IO.
 For PostgreSQL, use the canonical seed key, qualified source binding when needed,
 and the `rebuild_id`, `profile_identity`, and integer `dimensions` explicitly
-chosen from `repomap_embedding_profiles(graph_id="public-graph", selected=true,
+chosen from `cloe_embedding_profiles(graph_id="public-graph", selected=true,
 limit=20)`. Discovery defaults disabled, accepts limits 1–100, and never enables
 the optional capability. It reads only current accepted portable-publication
 metadata, in rebuild-ID order, with `has_more` for truncation. Multiple rebuilds
@@ -101,7 +101,7 @@ Discovery reports a malformed or missing latest portable receipt as
 `publication_unaccepted`, with no historical fallback. The existing seed query
 retains its bounded storage error for malformed receipt data. Privacy refusal
 also returns no tuples, candidates or provenance in both discovery and
-explicitly selected `repomap_similar_nodes` reads: whole-payload sanitizer
+explicitly selected `cloe_similar_nodes` reads: whole-payload sanitizer
 equality refuses on full private-path substring markers, secret-key or
 credentialed-URL/text redaction, and `>500`-character string truncation (even
 where query/import validation allows up to 4,096 characters), while
@@ -113,9 +113,9 @@ opaque digest and fixed-protocol collisions at exact structured paths.
 
 ## Selecting A Project Or Graph
 
-1. When the graph registry is active, call `repomap_list_graphs` first and
+1. When the graph registry is active, call `cloe_list_graphs` first and
    use `graph_id` with the graph-registry tools.
-2. For storage-family tools, call `repomap_projects`, then pass
+2. For storage-family tools, call `cloe_projects`, then pass
    `project="<name>"` (or rely on `default_project`). When no legacy project
    matches, an MCP-visible `graph_id` is accepted as the `project` value.
 3. Use explicit `root_path` plus connection arguments only for development
@@ -123,11 +123,11 @@ opaque digest and fixed-protocol collisions at exact structured paths.
 
 ## Status Contract
 
-`repomap_status` returns a canonical storage summary: `read_only=true`, the
+`cloe_status` returns a canonical storage summary: `read_only=true`, the
 expected repository identity, `graph_key_version=1`,
 `storage_model="canonical"`, and counts for `runs`, `files`,
 `raw_observations`, `canonical_nodes`, `canonical_edges`, and
-`canonical_evidence`. `repomap_graph_status` reads stored status for one
+`canonical_evidence`. `cloe_graph_status` reads stored status for one
 configured graph by `graph_id`. Root paths in responses are display-sanitized
 markers, and private graph roots are redacted.
 
@@ -145,8 +145,8 @@ Choose the search surface from the caller's question:
   inspect source. Such content need not name a node; spelling alone never
   chooses the route.
 
-`repomap_search_files` matches stored path, language and role, with optional
-exact path filtering. `repomap_search_observations` matches retained kind,
+`cloe_search_files` matches stored path, language and role, with optional
+exact path filtering. `cloe_search_observations` matches retained kind,
 source ID, path and serialized payload text, with optional exact kind/path
 filters; `include_raw` affects output only. Neither is arbitrary workspace
 source-body search. A complete empty result establishes no match only in that
@@ -156,7 +156,7 @@ responses establish less. Keep native fallback available without retries or
 automatic scope widening.
 
 For source navigation, read a fresh handoff and directly verify any supplied
-location first. Search and call `repomap_node_locations` only for unresolved
+location first. Search and call `cloe_node_locations` only for unresolved
 locations. For a selected node whose location is unresolved, request
 `evidence_role="direct", detail="compact"` and a small limit to locate the subject; use the
 reference/default view to investigate callers, mentions, outgoing links or
@@ -186,22 +186,22 @@ The [tested optional consumer example](../../../../tools/source_navigation_consu
 records handoff/lookup/fallback branches, makes zero graph calls for known
 locations or absent helpers, and keeps source verification a caller-side read.
 
-1. Call `repomap_status` (or `repomap_graph_status` for a configured graph)
+1. Call `cloe_status` (or `cloe_graph_status` for a configured graph)
    and confirm the read-only boundary and expected identity.
-2. Call `repomap_canonical_nodes` with a `kind` (for example
+2. Call `cloe_canonical_nodes` with a `kind` (for example
    `python.module`, `file`, `doc.page`, `feed.item`), or
-   `repomap_search_nodes` with a `graph_id` and query string when hunting for
+   `cloe_search_nodes` with a `graph_id` and query string when hunting for
    a node.
-3. Call `repomap_canonical_edges` with an edge `kind` (for example
+3. Call `cloe_canonical_edges` with an edge `kind` (for example
    `imports`, `references`) and a `source_key` when focusing on one node.
-4. Call `repomap_explain_canonical_edge` when evidence matters.
-5. Call `repomap_canonical_neighborhood` (or graph-scoped
-   `repomap_neighborhood`) for local graph context around one canonical
+4. Call `cloe_explain_canonical_edge` when evidence matters.
+5. Call `cloe_canonical_neighborhood` (or graph-scoped
+   `cloe_neighborhood`) for local graph context around one canonical
    node.
-6. For already-ingested sources, walk `repomap_ingested_sources` →
-   `repomap_source_summary` → `repomap_source_runs` →
-   `repomap_source_feed_items` → `repomap_explain_source_feed_item` →
-   `repomap_source_references`.
+6. For already-ingested sources, walk `cloe_ingested_sources` →
+   `cloe_source_summary` → `cloe_source_runs` →
+   `cloe_source_feed_items` → `cloe_explain_source_feed_item` →
+   `cloe_source_references`.
 
 ## Pagination And Bounded Output
 
@@ -223,9 +223,9 @@ legacy consumer still needs the older bare shape.
   evidence.
 - Treat `external:*`, `dynamic:*`, and `unknown:*` reference targets as
   explicit uncertainty, not failures.
-- `repomap_neighborhood` (configured graph) sanitizes its payload, and its
+- `cloe_neighborhood` (configured graph) sanitizes its payload, and its
   edge `source_key`/`target_key` fields come back as `[REDACTED]`. Use
-  `repomap_canonical_neighborhood` with `project="<graph_id>"` when you need
+  `cloe_canonical_neighborhood` with `project="<graph_id>"` when you need
   edge endpoint identities.
 
 ## Error Handling And Privacy
@@ -233,7 +233,7 @@ legacy consumer still needs the older bare shape.
 - MCP storage errors preserve the bounded failure reason but omit
   operational topology (host classification, container identity). Use the
   local ops CLI for authorized runtime diagnosis.
-- Every database-reading tool (canonical, `repomap_status`, graph/refresh
+- Every database-reading tool (canonical, `cloe_status`, graph/refresh
   status, search, project summary, configured neighborhood, the five
   language/framework summaries and the six source/feed tools) reads host-only
   for configured graphs: a stopped or unreachable database is reported, never
@@ -258,7 +258,7 @@ legacy consumer still needs the older bare shape.
 
 ## Optional task-scoped navigation search
 
-`repomap_navigation_search` is a SQLite Local sibling view; raw search remains
+`cloe_navigation_search` is a SQLite Local sibling view; raw search remains
 the default. Explicitly choose `scope="code"` (only `python.module`,
 `python.class`, `python.function`, `python.method`; not all code text),
 `scope="docs"`, or `all`, and optionally an exact `source_binding_id` plus

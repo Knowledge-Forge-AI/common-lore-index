@@ -21,7 +21,7 @@ from common_lore_index.retrieval.lexical_policy import (
 )
 from common_lore_index.retrieval.query_contracts import FallbackDisclosure, QueryMode
 from common_lore_index.storage.lexical_query_sql import RawLexicalQueryRow
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
@@ -54,8 +54,8 @@ def _mixed_policies(tmp_path: Path) -> tuple[LexicalGenerationPolicy, LexicalGen
     private_graph = resolve_ops_graph(config, MIXED_V1_GRAPH_ID)
     private_policy = build_lexical_generation_policy(private_graph)
 
-    config_text = (home / "repomap.rpl.toml").read_text(encoding="utf-8")
-    (home / "repomap.rpl.toml").write_text(
+    config_text = (home / "repomap.local.cloe.toml").read_text(encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(
         config_text.replace('privacy = "private-memory"', 'privacy = "public-dev"', 1),
         encoding="utf-8",
     )

@@ -17,7 +17,7 @@ from common_lore_index.service_package.operations import (
     ServicePackageError,
 )
 from common_lore_index.service_package.systemd import SystemdUserAdapter
-from repomap_test_support.executable_authority import controlled_service_authority
+from common_lore_index_test_support.executable_authority import controlled_service_authority
 
 
 class RecordingRunner:
@@ -54,7 +54,7 @@ class Slice9ServiceOperationsIntegrationTests(unittest.TestCase):
         home = root / "home"
         home.mkdir(mode=0o700, exist_ok=True)
         setup_local_runtime(home)
-        config = home / "repomap.rpl.toml"
+        config = home / "repomap.local.cloe.toml"
         config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
         spec = build_service_package_spec(home)
         adapter = SystemdUserAdapter(user_home=root / "user", uid=os.getuid())

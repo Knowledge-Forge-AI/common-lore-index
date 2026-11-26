@@ -11,7 +11,7 @@ from common_lore_index.coordinator._protocol_execution import _run_protocol_work
 from common_lore_index.coordinator.limits import CoordinatorLimits
 from common_lore_index.coordinator.process_supervision import launch_managed_process
 from common_lore_index.coordinator.refresh_adapter import RefreshCapability, create_refresh_capability
-from repomap_test_support.fencing_control_fakes import FencingControl
+from common_lore_index_test_support.fencing_control_fakes import FencingControl
 
 
 @dataclass

@@ -147,7 +147,7 @@ def prepare_workspace_and_identity(
         container_id,
         ("python3", "-c", passwd_probe),
     )
-    # Canonical-main test shim; installed legacy branding is proved separately.
+    # The source-qualification shim uses the canonical console name.
     cli_wrapper = (
         "#!/bin/sh\n"
         'PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}/workspace/tools:'
@@ -157,7 +157,7 @@ def prepare_workspace_and_identity(
     )
     wrapper_probe = (
         "from pathlib import Path; "
-        "path=Path('/sandbox-scratch/bin/repomap-kg'); "
+        "path=Path('/sandbox-scratch/bin/cloe'); "
         f"path.write_text({cli_wrapper!r}, encoding='utf-8'); "
         "path.chmod(0o755)"
     )

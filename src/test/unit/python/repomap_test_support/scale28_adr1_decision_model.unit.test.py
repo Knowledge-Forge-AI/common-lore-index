@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import pytest
 
-from repomap_test_support.scale28_adr1_decision_model import (
+from common_lore_index_test_support.scale28_adr1_decision_model import (
     EvidenceSizedHandoffInputs,
     EvidenceSizedHandoffOutcome,
     derive_evidence_sized_handoff,

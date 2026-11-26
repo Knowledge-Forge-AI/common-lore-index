@@ -52,7 +52,8 @@ def test_explicit_conflict_refuses_before_runtime_writes(tmp_path: Path, existin
     before = snapshot(home)
     with pytest.raises(LocalRuntimeError) as raised:
         setup_local_runtime(home, config_format=requested)
-    assert raised.value.diagnostics[0].code == "runtime-config-format-conflict"
+    expected = "runtime-config-format-invalid" if requested == "legacy" else "legacy-config-filenames"
+    assert raised.value.diagnostics[0].code == expected
     assert snapshot(home) == before and not (home / "runtime").exists()
 
 
@@ -64,7 +65,8 @@ def test_known_sqlite_home_refused_without_backend_switch(tmp_path: Path, suffix
     before = snapshot(home)
     with pytest.raises(LocalRuntimeError) as raised:
         setup_local_runtime(home)
-    assert raised.value.diagnostics[0].code == "sqlite-local-home-requires-local-command"
+    expected = "legacy-config-filenames" if suffix == ".rp.toml" else "sqlite-local-home-requires-local-command"
+    assert raised.value.diagnostics[0].code == expected
     assert snapshot(home) == before and not (home / "runtime").exists()
 
 
@@ -98,6 +100,8 @@ def test_unsafe_generated_target_refused_before_other_files(tmp_path: Path, kind
     with pytest.raises(LocalRuntimeError) as raised:
         setup_local_runtime(home, config_format=family)
     expected = "runtime-config-target-collision" if kind == "case-alias" else "runtime-config-target-unsafe"
+    if family == "legacy":
+        expected = "runtime-config-format-invalid"
     assert raised.value.diagnostics[0].code == expected
     assert snapshot(home) == before
     assert not (home / "runtime").exists()
@@ -139,7 +143,8 @@ def test_mixed_home_refuses_without_setup_state(tmp_path: Path, choice: str | No
     before = snapshot(tmp_path)
     with pytest.raises(LocalRuntimeError) as raised:
         setup_local_runtime(tmp_path, config_format=choice)
-    assert raised.value.diagnostics[0].code == "config-home-mixed-format"
+    expected = "runtime-config-format-invalid" if choice == "legacy" else "config-home-mixed-format"
+    assert raised.value.diagnostics[0].code == expected
     assert snapshot(tmp_path) == before
 
 
@@ -169,25 +174,33 @@ def test_dry_run_command_replays_the_selected_format(tmp_path: Path, family: str
     from common_lore_index.cli.parser import build_parser
 
     home = tmp_path / "absent"
+    if family == "legacy":
+        with pytest.raises(LocalRuntimeError) as raised:
+            setup_local_runtime(home, dry_run=True, config_format=family)
+        assert raised.value.diagnostics[0].code == "runtime-config-format-invalid"
+        assert not home.exists()
+        return
     result = setup_local_runtime(home, dry_run=True, config_format=family)
     assert not home.exists()
     assert str(home) not in json.dumps(result.to_jsonable())
     assert result.planned_command[-2:] == ("--config-format", family)
     args = build_parser().parse_args(result.planned_command)
     setup_local_runtime(args.repo_map_home, config_format=args.config_format)
-    expected = "repomap.local.cloe.toml" if family == "cloe" else "repomap.rpl.toml"
-    assert (home / expected).is_file()
+    assert (home / "repomap.local.cloe.toml").is_file()
 
 
 @pytest.mark.parametrize("payload", ['schema_version = "bad-schema"\n', 'broken = "unterminated\n', 'schema_version = 1\n[storage]\nbackend = "unknown"\n', 'schema_version = 1\nstorage = 1\n'])
-def test_legacy_bootstrap_retains_tolerance_and_existing_bytes(tmp_path: Path, payload: str) -> None:
+def test_legacy_bootstrap_refuses_before_parsing_and_preserves_bytes(tmp_path: Path, payload: str) -> None:
     target = tmp_path / "repomap.rpl.toml"
     target.write_text(payload)
-    assert setup_local_runtime(tmp_path).result == "success"
-    assert target.read_text() == payload
+    before = snapshot(tmp_path)
+    with pytest.raises(LocalRuntimeError) as raised:
+        setup_local_runtime(tmp_path)
+    assert raised.value.diagnostics[0].code == "legacy-config-filenames"
+    assert target.read_text() == payload and snapshot(tmp_path) == before
 
 
-def test_legacy_wrapped_read_failure_keeps_bootstrap_tolerance(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_legacy_bootstrap_refusal_does_not_attempt_a_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     target = tmp_path / "repomap.rpl.toml"
     target.write_text("schema_version = 1\n")
     original = Path.read_text
@@ -198,8 +211,10 @@ def test_legacy_wrapped_read_failure_keeps_bootstrap_tolerance(tmp_path: Path, m
             raise PermissionError("private-sentinel")
         return original(path, *args, **kwargs)
     monkeypatch.setattr(Path, "read_text", refusing)
-    assert setup_local_runtime(tmp_path).result == "success"
-    assert calls and all(path == target for path in calls)
+    with pytest.raises(LocalRuntimeError) as raised:
+        setup_local_runtime(tmp_path)
+    assert raised.value.diagnostics[0].code == "legacy-config-filenames"
+    assert calls == []
     assert target.read_bytes() == b"schema_version = 1\n"
 
 
@@ -211,7 +226,7 @@ def test_nonfile_legacy_base_entries_remain_ignored(tmp_path: Path, kind: str) -
     else:
         base.symlink_to(tmp_path / "absent")
     assert setup_local_runtime(tmp_path).result == "success"
-    assert (tmp_path / "repomap.rpl.toml").is_file()
+    assert (tmp_path / "repomap.local.cloe.toml").is_file()
 
 
 @pytest.mark.parametrize("family", ["legacy", "cloe"])
@@ -220,7 +235,8 @@ def test_undecodable_configuration_is_bounded_before_runtime_writes(tmp_path: Pa
     target.write_bytes(b"\xffprivate-sentinel")
     with pytest.raises(LocalRuntimeError) as raised:
         setup_local_runtime(tmp_path)
-    assert raised.value.diagnostics[0].code == "runtime-config-unavailable"
+    expected = "legacy-config-filenames" if family == "legacy" else "runtime-config-unavailable"
+    assert raised.value.diagnostics[0].code == expected
     assert "private-sentinel" not in str(raised.value)
     assert not (tmp_path / "runtime").exists()
 
@@ -242,12 +258,22 @@ def test_later_cloe_overlay_preserves_effective_operator_settings(tmp_path: Path
 
 @pytest.mark.parametrize("family", ["legacy", "cloe"])
 def test_owned_existing_target_permissions_are_preserved(tmp_path: Path, family: str) -> None:
+    if family == "legacy":
+        target = tmp_path / "repomap.rpl.toml"
+        target.write_text("schema_version = 1\n")
+        target.chmod(0o644)
+        before = snapshot(tmp_path)
+        with pytest.raises(LocalRuntimeError) as raised:
+            setup_local_runtime(tmp_path)
+        assert raised.value.diagnostics[0].code == "legacy-config-filenames"
+        assert target.stat().st_mode & 0o777 == 0o644 and snapshot(tmp_path) == before
+        return
     setup_local_runtime(tmp_path, config_format=family)
-    target = tmp_path / ("repomap.rpl.toml" if family == "legacy" else "repomap.local.cloe.toml")
-    before = target.read_bytes()
+    target = tmp_path / "repomap.local.cloe.toml"
+    original_bytes = target.read_bytes()
     target.chmod(0o644)
     result = setup_local_runtime(tmp_path)
-    assert target.read_bytes() == before and target.stat().st_mode & 0o777 == 0o644
+    assert target.read_bytes() == original_bytes and target.stat().st_mode & 0o777 == 0o644
     assert str(tmp_path) not in json.dumps(result.to_jsonable())
 
 

@@ -16,12 +16,12 @@ from common_lore_index.coordinator.local_lifecycle import initialize_coordinator
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.resource_report_cli_files import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.resource_report_cli_files import (
     limit, metric, private_directory, report_leftovers, report_payload, run_cloe,
 )
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,

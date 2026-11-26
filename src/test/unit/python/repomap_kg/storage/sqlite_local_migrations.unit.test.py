@@ -46,7 +46,7 @@ from common_lore_index.storage.sqlite_local.schema import (
     SCHEMA_V1_SQL,
     LocalStoreError,
 )
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
 
 BINDING = local_binding()
 # Captured from `git show HEAD:.../schema.py` at the LOCAL7 R1 checkpoint before any LOCAL8 edit.

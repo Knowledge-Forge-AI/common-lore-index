@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from repomap_test_support.sqlite_local_harness import interrupt_paused_child
-from repomap_test_support.sqlite_managed_child import ManagedChild
+from common_lore_index_test_support.sqlite_local_harness import interrupt_paused_child
+from common_lore_index_test_support.sqlite_managed_child import ManagedChild
 
 
 def test_managed_child_interrupt_orderly_signal_and_group() -> None:
@@ -89,9 +89,9 @@ def test_interrupt_paused_child_helper(tmp_path: Path) -> None:
 def test_observed_guard_sigint_settles_authentic_receipt_and_owned_group(tmp_path: Path) -> None:
     import coverage
     from runner_coverage import ChildCoverageSession
-    from repomap_test_support import sqlite_local_guard
-    from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-    from repomap_test_support.sqlite_local_harness import LocalHarness, await_ready, release
+    from common_lore_index_test_support import sqlite_local_guard
+    from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+    from common_lore_index_test_support.sqlite_local_harness import LocalHarness, await_ready, release
 
     source = write_shell_source(tmp_path / "source")
     home = write_sqlite_home(tmp_path / "home", graph_toml("interrupt-proof", source))

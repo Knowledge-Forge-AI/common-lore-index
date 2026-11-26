@@ -12,11 +12,11 @@ from common_lore_index.coordinator.client import CoordinatorClientError, LocalCo
 from common_lore_index.coordinator.contracts import normalize_request
 from common_lore_index.coordinator.service import CoordinatorService
 from common_lore_index.coordinator.storage import ControlStore
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 class IdleCoordinator:

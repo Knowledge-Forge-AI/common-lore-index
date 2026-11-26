@@ -20,7 +20,7 @@ from common_lore_index.retrieval.projection_query import (
 from common_lore_index.retrieval.publication_binding import CorrespondenceRefusal
 from common_lore_index.retrieval.query_contracts import CapabilityState
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
-from repomap_test_support.w5_publication_privacy_fixtures import (
+from common_lore_index_test_support.w5_publication_privacy_fixtures import (
     assert_correspondence_mismatch_matrix,
     make_fixture_projection,
     policy_with_resolution,

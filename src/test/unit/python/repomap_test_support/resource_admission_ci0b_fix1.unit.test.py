@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from repomap_test_support.resource_admission import (
+from common_lore_index_test_support.resource_admission import (
     HostSignals,
     MemoryPressure,
     decide_host_admission,
 )
-from repomap_test_support.resource_hygiene_policy import (
+from common_lore_index_test_support.resource_hygiene_policy import (
     GIB,
     MIN_FREE_DISK_BYTES,
     HygieneConfig,

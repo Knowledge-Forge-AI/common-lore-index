@@ -41,12 +41,12 @@ from common_lore_index.runtime.database_roles import (
 )
 from common_lore_index.service_package.environment import apply_service_environment
 from common_lore_index.storage import apply_migrations, default_rdbms_root, read_run_publication
-from repomap_test_support.executable_authority import controlled_psql_copy
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.executable_authority import controlled_psql_copy
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 _WORKER_ENVIRONMENT_KEYS = {"PATH", "PGUSER", "PGPASSWORD", "PSQLRC", "LANG", "LC_ALL", "PYTHONPATH"}
 

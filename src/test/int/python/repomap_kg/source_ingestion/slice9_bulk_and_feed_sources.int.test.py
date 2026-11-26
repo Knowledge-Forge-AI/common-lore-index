@@ -22,7 +22,7 @@ from common_lore_index.ops.ingestion.source_warc import (
     _warc_payload_route,
     _warc_target,
 )
-from repomap_test_support.source_ingestion_integration import (
+from common_lore_index_test_support.source_ingestion_integration import (
     bulk_fixture_root,
     source_fixture,
 )

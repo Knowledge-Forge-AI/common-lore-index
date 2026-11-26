@@ -70,71 +70,46 @@ GitHub, billing, or promotion authority.
 
 ## Current Trigger And Cost Map
 
-Common Lore Index has five hosted lanes across three cost tiers:
+The public [release qualification workflow](../../.github/workflows/repomap-release-qualification.yml)
+runs for pull requests targeting `main` on `opened`, `reopened`,
+`ready_for_review` and `synchronize`. It has no changed-path filter. The
+source-policy job checks same-repository `staging` → `main` and the exact
+candidate identity. A push to the head of a matching open PR starts a new
+campaign, including a docs-only push. A push with no matching open PR does
+not trigger product qualification. Preserve the exact workflow path and
+run identity in the current campaign reservation.
 
-| Candidate event | Lane | Trigger and work |
-| --- | --- | --- |
-| Pull request to `staging` | `repomap-static-analysis` | Automatic for matching paths, including `docs/**` and `AGENTS.md`; runs the sequential PR Fast static aggregate. |
-| Pull request to `staging` | `repomap-unit-tests` | Automatic for matching source, test, tool, package-policy, and workflow paths; docs-only changes do not trigger it; runs the canonical unit population at 85% statement and 85% branch coverage. |
-| Logically approved feature/fix | `repomap-staging-gate` | Explicit `workflow_dispatch` for one exact approved base/head pair; runs smoke then integration at the independent 80/80 integration gate and does not rerun unit. |
-| Pull request to `main` | `repomap-main-source-policy` | Cheap automatic source-topology check; accepts only same-repository `staging` as the source. |
-| Logically approved `staging` to `main` candidate | `repomap-main-system-gate` | Explicit `workflow_dispatch` for one exact approved pair; runs assembled-product system qualification. |
+| Job family | Hosted allocation |
+| --- | --- |
+| Source and export policy | 10 minutes |
+| Pre-review static | 40 minutes |
+| Canonical unit at 85/85 coverage | 60 minutes |
+| Native amd64 component and Rust qualification | 90 minutes |
+| Staging smoke | 30 minutes |
+| Three measured integration parts and one abrupt part | 240 minutes each, concurrent after smoke |
+| Staging integration aggregate | 20 minutes, requires all same-attempt producers |
+| Main system gate | 90 minutes, with the independently owned 3,600-second inner deadline |
+| CodeQL and SBOM/security | 30 minutes per CodeQL job; 20 minutes for SBOM/security |
 
-A change confined to `.github/pull_request_template.md` matches neither PR
-Fast lane's path filter and therefore receives no automatic hosted feedback.
-This does not grant publication authority or change the evidence required for
-other matching paths in the candidate.
+Workflow concurrency is keyed by the pull-request ref with
+`cancel-in-progress: true`. Another event can cancel work already running.
+A start remains spent under the applicable reservation. Keep the frozen PR
+head stable through execution and assessment. Don't use a PR status toggle,
+manual run or no-op push to duplicate a campaign.
 
-The automatic pull-request event types are `opened`, `reopened`,
-`ready_for_review`, and `synchronize`. `pull_request:synchronize` is the
-push-to-open-PR feedback event. A push to a branch with no open matching pull
-request does not currently invoke the two PR Fast workflows, but the push is
-still a remote publication and still requires explicit authorization. A push
-to `main` triggers no hosted workflow.
-
-The current public `repomap-release-qualification.yml` workflow uses
-workflow-level concurrency keyed by `github.ref`, with
-`cancel-in-progress: true`. A newer event can therefore cancel its native
-D12 lane; an execution is spent when that lane starts. The historical
-five-workflow split uses per-workflow/ref concurrency for static and unit
-lanes, while its standalone staging and main-system gates do not cancel
-an authorization run in progress. These mechanisms contain superseded work;
-they do not recover time already spent or authorize repeated pushes.
-
-Under [ADR 0092](../adr/2026/10/0092-public-native-d12-qualification.md), the current public candidate adds the separate native `linux/amd64` job `d12-native-amd64` for the first D12 hosted checkpoint; ARM64 hosted qualification is deferred. The `d12-system-hold` step in `main-system-gate` invokes `system-hold` after candidate binding and Python setup, before SDK or application work, and refuses unresolved prerequisites. This factual workflow description grants no additional trigger or promotion authority.
-
-The workflow job timeouts are conservative hosted qualification envelopes:
-static analysis retains 25 minutes, PR Fast unit has 60 minutes, and Main
-System Gate has 90 minutes. Public staging under ADR0216 runs a 30-minute
-smoke job, three measured integration parts and one abrupt part with a
-240-minute envelope per runner, and a 20-minute aggregate gate. The measured
-and abrupt jobs overlap after smoke succeeds. The aggregate preserves the
-existing `staging-integration-gate` check and fails if any required job fails.
-CI152 exhausted the former 180-minute envelope and CI159 exhausted the
-240-minute monolithic envelope. The historical standalone staging lane
-retains 180 minutes. GitHub-hosted runners are materially slower and more variable than
-the operator laptop. Main System Gate's inner `--system-timeout 3600` semantic
-deadline leaves 30 minutes for checkout, tool installation, image/build setup,
-cleanup, evidence generation, and hosted variance. Product-operation, worker,
-heartbeat, deadlock, cancellation, subprocess, database, individual-test, and
-ordinary local default deadlines remain independently owned and must not be
-expanded to consume the outer envelope. Record actual hosted durations and
-tighten outer envelopes only from evidence; do not add retries that conceal a
-deterministic failure.
-
-Workflow files currently expose manual dispatch on the automatic lanes for
-operator use, but agents must never manually duplicate an automatically
-triggered PR Fast run. Read-only inspection of a bounded set of runs does not
-authorize a rerun, cancellation, dispatch, or other mutation.
+The historical PR Fast and manual staging/system workflows describe
+earlier candidate evidence. The public workflow above owns current
+qualification. A push to `main` doesn't trigger product qualification.
+The existing [website workflow](../../.github/workflows/project-pages.yml)
+deploys website changes on `main` independently.
 
 ## Product milestone publication
 
-[ADR 0071](../adr/2026/09/0071-post-promotion-local-server-cloud-architecture.md)
-keeps development on private main. Public staging receives separately authorized
-significant reviewed milestones, not every slice. The approved hosted campaign
-must pass before a separately manager-authorized public-main v0.0.2 promotion.
-Pre-v0.1.0 previews are GitHub-only; v0.1.0 targets package managers. This policy
-does not itself grant any remote action or alter workflow triggers.
+Use the [v0.1.0 acceptance ledger](../specs/cloe-v010-release-readiness.md)
+and [ADR 0221](../adr/2026/11/0221-v010-release-readiness-sequence.md) for the
+public checkpoints. The public source preview remains v0.0.5 while the
+candidate is prepared. Promotion, tag, release and package publication
+require separate final authority for the accepted candidate.
 
 ## Scoped Local Testing And Pipeline Ownership
 
@@ -184,10 +159,8 @@ The following rules apply in every state, including `AVAILABLE`:
 - Publish only when hosted feedback is decision-relevant and the candidate is
   ready for that tier.
 - Never manually duplicate an automatically triggered PR Fast run.
-- Dispatch the staging gate only after logical approval of one exact
-  review-ready feature/fix candidate.
-- Dispatch the main-system gate only after logical approval of one exact
-  `staging`-to-`main` candidate.
+- Trigger public release qualification only for an authorized exact
+  staging-to-main candidate.
 - Do not rerun a failure until its category is understood and the rerun can add
   information.
 - Do not rerun a superseded SHA.
@@ -364,12 +337,10 @@ declared `EXHAUSTED`:
 - develop and review locally;
 - create one authorized local commit;
 - do not push or open the pull request while `EXHAUSTED`;
-- once the operator declares `AVAILABLE`, publish the final branch once and
-  open one pull request to `staging`;
-- allow the current path filters to trigger static analysis but not the unit
-  lane; and
-- do not dispatch staging until the exact docs candidate is logically approved
-  and staging qualification is actually required.
+- once the operator declares AVAILABLE, retain the docs in the next authorized
+  staging batch;
+- account for the full automatic product campaign if the update changes the
+  head of a matching pull request to main.
 
 This is an illustrative state application, not a permanent assertion that the
 account or repository is exhausted.

@@ -14,7 +14,7 @@ from common_lore_index.graph.keys import file_key
 from common_lore_index.storage.navigation_search import EVIDENCE_SCAN_LIMIT, NavigationSearchQuery
 from common_lore_index.storage.sqlite_local.connection import read_transaction
 from common_lore_index.storage.sqlite_local.navigation_queries import navigation_candidates
-from repomap_test_support.navigation_search_fixtures import (
+from common_lore_index_test_support.navigation_search_fixtures import (
     ALPHA_DOC,
     BETA_DOC,
     BINDING,
@@ -22,9 +22,9 @@ from repomap_test_support.navigation_search_fixtures import (
     GRAPH,
     navigation_home,
 )
-from repomap_test_support.sqlite_local_fixtures import local_binding
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
-from repomap_test_support.navigation_pushdown_fixtures import pushdown_home
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, refusal, structured, tool
+from common_lore_index_test_support.navigation_pushdown_fixtures import pushdown_home
 
 
 def test_scoped_grouped_navigation_over_guarded_sqlite_stdio(tmp_path: Path) -> None:
@@ -32,17 +32,19 @@ def test_scoped_grouped_navigation_over_guarded_sqlite_stdio(tmp_path: Path) -> 
     digest = hashlib.sha256(database.read_bytes()).hexdigest()
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     args = {"graph_id": GRAPH, "query": "beacon", "scope": "docs", "grouping": "source_document", "limit": 1}
-    requests = [initialize(), tool(2, "repomap_navigation_search", args),
-                tool(3, "repomap_navigation_search", {**args, "offset": 1}),
-                tool(4, "repomap_navigation_search", {**args, "scope": "code", "source_binding_id": BINDING,
+    requests = [initialize(), tool(2, "cloe_navigation_search", args),
+                tool(3, "cloe_navigation_search", {**args, "offset": 1}),
+                tool(4, "cloe_navigation_search", {**args, "scope": "code", "source_binding_id": BINDING,
                                                      "source_path_prefix": "src/pkg/"}),
-                tool(5, "repomap_search_nodes", {"graph_id": GRAPH, "query": "beacon", "limit": 1}),
-                tool(6, "repomap_navigation_search", {**args, "grouping": "none", "offset": 1})]
+                tool(5, "cloe_search_nodes", {"graph_id": GRAPH, "query": "beacon", "limit": 1}),
+                tool(6, "cloe_navigation_search", {**args, "grouping": "none", "offset": 1})]
     response = harness.mcp(home, requests)
     assert response == harness.mcp(home, requests)
     first, second = structured(response, 2), structured(response, 3)
     assert first["schema"] == "repomap.navigation_search" and first["count_unit"] == "groups"
     assert first["has_more"] and first["results"][0]["destination"] != second["results"][0]["destination"]
+    assert first["expansion"]["matches_tool"] == "cloe_navigation_search"
+    assert first["expansion"]["member_tool"] == "cloe_node_locations"
     hint = first["results"][0]["members"][0]["source_hints"][0]
     assert hint["evidence_role"] == "direct" and "evidence_key" not in hint and "publication" not in hint
     assert set(hint["raw_observation"]) == {"status", "ordinal", "kind"}
@@ -65,9 +67,9 @@ def test_production_cap_scope_admission_over_guarded_stdio(tmp_path: Path) -> No
     harness = LocalHarness(tmp_path / "pushdown-harness", block_psycopg=True)
     args = {"graph_id": GRAPH, "query": "needle", "scope": "docs", "source_binding_id": BINDING,
             "source_path_prefix": "docs/zzz", "grouping": "source_document"}
-    responses = harness.mcp(home, [initialize(), tool(2, "repomap_navigation_search", args),
-                                   tool(3, "repomap_navigation_search", {**args, "source_path_prefix": "docs/missing"}),
-                                   tool(4, "repomap_navigation_search", {**args, "source_path_prefix": "docs"})])
+    responses = harness.mcp(home, [initialize(), tool(2, "cloe_navigation_search", args),
+                                   tool(3, "cloe_navigation_search", {**args, "source_path_prefix": "docs/missing"}),
+                                   tool(4, "cloe_navigation_search", {**args, "source_path_prefix": "docs"})])
     target, empty, overflow = (structured(responses, i) for i in (2, 3, 4))
     assert target["status"] == "ok" and target["scan"]["nodes"] == 2
     assert target["scan"]["admission"]["vector_decodes"] == 1
@@ -90,9 +92,9 @@ def test_navigation_validation_refuses_without_mutating_publication(tmp_path: Pa
                ({"source_path_prefix": "src"}, "requires source_binding_id"),
                ({"source_binding_id": BINDING, "source_path_prefix": "../src"}, "source-relative")]
     args = {"graph_id": GRAPH, "query": "beacon"}
-    requests = [initialize(), *(tool(i, "repomap_navigation_search", {**args, **options})
+    requests = [initialize(), *(tool(i, "cloe_navigation_search", {**args, **options})
                                for i, (options, _) in enumerate(invalid, 2)),
-                tool(20, "repomap_navigation_search", args)]
+                tool(20, "cloe_navigation_search", args)]
     responses = harness.mcp(home, requests)
     for i, (_, message) in enumerate(invalid, 2):
         assert message in refusal(responses, i)
@@ -114,8 +116,8 @@ def test_unresolved_navigation_cannot_authorize_source_scope(tmp_path: Path, mut
     before = hashlib.sha256(database.read_bytes()).hexdigest()
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     args = {"graph_id": GRAPH, "query": "beacon", "scope": "docs", "grouping": "source_document"}
-    requests = [initialize(), tool(2, "repomap_navigation_search", args),
-                tool(3, "repomap_navigation_search", {**args, "source_binding_id": BINDING,
+    requests = [initialize(), tool(2, "cloe_navigation_search", args),
+                tool(3, "cloe_navigation_search", {**args, "source_binding_id": BINDING,
                                                      "source_path_prefix": "docs"})]
     responses = harness.mcp(home, requests)
     result, scoped = structured(responses, 2), structured(responses, 3)
@@ -137,10 +139,10 @@ def test_literal_kind_and_source_filters_preserve_group_identity(tmp_path: Path)
     harness = LocalHarness(tmp_path / "harness", block_psycopg=True)
     args = {"graph_id": GRAPH, "query": "beacon", "scope": "docs", "grouping": "source_document",
             "source_binding_id": BINDING, "source_path_prefix": "docs/naïve_%", "limit": 50}
-    requests = [initialize(), tool(2, "repomap_navigation_search", args),
-                tool(3, "repomap_navigation_search", {**args, "source_path_prefix": "docs/naïve%"}),
-                tool(4, "repomap_navigation_search", {**args, "kind": "doc.section"}),
-                tool(5, "repomap_navigation_search", {**args, "graph_id": "unpublished"})]
+    requests = [initialize(), tool(2, "cloe_navigation_search", args),
+                tool(3, "cloe_navigation_search", {**args, "source_path_prefix": "docs/naïve%"}),
+                tool(4, "cloe_navigation_search", {**args, "kind": "doc.section"}),
+                tool(5, "cloe_navigation_search", {**args, "graph_id": "unpublished"})]
     responses = harness.mcp(home, requests)
     full, empty, sections, absent = (structured(responses, mid) for mid in range(2, 6))
     assert full["results"] and sections["results"]
@@ -164,12 +166,12 @@ def test_neighborhood_windows_preserve_only_disclosed_source_identities(tmp_path
     args = {"graph_id": GRAPH, "node": node, "direction": direction}
     limits = [{"node_limit": 1}, {"edge_limit": 1}, {"node_limit": 1, "edge_limit": 1},
               {"node_limit": 100, "edge_limit": 100}, {"node_limit": 1, "edge_limit": 100}]
-    requests = [initialize(), tool(2, "repomap_neighborhood", args),
-                *(tool(mid, "repomap_neighborhood", {**args, **options})
+    requests = [initialize(), tool(2, "cloe_neighborhood", args),
+                *(tool(mid, "cloe_neighborhood", {**args, **options})
                   for mid, options in enumerate(limits, 3)),
-                tool(10, "repomap_neighborhood", {**args, "node": "doc.page:absent", "node_limit": 1}),
-                tool(11, "repomap_neighborhood", {**args, "node_limit": None}),
-                tool(12, "repomap_neighborhood", {**args, "node_limit": 0})]
+                tool(10, "cloe_neighborhood", {**args, "node": "doc.page:absent", "node_limit": 1}),
+                tool(11, "cloe_neighborhood", {**args, "node_limit": None}),
+                tool(12, "cloe_neighborhood", {**args, "node_limit": 0})]
     responses = harness.mcp(home, requests)
     full = structured(responses, 2)["result"]
     assert full["center"]["canonical_key"] == node and full["edges"]
@@ -244,16 +246,16 @@ def test_navigation_run_precedence_and_hint_ordering_over_guarded_stdio(tmp_path
     base = {"graph_id": GRAPH, "scope": "docs", "grouping": "source_document"}
     requests = [
         initialize(),
-        tool(2, "repomap_navigation_search", {
+        tool(2, "cloe_navigation_search", {
             **base, "query": "Deployment Operations", "kind": "doc.page",
             "source_binding_id": BINDING, "source_path_prefix": "docs/beta.md",
         }),
-        tool(3, "repomap_navigation_search", {
+        tool(3, "cloe_navigation_search", {
             **base, "query": "Gamma Diagnostics", "kind": "doc.page",
             "source_binding_id": BINDING, "source_path_prefix": "docs/gamma.md",
         }),
-        tool(4, "repomap_navigation_search", {**base, "query": "beacon", "kind": "doc.adr"}),
-        tool(5, "repomap_navigation_search", {
+        tool(4, "cloe_navigation_search", {**base, "query": "beacon", "kind": "doc.adr"}),
+        tool(5, "cloe_navigation_search", {
             **base, "query": "beacon", "kind": "doc.adr",
             "source_binding_id": BINDING, "source_path_prefix": "docs/adr",
         }),
@@ -320,9 +322,9 @@ def test_navigation_bounded_evidence_window_with_wide_payloads_over_guarded_stdi
     base = {"graph_id": GRAPH, "scope": "docs", "kind": "doc.page", "grouping": "source_document"}
     requests = [
         initialize(),
-        tool(2, "repomap_navigation_search", {**base, "query": early_query}),
-        tool(3, "repomap_navigation_search", {**base, "query": "Beacon"}),
-        tool(4, "repomap_navigation_search", {**base, "query": late_query}),
+        tool(2, "cloe_navigation_search", {**base, "query": early_query}),
+        tool(3, "cloe_navigation_search", {**base, "query": "Beacon"}),
+        tool(4, "cloe_navigation_search", {**base, "query": late_query}),
     ]
     responses = harness.mcp(home, requests)
     exact, overflow, selective = (structured(responses, mid) for mid in (2, 3, 4))

@@ -18,7 +18,7 @@ from ci.python_retention_evidence_schema import (
 )
 
 
-from repomap_test_support.retention_evidence_fixture import evidence_source as _make_source
+from common_lore_index_test_support.retention_evidence_fixture import evidence_source as _make_source
 
 
 def test_canonical_json_and_reordering_determinism() -> None:

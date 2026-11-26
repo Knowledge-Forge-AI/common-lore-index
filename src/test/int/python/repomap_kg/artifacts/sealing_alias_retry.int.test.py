@@ -15,7 +15,7 @@ import pytest
 from common_lore_index.artifacts._sealing_meter import SealingMeter
 from common_lore_index.artifacts.sealing_governance import SealingBudget, SealingBudgetExceeded
 from common_lore_index.ops.sealing_plan import build_sealing_plan
-from repomap_test_support.sealing_governance_fixtures import (
+from common_lore_index_test_support.sealing_governance_fixtures import (
     GRAPH_ID, binding_for, graph_for, open_descriptor_count, seal, write_tree,
 )
 

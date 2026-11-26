@@ -2,22 +2,22 @@
 
 from __future__ import annotations
 
-import repomap_test_support.resource_atomic_rename as resource_atomic_rename_owner
+import common_lore_index_test_support.resource_atomic_rename as resource_atomic_rename_owner
 
 import json
 from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_lifecycle_claim import ClaimRegistry
-from repomap_test_support.resource_quarantine_gc import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_lifecycle_claim import ClaimRegistry
+from common_lore_index_test_support.resource_quarantine_gc import (
     QuarantineError,
     quarantine_batch,
 )
-from repomap_test_support.resource_quarantine_records import restore_quarantined
-from repomap_test_support.resource_scratch_history import discover_historical_gc
+from common_lore_index_test_support.resource_quarantine_records import restore_quarantined
+from common_lore_index_test_support.resource_scratch_history import discover_historical_gc
 
 
 NOW = 2_000_000

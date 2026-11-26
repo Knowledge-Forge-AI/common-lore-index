@@ -4,12 +4,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support.resource_local_runtime_test import (
+from common_lore_index_test_support.resource_local_runtime_test import (
     LocalRuntimeTestCreationPlan,
     LocalRuntimeTestManifest,
     LocalRuntimeTestOwnershipError,
 )
-from repomap_test_support.resource_ledger import ResourceKind
+from common_lore_index_test_support.resource_ledger import ResourceKind
 
 
 class Owner:

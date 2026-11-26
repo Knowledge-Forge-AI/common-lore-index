@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_body_study_fixtures import quality_inputs
+from common_lore_index_test_support.retrieval_body_study_fixtures import quality_inputs
 from retrieval_body_study_attempt_journal import BodyAttemptJournal, read_attempt_journal
 from retrieval_body_study_journal_io import JournalRefusal, canonical, digest
 from retrieval_body_study_observation import build_body_failure_envelope, write_body_failure_envelope

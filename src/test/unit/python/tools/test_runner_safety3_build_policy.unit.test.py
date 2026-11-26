@@ -15,11 +15,11 @@ import d12_dependency_preflight as preflight
 import run_tests
 import runner_arguments
 import test_sandbox
-import repomap_test_support.test_cov5k_r2_fix1_executors as fix1_executors
-from repomap_test_support.test_cov5k_r2_fix1_catalog import build_closed_catalog
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support import retrieval_supplement_study as study
-from repomap_test_support.build_profile_debt import (
+import common_lore_index_test_support.test_cov5k_r2_fix1_executors as fix1_executors
+from common_lore_index_test_support.test_cov5k_r2_fix1_catalog import build_closed_catalog
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support import retrieval_supplement_study as study
+from common_lore_index_test_support.build_profile_debt import (
     DEFERRED_BUILD_PROFILE_NODE_IDS,
     enforce_build_profile_authority,
 )
@@ -178,7 +178,7 @@ def _conftest(request):
 
 
 def test_safety3_d12_optional_owner_is_visibly_deselected_and_required(request, monkeypatch):
-    from repomap_test_support import retrieval_body_study as body
+    from common_lore_index_test_support import retrieval_body_study as body
     conftest, lines = _conftest(request), list[str]()
     reporter = SimpleNamespace(write_line=lines.append)
     config, optional, other = _config(), _Item(d12.NODE_ID, d12.MARKER), _Item("src/test/int/python/x.int.test.py::t")
@@ -226,7 +226,7 @@ def test_safety3_d12_optional_owner_is_visibly_deselected_and_required(request, 
 
 
 def test_safety3_d12_leaves_old_build_profile_debt_and_refusals_unchanged(request):
-    debt_file = _REPOSITORY_ROOT / "src/test/support/python/repomap_test_support/build_profile_debt.py"
+    debt_file = _REPOSITORY_ROOT / "src/test/support/python/common_lore_index_test_support/build_profile_debt.py"
     assert hashlib.sha256(debt_file.read_bytes()).hexdigest() == _BASE_DEBT_FILE_SHA256
     assert len(DEFERRED_BUILD_PROFILE_NODE_IDS) == 12 and d12.NODE_ID not in DEFERRED_BUILD_PROFILE_NODE_IDS
     assert d12.MARKER != "requires_build_profile"

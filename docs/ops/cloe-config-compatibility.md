@@ -1,20 +1,13 @@
 # CLOE configuration compatibility
 
-Common Lore Index (CLOE) is Common Lore Index's selected successor identity. This first
-compatibility sequence keeps the existing `repomap-kg` distribution, executable
-and import namespace while preparing the coordinated package cutover.
-It does not move an existing home or database.
+Use the configuration migration commands to convert or recover an explicitly selected predecessor home.
 
 ## Home selection
 
-An explicit `--repo-map-home` wins. Otherwise a nonempty `CLOE_HOME` wins over
-nonempty `REPOMAP_HOME`. Without an explicit selector, a recognizable owned private
-`~/.cloe` wins. Otherwise a recognizable private `~/.repo-map` remains selected,
-including when an unrelated ordinary `~/.cloe` directory exists. The CLI emits
-a bounded compatibility notice on stderr and leaves that unrelated directory
-untouched. Missing defaults select `~/.cloe` without creating it; read-only commands
-never initialize it. Other unsafe or unrecognized states refuse and suggest an
-explicit `CLOE_HOME`. `CLOE_PATH` is unrelated and is ignored.
+An explicit `--repo-map-home` wins over a nonempty `CLOE_HOME`. Without either,
+the default is `~/.cloe`. An empty explicit flag is a usage error. Legacy environment settings such as `REPOMAP_HOME`
+are ignored. Select an older home explicitly for migration. Home selection
+creates no files and refuses unsafe or unrecognized defaults. `CLOE_PATH` is ignored.
 
 Implicit recognition requires an ordinary owned private directory, ordinary owned
 configuration files in one supported family, valid schema/layering and a storage
@@ -25,17 +18,11 @@ homes or fence independently running older binaries. See [ADR0118](../adr/2026/1
 
 ## Supported files and order
 
-A home uses exactly one family:
-
-| Family | Base files, loaded first | Local overlays, loaded second |
-|---|---|---|
-| Legacy | `*.rp.toml` | `*.rpl.toml` |
-| CLOE | `*.cloe.toml`, excluding local overlays | `*.local.cloe.toml` |
-
-Files sort alphabetically within each group. A local overlay is selected once.
-Discovery remains top-level only. A home mixing both families is refused;
-previously ignored CLOE-suffixed files now belong to an active family, so a
-legacy home containing them must resolve that mixture before loading.
+Normal home loading reads only top-level `*.cloe.toml` base files and
+`*.local.cloe.toml` overlays. Files sort alphabetically within each layer
+and the base precedes the overlay. Legacy `*.rp.toml` and `*.rpl.toml`
+filenames can be read by the migration commands. A home mixing families
+is refused.
 Unrelated TOML files retain ignored-file diagnostics. File suffixes do not
 grant permission to publish private configuration.
 
@@ -44,23 +31,23 @@ including configuration, Local state and MCP. An explicit MCP home also wins
 over an ambient CLOE_HOME. An explicitly selected CLOE home supports configured
 Local/Server reading, Local state operations and MCP. Keep the existing schema,
 backend declaration, graph identities,
-source roots and secret references. Other environment-variable names remain
-unchanged in this preparatory slice.
+source roots and secret references. MCP uses the canonical environment
+selectors `CLOE_OPS_CONFIG` for a single graph config file and `CLOE_MCP_CONFIG` for the
+optional JSON project registry, which defaults to `~/.config/common-lore-index/mcp.json`.
+MCP refuses nonempty legacy selectors. Update the client environment to use
+the CLOE names and explicitly select or copy an existing JSON registry.
+The former Codex-specific default is no longer searched.
 
 Container-runtime setup supports the same family selection:
 
 ```sh
-repomap-kg local setup --repo-map-home ./new-home --config-format cloe --dry-run --json
-repomap-kg local setup --repo-map-home ./new-home --config-format cloe --json
+cloe local setup --repo-map-home ./new-home --dry-run --json
+cloe local setup --repo-map-home ./new-home --json
 ```
 
-A fresh implicit `~/.cloe` defaults to CLOE filenames. Explicit custom empty homes
-retain legacy bootstrap behavior unless `--config-format cloe` is selected.
-An existing home's active family is detected automatically. An explicit format
-must match it; this command does not convert a legacy home. Legacy setup creates
-`repomap.rpl.toml`; CLOE setup creates `repomap.local.cloe.toml`, with the same
-template payload and stable runtime/graph/database naming. Loaded CLOE files
-are mounted by their actual names for the container runtime.
+Setup creates `repomap.local.cloe.toml` and mounts loaded CLOE files by
+their actual names. For an existing predecessor home, run the migration
+plan and apply commands before setup.
 
 Setup never overwrites an existing generated target. Its default overlay uses
 the same bootstrap precedence as legacy setup: it can override base-file values,
@@ -98,7 +85,7 @@ refusals. No malformed home is thereby certified usable.
 ## Read-only filename plan
 
 ```sh
-repomap-kg ops config-migration-plan --repo-map-home ./example-home --json
+cloe ops config-migration-plan --repo-map-home ./example-home --json
 ```
 
 The command reads the selected configuration files and validates the existing
@@ -136,8 +123,8 @@ so a plan does not assume a case-sensitive destination.
 
 `--config` is accepted only as a directory alias for this command; it does not
 plan an individual config file. If both options are supplied, `--repo-map-home`
-wins, as in existing ops selection. `REPOMAP_OPS_CONFIG` is an MCP-specific
-legacy setting and is not a planner selector. Use an explicit home when
+wins, as in existing ops selection. The MCP single-file `CLOE_OPS_CONFIG`
+selector does not select a planner home. Use an explicit home when
 planning a collection different from the current home selection.
 
 ## Apply, rollback and finalize
@@ -148,14 +135,14 @@ recover from interruptions. They change configuration filenames only. Values,
 graphs, databases, source roots and the default home do not change.
 
 ```sh
-repomap-kg ops config-migration-apply    --repo-map-home ./example-home            # dry run
-repomap-kg ops config-migration-apply    --repo-map-home ./example-home --yes --json
-repomap-kg ops config-migration-rollback --repo-map-home ./example-home --yes
-repomap-kg ops config-migration-finalize --repo-map-home ./example-home --yes
+cloe ops config-migration-apply    --repo-map-home ./example-home            # dry run
+cloe ops config-migration-apply    --repo-map-home ./example-home --yes --json
+cloe ops config-migration-rollback --repo-map-home ./example-home --yes
+cloe ops config-migration-finalize --repo-map-home ./example-home --yes
 ```
 
 Each command needs an explicit `--repo-map-home`. There is no `--config` alias
-and no `CLOE_HOME`/`REPOMAP_HOME`/default fallback. Without `--yes` a command is
+and no `CLOE_HOME` or default fallback. Without `--yes` a command is
 a dry run: it writes nothing, creates no lock or directory, and chmods nothing.
 `--dry-run` and `--yes` cannot be combined.
 
@@ -267,8 +254,8 @@ output quotes filenames.
 An interrupted apply (crash, power loss or `failed-recovery-required`):
 
 ```sh
-repomap-kg ops config-migration-rollback --repo-map-home ./example-home        # inspect
-repomap-kg ops config-migration-rollback --repo-map-home ./example-home --yes  # restore legacy names
+cloe ops config-migration-rollback --repo-map-home ./example-home        # inspect
+cloe ops config-migration-rollback --repo-map-home ./example-home --yes  # restore legacy names
 ```
 
 Afterwards you can run apply again. Recovery still works after a reboot. It

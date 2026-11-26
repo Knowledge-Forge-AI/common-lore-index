@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.ops.config_local import (
     load_graph_registry_config,
     load_graph_registry_config_home,
@@ -42,13 +42,11 @@ from common_lore_index.server._server_memory_parsing import (
     validate_server_memory_offset as validate_server_memory_offset,
     validate_server_memory_query as validate_server_memory_query,
 )
+from common_lore_index.ops.config_loading import OPS_CONFIG_ENV as ENV_OPS_CONFIG, require_canonical_mcp_selectors
 from common_lore_index.server._server_memory_records import (
     ServerMemoryDiagnostic as ServerMemoryDiagnostic,
     ServerMemoryEntry as ServerMemoryEntry,
 )
-
-
-ENV_OPS_CONFIG = "REPOMAP_OPS_CONFIG"
 
 
 @dataclass(frozen=True)
@@ -90,7 +88,7 @@ def server_memory_summary_payload(
     config = load_server_memory_ops_config(config_path, config_home=config_home)
     catalog = load_server_memory_catalog(config)
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "enabled": catalog.enabled,
@@ -126,7 +124,7 @@ def server_memory_search_payload(
     ]
     window = matched[safe_offset : safe_offset + safe_limit]
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "enabled": catalog.enabled,
@@ -238,6 +236,7 @@ def load_server_memory_ops_config(
     config_home: str | Path | None = None,
 ) -> GraphRegistryConfig:
     """Server memory reads only ``[server_memory]``; any backend's home works."""
+    require_canonical_mcp_selectors()
     if config_home is not None:
         return load_graph_registry_config_home(config_home)
     path_value = config_path or os.environ.get(ENV_OPS_CONFIG)

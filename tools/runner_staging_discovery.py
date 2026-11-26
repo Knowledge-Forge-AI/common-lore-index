@@ -13,7 +13,7 @@ import tempfile
 import time
 from typing import Any
 
-from repomap_test_support.test_scratch import establish_run
+from common_lore_index_test_support.test_scratch import establish_run
 from runner_failure_evidence import (
     CHILD_SCHEMA, DISCOVERY_SCHEMA, candidate_at_start, diagnostic_path, error_record,
     persist_diagnostic, print_diagnostic, read_diagnostic,
@@ -36,7 +36,7 @@ DEFAULT_DISCOVERY_TIMEOUT_SECONDS = 120.0
 def filter_child_environment(environ: Mapping[str, str]) -> dict[str, str]:
     """Pass test-owned inputs, tool lookup and sandbox admission, not bootstrap."""
     exact = {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TZ", "TMPDIR", "TMP", "TEMP",
-             "REPOMAP_GO_HELPER", "DOCKER_HOST",
+             "CLOE_GO_HELPER", "DOCKER_HOST",
              "DOCKER_CONFIG", "DOCKER_CONTEXT", "PYTEST_DISABLE_PLUGIN_AUTOLOAD",
              "PYTEST_ADDOPTS", "PYTEST_PLUGINS"}
     projected = {key: value for key, value in environ.items()

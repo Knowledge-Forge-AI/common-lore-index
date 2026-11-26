@@ -8,12 +8,12 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.retrieval_supplement_fixtures import (
+from common_lore_index_test_support.retrieval_supplement_fixtures import (
     make_test_bindings, make_test_catalog_payload, make_test_corpus_payload,
     make_test_exposures, make_test_identity, make_test_policy,
 )
-from repomap_test_support.retrieval_supplement_prepare import check_checkpoint, prepare_checkpoint
-from repomap_test_support.retrieval_supplement_source import supplement_source_snapshot
+from common_lore_index_test_support.retrieval_supplement_prepare import check_checkpoint, prepare_checkpoint
+from common_lore_index_test_support.retrieval_supplement_source import supplement_source_snapshot
 from retrieval_supplement_catalog import parse_catalog
 from retrieval_supplement_files import publish_member
 from retrieval_supplement_freeze import build_input_pin

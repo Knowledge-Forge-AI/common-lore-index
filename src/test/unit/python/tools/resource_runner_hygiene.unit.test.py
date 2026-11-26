@@ -9,12 +9,12 @@ from unittest.mock import Mock, patch
 
 import run_tests
 
-from repomap_test_support.resource_hygiene_policy import (
+from common_lore_index_test_support.resource_hygiene_policy import (
     HygieneConfig,
     HygieneConfigError,
     HygieneProfile,
 )
-from repomap_test_support.resource_retention import TerminalOutcome
+from common_lore_index_test_support.resource_retention import TerminalOutcome
 
 
 def _layout(tmp_path: Path):

@@ -1,6 +1,6 @@
 import unittest
 
-from repomap_test_support.bash import (
+from common_lore_index_test_support.bash import (
     BASH_FIXTURE_ROOT as FIXTURE_ROOT,
     FAKE_SECRET_MARKERS,
     first_observation,

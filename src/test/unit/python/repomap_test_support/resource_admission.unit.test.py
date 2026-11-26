@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from repomap_test_support.resource_admission import (
+from common_lore_index_test_support.resource_admission import (
     HostSignals,
     MemoryPressure,
     decide_host_admission,
     read_memory_pressure,
     read_memory_pressure_reading,
 )
-from repomap_test_support.resource_hygiene_policy import GIB, HygieneConfig, HygieneProfile
+from common_lore_index_test_support.resource_hygiene_policy import GIB, HygieneConfig, HygieneProfile
 
 
 def _signals(
@@ -130,7 +130,7 @@ def test_memory_pressure_is_unavailable_only_when_both_layers_are_silent(monkeyp
 
     monkeypatch.setattr("subprocess.run", unavailable)
     monkeypatch.setattr(
-        "repomap_test_support.resource_admission.read_proc_meminfo_reading",
+        "common_lore_index_test_support.resource_admission.read_proc_meminfo_reading",
         lambda: (MemoryPressure.UNAVAILABLE, None),
     )
 

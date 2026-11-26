@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -17,7 +17,7 @@ from common_lore_index.storage import (
     query_nix_summary,
 )
 
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     canonicalization_fixture,
 )
 
@@ -218,7 +218,7 @@ class StorageNixDomainSummaryIntegrationTests(unittest.TestCase):
                 )
             )
 
-            from common_lore_index.server.mcp import repomap_nix_summary
+            from common_lore_index.server.mcp import cloe_nix_summary
 
             with tempfile.TemporaryDirectory() as ops_config_tmpdir:
                 ops_config_path = Path(ops_config_tmpdir) / "nix-summary4.local.toml"
@@ -271,13 +271,13 @@ mode = "read_only"
                 with patch.dict(
                     "os.environ",
                     {
-                        "REPOMAP_OPS_CONFIG": str(ops_config_path),
-                        "REPOMAP_PSQL_COMMAND": postgres.psql_command,
+                        "CLOE_OPS_CONFIG": str(ops_config_path),
+                        "CLOE_PSQL_COMMAND": postgres.psql_command,
                     },
                     clear=False,
                 ):
-                    public_mcp_payload = repomap_nix_summary(graph_id="repo-map")
-                    private_mcp_payload = repomap_nix_summary(
+                    public_mcp_payload = cloe_nix_summary(graph_id="repo-map")
+                    private_mcp_payload = cloe_nix_summary(
                         graph_id="private-visible"
                     )
 

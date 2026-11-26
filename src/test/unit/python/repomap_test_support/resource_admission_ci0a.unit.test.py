@@ -6,14 +6,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support.resource_admission import (
+from common_lore_index_test_support.resource_admission import (
     HostSignals,
     MemoryPressure,
     decide_host_admission,
     read_memory_pressure_reading,
     read_proc_meminfo_reading,
 )
-from repomap_test_support.resource_hygiene_policy import (
+from common_lore_index_test_support.resource_hygiene_policy import (
     GIB,
     HygieneConfig,
     HygieneConfigError,
@@ -72,7 +72,7 @@ def test_missing_macos_tool_falls_back_to_proc_meminfo(monkeypatch, tmp_path):
 
     monkeypatch.setattr("subprocess.run", refuse)
     monkeypatch.setattr(
-        "repomap_test_support.resource_admission.read_proc_meminfo_reading",
+        "common_lore_index_test_support.resource_admission.read_proc_meminfo_reading",
         lambda: read_proc_meminfo_reading(write_meminfo(tmp_path, MEMINFO)),
     )
 
@@ -85,7 +85,7 @@ def test_failing_macos_tool_falls_back_to_proc_meminfo(monkeypatch, tmp_path):
         lambda *args, **kwargs: SimpleNamespace(returncode=1, stdout="", stderr=""),
     )
     monkeypatch.setattr(
-        "repomap_test_support.resource_admission.read_proc_meminfo_reading",
+        "common_lore_index_test_support.resource_admission.read_proc_meminfo_reading",
         lambda: read_proc_meminfo_reading(write_meminfo(tmp_path, MEMINFO)),
     )
 

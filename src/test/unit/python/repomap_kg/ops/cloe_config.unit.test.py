@@ -22,7 +22,7 @@ def test_cloe_home_precedence_without_creation(tmp_path: Path, monkeypatch: pyte
     assert resolve_repo_map_home() == new
     assert resolve_repo_map_home(explicit) == explicit
     monkeypatch.setenv("CLOE_HOME", "")
-    assert resolve_repo_map_home() == old
+    assert resolve_repo_map_home() == tmp_path / ".cloe"
     monkeypatch.delenv("REPOMAP_HOME")
     monkeypatch.setenv("CLOE_PATH", str(new))
     assert resolve_repo_map_home() == tmp_path / ".cloe"
@@ -148,21 +148,26 @@ def test_explicit_mcp_home_temporarily_overrides_ambient_cloe_home(
     original, selected = str(tmp_path / "ambient"), str(tmp_path / "explicit")
     monkeypatch.setenv("CLOE_HOME", original)
     monkeypatch.setenv("REPOMAP_HOME", original)
+    monkeypatch.setenv("CLOE_OPS_CONFIG", "incumbent-config")
 
     def serve() -> int:
         assert resolve_repo_map_home() == Path(selected)
+        assert os.environ["REPOMAP_HOME"] == original
+        assert os.environ["CLOE_OPS_CONFIG"] == "explicit-config"
         if fails:
             raise RuntimeError("serve failure")
         return 0
 
     monkeypatch.setattr(mcp, "serve_stdio", serve)
-    args = argparse.Namespace(command="mcp", mcp_command="serve", repo_map_home=selected, config=None)
+    args = argparse.Namespace(command="mcp", mcp_command="serve", repo_map_home=selected, config="explicit-config")
     if fails:
         with pytest.raises(RuntimeError, match="serve failure"):
             dispatch_observation_commands(args, ModuleType("cloe_test_commands"), lambda *_args, **_kwargs: None)
     else:
         assert dispatch_observation_commands(args, ModuleType("cloe_test_commands"), lambda *_args, **_kwargs: None) == 0
     assert resolve_repo_map_home() == Path(original)
+    assert os.environ["CLOE_OPS_CONFIG"] == "incumbent-config"
+    assert os.environ["REPOMAP_HOME"] == original
 
 
 def test_preexisting_target_name_refuses_conversion() -> None:
@@ -294,3 +299,64 @@ def test_journal_read_refuses_a_mismatched_admitted_snapshot(
     assert outcome["result"] == "refused" and outcome["writes_performed"] == 0
     assert outcome["refusals"] == [{"code": "config-migration-journal-invalid", "file": ""}]
     assert journal.read_bytes() == before
+
+
+def test_mcp_registry_default_is_optional_with_unset_selectors(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from common_lore_index.server.mcp_core import load_mcp_config, resolve_mcp_config_path
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    for selector in ("CLOE_MCP_CONFIG", "REPOMAP_MCP_CONFIG", "REPOMAP_OPS_CONFIG"):
+        monkeypatch.delenv(selector, raising=False)
+    assert resolve_mcp_config_path(None) == (tmp_path / ".config/common-lore-index/mcp.json", False)
+    assert load_mcp_config().projects == {}
+    assert not (tmp_path / ".config").exists()
+    assert not (tmp_path / ".cloe").exists()
+
+
+@pytest.mark.parametrize("selector", ["REPOMAP_OPS_CONFIG", "REPOMAP_MCP_CONFIG"])
+def test_memory_readback_refuses_stale_mcp_config_authority(monkeypatch: pytest.MonkeyPatch, selector: str) -> None:
+    from common_lore_index.server.memory_bridge import load_server_memory_ops_config
+
+    monkeypatch.setenv(selector, "legacy-selector-value-must-not-leak")
+    with pytest.raises(ValueError, match="^legacy-mcp-config-selector:") as refused:
+        load_server_memory_ops_config()
+    assert "legacy-selector-value-must-not-leak" not in str(refused.value)
+
+
+def test_mcp_connection_uses_canonical_environment_defaults(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from common_lore_index.server.mcp_core import StorageConnection, storage_connection
+
+    registry = tmp_path / "projects.json"
+    registry.write_text("{}")
+    monkeypatch.setenv("CLOE_MCP_CONFIG", str(registry))
+    monkeypatch.delenv("CLOE_HOME", raising=False)
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
+    for key, value in {"HOST": "public-fixture", "PORT": "55489", "USER": "readonly",
+                       "DATABASE": "fixture_db"}.items():
+        monkeypatch.delenv(f"REPOMAP_PG_{key}", raising=False)
+        monkeypatch.setenv(f"CLOE_PG_{key}", value)
+    monkeypatch.delenv("REPOMAP_PSQL_COMMAND", raising=False)
+    monkeypatch.setenv("CLOE_PSQL_COMMAND", "/fixture/bin/psql")
+    connection = storage_connection(root_path="/public-source", graph_stores=lambda _cfg: pytest.fail("queried"))
+    assert isinstance(connection, StorageConnection)
+    assert (connection.pg_host, connection.pg_port, connection.pg_user, connection.pg_database) == (
+        "public-fixture", "55489", "readonly", "fixture_db"
+    )
+    assert connection.psql_command == "/fixture/bin/psql"
+
+
+@pytest.mark.parametrize("suffix", [".rp.toml", ".rpl.toml"])
+def test_normal_config_owners_refuse_legacy_before_reading(tmp_path: Path, suffix: str) -> None:
+    from common_lore_index.ops.config_loading import load_ops_config
+    from common_lore_index.ops.config_local import load_graph_registry_config
+
+    legacy = tmp_path / ("config" + suffix)
+    legacy.write_text("malformed private content")
+    for loader in (load_ops_config, load_graph_registry_config):
+        for selected in (tmp_path, legacy):
+            with pytest.raises(OpsConfigError) as raised:
+                loader(selected)
+            assert raised.value.diagnostics[0].code == "legacy-config-filenames"
+            assert "malformed private content" not in str(raised.value)

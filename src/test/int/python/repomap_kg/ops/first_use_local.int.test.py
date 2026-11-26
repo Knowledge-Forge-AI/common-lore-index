@@ -17,24 +17,24 @@ from common_lore_index.ops.config_local import LocalSqliteConfig, load_graph_reg
 from common_lore_index.ops.local_refresh import refresh_local_graph
 from common_lore_index.ops.resource_view import ResourceObserver
 from common_lore_index.ops.resource_view._projections import project_compact_context
-from repomap_test_support.context_assertions import assert_valid_context_packet
-from repomap_test_support.governance3_first_use_sealing import (
+from common_lore_index_test_support.context_assertions import assert_valid_context_packet
+from common_lore_index_test_support.governance3_first_use_sealing import (
     assert_planned_refusal, assert_v2_sealing_counts, manifest_for_pin, mixed_inventory,
 )
-from repomap_test_support.first_use_workflow import (
+from common_lore_index_test_support.first_use_workflow import (
     first_use_expectations,
     guard_first_use_root,
 )
-from repomap_test_support.resource_report_cli_files import private_directory, report_payload
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.resource_report_cli_files import private_directory, report_payload
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_BINDINGS,
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.sqlite_local_harness import LocalHarness
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness
 
 
 def _json(completed: Any) -> dict[str, Any]:

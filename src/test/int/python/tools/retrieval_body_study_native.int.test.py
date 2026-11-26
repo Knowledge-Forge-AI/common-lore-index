@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_body_study import MARKER, require_body_admission
-from repomap_test_support.retrieval_body_study_driver import run_authenticated_body_study
+from common_lore_index_test_support.retrieval_body_study import MARKER, require_body_admission
+from common_lore_index_test_support.retrieval_body_study_driver import run_authenticated_body_study
 from retrieval_body_study_contracts import INNER_BODY_REPORT_DIR, TOTAL_RECORDS
 from retrieval_body_study_values import SLOT_COUNT
 

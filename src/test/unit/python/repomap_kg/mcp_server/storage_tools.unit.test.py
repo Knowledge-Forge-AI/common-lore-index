@@ -1,12 +1,12 @@
 from unittest.mock import patch
 
 from common_lore_index.storage import CanonicalStorageSummaryRecord
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class McpServerStorageToolUnitTests(McpServerTestSupport):
     def test_missing_project_and_default_are_rejected_before_query(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_status
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_status
 
         config_path = self.write_mcp_config(
             {
@@ -26,14 +26,14 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
                     RepoMapMcpError,
                     "unknown legacy MCP project or graph-registry graph_id",
                 ):
-                    repomap_status(project="missing")
+                    cloe_status(project="missing")
                 with self.assertRaisesRegex(RepoMapMcpError, "root_path is required"):
-                    repomap_status()
+                    cloe_status()
 
         query.assert_not_called()
 
     def test_project_and_explicit_overrides_are_rejected_unless_allowed(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_status
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_status
 
         config_path = self.write_mcp_config(
             {
@@ -46,13 +46,13 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
             }
         )
 
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             with patch("common_lore_index.server.mcp.query_canonical_storage_summary") as query:
                 with self.assertRaisesRegex(
                     RepoMapMcpError,
                     "project cannot be combined with explicit",
                 ):
-                    repomap_status(
+                    cloe_status(
                         project="repo-map",
                         root_path="/tmp/other",
                     )
@@ -60,7 +60,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
                     RepoMapMcpError,
                     "project cannot be combined with explicit",
                 ):
-                    repomap_status(
+                    cloe_status(
                         project="repo-map",
                         pg_database="other",
                     )
@@ -78,7 +78,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
                 },
             }
         )
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(allowed_config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(allowed_config_path)}):
             with patch(
                 "common_lore_index.server.mcp.query_canonical_storage_summary",
                 return_value=CanonicalStorageSummaryRecord(
@@ -93,7 +93,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
                     canonical_evidence=11,
                 ),
             ) as query:
-                payload = repomap_status(
+                payload = cloe_status(
                     project="repo-map",
                     root_path="/tmp/other",
                     pg_database="other_db",
@@ -104,7 +104,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
         self.assertEqual(query.call_args.kwargs["root_path"], "/tmp/other")
 
     def test_explicit_mode_wins_over_default_project_for_development(self):
-        from common_lore_index.server.mcp import repomap_status
+        from common_lore_index.server.mcp import cloe_status
 
         config_path = self.write_mcp_config(
             {
@@ -118,7 +118,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
             }
         )
 
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             with patch(
                 "common_lore_index.server.mcp.query_canonical_storage_summary",
                 return_value=CanonicalStorageSummaryRecord(
@@ -133,7 +133,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
                     canonical_evidence=11,
                 ),
             ) as query:
-                payload = repomap_status(
+                payload = cloe_status(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                 )
@@ -144,23 +144,23 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
         self.assertEqual(query.call_args.kwargs["root_path"], "/tmp/fixture")
 
     def test_status_requires_explicit_root_path_and_database(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_status
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_status
 
         with self.assertRaisesRegex(RepoMapMcpError, "root_path is required"):
-            repomap_status(root_path="", pg_database="postgres")
+            cloe_status(root_path="", pg_database="postgres")
 
         with patch.dict("os.environ", {}, clear=True):
             with self.assertRaisesRegex(RepoMapMcpError, "pg_database is required"):
-                repomap_status(root_path="/tmp/fixture")
+                cloe_status(root_path="/tmp/fixture")
 
     def test_status_rejects_non_psql_command_names(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_status
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_status
 
         with self.assertRaisesRegex(
             RepoMapMcpError,
             "psql_command must name a psql executable",
         ):
-            repomap_status(
+            cloe_status(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 psql_command="/usr/bin/not-psql",
@@ -170,23 +170,23 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
             RepoMapMcpError,
             "psql_command must not contain whitespace",
         ):
-            repomap_status(
+            cloe_status(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 psql_command="psql --echo-all",
             )
 
     def test_status_reads_postgres_connection_defaults_from_environment(self):
-        from common_lore_index.server.mcp import repomap_status
+        from common_lore_index.server.mcp import cloe_status
 
         with patch.dict(
             "os.environ",
             {
-                "REPOMAP_PG_HOST": "/tmp/pg",
-                "REPOMAP_PG_PORT": "5433",
-                "REPOMAP_PG_USER": "slair",
-                "REPOMAP_PG_DATABASE": "repomap",
-                "REPOMAP_PSQL_COMMAND": "/opt/postgres/bin/psql",
+                "CLOE_PG_HOST": "/tmp/pg",
+                "CLOE_PG_PORT": "5433",
+                "CLOE_PG_USER": "slair",
+                "CLOE_PG_DATABASE": "repomap",
+                "CLOE_PSQL_COMMAND": "/opt/postgres/bin/psql",
             },
             clear=False,
         ):
@@ -204,7 +204,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
                     canonical_evidence=11,
                 ),
             ) as query:
-                payload = repomap_status(root_path="/tmp/fixture")
+                payload = cloe_status(root_path="/tmp/fixture")
 
         self.assertEqual(payload["repository_name"], "fixture")
         self.assertEqual(
@@ -217,7 +217,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
         )
 
     def test_status_returns_read_only_summary_without_database_ids(self):
-        from common_lore_index.server.mcp import repomap_status
+        from common_lore_index.server.mcp import cloe_status
 
         with patch(
             "common_lore_index.server.mcp.query_canonical_storage_summary",
@@ -233,7 +233,7 @@ class McpServerStorageToolUnitTests(McpServerTestSupport):
                 canonical_evidence=11,
             ),
         ) as query:
-            payload = repomap_status(
+            payload = cloe_status(
                 root_path="/tmp/fixture",
                 pg_host="/tmp/pg",
                 pg_port="5432",

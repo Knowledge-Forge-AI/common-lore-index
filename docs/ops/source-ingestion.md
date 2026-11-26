@@ -59,7 +59,7 @@ conditional, inherited, merged, interpolated, indirect, and helper-generated
 output shapes re-enter only through a separately accepted static rule; Common Lore Index
 does not evaluate Nix.
 
-After an authorized refresh, use `repomap-kg ops graph-files --graph
+After an authorized refresh, use `cloe ops graph-files --graph
 <graph-id> --json` for countable source-qualified membership and candidate
 readback. Keep private dogfood to redacted/count-only inspection. Do not commit
 the concrete operations TOML, source paths, private bytes, raw observations, or
@@ -68,7 +68,7 @@ credentials.
 ## Configured Feed Ingestion
 
 ```sh
-repomap-kg sources ingest-feed --config <feed-source.toml> \
+cloe sources ingest-feed --config <feed-source.toml> \
   --root-path <repo-root> --json
 ```
 
@@ -82,7 +82,7 @@ different in-root directory.
 ## Local Archive Import
 
 ```sh
-repomap-kg sources import-archive --config <archive-source.toml> \
+cloe sources import-archive --config <archive-source.toml> \
   --root-path <repo-root> --json
 ```
 
@@ -92,7 +92,7 @@ a local artifact already on disk; nothing is fetched.
 ## Local WARC Import
 
 ```sh
-repomap-kg sources import-warc --config <warc-source.toml> \
+cloe sources import-warc --config <warc-source.toml> \
   --root-path <repo-root> --json
 ```
 
@@ -102,20 +102,20 @@ file already on disk; nothing is fetched.
 ## Bulk Corpus Plan And Import
 
 ```sh
-repomap-kg bulk plan --config <bulk-corpus.toml> --json
-repomap-kg bulk import --config <bulk-corpus.toml> --root-path <repo-root> --json
+cloe bulk plan --config <bulk-corpus.toml> --json
+cloe bulk import --config <bulk-corpus.toml> --root-path <repo-root> --json
 ```
 
 `bulk plan` projects the plan for one explicitly configured local corpus
 without acquiring or publishing anything. `bulk import` performs the
 acquisition-only import. Inspect aggregate results afterward with
-`repomap-kg storage bulk-summary --root-path <repo-root> --json`.
+`cloe storage bulk-summary --root-path <repo-root> --json`.
 
 ## Documented API Acquisition
 
 ```sh
-repomap-kg api plan --config <api-source.toml> --json
-repomap-kg api acquire --config <api-source.toml> --root-path <repo-root> --json
+cloe api plan --config <api-source.toml> --json
+cloe api acquire --config <api-source.toml> --root-path <repo-root> --json
 ```
 
 The config must provide source policy, read-only consent, an opaque
@@ -126,15 +126,15 @@ environment variables or keychains, implement OAuth, call live provider
 APIs, mutate provider state, or schedule work. Acquired artifacts land under
 `.repomap/api-runs/...` with redacted response artifacts. Inspect aggregate
 API provenance afterward with
-`repomap-kg storage api-summary --root-path <repo-root> --json`; that
+`cloe storage api-summary --root-path <repo-root> --json`; that
 readback never reads credentials, opens response bodies, or calls
 transports.
 
 ## GitHub REST Fixture Acquisition
 
 ```sh
-repomap-kg github plan --config <github-source.toml> --json
-repomap-kg github acquire --config <github-source.toml> --root-path <repo-root> --json
+cloe github plan --config <github-source.toml> --json
+cloe github acquire --config <github-source.toml> --root-path <repo-root> --json
 ```
 
 Plans and acquires one explicitly configured GitHub REST fixture source under
@@ -148,7 +148,7 @@ observations have been published to storage: `storage nodes` /
 `storage edges` with feed and config kinds, `storage explain-canonical-edge`
 for evidence, and the domain summaries (`storage bulk-summary`,
 `storage api-summary`). Read-only MCP source/feed tools
-(`repomap_ingested_sources`, `repomap_source_summary`, `repomap_source_runs`,
-`repomap_source_feed_items`, `repomap_explain_source_feed_item`,
-`repomap_source_references`) expose the same already-ingested metadata; see
+(`cloe_ingested_sources`, `cloe_source_summary`, `cloe_source_runs`,
+`cloe_source_feed_items`, `cloe_explain_source_feed_item`,
+`cloe_source_references`) expose the same already-ingested metadata; see
 the `repomap-mcp-readback` skill.

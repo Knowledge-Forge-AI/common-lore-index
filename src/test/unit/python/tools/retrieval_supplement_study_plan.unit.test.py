@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_supplement_study_fixtures import make_study_plan
+from common_lore_index_test_support.retrieval_supplement_study_fixtures import make_study_plan
 from retrieval_supplement_study_contracts import STUDY_INNER_PLAN_SCHEMA, StudyRefusal
 from retrieval_supplement_study_plan import (
     StudyAdmission,

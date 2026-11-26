@@ -30,15 +30,15 @@ from common_lore_index.graph.multi_source_records import (
 )
 from common_lore_index.ops.config_binding_records import OpsGraphSourceBindingConfig
 from common_lore_index.ops.config_records import OpsGraphConfig
-from common_lore_index.server.mcp import repomap_search_nodes, repomap_search_observations
+from common_lore_index.server.mcp import cloe_search_nodes, cloe_search_observations
 from common_lore_index.server.ops import like_escape
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class Slice11GraphReadbackCompositionIntegrationTests(unittest.TestCase):
@@ -155,8 +155,8 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-                payload = repomap_search_nodes(graph_id="repo-map", query="100%_done")
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
+                payload = cloe_search_nodes(graph_id="repo-map", query="100%_done")
             self.assertEqual(payload["result_count"], 1)
             self.assertEqual(payload["results"][0]["canonical_key"], "file:src/app_100%25_done.py")
 
@@ -167,9 +167,9 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-                files_payload = repomap_search_nodes(graph_id="repo-map", query="helper", kind="file")
-                funcs_payload = repomap_search_nodes(graph_id="repo-map", query="helper", kind="python.function")
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
+                files_payload = cloe_search_nodes(graph_id="repo-map", query="helper", kind="file")
+                funcs_payload = cloe_search_nodes(graph_id="repo-map", query="helper", kind="python.function")
             self.assertEqual(files_payload["result_count"], 1)
             self.assertEqual(files_payload["results"][0]["canonical_key"], "file:src/helper.py")
             self.assertEqual(funcs_payload["result_count"], 1)
@@ -182,8 +182,8 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-                payload = repomap_search_observations(
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
+                payload = cloe_search_observations(
                     graph_id="repo-map", query="format", path="src/helper.py"
                 )
             self.assertEqual(payload["result_count"], 1)
@@ -196,8 +196,8 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-                payload = repomap_search_observations(
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
+                payload = cloe_search_observations(
                     graph_id="repo-map", query="format", include_raw=False
                 )
             self.assertFalse(payload["raw_payload_policy"]["include_raw"])
@@ -213,8 +213,8 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-                payload = repomap_search_nodes(graph_id="repo-map", query="common")
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
+                payload = cloe_search_nodes(graph_id="repo-map", query="common")
             self.assertEqual(payload["result_count"], 1)
             self.assertEqual(payload["results"][0]["canonical_key"], "file:src/common.py")
 
@@ -247,8 +247,8 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-                payload = repomap_search_observations(
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
+                payload = cloe_search_observations(
                     graph_id="repo-map", query="format", include_raw=True
                 )
             self.assertTrue(payload["raw_payload_policy"]["include_raw"])
@@ -359,9 +359,9 @@ database = "{postgres.database}"
             apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
             self._populate_test_graph(postgres)
             config_path = self._write_ops_config(postgres)
-            with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
-                warc_payload = repomap_search_nodes(graph_id="repo-map", query="warc")
-                shell_payload = repomap_search_nodes(graph_id="repo-map", query="deploy")
+            with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
+                warc_payload = cloe_search_nodes(graph_id="repo-map", query="warc")
+                shell_payload = cloe_search_nodes(graph_id="repo-map", query="deploy")
             self.assertEqual(warc_payload["result_count"], 1)
             self.assertEqual(warc_payload["results"][0]["kind"], "warc.document")
             self.assertEqual(shell_payload["result_count"], 1)

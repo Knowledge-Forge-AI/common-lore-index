@@ -36,16 +36,16 @@ from common_lore_index.storage.postgres_node_locations import (
     read_postgres_node_locations_with_executor,
 )
 from common_lore_index.storage.psql import last_output_line
-from repomap_test_support.portable_publication_fixtures import publish_portable_bundle
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.portable_publication_fixtures import publish_portable_bundle
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
     publish_and_load_sqlite_corpus,
 )
@@ -180,7 +180,7 @@ def test_real_portable_postgres_navigation_matches_sqlite_and_keeps_safe_identit
             database=postgres.database, user=postgres.user, password=postgres.password,
         )
         postgres_state = publish_and_load_postgres_corpus(postgres_home, psql_command=postgres.psql_command)
-        monkeypatch.setenv("REPOMAP_PSQL_COMMAND", postgres.psql_command)
+        monkeypatch.setenv("CLOE_PSQL_COMMAND", postgres.psql_command)
         postgres_store = investigation_stores(load_graph_registry_config_home(postgres_home)).investigation_store()
         for query in (
             NavigationSearchQuery(query="RetrievalExecutionPipeline", limit=5),
@@ -220,7 +220,7 @@ def test_read_status_role_can_use_public_navigation_without_lexical_schema_or_ow
             tmp_path / "read-status-home", working, host="postgres", port=5432,
             database=postgres.database, user="repomap",
         )
-        config_text = (read_home / "repomap.rpl.toml").read_text(encoding="utf-8")
+        config_text = (read_home / "repomap.local.cloe.toml").read_text(encoding="utf-8")
         config_text = config_text.replace("host_port = 5432", f"host_port = {postgres.port}", 1)
         config_text = config_text.replace(
             '[runtime.postgres]\ndirect_host_port_enabled = true\n'
@@ -232,7 +232,7 @@ def test_read_status_role_can_use_public_navigation_without_lexical_schema_or_ow
         config_text = config_text.replace(
             'user = "repomap"\n', 'user = "repomap"\npassword_env = "REPOMAP_PG_PASSWORD"\n', 1
         )
-        (read_home / "repomap.rpl.toml").write_text(config_text, encoding="utf-8")
+        (read_home / "repomap.local.cloe.toml").write_text(config_text, encoding="utf-8")
         setup_local_runtime(read_home)
         env = {
             line.split("=", 1)[0]: line.split("=", 1)[1]
@@ -259,7 +259,7 @@ def test_read_status_role_can_use_public_navigation_without_lexical_schema_or_ow
             assert read_connection.execute("SELECT current_user").fetchone() == (READ_STATUS_ROLE,)
             public_count = read_connection.execute("SELECT count(*) FROM public.canonical_nodes").fetchone()
             assert public_count is not None and public_count[0] > 0
-        monkeypatch.setenv("REPOMAP_PSQL_COMMAND", postgres.psql_command)
+        monkeypatch.setenv("CLOE_PSQL_COMMAND", postgres.psql_command)
         store = investigation_stores(config).investigation_store()
         result = store.navigation_search(
             MIXED_V1_GRAPH_ID, NavigationSearchQuery(query="RetrievalExecutionPipeline", limit=5)

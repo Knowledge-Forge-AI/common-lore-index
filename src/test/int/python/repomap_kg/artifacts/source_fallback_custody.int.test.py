@@ -16,7 +16,7 @@ from common_lore_index.artifacts._source_sealing_io import (
     open_source_body,
 )
 from common_lore_index.artifacts.store import ArtifactIntegrityError, FileSystemArtifactStore
-from repomap_test_support.sealing_governance_fixtures import open_descriptor_count
+from common_lore_index_test_support.sealing_governance_fixtures import open_descriptor_count
 
 
 def _metadata(path: Path) -> tuple[int, str]:

@@ -4,7 +4,7 @@ from multiprocessing import get_context
 
 import pytest
 
-from repomap_test_support.scale28_adr2_bounded_ipc import (
+from common_lore_index_test_support.scale28_adr2_bounded_ipc import (
     OBSERVATION_MESSAGE,
     BoundedIpcFailure,
     process_send_delayed_second_message,

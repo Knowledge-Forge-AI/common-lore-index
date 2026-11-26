@@ -13,7 +13,7 @@ import common_lore_index.artifacts._store_metered as metered
 from common_lore_index.artifacts._store_filesystem import _private_details
 from common_lore_index.artifacts.sealing_governance import SealingBudget, SealingBudgetExceeded
 from common_lore_index.artifacts.store import FileSystemArtifactStore
-from repomap_test_support.metered_store_custody_fixtures import CloseFaultStream, DescriptorWitness, store_state
+from common_lore_index_test_support.metered_store_custody_fixtures import CloseFaultStream, DescriptorWitness, store_state
 
 
 class _ProducerStop(BaseException):

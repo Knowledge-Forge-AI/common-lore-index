@@ -9,12 +9,12 @@ from typing import TypedDict
 
 import pytest
 
-from repomap_test_support import resource_index_physical_membership as records
-from repomap_test_support import resource_index_recovery as recovery
-from repomap_test_support.resource_index_recovery_records import IndexRecoveryError
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_scratch import ScratchAccountingError, measure_scratch
-from repomap_test_support.resource_validation import HygieneValidationError
+from common_lore_index_test_support import resource_index_physical_membership as records
+from common_lore_index_test_support import resource_index_recovery as recovery
+from common_lore_index_test_support.resource_index_recovery_records import IndexRecoveryError
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_scratch import ScratchAccountingError, measure_scratch
+from common_lore_index_test_support.resource_validation import HygieneValidationError
 
 
 class PhysicalEntryDict(TypedDict):

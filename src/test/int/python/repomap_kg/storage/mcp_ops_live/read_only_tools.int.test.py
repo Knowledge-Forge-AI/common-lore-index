@@ -5,8 +5,8 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -16,7 +16,7 @@ from common_lore_index.storage import (
     default_rdbms_root,
 )
 
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     canonicalization_fixture,
 )
 
@@ -30,12 +30,12 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
         )
         from common_lore_index.server.mcp import (
             handle_jsonrpc_message,
-            repomap_canonical_edges,
-            repomap_canonical_neighborhood,
-            repomap_canonical_nodes,
-            repomap_explain_canonical_edge,
-            repomap_projects,
-            repomap_status,
+            cloe_canonical_edges,
+            cloe_canonical_neighborhood,
+            cloe_canonical_nodes,
+            cloe_explain_canonical_edge,
+            cloe_projects,
+            cloe_status,
             serve_stdio,
         )
 
@@ -57,16 +57,16 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
                 "psql_command": postgres.psql_command,
             }
             jsonrpc_args = {k: v for k, v in mcp_args.items() if k != "psql_command"}
-            status = repomap_status(**mcp_args)
-            modules_result = repomap_canonical_nodes(**mcp_args, kind="python.module")
+            status = cloe_status(**mcp_args)
+            modules_result = cloe_canonical_nodes(**mcp_args, kind="python.module")
             assert isinstance(modules_result, dict)
             modules = modules_result["items"]
             assert isinstance(modules, list)
-            imports_result = repomap_canonical_edges(**mcp_args, kind="imports", source_key="python.module:pkg.app")
+            imports_result = cloe_canonical_edges(**mcp_args, kind="imports", source_key="python.module:pkg.app")
             assert isinstance(imports_result, dict)
             imports = imports_result["items"]
             assert isinstance(imports, list)
-            explanation_response = repomap_explain_canonical_edge(
+            explanation_response = cloe_explain_canonical_edge(
                 **mcp_args,
                 source_key="python.module:pkg.app",
                 kind="imports",
@@ -74,7 +74,7 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
                 identity_metadata={},
             )
             explanation = explanation_response["result"]
-            neighborhood_response = repomap_canonical_neighborhood(
+            neighborhood_response = cloe_canonical_neighborhood(
                 **mcp_args,
                 node="python.module:pkg.app",
                 direction="out",
@@ -100,43 +100,43 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
                 with patch.dict(
                     "os.environ",
                     {
-                        "REPOMAP_MCP_CONFIG": str(mcp_config_path),
-                        "REPOMAP_PSQL_COMMAND": postgres.psql_command,
+                        "CLOE_MCP_CONFIG": str(mcp_config_path),
+                        "CLOE_PSQL_COMMAND": postgres.psql_command,
                     },
                     clear=False,
                 ):
-                    projects_payload = repomap_projects()
-                    project_status = repomap_status()
-                    project_modules_result = repomap_canonical_nodes(project="fixture", kind="python.module")
+                    projects_payload = cloe_projects()
+                    project_status = cloe_status()
+                    project_modules_result = cloe_canonical_nodes(project="fixture", kind="python.module")
                     assert isinstance(project_modules_result, dict)
                     project_modules = project_modules_result["items"]
                     assert isinstance(project_modules, list)
-                    project_imports_result = repomap_canonical_edges(
+                    project_imports_result = cloe_canonical_edges(
                         project="fixture", kind="imports", source_key="python.module:pkg.app",
                     )
                     assert isinstance(project_imports_result, dict)
                     project_imports = project_imports_result["items"]
                     assert isinstance(project_imports, list)
-                    project_explanation = repomap_explain_canonical_edge(
+                    project_explanation = cloe_explain_canonical_edge(
                         project="fixture",
                         source_key="python.module:pkg.app",
                         kind="imports",
                         target_key="python.module:pkg.lib.helper",
                         identity_metadata={},
                     )["result"]
-                    project_neighborhood = repomap_canonical_neighborhood(
+                    project_neighborhood = cloe_canonical_neighborhood(
                         project="fixture",
                         node="python.module:pkg.app",
                         direction="out",
                     )["result"]
                     jsonrpc_project_status = handle_jsonrpc_message({
                         "jsonrpc": "2.0", "id": 13, "method": "tools/call",
-                        "params": {"name": "repomap_status", "arguments": {}},
+                        "params": {"name": "cloe_status", "arguments": {}},
                     })
                     assert jsonrpc_project_status is not None
                     jsonrpc_project_modules = handle_jsonrpc_message({
                         "jsonrpc": "2.0", "id": 14, "method": "tools/call",
-                        "params": {"name": "repomap_canonical_nodes", "arguments": {"project": "fixture", "kind": "python.module"}},
+                        "params": {"name": "cloe_canonical_nodes", "arguments": {"project": "fixture", "kind": "python.module"}},
                     })
                     assert jsonrpc_project_modules is not None
             initialize_response = handle_jsonrpc_message({"jsonrpc": "2.0", "id": 1, "method": "initialize"})
@@ -145,23 +145,23 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
             assert tools_response is not None
             with patch.dict(
                 "os.environ",
-                {"REPOMAP_PSQL_COMMAND": postgres.psql_command},
+                {"CLOE_PSQL_COMMAND": postgres.psql_command},
                 clear=False,
             ):
                 jsonrpc_status = handle_jsonrpc_message({
                     "jsonrpc": "2.0", "id": 3, "method": "tools/call",
-                    "params": {"name": "repomap_status", "arguments": jsonrpc_args},
+                    "params": {"name": "cloe_status", "arguments": jsonrpc_args},
                 })
                 assert jsonrpc_status is not None
                 jsonrpc_modules = handle_jsonrpc_message({
                     "jsonrpc": "2.0", "id": 4, "method": "tools/call",
-                    "params": {"name": "repomap_canonical_nodes", "arguments": {**jsonrpc_args, "kind": "python.module"}},
+                    "params": {"name": "cloe_canonical_nodes", "arguments": {**jsonrpc_args, "kind": "python.module"}},
                 })
                 assert jsonrpc_modules is not None
                 jsonrpc_imports = handle_jsonrpc_message({
                     "jsonrpc": "2.0", "id": 5, "method": "tools/call",
                     "params": {
-                        "name": "repomap_canonical_edges",
+                        "name": "cloe_canonical_edges",
                         "arguments": {**jsonrpc_args, "kind": "imports", "source_key": "python.module:pkg.app"},
                     },
                 })
@@ -169,7 +169,7 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
                 jsonrpc_explanation = handle_jsonrpc_message({
                     "jsonrpc": "2.0", "id": 6, "method": "tools/call",
                     "params": {
-                        "name": "repomap_explain_canonical_edge",
+                        "name": "cloe_explain_canonical_edge",
                         "arguments": {
                             **jsonrpc_args,
                             "source_key": "python.module:pkg.app",
@@ -183,7 +183,7 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
                 jsonrpc_neighborhood = handle_jsonrpc_message({
                     "jsonrpc": "2.0", "id": 7, "method": "tools/call",
                     "params": {
-                        "name": "repomap_canonical_neighborhood",
+                        "name": "cloe_canonical_neighborhood",
                         "arguments": {**jsonrpc_args, "node": "python.module:pkg.app", "direction": "out"},
                     },
                 })
@@ -233,17 +233,17 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
 
         self.assertEqual(initialize_response["result"]["serverInfo"]["name"], "common-lore-index")
         expected_tools = [
-            "repomap_status", "repomap_projects", "repomap_canonical_nodes", "repomap_canonical_edges",
-            "repomap_explain_canonical_edge", "repomap_canonical_neighborhood", "repomap_ingested_sources",
-            "repomap_source_summary", "repomap_source_runs", "repomap_source_feed_items",
-            "repomap_explain_source_feed_item", "repomap_source_references", "repomap_list_graphs",
-            "repomap_graph_status", "repomap_search_nodes", "repomap_search_observations",
-            "repomap_search_files", "repomap_neighborhood", "repomap_project_summary",
-            "repomap_python_summary", "repomap_terraform_summary", "repomap_openapi_summary",
-            "repomap_js_framework_summary", "repomap_nix_summary", "repomap_refresh_status",
-            "repomap_server_memory_summary", "repomap_server_memory_search",
-            "repomap_similar_nodes", "repomap_embedding_profiles",
-            "repomap_node_locations", "repomap_navigation_search",
+            "cloe_status", "cloe_projects", "cloe_canonical_nodes", "cloe_canonical_edges",
+            "cloe_explain_canonical_edge", "cloe_canonical_neighborhood", "cloe_ingested_sources",
+            "cloe_source_summary", "cloe_source_runs", "cloe_source_feed_items",
+            "cloe_explain_source_feed_item", "cloe_source_references", "cloe_list_graphs",
+            "cloe_graph_status", "cloe_search_nodes", "cloe_search_observations",
+            "cloe_search_files", "cloe_neighborhood", "cloe_project_summary",
+            "cloe_python_summary", "cloe_terraform_summary", "cloe_openapi_summary",
+            "cloe_js_framework_summary", "cloe_nix_summary", "cloe_refresh_status",
+            "cloe_server_memory_summary", "cloe_server_memory_search",
+            "cloe_similar_nodes", "cloe_embedding_profiles",
+            "cloe_node_locations", "cloe_navigation_search",
         ]
         self.assertEqual([tool["name"] for tool in tools_response["result"]["tools"]], expected_tools)
         self.assertEqual(projects_payload["default_project"], "fixture")
@@ -283,17 +283,17 @@ class StorageMcpReadOnlyToolsIntegrationTests(unittest.TestCase):
         self.assertTrue(jsonrpc_missing["result"]["isError"])
         stdio_lines = stdio_output.getvalue().splitlines()
         self.assertEqual(len(stdio_lines), 2)
-        self.assertEqual(json.loads(stdio_lines[0])["result"]["tools"][0]["name"], "repomap_status")
+        self.assertEqual(json.loads(stdio_lines[0])["result"]["tools"][0]["name"], "cloe_status")
         self.assertEqual(json.loads(stdio_lines[1])["error"]["code"], -32700)
 
     def _assert_configured_portable_readback(self, postgres, status, modules, imports):
         """Exercise real configured routing after publication and relocation."""
         from common_lore_index.server.mcp import (
-            repomap_canonical_edges,
-            repomap_canonical_neighborhood,
-            repomap_canonical_nodes,
-            repomap_explain_canonical_edge,
-            repomap_status,
+            cloe_canonical_edges,
+            cloe_canonical_neighborhood,
+            cloe_canonical_nodes,
+            cloe_explain_canonical_edge,
+            cloe_status,
         )
 
         postgres.psql_scalar(
@@ -340,29 +340,29 @@ mode = "read_only"
                 )
                 with self.subTest(configured_root=configured_root), patch.dict(
                     "os.environ",
-                    {"REPOMAP_MCP_CONFIG": str(legacy_path),
-                     "REPOMAP_OPS_CONFIG": str(ops_path),
-                     "REPOMAP_PSQL_COMMAND": postgres.psql_command},
+                    {"CLOE_MCP_CONFIG": str(legacy_path),
+                     "CLOE_OPS_CONFIG": str(ops_path),
+                     "CLOE_PSQL_COMMAND": postgres.psql_command},
                 ):
-                    current = repomap_status(project="fixture")
+                    current = cloe_status(project="fixture")
                     self.assertEqual(current["counts"], status["counts"])
                     self.assertEqual(current["repository_name"], "current-fixture")
                     self.assertEqual(current["root_path"], "[graph-root]")
-                    nodes = repomap_canonical_nodes(project="fixture", kind="python.module")
+                    nodes = cloe_canonical_nodes(project="fixture", kind="python.module")
                     assert isinstance(nodes, dict)
                     self.assertEqual(nodes["items"], modules)
-                    edges = repomap_canonical_edges(
+                    edges = cloe_canonical_edges(
                         project="fixture", kind="imports", source_key="python.module:pkg.app",
                     )
                     assert isinstance(edges, dict)
                     self.assertEqual(edges["items"], imports)
-                    explanation = repomap_explain_canonical_edge(
+                    explanation = cloe_explain_canonical_edge(
                         project="fixture", source_key="python.module:pkg.app",
                         kind="imports", target_key="python.module:pkg.lib.helper",
                         identity_metadata={},
                     )["result"]
                     self.assertEqual(len(explanation["evidence"]), 1)
-                    neighborhood = repomap_canonical_neighborhood(
+                    neighborhood = cloe_canonical_neighborhood(
                         project="fixture", node="python.module:pkg.app", direction="out",
                     )["result"]
                     self.assertEqual(len(neighborhood["edges"]), len(imports))

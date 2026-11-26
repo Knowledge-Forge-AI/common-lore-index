@@ -41,7 +41,7 @@ from common_lore_index.storage.source_readback import (
     query_ingested_source_records,
     query_source_run_records,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 VALID_RAW_OBSERVATION = {
@@ -111,20 +111,20 @@ class Slice12GraphReadbackCompositionIntegrationTests(unittest.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self._orig_pg_connector = os.environ.get("REPOMAP_STORAGE_PG_CONNECTOR")
-        self._orig_readback_driver = os.environ.get("REPOMAP_STORAGE_READBACK_DRIVER")
-        os.environ["REPOMAP_STORAGE_PG_CONNECTOR"] = "psql"
-        os.environ["REPOMAP_STORAGE_READBACK_DRIVER"] = "psql"
+        self._orig_pg_connector = os.environ.get("CLOE_STORAGE_PG_CONNECTOR")
+        self._orig_readback_driver = os.environ.get("CLOE_STORAGE_READBACK_DRIVER")
+        os.environ["CLOE_STORAGE_PG_CONNECTOR"] = "psql"
+        os.environ["CLOE_STORAGE_READBACK_DRIVER"] = "psql"
 
     def tearDown(self) -> None:
         if self._orig_pg_connector is None:
-            os.environ.pop("REPOMAP_STORAGE_PG_CONNECTOR", None)
+            os.environ.pop("CLOE_STORAGE_PG_CONNECTOR", None)
         else:
-            os.environ["REPOMAP_STORAGE_PG_CONNECTOR"] = self._orig_pg_connector
+            os.environ["CLOE_STORAGE_PG_CONNECTOR"] = self._orig_pg_connector
         if self._orig_readback_driver is None:
-            os.environ.pop("REPOMAP_STORAGE_READBACK_DRIVER", None)
+            os.environ.pop("CLOE_STORAGE_READBACK_DRIVER", None)
         else:
-            os.environ["REPOMAP_STORAGE_READBACK_DRIVER"] = self._orig_readback_driver
+            os.environ["CLOE_STORAGE_READBACK_DRIVER"] = self._orig_readback_driver
         super().tearDown()
 
     def _write_fake_psql(self, directory: Path, payload_json: str) -> tuple[str, Path]:

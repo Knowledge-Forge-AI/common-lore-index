@@ -58,7 +58,7 @@ from common_lore_index.ops.readback import (
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
-from repomap_test_support.ops_refresh import VALID_REFRESH_CONFIG
+from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
 
 
 def _sample_refs() -> tuple[ArtifactReference, ArtifactReference]:
@@ -92,7 +92,7 @@ def _local_sqlite_config(root: Path, src_dir: Path) -> LocalSqliteConfig:
             }],
             "server_memory": {"enabled": False, "path": str(root / "mem"), "mode": "read_only"},
         },
-        config_path=str(root), config_home=str(root), config_files=("base.rp.toml",),
+        config_path=str(root), config_home=str(root), config_files=("base.cloe.toml",),
         diagnostics=(OpsConfigDiagnostic("warning", "w1", "service", "warn"),),
     )
 
@@ -219,7 +219,7 @@ def test_portable_refresh_worker_references_and_overlap_refusals(tmp_path: Path)
             _worker_references(terminal)
         assert exc_info.value.category == expected_cat
 
-    (tmp_path / "base.rp.toml").write_text(
+    (tmp_path / "base.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=tmp_path, private_root=tmp_path / "private")
     )
     config = load_ops_config_home(tmp_path)
@@ -339,7 +339,7 @@ def test_readback_container_hints_and_host_error_augmentation(tmp_path: Path, mo
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         closed_port = s.getsockname()[1]
-    (tmp_path / "base.rp.toml").write_text(
+    (tmp_path / "base.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=tmp_path, private_root=tmp_path / "private").replace("port = 5432", f"port = {closed_port}")
     )
     monkeypatch.setenv("PATH", str(tmp_path))
@@ -352,7 +352,7 @@ def test_readback_container_hints_and_host_error_augmentation(tmp_path: Path, mo
             expected_shape="object", mode="host_only",
         )
 
-    monkeypatch.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psql")
+    monkeypatch.setenv("CLOE_STORAGE_READBACK_DRIVER", "psql")
     with pytest.raises(StorageSchemaError, match="unable to launch psql command"):
         execute_ops_json_readback(
             config, database="repomap_g1", sql="SELECT 1", label="db1",

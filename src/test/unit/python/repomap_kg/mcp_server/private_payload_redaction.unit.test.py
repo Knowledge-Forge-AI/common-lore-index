@@ -12,7 +12,7 @@ from common_lore_index.storage import (
     CanonicalStorageSummaryRecord,
 )
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 @pytest.mark.parametrize("center,direction,expected", [
@@ -26,13 +26,13 @@ def test_public_neighborhood_real_endpoints_and_unchanged_sanitization(
 ):
     from common_lore_index.server import mcp, ops, _ops_summaries
     from common_lore_index.server._ops_sanitization import sanitize_jsonable
-    from repomap_test_support.related_context_fixtures import (
+    from common_lore_index_test_support.related_context_fixtures import (
         EXPECTED_IMPORTS, EXPECTED_LINKS, GRAPH, related_home,
     )
 
     home, _, _ = related_home(tmp_path)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.setenv("CLOE_HOME", str(home))
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     selection = ops.configured_graph(GRAPH).selection
     markers = selection.path_markers
     args = dict(graph_id=GRAPH, node=center, direction=direction, depth=1)
@@ -54,9 +54,9 @@ def test_public_neighborhood_real_endpoints_and_unchanged_sanitization(
         return result
 
     monkeypatch.setattr(_ops_summaries, "canonical_neighborhood_to_jsonable", capture)
-    reply = mcp.handle_tool_call("repomap_neighborhood", args)
+    reply = mcp.handle_tool_call("cloe_neighborhood", args)
     rpc = mcp.handle_jsonrpc_message(dict(jsonrpc="2.0", id=1, method="tools/call",
-        params=dict(name="repomap_neighborhood", arguments=args)))
+        params=dict(name="cloe_neighborhood", arguments=args)))
     assert rpc is not None
     assert rpc["result"] == reply
     payload = reply["structuredContent"]
@@ -80,21 +80,21 @@ def test_public_neighborhood_real_endpoints_and_unchanged_sanitization(
 
 
 @pytest.mark.parametrize("privacy", ["public-dev", "private-ops"])
-@pytest.mark.parametrize("tool", ["repomap_canonical_edges", "repomap_canonical_neighborhood"])
+@pytest.mark.parametrize("tool", ["cloe_canonical_edges", "cloe_canonical_neighborhood"])
 @pytest.mark.parametrize("schema", [0, 1])
 def test_legacy_canonical_routes_preserve_existing_endpoint_policy(
     tmp_path, monkeypatch, privacy, tool, schema,
 ):
     from common_lore_index.server import mcp, _ops_summaries
-    from repomap_test_support.related_context_fixtures import (
+    from common_lore_index_test_support.related_context_fixtures import (
         EXPECTED_IMPORTS, GRAPH, MODULE, related_home,
     )
 
     home, _, _ = related_home(tmp_path)
-    config = home / "repomap.rp.toml"
+    config = home / "repomap.cloe.toml"
     config.write_text(config.read_text().replace('privacy = "public-dev"', f'privacy = "{privacy}"'))
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.setenv("CLOE_HOME", str(home))
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     def refuse_restoration(*args, **kwargs):
         pytest.fail("Legacy canonical tools must not use selected-graph endpoint restoration")
     monkeypatch.setattr(_ops_summaries, "_preserve_visible_endpoints", refuse_restoration)
@@ -186,11 +186,11 @@ class McpServerPrivatePayloadRedactionUnitTests(McpServerTestSupport):
 
     def test_mcp_harden2_private_graph_payloads_redact_roots_across_tools(self):
         from common_lore_index.server.mcp import (
-            repomap_js_framework_summary,
-            repomap_list_graphs,
-            repomap_neighborhood,
-            repomap_project_summary,
-            repomap_search_files,
+            cloe_js_framework_summary,
+            cloe_list_graphs,
+            cloe_neighborhood,
+            cloe_project_summary,
+            cloe_search_files,
         )
 
         config_path = self.write_visible_ops_config()
@@ -211,20 +211,20 @@ class McpServerPrivatePayloadRedactionUnitTests(McpServerTestSupport):
         )
 
         cases = [
-            ("list_graphs", None, None, repomap_list_graphs, lambda p: p["graphs"][1], lambda p: self.assertTrue(p["graphs"][1]["warnings"])),
+            ("list_graphs", None, None, cloe_list_graphs, lambda p: p["graphs"][1], lambda p: self.assertTrue(p["graphs"][1]["warnings"])),
             ("project_summary", "common_lore_index.server.ops.query_canonical_storage_summary", CanonicalStorageSummaryRecord(
                 root_path="synthetic-private-root", repository_name="private-visible", latest_run_id=44, runs=1, files=2,
                 raw_observations=13, canonical_nodes=3, canonical_edges=4, canonical_evidence=5,
-            ), lambda: repomap_project_summary(graph_id="private-visible"), lambda p: p["graph"], lambda p: self.assertEqual(p["summary"]["root_path"], "[private-root]")),
+            ), lambda: cloe_project_summary(graph_id="private-visible"), lambda p: p["graph"], lambda p: self.assertEqual(p["summary"]["root_path"], "[private-root]")),
             ("js_framework_summary", "common_lore_index.server.ops.query_js_framework_summary", JSFrameworkSummaryRecord(
                 root_path="synthetic-private-root", repository_name="private-visible", framework_observations=6, framework_profiles={"node": 1},
                 node={}, express={}, nest={}, next={}, jest={}, jquery={}, generic_js={}, diagnostics={}, safety={"no_execution": True},
-            ), lambda: repomap_js_framework_summary(graph_id="private-visible"), lambda p: p["graph"], lambda p: self.assertEqual(p["summary"]["root_path"], "[private-root]")),
+            ), lambda: cloe_js_framework_summary(graph_id="private-visible"), lambda p: p["graph"], lambda p: self.assertEqual(p["summary"]["root_path"], "[private-root]")),
             ("neighborhood", "common_lore_index.server.ops.query_canonical_neighborhood", neighborhood,
-             lambda: repomap_neighborhood(graph_id="private-visible", node="python.module:private.app"), lambda p: p["graph"],
+             lambda: cloe_neighborhood(graph_id="private-visible", node="python.module:private.app"), lambda p: p["graph"],
              lambda p: self.assertEqual(p["result"]["center"]["canonical_key"], "python.module:private.app")),
             ("search_files", "common_lore_index.server.ops.query_mcp_search", {"results": [{"path": "src/private_app.py", "language": "python"}], "total": 1},
-             lambda: repomap_search_files(graph_id="private-visible", query="private"), lambda p: p["graph"], lambda p: self.assertEqual(p["result_count"], 1)),
+             lambda: cloe_search_files(graph_id="private-visible", query="private"), lambda p: p["graph"], lambda p: self.assertEqual(p["result_count"], 1)),
         ]
 
         with self.patch_ops_config(config_path):
@@ -244,11 +244,11 @@ class McpServerPrivatePayloadRedactionUnitTests(McpServerTestSupport):
         self,
     ):
         from common_lore_index.server.mcp import (
-            repomap_graph_status,
-            repomap_js_framework_summary,
-            repomap_list_graphs,
-            repomap_project_summary,
-            repomap_refresh_status,
+            cloe_graph_status,
+            cloe_js_framework_summary,
+            cloe_list_graphs,
+            cloe_project_summary,
+            cloe_refresh_status,
         )
         from common_lore_index.ops.reports import OpsRefreshGraphStatus
 
@@ -345,11 +345,11 @@ mode = "read_only"
             safety={"no_execution": True},
         )
         cases = (
-            ("list_graphs", repomap_list_graphs, None, None, lambda p: p["graphs"][0]),
-            ("graph_status", lambda: repomap_graph_status(graph_id="private-visible"), "common_lore_index.server.ops.query_refresh_status", {"private-visible": refresh_status}, lambda p: p["graph"]),
-            ("refresh_status", lambda: repomap_refresh_status(graph_id="private-visible"), "common_lore_index.server.ops.query_refresh_status", {"private-visible": refresh_status}, lambda p: p["graphs"][0]),
-            ("project_summary", lambda: repomap_project_summary(graph_id="private-visible"), "common_lore_index.server.ops.query_canonical_storage_summary", storage_summary, lambda p: p["graph"]),
-            ("js_framework_summary", lambda: repomap_js_framework_summary(graph_id="private-visible"), "common_lore_index.server.ops.query_js_framework_summary", js_framework_summary, lambda p: p["graph"]),
+            ("list_graphs", cloe_list_graphs, None, None, lambda p: p["graphs"][0]),
+            ("graph_status", lambda: cloe_graph_status(graph_id="private-visible"), "common_lore_index.server.ops.query_refresh_status", {"private-visible": refresh_status}, lambda p: p["graph"]),
+            ("refresh_status", lambda: cloe_refresh_status(graph_id="private-visible"), "common_lore_index.server.ops.query_refresh_status", {"private-visible": refresh_status}, lambda p: p["graphs"][0]),
+            ("project_summary", lambda: cloe_project_summary(graph_id="private-visible"), "common_lore_index.server.ops.query_canonical_storage_summary", storage_summary, lambda p: p["graph"]),
+            ("js_framework_summary", lambda: cloe_js_framework_summary(graph_id="private-visible"), "common_lore_index.server.ops.query_js_framework_summary", js_framework_summary, lambda p: p["graph"]),
         )
 
         with self.patch_ops_config(ops_config_path):

@@ -8,8 +8,8 @@ from actual_refresh_failure_causality import (
     FailureCausalityAuthority,
     failure_owner,
 )
-from repomap_test_support.test_cov5c_qualification import build_evidence
-from repomap_test_support.test_cov5d_qualification import (
+from common_lore_index_test_support.test_cov5c_qualification import build_evidence
+from common_lore_index_test_support.test_cov5d_qualification import (
     ContractComparison,
     QualificationManifest,
     REACQUISITION_FIRST_FAILURES,

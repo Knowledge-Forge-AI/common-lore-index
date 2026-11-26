@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support import retrieval_supplement_study_pg as study_pg
+from common_lore_index_test_support import retrieval_supplement_study_pg as study_pg
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.retrieval.lexical_policy import build_lexical_generation_policy
-from repomap_test_support.postgres_container import PostgresContainerDatabase
-from repomap_test_support.retrieval_supplement_fixtures import (
+from common_lore_index_test_support.postgres_container import PostgresContainerDatabase
+from common_lore_index_test_support.retrieval_supplement_fixtures import (
     make_test_bindings, make_test_identity, make_test_policy,
 )
 
@@ -23,7 +23,7 @@ from retrieval_supplement_study_inner_evidence import (
     begin_preparation_epoch,
     settle_cleanup,
 )
-from repomap_test_support.retrieval_supplement_study_pg_lifecycle import cleanup_container_absent
+from common_lore_index_test_support.retrieval_supplement_study_pg_lifecycle import cleanup_container_absent
 
 
 @dataclass(frozen=True)

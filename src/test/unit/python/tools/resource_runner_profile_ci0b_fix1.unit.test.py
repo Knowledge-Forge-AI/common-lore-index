@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from repomap_test_support.resource_hygiene_policy import HygieneProfile
-from repomap_test_support.resource_runner_profile import (
+from common_lore_index_test_support.resource_hygiene_policy import HygieneProfile
+from common_lore_index_test_support.resource_runner_profile import (
     RunnerProfileError,
     resolve_runner_profile,
 )

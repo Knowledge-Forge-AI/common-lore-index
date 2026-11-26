@@ -35,7 +35,7 @@ from common_lore_index.runtime.database_roles import render_database_role_sql
 from common_lore_index.runtime.local import build_local_runtime_plan, setup_local_runtime
 from common_lore_index.runtime.release import PACKAGED_PG_DUMP, PACKAGED_PG_RESTORE, PACKAGED_PSQL
 from common_lore_index.runtime import maintenance, release_cluster
-from repomap_test_support.local_db_backup import default_baseline_server_provenance
+from common_lore_index_test_support.local_db_backup import default_baseline_server_provenance
 
 
 @pytest.mark.parametrize(

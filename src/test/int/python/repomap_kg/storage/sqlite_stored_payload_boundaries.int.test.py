@@ -16,7 +16,7 @@ from common_lore_index.storage.sqlite_local.investigation_queries import observa
 from common_lore_index.storage.sqlite_local.nix_summary_queries import nix_summary
 from common_lore_index.storage.sqlite_local.summary_queries import python_summary
 from common_lore_index.storage.sqlite_local.connection import read_transaction
-from repomap_test_support.sqlite_local_fixtures import local_binding, published_sqlite_database, sqlite_logical_dump
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding, published_sqlite_database, sqlite_logical_dump
 
 BINDING = local_binding()
 

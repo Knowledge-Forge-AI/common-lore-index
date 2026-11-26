@@ -7,7 +7,7 @@ import pytest
 import requests
 
 import scale12_resource_sampling as resource_sampling
-from repomap_test_support.process_boundary import RecordingProcessBoundary
+from common_lore_index_test_support.process_boundary import RecordingProcessBoundary
 from scale12_resource_sampling import read_container_rss_upper_bound
 
 

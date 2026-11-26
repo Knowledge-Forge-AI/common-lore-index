@@ -14,10 +14,10 @@ from common_lore_index.artifacts._bundle_cancellation import BundleEncodingCance
 from common_lore_index.artifacts._bundle_stream_sort import BoundedExternalRowSorter
 from common_lore_index.artifacts._canonical import CanonicalEncodingError, canonical_json
 from common_lore_index.storage.staging_family_rows import StageFamily
-from repomap_test_support.bundle_sort_fixtures import (
+from common_lore_index_test_support.bundle_sort_fixtures import (
     SortIOWitness, encoder_for_bundle, encoder_for_rows, observe_sort_directory_cleanup,
 )
-from repomap_test_support.portable_publication_fixtures import _seven_family_bundle
+from common_lore_index_test_support.portable_publication_fixtures import _seven_family_bundle
 
 
 @pytest.mark.parametrize("limit", ["records", "bytes"])

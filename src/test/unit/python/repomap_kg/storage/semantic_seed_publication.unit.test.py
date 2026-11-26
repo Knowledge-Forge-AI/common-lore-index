@@ -41,7 +41,7 @@ from common_lore_index.storage.staged_ingestion import (
     new_direct_authority,
     stage_id_for_authority,
 )
-from repomap_test_support.semantic_seed_publication import (
+from common_lore_index_test_support.semantic_seed_publication import (
     SEED_KEY,
     SeedPublicationContext,
     build_seed_graph_config,
@@ -174,8 +174,8 @@ def test_publish_portable_seed_graph_mocks_db_publication(tmp_path: Path) -> Non
     fake_record.receipt.public_mapping.return_value = {"run_id": 42}
 
     with (
-        patch("repomap_test_support.semantic_seed_publication.run_staged_portable_refresh") as mock_refresh,
-        patch("repomap_test_support.semantic_seed_publication.read_latest_publication", return_value=fake_record),
+        patch("common_lore_index_test_support.semantic_seed_publication.run_staged_portable_refresh") as mock_refresh,
+        patch("common_lore_index_test_support.semantic_seed_publication.read_latest_publication", return_value=fake_record),
     ):
         ctx = publish_portable_seed_graph(
             mock_postgres,
@@ -275,8 +275,8 @@ def test_mcp_child_environment_and_real_module_lookup(
     env = kwargs["env"]
     root = Path(common_lore_index.__file__).resolve().parent.parent
     assert env["PYTHONPATH"] == str(root)
-    assert env["REPOMAP_OPS_CONFIG"] == str(config)
-    assert env["REPOMAP_PSQL_COMMAND"] == "inert-psql"
+    assert env["CLOE_OPS_CONFIG"] == str(config)
+    assert env["CLOE_PSQL_COMMAND"] == "inert-psql"
     assert env["PGPASSWORD"] == "inert-auth-marker"
     assert env["PGOPTIONS"] == (f"-c role={reader_role}" if reader_role else parent_env["PGOPTIONS"])
     assert env["PYTHONUNBUFFERED"] == env["PYTHONDONTWRITEBYTECODE"] == "1"
@@ -321,8 +321,8 @@ def test_mcp_real_stdio_preserves_requests_ids_and_response_order(
     _inert_mcp_module(tmp_path, monkeypatch, """import json, os, sys
 requests = [json.loads(line) for line in sys.stdin]
 checks = [os.environ['PGOPTIONS'] == '-c role=unit_reader',
-          os.environ['REPOMAP_PSQL_COMMAND'] == 'inert-psql',
-          os.environ['REPOMAP_OPS_CONFIG'].endswith('public-test.toml'),
+          os.environ['CLOE_PSQL_COMMAND'] == 'inert-psql',
+          os.environ['CLOE_OPS_CONFIG'].endswith('public-test.toml'),
           os.environ['PYTHONPATH'] == os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
           os.environ['PGPASSWORD'] == 'inert-auth-marker',
           os.environ['PYTHONUNBUFFERED'] == os.environ['PYTHONDONTWRITEBYTECODE'] == '1']

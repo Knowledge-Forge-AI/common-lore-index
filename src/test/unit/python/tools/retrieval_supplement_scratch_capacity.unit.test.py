@@ -10,8 +10,8 @@ import pytest
 import runner_pgvector_context as context
 import runner_pgvector_supplement_proof as proof
 import test_sandbox_capacity as capacity
-from repomap_test_support.retrieval_supplement_runtime_fixture import runtime_provenance_fixture
-from repomap_test_support.retrieval_supplement_study_fixtures import make_study_plan
+from common_lore_index_test_support.retrieval_supplement_runtime_fixture import runtime_provenance_fixture
+from common_lore_index_test_support.retrieval_supplement_study_fixtures import make_study_plan
 from retrieval_supplement_study_plan import (
     create_reservation, issue_admission, plan_digest, project_inner_study_plan,
 )

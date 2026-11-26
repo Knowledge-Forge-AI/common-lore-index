@@ -30,7 +30,7 @@ from common_lore_index.artifacts.validator import (
 )
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
 from common_lore_index.storage.staging_family_rows import StageFamily
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class StoragePublicationPipelineIntegrationTests(unittest.TestCase):

@@ -7,7 +7,7 @@ import pytest
 from common_lore_index.coordinator import _control_reconciliation as subject
 from common_lore_index.coordinator._control_types import JobClaim
 from common_lore_index.coordinator.semantics import reconcile_publication as model_reconcile
-from repomap_test_support.control_db_fakes import ScriptedCursor, connect_with
+from common_lore_index_test_support.control_db_fakes import ScriptedCursor, connect_with
 
 
 CLAIM = JobClaim("job-1", "graph-1", 2, "worker-1", 3)

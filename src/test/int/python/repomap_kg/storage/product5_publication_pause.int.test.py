@@ -17,7 +17,7 @@ from common_lore_index.storage.staged_ingestion import (
     new_direct_authority,
     run_staged_full_refresh,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.postgres_harness import temporary_postgres
 
 
 def _refresh(postgres):

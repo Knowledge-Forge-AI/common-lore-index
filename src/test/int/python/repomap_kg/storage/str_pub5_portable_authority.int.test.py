@@ -13,8 +13,8 @@ from common_lore_index.storage.publication_readback import (
 from common_lore_index.storage.staged_ingestion import (
     _psycopg_connection_params_from_psql_args, run_staged_portable_refresh,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.portable_publication_fixtures import (
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.portable_publication_fixtures import (
     _authority, _binding, _bundle, _seven_family_bundle,
 )
 

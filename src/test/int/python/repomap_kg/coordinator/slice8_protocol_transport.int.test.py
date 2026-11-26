@@ -13,7 +13,7 @@ from common_lore_index.storage.staging_event_transport import (
     StagingEventChannel,
     StagingEventTransportError,
 )
-from repomap_test_support.staging_transport_test_harness import BoundedTestPeer
+from common_lore_index_test_support.staging_transport_test_harness import BoundedTestPeer
 
 
 class Slice8ProtocolTransportIntegrationTests(unittest.TestCase):

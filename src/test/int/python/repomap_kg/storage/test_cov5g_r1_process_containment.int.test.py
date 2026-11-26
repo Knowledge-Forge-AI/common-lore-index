@@ -6,19 +6,19 @@ from typing import TypedDict
 
 import psycopg
 
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.test_cov5g_r1_containment import (
+from common_lore_index_test_support.test_cov5g_r1_containment import (
     ParentAction,
     process_containment_cases,
 )
-from repomap_test_support.test_cov5g_r1_process import (
+from common_lore_index_test_support.test_cov5g_r1_process import (
     ChildConfiguration,
     run_process_case,
 )
-from repomap_test_support.test_cov5k_r2_observer_protocol import (
+from common_lore_index_test_support.test_cov5k_r2_observer_protocol import (
     ADR_0046_EXPECTATIONS,
     FROZEN_THRESHOLDS_MS,
     POLICY_DIGEST,

@@ -7,7 +7,7 @@ from dataclasses import replace
 import pytest
 
 from common_lore_index.retrieval.query_contracts import QueryMode, QueryScope, unavailable_envelope
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
 from retrieval_evaluation_comparability import describe_comparability
 from retrieval_evaluation_grading import ExecutionState, grade_task_execution
 from retrieval_evaluation_schema import load_task_catalog

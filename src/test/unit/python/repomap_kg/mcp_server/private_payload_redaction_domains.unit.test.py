@@ -13,16 +13,16 @@ from common_lore_index.storage import (
     TerraformSummaryRecord,
 )
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 @pytest.fixture
 def endpoint_home(tmp_path, monkeypatch):
-    from repomap_test_support.related_context_fixtures import related_home
+    from common_lore_index_test_support.related_context_fixtures import related_home
 
     home, _, _ = related_home(tmp_path)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.setenv("CLOE_HOME", str(home))
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     return home
 
 
@@ -43,7 +43,7 @@ def _endpoint_call(monkeypatch, payload):
 
     monkeypatch.setattr(_ops_summaries, "canonical_neighborhood_to_jsonable",
                         lambda record: copy.deepcopy(payload))
-    reply = mcp.handle_tool_call("repomap_neighborhood",
+    reply = mcp.handle_tool_call("cloe_neighborhood",
         dict(graph_id="related", node="python.module:pkg.alpha", direction="out"))
     assert json.loads(reply["content"][0]["text"]) == reply["structuredContent"]
     return reply["structuredContent"]["result"]
@@ -80,7 +80,7 @@ def test_neighborhood_actual_private_selection_keeps_endpoints_withheld(
 ):
     from common_lore_index.server._ops_sanitization import sanitize_jsonable
 
-    config = endpoint_home / "repomap.rp.toml"
+    config = endpoint_home / "repomap.cloe.toml"
     config.write_text(config.read_text().replace('privacy = "public-dev"', f'privacy = "{privacy}"'))
     raw = _endpoint_fixture()
     assert _endpoint_call(monkeypatch, raw) == sanitize_jsonable(raw)
@@ -216,11 +216,11 @@ class McpServerPrivatePayloadRedactionDomainsUnitTests(McpServerTestSupport):
         self,
     ):
         from common_lore_index.server.mcp import (
-            repomap_graph_status,
-            repomap_list_graphs,
-            repomap_neighborhood,
-            repomap_projects,
-            repomap_search_files,
+            cloe_graph_status,
+            cloe_list_graphs,
+            cloe_neighborhood,
+            cloe_projects,
+            cloe_search_files,
         )
         from common_lore_index.ops.refresh import OpsRefreshGraphStatus
 
@@ -260,14 +260,14 @@ class McpServerPrivatePayloadRedactionDomainsUnitTests(McpServerTestSupport):
             edges=(),
         )
         cases = [
-            ("list_graphs", None, None, repomap_list_graphs, lambda p: p["graphs"][1], True),
-            ("projects_hint", None, None, repomap_projects, lambda p: {g["graph_id"]: g for g in p["graphs"]}["private-visible"], False),
+            ("list_graphs", None, None, cloe_list_graphs, lambda p: p["graphs"][1], True),
+            ("projects_hint", None, None, cloe_projects, lambda p: {g["graph_id"]: g for g in p["graphs"]}["private-visible"], False),
             ("graph_status", "common_lore_index.server.ops.query_refresh_status", {"private-visible": private_status},
-             lambda: repomap_graph_status(graph_id="private-visible"), lambda p: p["graph"], True),
+             lambda: cloe_graph_status(graph_id="private-visible"), lambda p: p["graph"], True),
             ("neighborhood", "common_lore_index.server.ops.query_canonical_neighborhood", neighborhood,
-             lambda: repomap_neighborhood(graph_id="private-visible", node="python.module:private.visible"), lambda p: p["graph"], True),
+             lambda: cloe_neighborhood(graph_id="private-visible", node="python.module:private.visible"), lambda p: p["graph"], True),
             ("search_files", "common_lore_index.server.ops.query_mcp_search", {"results": [{"path": "src/private_visible.py", "metadata": {"origin": "synthetic-fixture"}}], "total": 1},
-             lambda: repomap_search_files(graph_id="private-visible", query="private"), lambda p: p["graph"], True),
+             lambda: cloe_search_files(graph_id="private-visible", query="private"), lambda p: p["graph"], True),
         ]
 
         with self.patch_mcp_and_ops_config(mcp_config_path, ops_config_path):
@@ -287,10 +287,10 @@ class McpServerPrivatePayloadRedactionDomainsUnitTests(McpServerTestSupport):
         self,
     ):
         from common_lore_index.server.mcp import (
-            repomap_js_framework_summary,
-            repomap_openapi_summary,
-            repomap_python_summary,
-            repomap_terraform_summary,
+            cloe_js_framework_summary,
+            cloe_openapi_summary,
+            cloe_python_summary,
+            cloe_terraform_summary,
         )
 
         config_path = self.write_visible_ops_config()
@@ -309,22 +309,22 @@ class McpServerPrivatePayloadRedactionDomainsUnitTests(McpServerTestSupport):
                 package_files={"pyproject": 1}, packaging={}, tests={}, frameworks={}, references={}, redactions={},
                 diagnostics=nested_sensitive_metadata, generic_python={}, generic_config={"source": nested_sensitive_metadata},
                 dogfooding={}, safety={"no_execution": True},
-            ), lambda: repomap_python_summary(graph_id="private-visible")),
+            ), lambda: cloe_python_summary(graph_id="private-visible")),
             ("terraform", "common_lore_index.server.ops.query_terraform_summary", _make_record(
                 TerraformSummaryRecord, root_path="synthetic-private-root", repository_name="private-visible", terraform_observations=4,
                 terraform_files=2, file_families={}, terraform={}, references={}, tfvars={"sensitive": nested_sensitive_metadata},
                 redactions={}, diagnostics=nested_sensitive_metadata, generic_config={}, safety={"no_execution": True},
-            ), lambda: repomap_terraform_summary(graph_id="private-visible")),
+            ), lambda: cloe_terraform_summary(graph_id="private-visible")),
             ("openapi", "common_lore_index.server.ops.query_openapi_summary", _make_record(
                 OpenAPISummaryRecord, root_path="synthetic-private-root", repository_name="private-visible", openapi_observations=5,
                 openapi_documents=1, spec_families={"openapi3": 1}, openapi={}, methods={}, references={"source": nested_sensitive_metadata},
                 redactions={}, diagnostics={}, generic_config={}, safety={"no_fetch": True},
-            ), lambda: repomap_openapi_summary(graph_id="private-visible")),
+            ), lambda: cloe_openapi_summary(graph_id="private-visible")),
             ("js_framework", "common_lore_index.server.ops.query_js_framework_summary", _make_record(
                 JSFrameworkSummaryRecord, root_path="synthetic-private-root", repository_name="private-visible", framework_observations=6,
                 framework_profiles={"node": 1}, node=nested_sensitive_metadata, express={}, nest={}, next={}, jest={}, jquery={},
                 generic_js={}, diagnostics={}, safety={"no_execution": True},
-            ), lambda: repomap_js_framework_summary(graph_id="private-visible")),
+            ), lambda: cloe_js_framework_summary(graph_id="private-visible")),
         ]
 
         with self.patch_ops_config(config_path):
@@ -339,9 +339,9 @@ class McpServerPrivatePayloadRedactionDomainsUnitTests(McpServerTestSupport):
 
     def test_mcp_harden3_search_payloads_redact_secret_like_metadata(self):
         from common_lore_index.server.mcp import (
-            repomap_search_files,
-            repomap_search_nodes,
-            repomap_search_observations,
+            cloe_search_files,
+            cloe_search_nodes,
+            cloe_search_observations,
         )
 
         config_path = self.write_visible_ops_config()
@@ -364,9 +364,9 @@ class McpServerPrivatePayloadRedactionDomainsUnitTests(McpServerTestSupport):
             "total": 1,
         }
         cases = [
-            ("nodes", lambda: repomap_search_nodes(graph_id="private-visible", query="private"), nodes_payload, None),
-            ("observations", lambda: repomap_search_observations(graph_id="private-visible", query="command", include_raw=False), obs_payload, False),
-            ("files", lambda: repomap_search_files(graph_id="private-visible", query="private"), files_payload, None),
+            ("nodes", lambda: cloe_search_nodes(graph_id="private-visible", query="private"), nodes_payload, None),
+            ("observations", lambda: cloe_search_observations(graph_id="private-visible", query="command", include_raw=False), obs_payload, False),
+            ("files", lambda: cloe_search_files(graph_id="private-visible", query="private"), files_payload, None),
         ]
 
         with self.patch_ops_config(config_path):

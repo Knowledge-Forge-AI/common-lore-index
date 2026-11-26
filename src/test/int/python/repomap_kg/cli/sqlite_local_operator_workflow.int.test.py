@@ -27,14 +27,14 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from repomap_test_support.host_read_store_config import setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.host_read_store_config import setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import (
     graph_toml,
     multi_graph_toml,
     write_shell_source,
     write_sqlite_home,
 )
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.sqlite_local_harness import (
     LocalHarness,
     initialize,
     refusal,
@@ -176,9 +176,9 @@ def test_sqlite_local_operator_workflow_without_postgres(tmp_path: Path) -> None
         home,
         [
             initialize(),
-            tool(2, "repomap_graph_status", {"graph_id": "zulu"}),
-            tool(3, "repomap_canonical_nodes", {"project": "zulu", "limit": 2}),
-            tool(4, "repomap_graph_status", {"graph_id": "alpha"}),
+            tool(2, "cloe_graph_status", {"graph_id": "zulu"}),
+            tool(3, "cloe_canonical_nodes", {"project": "zulu", "limit": 2}),
+            tool(4, "cloe_graph_status", {"graph_id": "alpha"}),
         ],
     )
     assert structured(responses, 3)["items"], responses[3]
@@ -218,7 +218,7 @@ def test_blocker_engages_on_the_real_postgres_path(tmp_path: Path) -> None:
     harness = LocalHarness(tmp_path / "scratch", block_psycopg=True)
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     completed = harness.run("ops", "graphs", "--repo-map-home", str(home))
     assert completed.returncode == 1, completed.stderr
     assert "postgresql-driver-unavailable" in completed.stderr, completed.stderr

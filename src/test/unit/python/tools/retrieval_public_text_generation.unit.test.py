@@ -8,9 +8,9 @@ from typing import Any, cast
 
 import pytest
 
-import repomap_test_support.w5_public_text_generation as generation
-from repomap_test_support.w5_experiment_support import PUBLIC_ALIASES
-from repomap_test_support.w5_public_text_generation import (
+import common_lore_index_test_support.w5_public_text_generation as generation
+from common_lore_index_test_support.w5_experiment_support import PUBLIC_ALIASES
+from common_lore_index_test_support.w5_public_text_generation import (
     DECLARED_ALIASES, GenerationRefusal, GenerationResources, materialize_generation, prepare_generation_inputs,
 )
 from retrieval_public_text_contracts import PrivateMarkerScope

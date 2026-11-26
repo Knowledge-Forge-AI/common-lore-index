@@ -65,7 +65,7 @@ class ChildCoverageCapabilityUnitTests(unittest.TestCase):
         for capability in (cap_int, cap_staging):
             self.assertIsNone(capability.conformance_root)
             with self.assertRaisesRegex(CapabilityRefusalError, "test-conformance authority"):
-                capability.paths_for_command(("-m", "repomap_test_support.usage_worker"))
+                capability.paths_for_command(("-m", "common_lore_index_test_support.usage_worker"))
 
     def test_capability_refusal_for_disallowed_suites(self) -> None:
         for disallowed in ("unit", "smoke", "system", "inert", "unknown"):

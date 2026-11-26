@@ -7,7 +7,7 @@ from typing import Any, cast
 
 import pytest
 
-from repomap_test_support.first_use_workflow import (
+from common_lore_index_test_support.first_use_workflow import (
     FirstUseBindingExpectation,
     first_use_expectations,
     guard_first_use_root,

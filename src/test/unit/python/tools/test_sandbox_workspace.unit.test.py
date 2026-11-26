@@ -145,7 +145,7 @@ def test_dedicated_test_scratch_created_before_inner_test_release(tmp_path):
 
 
 def test_scratch_root_ownership_contract_against_sandbox_environment(tmp_path, monkeypatch):
-    from repomap_test_support.test_scratch import (
+    from common_lore_index_test_support.test_scratch import (
         ENV_SCRATCH_ROOT,
         TestScratchError,
         select_scratch_root,

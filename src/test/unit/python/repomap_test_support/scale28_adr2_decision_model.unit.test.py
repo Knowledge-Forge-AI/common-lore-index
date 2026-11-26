@@ -5,15 +5,15 @@ from typing import TypedDict
 
 import pytest
 
-from repomap_test_support.scale28_adr2_decision_model import (
+from common_lore_index_test_support.scale28_adr2_decision_model import (
     FreshnessDesign,
     PrototypeEvidence,
     StartupArchitecture,
     StartupAuthorityInputs,
     select_startup_authority,
 )
-from repomap_test_support.scale28_adr2_campaign_results import PROTOCOL_REVISION
-from repomap_test_support.scale28_adr2_freshness_model import (
+from common_lore_index_test_support.scale28_adr2_campaign_results import PROTOCOL_REVISION
+from common_lore_index_test_support.scale28_adr2_freshness_model import (
     derive_freshness_lease,
 )
 

@@ -13,7 +13,7 @@ from common_lore_index.coordinator import _publication_phase as phase, refresh_a
 from common_lore_index.coordinator._protocol_execution import SyntheticWorkerResult
 from common_lore_index.coordinator.protocol import ProtocolError, encode_jsonl
 from common_lore_index.coordinator.refresh_adapter import RefreshCapability, create_refresh_capability
-from repomap_test_support.executable_authority import approved_psql, search_path_for
+from common_lore_index_test_support.executable_authority import approved_psql, search_path_for
 
 
 def _capability(root: Path) -> RefreshCapability:

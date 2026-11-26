@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 import pytest
-from repomap_test_support.retrieval_body_study_snapshot_driver import (
+from common_lore_index_test_support.retrieval_body_study_snapshot_driver import (
     export_snapshot_counter_receipt,
     export_final_snapshot_budget,
     make_pg_byte_charger,

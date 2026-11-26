@@ -51,18 +51,18 @@ from common_lore_index.storage.sqlite_local.publisher import FAMILY_ORDER, Local
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
 from common_lore_index.storage.staging_family_rows import StageFamily
 from common_lore_index.storage.staged_ingestion import run_staged_portable_refresh, stage_id_for_authority
-from repomap_test_support.cli_in_process import FIXTURE_ROOT
-from repomap_test_support.host_mcp_publication import RESTORE_LOGIN_SQL, provision_roles, role_secrets
-from repomap_test_support.host_mcp_stdio import HostMcpHarness
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.cli_in_process import FIXTURE_ROOT
+from common_lore_index_test_support.host_mcp_publication import RESTORE_LOGIN_SQL, provision_roles, role_secrets
+from common_lore_index_test_support.host_mcp_stdio import HostMcpHarness
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.sqlite_local_fixtures import (
     SERVICE_TOML,
     graph_toml,
     multi_graph_toml,
     write_sqlite_home,
 )
-from repomap_test_support.sqlite_local_read_corpus import write_polyglot_source
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, structured, tool
+from common_lore_index_test_support.sqlite_local_read_corpus import write_polyglot_source
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, structured, tool
 
 ONE, MULTI = "sqlite-one", "sqlite-multi"
 CONSTELLATION = FIXTURE_ROOT / "multi_source_nix_constellation"
@@ -102,7 +102,7 @@ def _graphs(sources: dict[str, Path], databases: dict[str, str] | None = None) -
 
 def _write_pg_home(home: Path, port: int, databases: dict[str, str], sources: dict[str, Path]) -> None:
     setup_local_runtime(home)
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         "schema_version = 1\n" + SERVICE_TOML
         + '[runtime]\ncontainer_runtime = "docker"\nserver_host_port = 18080\nbind_host = "127.0.0.1"\n'
         + f'[runtime.postgres]\ndirect_host_port_enabled = true\nhost_port = {port}\nbind_host = "127.0.0.1"\n'
@@ -193,38 +193,38 @@ def _requests(local: LocalSqliteConfig) -> list[dict[str, Any]]:
                    "identity_metadata": edge.identity_metadata}
         file_query = "sh" if graph.id == ONE else "nix"
         calls: list[tuple[str, dict[str, Any]]] = [
-            ("repomap_canonical_nodes", {**p, "limit": 3}),
-            ("repomap_canonical_nodes", {**p, "limit": 3, "offset": 3}),
-            ("repomap_canonical_nodes", {**p, "result_schema_version": 0}),
-            ("repomap_canonical_nodes", {**p, "kind": node.kind}),
-            ("repomap_canonical_edges", {**p}),
-            ("repomap_canonical_edges", {**p, "limit": 1, "offset": 1}),
-            ("repomap_canonical_edges", {**p, "source_key": edge.source_key}),
-            ("repomap_explain_canonical_edge", explain),
-            ("repomap_explain_canonical_edge", {**explain, "evidence_limit": 1, "evidence_offset": 1}),
-            ("repomap_canonical_neighborhood", {**p, "node": edge.source_key}),
-            ("repomap_canonical_neighborhood", {**p, "node": edge.target_key, "direction": "in", "node_limit": 1}),
-            ("repomap_graph_status", g),
-            ("repomap_refresh_status", g),
-            ("repomap_project_summary", g),
-            ("repomap_search_nodes", {**g, "query": "A", "limit": 2}),
-            ("repomap_search_nodes", {**g, "query": "a", "limit": 2, "offset": 2}),
-            ("repomap_search_files", {**g, "query": file_query}),
-            ("repomap_search_files", {**g, "query": file_query, "limit": 1, "offset": 1}),
-            ("repomap_status", p),
-            ("repomap_search_observations", {**g, "query": "nix", "limit": 3}),
-            ("repomap_search_observations", {**g, "query": "NIX", "limit": 3, "offset": 3, "include_raw": True}),
-            ("repomap_search_observations", {**g, "query": "flake.nix", "kind": "file", "include_raw": True}),
-            ("repomap_search_observations", {**g, "query": '": "', "limit": 2}),
-            ("repomap_search_observations", {**g, "query": "g_a", "limit": 2, "offset": 1}),
-            ("repomap_neighborhood", {**g, "node": CENTERS[graph.id]}),
-            ("repomap_neighborhood", {**g, "node": CENTERS[graph.id], "direction": "in"}),
-            ("repomap_neighborhood", {**g, "node": "file:absent.nix", "direction": "out"}),
-            *((f"repomap_{family}_summary", g) for family in SUMMARIES),
+            ("cloe_canonical_nodes", {**p, "limit": 3}),
+            ("cloe_canonical_nodes", {**p, "limit": 3, "offset": 3}),
+            ("cloe_canonical_nodes", {**p, "result_schema_version": 0}),
+            ("cloe_canonical_nodes", {**p, "kind": node.kind}),
+            ("cloe_canonical_edges", {**p}),
+            ("cloe_canonical_edges", {**p, "limit": 1, "offset": 1}),
+            ("cloe_canonical_edges", {**p, "source_key": edge.source_key}),
+            ("cloe_explain_canonical_edge", explain),
+            ("cloe_explain_canonical_edge", {**explain, "evidence_limit": 1, "evidence_offset": 1}),
+            ("cloe_canonical_neighborhood", {**p, "node": edge.source_key}),
+            ("cloe_canonical_neighborhood", {**p, "node": edge.target_key, "direction": "in", "node_limit": 1}),
+            ("cloe_graph_status", g),
+            ("cloe_refresh_status", g),
+            ("cloe_project_summary", g),
+            ("cloe_search_nodes", {**g, "query": "A", "limit": 2}),
+            ("cloe_search_nodes", {**g, "query": "a", "limit": 2, "offset": 2}),
+            ("cloe_search_files", {**g, "query": file_query}),
+            ("cloe_search_files", {**g, "query": file_query, "limit": 1, "offset": 1}),
+            ("cloe_status", p),
+            ("cloe_search_observations", {**g, "query": "nix", "limit": 3}),
+            ("cloe_search_observations", {**g, "query": "NIX", "limit": 3, "offset": 3, "include_raw": True}),
+            ("cloe_search_observations", {**g, "query": "flake.nix", "kind": "file", "include_raw": True}),
+            ("cloe_search_observations", {**g, "query": '": "', "limit": 2}),
+            ("cloe_search_observations", {**g, "query": "g_a", "limit": 2, "offset": 1}),
+            ("cloe_neighborhood", {**g, "node": CENTERS[graph.id]}),
+            ("cloe_neighborhood", {**g, "node": CENTERS[graph.id], "direction": "in"}),
+            ("cloe_neighborhood", {**g, "node": "file:absent.nix", "direction": "out"}),
+            *((f"cloe_{family}_summary", g) for family in SUMMARIES),
         ]
         assert len(calls) == CALLS
         requests += [tool(base + index, name, arguments) for index, (name, arguments) in enumerate(calls, 1)]
-    requests += [tool(902, "repomap_refresh_status", {})]
+    requests += [tool(902, "cloe_refresh_status", {})]
     return requests
 
 
@@ -232,9 +232,9 @@ def test_same_validated_input_reads_identically_from_sqlite_and_postgresql(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     require_postgres_binaries()
-    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "REPOMAP_READ_STATUS_PASSWORD", "REPOMAP_STORAGE_PG_CONNECTOR"):
+    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "REPOMAP_READ_STATUS_PASSWORD", "CLOE_STORAGE_PG_CONNECTOR"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psycopg")
+    monkeypatch.setenv("CLOE_STORAGE_READBACK_DRIVER", "psycopg")
     with temporary_postgres() as postgres:
         token = uuid.uuid4().hex[:10]
         names = {ONE: f"sqlite_parity_one_{token}", MULTI: f"sqlite_parity_multi_{token}"}

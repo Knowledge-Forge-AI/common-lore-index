@@ -2,23 +2,23 @@
 
 from unittest.mock import MagicMock, patch
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class ConfiguredStorageIdentityTests(McpServerTestSupport):
     def test_all_eleven_exposed_tools_legacy_calls_omit_identity_keyword(self) -> None:
         from common_lore_index.server.mcp import (
-            repomap_canonical_edges,
-            repomap_canonical_neighborhood,
-            repomap_canonical_nodes,
-            repomap_explain_canonical_edge,
-            repomap_explain_source_feed_item,
-            repomap_ingested_sources,
-            repomap_source_feed_items,
-            repomap_source_references,
-            repomap_source_runs,
-            repomap_source_summary,
-            repomap_status,
+            cloe_canonical_edges,
+            cloe_canonical_neighborhood,
+            cloe_canonical_nodes,
+            cloe_explain_canonical_edge,
+            cloe_explain_source_feed_item,
+            cloe_ingested_sources,
+            cloe_source_feed_items,
+            cloe_source_references,
+            cloe_source_runs,
+            cloe_source_summary,
+            cloe_status,
         )
         from common_lore_index.storage import (
             CanonicalEdgeExplanationRecord,
@@ -56,7 +56,7 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
         )
 
         with (
-            patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(mcp_config_path)}, clear=True),
+            patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(mcp_config_path)}, clear=True),
             patch("common_lore_index.server.mcp.query_canonical_storage_summary", return_value=status_summary) as mock_status,
             patch("common_lore_index.server.mcp.query_canonical_node_records", return_value=(node,)) as mock_nodes,
             patch("common_lore_index.server.mcp.query_canonical_edge_records", return_value=(edge,)) as mock_edges,
@@ -69,81 +69,81 @@ class ConfiguredStorageIdentityTests(McpServerTestSupport):
             patch("common_lore_index.server.mcp.query_source_feed_item_explanation", return_value={"item_key": "feed.item:example:1"}) as mock_explain_feed,
             patch("common_lore_index.server.mcp.query_source_reference_records", return_value=()) as mock_source_refs,
         ):
-            repomap_status(project="legacy-proj")
+            cloe_status(project="legacy-proj")
             self.assertNotIn("repository_identity", mock_status.call_args.kwargs)
 
-            repomap_canonical_nodes(project="legacy-proj", kind="python.module")
+            cloe_canonical_nodes(project="legacy-proj", kind="python.module")
             self.assertNotIn("repository_identity", mock_nodes.call_args.kwargs)
 
-            repomap_canonical_edges(project="legacy-proj", kind="imports")
+            cloe_canonical_edges(project="legacy-proj", kind="imports")
             self.assertNotIn("repository_identity", mock_edges.call_args.kwargs)
 
-            repomap_explain_canonical_edge(
+            cloe_explain_canonical_edge(
                 project="legacy-proj", source_key="python.module:a", kind="imports",
                 target_key="python.module:b", identity_metadata={},
             )
             self.assertNotIn("repository_identity", mock_explain_edge.call_args.kwargs)
 
-            repomap_canonical_neighborhood(project="legacy-proj", node="python.module:a")
+            cloe_canonical_neighborhood(project="legacy-proj", node="python.module:a")
             self.assertNotIn("repository_identity", mock_neighborhood.call_args.kwargs)
 
-            repomap_ingested_sources(project="legacy-proj")
+            cloe_ingested_sources(project="legacy-proj")
             self.assertNotIn("repository_identity", mock_sources.call_args.kwargs)
 
-            repomap_source_summary(project="legacy-proj", source_id="example-feed")
+            cloe_source_summary(project="legacy-proj", source_id="example-feed")
             self.assertNotIn("repository_identity", mock_source_summary.call_args.kwargs)
 
-            repomap_source_runs(project="legacy-proj", source_id="example-feed")
+            cloe_source_runs(project="legacy-proj", source_id="example-feed")
             self.assertNotIn("repository_identity", mock_source_runs.call_args.kwargs)
 
-            repomap_source_feed_items(project="legacy-proj", source_id="example-feed")
+            cloe_source_feed_items(project="legacy-proj", source_id="example-feed")
             self.assertNotIn("repository_identity", mock_feed_items.call_args.kwargs)
 
-            repomap_explain_source_feed_item(project="legacy-proj", item_key="feed.item:example:1")
+            cloe_explain_source_feed_item(project="legacy-proj", item_key="feed.item:example:1")
             self.assertNotIn("repository_identity", mock_explain_feed.call_args.kwargs)
 
-            repomap_source_references(project="legacy-proj", source_id="example-feed")
+            cloe_source_references(project="legacy-proj", source_id="example-feed")
             self.assertNotIn("repository_identity", mock_source_refs.call_args.kwargs)
 
             # Test explicit connection calls also omit repository_identity
-            repomap_status(root_path="/tmp/explicit", pg_database="postgres")
+            cloe_status(root_path="/tmp/explicit", pg_database="postgres")
             self.assertNotIn("repository_identity", mock_status.call_args.kwargs)
 
-            repomap_canonical_nodes(root_path="/tmp/explicit", pg_database="postgres", kind="python.module")
+            cloe_canonical_nodes(root_path="/tmp/explicit", pg_database="postgres", kind="python.module")
             self.assertNotIn("repository_identity", mock_nodes.call_args.kwargs)
 
-            repomap_canonical_edges(root_path="/tmp/explicit", pg_database="postgres", kind="imports")
+            cloe_canonical_edges(root_path="/tmp/explicit", pg_database="postgres", kind="imports")
             self.assertNotIn("repository_identity", mock_edges.call_args.kwargs)
 
-            repomap_explain_canonical_edge(
+            cloe_explain_canonical_edge(
                 root_path="/tmp/explicit", pg_database="postgres", source_key="python.module:a",
                 kind="imports", target_key="python.module:b", identity_metadata={},
             )
             self.assertNotIn("repository_identity", mock_explain_edge.call_args.kwargs)
 
-            repomap_canonical_neighborhood(root_path="/tmp/explicit", pg_database="postgres", node="python.module:a")
+            cloe_canonical_neighborhood(root_path="/tmp/explicit", pg_database="postgres", node="python.module:a")
             self.assertNotIn("repository_identity", mock_neighborhood.call_args.kwargs)
 
-            repomap_ingested_sources(root_path="/tmp/explicit", pg_database="postgres")
+            cloe_ingested_sources(root_path="/tmp/explicit", pg_database="postgres")
             self.assertNotIn("repository_identity", mock_sources.call_args.kwargs)
 
-            repomap_source_summary(root_path="/tmp/explicit", pg_database="postgres", source_id="example-feed")
+            cloe_source_summary(root_path="/tmp/explicit", pg_database="postgres", source_id="example-feed")
             self.assertNotIn("repository_identity", mock_source_summary.call_args.kwargs)
 
-            repomap_source_runs(root_path="/tmp/explicit", pg_database="postgres", source_id="example-feed")
+            cloe_source_runs(root_path="/tmp/explicit", pg_database="postgres", source_id="example-feed")
             self.assertNotIn("repository_identity", mock_source_runs.call_args.kwargs)
 
-            repomap_source_feed_items(root_path="/tmp/explicit", pg_database="postgres", source_id="example-feed")
+            cloe_source_feed_items(root_path="/tmp/explicit", pg_database="postgres", source_id="example-feed")
             self.assertNotIn("repository_identity", mock_feed_items.call_args.kwargs)
 
-            repomap_explain_source_feed_item(root_path="/tmp/explicit", pg_database="postgres", item_key="feed.item:example:1")
+            cloe_explain_source_feed_item(root_path="/tmp/explicit", pg_database="postgres", item_key="feed.item:example:1")
             self.assertNotIn("repository_identity", mock_explain_feed.call_args.kwargs)
 
-            repomap_source_references(root_path="/tmp/explicit", pg_database="postgres", source_id="example-feed")
+            cloe_source_references(root_path="/tmp/explicit", pg_database="postgres", source_id="example-feed")
             self.assertNotIn("repository_identity", mock_source_refs.call_args.kwargs)
 
     def test_configured_portable_graph_routing_and_redaction(self) -> None:
-        from common_lore_index.server.mcp import repomap_status
+        from common_lore_index.server.mcp import cloe_status
         from common_lore_index.storage import CanonicalStorageSummaryRecord
 
         portable_ops_config = (
@@ -200,7 +200,7 @@ enabled = true
         )
         config_path = self.write_ops_config(portable_ops_config)
         with (
-            patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}, clear=True),
+            patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}, clear=True),
             patch("common_lore_index.server.mcp.query_canonical_storage_summary") as mock_summary,
         ):
             mock_summary.return_value = CanonicalStorageSummaryRecord(
@@ -215,7 +215,7 @@ enabled = true
                 canonical_evidence=5,
             )
             # 1. Public portable graph: root_path sent to query is "graph:portable-graph", returned payload root is "[graph-root]"
-            payload = repomap_status(project="portable-graph")
+            payload = cloe_status(project="portable-graph")
             self.assertEqual(mock_summary.call_args.kwargs["root_path"], "graph:portable-graph")
             self.assertEqual(mock_summary.call_args.kwargs["repository_identity"], "repo1:portable-graph")
             self.assertEqual(payload["root_path"], "[graph-root]")
@@ -233,7 +233,7 @@ enabled = true
                 canonical_edges=4,
                 canonical_evidence=5,
             )
-            payload_priv = repomap_status(project="portable-private-graph")
+            payload_priv = cloe_status(project="portable-private-graph")
             self.assertEqual(mock_summary.call_args.kwargs["root_path"], "graph:portable-private-graph")
             self.assertEqual(mock_summary.call_args.kwargs["repository_identity"], "repo1:portable-private-graph")
             self.assertEqual(payload_priv["root_path"], "[private-root]")
@@ -247,17 +247,17 @@ enabled = true
         )
 
         eleven_tools = (
-            "repomap_status",
-            "repomap_canonical_nodes",
-            "repomap_canonical_edges",
-            "repomap_explain_canonical_edge",
-            "repomap_canonical_neighborhood",
-            "repomap_ingested_sources",
-            "repomap_source_summary",
-            "repomap_source_runs",
-            "repomap_source_feed_items",
-            "repomap_explain_source_feed_item",
-            "repomap_source_references",
+            "cloe_status",
+            "cloe_canonical_nodes",
+            "cloe_canonical_edges",
+            "cloe_explain_canonical_edge",
+            "cloe_canonical_neighborhood",
+            "cloe_ingested_sources",
+            "cloe_source_summary",
+            "cloe_source_runs",
+            "cloe_source_feed_items",
+            "cloe_explain_source_feed_item",
+            "cloe_source_references",
         )
         definitions_by_name = {tool["name"]: tool for tool in tool_definitions()}
         for tool_name in eleven_tools:
@@ -268,13 +268,13 @@ enabled = true
             self.assertIn("project", properties)
             self.assertIn("root_path", properties)
 
-        validate_tool_call_arguments("repomap_status", {"project": "repo-map"})
-        validate_tool_call_arguments("repomap_canonical_nodes", {"project": "repo-map", "kind": "python.module"})
+        validate_tool_call_arguments("cloe_status", {"project": "repo-map"})
+        validate_tool_call_arguments("cloe_canonical_nodes", {"project": "repo-map", "kind": "python.module"})
         validate_tool_call_arguments(
-            "repomap_canonical_edges", {"project": "repo-map", "kind": "imports"}
+            "cloe_canonical_edges", {"project": "repo-map", "kind": "imports"}
         )
         validate_tool_call_arguments(
-            "repomap_explain_canonical_edge",
+            "cloe_explain_canonical_edge",
             {
                 "project": "repo-map",
                 "source_key": "python.module:a",
@@ -283,14 +283,14 @@ enabled = true
             },
         )
         validate_tool_call_arguments(
-            "repomap_canonical_neighborhood", {"project": "repo-map", "node": "python.module:a"}
+            "cloe_canonical_neighborhood", {"project": "repo-map", "node": "python.module:a"}
         )
-        validate_tool_call_arguments("repomap_ingested_sources", {"project": "repo-map"})
-        validate_tool_call_arguments("repomap_source_summary", {"project": "repo-map", "source_id": "src-1"})
-        validate_tool_call_arguments("repomap_source_runs", {"project": "repo-map", "source_id": "src-1"})
-        validate_tool_call_arguments("repomap_source_feed_items", {"project": "repo-map", "source_id": "src-1"})
+        validate_tool_call_arguments("cloe_ingested_sources", {"project": "repo-map"})
+        validate_tool_call_arguments("cloe_source_summary", {"project": "repo-map", "source_id": "src-1"})
+        validate_tool_call_arguments("cloe_source_runs", {"project": "repo-map", "source_id": "src-1"})
+        validate_tool_call_arguments("cloe_source_feed_items", {"project": "repo-map", "source_id": "src-1"})
         validate_tool_call_arguments(
-            "repomap_explain_source_feed_item",
+            "cloe_explain_source_feed_item",
             {"project": "repo-map", "item_key": "feed.item:example:1"},
         )
-        validate_tool_call_arguments("repomap_source_references", {"project": "repo-map", "source_id": "src-1"})
+        validate_tool_call_arguments("cloe_source_references", {"project": "repo-map", "source_id": "src-1"})

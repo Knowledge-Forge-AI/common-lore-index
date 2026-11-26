@@ -34,7 +34,7 @@ from common_lore_index.runtime.release_manifest import (
     D12_CANDIDATE_LIBPQ_VERSION,
     D12_CANDIDATE_PACKAGE_MANIFEST,
 )
-from repomap_test_support.d12_recipe import frozen_identity
+from common_lore_index_test_support.d12_recipe import frozen_identity
 from tools.system.candidate_image import require_release_prerequisites_resolved
 
 _REDACT_RE = re.compile(

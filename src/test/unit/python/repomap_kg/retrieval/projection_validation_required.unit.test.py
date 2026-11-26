@@ -7,7 +7,7 @@ from dataclasses import replace
 import pytest
 
 from common_lore_index.retrieval.publication_binding import CorrespondenceRefusal, check_correspondence
-from repomap_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
+from common_lore_index_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
 
 
 @pytest.mark.parametrize("field", ["manifest_reference", "bundle_reference", "receipt_reference", "spool_dir"])

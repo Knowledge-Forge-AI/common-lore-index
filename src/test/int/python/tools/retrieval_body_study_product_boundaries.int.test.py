@@ -22,24 +22,24 @@ from common_lore_index.retrieval.projection_query import (
     query_captured_text,
 )
 from common_lore_index.retrieval.query_contracts import CapabilityState, QueryEnvelope
-from repomap_test_support.context_assertions import (
+from common_lore_index_test_support.context_assertions import (
     assert_valid_context_packet,
     build_postgres_context_fixture,
 )
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE,
     CTX_GRAPH_ID,
     build_sqlite_context_fixture,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
     publish_and_load_sqlite_corpus,
 )
@@ -266,7 +266,7 @@ def test_real_pg_lexical_revision_and_enabled_drift_are_explicitly_refused(
             hit.locator.source_relative_path == "pkg/pipeline.py" for hit in initial.hits
         )
 
-        config_file = home / "repomap.rpl.toml"
+        config_file = home / "repomap.local.cloe.toml"
         original = config_file.read_text(encoding="utf-8")
         try:
             config_file.write_text(

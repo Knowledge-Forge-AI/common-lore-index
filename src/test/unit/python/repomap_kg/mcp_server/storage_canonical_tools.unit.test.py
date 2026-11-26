@@ -9,13 +9,13 @@ from common_lore_index.storage import (
     identity_metadata_hash,
 )
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 
 class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
     def test_canonical_nodes_resolves_patchable_facade_dependencies(self):
-        from common_lore_index.server.mcp import repomap_canonical_nodes
+        from common_lore_index.server.mcp import cloe_canonical_nodes
 
         records = (object(),)
         expected = [{"canonical_key": "patched"}]
@@ -29,7 +29,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
                 return_value=expected,
             ) as to_jsonable,
         ):
-            payload = repomap_canonical_nodes(
+            payload = cloe_canonical_nodes(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 kind="python.module",
@@ -41,7 +41,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
         to_jsonable.assert_called_once_with(records)
 
     def test_canonical_nodes_validates_args_and_calls_storage_helper(self):
-        from common_lore_index.server.mcp import repomap_canonical_nodes
+        from common_lore_index.server.mcp import cloe_canonical_nodes
 
         record = CanonicalNodeRecord(
             canonical_key="python.module:common_lore_index.cli",
@@ -58,7 +58,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
             "common_lore_index.server.mcp.query_canonical_node_records",
             return_value=(record,),
         ) as query:
-            payload = repomap_canonical_nodes(
+            payload = cloe_canonical_nodes(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 kind="python.module",
@@ -79,11 +79,11 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
         self.assertEqual(query.call_args.kwargs["graph_key_version"], 1)
 
     def test_canonical_nodes_rejects_invalid_key_before_query(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_canonical_nodes
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_canonical_nodes
 
         with patch("common_lore_index.server.mcp.query_canonical_node_records") as query:
             with self.assertRaisesRegex(RepoMapMcpError, "invalid canonical key"):
-                repomap_canonical_nodes(
+                cloe_canonical_nodes(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     canonical_key="python.module:bad#line",
@@ -92,14 +92,14 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
         query.assert_not_called()
 
     def test_canonical_nodes_rejects_path_prefix_for_non_file_kind(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_canonical_nodes
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_canonical_nodes
 
         with patch("common_lore_index.server.mcp.query_canonical_node_records") as query:
             with self.assertRaisesRegex(
                 RepoMapMcpError,
                 "path-prefix only applies to file canonical nodes",
             ):
-                repomap_canonical_nodes(
+                cloe_canonical_nodes(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     kind="python.module",
@@ -109,14 +109,14 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
         query.assert_not_called()
 
     def test_canonical_edges_rejects_unsupported_kind_before_query(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_canonical_edges
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_canonical_edges
 
         with patch("common_lore_index.server.mcp.query_canonical_edge_records") as query:
             with self.assertRaisesRegex(
                 RepoMapMcpError,
                 "unsupported canonical edge kind",
             ):
-                repomap_canonical_edges(
+                cloe_canonical_edges(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     kind="invokes",
@@ -125,7 +125,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
         query.assert_not_called()
 
     def test_canonical_edges_returns_existing_cli_json_shape(self):
-        from common_lore_index.server.mcp import repomap_canonical_edges
+        from common_lore_index.server.mcp import cloe_canonical_edges
 
         hash_text = identity_metadata_hash({})
         record = CanonicalEdgeRecord(
@@ -145,7 +145,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
             "common_lore_index.server.mcp.query_canonical_edge_records",
             return_value=(record,),
         ) as query:
-            payload = repomap_canonical_edges(
+            payload = cloe_canonical_edges(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 kind="imports",
@@ -160,7 +160,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
         self.assertEqual(query.call_args.kwargs["target_key"], "python.module:common_lore_index.storage")
 
     def test_explain_canonical_edge_hashes_identity_metadata(self):
-        from common_lore_index.server.mcp import repomap_explain_canonical_edge
+        from common_lore_index.server.mcp import cloe_explain_canonical_edge
 
         metadata = {"scope": "fixture", "order": [2, 1]}
         hash_text = identity_metadata_hash(metadata)
@@ -203,7 +203,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
             "common_lore_index.server.mcp.query_canonical_edge_explanation",
             return_value=record,
         ) as query:
-            payload = repomap_explain_canonical_edge(
+            payload = cloe_explain_canonical_edge(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 source_key="python.module:common_lore_index.cli",
@@ -228,7 +228,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
     def test_explain_canonical_edge_rejects_non_object_identity_metadata(self):
         from common_lore_index.server.mcp import (
             RepoMapMcpError,
-            repomap_explain_canonical_edge,
+            cloe_explain_canonical_edge,
         )
 
         import json
@@ -239,7 +239,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
                 RepoMapMcpError,
                 "identity_metadata must be a JSON object",
             ):
-                repomap_explain_canonical_edge(
+                cloe_explain_canonical_edge(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     source_key="python.module:common_lore_index.cli",
@@ -251,7 +251,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
         query.assert_not_called()
 
     def test_canonical_neighborhood_validates_args_and_returns_json_shape(self):
-        from common_lore_index.server.mcp import repomap_canonical_neighborhood
+        from common_lore_index.server.mcp import cloe_canonical_neighborhood
 
         hash_text = identity_metadata_hash({})
         record = CanonicalNeighborhoodRecord(
@@ -299,7 +299,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
             "common_lore_index.server.mcp.query_canonical_neighborhood",
             return_value=record,
         ) as query:
-            payload = repomap_canonical_neighborhood(
+            payload = cloe_canonical_neighborhood(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 node="python.module:common_lore_index.cli",
@@ -325,7 +325,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
     def test_canonical_neighborhood_rejects_depth_and_direction_before_query(self):
         from common_lore_index.server.mcp import (
             RepoMapMcpError,
-            repomap_canonical_neighborhood,
+            cloe_canonical_neighborhood,
         )
 
         with patch("common_lore_index.server.mcp.query_canonical_neighborhood") as query:
@@ -333,7 +333,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
                 RepoMapMcpError,
                 "neighborhood only supports depth 1",
             ):
-                repomap_canonical_neighborhood(
+                cloe_canonical_neighborhood(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     node="python.module:common_lore_index.cli",
@@ -344,7 +344,7 @@ class McpServerStorageCanonicalToolUnitTests(McpServerTestSupport):
                 RepoMapMcpError,
                 "direction must be one of both, in, out",
             ):
-                repomap_canonical_neighborhood(
+                cloe_canonical_neighborhood(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     node="python.module:common_lore_index.cli",

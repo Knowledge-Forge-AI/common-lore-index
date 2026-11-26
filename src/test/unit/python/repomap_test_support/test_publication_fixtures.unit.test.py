@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import unittest
 
-from repomap_test_support.publication_fixtures import (
+from common_lore_index_test_support.publication_fixtures import (
     PublicationFixture,
     json_checksums,
     json_family_manifest,

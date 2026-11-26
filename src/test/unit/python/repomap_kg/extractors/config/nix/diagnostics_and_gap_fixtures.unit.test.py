@@ -1,7 +1,7 @@
 import unittest
 
 from common_lore_index.extractors.config.nix import extract_nix_file_observations
-from repomap_test_support.nix_extractor import (
+from common_lore_index_test_support.nix_extractor import (
     NIX_EXTRACT1_FIXTURES,
     NIX_EXTRACT5_GAP_FIXTURES,
     NIX_OUTPUT_KINDS,

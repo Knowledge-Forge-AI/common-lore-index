@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_ledger import (
     CleanupResult,
     FinalPresence,
     ResourceKind,

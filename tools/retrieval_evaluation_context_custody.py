@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -46,7 +46,7 @@ def context_candidate_source_files(repo_root: Path = REPO_ROOT) -> dict[str, byt
     out.update(_collect_tree(repo_root / "src/main/resources", include=lambda _p: True))
     out.update(
         _collect_tree(
-            repo_root / "src/test/support/python/repomap_test_support",
+            repo_root / "src/test/support/python/common_lore_index_test_support",
             include=lambda p: p.suffix == ".py",
         )
     )

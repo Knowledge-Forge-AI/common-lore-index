@@ -22,7 +22,7 @@ from common_lore_index.runtime.release_cluster import (
 )
 from common_lore_index.storage import default_rdbms_root, discover_migrations
 from common_lore_index.storage.main import _migration_script
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -199,7 +199,7 @@ def _owned_cluster_databases():
 
 
 def _verify_cluster_toml(path: Path, postgres, graph_db: str) -> None:
-    data = tomllib.loads((path / "repomap.rpl.toml").read_text(encoding="utf-8"))
+    data = tomllib.loads((path / "repomap.local.cloe.toml").read_text(encoding="utf-8"))
     assert type(data["schema_version"]) is int and data["schema_version"] == 1
     assert data["service"] == {"mode": "local", "mcp_transport": "stdio", "log_level": "info"}
     assert data["runtime"]["container_runtime"] == "docker"
@@ -232,7 +232,7 @@ def _setup_cluster_home(path: Path, postgres, graph_db: str = "repomap_cluster_g
         f'enabled = false\nmcp_visible = false\nextractor_profile = "default"\nrefresh_policy = "manual"\nexclude_paths = []\n'
         f'[server_memory]\nenabled = false\npath = "./server-memory"\nmode = "read_only"\n'
     )
-    (path / "repomap.rpl.toml").write_text(toml, encoding="utf-8")
+    (path / "repomap.local.cloe.toml").write_text(toml, encoding="utf-8")
     _verify_cluster_toml(path, postgres, graph_db)
     env_file = path / "runtime" / ".env"
     env_lines = [

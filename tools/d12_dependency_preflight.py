@@ -29,8 +29,8 @@ from common_lore_index.runtime.release import (
 )
 from common_lore_index.runtime.release_dockerfile import ARCHIVE_APT_PATH, archive_apt_sources
 from common_lore_index.runtime.release_manifest import D12_CANDIDATE_PACKAGE_MANIFEST
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support.d12_core_image import D12Admission, D12ProfileError
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support.d12_core_image import D12Admission, D12ProfileError
 
 PLATFORMS = ("linux/arm64", "linux/amd64")
 _NATIVE = {"aarch64": "linux/arm64", "arm64": "linux/arm64", "x86_64": "linux/amd64", "amd64": "linux/amd64"}

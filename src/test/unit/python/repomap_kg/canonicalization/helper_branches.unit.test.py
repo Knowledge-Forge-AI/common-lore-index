@@ -1,6 +1,6 @@
 import unittest
 
-from repomap_test_support.policy_observations import (
+from common_lore_index_test_support.policy_observations import (
     raw_observation,
 )
 

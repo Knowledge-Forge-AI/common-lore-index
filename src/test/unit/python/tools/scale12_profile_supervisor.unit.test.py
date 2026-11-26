@@ -15,7 +15,7 @@ from common_lore_index.storage.staging_operation_events import (
     StagingOperationEvent,
     StagingOperationEventCategory,
 )
-from repomap_test_support.scale12_supervision_policy import OperationArmedElapsedMonitor
+from common_lore_index_test_support.scale12_supervision_policy import OperationArmedElapsedMonitor
 from scale11_threshold_evaluator import IncrementalThresholdMonitor, MetricSpec
 from scale12_event_transport import Scale12EventChannel, Scale12Frame, Scale12TransportError
 from scale12_profile_supervisor import (

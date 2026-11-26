@@ -14,7 +14,7 @@ from common_lore_index.artifacts._sealing_meter import SealingMeter
 from common_lore_index.artifacts._store_common import ArtifactIntegrityError
 from common_lore_index.artifacts.sealing_governance import SealingBudget, SealingBudgetExceeded
 from common_lore_index.artifacts.store import FileSystemArtifactStore
-from repomap_test_support.sealing_governance_fixtures import open_descriptor_count
+from common_lore_index_test_support.sealing_governance_fixtures import open_descriptor_count
 
 CHUNK = 64 * 1024
 

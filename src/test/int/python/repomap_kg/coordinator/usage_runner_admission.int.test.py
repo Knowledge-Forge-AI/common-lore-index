@@ -31,7 +31,7 @@ class _RefusalSubject(ChildCoverageCapability):
 
 def _spec(*args: str) -> WorkerLaunchSpec:
     return WorkerLaunchSpec(
-        argv=(sys.executable, "-m", "repomap_test_support.usage_worker", *args),
+        argv=(sys.executable, "-m", "common_lore_index_test_support.usage_worker", *args),
         environment={"PYTHONPATH": "/support:/main"},
         cwd=Path.cwd(),
     )

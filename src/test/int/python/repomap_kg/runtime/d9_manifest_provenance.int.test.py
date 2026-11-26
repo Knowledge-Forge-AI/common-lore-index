@@ -40,12 +40,12 @@ from common_lore_index.storage import (
     run_psql,
 )
 from common_lore_index.storage.main import _migration_script
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     connect_real_postgres as _connect,
     setup_real_backup_home as _setup_real_home,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 def _pick_contrib_extension(postgres: Any) -> str:
@@ -68,7 +68,7 @@ def test_real_core_provenance_v1_compatibility_and_consumer_refusals(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9a-core-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9a-core-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("REPOMAP_PG_PASSWORD", postgres.password)
@@ -253,7 +253,7 @@ def test_real_schema_upgrade_control_upgrade_and_release_cluster_refusals(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9a-upg-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9a-upg-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("REPOMAP_PG_PASSWORD", postgres.password)
@@ -338,7 +338,7 @@ def test_real_schema_upgrade_control_upgrade_and_release_cluster_refusals(
 @pytest.mark.requires_pgvector
 def test_pgvector_profile_real_extension_provenance_and_consumer_refusal(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9a-vec-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9a-vec-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("REPOMAP_PG_PASSWORD", postgres.password)

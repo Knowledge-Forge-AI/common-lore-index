@@ -40,15 +40,15 @@ from common_lore_index.storage.lexical_driver import (
     lexical_connection_scope,
 )
 from common_lore_index.storage.lexical_probe import probe_lexical_runtime
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
 )
 
@@ -209,7 +209,7 @@ def test_postgres_lexical_build_query_styles_fence_reclassification_revoke_and_r
         assert ref_empty_tsq.refusal_code == "empty_lexical_tsquery"
 
         # 8. Live on-disk config reload + policy reclassification check inside single-statement fence
-        cfg_file = pg_home / "repomap.rpl.toml"
+        cfg_file = pg_home / "repomap.local.cloe.toml"
         orig_cfg_text = cfg_file.read_text(encoding="utf-8")
         try:
             cfg_file.write_text(

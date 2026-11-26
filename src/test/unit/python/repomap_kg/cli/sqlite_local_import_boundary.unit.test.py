@@ -29,10 +29,10 @@ from common_lore_index import cli
 from common_lore_index.cli import _postgres_facade
 from common_lore_index.coordinator import local_mode
 from common_lore_index.ops import refresh as ops_refresh
-from repomap_test_support import sqlite_local_guard
-from repomap_test_support.host_read_store_config import setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, remove_database, tool
+from common_lore_index_test_support import sqlite_local_guard
+from common_lore_index_test_support.host_read_store_config import setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, remove_database, tool
 
 POSTGRES_IMPLEMENTATION = {
     "common_lore_index.coordinator.local_mode",
@@ -81,7 +81,7 @@ def test_postgres_home_reports_the_bounded_missing_driver_error(tmp_path: Path) 
     harness = LocalHarness(tmp_path / "pg-scratch", block_psycopg=True)
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     completed = harness.run("ops", "config-check", "--repo-map-home", str(home), "--json")
     assert completed.returncode == 1, completed.stderr
     assert "postgresql-driver-unavailable" in completed.stderr, completed.stderr
@@ -175,7 +175,7 @@ def test_mcp_serve_reads_a_sqlite_home_without_the_driver(tmp_path: Path) -> Non
     harness = LocalHarness(tmp_path / "scratch", block_psycopg=True)
     home = _home(tmp_path)
     _assert_driver_free(harness, harness.run("ops", "sqlite-init", "--repo-map-home", str(home), "--graph", "zulu"))
-    responses = harness.mcp(home, [initialize(), tool(2, "repomap_graph_status", {"graph_id": "zulu"})])
+    responses = harness.mcp(home, [initialize(), tool(2, "cloe_graph_status", {"graph_id": "zulu"})])
     assert responses[1]["result"]["serverInfo"]["name"] == "common-lore-index", responses[1]
     assert "result" in responses[2], responses[2]
     assert harness.forbidden_events() == [], harness.forbidden_events()
@@ -222,22 +222,22 @@ def test_facade_names_resolve_to_their_source_objects(monkeypatch: pytest.Monkey
 
 
 def test_navigation_search_over_existing_driver_free_stdio_path(tmp_path: Path) -> None:
-    from repomap_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
-    from repomap_test_support.sqlite_local_harness import structured
+    from common_lore_index_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
+    from common_lore_index_test_support.sqlite_local_harness import structured
 
     home, _ = navigation_home(tmp_path)
     harness = LocalHarness(tmp_path / "navigation-stdio", block_psycopg=True)
     args = {"graph_id": GRAPH, "query": "beacon", "scope": "docs",
             "grouping": "source_document", "limit": 1}
-    responses = harness.mcp(home, [initialize(), tool(2, "repomap_navigation_search", args),
-                                   tool(3, "repomap_navigation_search", {**args, "offset": 1}),
+    responses = harness.mcp(home, [initialize(), tool(2, "cloe_navigation_search", args),
+                                   tool(3, "cloe_navigation_search", {**args, "offset": 1}),
                                    {"jsonrpc": "2.0", "id": 4, "method": "tools/list"},
-                                   tool(5, "repomap_navigation_search", {**args, "source_binding_id": BINDING,
+                                   tool(5, "cloe_navigation_search", {**args, "source_binding_id": BINDING,
                                                                        "source_path_prefix": "docs/beta.md"})])
     first, second = structured(responses, 2), structured(responses, 3)
     assert first["schema"] == "repomap.navigation_search" and first["has_more"]
     assert first["results"][0]["destination"] != second["results"][0]["destination"]
-    assert any(row["name"] == "repomap_navigation_search" for row in responses[4]["result"]["tools"])
+    assert any(row["name"] == "cloe_navigation_search" for row in responses[4]["result"]["tools"])
     scoped = structured(responses, 5)
     assert scoped["status"] == "ok" and scoped["scan"]["nodes"] == 1
     assert scoped["results"][0]["destination"]["source_relative_path"] == "docs/beta.md"
@@ -246,7 +246,7 @@ def test_navigation_search_over_existing_driver_free_stdio_path(tmp_path: Path) 
 
 
 def test_context_pack_and_select_run_without_the_postgres_driver(tmp_path: Path) -> None:
-    from repomap_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
+    from common_lore_index_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
 
     home, _ = navigation_home(tmp_path)
     harness = LocalHarness(tmp_path / "context-driver-free", block_psycopg=True)

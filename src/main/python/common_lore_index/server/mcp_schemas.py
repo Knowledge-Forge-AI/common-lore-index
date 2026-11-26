@@ -12,13 +12,13 @@ from common_lore_index.server._mcp_neighborhood import neighborhood_properties
 def tool_definitions() -> list[dict[str, Any]]:
     return [
         tool_definition(
-            "repomap_status",
+            "cloe_status",
             "Return read-only legacy storage status and counts; use "
-            "repomap_graph_status for canonical graph counts.",
+            "cloe_graph_status for canonical graph counts.",
             {},
         ),
         {
-            "name": "repomap_projects",
+            "name": "cloe_projects",
             "description": "List configured read-only Common Lore Index MCP projects.",
             "inputSchema": {
                 "type": "object",
@@ -28,7 +28,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             },
         },
         tool_definition(
-            "repomap_canonical_nodes",
+            "cloe_canonical_nodes",
             "Read canonical graph nodes from Common Lore Index storage.",
             {
                 "kind": {"type": "string"},
@@ -46,7 +46,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             },
         ),
         tool_definition(
-            "repomap_canonical_edges",
+            "cloe_canonical_edges",
             "Read canonical graph edges from Common Lore Index storage.",
             {
                 "kind": {"type": "string"},
@@ -68,7 +68,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             },
         ),
         tool_definition(
-            "repomap_explain_canonical_edge",
+            "cloe_explain_canonical_edge",
             "Read one canonical edge and its evidence from Common Lore Index storage.",
             {
                 "source_key": {"type": "string"},
@@ -100,7 +100,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("source_key", "kind", "target_key"),
         ),
         tool_definition(
-            "repomap_canonical_neighborhood",
+            "cloe_canonical_neighborhood",
             "Read a depth-1 canonical graph neighborhood from Common Lore Index storage.",
             {
                 "node": {"type": "string"},
@@ -142,7 +142,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("node",),
         ),
         tool_definition(
-            "repomap_ingested_sources",
+            "cloe_ingested_sources",
             "List read-only RSS2-ingested source summaries from Common Lore Index storage.",
             {
                 "source_type": {"type": "string"},
@@ -151,13 +151,13 @@ def tool_definitions() -> list[dict[str, Any]]:
             },
         ),
         tool_definition(
-            "repomap_source_summary",
+            "cloe_source_summary",
             "Show safe metadata and feed graph counts for one ingested source.",
             {"source_id": {"type": "string"}},
             required=("source_id",),
         ),
         tool_definition(
-            "repomap_source_runs",
+            "cloe_source_runs",
             "List read-only ingestion runs inferred from RSS2 source metadata.",
             {
                 "source_id": {"type": "string"},
@@ -166,7 +166,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("source_id",),
         ),
         tool_definition(
-            "repomap_source_feed_items",
+            "cloe_source_feed_items",
             "List canonical feed items for one already-ingested source.",
             {
                 "source_id": {"type": "string"},
@@ -176,7 +176,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("source_id",),
         ),
         tool_definition(
-            "repomap_explain_source_feed_item",
+            "cloe_explain_source_feed_item",
             "Explain one canonical feed item from stored evidence only.",
             {
                 "item_key": {"type": "string"},
@@ -185,7 +185,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("item_key",),
         ),
         tool_definition(
-            "repomap_source_references",
+            "cloe_source_references",
             "List not-fetched references from feed items for one ingested source.",
             {
                 "source_id": {"type": "string"},
@@ -196,18 +196,18 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("source_id",),
         ),
         ops_tool_definition(
-            "repomap_list_graphs",
+            "cloe_list_graphs",
             "List enabled MCP-visible graphs from unified TOML config.",
             {},
         ),
         ops_tool_definition(
-            "repomap_graph_status",
+            "cloe_graph_status",
             "Read stored status for one configured MCP-visible graph.",
             {"graph_id": {"type": "string"}},
             required=("graph_id",),
         ),
         ops_tool_definition(
-            "repomap_search_nodes",
+            "cloe_search_nodes",
             "For one MCP-visible graph, search stored canonical key, kind and display name, with optional exact kind. Empty means no indexed match, not source absence. Use bounded native literal-text search in the caller's workspace/subtree for content; verify known locations with zero graph calls.",
             {
                 "graph_id": {"type": "string"},
@@ -219,7 +219,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("graph_id", "query"),
         ),
         ops_tool_definition(
-            "repomap_search_observations",
+            "cloe_search_observations",
             "For one MCP-visible graph, search retained observation kind, source ID, path and serialized payload text, with optional exact kind/path. include_raw controls output only. Empty means no stored-field match. Use bounded native literal-text search for arbitrary workspace source text.",
             {
                 "graph_id": {"type": "string"},
@@ -240,7 +240,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("graph_id", "query"),
         ),
         ops_tool_definition(
-            "repomap_search_files",
+            "cloe_search_files",
             "For one MCP-visible graph, search stored file path, language and role, with optional exact path. Empty means no stored-field match. File bodies are not searched; use bounded native literal-text search for workspace content.",
             {
                 "graph_id": {"type": "string"},
@@ -252,7 +252,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("graph_id", "query"),
         ),
         ops_tool_definition(
-            "repomap_neighborhood",
+            "cloe_neighborhood",
             "Read a one-hop canonical neighborhood for one MCP-visible graph. "
             "SQLite opt-in node_limit/edge_limit (1-100) independently bound returned sets "
             "with completeness probes; omitted dimensions remain unbounded. "
@@ -263,54 +263,54 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("graph_id", "node"),
         ),
         ops_tool_definition(
-            "repomap_project_summary",
+            "cloe_project_summary",
             "Read legacy storage project counts for one MCP-visible graph; use "
-            "repomap_graph_status for canonical graph counts.",
+            "cloe_graph_status for canonical graph counts.",
             {"graph_id": {"type": "string"}},
             required=("graph_id",),
         ),
         ops_tool_definition(
-            "repomap_python_summary",
+            "cloe_python_summary",
             "Read stored Python summary for one MCP-visible graph.",
             {"graph_id": {"type": "string"}},
             required=("graph_id",),
         ),
         ops_tool_definition(
-            "repomap_terraform_summary",
+            "cloe_terraform_summary",
             "Read stored Terraform summary for one MCP-visible graph.",
             {"graph_id": {"type": "string"}},
             required=("graph_id",),
         ),
         ops_tool_definition(
-            "repomap_openapi_summary",
+            "cloe_openapi_summary",
             "Read stored OpenAPI summary for one MCP-visible graph.",
             {"graph_id": {"type": "string"}},
             required=("graph_id",),
         ),
         ops_tool_definition(
-            "repomap_js_framework_summary",
+            "cloe_js_framework_summary",
             "Read stored JS framework summary for one MCP-visible graph.",
             {"graph_id": {"type": "string"}},
             required=("graph_id",),
         ),
         ops_tool_definition(
-            "repomap_nix_summary",
+            "cloe_nix_summary",
             "Read stored Nix/flakes summary for one MCP-visible graph.",
             {"graph_id": {"type": "string"}},
             required=("graph_id",),
         ),
         ops_tool_definition(
-            "repomap_refresh_status",
+            "cloe_refresh_status",
             "Read stored refresh status for MCP-visible graphs.",
             {"graph_id": {"type": "string"}},
         ),
         ops_tool_definition(
-            "repomap_server_memory_summary",
+            "cloe_server_memory_summary",
             "Summarize configured server-memory JSONL in read-only mode.",
             {},
         ),
         ops_tool_definition(
-            "repomap_server_memory_search",
+            "cloe_server_memory_search",
             "Search configured server-memory JSONL in read-only mode.",
             {
                 "query": {"type": "string"},
@@ -321,7 +321,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             required=("query",),
         ),
         ops_tool_definition(
-            "repomap_similar_nodes",
+            "cloe_similar_nodes",
             "Read stored similar nodes for one canonical node in an MCP-visible graph.",
             {
                 "graph_id": {"type": "string"},

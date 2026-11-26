@@ -4,8 +4,8 @@ import json
 import tempfile
 from pathlib import Path
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -201,7 +201,7 @@ WHERE canonical_nodes.repository_id = (
 
 
 def _write_config(home: Path, *, postgres) -> None:
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         f'''schema_version = 1
 [service]
 mode = "local"

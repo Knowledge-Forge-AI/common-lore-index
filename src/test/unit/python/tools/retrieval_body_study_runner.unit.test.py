@@ -156,7 +156,7 @@ def test_body_sdk_result_record_cannot_enter_an_old_cohort(tmp_path, caps):
 def test_body_inner_report_path_matches_canonical_export_root():
     from retrieval_body_study_contracts import BODY_ADMISSION_SCHEMA
     from retrieval_body_study_plan import plan_digest, project_inner_body_plan
-    from repomap_test_support.retrieval_body_study_host_cases import body_plan
+    from common_lore_index_test_support.retrieval_body_study_host_cases import body_plan
 
     plan = body_plan()
     admission = {"schema": BODY_ADMISSION_SCHEMA, "plan_sha256": plan_digest(plan),
@@ -173,7 +173,7 @@ def test_real_body_prepayment_charges_before_sdk_and_refuses_spent_sdk(tmp_path,
     from retrieval_body_study_evidence_budget import INNER_EPOCH_PREPARATION_BYTES
     from retrieval_body_study_contracts import MAX_PLAN_BYTES
     from retrieval_body_study_inner_read_reservation import prepay_inner_reads
-    from repomap_test_support.retrieval_body_study_host_cases import body_plan
+    from common_lore_index_test_support.retrieval_body_study_host_cases import body_plan
 
     # Synthetic closure measurement isolates this pure accounting boundary;
     # the real plan validator and on-disk candidate-size checks still execute.
@@ -204,7 +204,7 @@ def test_real_body_prepayment_charges_before_sdk_and_refuses_spent_sdk(tmp_path,
 
 def test_real_body_prepayment_refuses_measured_closure_drift_before_charge(tmp_path, monkeypatch):
     from retrieval_body_study_inner_read_reservation import prepay_inner_reads
-    from repomap_test_support.retrieval_body_study_host_cases import body_plan
+    from common_lore_index_test_support.retrieval_body_study_host_cases import body_plan
 
     plan = body_plan()
     (tmp_path / "README.md").write_bytes(b"x")
@@ -221,5 +221,5 @@ def test_real_body_prepayment_refuses_measured_closure_drift_before_charge(tmp_p
 
 
 def test_body_ledger_never_accepts_legacy_results_or_reopens_spent_sdk(tmp_path):
-    from repomap_test_support.retrieval_body_study_runner_cases import body_ledger_case
+    from common_lore_index_test_support.retrieval_body_study_runner_cases import body_ledger_case
     body_ledger_case(tmp_path)

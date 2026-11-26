@@ -5,8 +5,8 @@ import subprocess
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_fix2_observer import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_observer import (
     ConfiguredOwningAreaRunnerError,
     OWNING_AREA_STREAM_EXCERPT_BYTES,
     execute_owning_area_execution,

@@ -8,15 +8,13 @@ from typing import Any
 
 import pytest
 
-import repomap_test_support.installed_mcp_session as mcp_session_module
-from repomap_test_support.installed_environment import ChildExecutionFailure, InstalledEnvironment
-from repomap_test_support.installed_mcp_session import (
+import common_lore_index_test_support.installed_mcp_session as mcp_session_module
+from common_lore_index_test_support.installed_environment import ChildExecutionFailure, InstalledEnvironment
+from common_lore_index_test_support.installed_mcp_session import (
     McpSession, McpTranscript, result_digest, stderr_class, structured,
 )
-from repomap_test_support.installed_mcp_session import _hint_path, _member
+from common_lore_index_test_support.installed_mcp_session import _hint_path, _member
 
-MODULE_NOTICE = "warning: legacy-module: example"
-COMMAND_NOTICE = "warning: legacy-command: example"
 
 
 def _session() -> McpSession:
@@ -155,7 +153,7 @@ def test_requests_are_one_json_line_each_and_ids_increase() -> None:
     session = _session()
     first = session.request("initialize", {"protocolVersion": "2024-11-05"})
     session.notify("notifications/initialized")
-    second = session.call("repomap_navigation_search", {"graph_id": "tiny", "query": "q"})
+    second = session.call("cloe_navigation_search", {"graph_id": "tiny", "query": "q"})
     session.malformed()
     assert (first, second) == (1, 2) and session.request_ids == [1, 2] and session.malformed_sent == 1
     assert all(line.endswith(b"\n") and line.count(b"\n") == 1 for line in session.lines)
@@ -201,11 +199,8 @@ def test_reply_count_is_bounded() -> None:
 
 
 def test_stderr_classes_and_canonical_digest() -> None:
-    kwargs = {"module_notice": MODULE_NOTICE, "command_notice": COMMAND_NOTICE}
-    assert stderr_class("", **kwargs) == "empty"
-    assert stderr_class(MODULE_NOTICE + "\n", **kwargs) == "legacy-module-notice"
-    assert stderr_class(COMMAND_NOTICE + "\n", **kwargs) == "legacy-command-notice"
-    assert stderr_class(COMMAND_NOTICE + "\nTraceback\n", **kwargs) == "other"
+    assert stderr_class("") == "empty"
+    assert stderr_class("diagnostic\n") == "other"
     assert result_digest({"b": 1, "a": "é"}) == result_digest({"a": "é", "b": 1})
 
 

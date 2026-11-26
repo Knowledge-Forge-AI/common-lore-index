@@ -21,7 +21,7 @@ from typing import Any
 import pytest
 
 import d12_dependency_preflight as preflight
-from repomap_test_support import d12_core_image as d12
+from common_lore_index_test_support import d12_core_image as d12
 import runner_arguments
 import test_sandbox
 

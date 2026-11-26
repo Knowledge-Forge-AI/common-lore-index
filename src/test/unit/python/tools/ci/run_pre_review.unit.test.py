@@ -19,7 +19,7 @@ from ci.pre_review_evidence import (
 
 
 def make_oversized_payload(file_count: int = 2500) -> dict:
-    from repomap_test_support.retention_evidence_fixture import evidence_source
+    from common_lore_index_test_support.retention_evidence_fixture import evidence_source
     return evidence_source(status="failed", file_count=file_count, cohort_count=0, root="product")
 
 

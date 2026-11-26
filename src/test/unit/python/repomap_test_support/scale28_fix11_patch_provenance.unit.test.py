@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from repomap_test_support.scale28_fix11_patch_provenance import (
+from common_lore_index_test_support.scale28_fix11_patch_provenance import (
     PatchOperation,
     PatchParseError,
     parse_git_patch,

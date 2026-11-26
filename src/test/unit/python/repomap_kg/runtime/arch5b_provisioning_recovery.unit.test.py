@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.local_db_backup import LocalDbBackupUnitTestCase
+from common_lore_index_test_support.local_db_backup import LocalDbBackupUnitTestCase
 
 from common_lore_index.coordinator._control_types import ControlSchemaError
 from common_lore_index.coordinator.local_lifecycle import (

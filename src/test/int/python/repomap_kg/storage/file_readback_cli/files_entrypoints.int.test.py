@@ -5,14 +5,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
 
 from common_lore_index.observations import RawObservation
-from repomap_test_support.storage_publication import load_file_observations
+from common_lore_index_test_support.storage_publication import load_file_observations
 from common_lore_index.storage import (
     apply_migrations,
     default_rdbms_root,
@@ -89,7 +89,7 @@ class StorageFilesEntrypointsCliIntegrationTests(unittest.TestCase):
                 psql_command=postgres.psql_command,
             )
             home = Path(tmpdir)
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 f'''schema_version = 1
 [service]
 mode = "local"
@@ -184,7 +184,7 @@ mode = "read_only"
                 "exit 2\n"
             )
             failing_psql.chmod(0o755)
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 '''schema_version = 1
 [service]
 mode = "local"

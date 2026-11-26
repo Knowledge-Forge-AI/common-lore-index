@@ -19,7 +19,7 @@ from ci.d12_system_grant import (
     load_and_validate_system_build_grant,
     read_regular_json_object,
 )
-from repomap_test_support.d12_recipe import frozen_identity
+from common_lore_index_test_support.d12_recipe import frozen_identity
 import test_sandbox_images
 
 SYSTEM_HOLD_REFUSAL_SCHEMA = "repomap-d12-system-hold-refusal-v1"

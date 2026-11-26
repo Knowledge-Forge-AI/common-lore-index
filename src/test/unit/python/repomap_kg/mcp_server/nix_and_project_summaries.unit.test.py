@@ -3,12 +3,12 @@ from unittest.mock import patch
 
 from common_lore_index.storage import JSFrameworkSummaryRecord, CanonicalStorageSummaryRecord
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
     def test_nix_summary3_mcp_nix_summary_returns_count_only_payload(self):
-        from common_lore_index.server.mcp import repomap_nix_summary
+        from common_lore_index.server.mcp import cloe_nix_summary
 
         config_path = self.write_ops_config(self.visible_ops_config())
         summary_record = self.synthetic_nix_summary()
@@ -24,7 +24,7 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
                 "common_lore_index.ops.refresh.run_storage_readback_with_ops_psql",
                 side_effect=AssertionError("retained ops-psql fallback reached"),
             ) as run_storage:
-                payload = repomap_nix_summary(graph_id="repo-map")
+                payload = cloe_nix_summary(graph_id="repo-map")
 
         self.assertEqual(payload["summary_kind"], "nix")
         self.assert_public_graph_payload(payload["graph"])
@@ -107,22 +107,22 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
     def test_nix_summary3_mcp_nix_summary_rejects_hidden_and_disabled_graphs(
         self,
     ):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_nix_summary
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_nix_summary
 
         config_path = self.write_visible_ops_config()
         with self.patch_ops_config(config_path):
             with patch("common_lore_index.server.ops.query_nix_summary") as query:
                 with self.assertRaisesRegex(RepoMapMcpError, "not enabled"):
-                    repomap_nix_summary(graph_id="disabled")
+                    cloe_nix_summary(graph_id="disabled")
                 with self.assertRaisesRegex(RepoMapMcpError, "not MCP-visible"):
-                    repomap_nix_summary(graph_id="hidden")
+                    cloe_nix_summary(graph_id="hidden")
 
         query.assert_not_called()
 
     def test_nix_summary3_private_graph_nix_summary_redacts_roots_and_paths(
         self,
     ):
-        from common_lore_index.server.mcp import repomap_nix_summary
+        from common_lore_index.server.mcp import cloe_nix_summary
 
         private_root = "/Users/synthetic-local-user/private-flakes"
         config_path = self.write_live_ops8_private_ops_config(private_root)
@@ -135,7 +135,7 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
                 "common_lore_index.server.ops.query_nix_summary",
                 return_value=summary_record,
             ):
-                payload = repomap_nix_summary(graph_id="private-visible")
+                payload = cloe_nix_summary(graph_id="private-visible")
 
         self.assert_private_graph_payload(payload["graph"])
         self.assertEqual(payload["summary"]["root_path"], "[private-root]")
@@ -170,19 +170,19 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
 
         names = [tool["name"] for tool in tool_definitions()]
 
-        self.assertIn("repomap_nix_summary", names)
+        self.assertIn("cloe_nix_summary", names)
         self.assertEqual(
-            TOOL_FUNCTIONS["repomap_nix_summary"],
-            "repomap_nix_summary",
+            TOOL_FUNCTIONS["cloe_nix_summary"],
+            "cloe_nix_summary",
         )
-        schema = tool_input_schema("repomap_nix_summary")
+        schema = tool_input_schema("cloe_nix_summary")
         self.assertEqual(schema["required"], ["graph_id"])
         self.assertEqual(schema["properties"], {"graph_id": {"type": "string"}})
         self.assertFalse(schema["additionalProperties"])
         self.assert_tool_schema_omits_unsafe_arguments(schema)
 
     def test_mcp_smoke1_project_summary_redacts_private_summary_root(self):
-        from common_lore_index.server.mcp import repomap_project_summary
+        from common_lore_index.server.mcp import cloe_project_summary
 
         config_path = self.write_visible_ops_config()
         with self.patch_ops_config(config_path):
@@ -200,7 +200,7 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
                     canonical_evidence=5,
                 ),
             ):
-                payload = repomap_project_summary(graph_id="private-visible")
+                payload = cloe_project_summary(graph_id="private-visible")
 
         self.assert_private_graph_payload(payload["graph"])
         self.assertEqual(
@@ -210,7 +210,7 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
         self.assert_read_only_payload(payload)
         self.assert_no_synthetic_private_root(payload)
     def test_mcp_smoke1_domain_summary_redacts_private_summary_root(self):
-        from common_lore_index.server.mcp import repomap_js_framework_summary
+        from common_lore_index.server.mcp import cloe_js_framework_summary
 
         config_path = self.write_visible_ops_config()
         with self.patch_ops_config(config_path):
@@ -232,7 +232,7 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
                     safety={"no_execution": True},
                 ),
             ):
-                payload = repomap_js_framework_summary(graph_id="private-visible")
+                payload = cloe_js_framework_summary(graph_id="private-visible")
 
         self.assert_private_graph_payload(payload["graph"])
         self.assertEqual(payload["summary"]["root_path"], "[private-root]")
@@ -240,7 +240,7 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
         self.assert_no_synthetic_private_root(payload)
 
     def test_mcp_smoke1_project_summary_masks_public_summary_root(self):
-        from common_lore_index.server.mcp import repomap_project_summary
+        from common_lore_index.server.mcp import cloe_project_summary
 
         config_path = self.write_visible_ops_config()
         with self.patch_ops_config(config_path):
@@ -258,14 +258,14 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
                     canonical_evidence=5,
                 ),
             ):
-                payload = repomap_project_summary(graph_id="repo-map")
+                payload = cloe_project_summary(graph_id="repo-map")
 
         self.assert_public_graph_payload(payload["graph"])
         self.assertEqual(payload["summary"]["root_path"], "[graph-root]")
         self.assert_read_only_payload(payload)
 
     def test_mcp_smoke1_domain_summary_masks_public_summary_root(self):
-        from common_lore_index.server.mcp import repomap_js_framework_summary
+        from common_lore_index.server.mcp import cloe_js_framework_summary
 
         config_path = self.write_visible_ops_config()
         with self.patch_ops_config(config_path):
@@ -287,21 +287,21 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
                     safety={"no_execution": True},
                 ),
             ):
-                payload = repomap_js_framework_summary(graph_id="repo-map")
+                payload = cloe_js_framework_summary(graph_id="repo-map")
 
         self.assert_public_graph_payload(payload["graph"])
         self.assertEqual(payload["summary"]["root_path"], "[graph-root]")
         self.assert_read_only_payload(payload)
 
     def test_mcp_smoke2_projects_reports_graph_registry_available(self):
-        from common_lore_index.server.mcp import repomap_list_graphs, repomap_projects
+        from common_lore_index.server.mcp import cloe_list_graphs, cloe_projects
 
         mcp_config_path = self.write_empty_mcp_config()
         ops_config_path = self.write_visible_ops_config()
 
         with self.patch_mcp_and_ops_config(mcp_config_path, ops_config_path):
-            projects_payload = repomap_projects()
-            graphs_payload = repomap_list_graphs()
+            projects_payload = cloe_projects()
+            graphs_payload = cloe_list_graphs()
 
         self.assertEqual(projects_payload["projects"], [])
         self.assertIsNone(projects_payload["default_project"])
@@ -317,18 +317,18 @@ class McpServerNixAndProjectSummaryUnitTests(McpServerTestSupport):
             [graph["graph_id"] for graph in projects_payload["graphs"]],
             ["repo-map", "private-visible"],
         )
-        self.assertIn("repomap_list_graphs", projects_payload["message"])
+        self.assertIn("cloe_list_graphs", projects_payload["message"])
         self.assert_public_graph_payload(projects_payload["graphs"][0])
         self.assert_private_graph_payload(projects_payload["graphs"][1])
 
     def test_mcp_smoke2_projects_graph_registry_hint_keeps_roots_safe(self):
-        from common_lore_index.server.mcp import repomap_projects
+        from common_lore_index.server.mcp import cloe_projects
 
         mcp_config_path = self.write_empty_mcp_config()
         ops_config_path = self.write_visible_ops_config()
 
         with self.patch_mcp_and_ops_config(mcp_config_path, ops_config_path):
-            payload = repomap_projects()
+            payload = cloe_projects()
 
         graphs_by_id = {graph["graph_id"]: graph for graph in payload["graphs"]}
         self.assert_public_graph_payload(graphs_by_id["repo-map"])

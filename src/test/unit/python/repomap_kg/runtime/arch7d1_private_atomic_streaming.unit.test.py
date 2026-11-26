@@ -20,7 +20,7 @@ from common_lore_index.runtime.backup_manifests import (
 )
 from common_lore_index.runtime.backup_records import RuntimeContainerMetadata
 from common_lore_index.runtime.local import setup_local_runtime
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     maybe_provenance_runner_result,
     unit_maintenance_window_patch,
 )

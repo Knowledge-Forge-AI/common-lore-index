@@ -190,7 +190,7 @@ def inspect_related(*, graph_id: str, canonical_key: str, direction: str = "both
     if not _callable(tool_call):
         return _failure(base, "invalid_options")
     try:
-        reply = tool_call("repomap_neighborhood", {"graph_id": graph_id, "node": canonical_key,
+        reply = tool_call("cloe_neighborhood", {"graph_id": graph_id, "node": canonical_key,
                                                   "direction": direction, "depth": 1})
         return {**project_neighborhood(reply, **options), "graph_calls": 1}
     except Exception:  # Optional callback failure: no exception/payload leakage or retry.
@@ -262,7 +262,7 @@ def expand_selected(view: dict[str, Any], selected_keys: tuple[str, ...] = (), *
     for key in selected_keys:
         result["graph_calls"] += 1
         try:
-            reply = _copy(tool_call("repomap_node_locations", {
+            reply = _copy(tool_call("cloe_node_locations", {
                 "graph_id": result["selection"]["graph_id"], "canonical_key": key,
                 "evidence_role": "direct", "detail": "compact", "limit": 2,
             }), MAX_CAPTURE_BYTES)

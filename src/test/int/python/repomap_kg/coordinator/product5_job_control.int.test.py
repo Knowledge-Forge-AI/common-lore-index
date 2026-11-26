@@ -7,7 +7,7 @@ from contextlib import contextmanager
 import os
 import secrets
 import sys
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 import unittest
 from typing import Any
 
@@ -32,7 +32,7 @@ from common_lore_index.coordinator.transport import (
     LoopbackTcpService,
     UnixSocketService,
 )
-from repomap_test_support.startup_recovery_scenarios import _harness, _req
+from common_lore_index_test_support.startup_recovery_scenarios import _harness, _req
 
 
 def _valid_health_payload(version: int = 2, status: str = "ready") -> dict[str, object]:

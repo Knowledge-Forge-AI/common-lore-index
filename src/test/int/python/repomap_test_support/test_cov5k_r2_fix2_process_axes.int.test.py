@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support import test_cov5k_r2_fix1_executors as owner_fixtures
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_fix2_process_recorder import (
+from common_lore_index_test_support import test_cov5k_r2_fix1_executors as owner_fixtures
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_process_recorder import (
     execute_zero_process_boundary,
 )
 

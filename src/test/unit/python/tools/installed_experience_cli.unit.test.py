@@ -164,7 +164,7 @@ def test_product_never_imports_installed_tools_or_test_support() -> None:
     product = REPO_ROOT / "src" / "main" / "python"
     forbidden = ("installed_experience", "installed_candidate", "installed_environment",
                  "installed_projection", "installed_origin", "installed_mcp_session",
-                 "repomap_test_support", "from tools", "import tools")
+                 "common_lore_index_test_support", "from tools", "import tools")
     offenders = []
     for path in sorted(product.rglob("*.py")):
         text = path.read_text(encoding="utf-8")

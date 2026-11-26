@@ -19,7 +19,7 @@ from common_lore_index.coordinator.local_lifecycle import (
 )
 from common_lore_index.storage.authority import RequestId
 from common_lore_index.coordinator.storage import ControlStore
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 from common_lore_index.runtime.maintenance import (
     MaintenanceUnavailableError,
     maintenance_activity,
@@ -27,7 +27,7 @@ from common_lore_index.runtime.maintenance import (
     maintenance_window,
     require_transaction_admission,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -208,7 +208,7 @@ def test_lifecycle_maintenance_windows_and_database_ownership_validation(
     monkeypatch,
 ) -> None:
     require_postgres_binaries()
-    with short_test_directory("arch5a-", "ops/configured.rp.toml") as directory:
+    with short_test_directory("arch5a-", "ops/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("ARCH5A_TEST_PASSWORD", postgres.password)
@@ -216,7 +216,7 @@ def test_lifecycle_maintenance_windows_and_database_ownership_validation(
             home.mkdir(mode=0o700, exist_ok=True)
             repository = root / "repository"
             repository.mkdir()
-            (home / "configured.rp.toml").write_text(
+            (home / "configured.cloe.toml").write_text(
                 f'''schema_version = 1
 
 [service]

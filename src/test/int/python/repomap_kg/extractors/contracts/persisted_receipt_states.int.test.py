@@ -27,7 +27,7 @@ from common_lore_index.extractors.contracts.receipt_codec import (
 )
 from common_lore_index.extractors.contracts.receipt_schema import check_transition
 from common_lore_index.extractors.contracts.vocabulary import ContractError
-from repomap_test_support.extractor_contracts.receipt_fixtures import (
+from common_lore_index_test_support.extractor_contracts.receipt_fixtures import (
     attempt,
     canonical,
     declared_receipt,

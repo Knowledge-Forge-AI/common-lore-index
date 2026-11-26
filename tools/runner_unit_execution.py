@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from repomap_test_support.test_scratch import establish_run
+from common_lore_index_test_support.test_scratch import establish_run
 from runner_coverage import (
     ChildCoverageSession,
     collect_coverage_summary,
@@ -85,7 +85,7 @@ def run_selected_suites(
         if getattr(args, "smoke_image_reference", None):
             os.environ["REPOMAP_TEST_RUNTIME_IMAGE"] = args.smoke_image_reference
         elif docker_boundary is not None and resource_run is not None:
-            from repomap_test_support.resource_test_images import ensure_canonical_runtime_image
+            from common_lore_index_test_support.resource_test_images import ensure_canonical_runtime_image
 
             repo_root = Path(__file__).resolve().parents[1]
             os.environ["REPOMAP_TEST_RUNTIME_IMAGE"] = ensure_canonical_runtime_image(
@@ -122,7 +122,7 @@ def run_smoke_suite(
     if image_reference is None:
         if resource_run is None or docker_boundary is None:
             raise RuntimeError("managed smoke image ensure requires the run-wide boundary")
-        from repomap_test_support.resource_test_images import ensure_canonical_runtime_image
+        from common_lore_index_test_support.resource_test_images import ensure_canonical_runtime_image
 
         image_reference = ensure_canonical_runtime_image(
             repo_root=repo_root,

@@ -26,7 +26,7 @@ from common_lore_index.extractors.rust_pilot.readback import (
     verify_confinement,
     verify_install_tree,
 )
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import guest_text
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import guest_text
 
 MOUNTS = ("1 0 0:1 / / ro,nosuid,nodev - overlay overlay ro",
           "2 1 0:2 / /opt/repomap-rust rw,nosuid,nodev,relatime - tmpfs tmpfs rw,size=16384k,mode=755",

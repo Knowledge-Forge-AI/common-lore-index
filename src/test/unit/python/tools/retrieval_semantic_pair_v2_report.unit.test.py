@@ -10,7 +10,7 @@ from typing import cast
 import pytest
 
 import retrieval_semantic_pair_v2_report as pair_v2_module
-from repomap_test_support.w5_pair_fixtures import make_pair_artifacts
+from common_lore_index_test_support.w5_pair_fixtures import make_pair_artifacts
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_semantic_observed_operation_capture import make_unadmitted_operation_identity
 from retrieval_semantic_pair_artifacts import PairReportRefusal, load_journal

@@ -72,7 +72,7 @@ MAX_MEMBERS = 4096
 
 # This checks direct imports only. The maintained FTS fallback helper has an
 # existing transitive support import; its reviewed closure remains bound.
-_DIRECT_TEST_SUPPORT_IMPORT = re.compile(r"^\s*(?:from|import)\s+repomap_test_support\b", re.MULTILINE)
+_DIRECT_TEST_SUPPORT_IMPORT = re.compile(r"^\s*(?:from|import)\s+common_lore_index_test_support\b", re.MULTILINE)
 
 
 _COMMIT = re.compile(r"\A[0-9a-f]{40}\Z")

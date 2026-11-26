@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import (
     BIND_CORE, BIND_REDACTED, make_w5_calibration_task, make_w5_policy, make_w5_readback_adapter, make_w5_verified_pin,
 )
 from retrieval_evaluation_admission_w5 import admit_w5_task

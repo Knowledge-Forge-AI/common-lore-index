@@ -6,7 +6,7 @@ import pytest
 
 from common_lore_index.coordinator import _control_maintenance as maintenance
 from common_lore_index.coordinator._control_types import JobClaim
-from repomap_test_support.control_db_fakes import ScriptedCursor, connect_with
+from common_lore_index_test_support.control_db_fakes import ScriptedCursor, connect_with
 
 
 @pytest.fixture

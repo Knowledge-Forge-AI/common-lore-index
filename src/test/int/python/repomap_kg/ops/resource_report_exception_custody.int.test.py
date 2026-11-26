@@ -18,15 +18,15 @@ from common_lore_index.ops.config_records import OpsConfig
 from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.sqlite_local import investigation_queries
 from common_lore_index.storage.sqlite_local.connection import read_transaction
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.resource_report_cli_files import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.resource_report_cli_files import (
     TEMP_PREFIX, private_directory, report_leftovers, report_payload,
 )
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID, binding_id_for_alias, materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
 )
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
 
 
 GRAPH = "report-exception-int"

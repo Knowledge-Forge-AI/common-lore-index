@@ -243,7 +243,7 @@ class AbruptRunnerContext:
             declaration = self._usage_declaration()
             usage_case = None
             if len(spec.argv) >= 5 and tuple(spec.argv[1:3]) == (
-                "-m", "repomap_test_support.usage_worker"):
+                "-m", "common_lore_index_test_support.usage_worker"):
                 if spec.argv[3] == "--case" and len(spec.argv) > 4:
                     usage_case = spec.argv[4]
             if declaration is not None and usage_case == declaration.launch_case:
@@ -317,7 +317,7 @@ class AbruptRunnerContext:
             if (find_declaration(self.nodeid, self.declarations) is None
                     or self.nodeid not in self.nodeids
                     or tuple(spec.argv[1:5]) != (
-                        "-m", "repomap_test_support.portable_worker_conformance",
+                        "-m", "common_lore_index_test_support.portable_worker_conformance",
                         "--case", "crash:after-materialization")):
                 return measured_adapter(spec, identity, limits, **kwargs)
             if session is not None:

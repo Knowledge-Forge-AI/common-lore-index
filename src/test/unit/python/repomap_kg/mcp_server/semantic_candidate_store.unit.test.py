@@ -11,11 +11,11 @@ from common_lore_index.server.investigation_read_store import (
 )
 from common_lore_index.storage.semantic_candidates import unavailable
 from common_lore_index.storage.semantic_seed import SimilarNodesQuery
-from repomap_test_support.semantic_candidate_fixtures import PROFILE
+from common_lore_index_test_support.semantic_candidate_fixtures import PROFILE
 from common_lore_index.server.sqlite_read_binding import SqliteInvestigationReadStore
-from repomap_test_support.host_read_store_config import fail_if_reached, patched_guards
-from repomap_test_support.mcp_server import McpServerTestSupport
-from repomap_test_support.semantic_candidate_fixtures import candidate_query
+from common_lore_index_test_support.host_read_store_config import fail_if_reached, patched_guards
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.semantic_candidate_fixtures import candidate_query
 
 
 class SemanticCandidateStoreTests(McpServerTestSupport):

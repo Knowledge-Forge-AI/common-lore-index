@@ -37,10 +37,10 @@ from common_lore_index.runtime._extension_restore_native import run_bounded_ext_
 from common_lore_index.runtime.backup_records import LocalDbBackupError
 from common_lore_index.runtime.local import build_local_runtime_plan
 from common_lore_index.runtime.release import PACKAGED_PSQL
-from repomap_test_support.d9_extension_restore import engine_container_id, owned_d9_postgres_cluster, postmaster_crash_lines
-from repomap_test_support.local_db_backup import connect_real_postgres as _connect
-from repomap_test_support.postgres_harness import require_postgres_binaries
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.d9_extension_restore import engine_container_id, owned_d9_postgres_cluster, postmaster_crash_lines
+from common_lore_index_test_support.local_db_backup import connect_real_postgres as _connect
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 GRAPH = "d9b_reap_graph"
 LOCK_KEY = 4_242_017
@@ -150,7 +150,7 @@ def test_d9b_child_of_a_stopped_leader_is_never_left_for_the_pid1_postmaster(
 ) -> None:
     """Settlement never signals a leader whose child it cannot see reaped, nor a child its parent cannot reap."""
     require_postgres_binaries()
-    with short_test_directory("d9b-rp-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-rp-", "home/repomap.local.cloe.toml") as directory:
         home = Path(directory) / "home"
         with owned_d9_postgres_cluster(home, graph_db=GRAPH) as (identity, postgres, _runner):
             monkeypatch.setenv("REPOMAP_PG_PASSWORD", str(postgres.password))
@@ -213,7 +213,7 @@ def _adopted_orphan(container: str, token: str) -> _Proc:
 def test_d9b_recorded_leader_adopted_by_pid1_is_never_signalled(monkeypatch: pytest.MonkeyPatch, externally_stopped: bool) -> None:
     """A SIGKILLed or SIGSTOPped-then-killed PID 1 child would make the postmaster crash-restart every session."""
     require_postgres_binaries()
-    with short_test_directory("d9b-ra-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-ra-", "home/repomap.local.cloe.toml") as directory:
         with owned_d9_postgres_cluster(Path(directory) / "home", graph_db=GRAPH) as (identity, postgres, _runner):
             monkeypatch.setenv("REPOMAP_PG_PASSWORD", str(postgres.password))
             container, token = identity.postgres_container, uuid.uuid4().hex

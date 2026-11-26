@@ -27,9 +27,9 @@ from common_lore_index.ops.local_refresh import LocalRefreshResult, refresh_loca
 from common_lore_index.storage.sqlite_local.connection import publisher_lock
 from common_lore_index.storage.sqlite_local.publisher import FAMILY_ORDER
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.host_read_store_config import fail_if_reached, setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml, write_sqlite_home
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.host_read_store_config import fail_if_reached, setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml, write_sqlite_home
 
 PG_WRITE_TRIPWIRES = (
     "common_lore_index.ops.portable_refresh.run_staged_portable_refresh",
@@ -83,7 +83,7 @@ def test_sqlite_init_creates_once_then_reports_current(tmp_path: Path) -> None:
 def test_sqlite_init_refuses_a_postgres_home(tmp_path: Path) -> None:
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     code, _, stderr = _cli("ops", "sqlite-init", "--repo-map-home", str(home), "--graph", "host-one")
     assert code == 1 and "sqlite-local-home-required" in stderr, stderr
 
@@ -117,7 +117,7 @@ def test_local_refresh_refuses_postgres_only_options(
 def test_sqlite_home_config_errors_are_reported_directly(tmp_path: Path) -> None:
     home = tmp_path / "home"
     home.mkdir()
-    (home / "repomap.rp.toml").write_text(
+    (home / "repomap.cloe.toml").write_text(
         sqlite_home_toml('[postgres]\nhost = "h"\n' + graph_toml("one", tmp_path)), encoding="utf-8"
     )
     code, _, stderr = _cli("ops", "refresh-graph", "--repo-map-home", str(home), "--graph", "one")
@@ -128,7 +128,7 @@ def test_sqlite_home_config_errors_are_reported_directly(tmp_path: Path) -> None
 def test_postgres_home_falls_through_to_the_unchanged_dispatcher(tmp_path: Path) -> None:
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     args = argparse.Namespace(
         command="ops", ops_command="refresh-graph", repo_map_home=str(home), config=None,
         graph="host-one", mode="direct", psql_command=None, json=True,
@@ -204,8 +204,8 @@ def test_validation_failure_publishes_nothing(tmp_path: Path) -> None:
 def test_postgres_home_with_sqlite_overlay_refuses_both_commands(tmp_path: Path) -> None:
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
-    (home / "zz-local.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "zz-local.local.cloe.toml").write_text(
         'schema_version = 1\n[storage]\nbackend = "sqlite"\n', encoding="utf-8"
     )
     with patch.object(_ops_sqlite_dispatch, "refresh_local_graph", fail_if_reached), patch.object(
@@ -214,7 +214,7 @@ def test_postgres_home_with_sqlite_overlay_refuses_both_commands(tmp_path: Path)
         for command in ("refresh-graph", "sqlite-init"):
             code, _, stderr = _cli("ops", command, "--repo-map-home", str(home), "--graph", "host-one")
             assert code == 1, (command, code, stderr)
-            assert "conflicts with the postgresql backend of repomap.rpl.toml" in stderr, (command, stderr)
+            assert "conflicts with the postgresql backend of repomap.local.cloe.toml" in stderr, (command, stderr)
             assert "storage-backend-conflict: " in stderr, (command, stderr)
     assert not (home / "state").exists()
 

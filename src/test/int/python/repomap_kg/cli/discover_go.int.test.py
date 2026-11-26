@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[6]
-from repomap_test_support.cli_integration import CliIntegrationTestCase
+from common_lore_index_test_support.cli_integration import CliIntegrationTestCase
 
 
 class CliDiscoverGoIntegrationTests(CliIntegrationTestCase):
@@ -165,7 +165,7 @@ class CliDiscoverGoIntegrationTests(CliIntegrationTestCase):
     def test_discover_refuses_symlinks_pointing_outside_repository_root(self):
         import tempfile
 
-        from repomap_test_support.test_scratch import select_scratch_root
+        from common_lore_index_test_support.test_scratch import select_scratch_root
 
         with tempfile.TemporaryDirectory(dir=select_scratch_root()) as tmpdir:
             repo_root = Path(tmpdir) / "repo"
@@ -220,7 +220,7 @@ class CliDiscoverGoIntegrationTests(CliIntegrationTestCase):
 
         with patch.dict(
             "os.environ",
-            {"REPOMAP_GO_HELPER": "/missing/repomap-go-extract"},
+            {"CLOE_GO_HELPER": "/missing/cloe-go-extract"},
         ):
             exit_code, stdout, stderr = self.run_module_entrypoint(
                 "discover", str(fixture), "--jsonl"

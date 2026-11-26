@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -14,7 +14,7 @@ from common_lore_index.storage import (
     default_rdbms_root,
 )
 
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     discovery_fixture,
 )
 

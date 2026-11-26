@@ -22,20 +22,20 @@ from common_lore_index.server.graph_selection import select_graph
 from common_lore_index.server.investigation_read_store import PostgresInvestigationReadStore
 from common_lore_index.server.postgres_read_binding import PostgresGraphStores, PostgresInvestigationStores
 from common_lore_index.server.source_read_store import PostgresSourceReadStore
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     INVALID_PSQL_COMMAND,
     NO_FALLBACK_GUARDS,
     PG_BINDING_TRIPWIRES,
     patched_guards,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 PSQL = "/opt/pg/bin/psql"
 FAMILY_TOOLS: tuple[tuple[str, dict[str, Any]], ...] = (
-    ("repomap_project_summary", {"graph_id": "repo-map"}),
-    ("repomap_search_files", {"graph_id": "repo-map", "query": "a"}),
-    ("repomap_canonical_nodes", {"project": "repo-map"}),
-    ("repomap_source_runs", {"project": "repo-map", "source_id": "feed"}),
+    ("cloe_project_summary", {"graph_id": "repo-map"}),
+    ("cloe_search_files", {"graph_id": "repo-map", "query": "a"}),
+    ("cloe_canonical_nodes", {"project": "repo-map"}),
+    ("cloe_source_runs", {"project": "repo-map", "source_id": "feed"}),
 )
 CONTEXT_TRIPWIRES = ("common_lore_index.server._ops_records.McpOpsGraphContext.__init__",)
 DATABASE_TRIPWIRES = tuple(target for target in PG_BINDING_TRIPWIRES if target.endswith(".graph_database"))
@@ -47,8 +47,8 @@ DRIVER_TRIPWIRES = tuple(target for target in PG_BINDING_TRIPWIRES if "readback_
 
 class PostgresBindingPreservationTests(McpServerTestSupport):
     def _env(self, **env: str) -> Any:
-        return patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()),
-                                         "REPOMAP_OPS_CONFIG": str(self.write_visible_ops_config()), **env},
+        return patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()),
+                                         "CLOE_OPS_CONFIG": str(self.write_visible_ops_config()), **env},
                           clear=True)
 
     def test_investigation_binding_keeps_database_command_and_second_resolution(self) -> None:
@@ -56,7 +56,7 @@ class PostgresBindingPreservationTests(McpServerTestSupport):
         from common_lore_index.server._ops_records import graph_context
         from common_lore_index.server.ops import investigation_stores, load_mcp_ops_config
 
-        with self._env(REPOMAP_PSQL_COMMAND=PSQL):
+        with self._env(CLOE_PSQL_COMMAND=PSQL):
             config = load_mcp_ops_config()
             assert isinstance(config, OpsConfig), "a PostgreSQL home loads OpsConfig"
             binding: Any = investigation_stores(config)
@@ -78,7 +78,7 @@ class PostgresBindingPreservationTests(McpServerTestSupport):
         from common_lore_index.server._ops_records import graph_context
         from common_lore_index.server.mcp import graph_stores, storage_connection
 
-        with self._env(REPOMAP_PSQL_COMMAND=PSQL), \
+        with self._env(CLOE_PSQL_COMMAND=PSQL), \
                 patch("common_lore_index.server.mcp.query_canonical_node_records") as nodes_owner, \
                 patch("common_lore_index.server.mcp.query_source_run_records") as runs_owner:
             target: Any = storage_connection(project="repo-map")
@@ -102,13 +102,13 @@ class PostgresBindingPreservationTests(McpServerTestSupport):
         from common_lore_index.server.mcp import RepoMapMcpError, handle_tool_call
 
         for tool, args in FAMILY_TOOLS:
-            with self.subTest(tool=tool), self._env(REPOMAP_PSQL_COMMAND=INVALID_PSQL_COMMAND), \
+            with self.subTest(tool=tool), self._env(CLOE_PSQL_COMMAND=INVALID_PSQL_COMMAND), \
                     patched_guards(NO_FALLBACK_GUARDS), self.assertRaises(RepoMapMcpError) as raised:
                 handle_tool_call(tool, dict(args))
             self.assertEqual(str(raised.exception), "psql command must not contain whitespace")
         # Selection refusals still come first, before the command is read.
-        with self._env(REPOMAP_PSQL_COMMAND=INVALID_PSQL_COMMAND), self.assertRaises(RepoMapMcpError) as raised:
-            handle_tool_call("repomap_canonical_nodes", {"project": "hidden"})
+        with self._env(CLOE_PSQL_COMMAND=INVALID_PSQL_COMMAND), self.assertRaises(RepoMapMcpError) as raised:
+            handle_tool_call("cloe_canonical_nodes", {"project": "hidden"})
         self.assertEqual(str(raised.exception), "graph 'hidden' is not MCP-visible")
 
 
@@ -120,11 +120,11 @@ class PostgresBindingTripwireCanaryTests(McpServerTestSupport):
         from common_lore_index.server.ops import load_mcp_ops_config
 
         ops_path = self.write_visible_ops_config()
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(ops_path)}, clear=True):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(ops_path)}, clear=True):
             config = load_mcp_ops_config()
             assert isinstance(config, OpsConfig), "a PostgreSQL home loads OpsConfig"
         stack = ExitStack()
-        stack.enter_context(patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()),
+        stack.enter_context(patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()),
                                                       "REPOMAP_PG_PASSWORD": "synthetic"}, clear=True))
         stack.enter_context(patch("common_lore_index.server.ops.load_mcp_ops_config", lambda *_a: config))
         stack.enter_context(patch("common_lore_index.server.mcp_core.load_mcp_ops_config", lambda *_a: config))

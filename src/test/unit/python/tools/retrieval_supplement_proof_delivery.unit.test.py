@@ -11,7 +11,7 @@ import runner_pgvector_discovery as discovery
 import runner_pgvector_supplement_proof as proof
 from retrieval_supplement_study_contracts import STUDY_SELECTOR
 from runner_pgvector_prebuilt import ENV_OFFLINE_PLAN, INNER_PLAN, digest, json_bytes
-from repomap_test_support.retrieval_supplement_runtime_fixture import runtime_provenance_fixture
+from common_lore_index_test_support.retrieval_supplement_runtime_fixture import runtime_provenance_fixture
 
 
 def _proof_plan(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:

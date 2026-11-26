@@ -122,7 +122,7 @@ RULES = (
     CapabilityRule(
         "native_toolchain",
         (
-            r"REPOMAP_GO_HELPER",
+            r"CLOE_GO_HELPER",
             r"golangci-lint",
             r"['\"]go['\"]",
             r"native executable",

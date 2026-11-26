@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
 from retrieval_evaluation import main as cli_main
 from retrieval_evaluation_harness import (
     verify_fixture_freeze_guard,
@@ -110,7 +110,7 @@ def test_projection_adapter_preserves_requested_mode_and_discloses_literal_fallb
     from dataclasses import replace
     from common_lore_index.retrieval.projection_build import build_captured_text_projection
     from common_lore_index.retrieval.query_contracts import MatchSurface, QueryEnvelope, QueryMode
-    from repomap_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
+    from common_lore_index_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
     from retrieval_evaluation_grading import ExecutionState
     from retrieval_evaluation_reference import execute_projection_reference_task
 

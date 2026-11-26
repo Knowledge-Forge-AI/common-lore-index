@@ -6,7 +6,7 @@ import time
 import pytest
 
 from common_lore_index.observations.raw import RawObservation
-from repomap_test_support.scale18_digest_campaign import (
+from common_lore_index_test_support.scale18_digest_campaign import (
     SCALE18_BANDS,
     SCALE18_PROFILES,
     Scale18DigestCampaignError,

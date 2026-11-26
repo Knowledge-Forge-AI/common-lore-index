@@ -37,19 +37,19 @@ from common_lore_index.storage.semantic_candidate_import import build_embedding_
 from common_lore_index.storage.semantic_candidate_readback import query_semantic_candidates
 from common_lore_index.storage.semantic_candidates import CandidatePublication, EmbeddingEntry
 from common_lore_index.storage.staged_ingestion import run_staged_portable_refresh
-from repomap_test_support.d9_extension_policies import DEFAULT_REPLAY_BOUNDS, adr0077_pgvector_extension_policy, probe_live_container_qualification
-from repomap_test_support.d9_extension_restore import (
+from common_lore_index_test_support.d9_extension_policies import DEFAULT_REPLAY_BOUNDS, adr0077_pgvector_extension_policy, probe_live_container_qualification
+from common_lore_index_test_support.d9_extension_restore import (
     clean_template_reference, database_names, engine_container_id, owned_d9_postgres_cluster, seed_adr0077_roles_on_cluster,
 )
-from repomap_test_support.local_db_backup import connect_real_postgres as _connect
-from repomap_test_support.portable_publication_fixtures import _authority, _binding
-from repomap_test_support.postgres_harness import require_postgres_binaries
-from repomap_test_support.semantic_candidate_fixtures import BINDING, PROFILE, candidate_query
-from repomap_test_support.semantic_candidate_publication import candidate_bundle
-from repomap_test_support.semantic_candidate_restore import (
+from common_lore_index_test_support.local_db_backup import connect_real_postgres as _connect
+from common_lore_index_test_support.portable_publication_fixtures import _authority, _binding
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries
+from common_lore_index_test_support.semantic_candidate_fixtures import BINDING, PROFILE, candidate_query
+from common_lore_index_test_support.semantic_candidate_publication import candidate_bundle
+from common_lore_index_test_support.semantic_candidate_restore import (
     record_optional_schema_state, verify_reader_privilege_refusals, verify_restored_acl_and_principal, verify_writer_privilege_refusals,
 )
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 REPOSITORY = "repo1:candidate-fixture"
 ROOT = "graph:candidate-fixture"
@@ -85,7 +85,7 @@ def _execute(postgres: Any, sql: str, *, role: str | None = None) -> None:
 
 def _read_candidates(postgres: Any, query: Any) -> Any:
     with pytest.MonkeyPatch.context() as env:
-        env.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psql")
+        env.setenv("CLOE_STORAGE_READBACK_DRIVER", "psql")
         env.setenv("PGOPTIONS", f"-c role={READER} -c default_transaction_read_only=on")
         return query_semantic_candidates(postgres.psql_args, query=query, psql_command=postgres.psql_command)
 
@@ -111,7 +111,7 @@ def _seed_two_publications(handle: Any) -> Any:
 @pytest.mark.requires_pgvector
 def test_first_proof_unchanged_pgcustom_private_derived_toc_stdin_transport(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-proof-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-proof-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         src_db, dst_db, home = "d9b_src_graph", "d9b_dst_graph", root / "home"
         reference = clean_template_reference(root)
@@ -157,7 +157,7 @@ def test_first_proof_unchanged_pgcustom_private_derived_toc_stdin_transport(monk
 @pytest.mark.requires_pgvector
 def test_pgvector_d9b_end_to_end_single_and_coordinated_restore_and_role_reconciliation(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-vec-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-vec-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         graph_db, home = "d9b_vec_graph", root / "home"
         ctrl_db = f"{graph_db}_control"

@@ -15,10 +15,10 @@ from common_lore_index.coordinator._portable_worker_launch import run_portable_w
 from common_lore_index.coordinator.core import SyntheticCoordinator
 from common_lore_index.coordinator.startup_recovery import StartupRecoveryReport
 from common_lore_index.coordinator.storage import SingletonActiveError
-from repomap_test_support.portable_worker_scenarios import coordinator_test_limits, create_test_sealed_capability
+from common_lore_index_test_support.portable_worker_scenarios import coordinator_test_limits, create_test_sealed_capability
 
 
-from repomap_test_support.startup_recovery_scenarios import (
+from common_lore_index_test_support.startup_recovery_scenarios import (
     _harness, _refresh_harness, _make_refresh_fixture, _run_real_refresh_attempt, _req, _req_norm,
 )
 

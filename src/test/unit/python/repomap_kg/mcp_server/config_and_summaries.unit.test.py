@@ -8,7 +8,7 @@ from common_lore_index.storage import (
     PythonSummaryRecord,
     TerraformSummaryRecord,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
@@ -34,7 +34,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
             }
         )
 
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             config = load_mcp_config()
 
         self.assertEqual(config.default_project, "repo-map")
@@ -49,7 +49,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
         self.assertEqual(config.projects["repo-map"].pg_user, "repo_map")
 
     def test_repomap_projects_lists_configured_projects(self):
-        from common_lore_index.server.mcp import repomap_projects
+        from common_lore_index.server.mcp import cloe_projects
 
         config_path = self.write_mcp_config(
             {
@@ -69,10 +69,10 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
 
         with patch.dict(
             "os.environ",
-            {"REPOMAP_MCP_CONFIG": str(config_path)},
+            {"CLOE_MCP_CONFIG": str(config_path)},
             clear=True,
         ):
-            payload = repomap_projects()
+            payload = cloe_projects()
 
         self.assertEqual(payload["default_project"], "repo-map")
         self.assertEqual(
@@ -96,12 +96,12 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
         self.assertIn("legacy project config", payload["message"])
 
     def test_ops_mcp_list_graphs_exposes_only_enabled_visible_graphs(self):
-        from common_lore_index.server.mcp import repomap_list_graphs
+        from common_lore_index.server.mcp import cloe_list_graphs
 
         config_path = self.write_visible_ops_config()
 
         with self.patch_ops_config(config_path):
-            payload = repomap_list_graphs()
+            payload = cloe_list_graphs()
 
         self.assert_read_only_payload(payload)
         self.assertEqual(payload["graph_count"], 2)
@@ -117,28 +117,28 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
         self.assertNotIn("~/.codex/codex-vc/mcp/server-memory", serialized)
 
     def test_ops_mcp_graph_selection_rejects_disabled_or_hidden_graphs(self):
-        from common_lore_index.server.mcp import RepoMapMcpError, repomap_project_summary
+        from common_lore_index.server.mcp import RepoMapMcpError, cloe_project_summary
 
         config_path = self.write_visible_ops_config()
 
         with self.patch_ops_config(config_path):
             with patch("common_lore_index.server.ops.query_canonical_storage_summary") as query:
                 with self.assertRaisesRegex(RepoMapMcpError, "not enabled"):
-                    repomap_project_summary(graph_id="disabled")
+                    cloe_project_summary(graph_id="disabled")
                 with self.assertRaisesRegex(RepoMapMcpError, "not MCP-visible"):
-                    repomap_project_summary(graph_id="hidden")
+                    cloe_project_summary(graph_id="hidden")
 
         query.assert_not_called()
 
     def test_ops_mcp_project_summary_uses_unified_toml_storage_profile(self):
-        from common_lore_index.server.mcp import repomap_project_summary
+        from common_lore_index.server.mcp import cloe_project_summary
 
         config_path = self.write_visible_ops_config()
         with patch.dict(
             "os.environ",
             {
-                "REPOMAP_OPS_CONFIG": str(config_path),
-                "REPOMAP_PSQL_COMMAND": "/usr/local/bin/psql",
+                "CLOE_OPS_CONFIG": str(config_path),
+                "CLOE_PSQL_COMMAND": "/usr/local/bin/psql",
             },
         ):
             with patch(
@@ -155,7 +155,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
                     canonical_evidence=11,
                 ),
             ) as query:
-                payload = repomap_project_summary(graph_id="repo-map")
+                payload = cloe_project_summary(graph_id="repo-map")
 
         self.assert_read_only_payload(payload)
         self.assert_public_graph_payload(payload["graph"])
@@ -181,9 +181,9 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
 
     def test_ops_mcp_searches_are_bounded_and_redacted(self):
         from common_lore_index.server.mcp import (
-            repomap_search_files,
-            repomap_search_nodes,
-            repomap_search_observations,
+            cloe_search_files,
+            cloe_search_nodes,
+            cloe_search_observations,
         )
 
         config_path = self.write_visible_ops_config()
@@ -221,18 +221,18 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
                 "common_lore_index.server.ops.query_mcp_search",
                 side_effect=[node_payload, observation_payload, files_payload],
             ) as query:
-                nodes = repomap_search_nodes(
+                nodes = cloe_search_nodes(
                     graph_id="repo-map",
                     query="pkg",
                     limit=500,
                     offset=0,
                 )
-                observations = repomap_search_observations(
+                observations = cloe_search_observations(
                     graph_id="repo-map",
                     query="python.import",
                     include_raw=True,
                 )
-                files = repomap_search_files(graph_id="repo-map", query="app")
+                files = cloe_search_files(graph_id="repo-map", query="app")
 
         self.assertEqual(nodes["limit"], 100)
         self.assertTrue(nodes["has_more"] is False)
@@ -251,14 +251,14 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
 
     def test_ops_mcp_summary_wrappers_include_graph_context(self):
         from common_lore_index.server.mcp import (
-            repomap_js_framework_summary,
-            repomap_openapi_summary,
-            repomap_python_summary,
-            repomap_terraform_summary,
+            cloe_js_framework_summary,
+            cloe_openapi_summary,
+            cloe_python_summary,
+            cloe_terraform_summary,
         )
 
         config_path = self.write_ops_config(self.visible_ops_config())
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(config_path)}):
             with patch(
                 "common_lore_index.server.ops.query_python_summary",
                 return_value=PythonSummaryRecord(
@@ -278,7 +278,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
                     safety={"no_execution": True},
                 ),
             ) as query_py:
-                python_payload = repomap_python_summary(graph_id="repo-map")
+                python_payload = cloe_python_summary(graph_id="repo-map")
             with patch(
                 "common_lore_index.server.ops.query_terraform_summary",
                 return_value=TerraformSummaryRecord(
@@ -296,7 +296,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
                     safety={"no_execution": True},
                 ),
             ) as query_tf:
-                terraform_payload = repomap_terraform_summary(graph_id="repo-map")
+                terraform_payload = cloe_terraform_summary(graph_id="repo-map")
             with patch(
                 "common_lore_index.server.ops.query_openapi_summary",
                 return_value=OpenAPISummaryRecord(
@@ -314,7 +314,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
                     safety={"no_fetch": True},
                 ),
             ) as query_oa:
-                openapi_payload = repomap_openapi_summary(graph_id="repo-map")
+                openapi_payload = cloe_openapi_summary(graph_id="repo-map")
             with patch(
                 "common_lore_index.server.ops.query_js_framework_summary",
                 return_value=JSFrameworkSummaryRecord(
@@ -333,7 +333,7 @@ class McpServerConfigAndSummaryUnitTests(McpServerTestSupport):
                     safety={"no_execution": True},
                 ),
             ) as query_js:
-                js_payload = repomap_js_framework_summary(graph_id="repo-map")
+                js_payload = cloe_js_framework_summary(graph_id="repo-map")
 
         self.assertEqual(python_payload["summary"]["python_observations"], 3)
         self.assertEqual(terraform_payload["summary"]["terraform_observations"], 4)

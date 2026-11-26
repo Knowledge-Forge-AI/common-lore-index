@@ -9,14 +9,14 @@ from common_lore_index.storage.sqlite_local.raw_payload import (
     ascii_lower, contains_ascii_folded, jsonb_contains_ascii_folded, jsonb_text, jsonb_value,
 )
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
     def test_mcp_smoke3_refresh_status_flags_complete_without_finished_at(
         self,
     ):
-        from common_lore_index.server.mcp import repomap_refresh_status
+        from common_lore_index.server.mcp import cloe_refresh_status
 
         config_path = self.write_visible_ops_config()
         with self.patch_ops_config(config_path):
@@ -32,7 +32,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
                     )
                 },
             ):
-                payload = repomap_refresh_status()
+                payload = cloe_refresh_status()
 
         self.assertEqual(payload["graphs"][0]["latest_run_status"], "complete")
         self.assertIsNone(payload["graphs"][0]["latest_run_finished_at"])
@@ -48,7 +48,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
     def test_mcp_smoke3_graph_status_flags_complete_without_finished_at(
         self,
     ):
-        from common_lore_index.server.mcp import repomap_graph_status
+        from common_lore_index.server.mcp import cloe_graph_status
 
         config_path = self.write_visible_ops_config()
         with self.patch_ops_config(config_path):
@@ -61,7 +61,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
                     )
                 },
             ):
-                payload = repomap_graph_status(graph_id="repo-map")
+                payload = cloe_graph_status(graph_id="repo-map")
 
         self.assertEqual(payload["storage"]["latest_run_status"], "complete")
         self.assertIsNone(payload["storage"]["latest_run_finished_at"])
@@ -75,13 +75,13 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
         self.assert_read_only_payload(payload)
 
     def _live_ops3_graph_status(self, host_error: str) -> tuple[dict, str, list]:
-        from common_lore_index.server.mcp import repomap_graph_status
+        from common_lore_index.server.mcp import cloe_graph_status
 
         container_probes: list[str] = []
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "home"
             home.mkdir()
-            (home / "repomap.rpl.toml").write_text(
+            (home / "repomap.local.cloe.toml").write_text(
                 self.visible_ops_config().replace(
                     'host = "127.0.0.1"',
                     'host = "postgres"',
@@ -108,7 +108,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
             with (
                 patch.dict(
                     "os.environ",
-                    {"REPOMAP_OPS_CONFIG": str(home)},
+                    {"CLOE_OPS_CONFIG": str(home)},
                     clear=True,
                 ),
                 patch(
@@ -140,7 +140,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
                     create=True,
                 ),
             ):
-                payload = repomap_graph_status(graph_id="repo-map")
+                payload = cloe_graph_status(graph_id="repo-map")
         return payload, private_path, container_probes
 
     def test_live_ops3_mcp_graph_status_missing_database_error_is_safe(self):
@@ -174,7 +174,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
         self.assert_read_only_payload(payload)
 
     def test_mcp_smoke3_complete_with_finished_at_has_no_timestamp_warning(self):
-        from common_lore_index.server.mcp import repomap_refresh_status
+        from common_lore_index.server.mcp import cloe_refresh_status
 
         config_path = self.write_visible_ops_config()
         with self.patch_ops_config(config_path):
@@ -188,7 +188,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
                     )
                 },
             ):
-                payload = repomap_refresh_status()
+                payload = cloe_refresh_status()
 
         self.assertEqual(
             payload["graphs"][0]["latest_run_consistency"],
@@ -196,7 +196,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
         )
 
     def test_mcp_smoke3_non_complete_null_finished_at_has_no_complete_warning(self):
-        from common_lore_index.server.mcp import repomap_refresh_status
+        from common_lore_index.server.mcp import cloe_refresh_status
 
         config_path = self.write_visible_ops_config()
         with self.patch_ops_config(config_path):
@@ -210,7 +210,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
                     )
                 },
             ):
-                payload = repomap_refresh_status()
+                payload = cloe_refresh_status()
 
         self.assertEqual(
             payload["graphs"][0]["latest_run_consistency"],
@@ -218,7 +218,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
         )
 
     def test_mcp_smoke4_include_raw_false_documents_metadata_semantics(self):
-        from common_lore_index.server.mcp import repomap_search_observations
+        from common_lore_index.server.mcp import cloe_search_observations
 
         config_path = self.write_visible_ops_config()
         observation_payload = {
@@ -239,7 +239,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
                 "common_lore_index.server.ops.query_mcp_search",
                 return_value=observation_payload,
             ) as query:
-                payload = repomap_search_observations(
+                payload = cloe_search_observations(
                     graph_id="repo-map",
                     query="command",
                     include_raw=False,
@@ -255,7 +255,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
         self.assert_read_only_payload(payload)
 
     def test_mcp_smoke4_include_raw_true_reports_payload_included(self):
-        from common_lore_index.server.mcp import repomap_search_observations
+        from common_lore_index.server.mcp import cloe_search_observations
 
         config_path = self.write_visible_ops_config()
         observation_payload = {
@@ -280,7 +280,7 @@ class McpServerStatusAndRawPayloadUnitTests(McpServerTestSupport):
                 "common_lore_index.server.ops.query_mcp_search",
                 return_value=observation_payload,
             ) as query:
-                payload = repomap_search_observations(
+                payload = cloe_search_observations(
                     graph_id="repo-map",
                     query="command",
                     include_raw=True,

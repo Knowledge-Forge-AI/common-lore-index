@@ -18,7 +18,7 @@ from common_lore_index.coordinator._control_schema import (
     discover_control_migrations,
     migration_text,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -213,7 +213,7 @@ class ControlStoreIntegrationTests(unittest.TestCase):
         from pathlib import Path
         from common_lore_index.coordinator import _publication_phase as phase
         from common_lore_index.coordinator.configured_refresh import ConfiguredRefreshResolver
-        from repomap_test_support.startup_recovery_scenarios import _make_refresh_fixture, _refresh_harness, _req_norm, _run_real_refresh_attempt
+        from common_lore_index_test_support.startup_recovery_scenarios import _make_refresh_fixture, _refresh_harness, _req_norm, _run_real_refresh_attempt
 
         # Graph migrations require their own database, separate from control tables.
         with _refresh_harness() as (store, root, connect, postgres, graph_db):

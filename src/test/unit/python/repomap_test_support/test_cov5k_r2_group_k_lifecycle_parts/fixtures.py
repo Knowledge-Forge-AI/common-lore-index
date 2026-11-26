@@ -2,7 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
 
 class NotFound(Exception):
     pass

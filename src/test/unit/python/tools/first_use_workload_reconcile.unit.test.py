@@ -16,7 +16,7 @@ from first_use_workload_integrity import member_row, member_rows, sha256_hex
 from first_use_workload_recipe_shapes import RecipeStep
 from first_use_workload_reconcile import check_bundle, reconcile
 from first_use_workload_records import encode_index, index_payload
-from repomap_test_support.first_use_workload_samples import (
+from common_lore_index_test_support.first_use_workload_samples import (
     ATTEMPT, CANDIDATE, OTHER_ATTEMPT, SAMPLE_RECIPE, census_fact, pack_fact, pin, plan_payload,
     sample_facts, sample_files, sample_intent,
 )

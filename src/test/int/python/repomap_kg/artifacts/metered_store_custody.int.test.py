@@ -11,8 +11,8 @@ from common_lore_index.artifacts import _store_metered as metered
 from common_lore_index.artifacts._sealing_meter import SealingMeter
 from common_lore_index.artifacts.sealing_governance import SealingBudget, SealingBudgetExceeded
 from common_lore_index.artifacts.store import ArtifactIntegrityError, FileSystemArtifactStore
-from repomap_test_support.metered_store_custody_fixtures import DescriptorWitness, store_state
-from repomap_test_support.sealing_governance_fixtures import binding_for, graph_for, seal, write_tree
+from common_lore_index_test_support.metered_store_custody_fixtures import DescriptorWitness, store_state
+from common_lore_index_test_support.sealing_governance_fixtures import binding_for, graph_for, seal, write_tree
 
 
 @pytest.mark.parametrize("operation", ("fchmod", "fdopen"))

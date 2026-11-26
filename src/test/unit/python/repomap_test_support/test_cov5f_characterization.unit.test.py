@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_cov5f_characterization import (
+from common_lore_index_test_support.test_cov5f_characterization import (
     ACCEPTED_POLICY,
     ADR_0045_POLICY,
     CALLER_CONTEXTS,

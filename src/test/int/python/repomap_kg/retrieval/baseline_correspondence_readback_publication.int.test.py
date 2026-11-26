@@ -24,20 +24,20 @@ from common_lore_index.storage.context_postgres_identity import (
 )
 from common_lore_index.storage.readback_driver import execute_json_readback
 from common_lore_index.storage.staged_ingestion import run_staged_portable_refresh
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.portable_publication_fixtures import (
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.portable_publication_fixtures import (
     authority,
     binding,
     seven_family_bundle,
 )
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     materialize_mixed_v1_working_copy,
     binding_id_for_alias,
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_sqlite_corpus,
     publish_and_load_postgres_corpus,
     read_sqlite_accepted_publication,

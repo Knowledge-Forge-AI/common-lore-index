@@ -26,7 +26,7 @@ class ConfigExtractorJsonFamilyUnitTests(unittest.TestCase):
                             "args": ["repomap-kg", "mcp", "serve"],
                             "url": "https://example.com/docs",
                             "env": {
-                                "REPOMAP_MCP_CONFIG": "$REPOMAP_MCP_CONFIG",
+                                "CLOE_MCP_CONFIG": "$CLOE_MCP_CONFIG",
                                 "TOKEN": "secret-value",
                             },
                         }
@@ -83,8 +83,8 @@ class ConfigExtractorJsonFamilyUnitTests(unittest.TestCase):
         )
         self.assertIn(
             (
-                "/mcp_servers/repomap/env/REPOMAP_MCP_CONFIG",
-                "env:REPOMAP_MCP_CONFIG",
+                "/mcp_servers/repomap/env/CLOE_MCP_CONFIG",
+                "env:CLOE_MCP_CONFIG",
                 "env",
             ),
             {

@@ -9,7 +9,7 @@ from typing import Any, Sequence
 
 from retrieval_body_freeze import parse_body_source_freeze, verify_body_source_freeze
 from retrieval_body_pin import load_registered_body_inputs
-from repomap_test_support.retrieval_body_source import body_source_snapshot
+from common_lore_index_test_support.retrieval_body_source import body_source_snapshot
 from retrieval_body_values import digest_bytes, require
 from retrieval_body_witnesses import verify_body_witnesses
 from retrieval_body_input_metadata import validate_static_inventory

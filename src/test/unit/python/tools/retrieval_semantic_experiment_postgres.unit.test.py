@@ -6,7 +6,7 @@ from typing import cast
 import pytest
 
 from common_lore_index.storage.errors import StorageSchemaError
-import repomap_test_support.w5_experiment_postgres as postgres_support
+import common_lore_index_test_support.w5_experiment_postgres as postgres_support
 
 
 MULTILINE_EXPLAIN = """[

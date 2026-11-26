@@ -14,9 +14,9 @@ import pytest
 
 from offline_qualification_values import BASE_CONFIG, SDK_IMAGE
 from common_lore_index.retrieval.lexical_envelopes import LexicalQueryRequest
-from repomap_test_support import retrieval_body_study_pg
-from repomap_test_support.retrieval_body_fixtures import make_body_policy
-from repomap_test_support.retrieval_body_study_runtime_fixtures import functional_body_catalog
+from common_lore_index_test_support import retrieval_body_study_pg
+from common_lore_index_test_support.retrieval_body_fixtures import make_body_policy
+from common_lore_index_test_support.retrieval_body_study_runtime_fixtures import functional_body_catalog
 from retrieval_body_catalog import BodyCase
 import retrieval_lexical_replay as replay
 from retrieval_lexical_replay import CANDIDATE, LEGACY, ReplayIntegrityError, schedule

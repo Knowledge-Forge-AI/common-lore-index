@@ -5,7 +5,7 @@ Local homes bind ``server.sqlite_read_binding`` instead). The facades
 (``server.ops`` for investigation, ``server.mcp`` for canonical and source)
 construct these bindings with their call-time query owners; this module owns
 everything PostgreSQL-specific that selection no longer carries: the client
-command from ``REPOMAP_PSQL_COMMAND``, database naming via ``graph_database``,
+command from ``CLOE_PSQL_COMMAND``, database naming via ``graph_database``,
 and the :class:`McpOpsGraphContext` handed to the host readback authority.
 
 Credentials and driver selection stay inside ``read_configured_graph`` and the

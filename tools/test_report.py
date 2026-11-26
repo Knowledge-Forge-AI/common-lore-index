@@ -26,7 +26,7 @@ STATIC_SOURCE_DIR = Path(__file__).resolve().parent / "test" / "report" / "stati
 
 def report_docker_projection(projection: dict[str, int], *, boundary: str) -> None:
     """Print exactly what was derived; never substitute a literal zero."""
-    from repomap_test_support.resource_docker_boundary import PROJECTION_FIELDS
+    from common_lore_index_test_support.resource_docker_boundary import PROJECTION_FIELDS
 
     print(f"Docker residue boundary ({boundary}):")
     if not projection:

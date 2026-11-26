@@ -57,7 +57,7 @@ def save_graph_baselines(
     if not graph.enabled:
         raise OpsRefreshError(f"graph {graph_id!r} is disabled")
     if not config.config_home:
-        raise OpsRefreshError("baseline-save requires --repo-map-home or REPOMAP_HOME")
+        raise OpsRefreshError("baseline-save requires --repo-map-home or CLOE_HOME")
 
     graph_segment = _baseline_path_segment(graph.id, "graph id")
     kinds = _baseline_kinds(kind)
@@ -135,7 +135,7 @@ def prune_graph_baselines(
     if not graph.enabled:
         raise OpsRefreshError(f"graph {graph_id!r} is disabled")
     if not config.config_home:
-        raise OpsRefreshError("baseline-prune requires --repo-map-home or REPOMAP_HOME")
+        raise OpsRefreshError("baseline-prune requires --repo-map-home or CLOE_HOME")
     if keep < 1:
         raise OpsRefreshError("baseline-prune requires --keep N where N >= 1")
 

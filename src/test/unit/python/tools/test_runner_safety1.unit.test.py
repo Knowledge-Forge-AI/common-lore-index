@@ -12,7 +12,7 @@ import pytest
 import run_tests
 from test_runner_entry import RunnerDependencies, run_test_runner
 
-from repomap_test_support.resource_hygiene_policy import HygieneConfig, HygieneProfile
+from common_lore_index_test_support.resource_hygiene_policy import HygieneConfig, HygieneProfile
 
 
 EXACT_IMAGE = "sha256:" + "a" * 64
@@ -154,7 +154,7 @@ def test_smoke_receives_exact_image_id_from_repository_manager():
     boundary = Mock()
     with (
         patch(
-            "repomap_test_support.resource_test_images.ensure_canonical_runtime_image",
+            "common_lore_index_test_support.resource_test_images.ensure_canonical_runtime_image",
             return_value=EXACT_IMAGE,
         ) as ensure_image,
         patch("smoke.container_smoke.run_container_smoke", return_value=0) as smoke,

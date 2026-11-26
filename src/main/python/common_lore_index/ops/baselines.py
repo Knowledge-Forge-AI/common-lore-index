@@ -241,7 +241,7 @@ def _baseline_timestamp() -> str:
 
 def _baseline_storage_root(config: OpsConfig) -> Path:
     if not config.config_home:
-        raise OpsRefreshError("baseline-save requires --repo-map-home or REPOMAP_HOME")
+        raise OpsRefreshError("baseline-save requires --repo-map-home or CLOE_HOME")
     repo_map_home = Path(config.config_home).expanduser().resolve()
     return repo_map_home / "status" / "baselines"
 
@@ -367,7 +367,7 @@ def _ensure_path_under_baseline_root(path: Path, baseline_root: Path) -> None:
     if resolved_path == resolved_root:
         return
     if resolved_root not in resolved_path.parents:
-        raise OpsRefreshError("refusing baseline path outside REPOMAP_HOME/status/baselines")
+        raise OpsRefreshError("refusing baseline path outside CLOE_HOME/status/baselines")
 
 def _atomic_write_text(path: Path, text: str, *, replace_existing: bool) -> None:
     if path.exists() and not replace_existing:

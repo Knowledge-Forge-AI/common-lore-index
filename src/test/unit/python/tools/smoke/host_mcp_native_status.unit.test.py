@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from pathlib import Path
 import copy
+import json
+import re
 from types import SimpleNamespace
 from typing import Any
 
@@ -26,7 +28,8 @@ from common_lore_index.server.mcp import tool_definitions
 MULTI, FEED = "host-multi", "host-feed"
 PRE_W3_CATALOG_SHA256 = "c487dc30ffa570f6ec80af68fabbb15d5b96bdb273e5fc375676c7174321189d"
 PRE_REBRAND_CATALOG_SHA256 = "3869c9dac88c0a497e539b5d944409a00a3519eef1c9e2b8643420c1d77f6503"
-CURRENT_CATALOG_SHA256 = "181c74446606a9abb2fd97567eb38157263dffa1f00c1616a43dcd8674d83cb8"
+PRE_CANONICAL_CATALOG_SHA256 = "181c74446606a9abb2fd97567eb38157263dffa1f00c1616a43dcd8674d83cb8"
+CURRENT_CATALOG_SHA256 = "2c2a37e9b510e564431e5c26d00d19adee436543fce309355a6f38c058f42a78"
 
 
 def test_native_smoke_catalog_pin_covers_the_optional_read_tool() -> None:
@@ -37,11 +40,23 @@ def test_native_smoke_catalog_pin_covers_the_optional_read_tool() -> None:
     assert len({tool["name"] for tool in tools}) == 31
     assert all(tool["inputSchema"].get("additionalProperties") is False for tool in tools)
     assert not any("lexical" in tool["name"] or "write" in tool["name"] or "mutate" in tool["name"] for tool in tools)
-    assert sum(tool["name"] == "repomap_similar_nodes" for tool in tools) == 1
-    assert sum(tool["name"] == "repomap_embedding_profiles" for tool in tools) == 1
-    assert sum(tool["name"] == "repomap_node_locations" for tool in tools) == 1
-    assert sum(tool["name"] == "repomap_navigation_search" for tool in tools) == 1
+    assert sum(tool["name"] == "cloe_similar_nodes" for tool in tools) == 1
+    assert sum(tool["name"] == "cloe_embedding_profiles" for tool in tools) == 1
+    assert sum(tool["name"] == "cloe_node_locations" for tool in tools) == 1
+    assert sum(tool["name"] == "cloe_navigation_search" for tool in tools) == 1
 
+    # Reproduce the prior catalogs from the exact wire-name projection.
+    canonical_names = {tool["name"] for tool in tools}
+    assert all(name.startswith("cloe_") for name in canonical_names)
+    name_pattern = re.compile(r"\b(?:" + "|".join(sorted(canonical_names)) + r")\b")
+
+    def legacy_catalog(catalog):
+        serialized = json.dumps(catalog, sort_keys=True)
+        return json.loads(name_pattern.sub(lambda hit: "repomap_" + hit[0].removeprefix("cloe_"), serialized))
+
+    serialized_catalog = json.dumps(tools, sort_keys=True)
+    assert not any("repomap_" + name.removeprefix("cloe_") in serialized_catalog for name in canonical_names)
+    assert catalog_digest(legacy_catalog(tools)) == PRE_CANONICAL_CATALOG_SHA256
     # Confirm pre-W3 catalog constant reproduces under identical serialization when the
     # two W3 description additions ("SQLite Local and PostgreSQL" -> "SQLite Local") are reverted.
     pre_rebrand_tools = copy.deepcopy(tools)
@@ -51,16 +66,16 @@ def test_native_smoke_catalog_pin_covers_the_optional_read_tool() -> None:
             tool["description"] = tool["description"].replace("Common Lore Index", "RepoMap")
             description_changes.add(tool["name"])
     assert description_changes == {
-        "repomap_projects", "repomap_canonical_nodes", "repomap_canonical_edges",
-        "repomap_explain_canonical_edge", "repomap_canonical_neighborhood",
-        "repomap_ingested_sources",
+        "cloe_projects", "cloe_canonical_nodes", "cloe_canonical_edges",
+        "cloe_explain_canonical_edge", "cloe_canonical_neighborhood",
+        "cloe_ingested_sources",
     }
-    assert catalog_digest(pre_rebrand_tools) == PRE_REBRAND_CATALOG_SHA256
+    assert catalog_digest(legacy_catalog(pre_rebrand_tools)) == PRE_REBRAND_CATALOG_SHA256
     pre_w3_tools = copy.deepcopy(pre_rebrand_tools)
     for tool in pre_w3_tools:
-        if tool["name"] in ("repomap_node_locations", "repomap_navigation_search"):
+        if tool["name"] in ("cloe_node_locations", "cloe_navigation_search"):
             tool["description"] = tool["description"].replace("SQLite Local and PostgreSQL", "SQLite Local", 1)
-    assert catalog_digest(pre_w3_tools) == PRE_W3_CATALOG_SHA256
+    assert catalog_digest(legacy_catalog(pre_w3_tools)) == PRE_W3_CATALOG_SHA256
 
     # Negative catalog custody checks on _family_checks.
     mutated = copy.deepcopy(tools)

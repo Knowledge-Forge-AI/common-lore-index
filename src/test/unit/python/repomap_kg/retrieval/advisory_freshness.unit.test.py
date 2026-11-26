@@ -16,8 +16,8 @@ from common_lore_index.retrieval.advisory_freshness import (
 from common_lore_index.retrieval.context_assembly import build_compact_context
 from common_lore_index.retrieval.context_budget import serialize_compact_json
 from common_lore_index.retrieval.context_contracts import ContextRequest
-from repomap_test_support.context_assertions import assert_valid_context_packet
-from repomap_test_support.context_fixture import BINDING_CORE, BINDING_DOCS, build_sqlite_context_fixture
+from common_lore_index_test_support.context_assertions import assert_valid_context_packet
+from common_lore_index_test_support.context_fixture import BINDING_CORE, BINDING_DOCS, build_sqlite_context_fixture
 from portable_handoff import _relative as handoff_relative
 
 

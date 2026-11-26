@@ -21,11 +21,11 @@ from first_use_workload_recipe_shapes import RecipeStep, ReportSpec
 from first_use_workload_report_rules import (
     decode_plan_member, plan_rules, planned_refusal_formula, publish_formula, report_identity,
 )
-from repomap_test_support.first_use_workload_samples import (
+from common_lore_index_test_support.first_use_workload_samples import (
     SAMPLE_RECIPE, pack_fact, pin, plan_payload, publish_payload, refusal_payload,
 )
-from repomap_test_support.first_use_workload_witness import packet_refs
-from repomap_test_support.retrieval_evaluation_fixture import binding_id_for_alias
+from common_lore_index_test_support.first_use_workload_witness import packet_refs
+from common_lore_index_test_support.retrieval_evaluation_fixture import binding_id_for_alias
 
 S, C, M = 1000, 200, 300
 

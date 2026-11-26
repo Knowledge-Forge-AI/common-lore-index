@@ -16,15 +16,15 @@ import pytest
 
 from common_lore_index.runtime import python_payload as payload
 from common_lore_index.runtime import release
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support import d12_python31216 as proof
-from repomap_test_support.d12_complete_inventory import complete_inventory
-from repomap_test_support.d12_image_probes import _hashes
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support import d12_python31216 as proof
+from common_lore_index_test_support.d12_complete_inventory import complete_inventory
+from common_lore_index_test_support.d12_image_probes import _hashes
 from tools.system.d12_debian_policy import DebianDeltaError, assess_debian_delta
-from repomap_test_support.resource_docker_current import CurrentRunDockerContainers
-from repomap_test_support.resource_ledger import ResourceKind
-from repomap_test_support.resource_run import active_resource_run
-from repomap_test_support.resource_test_images import TestImageManager
+from common_lore_index_test_support.resource_docker_current import CurrentRunDockerContainers
+from common_lore_index_test_support.resource_ledger import ResourceKind
+from common_lore_index_test_support.resource_run import active_resource_run
+from common_lore_index_test_support.resource_test_images import TestImageManager
 from tools.system import d12_glibc_risk as risk
 
 REPO_ROOT = Path(__file__).resolve().parents[6]

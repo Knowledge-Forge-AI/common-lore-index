@@ -4,7 +4,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from repomap_test_support.scale28_adr2_frame_model import (
+from common_lore_index_test_support.scale28_adr2_frame_model import (
     ObservationExpectations,
     encode_observation_acknowledgement,
     encode_observation_frame,
@@ -12,10 +12,10 @@ from repomap_test_support.scale28_adr2_frame_model import (
     validate_observation_acknowledgement,
     validate_observation_frame,
 )
-from repomap_test_support.scale28_adr2_freshness_model import (
+from common_lore_index_test_support.scale28_adr2_freshness_model import (
     PreparationProtocolState,
 )
-from repomap_test_support.scale28_adr2_model_fixtures import (
+from common_lore_index_test_support.scale28_adr2_model_fixtures import (
     FRAME_RECEIVED_NS,
     fixture_accepted_protocol_state,
     fixture_bindings,
@@ -25,14 +25,14 @@ from repomap_test_support.scale28_adr2_model_fixtures import (
     fixture_receipt_payload,
     fixture_resource_baseline,
 )
-from repomap_test_support.scale28_adr2_receipt_model import (
+from common_lore_index_test_support.scale28_adr2_receipt_model import (
     encode_receipt,
     validate_preparation_receipt,
 )
-from repomap_test_support.scale28_adr2_accepted_evidence import (
+from common_lore_index_test_support.scale28_adr2_accepted_evidence import (
     AcceptedPreparationEvidence,
 )
-from repomap_test_support.scale28_adr2_bounded_ipc import BoundedIpcMessage
+from common_lore_index_test_support.scale28_adr2_bounded_ipc import BoundedIpcMessage
 
 
 def test_attempt_expectations_copy_every_caller_owned_binding() -> None:

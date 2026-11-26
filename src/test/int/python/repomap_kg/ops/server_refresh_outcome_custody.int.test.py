@@ -24,11 +24,11 @@ from common_lore_index.storage.publication_phase_witness import (
 )
 from common_lore_index.storage.staged_rows import PreparedStageRows
 from common_lore_index.storage.readback_driver import _psycopg_connection_params_from_psql_args
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID, materialize_mixed_v1_working_copy, write_mixed_v1_postgres_home,
 )
-from repomap_test_support.server_retained_recovery_fixture import direct_authority, prepare_retained_server
+from common_lore_index_test_support.server_retained_recovery_fixture import direct_authority, prepare_retained_server
 
 
 def test_real_failed_rollback_cannot_commit_final_transaction_rows(

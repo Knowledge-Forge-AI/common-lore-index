@@ -19,13 +19,13 @@ from common_lore_index.retrieval.query_contracts import (
     QUERY_CONTRACT_VERSION,
     unavailable_envelope,
 )
-from repomap_test_support.w5_experiment_vector import baseline_file_metrics
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_experiment_vector import baseline_file_metrics
+from common_lore_index_test_support.w5_semantic_support import (
     BIND_CORE,
     make_w5_calibration_task,
     make_w5_verified_pin,
 )
-from repomap_test_support.w5_experiment_support import (
+from common_lore_index_test_support.w5_experiment_support import (
     EXPERIMENT_SOURCE_PATHS,
     experiment_source_closure,
 )
@@ -206,11 +206,11 @@ def test_experiment_source_closure_binds_report_owner_hash_and_refuses_missing_o
         "src/main/python/common_lore_index/storage/publication_readback.py",
         "src/main/python/common_lore_index/storage/authority.py",
         "src/main/python/common_lore_index/storage/publication.py",
-        "src/test/support/python/repomap_test_support/semantic_candidate_restore.py",
-        "src/test/support/python/repomap_test_support/semantic_candidate_cleanup.py",
-        "src/test/support/python/repomap_test_support/postgres_logical_backup.py",
-        "src/test/support/python/repomap_test_support/postgres_harness.py",
-        "src/test/support/python/repomap_test_support/w5_generator_support.py", "src/test/support/python/repomap_test_support/w5_semantic_support.py", "src/test/support/python/repomap_test_support/w5_semantic_store_support.py",
+        "src/test/support/python/common_lore_index_test_support/semantic_candidate_restore.py",
+        "src/test/support/python/common_lore_index_test_support/semantic_candidate_cleanup.py",
+        "src/test/support/python/common_lore_index_test_support/postgres_logical_backup.py",
+        "src/test/support/python/common_lore_index_test_support/postgres_harness.py",
+        "src/test/support/python/common_lore_index_test_support/w5_generator_support.py", "src/test/support/python/common_lore_index_test_support/w5_semantic_support.py", "src/test/support/python/common_lore_index_test_support/w5_semantic_store_support.py",
         "src/main/python/common_lore_index/ops/config.py", "src/main/python/common_lore_index/ops/config_local.py", "src/main/python/common_lore_index/ops/config_records.py", "src/main/python/common_lore_index/canonicalization/_go_family.py",
         "src/main/python/common_lore_index/storage/context_postgres_identity.py", "src/main/python/common_lore_index/storage/readback_driver.py", "src/main/python/common_lore_index/storage/sqlite_local/connection.py",
     } <= set(EXPERIMENT_SOURCE_PATHS)
@@ -221,7 +221,7 @@ def test_experiment_source_closure_binds_report_owner_hash_and_refuses_missing_o
         path.write_bytes(relative.encode("utf-8"))
     monkeypatch.setattr("retrieval_evaluation_admission.candidate_source_files", lambda _root: {})
     monkeypatch.setattr(
-        "repomap_test_support.w5_experiment_support.worker_source_closure",
+        "common_lore_index_test_support.w5_experiment_support.worker_source_closure",
         lambda _root: ({}, {}),
     )
 

@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from repomap_test_support.w5_experiment_ann_diagnostic import (
+from common_lore_index_test_support.w5_experiment_ann_diagnostic import (
     MarkerSink,
     diagnostic_index_spec,
     run_hnsw_catalog_diagnostic,

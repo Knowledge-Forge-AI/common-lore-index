@@ -9,18 +9,18 @@ from typing import Any
 import pytest
 
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     PublishedCorpusState,
     publish_and_load_postgres_corpus,
     publish_and_load_sqlite_corpus,
 )
-from repomap_test_support.w5_publication_validation_fixtures import publication_tree
+from common_lore_index_test_support.w5_publication_validation_fixtures import publication_tree
 
 
 def _assert_validation_boundaries(state: PublishedCorpusState) -> None:

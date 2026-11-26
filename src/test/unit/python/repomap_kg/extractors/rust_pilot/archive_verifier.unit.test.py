@@ -23,7 +23,7 @@ from common_lore_index.extractors.rust_pilot.archive_verifier import (
     verify_wheel,
 )
 from common_lore_index.extractors.rust_pilot.component_lock import MemberLock, canonical_json
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import build_wheel, synthetic_wheel
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import build_wheel, synthetic_wheel
 
 FILES = {"demo/__init__.py": b"VALUE = 1\n", "demo/_binding.so": b"\x7fELF-not-real",
          "demo-1.0.dist-info/METADATA": b"Name: demo\n"}

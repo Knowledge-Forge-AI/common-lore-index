@@ -20,7 +20,7 @@ def installed_legacy(request, tmp_path, service_authority, monkeypatch):
     from common_lore_index.runtime.local import setup_local_runtime
     home = tmp_path / "product-home"
     setup_local_runtime(home)
-    config = home / "repomap.rpl.toml"
+    config = home / "repomap.local.cloe.toml"
     config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
     monkeypatch.setattr(contract, "_IMPORT_PACKAGE", "repomap_kg")
     old_spec = contract.build_service_package_spec(home)

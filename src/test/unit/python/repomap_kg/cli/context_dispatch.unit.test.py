@@ -43,7 +43,7 @@ def test_context_entry_does_not_resolve_release_facade(
 
     scope = cli_entry.__globals__
     monkeypatch.setitem(scope, "build_parser", Parser)
-    monkeypatch.setitem(scope, "_home_selection_notice", lambda _args: None)
+    monkeypatch.setitem(scope, "_preflight_cli_home", lambda _args: None)
     monkeypatch.setitem(scope, "dispatch_config_migration", lambda *args: None)
     monkeypatch.setitem(scope, "dispatch_ops_sqlite_command", lambda *args: None)
     monkeypatch.setitem(scope, "_commands_module", lambda: _ReleaseFacade("cli"))

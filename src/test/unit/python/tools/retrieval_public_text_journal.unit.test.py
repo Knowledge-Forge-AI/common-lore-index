@@ -8,11 +8,11 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.w5_experiment_support import experiment_source_closure
-from repomap_test_support.w5_public_text_artifacts import (
+from common_lore_index_test_support.w5_experiment_support import experiment_source_closure
+from common_lore_index_test_support.w5_public_text_artifacts import (
     MODEL_MEMBERS, SyntheticStudy, synthetic_admission, synthetic_raw_component,
 )
-from repomap_test_support.w5_public_text_journal import (
+from common_lore_index_test_support.w5_public_text_journal import (
     FAILURE_NAME, StudyFailureReceipt, StudyJournalRefusal, begin_component_journal, finish_component_journal,
     record_operation, validate_failure_receipt, write_failure_receipt,
 )

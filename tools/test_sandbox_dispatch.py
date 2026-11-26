@@ -41,7 +41,7 @@ def integration_sandbox_dispatch(
             verify_host_system_proof_for_dispatch(
                 args, raw_argv=raw_argv, repo_root=repo_root
             )
-        from repomap_test_support.unit_purity import require_live_resource_allowed
+        from common_lore_index_test_support.unit_purity import require_live_resource_allowed
 
         require_live_resource_allowed("integration sandbox Docker boundary")
         offline = host_context(raw_argv, repo_root)

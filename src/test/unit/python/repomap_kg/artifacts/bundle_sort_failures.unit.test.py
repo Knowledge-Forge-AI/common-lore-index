@@ -13,7 +13,7 @@ from common_lore_index.artifacts import _bundle_sort_runs as runs_module
 from common_lore_index.artifacts import _bundle_stream_sort as sorter_module
 from common_lore_index.artifacts._bundle_cancellation import BundleEncodingCancelled, close_iterator
 from common_lore_index.artifacts._bundle_stream_sort import BoundedExternalRowSorter
-from repomap_test_support.bundle_sort_fixtures import SortIOWitness
+from common_lore_index_test_support.bundle_sort_fixtures import SortIOWitness
 
 
 def _run_files(sorter: BoundedExternalRowSorter) -> set[Path]:

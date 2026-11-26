@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from common_lore_index.ops.preflight import _scan_preflight_root
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class Slice14GraphReadbackCompositionUnitTests(unittest.TestCase):

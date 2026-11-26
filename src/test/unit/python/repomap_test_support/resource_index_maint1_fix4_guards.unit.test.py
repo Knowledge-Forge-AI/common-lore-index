@@ -12,10 +12,10 @@ from typing import cast
 import pytest
 
 import test_hygiene_maintenance as maintenance_tool
-from repomap_test_support import resource_index_mode_migration as mode
-from repomap_test_support.resource_index_recovery_records import IndexRecoveryError
-from repomap_test_support.resource_ledger_io import write_private_json_exclusive
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support import resource_index_mode_migration as mode
+from common_lore_index_test_support.resource_index_recovery_records import IndexRecoveryError
+from common_lore_index_test_support.resource_ledger_io import write_private_json_exclusive
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimRegistry,
     MaintenanceHandle,
 )

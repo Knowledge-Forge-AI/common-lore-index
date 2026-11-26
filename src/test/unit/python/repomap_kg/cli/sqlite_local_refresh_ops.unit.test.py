@@ -24,9 +24,9 @@ from common_lore_index.cli import _ops_sqlite_dispatch
 from common_lore_index.ops import local_refresh, local_refresh_enabled, portable_refresh
 from common_lore_index.ops.local_refresh import LocalRefreshError, LocalRefreshResult
 from common_lore_index.storage.sqlite_local import connection
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.host_read_store_config import fail_if_reached, setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.host_read_store_config import fail_if_reached, setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import (
     graph_toml,
     multi_graph_toml,
     write_shell_source,
@@ -161,7 +161,7 @@ def test_coordinator_mode_is_refused_before_any_side_effect(
     tmp_path: Path, key: tuple[str, ...], selector: str, pg_tripwires: None
 ) -> None:
     home = _home(tmp_path)
-    target = ("--repo-map-home", str(home)) if selector == "home" else ("--config", str(home / "repomap.rp.toml"))
+    target = ("--repo-map-home", str(home)) if selector == "home" else ("--config", str(home / "repomap.cloe.toml"))
     with patch.object(_ops_sqlite_dispatch, "load_graph_registry_config_home", fail_if_reached), patch.object(
         _ops_sqlite_dispatch, "load_graph_registry_config", fail_if_reached
     ), patch.object(_ops_sqlite_dispatch, "refresh_local_graph", fail_if_reached), patch.object(
@@ -178,7 +178,7 @@ def test_coordinator_mode_is_refused_before_any_side_effect(
 def test_postgres_coordinator_refusal_order_is_unchanged(tmp_path: Path) -> None:
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     with patch.object(cli, "run_coordinator_refresh", fail_if_reached):
         code, _, stderr = run_repo_map_in_process(
             "ops", "refresh-graph", "--repo-map-home", str(home), "--graph", "host-one", "--mode", "coordinator"

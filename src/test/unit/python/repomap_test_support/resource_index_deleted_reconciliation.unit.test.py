@@ -25,23 +25,23 @@ import pytest
 
 
 
-from repomap_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
 
 
 
-from repomap_test_support.resource_deletion_records import DeletionRecordStore
+from common_lore_index_test_support.resource_deletion_records import DeletionRecordStore
 
 
 
-from repomap_test_support.resource_hygiene_policy import GIB, HygieneProfile
+from common_lore_index_test_support.resource_hygiene_policy import GIB, HygieneProfile
 
 
 
-from repomap_test_support.resource_index import AdvisoryIndex
+from common_lore_index_test_support.resource_index import AdvisoryIndex
 
 
 
-from repomap_test_support.resource_index_maintenance import (
+from common_lore_index_test_support.resource_index_maintenance import (
     IndexMaintenanceError,
     reconcile_deleted_run,
     recover_deleted_index_reconciliations,
@@ -49,14 +49,14 @@ from repomap_test_support.resource_index_maintenance import (
 
 
 
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
 
 
 
 
 
 
-from repomap_test_support.resource_lifecycle_claim import ClaimRegistry
+from common_lore_index_test_support.resource_lifecycle_claim import ClaimRegistry
 
 
 

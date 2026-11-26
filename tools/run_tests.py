@@ -49,29 +49,29 @@ if str(Path(__file__).resolve().parents[1] / "src" / "test" / "support" / "pytho
     )
 
 from test_sandbox_dispatch import integration_sandbox_dispatch as integration_sandbox_dispatch
-from repomap_test_support.test_scratch import (
+from common_lore_index_test_support.test_scratch import (
     ENV_PHASE,
     TestScratchLayout,
     establish_run,
     finalize_run as finalize_run,
 )
-from repomap_test_support.unit_purity import UnitPurityState as UnitPurityState
-from repomap_test_support.resource_hygiene_policy import (
+from common_lore_index_test_support.unit_purity import UnitPurityState as UnitPurityState
+from common_lore_index_test_support.resource_hygiene_policy import (
     HygieneProfile as HygieneProfile,
     load_hygiene_config as load_hygiene_config,
 )
-from repomap_test_support.resource_retention import TerminalOutcome as TerminalOutcome
-from repomap_test_support.resource_runner_profile import (
+from common_lore_index_test_support.resource_retention import TerminalOutcome as TerminalOutcome
+from common_lore_index_test_support.resource_runner_profile import (
     resolve_runner_profile as resolve_runner_profile,
 )
-from repomap_test_support.resource_run import (
+from common_lore_index_test_support.resource_run import (
     TestResourceRun,
     cleanup_unadmitted_layout as cleanup_unadmitted_layout,
 )
-from repomap_test_support.resource_docker_boundary import (
+from common_lore_index_test_support.resource_docker_boundary import (
     RunWideDockerBoundary,
 )
-from repomap_test_support.build_profile_debt import (
+from common_lore_index_test_support.build_profile_debt import (
     DEFERRED_BUILD_PROFILE_NODE_IDS as DEFERRED_BUILD_PROFILE_NODE_IDS,
 )
 
@@ -176,8 +176,8 @@ def start_runwide_docker_boundary(args, resource_run):
     try:
         import docker
 
-        from repomap_test_support.resource_docker_mediation import install_canonical_authority
-        from repomap_test_support.resource_test_image_materialization import recover_interrupted_runtime_materialization
+        from common_lore_index_test_support.resource_docker_mediation import install_canonical_authority
+        from common_lore_index_test_support.resource_test_image_materialization import recover_interrupted_runtime_materialization
         # Installed before any client exists so every independently constructed
         # docker.from_env() in this process shares the same mediation.
         authority = install_canonical_authority(resource_run.ledger)

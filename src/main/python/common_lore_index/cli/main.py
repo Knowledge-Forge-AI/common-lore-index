@@ -284,18 +284,21 @@ def __dir__() -> list[str]:
     return sorted(set(globals()) | POSTGRES_FACADE_NAMES)
 
 
-def _home_selection_notice(args: argparse.Namespace) -> None:
+def _preflight_cli_home(args: argparse.Namespace) -> None:
+    if getattr(args, "repo_map_home", None) == "":
+        _resolve_home_selection("")  # Reject before any explicit config route can bypass home selection.
     if args.version or not hasattr(args, "repo_map_home") or getattr(args, "config", None) is not None:
         return
-    if args.command == "mcp" and getattr(args, "mcp_command", None) == "serve" and os.environ.get("REPOMAP_OPS_CONFIG"):
-        return  # MCP's explicit single-file setting owns selection, including with a home option.
+    if args.command == "mcp" and getattr(args, "mcp_command", None) == "serve":
+        from common_lore_index.ops.config_loading import OPS_CONFIG_ENV, legacy_mcp_selector_error
+
+        if legacy_mcp_selector_error() or os.environ.get(OPS_CONFIG_ENV):
+            return  # The stdio owner handles the legacy refusal and single-file selection.
     if args.command == "ops" and getattr(args, "ops_command", None) in (
-        "config-migration-apply", "config-migration-rollback", "config-migration-finalize",
+        "config-migration-plan", "config-migration-apply", "config-migration-rollback", "config-migration-finalize",
     ):
-        return  # Their explicit-home requirement is independent authority.
-    selection = _resolve_home_selection(args.repo_map_home)
-    for notice in selection.notices:
-        print(f"warning: legacy-default-home: {notice}", file=sys.stderr)
+        return  # Migration owners validate their own read or mutation authority.
+    _resolve_home_selection(args.repo_map_home)
 
 
 def main(argv: list[str] | None = None, *, prog: str | None = None) -> int:
@@ -320,7 +323,7 @@ def main(argv: list[str] | None = None, *, prog: str | None = None) -> int:
 
 def _dispatch_main(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
     try:
-        _home_selection_notice(args)
+        _preflight_cli_home(args)
     except OpsConfigError as error:
         for diagnostic in error.diagnostics:
             print(f"{diagnostic.code}: {diagnostic.message}", file=sys.stderr)

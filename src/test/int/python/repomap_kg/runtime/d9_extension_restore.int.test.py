@@ -27,17 +27,17 @@ from common_lore_index.storage import (
     GraphSchemaStatus, apply_migrations, default_rdbms_root, discover_migrations, graph_schema_readiness, run_psql,
 )
 from common_lore_index.storage.main import _migration_script
-from repomap_test_support.d9_extension_policies import (
+from common_lore_index_test_support.d9_extension_policies import (
     control_extension_policy, hide_extension_script_in_container, installed_synthetic_extensions,
     probe_live_container_qualification, synthetic_multilevel_extension_policy, tamper_extension_script_in_container,
 )
-from repomap_test_support.d9_extension_restore import (
+from common_lore_index_test_support.d9_extension_restore import (
     SYNTHETIC_GRAPH_SQL, clean_template_reference, database_names, observe_template_baseline_in_container,
     owned_d9_postgres_cluster, postmaster_crash_lines, seed_synthetic_graph,
 )
-from repomap_test_support.local_db_backup import connect_real_postgres as _connect
-from repomap_test_support.postgres_harness import require_postgres_binaries
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.local_db_backup import connect_real_postgres as _connect
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 BASELINE_ROLES = ("repomap_read_status", "repomap_refresh_publication", "repomap_coordinator_control")
 TRIXIE_SERVER_VERSION = "16.15 (Debian 16.15-1.pgdg13+2)"  # observed on POSTGRES_RELEASE_IMAGE
@@ -68,7 +68,7 @@ def _refused(
 
 def test_d9b_multilevel_synthetic_extension_restore_and_refusals(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-core-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-core-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         graph_db, ctrl_db, home = "d9b_graph", "d9b_graph_control", root / "home"
         reference = clean_template_reference(root)
@@ -188,7 +188,7 @@ def test_d9b_multilevel_synthetic_extension_restore_and_refusals(monkeypatch: py
 
 def test_d9b_backup_first_upgrade_and_drop_consumers_with_policy(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-upg-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-upg-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         graph_db, ctrl_db, home = "d9b_upg_graph", "d9b_upg_graph_control", root / "home"
         reference = clean_template_reference(root)
@@ -283,7 +283,7 @@ def _exact_trixie_container(container: str) -> dict[str, str]:
 def test_d12_trixie_backup_restore_and_collation_refusals(monkeypatch: pytest.MonkeyPatch) -> None:
     """ADR 0091 D9 compatibility on the exact Trixie release server, separate disposable clusters only."""
     require_postgres_binaries()
-    with short_test_directory("d12t-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d12t-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         graph_db, home = "d12t_graph", root / "home"
         reference = clean_template_reference(root, image=POSTGRES_RELEASE_IMAGE)

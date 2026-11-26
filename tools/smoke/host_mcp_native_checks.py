@@ -43,17 +43,17 @@ from common_lore_index.storage import (
     source_feed_item_records_to_jsonable, source_reference_records_to_jsonable, source_run_records_to_jsonable,
     source_summary_to_jsonable,
 )
-from repomap_test_support.host_mcp_domain_reads import _status
-from repomap_test_support.host_mcp_investigation import (
+from common_lore_index_test_support.host_mcp_domain_reads import _status
+from common_lore_index_test_support.host_mcp_investigation import (
     _edge_identity, _explain_args, _explain_tool, _search, _search_projection, _summary, _without_warnings,
 )
-from repomap_test_support.host_mcp_publication import cli, jsonable
-from repomap_test_support.host_mcp_stdio import initialize_request, tool_request, tools_list_request
+from common_lore_index_test_support.host_mcp_publication import cli, jsonable
+from common_lore_index_test_support.host_mcp_stdio import initialize_request, tool_request, tools_list_request
 
 from .host_mcp_native_fixture import FEED_SOURCE_ID, VISIBLE_GRAPHS, NativeFixture, stored_repository_facts
 from .host_mcp_native_launch import Expectation
 
-CATALOG_SHA256 = "181c74446606a9abb2fd97567eb38157263dffa1f00c1616a43dcd8674d83cb8"  # 31 read tools
+CATALOG_SHA256 = "2c2a37e9b510e564431e5c26d00d19adee436543fce309355a6f38c058f42a78"  # 31 read tools
 BAD_ITEM = "python.module:not-a-feed-item"
 HIDDEN = "graph 'host-hidden' is not MCP-visible"
 RESTART_IDS = (20, 33, 45)  # one canonical, investigation and source/feed read
@@ -91,9 +91,9 @@ def build_native_plan(fixture: NativeFixture) -> NativePlan:
     plan.expectations[1] = Expectation("protocol", MCP_PROTOCOL_VERSION, lambda result: result["protocolVersion"])
     plan.expectations[2] = Expectation("protocol", _by_name(tool_definitions()), lambda result: _by_name(result["tools"]))
     plan.chain["catalog_sha256"] = catalog_digest(tool_definitions())
-    plan.positive(10, "repomap_list_graphs", {}, list_graphs_payload(config_path=str(fixture.home)),
+    plan.positive(10, "cloe_list_graphs", {}, list_graphs_payload(config_path=str(fixture.home)),
                   nonempty=lambda payload: bool(payload["graphs"]))
-    plan.positive(11, "repomap_projects", {}, {"projects": [], "graph_registry_available": True,
+    plan.positive(11, "cloe_projects", {}, {"projects": [], "graph_registry_available": True,
                                                "graph_ids": list(VISIBLE_GRAPHS)},
                   project=lambda p: {"projects": p["projects"], "graph_registry_available": p["graph_registry_available"],
                                      "graph_ids": [graph["graph_id"] for graph in p["graphs"]]})
@@ -101,17 +101,17 @@ def build_native_plan(fixture: NativeFixture) -> NativePlan:
     _investigation(plan, fixture, edge["source_key"])
     _source(plan, fixture)
     for mid, name, args, text in (
-        (90, "repomap_canonical_nodes", {"project": "no-such-graph"},
+        (90, "cloe_canonical_nodes", {"project": "no-such-graph"},
          "unknown legacy MCP project or graph-registry graph_id: no-such-graph"),
-        (91, "repomap_search_nodes", {"graph_id": "no-such-graph", "query": "sh"}, "unknown graph_id: no-such-graph"),
-        (92, "repomap_canonical_nodes", {"project": "host-hidden"}, HIDDEN),
-        (93, "repomap_project_summary", {"graph_id": "host-hidden"}, HIDDEN),
-        (94, "repomap_ingested_sources", {"project": "host-hidden"}, HIDDEN),
-        (95, "repomap_canonical_nodes", {"project": "host-multi", "limit": 201}, "limit must be between 1 and 200"),
-        (96, "repomap_search_files", {"graph_id": "host-multi", "query": "   "}, "query is required"),
-        (97, "repomap_source_feed_items", {"project": "host-feed", "source_id": FEED_SOURCE_ID, "limit": 0},
+        (91, "cloe_search_nodes", {"graph_id": "no-such-graph", "query": "sh"}, "unknown graph_id: no-such-graph"),
+        (92, "cloe_canonical_nodes", {"project": "host-hidden"}, HIDDEN),
+        (93, "cloe_project_summary", {"graph_id": "host-hidden"}, HIDDEN),
+        (94, "cloe_ingested_sources", {"project": "host-hidden"}, HIDDEN),
+        (95, "cloe_canonical_nodes", {"project": "host-multi", "limit": 201}, "limit must be between 1 and 200"),
+        (96, "cloe_search_files", {"graph_id": "host-multi", "query": "   "}, "query is required"),
+        (97, "cloe_source_feed_items", {"project": "host-feed", "source_id": FEED_SOURCE_ID, "limit": 0},
          "limit must be between 1 and 500"),
-        (98, "repomap_explain_source_feed_item", {"project": "host-feed", "item_key": BAD_ITEM},
+        (98, "cloe_explain_source_feed_item", {"project": "host-feed", "item_key": BAD_ITEM},
          "item_key must use the feed.item namespace"),
     ):
         plan.refusal(mid, name, args, text)
@@ -125,28 +125,28 @@ def _canonical(plan: NativePlan, fixture: NativeFixture) -> dict[str, Any]:
     records = query_canonical_node_records(database.psql_args, limit=2, offset=0, **common)
     page = public_read_page(records, limit=1, offset=0)
     project = {"project": gid}
-    plan.positive(20, "repomap_canonical_nodes", {**project, "limit": 1, "offset": 0},
+    plan.positive(20, "cloe_canonical_nodes", {**project, "limit": 1, "offset": 0},
                   public_read_page_to_jsonable(page, result_kind="canonical_nodes",
                                                serialize_items=canonical_node_records_to_jsonable),
                   nonempty=lambda payload: bool(payload["items"]))
     edges = cli(home, gid, "edges", "--limit", "200")
     edge = edges["items"][0]
-    plan.positive(21, "repomap_canonical_edges", {**project, "limit": 200}, edges,
+    plan.positive(21, "cloe_canonical_edges", {**project, "limit": 200}, edges,
                   nonempty=lambda payload: bool(payload["items"]))
-    plan.positive(22, "repomap_canonical_edges", {**project, "limit": 200, "result_schema_version": 0},
+    plan.positive(22, "cloe_canonical_edges", {**project, "limit": 200, "result_schema_version": 0},
                   cli(home, gid, "edges", "--limit", "200", "--legacy-json-array"))
     explain = {**project, **_explain_tool(edge), "evidence_limit": 1}
-    plan.positive(23, "repomap_explain_canonical_edge", explain,
+    plan.positive(23, "cloe_explain_canonical_edge", explain,
                   cli(home, gid, "explain-canonical-edge", *_explain_args(edge, "--evidence-limit", "1")),
                   nonempty=lambda payload: bool(payload["result"]["evidence"]))
-    plan.positive(24, "repomap_explain_canonical_edge", {**explain, "result_schema_version": 0},
+    plan.positive(24, "cloe_explain_canonical_edge", {**explain, "result_schema_version": 0},
                   cli(home, gid, "explain-canonical-edge", *_explain_args(edge, "--evidence-limit", "1"),
                       "--legacy-json-object"))
     record = query_canonical_neighborhood(database.psql_args, node=edge["source_key"], direction="both", depth=1,
                                           graph_key_version=1, node_limit=2, node_offset=0, edge_limit=2,
                                           edge_offset=0, **common)
     nodes, links = public_read_page(record.nodes, limit=1, offset=0), public_read_page(record.edges, limit=1, offset=0)
-    plan.positive(25, "repomap_canonical_neighborhood",
+    plan.positive(25, "cloe_canonical_neighborhood",
                   {**project, "node": edge["source_key"], "direction": "both", "node_limit": 1, "edge_limit": 1},
                   public_embedded_read_result_to_jsonable(
                       canonical_neighborhood_to_jsonable(replace(record, nodes=nodes.items, edges=links.items)),
@@ -170,11 +170,11 @@ def _investigation(plan: NativePlan, fixture: NativeFixture, key: str) -> None:
     def found(payload: Any) -> bool:
         return payload["result_count"] > 0
 
-    plan.positive(30, "repomap_search_nodes", {"graph_id": gid, "query": key},
+    plan.positive(30, "cloe_search_nodes", {"graph_id": gid, "query": key},
                   _search(pub, context, gid, "nodes", query=key), project=_search_projection, nonempty=found)
-    plan.positive(31, "repomap_search_files", {"graph_id": gid, "query": "lib"},
+    plan.positive(31, "cloe_search_files", {"graph_id": gid, "query": "lib"},
                   _search(pub, context, gid, "files", query="lib"), project=_search_projection, nonempty=found)
-    plan.positive(32, "repomap_project_summary", {"graph_id": gid}, _summary(pub, context, gid),
+    plan.positive(32, "cloe_project_summary", {"graph_id": gid}, _summary(pub, context, gid),
                   project=lambda payload: payload["summary"],
                   nonempty=lambda payload: payload["summary"]["counts"]["canonical_nodes"] > 0)
 
@@ -185,13 +185,13 @@ def _investigation(plan: NativePlan, fixture: NativeFixture, key: str) -> None:
         return bool(payload["graphs"]) and all(graph["repository_exists"] for graph in payload["graphs"])
 
     for mid, status_graph in ((33, "host-feed"), (36, gid)):
-        plan.positive(mid, "repomap_graph_status", {"graph_id": status_graph},
+        plan.positive(mid, "cloe_graph_status", {"graph_id": status_graph},
                       refresh_graph_status_payload(statuses[status_graph], graph=graphs[status_graph]),
                       project=lambda payload: payload["storage"], nonempty=exists)
     for mid, status_graph in ((34, "host-feed"), (37, gid)):
-        plan.positive(mid, "repomap_refresh_status", {"graph_id": status_graph}, [listed(status_graph)],
+        plan.positive(mid, "cloe_refresh_status", {"graph_id": status_graph}, [listed(status_graph)],
                       project=_without_warnings, nonempty=all_exist)
-    plan.positive(35, "repomap_refresh_status", {}, [listed(graph_id) for graph_id in VISIBLE_GRAPHS],
+    plan.positive(35, "cloe_refresh_status", {}, [listed(graph_id) for graph_id in VISIBLE_GRAPHS],
                   project=_without_warnings, nonempty=all_exist)
     plan.chain["stored_status"] = {graph_id: stored_repository_facts(fixture.databases[graph_id], graph_id)
                                    for graph_id in VISIBLE_GRAPHS}
@@ -207,27 +207,27 @@ def _source(plan: NativePlan, fixture: NativeFixture) -> None:
                      psql_command=database.psql_command, **filters)
 
     feed, source = {"project": gid}, {"project": gid, "source_id": FEED_SOURCE_ID}
-    plan.positive(40, "repomap_ingested_sources", {**feed, "source_type": "feed.rss"},
+    plan.positive(40, "cloe_ingested_sources", {**feed, "source_type": "feed.rss"},
                   ingested_source_records_to_jsonable(admin(query_ingested_source_records, source_type="feed.rss",
                                                             policy_status=None, limit=50)))
-    plan.positive(41, "repomap_source_summary", source,
+    plan.positive(41, "cloe_source_summary", source,
                   source_summary_to_jsonable(admin(query_source_summary, source_id=FEED_SOURCE_ID)),
                   nonempty=lambda payload: payload["feed_items"] >= 1)
     runs = admin(query_source_run_records, source_id=FEED_SOURCE_ID, limit=25)
-    plan.positive(42, "repomap_source_runs", source, source_run_records_to_jsonable(runs))
+    plan.positive(42, "cloe_source_runs", source, source_run_records_to_jsonable(runs))
     run_id = runs[0].source_run_id
     items = admin(query_source_feed_item_records, source_id=FEED_SOURCE_ID, source_run_id=run_id, limit=50)
-    plan.positive(43, "repomap_source_feed_items", {**source, "source_run_id": run_id},
+    plan.positive(43, "cloe_source_feed_items", {**source, "source_run_id": run_id},
                   source_feed_item_records_to_jsonable(items))
     references = admin(query_source_reference_records, source_id=FEED_SOURCE_ID, source_run_id=None,
                        target_kind="external.url", limit=50)
-    plan.positive(44, "repomap_source_references", {**source, "target_kind": "external.url"},
+    plan.positive(44, "cloe_source_references", {**source, "target_kind": "external.url"},
                   source_reference_records_to_jsonable(references))
     item_key = next(item.item_key for item in items if item.item_key in {ref.source_item_key for ref in references})
-    plan.positive(45, "repomap_explain_source_feed_item", {**feed, "item_key": item_key, "source_id": FEED_SOURCE_ID},
+    plan.positive(45, "cloe_explain_source_feed_item", {**feed, "item_key": item_key, "source_id": FEED_SOURCE_ID},
                   admin(query_source_feed_item_explanation, item_key=item_key, source_id=FEED_SOURCE_ID),
                   nonempty=lambda payload: bool(payload["item"]))
-    plan.positive(46, "repomap_status", feed, _status(admin(query_canonical_storage_summary), gid),
+    plan.positive(46, "cloe_status", feed, _status(admin(query_canonical_storage_summary), gid),
                   nonempty=lambda payload: payload["counts"]["canonical_nodes"] > 0)
     plan.chain.update(run_id=run_id, item_key=item_key)
 

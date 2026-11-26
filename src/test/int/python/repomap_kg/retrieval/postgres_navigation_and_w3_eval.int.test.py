@@ -10,9 +10,9 @@ from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.server.ops import investigation_stores
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
 from common_lore_index.storage.node_locations import NodeLocationsQuery
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_FIXTURE_ROOT,
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
@@ -20,7 +20,7 @@ from repomap_test_support.retrieval_evaluation_fixture import (
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
     publish_and_load_sqlite_corpus,
 )

@@ -14,7 +14,7 @@ from common_lore_index.coordinator import _portable_authority as pa
 FILESYSTEM = "filesystem authority denied"
 RUNTIME = "runtime authority denied"
 IMPORT = "import authority denied"
-HELPER = "repomap-go-extract"
+HELPER = "cloe-go-extract"
 
 
 class _BadFspath:
@@ -213,7 +213,7 @@ def test_database_and_publisher_imports_are_refused_while_other_events_pass(
 def test_go_helper_launch_is_limited_to_the_named_binary_under_code_or_env_override(
     layout: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv("REPOMAP_GO_HELPER", raising=False)
+    monkeypatch.delenv("CLOE_GO_HELPER", raising=False)
     helper = layout.code / HELPER
     for event, args in (
         ("subprocess.Popen", (str(helper),)),
@@ -226,14 +226,16 @@ def test_go_helper_launch_is_limited_to_the_named_binary_under_code_or_env_overr
     foreign = layout.outside / HELPER
     refused_commands: tuple[tuple[object, ...], ...] = (
         (), (None,), (None, []), (None, ()), (None, "not-a-list"), (3,),
-        (str(foreign),), (str(layout.code / "other-tool"),),
+        (str(foreign),), (str(layout.code / "other-tool"),), (str(layout.code / "repomap-go-extract"),),
     )
     for refused in refused_commands:
         _deny(layout, "subprocess.Popen", refused, RUNTIME)
 
     monkeypatch.setenv("REPOMAP_GO_HELPER", str(foreign))
+    _deny(layout, "subprocess.Popen", (str(foreign),), RUNTIME)
+    monkeypatch.setenv("CLOE_GO_HELPER", str(foreign))
     _allow(layout, "subprocess.Popen", (str(foreign),))
     _deny(layout, "subprocess.Popen", (str(layout.outside / "sub" / HELPER),), RUNTIME)
 
-    monkeypatch.setenv("REPOMAP_GO_HELPER", "")
+    monkeypatch.setenv("CLOE_GO_HELPER", "")
     _deny(layout, "subprocess.Popen", (str(foreign),), RUNTIME)

@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[6]
-from repomap_test_support.cli_integration import CliIntegrationTestCase
+from common_lore_index_test_support.cli_integration import CliIntegrationTestCase
 
 
 class CliDiscoverCoreIntegrationTests(CliIntegrationTestCase):
@@ -206,7 +206,7 @@ class CliDiscoverCoreIntegrationTests(CliIntegrationTestCase):
                     "repomap": {
                         "command": "repomap-kg", "args": ["python3", "-m", "common_lore_index"],
                         "program": "repomap-kg --serve", "executable": "bin/tool",
-                        "env": {"REPOMAP_MCP_CONFIG": "$REPOMAP_MCP_CONFIG", "TOKEN": "cfg1-sensitive-token"},
+                        "env": {"CLOE_MCP_CONFIG": "$CLOE_MCP_CONFIG", "TOKEN": "cfg1-sensitive-token"},
                         "docs_url": "https://example.com/docs", "mailto": "mailto:dev@example.com",
                         "path": "../../outside.json", "absolute_path": "/tmp/external.json",
                         "template_path": "${PROJECT_ROOT}/config.json",
@@ -244,7 +244,7 @@ class CliDiscoverCoreIntegrationTests(CliIntegrationTestCase):
         reference_targets = {o["target"] for o in references}
         self.assertTrue({
             "tool:repomap-kg", "tool:python3", "dynamic:tool:config-command-fragment",
-            "unknown:tool:unknown-config-command", "env:REPOMAP_MCP_CONFIG", "env:TOKEN",
+            "unknown:tool:unknown-config-command", "env:CLOE_MCP_CONFIG", "env:TOKEN",
             "external.url:https%3A%2F%2Fexample.com%2Fdocs", "external.url:mailto%3Adev%40example.com",
             "file:mcp/config.json", "unknown:file:repo-escaping-config-reference",
             "external:file:absolute-config-reference", "dynamic:file:config-reference-expanded-from-variable",

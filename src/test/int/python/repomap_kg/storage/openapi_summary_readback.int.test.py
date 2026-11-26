@@ -5,12 +5,12 @@ import os
 import tempfile
 from pathlib import Path
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     canonicalization_fixture,
     openapi_fixture,
 )
@@ -57,7 +57,7 @@ def test_psycopg74_openapi_summary_connector_cli_and_mcp_parity() -> None:
     previous_environment = {
         name: (name in os.environ, os.environ.get(name))
         for name in (PG_CONNECTOR_ENV, READBACK_DRIVER_ENV, "PGPASSWORD",
-                     "REPOMAP_OPS_CONFIG", "REPOMAP_PSQL_COMMAND")
+                     "CLOE_OPS_CONFIG", "CLOE_PSQL_COMMAND")
     }
 
     try:
@@ -265,7 +265,7 @@ def _cli_connection_args(postgres, *, root_path: str) -> tuple[str, ...]:
     )
 
 def _mcp_payloads(postgres, *, public_root: str, private_root: str):
-    from common_lore_index.server.mcp import repomap_openapi_summary
+    from common_lore_index.server.mcp import cloe_openapi_summary
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config_path = Path(tmpdir) / "psycopg74.local.toml"
@@ -273,16 +273,16 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
             _ops_config(postgres, public_root=public_root, private_root=private_root),
             encoding="utf-8",
         )
-        os.environ["REPOMAP_OPS_CONFIG"] = str(config_path)
+        os.environ["CLOE_OPS_CONFIG"] = str(config_path)
         payloads = {}
         for mode, selector, connector, psql_command in (
             ("psql", PG_CONNECTOR_ENV, "psql", postgres.psql_command),
             ("default", None, None, str(Path(tmpdir) / "missing" / "psql")),
         ):
             _select_connector(selector, connector, postgres=postgres)
-            os.environ["REPOMAP_PSQL_COMMAND"] = psql_command
+            os.environ["CLOE_PSQL_COMMAND"] = psql_command
             payloads[mode] = {
-                graph_id: repomap_openapi_summary(graph_id=graph_id)
+                graph_id: cloe_openapi_summary(graph_id=graph_id)
                 for graph_id in ("public-openapi", "private-openapi")
             }
         return payloads

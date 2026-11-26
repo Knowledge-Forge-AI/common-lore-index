@@ -14,8 +14,8 @@ from common_lore_index.retrieval.query_contracts import (
     QueryMode, QueryScope, refused_envelope, stale_envelope, unavailable_envelope,
 )
 
-from repomap_test_support.retrieval_body_admission_fixtures import make_body_publication
-from repomap_test_support.retrieval_w5_matched_fixture import (
+from common_lore_index_test_support.retrieval_body_admission_fixtures import make_body_publication
+from common_lore_index_test_support.retrieval_w5_matched_fixture import (
     EVALUATOR, GRADE, captured_fixture, make_synthetic_archives, ready_fit, synthetic_policy, synthetic_result, synthetic_tar,
 )
 from retrieval_supplement_primitives import canonical_bytes

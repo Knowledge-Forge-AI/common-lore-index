@@ -47,7 +47,7 @@ from common_lore_index.storage.staging_merge import (
     build_source_index_merge_statements,
 )
 from common_lore_index.storage.staging_ownership import StageOwner
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     DEFAULT_TEST_POSTGRES_PORT,
     DEFAULT_TEST_POSTGRES_RUNTIME,
     require_postgres_binaries,

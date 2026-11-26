@@ -21,15 +21,15 @@ import pytest
 from common_lore_index.runtime._extension_restore_qualification import TrustedArtifactQualification
 from common_lore_index.runtime.backup import dump_database, init_database_from_dump
 from common_lore_index.runtime.backup_records import LocalDbBackupError
-from repomap_test_support.d9_extension_policies import (
+from common_lore_index_test_support.d9_extension_policies import (
     installed_synthetic_extensions, probe_live_container_qualification, synthetic_multilevel_extension_policy,
 )
-from repomap_test_support.d9_extension_restore import (
+from common_lore_index_test_support.d9_extension_restore import (
     clean_template_reference, database_names, engine_container_id, owned_d9_postgres_cluster, seed_synthetic_graph,
 )
-from repomap_test_support.local_db_backup import connect_real_postgres as _connect
-from repomap_test_support.postgres_harness import require_postgres_binaries
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.local_db_backup import connect_real_postgres as _connect
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 GRAPH = "d9b_rq_graph"
 
@@ -66,7 +66,7 @@ def _refused(
 @pytest.mark.requires_pgvector
 def test_original_backup_restores_on_later_qualified_independent_engine_image(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-rq-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-rq-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         home, target_home = root / "home", root / "target_home"
         core_reference = clean_template_reference(root, profile="core")

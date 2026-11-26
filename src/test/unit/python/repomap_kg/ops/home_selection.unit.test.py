@@ -44,8 +44,8 @@ def populate(path: Path, kind: str) -> None:
 @pytest.mark.parametrize(("new", "old", "source"), [
     ("absent", "absent", "fresh-default"), ("empty", "absent", "fresh-default"),
     ("sqlite", "sqlite", "cloe-default"), ("postgres", "absent", "cloe-default"),
-    ("absent", "sqlite", "legacy-default"), ("empty", "postgres", "legacy-default"),
-    ("foreign", "sqlite", "legacy-default"), ("invalid", "sqlite", "legacy-default"),
+    ("absent", "sqlite", "fresh-default"), ("empty", "postgres", "fresh-default"),
+    ("absent", "foreign", "fresh-default"), ("absent", "file", "fresh-default"),
 ])
 def test_default_selection_table(defaults: tuple[Path, Path], new: str, old: str, source: str) -> None:
     current, legacy = defaults
@@ -54,9 +54,7 @@ def test_default_selection_table(defaults: tuple[Path, Path], new: str, old: str
     before = {p: p.read_bytes() for root in defaults if root.is_dir() for p in root.iterdir() if p.is_file()}
     selection = _resolve_home_selection()
     assert selection.source == source
-    assert selection.path == (legacy if source == "legacy-default" else current)
-    assert bool(selection.notices) == (source == "legacy-default")
-    assert all(str(current.parent) not in message for message in selection.notices)
+    assert selection.path == current
     assert {p: p.read_bytes() for p in before} == before
     if new == "absent":
         assert not current.exists()
@@ -66,9 +64,8 @@ def test_default_selection_table(defaults: tuple[Path, Path], new: str, old: str
     ("foreign", "absent", "default-home-unrecognized"),
     ("invalid", "absent", "default-home-unrecognized"),
     ("file", "sqlite", "default-home-unsafe"),
-    ("absent", "foreign", "legacy-default-home-unrecognized"),
-    ("absent", "empty", "legacy-default-home-unrecognized"),
-    ("absent", "file", "legacy-default-home-unrecognized"),
+    ("foreign", "sqlite", "default-home-unrecognized"),
+    ("invalid", "sqlite", "default-home-unrecognized"),
 ])
 def test_unrecognized_defaults_refuse_without_disclosing_or_creating(
     defaults: tuple[Path, Path], new: str, old: str, code: str,
@@ -91,8 +88,27 @@ def test_explicit_precedence_does_not_inspect_defaults(defaults, monkeypatch: py
     monkeypatch.setenv("CLOE_HOME", str(current))
     assert resolve_repo_map_home() == current
     assert _resolve_home_selection(legacy).source == "explicit"
+
+
+def test_legacy_environment_does_not_select_a_home(defaults, monkeypatch: pytest.MonkeyPatch) -> None:
+    current, legacy = defaults
+    populate(legacy, "sqlite")
+    monkeypatch.setenv("REPOMAP_HOME", str(legacy))
     monkeypatch.setenv("CLOE_HOME", "")
-    assert resolve_repo_map_home() == legacy
+    assert _resolve_home_selection().source == "fresh-default"
+    assert resolve_repo_map_home() == current and not current.exists()
+
+
+def test_empty_explicit_home_refuses_instead_of_selecting_cwd_or_environment(
+    defaults, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    current, legacy = defaults
+    monkeypatch.setenv("CLOE_HOME", str(legacy))
+    monkeypatch.setattr(home_selection, "_classify", lambda *_args: pytest.fail("empty explicit home inspected defaults"))
+    with pytest.raises(OpsConfigError) as raised:
+        resolve_repo_map_home("")
+    assert [item.code for item in raised.value.diagnostics] == ["explicit-home-empty"]
+    assert not current.exists() and not legacy.exists()
 
 
 def test_cloe_path_is_never_a_product_setting(defaults, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -196,16 +212,16 @@ def test_cli_default_refusal_retains_its_safe_code(defaults, capsys) -> None:
 
 
 def test_mcp_explicit_config_environment_does_not_inspect_default_home(defaults, monkeypatch) -> None:
-    from common_lore_index.cli.main import _home_selection_notice
+    from common_lore_index.cli.main import _preflight_cli_home
     from common_lore_index.cli.parser import build_parser
     current, _legacy = defaults
     populate(current, "foreign")
     args = build_parser().parse_args(["mcp", "serve"])
-    monkeypatch.setenv("REPOMAP_OPS_CONFIG", "explicit-config.toml")
-    _home_selection_notice(args)
-    monkeypatch.setenv("REPOMAP_OPS_CONFIG", "")
+    monkeypatch.setenv("CLOE_OPS_CONFIG", "explicit-config.toml")
+    _preflight_cli_home(args)
+    monkeypatch.setenv("CLOE_OPS_CONFIG", "")
     with pytest.raises(OpsConfigError):
-        _home_selection_notice(args)
+        _preflight_cli_home(args)
 
 
 @pytest.mark.parametrize("operation", ["up_local_runtime", "down_local_runtime", "query_local_runtime_status"])
@@ -225,6 +241,6 @@ def test_legacy_resolver_facades_keep_one_path_returning_function(defaults) -> N
     current, legacy = defaults
     populate(legacy, "sqlite")
     assert local.resolve_repo_map_home is config.resolve_repo_map_home is config_loading.resolve_repo_map_home
-    assert local.resolve_repo_map_home() == legacy
+    assert local.resolve_repo_map_home() == current
     assert local.resolve_repo_map_home(current) == current
     assert not current.exists()

@@ -9,16 +9,16 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
 
 from common_lore_index.server.mcp import (
     RepoMapMcpError,
-    repomap_search_files,
-    repomap_search_nodes,
-    repomap_search_observations,
+    cloe_search_files,
+    cloe_search_nodes,
+    cloe_search_observations,
 )
 from common_lore_index.storage import (
     apply_migrations,
@@ -51,7 +51,7 @@ def test_psycopg108_mcp_search_connector_pagination_raw_and_privacy_parity(
             )
             _seed(private_postgres)
             config_path = _write_config(base, postgres=postgres)
-            os.environ["REPOMAP_OPS_CONFIG"] = str(config_path)
+            os.environ["CLOE_OPS_CONFIG"] = str(config_path)
 
             import common_lore_index.ops.readback as readback
 
@@ -116,7 +116,7 @@ def test_psycopg108_mcp_search_connector_pagination_raw_and_privacy_parity(
                 "metadata": {"category": "public"},
             }
 
-            private_payload = repomap_search_files(
+            private_payload = cloe_search_files(
                 graph_id="private-visible",
                 query="README",
             )
@@ -144,7 +144,7 @@ def test_psycopg108_mcp_search_connector_pagination_raw_and_privacy_parity(
             # password-bearing psql driver reports its bounded generic label.
             _select("psycopg", "psycopg", command=None, postgres=postgres)
             with pytest.raises(RepoMapMcpError, match="missing or not initialized"):
-                repomap_search_files(graph_id="missing-database", query="README")
+                cloe_search_files(graph_id="missing-database", query="README")
             _select(
                 "conflict-a",
                 "unsupported-value",
@@ -152,7 +152,7 @@ def test_psycopg108_mcp_search_connector_pagination_raw_and_privacy_parity(
                 postgres=postgres,
             )
             with pytest.raises(RepoMapMcpError) as missing_psql:
-                repomap_search_files(graph_id="missing-database", query="README")
+                cloe_search_files(graph_id="missing-database", query="README")
             assert str(missing_psql.value) == "psql readback failed for files MCP search"
     finally:
         _restore_environment(previous)
@@ -176,12 +176,12 @@ def test_psycopg108_mcp_search_refuses_wrong_declared_password(
             )
             _seed(postgres)
             config_path = _write_config(Path(tmpdir), postgres=postgres)
-            os.environ["REPOMAP_OPS_CONFIG"] = str(config_path)
+            os.environ["CLOE_OPS_CONFIG"] = str(config_path)
             _select("psycopg", "psycopg", command=None, postgres=postgres)
             wrong = "wrong-" + secrets.token_hex(8)
             os.environ["PUBLIC_SAFE_PASSWORD"] = wrong
             with pytest.raises(RepoMapMcpError) as refused:
-                repomap_search_files(graph_id="public", query="README")
+                cloe_search_files(graph_id="public", query="README")
             message = str(refused.value)
             assert re.match(
                 r"psycopg (authentication|connection) failed for files MCP search", message
@@ -196,8 +196,8 @@ def test_psycopg108_mcp_search_refuses_wrong_declared_password(
 _ENV_NAMES = (
     PG_CONNECTOR_ENV,
     READBACK_DRIVER_ENV,
-    "REPOMAP_OPS_CONFIG",
-    "REPOMAP_PSQL_COMMAND",
+    "CLOE_OPS_CONFIG",
+    "CLOE_PSQL_COMMAND",
     "PGPASSWORD",
     "PATH",
     "PUBLIC_SAFE_PASSWORD",
@@ -214,25 +214,25 @@ def _restore_environment(previous: dict[str, tuple[bool, str | None]]) -> None:
 
 def _public_payloads() -> dict[str, object]:
     return {
-        "files": repomap_search_files(
+        "files": cloe_search_files(
             graph_id="public",
             query=".",
             limit=1,
         ),
-        "nodes": repomap_search_nodes(
+        "nodes": cloe_search_nodes(
             graph_id="public",
             query="public:",
             kind="file",
             limit=2,
         ),
-        "observations": repomap_search_observations(
+        "observations": cloe_search_observations(
             graph_id="public",
             query="file",
             kind="file",
             path="README.md",
             include_raw=False,
         ),
-        "raw_observations": repomap_search_observations(
+        "raw_observations": cloe_search_observations(
             graph_id="public",
             query="file",
             kind="file",
@@ -345,7 +345,7 @@ def _select(
     for name, value in (
         (PG_CONNECTOR_ENV, connector),
         (READBACK_DRIVER_ENV, driver),
-        ("REPOMAP_PSQL_COMMAND", command),
+        ("CLOE_PSQL_COMMAND", command),
     ):
         if value is None:
             os.environ.pop(name, None)

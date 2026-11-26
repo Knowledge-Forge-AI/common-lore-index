@@ -11,8 +11,8 @@ from common_lore_index.storage.publication_readback import RunPublicationRecord
 from common_lore_index.storage.semantic_candidates import (
     CandidatePublication, CandidateQuery, EmbeddingProfile,
 )
-from repomap_test_support.w5_experiment_postgres import HNSW_OWNER_ROLE, HnswObservation
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_experiment_postgres import HNSW_OWNER_ROLE, HnswObservation
+from common_lore_index_test_support.w5_semantic_support import (
     BIND_COMP, BIND_CORE, make_w5_calibration_task, make_w5_verified_pin,
 )
 from retrieval_evaluation_grading import ExecutionState

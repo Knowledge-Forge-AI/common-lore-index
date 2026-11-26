@@ -39,9 +39,12 @@ EXIT_CODES = {"completed_pending_manager_review": 0, "checks_failed": 1, "failed
               "cleanup_incomplete": 3, "interrupted": 130}
 QUALIFICATION_CLASSES = ("native-macos-checkout-console", "linux-harness-exercise")
 PARENT_STRIPPED_PREFIXES = ("PG",)
-PARENT_STRIPPED_KEYS = ("REPOMAP_STORAGE_PG_CONNECTOR", "REPOMAP_STORAGE_READBACK_DRIVER", "REPOMAP_PG_HOST",
-                        "REPOMAP_PG_PORT", "REPOMAP_PG_USER", "REPOMAP_PG_DATABASE", "REPOMAP_PSQL_COMMAND",
-                        "REPOMAP_MCP_CONFIG", "REPOMAP_OPS_CONFIG", "REPOMAP_HOME")
+PARENT_STRIPPED_KEYS = ("CLOE_STORAGE_PG_CONNECTOR", "CLOE_STORAGE_READBACK_DRIVER",
+                        "REPOMAP_STORAGE_PG_CONNECTOR", "REPOMAP_STORAGE_READBACK_DRIVER", "CLOE_PG_HOST",
+                        "CLOE_PG_PORT", "CLOE_PG_USER", "CLOE_PG_DATABASE", "CLOE_PSQL_COMMAND",
+                        "REPOMAP_PG_HOST", "REPOMAP_PG_PORT", "REPOMAP_PG_USER", "REPOMAP_PG_DATABASE", "REPOMAP_PSQL_COMMAND",
+                        "REPOMAP_MCP_CONFIG", "REPOMAP_OPS_CONFIG", "REPOMAP_HOME", "CLOE_HOME",
+                        "CLOE_MCP_CONFIG", "CLOE_OPS_CONFIG")
 
 
 PHASES = ("pending", "active", "cleanup", "finalize")
@@ -95,11 +98,11 @@ def parent_environment(parent_bin: Path, work: Path) -> Iterator[dict[str, Any]]
     try:
         for key in removed:
             del os.environ[key]
-        os.environ["REPOMAP_STORAGE_READBACK_DRIVER"] = "psycopg"
+        os.environ["CLOE_STORAGE_READBACK_DRIVER"] = "psycopg"
         os.environ["PATH"] = f"{parent_bin}{os.pathsep}{saved.get('PATH', '/usr/bin:/bin')}"
         (work / "parent-tmp").mkdir(mode=0o700, exist_ok=True)
         tempfile.tempdir = str(work / "parent-tmp")  # the maintained psql wrapper lands in the owned root
-        yield {"removed_keys": removed, "set": {"REPOMAP_STORAGE_READBACK_DRIVER": "psycopg"},
+        yield {"removed_keys": removed, "set": {"CLOE_STORAGE_READBACK_DRIVER": "psycopg"},
                "path_prepended": str(parent_bin), "tempdir": tempfile.tempdir,
                "python3_on_path": shutil.which("python3")}
     finally:

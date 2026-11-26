@@ -15,17 +15,17 @@ from common_lore_index.retrieval.context_contracts import ContextRequest
 from common_lore_index.retrieval.context_work import WorkLedger
 from common_lore_index.server.context_read_postgres import PostgresContextReadAdapter
 from common_lore_index.storage.row_helpers import identity_metadata_hash
-from repomap_test_support.context_assertions import (
+from common_lore_index_test_support.context_assertions import (
     assert_valid_context_packet,
     build_postgres_context_fixture,
 )
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE,
     CTX_GRAPH_ID,
     SNAP_CORE,
     build_sqlite_context_fixture,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
 SEED = "py:pkg.billing.InvoiceService"

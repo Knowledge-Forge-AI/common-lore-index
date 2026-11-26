@@ -50,7 +50,7 @@ def test_compose_declares_complete_health_gated_cluster() -> None:
     assert "stdin_open: true" in compose
     assert "profiles: [\"integration\"]" in compose
     assert "profiles: [\"admin\"]" in compose
-    assert compose.count("REPOMAP_PG_USER: repomap_read_status") == 2
+    assert compose.count("CLOE_PG_USER: repomap_read_status") == 2
     assert "internal: true" in compose
     assert "repomap-http:" in compose
     assert "-http\n" in compose
@@ -123,7 +123,7 @@ def test_ambient_database_user_does_not_override_config_authority(
         home = Path(tmpdir) / "home"
         setup_local_runtime(home)
         configured = load_ops_config_home(home)
-        monkeypatch.setenv("REPOMAP_PG_USER", "repomap_read_status")
+        monkeypatch.setenv("CLOE_PG_USER", "repomap_read_status")
         reloaded = load_ops_config_home(home)
 
     assert configured.postgres.user == "repomap"
@@ -137,7 +137,7 @@ def test_enabled_source_root_is_read_only_only_where_execution_requires_it() -> 
         source = home / "source"
         source.mkdir(mode=0o700, exist_ok=True)
         source.chmod(0o700)
-        config = home / "repomap.rpl.toml"
+        config = home / "repomap.local.cloe.toml"
         config.write_text(
             config.read_text(encoding="utf-8")
             .replace('root_path = "./repo-map"', f'root_path = "{source}"')

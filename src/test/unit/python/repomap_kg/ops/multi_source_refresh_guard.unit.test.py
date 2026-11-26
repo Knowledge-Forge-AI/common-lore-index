@@ -18,7 +18,7 @@ from common_lore_index.ops.generations import source_generation
 from common_lore_index.ops.refresh import preflight_graph, refresh_enabled_graphs, refresh_graph
 from common_lore_index.ops.reports import refresh_result_to_jsonable
 from common_lore_index.server.ops import graph_context
-from repomap_test_support.ops_refresh import SnapshotPublisher
+from common_lore_index_test_support.ops_refresh import SnapshotPublisher
 
 
 def _config_text(first_root: Path, second_root: Path) -> str:

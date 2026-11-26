@@ -27,7 +27,7 @@ from common_lore_index.storage.readback_driver import (
 from common_lore_index.storage.staged_publication import execute_final_transaction
 from common_lore_index.storage.staging_merge import MergeContext
 from common_lore_index.storage.staging_ownership import StageOwner
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

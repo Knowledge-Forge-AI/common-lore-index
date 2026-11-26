@@ -19,9 +19,9 @@ from common_lore_index.retrieval.context_work import (
     MAX_SQL_STATEMENTS_SQLITE, SQLITE_CONTEXT_PROGRESS_CALLBACK_LIMIT,
 )
 from common_lore_index.storage.readback_driver import _psycopg_connection_params_from_psql_args
-from repomap_test_support.context_assertions import assert_valid_context_packet, build_postgres_context_fixture
-from repomap_test_support.context_fixture import BINDING_CORE, CTX_GRAPH_ID, SNAP_CORE, build_sqlite_context_fixture
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.context_assertions import assert_valid_context_packet, build_postgres_context_fixture
+from common_lore_index_test_support.context_fixture import BINDING_CORE, CTX_GRAPH_ID, SNAP_CORE, build_sqlite_context_fixture
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 SEED = "py:pkg.billing.InvoiceService"
 NEIGHBOR = "py:scanbound.Neighbor"

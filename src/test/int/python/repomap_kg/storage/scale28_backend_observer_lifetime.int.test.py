@@ -8,8 +8,8 @@ pytestmark = pytest.mark.requires_build_profile
 
 from actual_refresh_failure_causality import FailureCandidate
 from common_lore_index.storage.run_authority import read_run_authority
-from repomap_test_support.postgres_harness import require_postgres_binaries
-from repomap_test_support.scale15_runtime_campaign import (
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries
+from common_lore_index_test_support.scale15_runtime_campaign import (
     Scale15RuntimeFixture,
     expected_authority,
     run_ordinary_refresh,
@@ -17,7 +17,7 @@ from repomap_test_support.scale15_runtime_campaign import (
     start_scale15_runtime,
     stop_scale15_runtime,
 )
-from repomap_test_support.test_cov5k_r2_fix3_sibling_oracle import (
+from common_lore_index_test_support.test_cov5k_r2_fix3_sibling_oracle import (
     validate_sibling_campaign_oracle,
 )
 from scale13_actual_path_readback import read_actual_path_state

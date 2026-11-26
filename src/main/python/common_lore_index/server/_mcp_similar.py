@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 from typing import Any
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.server._ops_records import McpOpsError
 from common_lore_index.server._ops_sanitization import safety_markers, sanitize_jsonable
 from common_lore_index.server.mcp_core import (
@@ -58,7 +58,7 @@ def similar_nodes_payload(
     if _profiles_need_redaction(result_data, selection.path_markers):
         result_data = unavailable("privacy_refused").to_jsonable()
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "read_only": True,
         "graph": graph_payload(
@@ -70,7 +70,7 @@ def similar_nodes_payload(
     }
 
 
-def repomap_similar_nodes(
+def cloe_similar_nodes(
     *,
     graph_id: str,
     canonical_key: str,
@@ -111,8 +111,8 @@ def repomap_similar_nodes(
 __all__ = (
     "SimilarNodesQuery",
     "embedding_profiles_payload",
-    "repomap_embedding_profiles",
-    "repomap_similar_nodes",
+    "cloe_embedding_profiles",
+    "cloe_similar_nodes",
     "similar_nodes_payload",
 )
 
@@ -131,7 +131,7 @@ def embedding_profiles_payload(
         # Redacting a tuple in place would invalidate its profile digest or IDs.
         result_data = profiles_unavailable("privacy_refused").to_jsonable()
     return {
-        "server": "repomap-kg", "version": __version__, "read_only": True,
+        "server": DISTRIBUTION_NAME, "version": __version__, "read_only": True,
         "graph": graph_payload(selection.graph, database=target.stores.storage_label(selection)),
         **result_data, "safety": safety_markers(),
     }
@@ -217,7 +217,7 @@ def _profiles_need_redaction(payload: dict[str, Any], markers: tuple[str, ...]) 
     return any(contains_username(payload.get(field), (field,)) for field in ("profiles", "provenance"))
 
 
-def repomap_embedding_profiles(
+def cloe_embedding_profiles(
     *, graph_id: str, selected: bool = False, limit: int = 20,
     config_path: str | os.PathLike[str] | None = None,
 ) -> dict[str, Any]:
@@ -233,7 +233,7 @@ def repomap_embedding_profiles(
 
 def embedding_profiles_tool_definition() -> dict[str, Any]:
     return {
-        "name": "repomap_embedding_profiles",
+        "name": "cloe_embedding_profiles",
         "description": "Read current public-safe precomputed profile tuples; explicitly choose one for similar_nodes.",
         "inputSchema": {
             "type": "object",

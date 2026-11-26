@@ -34,8 +34,8 @@ from common_lore_index.server import _ops_sanitization, sqlite_read_binding
 from common_lore_index.storage.sqlite_local import connection, migrations
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
 from common_lore_index.storage.sqlite_local.schema import DATABASE_BUSY, LocalStoreError
-from repomap_test_support.host_read_store_config import fail_if_reached
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.host_read_store_config import fail_if_reached
+from common_lore_index_test_support.sqlite_local_fixtures import (
     generation_bundle,
     graph_toml,
     publication_for,

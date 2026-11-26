@@ -16,9 +16,9 @@ from common_lore_index.ops.lexical_service import build_graph_lexical_generation
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
 from common_lore_index.server.investigation_read_store import GraphSearchQuery
 from common_lore_index.server.ops import investigation_stores
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_FIXTURE_ROOT,
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
@@ -26,15 +26,15 @@ from repomap_test_support.retrieval_evaluation_fixture import (
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
     publish_and_load_sqlite_corpus,
 )
-from repomap_test_support.w5_experiment_vector import (
+from common_lore_index_test_support.w5_experiment_vector import (
     baseline_file_metrics,
     baseline_file_metrics_with_correspondence,
 )
-from repomap_test_support.w5_generator_support import GeneratorFixtureReader
+from common_lore_index_test_support.w5_generator_support import GeneratorFixtureReader
 from retrieval_evaluation_comparability import query_fenced_current_observations
 from retrieval_evaluation_criteria import derive_future_criteria_proposal
 from retrieval_evaluation_execution import ArmContext

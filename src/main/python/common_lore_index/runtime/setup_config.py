@@ -14,6 +14,7 @@ from common_lore_index.ops.config_records import OpsConfigError
 from common_lore_index.ops.config_storage import refuse_sqlite_home
 from common_lore_index.runtime._home_authority import create_private_file, ensure_private_directory
 from common_lore_index.runtime._plan_records import LocalRuntimeDiagnostic, LocalRuntimeError
+from common_lore_index.runtime.plan import require_canonical_runtime_source_selector
 
 
 def _refuse(code: str, message: str) -> NoReturn:
@@ -27,17 +28,9 @@ def _config_refusal(error: OpsConfigError) -> NoReturn:
     _refuse(codes[0] if codes else "runtime-config-invalid", "configuration preflight refused")
 
 
-def resolve_setup_home(value: str | Path | None, config_format: str | None) -> tuple[Path, str | None]:
-    """Use CLOE filenames only for a fresh implicit new default; preserve explicit choices."""
-    try:
-        selection = _resolve_home_selection(value)
-    except OpsConfigError as error:
-        _config_refusal(error)
-    return selection.path, config_format or ("cloe" if selection.source == "fresh-default" else None)
-
-
 def resolve_runtime_home(value: str | Path | None = None) -> Path:
     """Keep lifecycle API selection failures in the runtime diagnostic family."""
+    require_canonical_runtime_source_selector()
     try:
         return _resolve_home_selection(value).path
     except OpsConfigError as error:
@@ -60,8 +53,8 @@ def prepare_setup_config(
     home: Path, *, config_format: str | None = None, dry_run: bool = False,
 ) -> Path:
     """Select without changing configuration; actual setup validates home custody first."""
-    if config_format not in (None, "legacy", "cloe"):
-        _refuse("runtime-config-format-invalid", "choose legacy or cloe")
+    if config_format not in (None, "cloe"):
+        _refuse("runtime-config-format-invalid", "choose cloe; use config migration for an existing legacy home")
     try:
         (home / OPERATION_DIRECTORY).lstat()
     except (FileNotFoundError, NotADirectoryError):
@@ -85,11 +78,7 @@ def prepare_setup_config(
                 _refuse("repo-map-home-unsafe", "home must be an ordinary directory")
             entries = list(home.iterdir())
         files, _ignored = discover_home_config_files(home) if entries else ([], [])
-        family = ("cloe" if files[0].name.endswith(".cloe.toml") else "legacy") if files else None
-        if family is not None and config_format is not None and family != config_format:
-            _refuse("runtime-config-format-conflict", "requested format conflicts with the existing home")
-        selected = config_format or family or "legacy"
-        target = home / ("repomap.local.cloe.toml" if selected == "cloe" else "repomap.rpl.toml")
+        target = home / "repomap.local.cloe.toml"
         portable = unicodedata.normalize("NFC", target.name).casefold()
         if any(p.name != target.name and unicodedata.normalize("NFC", p.name).casefold() == portable for p in entries):
             _refuse("runtime-config-target-collision", "generated target has an occupied portable alias")
@@ -100,12 +89,10 @@ def prepare_setup_config(
             except OpsConfigError as error:
                 if isinstance(error.__cause__, UnicodeDecodeError):
                     _refuse("runtime-config-unavailable", "configuration preflight could not decode the selected home")
-                # Preserve legacy bootstrap tolerance; the new CLOE producer fails closed.
-                if selected == "cloe" or any(d.code == "config-home-mixed-format" for d in error.diagnostics):
-                    _config_refusal(error)
+                _config_refusal(error)
             else:
                 refuse_sqlite_home(payload.get("storage"), diagnostics)
-                if selected == "cloe" and any(d.severity == "error" for d in diagnostics):
+                if any(d.severity == "error" for d in diagnostics):
                     _config_refusal(OpsConfigError(diagnostics))
         return target
     except OpsConfigError as error:

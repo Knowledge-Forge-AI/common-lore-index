@@ -24,7 +24,7 @@ def _proof(claim, root):
     from common_lore_index.coordinator.refresh_adapter import RefreshCapability, create_refresh_capability, run_refresh_worker
     from common_lore_index.coordinator._supervisor_fencing import bind_durable_launch, earn_in_process_fencing_proof
     from common_lore_index.coordinator.limits import CoordinatorLimits
-    from repomap_test_support.fencing_control_fakes import FencingControl
+    from common_lore_index_test_support.fencing_control_fakes import FencingControl
 
     control = FencingControl(claim)
     worker_root = Path(root) / f"cap_run_{claim.job_id}_{claim.attempt}"

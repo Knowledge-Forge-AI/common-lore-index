@@ -10,7 +10,7 @@ from common_lore_index.graph.discovery import discover_observations
 from common_lore_index.ops.ingestion.bulk import classify_bulk_route
 from common_lore_index.ops.ingestion.source import _archive_extractor_route
 
-from repomap_test_support.bats import (
+from common_lore_index_test_support.bats import (
     BATS_FIXTURE_ROOT as FIXTURE_ROOT,
     first_observation,
     observations_by_kind,

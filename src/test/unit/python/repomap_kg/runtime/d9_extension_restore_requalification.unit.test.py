@@ -27,11 +27,11 @@ from common_lore_index.runtime._extension_restore_qualification import (
 from common_lore_index.runtime._extension_restore_template import BASELINE_CATALOGS, BASELINE_INDIRECT_CATALOGS
 from common_lore_index.runtime.backup_records import LocalDbBackupError, RuntimeContainerMetadata
 from common_lore_index.runtime.local import build_local_runtime_plan, setup_local_runtime
-from repomap_test_support.d9_extension_policies import (
+from common_lore_index_test_support.d9_extension_policies import (
     DEFAULT_ARTIFACT_QUALIFICATION, DEFAULT_TEST_ENGINE_IMAGE_ID, DEFAULT_TEST_INSPECT_IMAGE,
     UNIT_VECTOR_CONTROL_SHA256, UNIT_VECTOR_LIBRARY_SHA256, UNIT_VECTOR_SCRIPT_SHA256, adr0077_pgvector_extension_policy,
 )
-from repomap_test_support.local_db_backup import default_baseline_server_provenance
+from common_lore_index_test_support.local_db_backup import default_baseline_server_provenance
 
 LATER_IMAGE_ID = "sha256:" + "7" * 64
 LATER_BASELINE = hashlib.sha256(b"later-target-template1").hexdigest()

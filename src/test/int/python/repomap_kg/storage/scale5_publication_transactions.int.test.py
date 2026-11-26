@@ -34,11 +34,11 @@ from common_lore_index.storage.staging_observability import StagingMeasurements
 from common_lore_index.storage.staging_merge import (
     build_source_index_merge_statements,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.publication_fixtures import (
+from common_lore_index_test_support.publication_fixtures import (
     PublicationFixture,
     execute_statements,
 )

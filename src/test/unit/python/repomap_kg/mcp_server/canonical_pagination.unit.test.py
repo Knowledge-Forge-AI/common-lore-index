@@ -1,13 +1,13 @@
 from unittest.mock import patch
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
     def test_canonical_list_schemas_define_bounded_pagination(self):
         from common_lore_index.server.mcp import tool_input_schema
 
-        for name in ("repomap_canonical_nodes", "repomap_canonical_edges"):
+        for name in ("cloe_canonical_nodes", "cloe_canonical_edges"):
             with self.subTest(tool=name):
                 properties = tool_input_schema(name)["properties"]
                 self.assertEqual(
@@ -35,10 +35,10 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
     def test_embedded_read_schemas_define_independent_bounded_windows(self):
         from common_lore_index.server.mcp import tool_input_schema
 
-        explanation = tool_input_schema("repomap_explain_canonical_edge")[
+        explanation = tool_input_schema("cloe_explain_canonical_edge")[
             "properties"
         ]
-        neighborhood = tool_input_schema("repomap_canonical_neighborhood")[
+        neighborhood = tool_input_schema("cloe_canonical_neighborhood")[
             "properties"
         ]
 
@@ -52,15 +52,15 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
 
     def test_canonical_lists_forward_default_and_explicit_pagination(self):
         from common_lore_index.server.mcp import (
-            repomap_canonical_edges,
-            repomap_canonical_nodes,
+            cloe_canonical_edges,
+            cloe_canonical_nodes,
         )
 
         with patch(
             "common_lore_index.server.mcp.query_canonical_node_records",
             return_value=(),
         ) as node_query:
-            payload = repomap_canonical_nodes(
+            payload = cloe_canonical_nodes(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                 )
@@ -76,7 +76,7 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
             "common_lore_index.server.mcp.query_canonical_edge_records",
             return_value=(),
         ) as edge_query:
-            payload = repomap_canonical_edges(
+            payload = cloe_canonical_edges(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     limit=7,
@@ -90,13 +90,13 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
         self.assertEqual(edge_query.call_args.kwargs["offset"], 3)
 
     def test_canonical_lists_retain_bounded_schema_zero_alias(self):
-        from common_lore_index.server.mcp import repomap_canonical_nodes
+        from common_lore_index.server.mcp import cloe_canonical_nodes
 
         with patch(
             "common_lore_index.server.mcp.query_canonical_node_records",
             return_value=(),
         ) as query:
-            payload = repomap_canonical_nodes(
+            payload = cloe_canonical_nodes(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 result_schema_version=0,
@@ -108,46 +108,46 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
     def test_canonical_lists_reject_invalid_pagination_before_query(self):
         from common_lore_index.server.mcp import (
             RepoMapMcpError,
-            repomap_canonical_edges,
-            repomap_canonical_nodes,
+            cloe_canonical_edges,
+            cloe_canonical_nodes,
         )
 
         cases = (
             (
-                lambda: repomap_canonical_nodes(
+                lambda: cloe_canonical_nodes(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     limit=0,
                 ),
                 "limit must be between",
-                "repomap_canonical_nodes",
+                "cloe_canonical_nodes",
             ),
             (
-                lambda: repomap_canonical_edges(
+                lambda: cloe_canonical_edges(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     limit=201,
                 ),
                 "limit must be between",
-                "repomap_canonical_edges",
+                "cloe_canonical_edges",
             ),
             (
-                lambda: repomap_canonical_nodes(
+                lambda: cloe_canonical_nodes(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     offset=-1,
                 ),
                 "offset must be a non-negative integer",
-                "repomap_canonical_nodes",
+                "cloe_canonical_nodes",
             ),
             (
-                lambda: repomap_canonical_edges(
+                lambda: cloe_canonical_edges(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     result_schema_version=2,
                 ),
                 "result schema version must be 0 or 1",
-                "repomap_canonical_edges",
+                "cloe_canonical_edges",
             ),
         )
         with (
@@ -165,13 +165,13 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
     def test_embedded_reads_reject_invalid_windows_before_query(self):
         from common_lore_index.server.mcp import (
             RepoMapMcpError,
-            repomap_canonical_neighborhood,
-            repomap_explain_canonical_edge,
+            cloe_canonical_neighborhood,
+            cloe_explain_canonical_edge,
         )
 
         cases = (
             (
-                lambda: repomap_explain_canonical_edge(
+                lambda: cloe_explain_canonical_edge(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     source_key="file:bin/tool",
@@ -180,27 +180,27 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
                     evidence_limit=201,
                 ),
                 "limit must be between",
-                "repomap_explain_canonical_edge",
+                "cloe_explain_canonical_edge",
             ),
             (
-                lambda: repomap_canonical_neighborhood(
+                lambda: cloe_canonical_neighborhood(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     node="tool:nix",
                     edge_offset=-1,
                 ),
                 "offset must be a non-negative integer",
-                "repomap_canonical_neighborhood",
+                "cloe_canonical_neighborhood",
             ),
             (
-                lambda: repomap_canonical_neighborhood(
+                lambda: cloe_canonical_neighborhood(
                     root_path="/tmp/fixture",
                     pg_database="postgres",
                     node="tool:nix",
                     result_schema_version=2,
                 ),
                 "result schema version must be 0 or 1",
-                "repomap_canonical_neighborhood",
+                "cloe_canonical_neighborhood",
             ),
         )
         with (
@@ -217,8 +217,8 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
 
     def test_embedded_reads_retain_bounded_schema_zero_aliases(self):
         from common_lore_index.server.mcp import (
-            repomap_canonical_neighborhood,
-            repomap_explain_canonical_edge,
+            cloe_canonical_neighborhood,
+            cloe_explain_canonical_edge,
         )
         from common_lore_index.storage import (
             CanonicalEdgeExplanationRecord,
@@ -239,7 +239,7 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
                 ),
             ) as neighborhood,
         ):
-            explanation_payload = repomap_explain_canonical_edge(
+            explanation_payload = cloe_explain_canonical_edge(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 source_key="file:bin/tool",
@@ -249,7 +249,7 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
                 evidence_offset=3,
                 result_schema_version=0,
             )
-            neighborhood_payload = repomap_canonical_neighborhood(
+            neighborhood_payload = cloe_canonical_neighborhood(
                 root_path="/tmp/fixture",
                 pg_database="postgres",
                 node="tool:nix",
@@ -281,7 +281,7 @@ class McpServerCanonicalPaginationUnitTests(McpServerTestSupport):
                 "id": 30,
                 "method": "tools/call",
                 "params": {
-                    "name": "repomap_canonical_nodes",
+                    "name": "cloe_canonical_nodes",
                     "arguments": {
                         "root_path": "/tmp/fixture",
                         "pg_database": "postgres",

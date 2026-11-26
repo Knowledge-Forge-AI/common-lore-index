@@ -18,7 +18,7 @@ from common_lore_index.storage import StorageSchemaError, apply_migrations, defa
 from common_lore_index.storage.authority import AttemptNumber, JobId, OperationId
 from common_lore_index.storage.readback_driver import _psycopg_connection_params_from_psql_args
 from common_lore_index.storage.staged_ingestion import IngestionAuthority, run_staged_full_refresh
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     PostgresContainerDatabase, require_postgres_binaries, temporary_postgres,
 )
 

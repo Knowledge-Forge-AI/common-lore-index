@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-import repomap_test_support.installed_projection as projection
-from repomap_test_support.installed_projection import (
+import common_lore_index_test_support.installed_projection as projection
+from common_lore_index_test_support.installed_projection import (
     ProjectionRecord, ProjectionRefused, project_sdk_distribution, requirement_from_wheel, target_listing,
 )
 

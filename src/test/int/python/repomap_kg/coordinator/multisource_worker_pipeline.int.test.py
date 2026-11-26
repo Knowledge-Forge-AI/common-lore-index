@@ -48,10 +48,10 @@ from common_lore_index.graph.multi_source import (
 )
 from common_lore_index.graph.multi_source_pipeline import capture_multi_source_candidate
 from common_lore_index.ops.config_records import OpsGraphConfig
-from repomap_test_support.portable_publication_fixtures import (
+from common_lore_index_test_support.portable_publication_fixtures import (
     make_test_binding,
 )
-from repomap_test_support.portable_worker_scenarios import (
+from common_lore_index_test_support.portable_worker_scenarios import (
     assert_supervised_run_portable_worker_lifecycle,
     coordinator_test_limits,
     create_test_sealed_capability,

@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     LocalDbBackupUnitTestCase,
     maybe_provenance_runner_result,
 )

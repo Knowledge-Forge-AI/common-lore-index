@@ -9,7 +9,7 @@ from common_lore_index.service_package.artifacts import ServiceArtifactError
 from common_lore_index.service_package.launchd import LaunchdUserAdapter
 from common_lore_index.service_package.operations import CoordinatorServiceOperations, ServiceActionResult, ServicePackageError
 from common_lore_index.service_package.systemd import SystemdUserAdapter
-from repomap_test_support.executable_authority import controlled_service_authority
+from common_lore_index_test_support.executable_authority import controlled_service_authority
 
 
 @pytest.mark.parametrize("adapter_type", [LaunchdUserAdapter, SystemdUserAdapter])
@@ -17,7 +17,7 @@ from repomap_test_support.executable_authority import controlled_service_authori
 def test_persisted_legacy_definition_is_inspected_and_removed_without_activation(tmp_path, monkeypatch, adapter_type, failure):
     home = tmp_path / "product-home"
     setup_local_runtime(home)
-    config = home / "repomap.rpl.toml"
+    config = home / "repomap.local.cloe.toml"
     config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
     with controlled_service_authority(tmp_path / "executables"):
         monkeypatch.setattr(contract, "_IMPORT_PACKAGE", "repomap_kg")
@@ -89,7 +89,7 @@ def test_malformed_plist_values_refuse_at_the_adapter_boundary(tmp_path, body):
 def test_current_module_with_legacy_description_validates_without_native_activation(tmp_path, monkeypatch):
     home = tmp_path / "product-home"
     setup_local_runtime(home)
-    config = home / "repomap.rpl.toml"
+    config = home / "repomap.local.cloe.toml"
     config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
     with controlled_service_authority(tmp_path / "executables"):
         spec = contract.build_service_package_spec(home)

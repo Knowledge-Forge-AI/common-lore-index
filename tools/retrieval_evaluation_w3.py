@@ -8,7 +8,7 @@ import re
 import shlex
 from typing import Any
 
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
 from retrieval_evaluation_admission import (
     candidate_source_files,
     runtime_profile,

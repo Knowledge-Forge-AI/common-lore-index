@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from repomap_test_support.scale28_adr2_accepted_evidence import (
+from common_lore_index_test_support.scale28_adr2_accepted_evidence import (
     ParentObservedTerminalFacts,
     validate_parent_terminal_facts,
 )
-from repomap_test_support.scale28_adr2_model_fixtures import (
+from common_lore_index_test_support.scale28_adr2_model_fixtures import (
     FRAME_RECEIVED_NS,
     fixture_accepted_protocol_state,
 )

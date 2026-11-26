@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.w5_semantic_support import make_w5_calibration_task
+from common_lore_index_test_support.w5_semantic_support import make_w5_calibration_task
 from retrieval_evaluation_schema import TASK_CATALOG_SCHEMA_VERSION
 from retrieval_public_text_census import retained_task_sha256, task_sha256
 import retrieval_public_text_tasks as tasks_module

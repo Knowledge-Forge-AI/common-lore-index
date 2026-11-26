@@ -25,8 +25,8 @@ import common_lore_index.runtime.local as runtime_local
 import common_lore_index.storage.readback_driver as storage_readback
 from common_lore_index.ops.config import load_ops_config_home
 from common_lore_index.storage import StorageSchemaError
-from repomap_test_support.ops_refresh import VALID_REFRESH_CONFIG
-from repomap_test_support.process_boundary import (
+from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
+from common_lore_index_test_support.process_boundary import (
     PsqlInvokedError,
     RecordingProcessBoundary,
     poison_psql_directory,
@@ -45,7 +45,7 @@ def _container_internal_config(tmp_path: Path):
     root = tmp_path / "repo"
     home.mkdir(parents=True)
     root.mkdir()
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=root, private_root=root / "private")
         + "\n[runtime]\n"
         + 'container_runtime = "docker"\n'

@@ -40,7 +40,7 @@ from common_lore_index.storage.staging_observability import (
     StagingOperationEvent,
     StagingPhaseEvent,
 )
-from repomap_test_support.performance_baseline import (
+from common_lore_index_test_support.performance_baseline import (
     close_phase_spans,
     measurement_index,
     reconcile_families,

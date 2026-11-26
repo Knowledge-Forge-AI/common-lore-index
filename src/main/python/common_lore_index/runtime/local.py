@@ -29,7 +29,6 @@ from common_lore_index.runtime.commands import (
 from common_lore_index.runtime.database_role_contract import ensure_role_secrets
 from common_lore_index.runtime.setup_config import (
     prepare_setup_config as _prepare_setup_config, create_setup_config as _create_setup_config,
-    resolve_setup_home as _resolve_setup_home,
     resolve_runtime_home as _resolve_runtime_home,
 )
 from common_lore_index.runtime._home_authority import (
@@ -60,10 +59,10 @@ def setup_local_runtime(
     dry_run: bool = False,
     config_format: str | None = None,
 ) -> LocalRuntimeResult:
-    home, config_format = _resolve_setup_home(repo_map_home, config_format)
+    home = _resolve_runtime_home(repo_map_home)
     config_path = _prepare_setup_config(home, config_format=config_format, dry_run=dry_run)
     identity = LocalRuntimeIdentity.from_home(home)
-    config_format = "cloe" if config_path.name.endswith(".cloe.toml") else "legacy"
+    config_format = "cloe"
     diagnostics = [LocalRuntimeDiagnostic(
         "info", f"setup-config-format-{config_format}", "config-home",
         f"setup uses {config_path.name}",
@@ -77,7 +76,7 @@ def setup_local_runtime(
             plan=plan,
             diagnostics=(*diagnostics, LocalRuntimeDiagnostic(
                 "info", "setup-dry-run", "config-home",
-                "local setup would create REPOMAP_HOME runtime files",
+                "local setup would create CLOE_HOME runtime files",
             ),),
             planned_command=("local", "setup", "--repo-map-home", str(home), "--config-format", config_format),
         )
@@ -93,7 +92,7 @@ def setup_local_runtime(
         raise
     except (OSError, ValueError):
         raise LocalRuntimeError((LocalRuntimeDiagnostic(
-            "error", "repo-map-home-unsafe", "REPOMAP_HOME",
+            "error", "repo-map-home-unsafe", "CLOE_HOME",
             "Local home and runtime authority must be owned ordinary private objects",
         ),)) from None
     if _create_setup_config(config_path, default_repomap_rpl_toml()):
@@ -285,7 +284,7 @@ def query_local_runtime_status(
     if not plan.compose_file.exists():
         diagnostics.append(LocalRuntimeDiagnostic(
             "warning", "runtime-files-missing", str(plan.compose_file),
-            "runtime files are missing; run repomap-kg local setup",
+            "runtime files are missing; run cloe local setup",
         ))
     if check_containers:
         runtime_available = shutil.which(plan.container_runtime) is not None

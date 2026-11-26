@@ -19,7 +19,7 @@ import pytest
 from ci import psycopg_bootstrap
 from ci.python_retention_operations import dynamic_operations
 import native_apt_prerequisites as apt
-from repomap_test_support import resource_test_image_commands as commands
+from common_lore_index_test_support import resource_test_image_commands as commands
 
 ROOT = Path(__file__).resolve().parents[5]
 CANONICAL, WRAPPER = ROOT / "tools/native_apt_prerequisites.py", ROOT / "tools/test_sandbox/apt_prerequisites.py"

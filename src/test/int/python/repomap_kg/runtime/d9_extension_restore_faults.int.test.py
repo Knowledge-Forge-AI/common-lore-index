@@ -32,15 +32,15 @@ from common_lore_index.runtime.backup_records import LocalDbBackupError
 from common_lore_index.runtime.local import build_local_runtime_plan
 from common_lore_index.runtime.maintenance import MAINTENANCE_LOCK_KEY, MaintenanceUnavailableError, maintenance_activity
 from common_lore_index.runtime.release import PACKAGED_PSQL
-from repomap_test_support.d9_extension_policies import (
+from common_lore_index_test_support.d9_extension_policies import (
     installed_synthetic_extensions, probe_live_container_qualification, synthetic_multilevel_extension_policy,
 )
-from repomap_test_support.d9_extension_restore import (
+from common_lore_index_test_support.d9_extension_restore import (
     clean_template_reference, database_names, engine_container_id, owned_d9_postgres_cluster, seed_synthetic_graph,
 )
-from repomap_test_support.local_db_backup import connect_real_postgres as _connect
-from repomap_test_support.postgres_harness import require_postgres_binaries
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.local_db_backup import connect_real_postgres as _connect
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 GRAPH = "d9b_fault_graph"
 # Rewrites this invocation's control record to name the postmaster, in a subshell that keeps "$@".
@@ -89,7 +89,7 @@ def _is_replay(cmd: list[str]) -> bool:
 
 def test_d9b_fault_matrix_custody_and_cooperating_actor_exclusion(monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    with short_test_directory("d9b-flt-", "home/repomap.rpl.toml") as directory:
+    with short_test_directory("d9b-flt-", "home/repomap.local.cloe.toml") as directory:
         root = Path(directory)
         home = root / "home"
         reference = clean_template_reference(root)

@@ -6,7 +6,7 @@ from threading import Event, Thread
 import psycopg
 import pytest
 
-from repomap_test_support.test_cov5a_startup_model import (
+from common_lore_index_test_support.test_cov5a_startup_model import (
     ALTERNATIVES,
     fits_unchanged_ceiling,
     release_is_authorized,

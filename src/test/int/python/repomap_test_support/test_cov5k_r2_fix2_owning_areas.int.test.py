@@ -4,15 +4,15 @@ from pathlib import Path
 
 import pytest
 
-import repomap_test_support.test_cov5k_r2_fix2_observer as observer
-from repomap_test_support.test_cov5k_r2_fix2_catalog import (
+import common_lore_index_test_support.test_cov5k_r2_fix2_observer as observer
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import (
     CatalogEntry,
     build_closed_catalog,
 )
-from repomap_test_support.test_cov5k_r2_fix2_observer import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_observer import (
     execute_owning_area_execution,
 )
-from repomap_test_support.test_scratch import ENV_SCRATCH_ROOT, establish_run
+from common_lore_index_test_support.test_scratch import ENV_SCRATCH_ROOT, establish_run
 
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[5]

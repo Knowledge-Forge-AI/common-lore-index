@@ -10,16 +10,16 @@ import pytest
 from common_lore_index.ops.config_local import load_graph_registry_config_home
 from common_lore_index.ops.lexical_service import build_graph_lexical_generation
 from common_lore_index.ops.config_records import OpsConfig
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_FIXTURE_ROOT, MIXED_V1_GRAPH_ID, binding_id_for_alias,
     materialize_mixed_v1_working_copy, write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus, publish_and_load_sqlite_corpus,
 )
-from repomap_test_support.w5_generator_support import GeneratorFixtureReader
+from common_lore_index_test_support.w5_generator_support import GeneratorFixtureReader
 from retrieval_evaluation_fts import execute_postgres_native_fts_task
 from retrieval_evaluation_schema import load_task_catalog
 from retrieval_evaluation_views import materialize_native_search_view

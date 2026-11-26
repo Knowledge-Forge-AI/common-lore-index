@@ -38,6 +38,6 @@ def test_no_behavior_bearing_test_allocates_outside_the_scratch_owner():
 
     assert offenders == [], (
         "these sites allocate outside the centralized test scratch owner; "
-        "use repomap_test_support.test_scratch.short_test_directory: "
+        "use common_lore_index_test_support.test_scratch.short_test_directory: "
         + ", ".join(offenders)
     )

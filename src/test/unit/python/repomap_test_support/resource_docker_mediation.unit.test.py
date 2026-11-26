@@ -8,16 +8,16 @@ import pytest
 from docker.api.build import BuildApiMixin
 from docker.api.image import ImageApiMixin
 
-from repomap_test_support.resource_docker_mediation import (
+from common_lore_index_test_support.resource_docker_mediation import (
     LOW_LEVEL_PULL_ROUTES,
     CanonicalDockerAuthority,
     DockerOperationRefused,
     classify_container_cli,
 )
-from repomap_test_support.resource_docker_mediation_isolation import (
+from common_lore_index_test_support.resource_docker_mediation_isolation import (
     ambient_authorities_suspended,
 )
-from repomap_test_support.resource_docker_operations import (
+from common_lore_index_test_support.resource_docker_operations import (
     DockerAuthorityClass,
     DockerOperationJournal,
     DockerOperationKind,

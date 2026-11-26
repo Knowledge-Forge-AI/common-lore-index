@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from retrieval_body_pin import RegisteredBodyInputs, require_registered_body_inputs
-from repomap_test_support.retrieval_body_source import BodySourceSnapshot, body_source_snapshot
+from common_lore_index_test_support.retrieval_body_source import BodySourceSnapshot, body_source_snapshot
 from retrieval_body_input_records import parse_body_input_pin
 from retrieval_body_values import (
     PIN_SCHEMA, canonical_bytes, digest_bytes, digest_json, digest_value,

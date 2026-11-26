@@ -4,7 +4,7 @@ from typing import NoReturn
 from io import StringIO
 from unittest.mock import patch
 
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     PostgresIpcGuard,
     SharedMemorySegment,
     cleanup_postgres_shared_memory_leaks,
@@ -22,7 +22,7 @@ class PostgresSharedMemoryUnitTests(unittest.TestCase):
         # These command-plan contracts use explicit fake runners. The managed
         # Docker ownership path has separate SDK-double unit contracts.
         active_run = patch(
-            "repomap_test_support.postgres_container.active_resource_run",
+            "common_lore_index_test_support.postgres_container.active_resource_run",
             return_value=None,
         )
         active_run.start()

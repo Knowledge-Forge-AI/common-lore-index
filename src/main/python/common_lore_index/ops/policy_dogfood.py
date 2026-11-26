@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.ops.config import (
     PRIVATE_PRIVACY,
     REDACTED,
@@ -73,7 +73,7 @@ def policy_dogfood_payload(
     server_memory = server_memory_policy_summary(catalog)
     suggestions = build_agents_suggestions(graph, buckets, server_memory)
     return {
-        "server": "repomap-kg",
+        "server": DISTRIBUTION_NAME,
         "version": __version__,
         "command": "policy-dogfood",
         "read_only": True,

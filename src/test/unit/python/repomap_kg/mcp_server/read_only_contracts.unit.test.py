@@ -10,7 +10,7 @@ from common_lore_index.storage import (
     CanonicalStorageSummaryRecord,
 )
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class ReadOnlyCase(NamedTuple):
@@ -34,11 +34,11 @@ class SearchCase(NamedTuple):
 class McpServerReadOnlyContractUnitTests(McpServerTestSupport):
     def test_mcp_harden2_graph_backed_tools_share_read_only_contract(self):
         from common_lore_index.server.mcp import (
-            repomap_graph_status,
-            repomap_js_framework_summary,
-            repomap_list_graphs,
-            repomap_neighborhood,
-            repomap_project_summary,
+            cloe_graph_status,
+            cloe_js_framework_summary,
+            cloe_list_graphs,
+            cloe_neighborhood,
+            cloe_project_summary,
         )
 
         config_path = self.write_visible_ops_config()
@@ -132,7 +132,7 @@ class McpServerReadOnlyContractUnitTests(McpServerTestSupport):
                 label="list_graphs",
                 patch_target=None,
                 patch_value=None,
-                call=repomap_list_graphs,
+                call=cloe_list_graphs,
                 graph=first_graph,
                 extra=lambda payload: self.assertEqual(payload["graph_count"], 2),
             ),
@@ -148,7 +148,7 @@ class McpServerReadOnlyContractUnitTests(McpServerTestSupport):
                         canonical_edges=7,
                     )
                 },
-                call=lambda: repomap_graph_status(graph_id="repo-map"),
+                call=lambda: cloe_graph_status(graph_id="repo-map"),
                 graph=lambda payload: payload["graph"],
                 extra=check_status_extra,
             ),
@@ -156,7 +156,7 @@ class McpServerReadOnlyContractUnitTests(McpServerTestSupport):
                 label="project_summary",
                 patch_target="common_lore_index.server.ops.query_canonical_storage_summary",
                 patch_value=storage_summary("/tmp/fixture", "fixture"),
-                call=lambda: repomap_project_summary(graph_id="repo-map"),
+                call=lambda: cloe_project_summary(graph_id="repo-map"),
                 graph=lambda payload: payload["graph"],
                 extra=check_project_extra,
             ),
@@ -164,7 +164,7 @@ class McpServerReadOnlyContractUnitTests(McpServerTestSupport):
                 label="js_framework_summary",
                 patch_target="common_lore_index.server.ops.query_js_framework_summary",
                 patch_value=js_framework_summary("/tmp/fixture", "fixture"),
-                call=lambda: repomap_js_framework_summary(graph_id="repo-map"),
+                call=lambda: cloe_js_framework_summary(graph_id="repo-map"),
                 graph=lambda payload: payload["graph"],
                 extra=check_js_extra,
             ),
@@ -172,7 +172,7 @@ class McpServerReadOnlyContractUnitTests(McpServerTestSupport):
                 label="neighborhood",
                 patch_target="common_lore_index.server.ops.query_canonical_neighborhood",
                 patch_value=neighborhood,
-                call=lambda: repomap_neighborhood(
+                call=lambda: cloe_neighborhood(
                     graph_id="repo-map",
                     node="python.module:pkg.app",
                 ),
@@ -198,16 +198,16 @@ class McpServerReadOnlyContractUnitTests(McpServerTestSupport):
                     case.extra(payload)
     def test_mcp_harden2_search_payloads_share_bounded_result_contract(self):
         from common_lore_index.server.mcp import (
-            repomap_search_files,
-            repomap_search_nodes,
-            repomap_search_observations,
+            cloe_search_files,
+            cloe_search_nodes,
+            cloe_search_observations,
         )
 
         config_path = self.write_visible_ops_config()
         cases: list[SearchCase] = [
             SearchCase(
                 label="nodes",
-                call=lambda: repomap_search_nodes(
+                call=lambda: cloe_search_nodes(
                     graph_id="repo-map",
                     query="pkg",
                     limit=1,
@@ -237,7 +237,7 @@ class McpServerReadOnlyContractUnitTests(McpServerTestSupport):
             ),
             SearchCase(
                 label="observations",
-                call=lambda: repomap_search_observations(
+                call=lambda: cloe_search_observations(
                     graph_id="repo-map",
                     query="command",
                     limit=1,
@@ -270,7 +270,7 @@ class McpServerReadOnlyContractUnitTests(McpServerTestSupport):
             ),
             SearchCase(
                 label="files",
-                call=lambda: repomap_search_files(
+                call=lambda: cloe_search_files(
                     graph_id="repo-map",
                     query="app",
                     limit=1,

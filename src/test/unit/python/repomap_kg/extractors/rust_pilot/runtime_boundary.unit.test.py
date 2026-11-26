@@ -32,7 +32,7 @@ from common_lore_index.extractors.rust_pilot.observations import (
 )
 from common_lore_index.extractors.rust_pilot.readback import confined_network
 from common_lore_index.extractors.rust_pilot.witness_state import FileRecord
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import frames, item_frame
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import frames, item_frame
 
 RUN = "rp1.0123456789abcdef"
 IMAGE = "sha256:" + "a" * 64

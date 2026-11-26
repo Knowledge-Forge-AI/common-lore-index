@@ -4,7 +4,7 @@ import unittest
 from unittest import mock
 from pathlib import Path
 
-from repomap_test_support.cli import (
+from common_lore_index_test_support.cli import (
     REPO_ROOT,
     SOURCE_ROOT,
     module_environment,
@@ -14,7 +14,7 @@ from repomap_test_support.cli import (
 )
 
 from common_lore_index import __version__
-from repomap_test_support import cli, cli_in_process
+from common_lore_index_test_support import cli, cli_in_process
 
 
 class TestSupportCliHelpersUnitTests(unittest.TestCase):

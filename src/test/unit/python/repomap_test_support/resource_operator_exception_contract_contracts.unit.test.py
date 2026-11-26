@@ -7,42 +7,42 @@ from pathlib import Path
 
 import pytest
 
-import repomap_test_support.resource_deletion_gc as deletion_gc
-import repomap_test_support.resource_operator_reclamation as reclamation
-from repomap_test_support.resource_deletion_gc_test_support import (
+import common_lore_index_test_support.resource_deletion_gc as deletion_gc
+import common_lore_index_test_support.resource_operator_reclamation as reclamation
+from common_lore_index_test_support.resource_deletion_gc_test_support import (
     delete as delete_quarantine,
     owners as deletion_owners,
     quarantine,
     root as deletion_root,
 )
-from repomap_test_support.resource_deletion_records import DeletionRecordStore
-from repomap_test_support.resource_lifecycle_claim import CLAIM_LEASE_SECONDS
-from repomap_test_support.resource_ledger_io import (
+from common_lore_index_test_support.resource_deletion_records import DeletionRecordStore
+from common_lore_index_test_support.resource_lifecycle_claim import CLAIM_LEASE_SECONDS
+from common_lore_index_test_support.resource_ledger_io import (
     read_private_json,
     write_private_json,
 )
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     OPERATOR_DELETION_MAX_SECONDS,
     OperatorReclamationRequest,
     reclaim_run_population,
 )
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     PROJECT,
     add_monitoring_link,
     add_run,
     dead,
     private_root,
 )
-from repomap_test_support.resource_operator_records import (
+from common_lore_index_test_support.resource_operator_records import (
     PUBLIC_LOG_SCHEMA,
     SCOPE_CLASS,
     create_operation_record,
     operation_root,
     read_operation_record,
 )
-from repomap_test_support.resource_safe_tree_failure import SafeTreeDeleteFailure
-from repomap_test_support.resource_validation import HygieneValidationError
+from common_lore_index_test_support.resource_safe_tree_failure import SafeTreeDeleteFailure
+from common_lore_index_test_support.resource_validation import HygieneValidationError
 
 
 def approved() -> OperatorReclamationRequest:

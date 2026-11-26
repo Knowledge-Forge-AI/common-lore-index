@@ -3,7 +3,7 @@ import pytest
 
 from common_lore_index.coordinator.core import SyntheticCoordinator
 from common_lore_index.coordinator.startup_recovery import RecoveryDiagnostic
-from repomap_test_support.coordinator_core_fakes import FakeStore, terminal
+from common_lore_index_test_support.coordinator_core_fakes import FakeStore, terminal
 
 
 def _diagnostics(coordinator: SyntheticCoordinator) -> tuple[RecoveryDiagnostic, ...]:
@@ -125,7 +125,7 @@ def test_programming_errors_reach_health_and_log_without_raw_messages(tmp_path, 
     from unittest.mock import create_autospec
     from common_lore_index.coordinator._coordinator_protocols import ServiceStore
     from common_lore_index.coordinator.service import CoordinatorService
-    from repomap_test_support.coordinator_core_fakes import Claim
+    from common_lore_index_test_support.coordinator_core_fakes import Claim
 
     store = FakeStore()
     coordinator = SyntheticCoordinator(store, "coordinator-a", lambda *_: terminal())

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.w5_pair_fixtures import make_pair_artifacts
+from common_lore_index_test_support.w5_pair_fixtures import make_pair_artifacts
 from retrieval_semantic_pair_artifacts import (
     MAX_RESULT_BYTES,
     MAX_RESULT_INPUT_BYTES,

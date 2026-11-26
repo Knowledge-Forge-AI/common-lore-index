@@ -26,8 +26,8 @@ JsonReadbackDriver = Literal["psql", "psycopg"]
 CatalogPresence = Literal["absent", "present", "denied", "unavailable", "malformed"]
 
 
-PG_CONNECTOR_ENV = "REPOMAP_STORAGE_PG_CONNECTOR"
-READBACK_DRIVER_ENV = "REPOMAP_STORAGE_READBACK_DRIVER"
+PG_CONNECTOR_ENV = "CLOE_STORAGE_PG_CONNECTOR"
+READBACK_DRIVER_ENV = "CLOE_STORAGE_READBACK_DRIVER"
 JSON_READBACK_CAPABILITY = "json_readback"
 
 __all__ = (
@@ -277,6 +277,10 @@ def execute_json_readback_with_driver(
 
 
 def selected_json_readback_driver() -> JsonReadbackDriver:
+    if any(_connector_env_value(key) for key in (
+        "REPOMAP_STORAGE_PG_CONNECTOR", "REPOMAP_STORAGE_READBACK_DRIVER"
+    )):
+        raise StorageSchemaError("legacy-readback-selector: migrate readback settings to CLOE_STORAGE_*")
     pg_connector = _connector_env_value(PG_CONNECTOR_ENV)
     readback_driver = _connector_env_value(READBACK_DRIVER_ENV)
     if (

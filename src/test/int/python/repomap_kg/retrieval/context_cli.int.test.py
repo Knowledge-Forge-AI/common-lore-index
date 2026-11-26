@@ -9,18 +9,18 @@ from pathlib import Path
 import pytest
 
 from common_lore_index.cli.main import main
-from repomap_test_support.context_assertions import (
+from common_lore_index_test_support.context_assertions import (
     assert_valid_budget_error,
     assert_valid_context_packet,
     build_postgres_context_fixture,
 )
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE,
     BINDING_DOCS,
     CTX_GRAPH_ID,
     build_sqlite_context_fixture,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -158,7 +158,7 @@ def test_cli_context_select_and_pack_over_sqlite_and_postgres_homes(
 
     # PostgreSQL home CLI execution
     with temporary_postgres() as postgres:
-        monkeypatch.setenv("REPOMAP_PSQL_COMMAND", postgres.psql_command)
+        monkeypatch.setenv("CLOE_PSQL_COMMAND", postgres.psql_command)
         pg_dir = tmp_path / "pg_home"
         pg_dir.mkdir(parents=True, exist_ok=True)
         build_postgres_context_fixture(pg_dir, postgres)
@@ -169,7 +169,7 @@ def test_cli_context_select_and_pack_over_sqlite_and_postgres_homes(
                 "ops",
                 "context-select",
                 "--config",
-                str(pg_dir / "repomap.rpl.toml"),
+                str(pg_dir / "repomap.local.cloe.toml"),
                 "--graph",
                 CTX_GRAPH_ID,
                 "--binding",
@@ -189,7 +189,7 @@ def test_cli_context_select_and_pack_over_sqlite_and_postgres_homes(
                 "ops",
                 "context-pack",
                 "--config",
-                str(pg_dir / "repomap.rpl.toml"),
+                str(pg_dir / "repomap.local.cloe.toml"),
                 "--graph",
                 CTX_GRAPH_ID,
                 "--mode",
@@ -212,7 +212,7 @@ def test_cli_context_select_and_pack_over_sqlite_and_postgres_homes(
 
         rc_pg_fallback, raw_pg_fallback, err_pg_fallback = _invoke_cli(
             [
-                "ops", "context-pack", "--config", str(pg_dir / "repomap.rpl.toml"),
+                "ops", "context-pack", "--config", str(pg_dir / "repomap.local.cloe.toml"),
                 "--graph", CTX_GRAPH_ID, "--mode", "graph_investigation",
                 "--canonical-key", "py:pkg.billing.InvoiceService", "--query", "InvoiceService",
                 "--fallback-to", "ranked_discovery", "--allow-partial",

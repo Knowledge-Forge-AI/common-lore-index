@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.installed_candidate import (
+from common_lore_index_test_support.installed_candidate import (
     DIST_INFO, BuiltWheel, expected_entry_points, expected_inventory, expected_requires, input_digest,
     input_names, installed_graph_parser_digest, inventory_sha256, license_bytes_match, license_members,
     rows_sha256, wheel_inventory,
@@ -23,7 +23,7 @@ dependencies = ["typing-extensions==4.16.0"]
 
 [project.scripts]
 cloe = "common_lore_index.entrypoints:cloe_main"
-repomap-kg = "common_lore_index.entrypoints:legacy_main"
+common-lore-index = "common_lore_index.entrypoints:long_main"
 
 [tool.setuptools.data-files]
 "share/common-lore-index/rdbms" = ["src/main/resources/rdbms/changelog.yaml"]
@@ -93,9 +93,7 @@ def test_expected_inventory_is_derived_from_owners_alone(tmp_path: Path) -> None
     assert "common_lore_index/cli/main.py" in expected
     assert "common_lore_index/third_party_licenses/a.json" in expected
     assert not any("__pycache__" in name for name in expected)
-    assert {name for name in expected if name.startswith("repomap_kg/")} == {
-        "repomap_kg/" + leaf for leaf in ("__init__.py", "__main__.py", "ops/__init__.py",
-                                          "ops/config_migration.py", "server/__init__.py", "server/mcp.py")}
+    assert not any(name.startswith("repomap_kg/") for name in expected)
     data = "common_lore_index-0.0.4.data/data/share/common-lore-index/rdbms"
     assert f"{data}/changelog.yaml" in expected and f"{data}/2026/06/01.sql" in expected
     assert not any(name.endswith("02.sql") for name in expected)
@@ -107,7 +105,7 @@ def test_expected_inventory_is_derived_from_owners_alone(tmp_path: Path) -> None
 def test_source_entry_points_and_requirement(tmp_path: Path) -> None:
     root = _tree(tmp_path)
     assert expected_entry_points(root) == ["cloe=common_lore_index.entrypoints:cloe_main",
-                                           "repomap-kg=common_lore_index.entrypoints:legacy_main"]
+                                           "common-lore-index=common_lore_index.entrypoints:long_main"]
     assert expected_requires(root) == ["typing-extensions==4.16.0"]
     assert rows_sha256(["a"]) != rows_sha256(["b"])
 
@@ -150,7 +148,7 @@ def test_inventory_digest_ignores_only_optional_top_level() -> None:
 def test_material_refuses_an_unreviewed_message_body(tmp_path: Path) -> None:
     import shutil
 
-    from repomap_test_support.installed_experience_fixture import FIXTURE_ROOT, write_tiny_material
+    from common_lore_index_test_support.installed_experience_fixture import FIXTURE_ROOT, write_tiny_material
 
     fixture = tmp_path / "fixture"
     shutil.copytree(FIXTURE_ROOT, fixture)
@@ -169,7 +167,7 @@ def test_candidate_pins_follow_current_release_and_keep_incumbent_frozen() -> No
         CANDIDATE_DISTRIBUTION, CANDIDATE_VERSION, CANDIDATE_WHEEL_PREFIX,
         INCUMBENT_COMMIT, INCUMBENT_DISTRIBUTION, INCUMBENT_WHEEL_PREFIX,
     )
-    from repomap_test_support.installed_candidate import ROOT
+    from common_lore_index_test_support.installed_candidate import ROOT
 
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
     assert CANDIDATE_DISTRIBUTION == project["name"] == "common-lore-index"
@@ -181,7 +179,7 @@ def test_candidate_pins_follow_current_release_and_keep_incumbent_frozen() -> No
 
 
 def test_released_wheel_uses_exact_source_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    import repomap_test_support.installed_candidate as installed
+    import common_lore_index_test_support.installed_candidate as installed
 
     factory = object()
     recorded = object()
@@ -203,7 +201,7 @@ def test_released_wheel_uses_exact_source_only(monkeypatch: pytest.MonkeyPatch, 
 def test_archive_memo_distinguishes_wheel_prefix_and_input_paths(
     monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory, tmp_path: Path,
 ) -> None:
-    import repomap_test_support.installed_candidate as installed
+    import common_lore_index_test_support.installed_candidate as installed
 
     root = tmp_path / "repository"
     root.mkdir()
@@ -217,7 +215,10 @@ def test_archive_memo_distinguishes_wheel_prefix_and_input_paths(
                 members.add(root / name, arcname=name)
         return ""
 
+    build_sources: list[Path] = []
+
     def build(source: Path, output: Path, prefix: str) -> Path:
+        build_sources.append(source)
         output.mkdir()
         wheel = output / f"{prefix}py3-none-any.whl"
         wheel.write_text(sorted(path.name for path in source.iterdir())[0], encoding="utf-8")
@@ -234,6 +235,29 @@ def test_archive_memo_distinguishes_wheel_prefix_and_input_paths(
     assert renamed.input_sha256 == first.input_sha256
     assert different.input_sha256 != first.input_sha256
     assert different.wheel.read_text(encoding="utf-8") == "LICENSE"
+
+    for mismatch in (
+        (different.input_sha256, first.input_count),
+        (first.input_sha256, first.input_count + 1),
+    ):
+        with pytest.raises(AssertionError, match="archive differs from pinned package inputs"):
+            installed._archived_wheel(
+                tmp_path_factory, root, "commit", "first-", ("NOTICE",),
+                expected_inputs=mismatch,
+            )
+    assert len(build_sources) == 3
+
+    def checked_archive() -> BuiltWheel:
+        return installed._archived_wheel(
+            tmp_path_factory, root, "commit", "first-", ("NOTICE",),
+            expected_inputs=(first.input_sha256, first.input_count),
+        )
+
+    checked = checked_archive()
+    assert checked.wheel != first.wheel
+    assert checked.input_sha256 == first.input_sha256
+    assert checked_archive() is checked
+    assert len(build_sources) == 4
 
 
 @pytest.mark.parametrize("drift", ("none", "source", "installation", "version", "metadata"))
@@ -269,7 +293,7 @@ def test_source_archive_rejects_changed_or_unowned_members(tmp_path: Path, fault
     import tarfile
 
     from installed_experience_pins import CANDIDATE_VERSION
-    from repomap_test_support.installed_sdist import SDIST_FILENAME, verify_sdist
+    from common_lore_index_test_support.installed_sdist import SDIST_FILENAME, verify_sdist
 
     archive = tmp_path / SDIST_FILENAME
     stem = SDIST_FILENAME.removesuffix(".tar.gz")

@@ -29,7 +29,7 @@ from runner_coverage_execution import prepare_child_coverage_environment
 from process_rss_monitor import ProcessRssMonitor
 from common_lore_index.graph.discovery import discover_observations
 from common_lore_index.ops.generations import source_generation
-from repomap_test_support.scale18_digest_campaign import (
+from common_lore_index_test_support.scale18_digest_campaign import (
     SCALE18_PROFILES,
     build_scale18_workload,
     derive_scale18_observations,

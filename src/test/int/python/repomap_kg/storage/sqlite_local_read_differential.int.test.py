@@ -56,10 +56,10 @@ from common_lore_index.storage.sqlite_local import (
 )
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.portable_publication_fixtures import publish_portable_bundle
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.sqlite_local_fixtures import local_binding, publication_for
-from repomap_test_support.sqlite_local_read_corpus import read_corpus_bundle
+from common_lore_index_test_support.portable_publication_fixtures import publish_portable_bundle
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding, publication_for
+from common_lore_index_test_support.sqlite_local_read_corpus import read_corpus_bundle
 
 GRAPH = "read-corpus"
 ROOT = f"graph:{GRAPH}"
@@ -111,7 +111,7 @@ def _runs(value: Any, pg_run: int) -> Any:
 
 
 def test_cloe_and_legacy_dogfood_markers_match_in_both_stores(tmp_path: Path, monkeypatch):
-    from repomap_test_support import sqlite_local_read_corpus as corpus
+    from common_lore_index_test_support import sqlite_local_read_corpus as corpus
     require_postgres_binaries()
     monkeypatch.setenv(READBACK_DRIVER_ENV, "psycopg")
     cases: tuple[tuple[str, dict[str, str], bool], ...] = (
@@ -143,7 +143,7 @@ def test_cloe_and_legacy_dogfood_markers_match_in_both_stores(tmp_path: Path, mo
 
 def test_read_corpus_matches_postgresql_query_owners(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     require_postgres_binaries()
-    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "REPOMAP_STORAGE_PG_CONNECTOR"):
+    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "CLOE_STORAGE_PG_CONNECTOR"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv(READBACK_DRIVER_ENV, "psycopg")
     with temporary_postgres() as postgres:

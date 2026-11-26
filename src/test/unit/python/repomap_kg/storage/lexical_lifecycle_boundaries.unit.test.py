@@ -22,7 +22,7 @@ from common_lore_index.retrieval.query_contracts import CapabilityState
 from common_lore_index.storage import lexical_population
 from common_lore_index.storage.lexical_driver import LexicalStorageError
 from common_lore_index.storage.lexical_lifecycle import publish_lexical_generation
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
@@ -224,7 +224,7 @@ def test_privacy_refusals_require_body_authorization_and_selected_bindings(
     assert refused_graph.result == "refused"
     assert refused_graph.refusal_code == "graph_privacy_not_authorized"
 
-    config_path = home / "repomap.rpl.toml"
+    config_path = home / "repomap.local.cloe.toml"
     public_graph = config_path.read_text().replace('privacy = "private-memory"', 'privacy = "public-dev"', 1)
     config_path.write_text(public_graph)
     retention_refusal = build_graph_lexical_generation(

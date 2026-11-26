@@ -16,10 +16,10 @@ import pytest
 from ci import qualification_rust_runtime as runtime
 from ci import rust_pilot_qualification as command
 from ci.qualification_rust_manifest import ManifestError, validate_manifest
-from repomap_test_support.rust_pilot_fake_tree_sitter.tree_sitter._grammar import parse_source
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.tree_sitter._grammar import parse_source
 
 ROOT = Path(__file__).resolve().parents[6]
-MANIFEST = ROOT / "tools/ci/rust_pilot_qualification_manifest.json"
+MANIFEST = ROOT / "tools/ci/rust_pilot_qualification_manifest_cloe_namespace_v1.json"
 FIXTURES = ROOT / "src/test/fixtures/rust_pilot"
 
 

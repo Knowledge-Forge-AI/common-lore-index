@@ -31,12 +31,12 @@ from common_lore_index.runtime.backup_manifests import (
     summarize_pg_restore_toc,
     verify_dump_file_checksum_for_inspection,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     postgres_bin_dir,
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 def _connect(postgres, dbname: str | None = None, *, autocommit: bool = False):
@@ -82,7 +82,7 @@ def _make_home(root: Path, postgres, graph_db: str) -> Path:
         f'enabled = true\nmcp_visible = false\nextractor_profile = "default"\nrefresh_policy = "manual"\n'
         f'[server_memory]\nenabled = false\npath = "disabled"\nmode = "read_only"\n'
     )
-    (home / "configured.rp.toml").write_text(cfg, encoding="utf-8")
+    (home / "configured.cloe.toml").write_text(cfg, encoding="utf-8")
     ensure_role_secrets(home / "runtime" / ".env")
     return home
 
@@ -289,7 +289,7 @@ def test_upgrade_ledgered_schema_refusals_rollback_and_success(tmp_path):
 
 def test_coordinator_control_upgrade_lifecycle_flow_and_refusals(monkeypatch):
     require_postgres_binaries()
-    with short_test_directory("p5-ctrl-", "home/configured.rp.toml") as directory:
+    with short_test_directory("p5-ctrl-", "home/configured.cloe.toml") as directory:
         root = Path(directory)
         with temporary_postgres() as postgres:
             monkeypatch.setenv("TEST_PG_PASSWORD", postgres.password)

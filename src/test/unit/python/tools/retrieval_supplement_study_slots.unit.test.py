@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support import retrieval_supplement_study_slots as slots
+from common_lore_index_test_support import retrieval_supplement_study_slots as slots
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_public_text_request import ARM_PTX, ARM_V1
 from retrieval_supplement_declaration import SlotIdentity
@@ -122,11 +122,11 @@ def test_exact_read_digest_binds_the_executed_statement(
     monkeypatch: pytest.MonkeyPatch, statement: str,
 ) -> None:
     import hashlib
-    from repomap_test_support import w5_public_text_postgres as pg
+    from common_lore_index_test_support import w5_public_text_postgres as pg
     from typing import cast
     from retrieval_public_text_study_queries import StudyQuery
     from retrieval_semantic_provenance import VerifiedPublicationPin
-    from repomap_test_support.w5_experiment_postgres import PostgresHandle
+    from common_lore_index_test_support.w5_experiment_postgres import PostgresHandle
     observed: list[str] = []
     monkeypatch.setattr(pg, "scoped_snapshot", lambda *_args: "snapshot")
     monkeypatch.setattr(pg, "exact_sql", lambda _query: statement)
@@ -142,7 +142,7 @@ def test_exact_read_digest_binds_the_executed_statement(
 
 
 def test_completed_vector_capture_joins_binding_descriptors() -> None:
-    from repomap_test_support.w5_semantic_support import (
+    from common_lore_index_test_support.w5_semantic_support import (
         BIND_CORE, SNAP_CORE_G1, make_w5_calibration_task, make_w5_verified_pin,
     )
     from retrieval_semantic_fusion import AdmittedArmObservation, FileIdentityTuple, fuse_arm_observations_rrf
@@ -175,7 +175,7 @@ def test_completed_vector_capture_joins_binding_descriptors() -> None:
 def test_real_slot_fusion_and_validator_after_completed_read(
     monkeypatch: pytest.MonkeyPatch, arm: str, descriptor: str | None, refused: bool,
 ) -> None:
-    from repomap_test_support.w5_semantic_support import (
+    from common_lore_index_test_support.w5_semantic_support import (
         BIND_CORE, SNAP_CORE_G1, make_w5_calibration_task, make_w5_verified_pin,
     )
     from retrieval_semantic_fusion import AdmittedArmObservation, FileIdentityTuple

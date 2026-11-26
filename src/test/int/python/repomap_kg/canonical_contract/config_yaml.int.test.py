@@ -1,6 +1,6 @@
 import unittest
 
-from repomap_test_support.canonical_contract import DISCOVERY_FIXTURE_ROOT
+from common_lore_index_test_support.canonical_contract import DISCOVERY_FIXTURE_ROOT
 
 from common_lore_index.canonicalization import canonicalize_observations
 from common_lore_index.extractors.config.generic import extract_config_file_observations, json_pointer

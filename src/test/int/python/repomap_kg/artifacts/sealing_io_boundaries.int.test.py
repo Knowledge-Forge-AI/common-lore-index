@@ -15,7 +15,7 @@ from common_lore_index.artifacts._metered_io import MeteredRaw, metered_hash, me
 from common_lore_index.artifacts._sealing_meter import SealingMeter
 from common_lore_index.artifacts.sealing_governance import SealingBudget, SealingBudgetExceeded
 from common_lore_index.artifacts.store import ArtifactIntegrityError, FileSystemArtifactStore
-from repomap_test_support.sealing_governance_fixtures import open_descriptor_count
+from common_lore_index_test_support.sealing_governance_fixtures import open_descriptor_count
 
 
 def _objects(store: FileSystemArtifactStore) -> dict[str, tuple[bytes, int]]:

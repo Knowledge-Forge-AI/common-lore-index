@@ -20,11 +20,11 @@ def add_local_commands(
     local_subcommands = local.add_subparsers(dest="local_command")
     local_setup = local_subcommands.add_parser(
         "setup",
-        help="create local runtime files under REPOMAP_HOME",
+        help="create local runtime files under CLOE_HOME",
     )
     add_local_runtime_arguments(local_setup)
     local_setup.add_argument(
-        "--config-format", choices=("legacy", "cloe"),
+        "--config-format", choices=("cloe",),
         help="choose the new home's configuration format; existing homes must match",
     )
     local_setup.add_argument(

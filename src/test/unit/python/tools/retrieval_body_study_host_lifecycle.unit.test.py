@@ -20,7 +20,7 @@ from retrieval_body_study_host_runner_lease import RunnerLease
 from retrieval_body_study_reservation import (
     consume_reservation, settle_reservation, write_private_once,
 )
-from repomap_test_support.retrieval_body_study_host_cases import body_plan, reservation_record
+from common_lore_index_test_support.retrieval_body_study_host_cases import body_plan, reservation_record
 from retrieval_body_study_plan import plan_digest
 
 

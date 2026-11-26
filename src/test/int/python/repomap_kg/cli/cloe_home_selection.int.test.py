@@ -1,4 +1,4 @@
-"""Real default selection, retained Local state and stdio compatibility."""
+"""Canonical default selection with explicit legacy migration and retained Local state."""
 from concurrent.futures import ThreadPoolExecutor
 import json
 import os
@@ -7,9 +7,9 @@ import stat
 
 import pytest
 
-from repomap_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
-from repomap_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, tool
+from common_lore_index_test_support.cli_integration import OPS_CONFIG_TEMPLATE, run_cli_module
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, sqlite_home_toml
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, tool
 from common_lore_index.runtime.plan import LOCAL_RUNTIME_ENV_FILE
 
 
@@ -27,11 +27,11 @@ def defaults(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Pat
 
 
 @pytest.mark.parametrize("foreign_new", [False, True])
-def test_default_legacy_json_and_mcp_readback_preserve_existing_sqlite_state(tmp_path: Path, foreign_new: bool) -> None:
+def test_explicit_legacy_plan_and_mcp_readback_preserve_existing_sqlite_state(tmp_path: Path, foreign_new: bool) -> None:
     harness = LocalHarness(tmp_path / "guarded with spaces", block_psycopg=True)
     home = harness.user_home / ".repo-map"
     home.mkdir(mode=0o700)
-    (home / "00.rp.toml").write_text(sqlite_home_toml(graph_toml("one", "/not-read/source")))
+    (home / "00.cloe.toml").write_text(sqlite_home_toml(graph_toml("one", "/not-read/source")))
     initialized = harness.run("ops", "sqlite-init", "--repo-map-home", str(home), "--graph", "one", "--json")
     assert initialized.returncode == 0, initialized.stderr
     current = harness.user_home / ".cloe"
@@ -39,7 +39,7 @@ def test_default_legacy_json_and_mcp_readback_preserve_existing_sqlite_state(tmp
         current.mkdir()
         (current / "language-state").write_text("foreign opaque sentinel")
     cold = snapshot(harness.user_home)
-    planned = harness.run("ops", "config-migration-plan", "--json")
+    planned = harness.run("ops", "config-migration-plan", "--repo-map-home", str(home), "--json")
     assert planned.returncode == 0, planned.stderr
     assert json.loads(planned.stdout)["writes_performed"] == 0
     assert snapshot(harness.user_home) == cold  # Selection/configuration does not open SQLite.
@@ -47,21 +47,23 @@ def test_default_legacy_json_and_mcp_readback_preserve_existing_sqlite_state(tmp
     warm = harness.run("ops", "graphs", "--repo-map-home", str(home), "--check-db", "--json")
     assert warm.returncode == 0, warm.stderr
     before = snapshot(harness.user_home)
-    implicit = harness.run("ops", "graphs", "--check-db", "--json")
+    implicit = harness.run("ops", "config-migration-plan", "--json", extra_env={"REPOMAP_HOME": str(home)})
+    expected_refusal = "default-home-unrecognized" if foreign_new else "config-home-missing"
+    assert implicit.returncode == 1 and expected_refusal in implicit.stderr
+    canonical = harness.run("ops", "config-migration-plan", "--json", extra_env={"CLOE_HOME": str(home)})
+    assert canonical.returncode == 0, canonical.stderr
+    assert json.loads(canonical.stdout)["writes_performed"] == 0
+    assert snapshot(harness.user_home) == before
     explicit = harness.run("ops", "graphs", "--repo-map-home", str(home), "--check-db", "--json")
-    assert implicit.returncode == explicit.returncode == 0, implicit.stderr + explicit.stderr
-    assert implicit.stdout == explicit.stdout
-    status = json.loads(implicit.stdout)["graphs"][0]["storage_status"]
+    assert explicit.returncode == 0, explicit.stderr
+    status = json.loads(explicit.stdout)["graphs"][0]["storage_status"]
     assert status["state"] == "current" and status["accepted_generation"] is None
-    assert "legacy-default-home" in implicit.stderr and "legacy-default-home" not in explicit.stderr
     assert str(home) not in implicit.stderr and "foreign opaque sentinel" not in implicit.stderr
     payload = "".join(json.dumps(item) + "\n" for item in (
-        initialize(), tool(2, "repomap_graph_status", {"graph_id": "one"}),
+        initialize(), tool(2, "cloe_graph_status", {"graph_id": "one"}),
     ))
-    served = harness.run("mcp", "serve", input_text=payload)
-    served_explicit = harness.run("mcp", "serve", "--repo-map-home", str(home), input_text=payload)
+    served = harness.run("mcp", "serve", "--repo-map-home", str(home), input_text=payload)
     assert served.returncode == 0, served.stderr
-    assert served_explicit.returncode == 0 and served.stdout == served_explicit.stdout
     responses = [json.loads(line) for line in served.stdout.splitlines() if line.strip()]
     assert [item["id"] for item in responses] == [1, 2]
     assert not responses[1]["result"].get("isError", False)
@@ -73,6 +75,18 @@ def test_default_legacy_json_and_mcp_readback_preserve_existing_sqlite_state(tmp
     assert "psycopg" not in harness.imported_modules()
     if not foreign_new:
         assert not current.exists()
+
+
+@pytest.mark.parametrize("command", [("local", "setup"), ("mcp", "serve", "--config", "unread-config")])
+def test_empty_explicit_home_refuses_before_touching_cwd_or_environment(tmp_path: Path, command: tuple[str, ...]) -> None:
+    harness = LocalHarness(tmp_path / "empty selector harness", block_psycopg=True)
+    (harness.cwd / "unrelated.txt").write_text("unchanged")
+    selected = tmp_path / "unselected-home"
+    before = snapshot(harness.cwd)
+    result = harness.run(*command, "--repo-map-home", "", extra_env={"CLOE_HOME": str(selected)})
+    assert result.returncode == 1 and "explicit-home-empty" in result.stderr and not result.stdout
+    assert snapshot(harness.cwd) == before and not selected.exists()
+    assert not (harness.user_home / ".cloe").exists() and not harness.shim_invocations()
 
 
 def test_fresh_default_setup_is_cloe_private_and_dry_run_replayable(tmp_path: Path, monkeypatch) -> None:
@@ -92,14 +106,14 @@ def test_fresh_default_setup_is_cloe_private_and_dry_run_replayable(tmp_path: Pa
     assert snapshot(current) == before
 
 
-def test_legacy_default_setup_dry_run_never_initializes_new_home(tmp_path: Path, monkeypatch) -> None:
+def test_default_setup_dry_run_keeps_legacy_home_outside_scope(tmp_path: Path, monkeypatch) -> None:
     current, legacy = defaults(tmp_path, monkeypatch)
     legacy.mkdir(mode=0o700)
     (legacy / "00.rp.toml").write_text(OPS_CONFIG_TEMPLATE)
     before = snapshot(legacy)
     result = run_cli_module("local", "setup", "--dry-run", "--json")
     assert result.returncode == 0, result.stderr
-    assert "legacy-default-home" in result.stderr
+    assert "legacy-default-home" not in result.stderr
     assert snapshot(legacy) == before and not current.exists()
 
 
@@ -184,7 +198,7 @@ def test_mcp_explicit_config_environment_survives_foreign_default(tmp_path: Path
     harness = LocalHarness(tmp_path / "explicit-config", block_psycopg=True)
     home = harness.scratch / "selected-home"
     home.mkdir(mode=0o700)
-    config = home / "00.rp.toml"
+    config = home / "00.cloe.toml"
     config.write_text(sqlite_home_toml(graph_toml("one", "/not-read/source")))
     initialized = harness.run("ops", "sqlite-init", "--repo-map-home", str(home), "--graph", "one", "--json")
     assert initialized.returncode == 0, initialized.stderr
@@ -193,9 +207,9 @@ def test_mcp_explicit_config_environment_survives_foreign_default(tmp_path: Path
     (current / "foreign.txt").write_text("opaque private sentinel")
     before = snapshot(current)
     payload = "".join(json.dumps(item) + "\n" for item in (
-        initialize(), tool(2, "repomap_graph_status", {"graph_id": "one"}),
+        initialize(), tool(2, "cloe_graph_status", {"graph_id": "one"}),
     ))
-    served = harness.run("mcp", "serve", input_text=payload, extra_env={"REPOMAP_OPS_CONFIG": str(config)})
+    served = harness.run("mcp", "serve", input_text=payload, extra_env={"CLOE_OPS_CONFIG": str(config)})
     assert served.returncode == 0, served.stderr
     responses = [json.loads(line) for line in served.stdout.splitlines() if line.strip()]
     assert [item["id"] for item in responses] == [1, 2]
@@ -219,7 +233,7 @@ def test_runtime_api_refuses_implicit_foreign_home_before_runtime_work(tmp_path:
     assert snapshot(current) == before and not legacy.exists()
 
 
-def test_legacy_runtime_and_config_facades_select_the_same_original_home(tmp_path: Path, monkeypatch) -> None:
+def test_config_and_runtime_share_canonical_defaults_and_explicit_legacy_selection(tmp_path: Path, monkeypatch) -> None:
     from common_lore_index.ops import config, config_loading
     from common_lore_index.runtime import local
     current, legacy = defaults(tmp_path, monkeypatch)
@@ -227,7 +241,11 @@ def test_legacy_runtime_and_config_facades_select_the_same_original_home(tmp_pat
     (legacy / "00.rp.toml").write_text(OPS_CONFIG_TEMPLATE)
     before = snapshot(legacy)
     assert local.resolve_repo_map_home is config.resolve_repo_map_home is config_loading.resolve_repo_map_home
-    assert local.resolve_repo_map_home() == legacy
-    loaded = config.load_ops_config_home()
-    assert loaded.config_home == str(legacy)
+    assert local.resolve_repo_map_home() == current
+    assert local.resolve_repo_map_home(legacy) == legacy
+    with pytest.raises(config.OpsConfigError) as refused:
+        config.load_ops_config_home(legacy)
+    assert refused.value.diagnostics[0].code == "legacy-config-filenames"
+    plan = run_cli_module("ops", "config-migration-plan", "--repo-map-home", str(legacy), "--json")
+    assert plan.returncode == 0 and json.loads(plan.stdout)["conversion_required"]
     assert snapshot(legacy) == before and not current.exists()

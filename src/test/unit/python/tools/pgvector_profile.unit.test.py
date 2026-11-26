@@ -11,15 +11,15 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from repomap_test_support.postgres_container_config import (
+from common_lore_index_test_support.postgres_container_config import (
     PostgresContainerConfig,
     TEST_POSTGRES_IMAGE,
 )
-from repomap_test_support.postgres_container import (
+from common_lore_index_test_support.postgres_container import (
     PgvectorContainerConfig,
     PostgresContainerHarness,
 )
-from repomap_test_support.pgvector_profile import (
+from common_lore_index_test_support.pgvector_profile import (
     CORE_PROFILE,
     ENV_PG_TEST_PROFILE,
     PGVECTOR_PROFILE,
@@ -258,7 +258,7 @@ class PgvectorProfileUnitTests(unittest.TestCase):
         with patch.dict("os.environ", {ENV_PG_TEST_PROFILE: PGVECTOR_PROFILE}):
             with pytest_environment_for(("int",), args_core):
                 self.assertEqual(os.environ[ENV_PG_TEST_PROFILE], CORE_PROFILE)
-                self.assertIn("repomap_test_support.pgvector_profile", os.environ.get("PYTEST_PLUGINS", ""))
+                self.assertIn("common_lore_index_test_support.pgvector_profile", os.environ.get("PYTEST_PLUGINS", ""))
             self.assertEqual(os.environ[ENV_PG_TEST_PROFILE], PGVECTOR_PROFILE)
 
         args_pgv = argparse.Namespace(
@@ -270,7 +270,7 @@ class PgvectorProfileUnitTests(unittest.TestCase):
         with patch.dict("os.environ", {ENV_PG_TEST_PROFILE: CORE_PROFILE}):
             with pytest_environment_for(("int",), args_pgv):
                 self.assertEqual(os.environ[ENV_PG_TEST_PROFILE], PGVECTOR_PROFILE)
-                self.assertIn("repomap_test_support.pgvector_profile", os.environ.get("PYTEST_PLUGINS", ""))
+                self.assertIn("common_lore_index_test_support.pgvector_profile", os.environ.get("PYTEST_PLUGINS", ""))
             self.assertEqual(os.environ[ENV_PG_TEST_PROFILE], CORE_PROFILE)
 
     def test_test_sandbox_entrypoint_materialization_wiring(self) -> None:
@@ -304,7 +304,7 @@ class PgvectorProfileUnitTests(unittest.TestCase):
                 _materialize_inner_pgvector_if_requested(valid_argv, inner_env, runner_fn=commands)
             commands.assert_not_called()
 
-    @patch("repomap_test_support.postgres_container.active_resource_run", return_value=None)
+    @patch("common_lore_index_test_support.postgres_container.active_resource_run", return_value=None)
     def test_postgres_container_harness_profile_binding(self, _resource_run) -> None:
         core_config = PostgresContainerConfig()
         with patch.dict("os.environ", {ENV_PG_TEST_PROFILE: CORE_PROFILE}):

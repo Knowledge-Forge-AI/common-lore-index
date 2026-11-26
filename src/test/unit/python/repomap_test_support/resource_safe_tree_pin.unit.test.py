@@ -9,29 +9,29 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     OperatorReclamationInterrupted,
     OperatorReclamationRequest,
     reclaim_run_population,
 )
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     add_run,
     dead,
     private_root,
 )
-from repomap_test_support.resource_operator_scope import (
+from common_lore_index_test_support.resource_operator_scope import (
     OperatorScopeIdentityError,
     close_scope_pins,
     inventory_operator_scope,
 )
-from repomap_test_support.resource_safe_tree_delete import (
+from common_lore_index_test_support.resource_safe_tree_delete import (
     SafeTreeDeleteError,
     SafeTreeDeleteFailure,
     delete_run_entry,
     inspect_run_entry,
 )
-from repomap_test_support.resource_safe_tree_pin import (
+from common_lore_index_test_support.resource_safe_tree_pin import (
     EntryPin,
     close_pin,
     pin_run_entry,
@@ -270,7 +270,7 @@ def test_inventory_releases_acquired_pins_when_binding_fails(
     root = private_root(tmp_path)
     for name in ("a-first", "b-second", "c-third"):
         (root / "r" / name).write_bytes(b"payload")
-    import repomap_test_support.resource_operator_scope as scope
+    import common_lore_index_test_support.resource_operator_scope as scope
 
     original = scope._classify_entry
 
@@ -344,7 +344,7 @@ def test_inventory_refuses_when_a_pin_disagrees_with_the_population(
 ) -> None:
     root = private_root(tmp_path)
     (root / "r" / "target").write_bytes(b"payload")
-    import repomap_test_support.resource_operator_scope as scope
+    import common_lore_index_test_support.resource_operator_scope as scope
 
     original = scope.pin_run_entry
 

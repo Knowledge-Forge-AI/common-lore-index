@@ -11,21 +11,21 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support import resource_index_recovery as recovery
-from repomap_test_support.resource_hygiene_policy import GIB, HygieneProfile
-from repomap_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
-from repomap_test_support.resource_index_maintenance import compact_index
-from repomap_test_support.resource_index_physical_membership import (
+from common_lore_index_test_support import resource_index_recovery as recovery
+from common_lore_index_test_support.resource_hygiene_policy import GIB, HygieneProfile
+from common_lore_index_test_support.resource_index import AdvisoryIndex, HostAdmissionRefused
+from common_lore_index_test_support.resource_index_maintenance import compact_index
+from common_lore_index_test_support.resource_index_physical_membership import (
     RECOVERY_PHYSICAL_INVENTORY_SCHEMA,
     validate_recovery_physical_inventory,
 )
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_ledger_io import (
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_ledger_io import (
     read_private_json,
     write_private_json_exclusive,
 )
-from repomap_test_support.resource_lifecycle_claim import ClaimRegistry
-from repomap_test_support.resource_scratch import measure_scratch
+from common_lore_index_test_support.resource_lifecycle_claim import ClaimRegistry
+from common_lore_index_test_support.resource_scratch import measure_scratch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[5]

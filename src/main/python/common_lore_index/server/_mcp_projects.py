@@ -25,7 +25,7 @@ class ProjectDependencies:
     graph_payload: Callable[..., Any] = default_graph_payload
 
 
-def repomap_projects(
+def cloe_projects(
     *,
     dependencies: ProjectDependencies | None = None,
 ) -> dict[str, Any]:
@@ -84,7 +84,7 @@ def graph_registry_projects_hint(
         )
     if graph_entries:
         message = (
-            "graph registry is active; use repomap_list_graphs for the primary "
+            "graph registry is active; use cloe_list_graphs for the primary "
             "graph inventory"
         )
     else:

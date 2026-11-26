@@ -45,7 +45,7 @@ def test_system_report_to_dict_and_serialization(tmp_path: Path) -> None:
         gate_kind="main-system", approval_id="app-123", pr_number="21", repository="owner/repo",
         approved_base_branch="main", approved_base_sha="base12345", approved_head_branch="staging", approved_head_sha="head12345",
         candidate_base_parent="base12345", candidate_head_parent="head12345",
-        release_version_checks={"python": "3.12.0", "go_helper": "/usr/local/bin/repomap-go-extract"},
+        release_version_checks={"python": "3.12.0", "go_helper": "/usr/local/bin/cloe-go-extract"},
         service_identities={"coordinator": "cid-coord", "http": "cid-http"},
         coordinator_evidence={"job_id": "job-101", "replayed": True}, mcp_readback_digest="sha256-mcp-digest",
         cleanup_status={"success": True, "errors": []}, run_id="run-sys0-test", passed=True, total_duration_seconds=21.2556,

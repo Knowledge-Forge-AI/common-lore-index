@@ -8,25 +8,25 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_deletion_gc import (
+from common_lore_index_test_support.resource_deletion_gc import (
     PhysicalMutationState,
     public_deletion_projection,
 )
-from repomap_test_support.resource_gc_ledger import GcLedger, GcLedgerError
-from repomap_test_support.resource_hygiene_policy import GIB, HygieneProfile
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger, GcLedgerError
+from common_lore_index_test_support.resource_hygiene_policy import GIB, HygieneProfile
+from common_lore_index_test_support.resource_ledger import (
     ResourceKind,
     ResourceLedger,
     RetainedReason,
     RunIdentity,
 )
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimError,
     ClaimPurpose,
     ClaimRegistry,
     register_protection,
 )
-from repomap_test_support.resource_quarantine_gc import (
+from common_lore_index_test_support.resource_quarantine_gc import (
     BATCH_MAX_BYTES,
     BATCH_MAX_RUNS,
     BATCH_MAX_SECONDS,
@@ -38,8 +38,8 @@ from repomap_test_support.resource_quarantine_gc import (
     restore_quarantined,
     select_batch,
 )
-from repomap_test_support.resource_retention import DAY_SECONDS, RetentionClass
-from repomap_test_support.resource_scratch_history import (
+from common_lore_index_test_support.resource_retention import DAY_SECONDS, RetentionClass
+from common_lore_index_test_support.resource_scratch_history import (
     HistoricalGcCandidate,
     discover_historical_gc,
 )

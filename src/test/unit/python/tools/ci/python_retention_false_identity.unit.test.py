@@ -161,7 +161,7 @@ def test_real_target_symbol_claim_is_refused(tmp_path: Path) -> None:
 
 def test_rebound_runtime_import_is_refused() -> None:
     source = (_ROOT / _OWNER_PATH).read_text(encoding="utf-8")
-    marker = "from repomap_test_support.test_cov5k_r2_fix4_terminal_contexts import ("
+    marker = "from common_lore_index_test_support.test_cov5k_r2_fix4_terminal_contexts import ("
     tree = _tree(source.replace(marker, "runtime = object()\n\n" + marker, 1))
     with pytest.raises(ValueError, match="runtime import"):
         _resolve(tree)

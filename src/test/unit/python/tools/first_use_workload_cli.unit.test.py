@@ -24,7 +24,7 @@ from first_use_workload_source_identity import (
     SourceIdentityError, candidate_census, current_intent, product_digest,
 )
 from first_use_workload_domains import ALIASES, WorkloadError
-from repomap_test_support.first_use_workload_samples import ATTEMPT, sample_files
+from common_lore_index_test_support.first_use_workload_samples import ATTEMPT, sample_files
 
 TOOLS = REPO_ROOT / "tools"
 PRODUCT = REPO_ROOT / "src" / "main" / "python"
@@ -250,7 +250,7 @@ def test_no_product_module_imports_the_workload_or_test_support() -> None:
     offenders = [
         str(path.relative_to(PRODUCT))
         for path in sorted(PRODUCT.rglob("*.py"))
-        if any(name.split(".")[0].startswith("first_use_workload") or name.split(".")[0] == "repomap_test_support"
+        if any(name.split(".")[0].startswith("first_use_workload") or name.split(".")[0] == "common_lore_index_test_support"
                for name in _imports(path))
     ]
     assert offenders == []
@@ -260,7 +260,7 @@ def test_workload_tools_never_import_test_support() -> None:
     owners = sorted(TOOLS.glob("first_use_workload*.py"))
     assert len(owners) == 17
     for path in owners:
-        assert not any(name.startswith("repomap_test_support") for name in _imports(path)), path.name
+        assert not any(name.startswith("common_lore_index_test_support") for name in _imports(path)), path.name
 
 
 def test_entry_point_puts_this_checkout_first() -> None:

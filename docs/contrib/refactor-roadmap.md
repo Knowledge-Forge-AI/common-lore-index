@@ -475,7 +475,7 @@ Goal:
 
 Likely files:
 
-- `src/test/support/python/repomap_test_support/`
+- `src/test/support/python/common_lore_index_test_support/`
 - large CLI, storage, canonicalization, ops, and extractor tests.
 
 Out of scope:
@@ -499,9 +499,9 @@ Risk: medium.
 
 REF8 implementation note: REF8 kept production code untouched and established
 the first test-support consolidation in the existing
-`repomap_test_support` package. Shared CLI/module invocation, repo/source-root
+`common_lore_index_test_support` package. Shared CLI/module invocation, repo/source-root
 constants, environment construction, and public-safe text fixture writing now
-live in `repomap_test_support.cli`; the large CLI and storage integration tests
+live in `common_lore_index_test_support.cli`; the large CLI and storage integration tests
 use those helpers while keeping behavior assertions at the call sites. Broader
 storage fixture, canonical graph, and ops-runtime helper extraction remains
 deferred.
@@ -7753,7 +7753,7 @@ prohibited.
 `SCALE28-FIX12-DIAG1-FIX1` (2026-07-28) gave the repository one owner for every
 temporary, cache, and build-state path a test run creates.
 
-`repomap_test_support.test_scratch` selects a scratch root by explicit
+`common_lore_index_test_support.test_scratch` selects a scratch root by explicit
 environment variable, then a Darwin shared root when one already exists and is
 safe, then a portable fallback beneath `tempfile.gettempdir()`. It never
 creates the operator-managed shared root. It allocates a short run root by

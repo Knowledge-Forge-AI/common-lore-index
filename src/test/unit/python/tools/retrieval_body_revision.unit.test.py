@@ -6,7 +6,7 @@ from copy import deepcopy
 
 import pytest
 
-from repomap_test_support.retrieval_body_pin_fixtures import make_body_input_files
+from common_lore_index_test_support.retrieval_body_pin_fixtures import make_body_input_files
 from retrieval_body_input_records import parse_body_input_pin
 from retrieval_body_revision import verify_body_input_revision
 from retrieval_body_values import BodyError, canonical_bytes, digest_bytes, strict_json

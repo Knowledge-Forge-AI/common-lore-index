@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from repomap_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.navigation_search_fixtures import BINDING, GRAPH, navigation_home
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.sqlite_local_harness import (
     LocalHarness,
     initialize,
     structured,
@@ -42,12 +42,12 @@ def test_guarded_sqlite_mcp_stdio_multi_request_navigation_session_without_deadl
     requests = [
         initialize(1),
         {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}},
-        tool(2, "repomap_navigation_search", args),
-        tool(3, "repomap_navigation_search", {**args, "offset": 1}),
+        tool(2, "cloe_navigation_search", args),
+        tool(3, "cloe_navigation_search", {**args, "offset": 1}),
         {"jsonrpc": "2.0", "id": 4, "method": "tools/list"},
         tool(
             5,
-            "repomap_navigation_search",
+            "cloe_navigation_search",
             {
                 **args,
                 "source_binding_id": BINDING,
@@ -62,7 +62,7 @@ def test_guarded_sqlite_mcp_stdio_multi_request_navigation_session_without_deadl
     assert first["schema"] == "repomap.navigation_search" and first["has_more"] is True
     assert first["results"][0]["destination"] != second["results"][0]["destination"]
     assert any(
-        row["name"] == "repomap_navigation_search"
+        row["name"] == "cloe_navigation_search"
         for row in responses[4]["result"]["tools"]
     )
     scoped = structured(responses, 5)

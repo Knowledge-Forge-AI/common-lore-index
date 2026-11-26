@@ -14,7 +14,7 @@ def test_arch1j_production_has_no_synthetic_test_adapter_ownership() -> None:
 
     combined = "\n".join(_source(module) for module in (_protocol_core, _worker_launch, core, protocol))
 
-    assert "repomap_test_support" not in combined
+    assert "common_lore_index_test_support" not in combined
     assert "src/test/support/python" not in combined
     assert "ALLOWED_SYNTHETIC_WORKER_MODES" not in combined
     assert "for_synthetic_worker" not in combined
@@ -22,7 +22,7 @@ def test_arch1j_production_has_no_synthetic_test_adapter_ownership() -> None:
 
 
 def test_arch1j_test_support_owns_synthetic_worker_adapter() -> None:
-    import repomap_test_support.synthetic_worker_adapter as adapter
+    import common_lore_index_test_support.synthetic_worker_adapter as adapter
     import common_lore_index.coordinator.protocol as protocol
 
     assert callable(adapter.run_synthetic_worker)

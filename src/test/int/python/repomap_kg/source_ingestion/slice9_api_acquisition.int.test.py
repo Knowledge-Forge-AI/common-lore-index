@@ -27,7 +27,7 @@ from common_lore_index.ops.ingestion.github_api import (
     acquire_github_api_source,
     load_github_api_source_config,
 )
-from repomap_test_support.source_ingestion_integration import (
+from common_lore_index_test_support.source_ingestion_integration import (
     api_fixture_root,
     github_api_fixture_root,
 )

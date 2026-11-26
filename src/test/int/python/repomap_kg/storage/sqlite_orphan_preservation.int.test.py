@@ -11,7 +11,7 @@ from common_lore_index.storage.sqlite_local import orphans
 from common_lore_index.storage.sqlite_local.connection import sidecar_paths
 from common_lore_index.storage.sqlite_local.locking import hold_graph_lock, lock_path, probe_graph_lock
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.sqlite_local_fixtures import local_binding, published_sqlite_database
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding, published_sqlite_database
 
 BINDING = local_binding()
 TOKEN = "0123456789abcdef"

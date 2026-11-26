@@ -6,7 +6,7 @@ import pytest
 
 from ci import check_generated_drift as generated_drift
 from ci import update_generated_locks as lock_upgrade
-from repomap_test_support.generated_lock_fixtures import (
+from common_lore_index_test_support.generated_lock_fixtures import (
     LOCKS,
     POLICY,
     FakeUvIndex,

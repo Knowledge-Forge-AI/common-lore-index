@@ -39,8 +39,8 @@ from common_lore_index.storage.sql_core import sql_literal
 from common_lore_index.storage.sql_summaries import build_js_framework_summary_query_sql
 from common_lore_index.storage.sql_summaries_nix import build_nix_summary_query_sql
 from common_lore_index.storage.sql_summaries_python import build_python_summary_query_sql
-from repomap_test_support.postgres_container_config import PostgresContainerDatabase
-from repomap_test_support.postgres_harness import active_or_new_postgres_session
+from common_lore_index_test_support.postgres_container_config import PostgresContainerDatabase
+from common_lore_index_test_support.postgres_harness import active_or_new_postgres_session
 
 pytestmark = [pytest.mark.int]
 

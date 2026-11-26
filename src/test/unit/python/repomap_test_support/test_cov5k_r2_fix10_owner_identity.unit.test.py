@@ -8,14 +8,14 @@ import subprocess
 
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_fix2_evidence import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import (
     ExecutorEvidenceError,
     verify_executor_evidence,
 )
-from repomap_test_support.test_cov5k_r2_fix2_runtime import execute_runtime_driver_read
-from repomap_test_support.test_cov5k_r2_fix3_owner_binding import external_owner_evidence
-from repomap_test_support.test_cov5k_r2_fix4_psycopg import public_expected_authority
+from common_lore_index_test_support.test_cov5k_r2_fix2_runtime import execute_runtime_driver_read
+from common_lore_index_test_support.test_cov5k_r2_fix3_owner_binding import external_owner_evidence
+from common_lore_index_test_support.test_cov5k_r2_fix4_psycopg import public_expected_authority
 
 
 _WRAPPER_BYTES = b"#!/bin/sh\n# launcher target\nexec /bin/true \"$@\"\n"

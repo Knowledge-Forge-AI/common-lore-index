@@ -16,7 +16,7 @@ from common_lore_index.extractors.contracts.legacy_registry import (
     LEGACY_EXTRACTOR_OWNERS,
     LegacyMembershipError,
 )
-from repomap_test_support.extractor_contracts import legacy_source
+from common_lore_index_test_support.extractor_contracts import legacy_source
 
 TREES = legacy_source.product_trees()
 

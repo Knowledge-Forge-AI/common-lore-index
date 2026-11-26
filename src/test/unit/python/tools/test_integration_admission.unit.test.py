@@ -57,7 +57,7 @@ class IntegrationAdmissionDisciplineUnitTests(unittest.TestCase):
             tree = ast.parse(target.read_text(encoding="utf-8"))
             imports_selection = any(
                 isinstance(node, ast.ImportFrom)
-                and node.module == "repomap_test_support.test_scratch"
+                and node.module == "common_lore_index_test_support.test_scratch"
                 and any(alias.name == "select_scratch_root" for alias in node.names)
                 for node in ast.walk(tree)
             )

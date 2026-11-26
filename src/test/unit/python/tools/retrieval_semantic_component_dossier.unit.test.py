@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Any
 
-from repomap_test_support.w5_pair_fixtures import make_pair_artifacts
-from repomap_test_support.w5_component_artifacts import make_component_pair
+from common_lore_index_test_support.w5_pair_fixtures import make_pair_artifacts
+from common_lore_index_test_support.w5_component_artifacts import make_component_pair
 from retrieval_semantic_component_dossier import build_component_dossier
 from retrieval_semantic_experiment_contracts import canonical_json_bytes
 from retrieval_semantic_pair_artifacts import digest_bytes

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_docker_operations import (
+from common_lore_index_test_support.resource_docker_operations import (
     DERIVED_OPERATION_FIELDS,
     DockerAuthorityClass,
     DockerOperationJournal,

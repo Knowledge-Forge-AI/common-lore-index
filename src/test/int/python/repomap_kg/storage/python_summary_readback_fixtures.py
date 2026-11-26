@@ -2,8 +2,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 import tempfile
 from pathlib import Path
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.storage_integration import (
     python_ecosystem_fixture,
     python_web_fixture,
 )

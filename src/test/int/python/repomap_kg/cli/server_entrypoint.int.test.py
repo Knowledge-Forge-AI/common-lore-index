@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_in_process import REPO_ROOT, module_process_environment
-from repomap_test_support.cli_integration import (
+from common_lore_index_test_support.cli_in_process import REPO_ROOT, module_process_environment
+from common_lore_index_test_support.cli_integration import (
     CliIntegrationTestCase,
     OPS_CONFIG_TEMPLATE,
 )
@@ -53,7 +53,7 @@ class CliServerEntrypointIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             (home).mkdir()
-            (home / "repomap.rpl.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
+            (home / "repomap.local.cloe.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
             port = self.local_server_test_port()
             process = popen_observed_process(
                 [
@@ -128,7 +128,7 @@ class CliServerEntrypointIntegrationTests(CliIntegrationTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             home.mkdir()
-            (home / "repomap.rpl.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
+            (home / "repomap.local.cloe.toml").write_text(OPS_CONFIG_TEMPLATE, encoding="utf-8")
 
             health = build_health_payload(home)
             with patch(

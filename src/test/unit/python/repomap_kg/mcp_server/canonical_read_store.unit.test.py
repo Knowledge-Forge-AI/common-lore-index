@@ -24,14 +24,14 @@ from common_lore_index.storage import (
     StorageSchemaError,
     identity_metadata_hash,
 )
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     NO_FALLBACK_GUARDS,
     fail_if_reached as _fail,
     patched_guards as _patched,
     setup_owned_config as _setup_owned_config,
     setup_owned_home,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 NODE = CanonicalNodeRecord(
     canonical_key="python.module:pkg.a", graph_key_version=1, kind="python.module",
@@ -47,14 +47,14 @@ EDGE = CanonicalEdgeRecord(
 EXPLANATION = CanonicalEdgeExplanationRecord(edge=EDGE, evidence=())
 NEIGHBORHOOD = CanonicalNeighborhoodRecord(center=NODE, nodes=(NODE,), edges=(EDGE,))
 TOOL_CALLS = (
-    ("repomap_canonical_nodes", {"kind": "python.module", "limit": 1, "offset": 3}),
-    ("repomap_canonical_edges", {"kind": "imports", "source_key": "python.module:pkg.a", "limit": 2}),
-    ("repomap_explain_canonical_edge", {
+    ("cloe_canonical_nodes", {"kind": "python.module", "limit": 1, "offset": 3}),
+    ("cloe_canonical_edges", {"kind": "imports", "source_key": "python.module:pkg.a", "limit": 2}),
+    ("cloe_explain_canonical_edge", {
         "source_key": "python.module:pkg.a", "kind": "imports",
         "target_key": "python.module:pkg.b", "identity_metadata": {"alias": "b"},
         "evidence_limit": 4, "evidence_offset": 1,
     }),
-    ("repomap_canonical_neighborhood", {
+    ("cloe_canonical_neighborhood", {
         "node": "python.module:pkg.a", "direction": "out", "node_limit": 5,
         "node_offset": 1, "edge_limit": 6, "edge_offset": 2,
     }),
@@ -148,27 +148,27 @@ class CanonicalReadStoreDispatchTests(McpServerTestSupport):
         a, b = "python.module:a", "python.module:b"
         edge_args = {"source_key": a, "kind": "imports", "target_key": b}
         cases = (
-            ("repomap_canonical_nodes", {"limit": 201}, "limit must be between 1 and 200"),
-            ("repomap_canonical_nodes", {"offset": -1}, "offset must be a non-negative integer"),
-            ("repomap_canonical_nodes", {"result_schema_version": 2}, "result schema version must be 0 or 1"),
-            ("repomap_canonical_nodes", {"graph_key_version": 2}, "unsupported graph key version"),
-            ("repomap_canonical_nodes", {"sql": "SELECT 1"}, "unexpected argument(s): sql"),
-            ("repomap_canonical_edges", {"source_key": "x"},
+            ("cloe_canonical_nodes", {"limit": 201}, "limit must be between 1 and 200"),
+            ("cloe_canonical_nodes", {"offset": -1}, "offset must be a non-negative integer"),
+            ("cloe_canonical_nodes", {"result_schema_version": 2}, "result schema version must be 0 or 1"),
+            ("cloe_canonical_nodes", {"graph_key_version": 2}, "unsupported graph key version"),
+            ("cloe_canonical_nodes", {"sql": "SELECT 1"}, "unexpected argument(s): sql"),
+            ("cloe_canonical_edges", {"source_key": "x"},
              "invalid source canonical key: canonical key must include a namespace separator"),
-            ("repomap_explain_canonical_edge", {**edge_args, "identity_metadata": "x"},
+            ("cloe_explain_canonical_edge", {**edge_args, "identity_metadata": "x"},
              "identity_metadata must be a JSON object"),
-            ("repomap_explain_canonical_edge", {"kind": "imports", "target_key": b},
+            ("cloe_explain_canonical_edge", {"kind": "imports", "target_key": b},
              "missing required argument(s): source_key"),
-            ("repomap_explain_canonical_edge", {**edge_args, "evidence_limit": 201},
+            ("cloe_explain_canonical_edge", {**edge_args, "evidence_limit": 201},
              "limit must be between 1 and 200"),
-            ("repomap_canonical_neighborhood", {"node": a, "direction": "sideways"},
+            ("cloe_canonical_neighborhood", {"node": a, "direction": "sideways"},
              "direction must be one of both, in, out"),
-            ("repomap_canonical_neighborhood", {"node": a, "depth": 9},
+            ("cloe_canonical_neighborhood", {"node": a, "depth": 9},
              "storage neighborhood only supports depth 1"),
-            ("repomap_canonical_nodes", {"project": "missing"},
+            ("cloe_canonical_nodes", {"project": "missing"},
              "unknown legacy MCP project or graph-registry graph_id: missing"),
-            ("repomap_canonical_nodes", {"project": "disabled"}, "graph 'disabled' is not enabled"),
-            ("repomap_canonical_nodes", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
+            ("cloe_canonical_nodes", {"project": "disabled"}, "graph 'disabled' is not enabled"),
+            ("cloe_canonical_nodes", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
         )
         env = self.patch_mcp_and_ops_config(self.write_empty_mcp_config(), self.write_visible_ops_config())
         with env, patch("common_lore_index.server.mcp.canonical_read_store", _fail), patch(
@@ -185,7 +185,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
         """Resolve a configured target and return its PostgreSQL-bound connection."""
         from common_lore_index.server.mcp import storage_connection
 
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()), **env}, clear=True):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()), **env}, clear=True):
             target: Any = storage_connection(project=graph_id)
         return target.stores.canonical_store(target.selection).connection
 
@@ -201,7 +201,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
             ("host-one", "/public/host-one", "repomap_host_one"),
             ("host-multi", "graph:host-multi", "repomap_host_multi"),
         ):
-            connection = self._connection(graph_id, REPOMAP_HOME=str(home), **ambient)
+            connection = self._connection(graph_id, CLOE_HOME=str(home), **ambient)
             calls: list[tuple[tuple, dict]] = []
             with patch.dict("os.environ", ambient, clear=True):
                 store = PostgresCanonicalReadStore(connection, _recording_queries(calls))
@@ -228,13 +228,13 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
         ), encoding="utf-8")
         # `--config F` is not setup-owned even when F lives in the home, so the
         # admin-shaped default keeps its explicit credential and no projection.
-        config_file = home / "repomap.rpl.toml"
+        config_file = home / "repomap.local.cloe.toml"
         cases: tuple[tuple[Path, dict[str, str], str, str], ...] = (
             (custom, {}, "custom_reader", "custom-secret"),
             (config_file, {"REPOMAP_PG_PASSWORD": "operator-secret"}, "repomap", "operator-secret"),
         )
         for path, env, user, password in cases:
-            connection = self._connection("host-one", REPOMAP_OPS_CONFIG=str(path), **env)
+            connection = self._connection("host-one", CLOE_OPS_CONFIG=str(path), **env)
             calls: list[tuple[tuple, dict]] = []
             with patch.dict("os.environ", env, clear=True):
                 PostgresCanonicalReadStore(connection, _recording_queries(calls)).canonical_edges(
@@ -246,7 +246,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
     def test_compose_style_read_status_environment_is_equivalent(self) -> None:
         env = {"REPOMAP_READ_STATUS_PASSWORD": "compose-read-secret"}
         connection = self._connection(
-            "repo-map", REPOMAP_OPS_CONFIG=str(self.write_container_internal_ops_config()), **env
+            "repo-map", CLOE_OPS_CONFIG=str(self.write_container_internal_ops_config()), **env
         )
         calls: list[tuple[tuple, dict]] = []
         with patch.dict("os.environ", env, clear=True):
@@ -288,7 +288,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
 
             with env, patch("common_lore_index.server.mcp.query_canonical_node_records", failing):
                 with _patched(guards), self.assertRaises(RepoMapMcpError) as raised:
-                    handle_tool_call("repomap_canonical_nodes", {"project": "repo-map"})
+                    handle_tool_call("cloe_canonical_nodes", {"project": "repo-map"})
             self.assertEqual(str(raised.exception), expected)
 
     def test_seam_import_boundary_and_pure_construction(self) -> None:
@@ -306,7 +306,7 @@ class PostgresCanonicalReadStoreAdapterTests(McpServerTestSupport):
                      "common_lore_index.coordinator")
         self.assertFalse({name for name in imported if name and name.startswith(forbidden)})
         connection = self._connection(
-            "repo-map", REPOMAP_OPS_CONFIG=str(self.write_visible_ops_config())
+            "repo-map", CLOE_OPS_CONFIG=str(self.write_visible_ops_config())
         )
         with patch.object(module, "readback_postgres_authority", _fail):
             queries = CanonicalStorageQueries(nodes=_fail, edges=_fail, edge_explanation=_fail, neighborhood=_fail,

@@ -13,7 +13,7 @@ from common_lore_index.ops.reports import (
     refresh_result_to_jsonable,
     refresh_status_to_jsonable,
 )
-from repomap_test_support.ops_refresh import VALID_REFRESH_CONFIG
+from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
 
 
 @pytest.mark.parametrize('privacy', ['public-dev', 'private-ops', 'private-memory', 'private-config', 'sensitive-local'])

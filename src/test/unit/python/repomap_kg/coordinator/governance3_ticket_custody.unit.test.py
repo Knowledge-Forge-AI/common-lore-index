@@ -23,7 +23,7 @@ from common_lore_index.coordinator.process_supervision import (
     launch_managed_process,
 )
 from common_lore_index.coordinator.refresh_adapter import RefreshCapability, create_refresh_capability
-from repomap_test_support.fencing_control_fakes import FencingControl
+from common_lore_index_test_support.fencing_control_fakes import FencingControl
 
 _PROVEN = CustodyOutcome(True, -9, True, True, True, True, True, None)
 _ENV = {**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[6] / "src/main/python")}

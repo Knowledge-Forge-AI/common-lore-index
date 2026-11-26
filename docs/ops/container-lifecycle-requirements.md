@@ -15,7 +15,7 @@ deleted or modified during the audit.
 The current local-runtime path is:
 
 ```text
-repomap-kg local up
+cloe local up
   -> CLI local dispatch
   -> runtime.local.up_local_runtime
   -> runtime.plan.build_local_runtime_plan
@@ -29,10 +29,10 @@ repomap-kg local up
 Closeout and readback are:
 
 ```text
-repomap-kg local down
+cloe local down
   -> docker compose --project-name repomap-<home-hash> down
 
-repomap-kg local status --check-containers
+cloe local status --check-containers
   -> inspect the expected container names and Common Lore Index runtime labels
 ```
 
@@ -45,7 +45,7 @@ image and named volumes.
 - Compose has no top-level `name`; the command supplies
   `--project-name repomap-<home-hash>`.
 - `<home-hash>` is the first twelve hexadecimal characters of a digest of the
-  resolved `REPOMAP_HOME` path.
+  resolved path of the selected home.
 - The generated Compose file explicitly names the built deployment image
   `repomap-runtime:<home-hash>`. It does not use `latest`, the legacy
   `repomap-runtime-<home-hash>:latest` shape, or Compose's default

@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.first_use_workload_call_results import (
+from common_lore_index_test_support.first_use_workload_call_results import (
     ReturnedPublication, local_cli_publication, local_inprocess_publication,
     revocation_result, server_publication,
 )
@@ -16,13 +16,13 @@ from common_lore_index.ops.resource_reports._codec import encode_report
 from common_lore_index.ops.resource_view import ResourceObserver
 from first_use_workload_census import load_census
 from first_use_workload_recipe import scenario_steps
-from repomap_test_support.first_use_workload_driver import CallOutcome, CleanupRegistry
-from repomap_test_support.first_use_workload_session import Backend, ScenarioContext
-from repomap_test_support.first_use_workload_local_steps import LocalSession
-from repomap_test_support.first_use_workload_samples import pin
-from repomap_test_support import first_use_workload_rows as rows
-from repomap_test_support import first_use_workload_server_steps as server_steps
-from repomap_test_support import first_use_workload_session as session_module
+from common_lore_index_test_support.first_use_workload_driver import CallOutcome, CleanupRegistry
+from common_lore_index_test_support.first_use_workload_session import Backend, ScenarioContext
+from common_lore_index_test_support.first_use_workload_local_steps import LocalSession
+from common_lore_index_test_support.first_use_workload_samples import pin
+from common_lore_index_test_support import first_use_workload_rows as rows
+from common_lore_index_test_support import first_use_workload_server_steps as server_steps
+from common_lore_index_test_support import first_use_workload_session as session_module
 
 
 def test_local_cli_records_actual_generation_and_validates_success() -> None:

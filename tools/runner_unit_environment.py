@@ -18,9 +18,9 @@ if str(_REPO_ROOT / "src" / "test" / "support" / "python") not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT / "src" / "test" / "support" / "python"))
 
 from build_go_helper import build_go_helper, validate_go_sources
-from repomap_test_support.build_profile_debt import DEFERRED_BUILD_PROFILE_NODE_IDS
-from repomap_test_support.test_scratch import establish_run
-from repomap_test_support.unit_purity import UnitPurityState
+from common_lore_index_test_support.build_profile_debt import DEFERRED_BUILD_PROFILE_NODE_IDS
+from common_lore_index_test_support.test_scratch import establish_run
+from common_lore_index_test_support.unit_purity import UnitPurityState
 from runner_arguments import is_relative_to
 from test_report import TestRecord
 
@@ -43,7 +43,7 @@ def prepare_go_test_environment(
         )
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         raise RuntimeError(f"Go helper validation failed: {error}") from error
-    os.environ["REPOMAP_GO_HELPER"] = str(helper)
+    os.environ["CLOE_GO_HELPER"] = str(helper)
 
 
 @contextmanager
@@ -61,13 +61,13 @@ def pytest_environment_for(suites: tuple[str, ...], args):
     d12_platform = getattr(args, "d12_core_image_profile", None)
     if d12_platform is not None:
         # Population selection only; build authority is the runner's admission.
-        from repomap_test_support import d12_core_image as d12
+        from common_lore_index_test_support import d12_core_image as d12
 
         updates[d12.ENV_PROFILE] = d12_platform
         updates[d12.ENV_REPORT_DIR] = str(
             Path(args.report_dir) / "d12-core-image" / d12_platform.replace("/", "-"))
 
-    plugin_module = "repomap_test_support.pgvector_profile"
+    plugin_module = "common_lore_index_test_support.pgvector_profile"
     existing_plugins = [
         p.strip() for p in os.environ.get("PYTEST_PLUGINS", "").split(",") if p.strip()
     ]

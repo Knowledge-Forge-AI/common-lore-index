@@ -23,18 +23,18 @@ from common_lore_index.runtime.database_roles import (
 )
 from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.storage import apply_migrations, default_rdbms_root, run_psql
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.storage_integration import canonicalization_fixture
+from common_lore_index_test_support.storage_integration import canonicalization_fixture
 
 
 GRAPH_ID = "local-readback"
 REPOSITORY_NAME = "local-readback"
 ROOT_PATH = "/public/local-readback"
-READBACK_DRIVER_ENV = "REPOMAP_STORAGE_READBACK_DRIVER"
+READBACK_DRIVER_ENV = "CLOE_STORAGE_READBACK_DRIVER"
 READBACK_ENV_NAMES = (
     "PGPASSWORD",
     "REPOMAP_PG_PASSWORD",
@@ -80,7 +80,7 @@ def test_setup_owned_local_readback_uses_read_role_without_password_export(
 
         for name in READBACK_ENV_NAMES:
             monkeypatch.delenv(name, raising=False)
-        monkeypatch.delenv("REPOMAP_STORAGE_PG_CONNECTOR", raising=False)
+        monkeypatch.delenv("CLOE_STORAGE_PG_CONNECTOR", raising=False)
         monkeypatch.setenv(READBACK_DRIVER_ENV, "psycopg")
 
         def invoke(*args: str) -> dict[str, object]:
@@ -162,7 +162,7 @@ def test_setup_owned_local_readback_uses_read_role_without_password_export(
 
 
 def _write_local_config(home: Path, host_port: int, database: str) -> None:
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         f'''schema_version = 1
 [service]
 mode = "local"

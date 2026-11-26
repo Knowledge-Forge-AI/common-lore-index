@@ -9,7 +9,7 @@ import pytest
 from common_lore_index.coordinator import _portable_semantic_adapter as adapter
 from common_lore_index.artifacts._store_stream import VerifyingArtifactStream
 from common_lore_index.coordinator._portable_materialization import MaterializedWorkspace
-from repomap_test_support.materialization_fixtures import (
+from common_lore_index_test_support.materialization_fixtures import (
     BINDING_ID, CHUNK_BYTES, capability_for, copy_case, manifest_for, observe_copy_writes,
 )
 

@@ -6,8 +6,8 @@ from typing import NoReturn
 from pathlib import Path
 from unittest.mock import patch
 
-import repomap_test_support.postgres_harness as postgres_harness
-from repomap_test_support.postgres_harness import (
+import common_lore_index_test_support.postgres_harness as postgres_harness
+from common_lore_index_test_support.postgres_harness import (
     DEFAULT_TEST_POSTGRES_PORT,
     PostgresContainerConfig,
     PostgresContainerDatabase,
@@ -17,7 +17,7 @@ from repomap_test_support.postgres_harness import (
     set_active_postgres_session,
     temporary_postgres,
 )
-from repomap_test_support.resource_ledger import RunIdentity
+from common_lore_index_test_support.resource_ledger import RunIdentity
 
 
 def unexpected_runner(*args: object, **kwargs: object) -> NoReturn:
@@ -29,7 +29,7 @@ class PostgresHarnessUnitTests(unittest.TestCase):
         # These command-plan contracts use explicit fake runners. The managed
         # Docker ownership path has separate SDK-double unit contracts.
         active_run = patch(
-            "repomap_test_support.postgres_container.active_resource_run",
+            "common_lore_index_test_support.postgres_container.active_resource_run",
             return_value=None,
         )
         active_run.start()
@@ -139,7 +139,7 @@ class PostgresHarnessUnitTests(unittest.TestCase):
         )
 
         with patch(
-            "repomap_test_support.postgres_harness.shutil.which",
+            "common_lore_index_test_support.postgres_harness.shutil.which",
             return_value="/usr/bin/docker",
         ):
             with self.assertRaises(RuntimeError) as raised:

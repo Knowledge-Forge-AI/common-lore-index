@@ -7,17 +7,18 @@ import subprocess
 
 import pytest
 
-from repomap_test_support.installed_environment import (
+from common_lore_index_test_support.installed_environment import (
     DELETED_KEYS, FIXED_VALUES, ChildExecutionFailure, ChildResult, InstalledEnvironment,
     child_environment, create_environment, include_system_site_packages, run_child,
 )
-from repomap_test_support import installed_environment as owner
+from common_lore_index_test_support import installed_environment as owner
 
 INHERITED = {
     "PATH": "/opt/runner/bin:/usr/bin", "HOME": "/home/runner", "PYTHONPATH": "/checkout/src/main/python",
     "PYTHONHOME": "/x", "PYTHONSTARTUP": "/x", "PYTHONUSERBASE": "/x", "PYTHONEXECUTABLE": "/x",
     "PYTHONSAFEPATH": "1", "VIRTUAL_ENV": "/checkout/.venv", "COVERAGE_FILE": "/c", "PGHOST": "db", "PGPASSWORD": "pw", "REPOMAP_HOME": "/h", "CLOE_HOME": "/h",
-    "REPOMAP_OPS_CONFIG": "/h", "REPOMAP_PG_URL": "x", "SERVICE_TOKEN": "t", "LANG": "en_US.UTF-8",
+    "REPOMAP_OPS_CONFIG": "/h", "REPOMAP_MCP_CONFIG": "/h", "CLOE_OPS_CONFIG": "/h", "CLOE_MCP_CONFIG": "/h",
+    "REPOMAP_PG_URL": "x", "SERVICE_TOKEN": "t", "LANG": "en_US.UTF-8",
     "KEEP_ME": "kept",
 }
 

@@ -6,8 +6,8 @@ import uuid
 import psycopg
 import pytest
 
-from repomap_test_support.executable_authority import controlled_psql_copy
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.executable_authority import controlled_psql_copy
+from common_lore_index_test_support.test_scratch import short_test_directory
 from common_lore_index.coordinator.job_control import (
     coordinator_health,
     coordinator_job_status,
@@ -33,7 +33,7 @@ from common_lore_index.runtime.database_roles import (
     render_database_role_sql,
 )
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -63,7 +63,7 @@ def test_explicit_local_mode_launches_and_replays_configured_refresh(
                     graph_postgres.psql_args,
                     psql_command=graph_postgres.psql_command,
                 )
-                (home / "configured.rp.toml").write_text(
+                (home / "configured.cloe.toml").write_text(
                     _configured_ops_text(graph_postgres, repository), encoding="utf-8"
                 )
                 monkeypatch.setenv("ASYNC9_TEST_PASSWORD", postgres.password)
@@ -231,7 +231,7 @@ def test_local_mode_boundary_refusals_and_orderly_serve_lifecycle(
                     graph_postgres.psql_args,
                     psql_command=graph_postgres.psql_command,
                 )
-                (home / "configured.rp.toml").write_text(
+                (home / "configured.cloe.toml").write_text(
                     _configured_ops_text(graph_postgres, repository), encoding="utf-8"
                 )
                 monkeypatch.setenv("ASYNC9_TEST_PASSWORD", postgres.password)

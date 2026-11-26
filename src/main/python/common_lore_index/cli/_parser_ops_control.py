@@ -17,7 +17,7 @@ def add_ops_control_commands(
     coordinator_serve.add_argument(
         "--repo-map-home",
         required=True,
-        help="REPOMAP_HOME that owns configuration and the private endpoint",
+        help="CLOE_HOME that owns configuration and the private endpoint",
     )
     coordinator_serve.add_argument(
         "--json",
@@ -89,7 +89,7 @@ def add_ops_control_commands(
         service_action.add_argument(
             "--repo-map-home",
             required=True,
-            help="absolute owner-private REPOMAP_HOME selected by the service",
+            help="absolute owner-private CLOE_HOME selected by the service",
         )
         if action_name != "render":
             service_action.add_argument(
@@ -118,7 +118,7 @@ def add_ops_control_commands(
         control_command.add_argument(
             "--repo-map-home",
             required=True,
-            help="owner-private REPOMAP_HOME that determines control authority",
+            help="owner-private CLOE_HOME that determines control authority",
         )
         control_command.add_argument(
             "--json",
@@ -132,7 +132,7 @@ def add_ops_control_commands(
     control_upgrade.add_argument(
         "--repo-map-home",
         required=True,
-        help="owner-private REPOMAP_HOME that determines control authority",
+        help="owner-private CLOE_HOME that determines control authority",
     )
     control_upgrade.add_argument(
         "--backup-first",
@@ -156,7 +156,7 @@ def add_ops_control_commands(
         job_command.add_argument(
             "--repo-map-home",
             required=True,
-            help="owner-private REPOMAP_HOME that determines coordinator authority",
+            help="owner-private CLOE_HOME that determines coordinator authority",
         )
         job_command.add_argument("--job-id", required=True, help="existing durable job ID")
         if command_name == "coordinator-job-wait":

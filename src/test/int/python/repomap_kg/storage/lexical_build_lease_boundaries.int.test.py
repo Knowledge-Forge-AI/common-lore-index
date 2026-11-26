@@ -37,14 +37,14 @@ from common_lore_index.storage.lexical_population import (
     populate_lexical_generation_rows,
 )
 from common_lore_index.storage.lexical_revoke import revoke_lexical_generations
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
 )
 
@@ -230,7 +230,7 @@ def test_failed_attempt_cleanup_preserves_ready_authority_and_removes_owned_rows
             authorize_body=True,
         )
         assert first.published is not None and first.plan is not None
-        config_path = home / "repomap.rpl.toml"
+        config_path = home / "repomap.local.cloe.toml"
         original = config_path.read_text(encoding="utf-8")
         config_path.write_text(_disable_companion(original), encoding="utf-8")
         changed_config = load_graph_registry_config_home(home)

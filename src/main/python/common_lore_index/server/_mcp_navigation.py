@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from common_lore_index import __version__
+from common_lore_index import DISTRIBUTION_NAME, __version__
 from common_lore_index.server._mcp_ops_tools import ops_payload
 from common_lore_index.server._navigation_groups import group_page
 from common_lore_index.server._ops_search import validate_query
@@ -15,7 +15,7 @@ from common_lore_index.storage.navigation_search import NavigationSearchQuery
 
 def navigation_tool_definition() -> dict[str, Any]:
     return {
-        "name": "repomap_navigation_search",
+        "name": "cloe_navigation_search",
         "description": "Optional SQLite Local and PostgreSQL literal search of canonical key, kind and display name, "
                        "not source text. code supports only python.module, python.class, python.function, python.method; "
                        "docs supports page/section/ADR/skill. Use bounded native literal-text search "
@@ -26,7 +26,7 @@ def navigation_tool_definition() -> dict[str, Any]:
                        "Scan exhaustion is incomplete, never a complete empty query. "
                        "Incomplete/unavailable/error results establish less. Use raw search for other kinds "
                        "or native navigation on unsupported/unhelpful results. "
-                       "Resolve a selected member with repomap_node_locations direct/compact; "
+                       "Resolve a selected member with cloe_node_locations direct/compact; "
                        "verify an already supplied handoff directly with zero graph calls. "
                        "Ungrouped reads enumerate matches independently; each read may see a newer publication.",
         "inputSchema": {
@@ -58,7 +58,7 @@ def navigation_search_payload(
     scan = target.stores.investigation_store().navigation_search(selection.graph_id, request)
     page = group_page(scan, request, selection.path_markers)
     return {
-        "server": "repomap-kg", "version": __version__, "read_only": True,
+        "server": DISTRIBUTION_NAME, "version": __version__, "read_only": True,
         "schema": "repomap.navigation_search", "schema_version": 1,
         "graph": graph_payload(selection.graph, database=target.stores.storage_label(selection)),
         "repository_identity": selection.repository_identity, "graph_key_version": 1,
@@ -73,14 +73,14 @@ def navigation_search_payload(
         "limit": limit, "offset": offset, "member_limit": member_limit, **page,
         "run_selection": "accepted_evidence_else_latest_historical_before_role_filter",
         "freshness": "unverified", "fallback": "native_search",
-        "expansion": {"member_tool": "repomap_node_locations", "evidence_role": "direct", "detail": "compact",
-                      "matches_tool": "repomap_navigation_search", "grouping": "none",
+        "expansion": {"member_tool": "cloe_node_locations", "evidence_role": "direct", "detail": "compact",
+                      "matches_tool": "cloe_navigation_search", "grouping": "none",
                       "snapshot": "independent_reads_may_observe_newer_publications"},
         "safety": safety_markers(),
     }
 
 
-def repomap_navigation_search(
+def cloe_navigation_search(
     *, graph_id: str, query: str, scope: str = "all", grouping: str = "none",
     kind: str | None = None, source_binding_id: str | None = None,
     source_path_prefix: str | None = None, limit: int = 20, offset: int = 0, member_limit: int = 5,

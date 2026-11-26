@@ -17,32 +17,30 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from common_lore_index.entrypoints import LEGACY_COMMAND_NOTICE
 from common_lore_index.graph.multi_source import graph_source_binding_id
 from common_lore_index.retrieval.context_contracts import DEFAULT_BUDGET_BYTES
 from common_lore_index.server._mcp_dispatch import MCP_PROTOCOL_VERSION
 from installed_experience_pins import CODE_KIND, GRAPH_ID
-from repomap_kg.server.mcp import LEGACY_MCP_NOTICE
-from repomap_test_support.installed_candidate import ROOT, candidate_wheel
-from repomap_test_support.installed_environment import ChildResult, run_child
-from repomap_test_support.installed_experience_driver import (
+from common_lore_index_test_support.installed_candidate import ROOT, candidate_wheel
+from common_lore_index_test_support.installed_environment import ChildResult, run_child
+from common_lore_index_test_support.installed_experience_driver import (
     Observed, OwnerRun, blocker_probe, guard_events, guard_extra, guarded_argv, intent_for,
     json_object, observed_code, preparation, pure_environment,
 )
-from repomap_test_support.installed_experience_fixture import (
+from common_lore_index_test_support.installed_experience_fixture import (
     current_config_name, driverless_postgres_home, expectations, message_is_reviewed_public,
     tiny_home, write_tiny_material,
 )
-from repomap_test_support.installed_mcp_session import McpSession, stderr_class, structured, useful_question
-from repomap_test_support.installed_origin import observe_origin
-from repomap_test_support.installed_experience_witnesses import origin_source_values, pure_local_origin_witness
-from repomap_test_support.source_ingestion_integration import copy_warc_fixture_root, source_ingestion_fixture_root
+from common_lore_index_test_support.installed_mcp_session import McpSession, stderr_class, structured, useful_question
+from common_lore_index_test_support.installed_origin import observe_origin
+from common_lore_index_test_support.installed_experience_witnesses import origin_source_values, pure_local_origin_witness
+from common_lore_index_test_support.source_ingestion_integration import copy_warc_fixture_root, source_ingestion_fixture_root
 
 OUT, EXIT, FS, MCP, GUARD = "child-stdout", "child-exit", "filesystem", "mcp-reply", "guard-log"
 
 
 def _stderr(result: ChildResult) -> str:
-    return stderr_class(result.stderr, module_notice=LEGACY_MCP_NOTICE, command_notice=LEGACY_COMMAND_NOTICE)
+    return stderr_class(result.stderr)
 
 
 def _absolute_strings(value: Any) -> list[str]:
@@ -115,7 +113,7 @@ def test_installed_local_workflow(tmp_path_factory, tmp_path: Path) -> None:
     scripts = project["scripts"]
     source = {"L00": origin_source_values(ROOT),
               "L01": {f"{key}_stdout": f"{name} {version}\n" for key, name in (
-                  ("cloe", "cloe"), ("long", "common-lore-index"), ("legacy", "repomap-kg"))},
+                  ("cloe", "cloe"), ("long", "common-lore-index"))},
               "L05": {"code_line": expect.code_line}}
     run = OwnerRun("local", intent_for("local", preparation(candidate), source))
     run.registry.own(owned)
@@ -130,7 +128,7 @@ def test_installed_local_workflow(tmp_path_factory, tmp_path: Path) -> None:
 
     def l01() -> Observed:
         facts: dict[str, tuple[Any, str]] = {}
-        for key, name in (("cloe", "cloe"), ("long", "common-lore-index"), ("legacy", "repomap-kg")):
+        for key, name in (("cloe", "cloe"), ("long", "common-lore-index")):
             result = run_child(env, (str(env.wrapper(name)), "--version"))
             if result.returncode != 0:
                 return Observed(exit=result.exit, failure_code="child-exit-nonzero")
@@ -194,7 +192,7 @@ def test_installed_local_workflow(tmp_path_factory, tmp_path: Path) -> None:
         session.request("initialize", {"protocolVersion": MCP_PROTOCOL_VERSION, "capabilities": {},
                                        "clientInfo": {"name": "installed-experience", "version": "1"}})
         session.notify("notifications/initialized")
-        message = session.call("repomap_search_nodes", {"graph_id": GRAPH_ID,
+        message = session.call("cloe_search_nodes", {"graph_id": GRAPH_ID,
                                 "query": "email.message", "kind": "email.message"})
         transcript = session.close()
         rows = (structured(transcript, message) or {}).get("results") or []

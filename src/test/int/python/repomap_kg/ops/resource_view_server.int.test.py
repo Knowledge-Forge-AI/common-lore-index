@@ -24,15 +24,15 @@ from common_lore_index.ops.resource_view._projections import project_staging_res
 from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.errors import StorageCommitUnknownError
 from common_lore_index.storage.staging_observability import StagingMeasurements
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
 )
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.cli_in_process import module_process_environment
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.sqlite_managed_child import ManagedChild, cleanup_after_failure
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.cli_in_process import module_process_environment
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.sqlite_managed_child import ManagedChild, cleanup_after_failure
 from runner_coverage_observer import popen_observed_process
 
 _TEST_CONTROL_ACK = b"resource-view-test-control-ack-v1\n"

@@ -11,9 +11,9 @@ def test_hold_and_spawn_abrupt_kill_settlement_produces_complete_receipt_and_cle
     """Prove HOLD_AND_SPAWN with abrupt=True produces complete .exit, valid shard, and clean combine on kill_holder."""
     import sqlite3
     from runner_coverage_execution import read_registered_children
-    from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-    from repomap_test_support.sqlite_local_harness import LocalHarness
-    from repomap_test_support.sqlite_local_lock_children import HOLD_AND_SPAWN, kill_holder, start_holder
+    from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+    from common_lore_index_test_support.sqlite_local_harness import LocalHarness
+    from common_lore_index_test_support.sqlite_local_lock_children import HOLD_AND_SPAWN, kill_holder, start_holder
 
     source = write_shell_source(tmp_path / "sources" / "vault")
     home = write_sqlite_home(tmp_path / "home", graph_toml("vault", source, privacy="private-ops"))
@@ -69,9 +69,9 @@ def test_hold_and_spawn_abrupt_kill_settlement_produces_complete_receipt_and_cle
 
 def test_hold_and_spawn_abrupt_child_unexpectedly_released_invalidates_receipt_and_raises(tmp_path: Path) -> None:
     """Prove an abrupt HOLD_AND_SPAWN child released instead of killed invalidates receipt and raises."""
-    from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-    from repomap_test_support.sqlite_local_harness import LocalHarness
-    from repomap_test_support.sqlite_local_lock_children import HOLD_AND_SPAWN, release_holder, start_holder
+    from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+    from common_lore_index_test_support.sqlite_local_harness import LocalHarness
+    from common_lore_index_test_support.sqlite_local_lock_children import HOLD_AND_SPAWN, release_holder, start_holder
 
     source = write_shell_source(tmp_path / "sources" / "vault")
     home = write_sqlite_home(tmp_path / "home", graph_toml("vault", source, privacy="private-ops"))

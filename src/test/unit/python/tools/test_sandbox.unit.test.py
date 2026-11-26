@@ -269,10 +269,10 @@ def test_managed_image_reuses_only_exact_recipe_identity(tmp_path):
     assert not any(command[:2] == ["docker", "build"] for command in calls)
 
 
-from repomap_test_support.pgvector_prebuilt_sandbox_cases import (
+from common_lore_index_test_support.pgvector_prebuilt_sandbox_cases import (
     outer_command_case, prepare_case, finished_case, run_tests_case,
 )
-from repomap_test_support.pgvector_prebuilt_facade_cases import facade_case, dispatch_case
+from common_lore_index_test_support.pgvector_prebuilt_facade_cases import facade_case, dispatch_case
 
 
 @pytest.mark.parametrize("role,failure", [

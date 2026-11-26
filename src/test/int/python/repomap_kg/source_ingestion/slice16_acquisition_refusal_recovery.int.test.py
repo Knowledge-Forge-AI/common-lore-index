@@ -2,7 +2,7 @@
 from pathlib import Path
 import pytest
 from common_lore_index.ops.ingestion.github_api import acquire_github_api_source, GitHubApiPolicyError
-from repomap_test_support.run25_acquisition_fixtures import (
+from common_lore_index_test_support.run25_acquisition_fixtures import (
     Run25DeterministicGitHubTransport, make_run25_github_source_toml, snapshot_directory_state,
 )
 
@@ -81,7 +81,7 @@ def test_github_http_transport_accepts_large_configured_budget():
     from common_lore_index.ops.ingestion.github_api import (
         PublicGitHubRestTransport, build_github_api_plan_from_config, load_github_api_source_config,
     )
-    from repomap_test_support.source_ingestion_integration import IntFakeGitHubOpener, github_api_fixture_root
+    from common_lore_index_test_support.source_ingestion_integration import IntFakeGitHubOpener, github_api_fixture_root
 
     path = github_api_fixture_root() / "public_real_transport_config" / "github-source.toml"
     config = replace(load_github_api_source_config(path), max_bytes_per_run=2**63 - 1)

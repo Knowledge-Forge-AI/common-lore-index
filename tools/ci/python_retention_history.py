@@ -22,6 +22,10 @@ from ci.python_retention_cohorts import (
     validate_cohorts,
 )
 from ci.retained_python_namespace_history import namespace_path_successors
+from ci.retained_python_git import is_ancestor
+from ci.python_retention_support_projection import (
+    IDENTITY as SUPPORT_IDENTITY, SupportNamespaceProjection,
+)
 
 
 
@@ -117,8 +121,15 @@ def _resolve_chain(
     start: str,
     current: set[str],
     targets: Mapping[str, Sequence[str]],
+    support_paths: Mapping[str, str] | None = None,
 ) -> set[str]:
     leaves: set[str] = set()
+
+    def successors(node: str) -> list[str]:
+        history = list(targets.get(node, ()))
+        if support_paths is not None and node in support_paths:
+            history.append(support_paths[node])
+        return history
 
     def walk(node: str, visiting: set[str]) -> None:
         if node in visiting:
@@ -126,18 +137,15 @@ def _resolve_chain(
         if node in current:
             leaves.add(node)
             return
-        if node not in targets:
+        if node not in targets and (support_paths is None or node not in support_paths):
             raise HistoryValidationError(
                 f"removed path requires explicit scope history: {node}"
             )
-        successors = targets[node]
-        if not successors:
-            return  # An explicit ``to: null`` is a valid terminated leaf.
         next_visiting = visiting | {node}
-        for successor in successors:
+        for successor in successors(node):
             walk(successor, next_visiting)
 
-    for successor in targets.get(start, ()):
+    for successor in successors(start):
         walk(successor, {start})
     return leaves
 
@@ -178,6 +186,7 @@ def validate_path_history(
     *,
     git_runner: GitRunner = subprocess.run,
     context: HistoryContext | None = None,
+    support: SupportNamespaceProjection | None = None,
 ) -> PathHistoryResult:
     """Validate append-only path lineage and protected predecessor coverage."""
     by_old, targets, transitions, decompositions = _parse_history(data)
@@ -191,6 +200,11 @@ def validate_path_history(
         targets[source] = [successor]
         by_old[source] = {"from": source, "to": successor,
                           "rationale": "Sealed ADR0123 namespace identity projection"}
+    support_paths = support.paths if support is not None else {}
+    if set(namespace_successors) & support_paths.keys():
+        raise HistoryValidationError("product and test-support namespace projections overlap")
+    for source, successor in support_paths.items():
+        by_old.setdefault(source, {"from": source, "to": successor, "rationale": SUPPORT_IDENTITY})
     current_files = {
         entry["path"]: entry
         for entry in data.get("files", [])
@@ -215,7 +229,12 @@ def validate_path_history(
     if basis.worktree_predecessor is not None and basis.worktree_predecessor not in predecessor_commits:
         predecessor_commits.append(basis.worktree_predecessor)
     documents_by_commit: dict[str, dict[str, Any]] = {}
+    projections_by_commit: dict[str, SupportNamespaceProjection | None] = {}
     for commit in predecessor_commits:
+        projections_by_commit[commit] = (
+            support if support is not None and support.introduction is not None
+            and is_ancestor(repo_root, support.introduction, commit) else None
+        )
         blob = inventory_blob(repo_root, commit, basis.inventory_path, git_runner)
         if blob is None:
             # An absent predecessor is valid only after complete-history proof.
@@ -253,15 +272,18 @@ def validate_path_history(
                 raise HistoryValidationError(
                     "inventory lineage history is not append-only"
                 )
-            validate_cohort_transition(older, newer)
-    for document in previous_documents:
+            validate_cohort_transition(older, newer, older_support=projections_by_commit[older_commit],
+                                       newer_support=projections_by_commit[newer_commit])
+    for commit, document in zip(predecessor_commits, previous_documents, strict=True):
         _, _, old_transitions, old_decompositions = _parse_history(document)
         if not _subsequence(old_transitions, transitions) or not _subsequence(
             old_decompositions, decompositions
         ):
             raise HistoryValidationError("inventory lineage history is not append-only")
-        validate_cohort_transition(document, data)
+        validate_cohort_transition(document, data, older_support=projections_by_commit[commit], newer_support=support)
     if not previous_documents:
+        if support is not None:
+            raise HistoryValidationError("test-support projection requires an audited predecessor")
         validate_cohorts(data)
 
     old_entries: dict[str, list[dict[str, Any]]] = {}
@@ -279,7 +301,7 @@ def validate_path_history(
             # After publication the comparison inventory may contain only the
             # renamed owner. Its exact sealed successor is still required;
             # ordinary absent sources retain the predecessor-evidence refusal.
-            if namespace_successors.get(source) in current:
+            if namespace_successors.get(source) in current or source in support_paths:
                 continue
             raise HistoryValidationError(
                 f"lineage source lacks predecessor evidence: {source}"
@@ -290,16 +312,16 @@ def validate_path_history(
             raise HistoryValidationError(
                 f"removed path requires explicit scope history: {path}"
             )
-        if targets[path]:
-            _resolve_chain(path, current, targets)
+        if targets.get(path) or path in support_paths:
+            _resolve_chain(path, current, targets, support_paths)
     for path, entries in old_entries.items():
         if path in current:
             for entry in entries:
                 _check_protection(entry, current_files.get(path), path)
-    for source, successors in targets.items():
-        if not successors:
+    for source in sorted(targets.keys() | support_paths.keys()):
+        if not targets.get(source) and source not in support_paths:
             continue
-        leaves = _resolve_chain(source, current, targets)
+        leaves = _resolve_chain(source, current, targets, support_paths)
         source_entries = old_entries.get(source, [])
         if not source_entries and source in current_files:
             source_entries = [current_files[source]]
@@ -314,6 +336,8 @@ def validate_path_history(
         else None
     )
     evidence["namespace_source_successors"] = namespace_successors
+    if support_paths:
+        evidence["test_support_namespace_successors"] = support_paths
     comparison_evidence = evidence.get("comparison_basis")
     if not isinstance(comparison_evidence, dict):
         raise HistoryValidationError("history evidence comparison basis is invalid")

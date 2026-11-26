@@ -6,12 +6,12 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.storage_integration import canonicalization_fixture
+from common_lore_index_test_support.storage_integration import canonicalization_fixture
 
 from common_lore_index.storage import (
     apply_migrations,
@@ -259,7 +259,7 @@ def _cli_connection_args(postgres, *, root_path: str) -> tuple[str, ...]:
 
 
 def _mcp_payloads(postgres, *, public_root: str, private_root: str):
-    from common_lore_index.server.mcp import repomap_nix_summary
+    from common_lore_index.server.mcp import cloe_nix_summary
 
     with tempfile.TemporaryDirectory() as tmpdir:
         config_path = Path(tmpdir) / "psycopg62.local.toml"
@@ -271,8 +271,8 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
         with patch.dict(
             os.environ,
             {
-                "REPOMAP_OPS_CONFIG": str(config_path),
-                "REPOMAP_PSQL_COMMAND": postgres.psql_command,
+                "CLOE_OPS_CONFIG": str(config_path),
+                "CLOE_PSQL_COMMAND": postgres.psql_command,
             },
             clear=False,
         ):
@@ -282,7 +282,7 @@ def _mcp_payloads(postgres, *, public_root: str, private_root: str):
             ):
                 _select_connector(selector, connector, postgres=postgres)
                 payloads[mode] = {
-                    graph_id: repomap_nix_summary(graph_id=graph_id)
+                    graph_id: cloe_nix_summary(graph_id=graph_id)
                     for graph_id in ("public-nix", "private-nix")
                 }
         return payloads

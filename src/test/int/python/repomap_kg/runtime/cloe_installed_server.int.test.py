@@ -14,7 +14,7 @@ import contextlib
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
@@ -27,20 +27,20 @@ from installed_experience_pins import (
     CODE_KIND, GRAPH_ID, POSTGRES_BIN, PSYCOPG_IMPL, PSYCOPG_VERSION, RELEASED_CLOE_COMMIT,
 )
 from installed_experience_rules import classify_environment
-from repomap_test_support.installed_candidate import (
+from common_lore_index_test_support.installed_candidate import (
     ROOT, candidate_wheel, installed_graph_parser_digest, released_cloe_wheel,
 )
-from repomap_test_support.installed_environment import InstalledEnvironment, include_system_site_packages, run_child
-from repomap_test_support.installed_experience_driver import (
+from common_lore_index_test_support.installed_environment import InstalledEnvironment, include_system_site_packages, run_child
+from common_lore_index_test_support.installed_experience_driver import (
     Observed, OwnerRun, intent_for, json_object, preparation, pure_environment,
 )
-from repomap_test_support.installed_experience_fixture import (
+from common_lore_index_test_support.installed_experience_fixture import (
     expectations, provisioned_postgres_home, write_tiny_material,
 )
-from repomap_test_support.installed_mcp_session import result_digest, useful_question
-from repomap_test_support.installed_origin import classify, closure, observe_origin
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.installed_mcp_session import result_digest, useful_question
+from common_lore_index_test_support.installed_origin import classify, closure, observe_origin
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
     materialize_mixed_v1_working_copy,
@@ -48,7 +48,8 @@ from repomap_test_support.retrieval_evaluation_fixture import (
 )
 
 OUT, MCP = "child-stdout", "mcp-reply"
-READBACK = {"REPOMAP_STORAGE_READBACK_DRIVER": "psycopg"}
+READBACK = {"CLOE_STORAGE_READBACK_DRIVER": "psycopg"}
+PREDECESSOR_READBACK = {"REPOMAP_STORAGE_READBACK_DRIVER": "psycopg"}
 SERVER_PROBE = """import json, os, sys
 home, psql, database, graph, query = sys.argv[1:6]
 secret = os.path.join(home, 'pgpass.secret')
@@ -65,8 +66,8 @@ print(json.dumps({'stage': 'refresh', 'result': result.result,
                   'publication_state': result.publication_state,
                   'failure_category': result.error_category}), flush=True)
 os.environ['CLOE_HOME'] = home
-from common_lore_index.server._mcp_navigation import repomap_navigation_search
-found = repomap_navigation_search(graph_id=graph, query=query, scope='code')
+from common_lore_index.server._mcp_navigation import cloe_navigation_search
+found = cloe_navigation_search(graph_id=graph, query=query, scope='code')
 kinds = [member.get('kind') for group in found.get('results', []) for member in group.get('members', [])]
 print(json.dumps({'result': result.result, 'publication_state': result.publication_state,
                   'function_present': %r in kinds}))
@@ -190,7 +191,7 @@ def test_released_provisioned_server_upgrade(
     for env in (old, new):
         normal = observe_origin(env, ROOT, isolated=False)
         isolated = observe_origin(env, ROOT, isolated=True)
-        assert closure("provisioned-server", normal, isolated)
+        assert closure("provisioned-server", normal, isolated, legacy_facade=env is old)
         driver = (isolated.payload or {}).get("driver") or {}
         assert driver.get("impl") == PSYCOPG_IMPL and driver.get("version") == PSYCOPG_VERSION
         assert classify(driver.get("file"), env, ROOT) == "system-site"
@@ -204,9 +205,9 @@ def test_released_provisioned_server_upgrade(
                                         host=postgres.host, port=postgres.port, database=postgres.database,
                                         user=postgres.user, password=postgres.password)
 
-        def refresh(env: InstalledEnvironment, query: str) -> None:
-            result = run_child(env, (str(env.python), "-c", SERVER_PROBE, str(home), str(client),
-                                     postgres.database, GRAPH_ID, query), extra=READBACK)
+        def refresh(env: InstalledEnvironment, query: str, *, probe: str = SERVER_PROBE) -> None:
+            result = run_child(env, (str(env.python), "-c", probe, str(home), str(client),
+                                     postgres.database, GRAPH_ID, query), extra=PREDECESSOR_READBACK if env is old else READBACK)
             assert result.exit == 0, result.exit
             payload = json_object(result.stdout.strip().splitlines()[-1])
             assert payload == {"result": "success", "publication_state": "committed", "function_present": True}
@@ -215,21 +216,24 @@ def test_released_provisioned_server_upgrade(
             selected = run_child(env, (str(env.wrapper("cloe")), "ops", "context-select",
                                        "--repo-map-home", str(home), "--graph", GRAPH_ID,
                                        "--binding", graph_source_binding_id(GRAPH_ID, "code"),
-                                       "--pin-publication", "--output", str(output)), extra=READBACK)
+                                       "--pin-publication", "--output", str(output)), extra=PREDECESSOR_READBACK if env is old else READBACK)
             assert selected.exit == 0, selected.exit
             return ((json_object(selected.stdout) or {}).get("expected_publication") or {}).get("generation")
 
-        def locations(env: InstalledEnvironment, query: str) -> tuple[object, ...]:
+        def locations(env: InstalledEnvironment, query: str, *,
+                      tool_prefix: Literal["cloe", "repomap"] = "cloe") -> tuple[object, ...]:
             answer = useful_question(env, (str(env.wrapper("cloe")), "mcp", "serve", "--repo-map-home", str(home)),
                                      graph_id=GRAPH_ID, code_query=query, code_kind=CODE_KIND,
-                                     docs_query=expected.docs_query, protocol=MCP_PROTOCOL_VERSION, extra=READBACK)
+                                     docs_query=expected.docs_query, protocol=MCP_PROTOCOL_VERSION,
+                                     extra=PREDECESSOR_READBACK if env is old else READBACK, tool_prefix=tool_prefix)
             assert answer.complete and answer.protocol_version == MCP_PROTOCOL_VERSION
             return tuple(answer.facts[key][0] for key in ("code_kind", "code_path", "code_line", "docs_path"))
 
-        refresh(old, expected.code_query)
+        released_probe = SERVER_PROBE.replace("cloe_navigation_search", "repomap_navigation_search")
+        refresh(old, expected.code_query, probe=released_probe)
         assert generation(old, tmp_path / "release-selection.json") == 1
         original = (CODE_KIND, expected.code_path, expected.code_line, expected.docs_path)
-        assert locations(old, expected.code_query) == original
+        assert locations(old, expected.code_query, tool_prefix="repomap") == original
         hidden = material.with_name("material offline")
         material.rename(hidden)
         assert locations(new, expected.code_query) == original

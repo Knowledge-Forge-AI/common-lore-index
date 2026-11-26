@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from common_lore_index.retrieval.query_contracts import QueryMode, QueryScope, unavailable_envelope
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
 from retrieval_evaluation_accounting import ByteLayerAccounting
 from retrieval_evaluation_admission import admit_evaluation
 from retrieval_evaluation_attempts import admit_attempt

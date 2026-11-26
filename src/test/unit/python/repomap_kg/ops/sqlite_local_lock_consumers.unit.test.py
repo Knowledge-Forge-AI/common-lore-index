@@ -28,11 +28,11 @@ from common_lore_index.ops.local_cleanup import cleanup_local_graph
 from common_lore_index.ops.local_state_layout import attempts_namespace
 from common_lore_index.ops.portable_refresh import portable_attempts_parent
 from common_lore_index.storage.sqlite_local.schema import LocalStoreError
-from repomap_test_support.cli_in_process import module_process_environment
-from repomap_test_support.host_read_store_config import fail_if_reached
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import remove_database
-from repomap_test_support.sqlite_local_lock_children import release_holder, start_holder
+from common_lore_index_test_support.cli_in_process import module_process_environment
+from common_lore_index_test_support.host_read_store_config import fail_if_reached
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import remove_database
+from common_lore_index_test_support.sqlite_local_lock_children import release_holder, start_holder
 
 IN_PROGRESS = "graph-publication-in-progress"
 

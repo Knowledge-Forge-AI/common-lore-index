@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.w5_component_artifacts import make_component_pair
+from common_lore_index_test_support.w5_component_artifacts import make_component_pair
 from retrieval_semantic_pair_artifacts import PairReportRefusal, load_journal
 from retrieval_semantic_raw_component_anchors import canonical_anchors, digest_map, safe_subcode
 

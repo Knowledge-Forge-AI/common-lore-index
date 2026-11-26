@@ -65,7 +65,7 @@ def _render_text(result: dict[str, Any]) -> None:
 def _dispatch_plan(args: argparse.Namespace, print_error: Callable[..., None]) -> int:
     try:
         selected = args.repo_map_home or args.config
-        home, _, files, _ = _read_ops_config_home_payload(selected)
+        home, _, files, _ = _read_ops_config_home_payload(selected, migration=True)
         occupied = {entry.name for entry in home.iterdir()}
         plan = plan_cloe_config_filenames(files, occupied_names=occupied)
     except OpsConfigError as error:

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 from common_lore_index.graph.multi_source import SourceKind
-from repomap_test_support.run25_wave2_corpus import (
+from common_lore_index_test_support.run25_wave2_corpus import (
     create_run25_wave2_graph_config,
     inject_malformed_plist,
     inject_malformed_yaml,

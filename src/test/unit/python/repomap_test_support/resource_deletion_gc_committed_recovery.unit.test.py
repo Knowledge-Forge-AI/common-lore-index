@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_deletion_gc import (
+from common_lore_index_test_support.resource_deletion_gc import (
     DeletionGcError,
 )
-from repomap_test_support.resource_deletion_records import (
+from common_lore_index_test_support.resource_deletion_records import (
     DeletionRecordStore,
     DeletionRecoveryState,
 )
-from repomap_test_support.resource_deletion_gc_test_support import (
+from common_lore_index_test_support.resource_deletion_gc_test_support import (
     NOW,
     assert_one_ambiguous as _assert_one_ambiguous,
     committed_fixture as _committed_fixture,
@@ -26,7 +26,7 @@ from repomap_test_support.resource_deletion_gc_test_support import (
     rewrite_barrier as _rewrite_barrier,
     root as _root,
 )
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimError,
     ClaimPurpose,
     register_protection,

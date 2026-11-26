@@ -8,7 +8,7 @@ from typing import Any
 
 from common_lore_index.retrieval.context_work import WorkLedger
 from common_lore_index.server.context_read_sqlite import SqliteContextReadAdapter
-from repomap_test_support.context_fixture import build_sqlite_context_fixture
+from common_lore_index_test_support.context_fixture import build_sqlite_context_fixture
 from retrieval_evaluation_context_native import (
     ContextNativeView,
     materialize_context_native_view,

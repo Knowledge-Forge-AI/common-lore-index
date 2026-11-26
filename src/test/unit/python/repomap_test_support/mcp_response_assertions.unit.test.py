@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from repomap_test_support.mcp_response_assertions import (
+from common_lore_index_test_support.mcp_response_assertions import (
     is_json_object,
     is_mcp_response,
     json_bool_field,

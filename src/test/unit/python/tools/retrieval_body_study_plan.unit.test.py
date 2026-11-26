@@ -39,7 +39,7 @@ def test_candidate_snapshot_rejects_symlink_escape() -> None:
 
 def test_body_plan_byte_cap_is_checked_on_mapping_before_admission() -> None:
     from retrieval_body_study_contracts import MAX_PLAN_BYTES
-    from repomap_test_support.retrieval_body_study_host_cases import body_plan
+    from common_lore_index_test_support.retrieval_body_study_host_cases import body_plan
 
     plan = body_plan()
     validate_body_plan(plan)

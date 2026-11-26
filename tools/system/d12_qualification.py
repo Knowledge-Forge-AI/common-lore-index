@@ -11,7 +11,7 @@ from typing import Any
 
 from ci.d12_system_grant import read_regular_json_object, validate_system_admission_proof
 from ci.d12_hosted_state import VERIFIED_AMD64_BASE_METADATA
-from repomap_test_support import d12_image_probes as d12
+from common_lore_index_test_support import d12_image_probes as d12
 from tools.system.d12_candidate_assessment import verify_preflight_matches_manifest
 from tools.system.config import SystemTestError
 from tools.system.d12_candidate_assessment import _verify_candidate_assessment, _verify_round_trip

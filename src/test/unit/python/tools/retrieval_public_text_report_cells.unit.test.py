@@ -8,7 +8,7 @@ from typing import Any, cast
 
 import pytest
 
-from repomap_test_support.w5_semantic_support import make_w5_calibration_task
+from common_lore_index_test_support.w5_semantic_support import make_w5_calibration_task
 from retrieval_public_text_census import retained_task_sha256, task_sha256
 from retrieval_public_text_fusion import METRIC_KEYS
 from retrieval_public_text_report_cells import (

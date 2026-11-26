@@ -28,9 +28,9 @@ from common_lore_index.ops.config_local import LocalSqliteConfig, load_graph_reg
 from common_lore_index.storage.sqlite_local import migrations
 from common_lore_index.storage.sqlite_local.connection import publisher_lock
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.host_read_store_config import fail_if_reached, setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.host_read_store_config import fail_if_reached, setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import (
     generation_bundle,
     graph_toml,
     publication_for,
@@ -150,7 +150,7 @@ def test_behind_database_is_reported_and_refused_by_ordinary_commands(
 def test_postgres_home_refuses_before_any_action(tmp_path: Path) -> None:
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     before = sorted(path.name for path in home.rglob("*"))
     message = _refused(tmp_path, home, "sqlite-upgrade", "--graph", "host-one", "--backup-output", str(tmp_path / "bk"))
     assert "sqlite-local-home-required" in message, message

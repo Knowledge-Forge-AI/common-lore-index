@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.w5_experiment_results import (
+from common_lore_index_test_support.w5_experiment_results import (
     ResultV2Run,
     finalize_attempt_evidence,
 )

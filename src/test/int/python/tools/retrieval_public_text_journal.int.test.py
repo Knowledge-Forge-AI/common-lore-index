@@ -11,9 +11,9 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.w5_experiment_support import experiment_source_closure
-from repomap_test_support.w5_public_text_artifacts import SyntheticStudy, synthetic_admission, synthetic_raw_component
-from repomap_test_support.w5_public_text_journal import begin_component_journal, finish_component_journal
+from common_lore_index_test_support.w5_experiment_support import experiment_source_closure
+from common_lore_index_test_support.w5_public_text_artifacts import SyntheticStudy, synthetic_admission, synthetic_raw_component
+from common_lore_index_test_support.w5_public_text_journal import begin_component_journal, finish_component_journal
 from retrieval_public_text_allocation import (
     AllocationRefused, StudySpec, WorkerSpec, finish_study, finish_worker, read_state, reserve_study, reserve_worker,
 )
@@ -97,8 +97,8 @@ def test_driver_keeps_actual_journal_write_failure_beside_primary(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Real exclusive journal writes fail; the original study cause remains primary."""
     import json
-    import repomap_test_support.w5_public_text_study as study
-    from repomap_test_support.w5_public_text_journal import FAILURE_NAME
+    import common_lore_index_test_support.w5_public_text_study as study
+    from common_lore_index_test_support.w5_public_text_journal import FAILURE_NAME
 
     root = tmp_path.resolve()
     worker = worker_closure(REPO)

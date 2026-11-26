@@ -330,7 +330,7 @@ def test_scrub_coverage_environment_disarms_capability_atomically(tmp_path):
 
 
 def test_module_process_environment_avoids_duplicate_entries(tmp_path):
-    from repomap_test_support.cli_in_process import module_process_environment
+    from common_lore_index_test_support.cli_in_process import module_process_environment
     from runner_coverage_bootstrap import install_bootstrap_directory
     m_dir = tmp_path / "child_procs"
     m_dir.mkdir()

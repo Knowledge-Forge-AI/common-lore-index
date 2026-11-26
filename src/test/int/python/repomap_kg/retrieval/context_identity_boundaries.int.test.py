@@ -20,14 +20,14 @@ from common_lore_index.storage.node_locations import NodeLocationsQuery
 from common_lore_index.storage.postgres_navigation_sql import PG_SCOPED_TRANSPORT_BYTE_CAP
 from common_lore_index.storage.postgres_node_locations import read_postgres_node_locations_with_executor
 from common_lore_index.storage.readback_driver import execute_json_readback
-from repomap_test_support.context_assertions import (
+from common_lore_index_test_support.context_assertions import (
     assert_valid_budget_error, assert_valid_context_packet, build_postgres_context_fixture,
 )
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE, BINDING_DOCS, CTX_GRAPH_ID, SNAP_CORE, SNAP_DOCS,
     build_sqlite_context_fixture,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
 def _valid_vector() -> list[list[Any]]:

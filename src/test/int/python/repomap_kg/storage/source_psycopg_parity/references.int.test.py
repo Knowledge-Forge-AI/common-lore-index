@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -23,7 +23,7 @@ from common_lore_index.storage.readback_driver import (
     READBACK_DRIVER_ENV,
 )
 
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     _restore_environment_variable,
     _select_pg_connector_for_postgres,
     discovery_fixture,
@@ -55,7 +55,7 @@ class StorageSourceReferenceRecordsPsycopgParityIntegrationTests(unittest.TestCa
                 body=feed_body,
             )
 
-        from common_lore_index.server.mcp import repomap_source_references
+        from common_lore_index.server.mcp import cloe_source_references
 
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -124,7 +124,7 @@ class StorageSourceReferenceRecordsPsycopgParityIntegrationTests(unittest.TestCa
                         source_id="missing-source",
                         psql_command=postgres.psql_command,
                     )
-                    psql_mcp_payload = repomap_source_references(
+                    psql_mcp_payload = cloe_source_references(
                         **mcp_args,
                         source_id="example-rss-feed",
                         source_run_id=source_run_id,
@@ -201,7 +201,7 @@ class StorageSourceReferenceRecordsPsycopgParityIntegrationTests(unittest.TestCa
                         source_id="missing-source",
                         psql_command=psycopg_only_psql_command,
                     )
-                    psycopg_mcp_payload = repomap_source_references(
+                    psycopg_mcp_payload = cloe_source_references(
                         **mcp_args,
                         source_id="example-rss-feed",
                         source_run_id=source_run_id,

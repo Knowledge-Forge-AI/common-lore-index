@@ -427,7 +427,7 @@ Equivalent or specialized module entrypoints are:
   import-warc`, `bulk import`, `api acquire`, and `github acquire`, versioned
   acquisition-only commands that cannot mutate final graph state or freshness.
 
-`src/main/go/cmd/repomap-go-extract/main.go` is an internal helper executable,
+`src/main/go/cmd/cloe-go-extract/main.go` is an internal helper executable,
 not a second user-facing Common Lore Index product. Python resolves it only through the
 controlled contract in
 `src/main/python/common_lore_index/extractors/languages/go_helper.py` and invokes it
@@ -829,8 +829,8 @@ MCP dispatch is read-only. It may inspect configured and stored state, but it
 does not refresh graphs, initialize or migrate databases, restore or drop
 databases, install services, or mutate source roots.
 
-`repomap_canonical_nodes`, `repomap_canonical_edges`,
-`repomap_explain_canonical_edge`, and `repomap_canonical_neighborhood` read
+`cloe_canonical_nodes`, `cloe_canonical_edges`,
+`cloe_explain_canonical_edge`, and `cloe_canonical_neighborhood` read
 through the named canonical read-store seam in
 `src/main/python/common_lore_index/server/canonical_read_store.py`. The payload
 functions in `server/mcp_canonical.py` resolve the graph, apply visibility,
@@ -854,9 +854,9 @@ see `docs/status/2026/09/28/00970-product2-host-mcp-readstore1-exit.md`.
 Seven configured-graph investigation tools read through the named
 investigation read-store seam in
 `src/main/python/common_lore_index/server/investigation_read_store.py`:
-`repomap_graph_status`, `repomap_refresh_status`, `repomap_search_nodes`,
-`repomap_search_files`, `repomap_search_observations`,
-`repomap_project_summary` and `repomap_neighborhood`. The payload owners in
+`cloe_graph_status`, `cloe_refresh_status`, `cloe_search_nodes`,
+`cloe_search_files`, `cloe_search_observations`,
+`cloe_project_summary` and `cloe_neighborhood`. The payload owners in
 `server/ops.py`, `server/_ops_search.py` and `server/_ops_summaries.py` keep
 graph visibility, validation, serialization, redaction and paging. They pass
 a graph id and frozen query records (`GraphRefreshStatusQuery`,
@@ -885,7 +885,7 @@ READSTORE3 finishes the remaining twelve database readers on the same seams:
   `SourceReferencesQuery`) to `SourceReadStore` in
   `src/main/python/common_lore_index/server/source_read_store.py`, whose only adapter
   delegates to the maintained `storage/source_readback.py` owners;
-- legacy `repomap_status` calls
+- legacy `cloe_status` calls
   `CanonicalReadStore.canonical_storage_summary()`; its payload is unchanged.
 
 The source and status adapters share
@@ -925,8 +925,8 @@ fallback for configured graphs. The CLI default (`host_then_container`) is
 unchanged in `ops.refresh`. RESOLVE1 removed the dormant
 `mcp_core.StorageConnection.query_storage` and
 `server/ops.py::query_configured_storage`, and a unit guard keeps every
-`server` module free of the retained fallback names. `repomap_list_graphs`
-and `repomap_projects` read configuration only, with no backend binding. The
+`server` module free of the retained fallback names. `cloe_list_graphs`
+and `cloe_projects` read configuration only, with no backend binding. The
 two server-memory tools read files through the memory bridge. Still
 PostgreSQL-specific:
 
@@ -1326,7 +1326,7 @@ a claim that this documentation phase reran the operation.
 | Database capability separation | Long-running readers, refresh workers, coordinator control, and lifecycle administration have distinct minimum authority | ARCH7E defines and verifies the grants; ARCH7G projects per-unit secrets and writable mounts so lifecycle administration is absent from long-running units | Unit, disposable-PostgreSQL, render, and fresh-cluster tests prove the role and capability matrix | ARCH7E and ARCH7G status evidence | No material mismatch |
 | Database determinism | Database encoding/collation and protocol ordering are stable across supported release clusters | ARCH7G initializes the cluster with UTF-8/C and creates graph/control databases from `template0` with explicit UTF-8/C attributes; application ordering remains explicit where required | Exact SQL/render tests and fresh-cluster catalog acceptance | ARCH7G status evidence | No material release-cluster mismatch; ARCH8 repeats upgrade/restore equivalence |
 | Psycopg and `psql` | Psycopg for adapted runtime paths while retaining `psql` for owned migration/lifecycle paths | `pyproject.toml`; `storage/readback_driver.py`; `storage/staged_ingestion.py`; `storage/main.py` | `storage/readback_driver/driver_selection.unit.test.py`; `storage/psycopg_parity/summary.int.test.py` | `docs/status/2026/07/12/00444-psycopg110-connector-readback-closure.md` | No material mismatch |
-| Go extraction | Controlled versioned helper protocol with deterministic full-refresh output | `extractors/languages/go_helper.py`; `extractors/languages/go_protocol.py`; `src/main/go/cmd/repomap-go-extract/main.go`; ARCH7F target-platform image construction | Protocol/path-scope/build tests plus ARCH7F release-resource and fresh-image probes | GO closure and ARCH7F status evidence | No material Linux container release mismatch; native Windows background packaging remains an intentional deferral |
+| Go extraction | Controlled versioned helper protocol with deterministic full-refresh output | `extractors/languages/go_helper.py`; `extractors/languages/go_protocol.py`; `src/main/go/cmd/cloe-go-extract/main.go`; ARCH7F target-platform image construction | Protocol/path-scope/build tests plus ARCH7F release-resource and fresh-image probes | GO closure and ARCH7F status evidence | No material Linux container release mismatch; native Windows background packaging remains an intentional deferral |
 | Python distribution resources | End-user runtime operates from the installed image rather than a checkout | ARCH7F packages both migration trees and the distribution; ARCH7G runs every application unit from that image without host Python | Release-resource, wheel-catalog, multi-architecture build, and fresh-cluster toolchain-absence tests | ARCH7F and ARCH7G status evidence | No material mismatch |
 | Source-root access | Enabled graph roots are available without broad host authority | ARCH7G resolves every enabled root from validated configuration and mounts the same absolute path read-only only into units that perform extraction/lifecycle work | Render tests cover exact enabled-root projection and writable-capability exclusion | ARCH7G status evidence | No material mismatch; ARCH8 exercises the public repository ladder |
 | Native background service | Portable foreground coordinator plus host-native adapters where supported | LaunchAgent and systemd-user adapters; Windows native adapter is explicitly pending | `service_package/platforms.unit.test.py`; `cli/coordinator_service.unit.test.py` | `docs/status/2026/07/13/00527-async13-portable-user-service-packaging.md` | No material mismatch; intentional platform deferral |
@@ -1540,7 +1540,7 @@ canonical tools
 (`docs/status/2026/09/28/00970-product2-host-mcp-readstore1-exit.md`), the
 seven configured investigation tools
 (`docs/status/2026/09/28/00971-product2-host-mcp-readstore2-exit.md`), and the
-five language summaries, six source/feed tools and legacy `repomap_status`
+five language summaries, six source/feed tools and legacy `cloe_status`
 (`docs/status/2026/09/28/00972-product2-host-mcp-readstore3-exit.md`). The
 census is 23 database reads + 2 configuration inventories + 2 server-memory
 file reads = 27 tools. RESOLVE1
@@ -1635,7 +1635,7 @@ operational Local path; the operator reference is `docs/ops/sqlite-local.md`.
 - `mcp serve` binds a SQLite home through `server.sqlite_read_binding`. All
   23 database-reading tools read the accepted generation read-only (`mode=ro`,
   one snapshot per operation) through named SQLite query owners:
-  - LOCAL4 added legacy `repomap_status`, observation search, the configured
+  - LOCAL4 added legacy `cloe_status`, observation search, the configured
     neighborhood and the five language summaries.
   - LOCAL5 (status 00981) added the six source/feed tools. They are served by
     `SqliteSourceReadStore` over `storage.sqlite_local.source_queries` and

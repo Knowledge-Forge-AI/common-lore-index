@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from repomap_test_support.github_api_ingestion import GitHubApiIngestionTestSupport
+from common_lore_index_test_support.github_api_ingestion import GitHubApiIngestionTestSupport
 
 from common_lore_index.ops.ingestion import github_api as github
 

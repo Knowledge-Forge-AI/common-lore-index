@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_supplement_analysis_fixtures import (
+from common_lore_index_test_support.retrieval_supplement_analysis_fixtures import (
     SYNTHETIC_ANALYZER,
     native_shaped_provenance,
     synthetic_bundle,

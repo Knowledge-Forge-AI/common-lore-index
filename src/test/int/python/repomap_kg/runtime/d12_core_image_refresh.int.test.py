@@ -14,9 +14,9 @@ from common_lore_index.runtime.release import (
     PSYCOPG_LIBPQ_VERSION,
     PYTHON_RELEASE_IMAGE,
 )
-from repomap_test_support import d12_core_image as d12
-from repomap_test_support.d12_core_image_cleanup import run_candidate_cleanup
-from repomap_test_support.d12_image_probes import (
+from common_lore_index_test_support import d12_core_image as d12
+from common_lore_index_test_support.d12_core_image_cleanup import run_candidate_cleanup
+from common_lore_index_test_support.d12_image_probes import (
     ADVISORIES as _EXTRACTED_ADVISORIES,
     CLIENTS as _EXTRACTED_CLIENTS,
     FIXED_IN as _EXTRACTED_FIXED_IN,
@@ -38,11 +38,11 @@ from repomap_test_support.d12_image_probes import (
     _tmpfs as _extracted_tmpfs,
     _version as _extracted_version,
 )
-from repomap_test_support.resource_docker import ownership_labels
-from repomap_test_support.resource_docker_current import CurrentRunDockerContainers
-from repomap_test_support.resource_ledger import ResourceKind
-from repomap_test_support.resource_run import active_resource_run
-from repomap_test_support.test_scratch import establish_run
+from common_lore_index_test_support.resource_docker import ownership_labels
+from common_lore_index_test_support.resource_docker_current import CurrentRunDockerContainers
+from common_lore_index_test_support.resource_ledger import ResourceKind
+from common_lore_index_test_support.resource_run import active_resource_run
+from common_lore_index_test_support.test_scratch import establish_run
 
 pytestmark = pytest.mark.requires_d12_core_image_profile
 REPO_ROOT = Path(__file__).resolve().parents[6]

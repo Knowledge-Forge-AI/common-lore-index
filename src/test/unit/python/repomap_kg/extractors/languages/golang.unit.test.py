@@ -30,7 +30,7 @@ class GolangRepositoryExtractionUnitTests(unittest.TestCase):
                 FileStub("a/first.go", "go"),
                 FileStub("tool.py", "python"),
             )
-            with patch.dict(os.environ, {"REPOMAP_GO_HELPER": str(helper)}):
+            with patch.dict(os.environ, {"CLOE_GO_HELPER": str(helper)}):
                 observations = extract_go_repository_observations(root, file_infos)
 
         self.assertEqual(
@@ -41,7 +41,7 @@ class GolangRepositoryExtractionUnitTests(unittest.TestCase):
     def test_skips_helper_resolution_when_repository_has_no_go_files(self):
         with patch.dict(
             os.environ,
-            {"REPOMAP_GO_HELPER": "/missing/repomap-go-extract"},
+            {"CLOE_GO_HELPER": "/missing/cloe-go-extract"},
         ):
             observations = extract_go_repository_observations(
                 Path("/tmp/repository"),
@@ -53,7 +53,7 @@ class GolangRepositoryExtractionUnitTests(unittest.TestCase):
     def test_missing_helper_fails_without_lexical_fallback(self):
         with patch.dict(
             os.environ,
-            {"REPOMAP_GO_HELPER": "/missing/repomap-go-extract"},
+            {"CLOE_GO_HELPER": "/missing/cloe-go-extract"},
         ):
             with self.assertRaises(GoHelperUnavailableError):
                 extract_go_repository_observations(
@@ -62,7 +62,7 @@ class GolangRepositoryExtractionUnitTests(unittest.TestCase):
                 )
 
     def write_helper(self, root: Path) -> Path:
-        helper = root / "repomap-go-extract"
+        helper = root / "cloe-go-extract"
         helper.write_text(
             "#!" + sys.executable + "\n" + textwrap.dedent(
                 r'''

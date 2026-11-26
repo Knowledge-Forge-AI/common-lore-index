@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from retrieval_body_freeze import parse_body_source_freeze
-from repomap_test_support.retrieval_body_source import _read_members, _relative_members, _root
+from common_lore_index_test_support.retrieval_body_source import _read_members, _relative_members, _root
 from retrieval_body_input_records import INPUT_NAMES, PIN_SCHEMA
 from retrieval_body_values import BodyError, canonical_bytes, digest_bytes, digest_json
 
@@ -118,7 +118,7 @@ def test_source_helpers_refuse_symlink_root_and_duplicate_members(tmp_path):
 
 def test_source_helper_enforces_aggregate_limit(monkeypatch):
     monkeypatch.setattr(
-        "repomap_test_support.retrieval_body_source.read_member",
+        "common_lore_index_test_support.retrieval_body_source.read_member",
         lambda _root, _name, max_bytes: b"x" * max_bytes,
     )
     members = [f"tools/{index}.py" for index in range(9)]

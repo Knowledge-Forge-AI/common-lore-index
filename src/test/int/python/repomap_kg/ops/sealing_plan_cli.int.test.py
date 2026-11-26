@@ -13,14 +13,14 @@ import os
 from pathlib import Path
 
 from common_lore_index.ops.config_local import load_graph_registry_config_home
-from repomap_test_support.resource_report_cli_files import run_cloe
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.resource_report_cli_files import run_cloe
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home,
 )
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import LocalHarness
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness
 
 GRAPH = "plan-local"
 POSTGRES_IMPLEMENTATION = {"common_lore_index.ops.refresh", "common_lore_index.storage.staged_ingestion", "psycopg"}

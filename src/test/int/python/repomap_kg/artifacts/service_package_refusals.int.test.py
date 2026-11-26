@@ -26,8 +26,8 @@ from common_lore_index.service_package.operations import (
 )
 from common_lore_index.service_package.systemd import SystemdUserAdapter
 from common_lore_index.storage.staging_family_contracts import PrivacyClassification
-from repomap_test_support.test_scratch import select_scratch_root
-from repomap_test_support.service_publication_families import (
+from common_lore_index_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.service_publication_families import (
     sample_publication_families as _sample_publication_families,
 )
 
@@ -306,7 +306,7 @@ class ServicePackageRefusalsIntegrationTests(unittest.TestCase):
 
         def native_home(home: Path) -> None:
             setup_local_runtime(home)
-            config = home / "repomap.rpl.toml"
+            config = home / "repomap.local.cloe.toml"
             config.write_text(config.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
 
         repomap_home = self.tmpdir / "service_coord_home"

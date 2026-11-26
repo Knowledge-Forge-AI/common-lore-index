@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import pytest
 
-from repomap_test_support.retrieval_body_pin_fixtures import (
+from common_lore_index_test_support.retrieval_body_pin_fixtures import (
     make_body_identity,
     make_body_input_files,
     make_body_namespace_payload,
@@ -80,7 +80,7 @@ def test_registered_loader_rejects_functional_pin_before_catalog_decode(tmp_path
 @pytest.mark.parametrize("field", ["phase", "reviewed_design_sha256", "clarified_design_sha256",
                                     "review_result_sha256", "parent_bridge_sha256"])
 def test_gate_rejects_metadata_drift(field: str) -> None:
-    from repomap_test_support.retrieval_body_pin_fixtures import make_body_gate_payload
+    from common_lore_index_test_support.retrieval_body_pin_fixtures import make_body_gate_payload
 
     gate = make_body_gate_payload()
     gate[field] = "not-a-raw-sha" if field != "phase" else "wrong-phase"
@@ -89,7 +89,7 @@ def test_gate_rejects_metadata_drift(field: str) -> None:
 
 
 def test_gate_rejects_boolean_coercion() -> None:
-    from repomap_test_support.retrieval_body_pin_fixtures import make_body_gate_payload
+    from common_lore_index_test_support.retrieval_body_pin_fixtures import make_body_gate_payload
 
     gate = make_body_gate_payload()
     gate["independent_pre_authoring_pass"] = 1

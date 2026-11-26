@@ -13,7 +13,7 @@ import zipfile
 import pytest
 
 import retrieval_semantic_generator_worker as worker
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import (
     make_w5_sample_nodes_and_evidence,
     make_w5_verified_pin,
 )

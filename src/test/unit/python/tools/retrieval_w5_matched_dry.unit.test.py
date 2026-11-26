@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.retrieval_w5_matched_fixture import make_synthetic_archives, synthetic_tar
+from common_lore_index_test_support.retrieval_w5_matched_fixture import make_synthetic_archives, synthetic_tar
 from retrieval_body_study_journal_io import root_identity
 from retrieval_w5_matched_dry import EVALUATOR_MEMBER, DryRunPlan, OfflineClosure, run_synthetic_dry
 

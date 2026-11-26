@@ -32,12 +32,12 @@ from common_lore_index.storage.staged_ingestion import (
     IngestionAuthority,
     run_staged_full_refresh,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     PostgresContainerDatabase,
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.schema_history import pre_arch5d_rdbms_root
+from common_lore_index_test_support.schema_history import pre_arch5d_rdbms_root
 
 
 def _observations() -> tuple[RawObservation, ...]:

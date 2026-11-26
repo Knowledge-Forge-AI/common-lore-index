@@ -27,12 +27,12 @@ import zipfile
 import pytest
 
 from common_lore_index.graph.multi_source_pipeline import capture_multi_source_candidate
-from common_lore_index.ops.config import build_graph_storage_status_sql
+from common_lore_index.ops.config import build_graph_storage_status_sql, load_ops_config_home
 from common_lore_index.ops.direct_publication import publish_observation_generation
 from common_lore_index.ops.refresh_sql import build_graph_summary_sql, build_refresh_status_sql
 from common_lore_index.runtime.database_roles import READ_STATUS_ROLE
 from common_lore_index.storage import apply_migrations, default_rdbms_root
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 from smoke.host_mcp_native_checks import STATUS_COUNTS
 from smoke.host_mcp_native_evidence import EvidenceWriter
 from smoke.host_mcp_native_fixture import configured_publication, stage_native_config, stored_repository_facts
@@ -91,8 +91,8 @@ class HarnessDatabaseBackend:
 
 
 def _console() -> Path:
-    beside = Path(sys.executable).with_name("repomap-kg")
-    provisioned = shutil.which("repomap-kg")
+    beside = Path(sys.executable).with_name("cloe")
+    provisioned = shutil.which("cloe")
     return beside if beside.is_file() else Path(provisioned or beside)
 
 
@@ -100,7 +100,8 @@ def test_runner_exercises_fixture_and_stdio_mechanics_in_the_linux_harness(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     require_postgres_binaries()
-    for name in ("REPOMAP_PG_PASSWORD", "REPOMAP_READ_STATUS_PASSWORD", "REPOMAP_STORAGE_PG_CONNECTOR"):
+    for name in ("REPOMAP_PG_PASSWORD", "REPOMAP_READ_STATUS_PASSWORD",
+                 "CLOE_STORAGE_PG_CONNECTOR", "REPOMAP_STORAGE_PG_CONNECTOR"):
         monkeypatch.delenv(name, raising=False)
     console = console_entrypoint(_console())
     run_id = f"linux-{uuid.uuid4().hex[:8]}"
@@ -161,7 +162,7 @@ def test_runner_exercises_fixture_and_stdio_mechanics_in_the_linux_harness(
     assert json.loads(members["session-restart.json"])["pid"] != main["pid"]
     oracle = json.loads(members["oracle.json"])["messages"]
     assert {oracle[mid]["tool"] for mid in ("20", "30", "40")} == {
-        "repomap_canonical_nodes", "repomap_search_nodes", "repomap_ingested_sources"}
+        "cloe_canonical_nodes", "cloe_search_nodes", "cloe_ingested_sources"}
 
     assert remaining == "0" and read_backends == "0" and not work.exists()
     assert json.loads(members["cleanup.json"])["steps"][-1] == {"step": "remove-work-root", "ok": True,
@@ -203,7 +204,9 @@ def test_status_owners_select_the_configured_repository_name(tmp_path: Path) -> 
             apply_migrations(default_rdbms_root(), database.psql_args, psql_command=database.psql_command)
             work = tmp_path / "work"
             work.mkdir(mode=0o700)
-            _, _, graphs = stage_native_config(work, postgres.port, database.database, "native_status_feed_unused")
+            home, _, graphs = stage_native_config(work, postgres.port, database.database, "native_status_feed_unused")
+            assert {path.name for path in home.glob("*.toml")} == {"repomap.local.cloe.toml"}
+            assert load_ops_config_home(home).runtime.postgres.host_port == postgres.port
             multi = graphs["host-multi"]
             observations = capture_multi_source_candidate(multi).observations
 

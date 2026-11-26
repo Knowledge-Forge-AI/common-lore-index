@@ -6,11 +6,11 @@ import uuid
 import docker
 import pytest
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.resource_docker_current import CurrentRunDockerContainers
-from repomap_test_support.resource_run import active_resource_run
-from repomap_test_support.test_cov5k_r2_fix2_evidence import verify_executor_evidence
-from repomap_test_support.test_cov5k_r2_fix2_runtime import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.resource_docker_current import CurrentRunDockerContainers
+from common_lore_index_test_support.resource_run import active_resource_run
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import verify_executor_evidence
+from common_lore_index_test_support.test_cov5k_r2_fix2_runtime import (
     execute_container_rss_equivalence,
 )
 

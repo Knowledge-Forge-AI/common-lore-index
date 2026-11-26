@@ -11,15 +11,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.sqlite_local_harness import (
     await_ready,
     kill_paused_child,
 )
-from repomap_test_support.sqlite_local_lock_children import (
+from common_lore_index_test_support.sqlite_local_lock_children import (
     kill_holder,
     read_line,
 )
-from repomap_test_support.sqlite_managed_child import (
+from common_lore_index_test_support.sqlite_managed_child import (
     AbruptOwnershipError,
     ManagedChild,
     cleanup_after_failure,
@@ -162,7 +162,7 @@ def test_await_ready_preserves_primary_error_when_settlement_fails(tmp_path: Pat
     child = ManagedChild(raw, abrupt=True)
 
     with patch.object(ManagedChild, "kill_abruptly") as mock_kill, \
-         patch("repomap_test_support.sqlite_local_harness.BARRIER_DEADLINE_SECONDS", 0.01), \
+         patch("common_lore_index_test_support.sqlite_local_harness.BARRIER_DEADLINE_SECONDS", 0.01), \
          patch("os.kill", side_effect=ProcessLookupError), \
          patch("os.killpg", side_effect=ProcessLookupError):
         settlement_failure = AssertionError("terminal_receipt_incomplete before abrupt termination")

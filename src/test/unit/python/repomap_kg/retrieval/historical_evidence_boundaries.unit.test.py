@@ -9,7 +9,7 @@ import shutil
 
 import pytest
 
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
 from retrieval_evaluation_historical_evidence import verify_completed_attempt
 from retrieval_evaluation_reprojection import load_journal_envelopes, reproject_attempt7_files
 from retrieval_evaluation_schema import load_task_catalog

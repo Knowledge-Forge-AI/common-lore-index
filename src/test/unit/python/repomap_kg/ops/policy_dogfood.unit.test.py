@@ -47,7 +47,7 @@ def write_policy_fixture(tmpdir: str) -> tuple[Path, Path]:
         encoding="utf-8",
     )
     repo_map_home.mkdir()
-    (repo_map_home / "00-project.rp.toml").write_text(
+    (repo_map_home / "00-project.cloe.toml").write_text(
         f"""
 schema_version = 1
 
@@ -103,6 +103,7 @@ class OpsPolicyDogfoodUnitTests(unittest.TestCase):
             )
 
         self.assertEqual(payload["command"], "policy-dogfood")
+        self.assertEqual(payload["server"], "common-lore-index")
         self.assertTrue(payload["read_only"])
         self.assertEqual(payload["graph"]["graph_id"], "codex-vc")
         self.assertEqual(payload["graph"]["privacy"], "private-ops")
@@ -151,7 +152,7 @@ class OpsPolicyDogfoodUnitTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_map_home, _ = write_policy_fixture(tmpdir)
-            config_file = repo_map_home / "00-project.rp.toml"
+            config_file = repo_map_home / "00-project.cloe.toml"
             config_file.write_text(
                 config_file.read_text(encoding="utf-8").replace(
                     "mcp_visible = true",

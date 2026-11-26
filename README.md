@@ -26,7 +26,7 @@ and hosted qualification remain separate gates.
 - Git repository: [`common-lore-index`](https://github.com/Knowledge-Forge-AI/common-lore-index)
 - Python distribution: `common-lore-index`
 - Python import package: `common_lore_index`
-- CLI: `cloe` (also `common-lore-index`; transitional `repomap-kg` through v0.1.x)
+- CLI: `cloe` (also `common-lore-index`)
 - License: AGPL-3.0-or-later plus commercial licensing
 - Storage: SQLite Local and PostgreSQL; the reference Server deployment uses a local container
 - Product direction: [Local, Server Engine and Cloud](docs/adr/2026/09/0071-post-promotion-local-server-cloud-architecture.md)
@@ -212,13 +212,13 @@ hooks, assertions, mocks, and stubs as non-executed test intent.
 - Nix is optional. It is useful for this repository's local development setup,
   but Common Lore Index also runs directly from a Python checkout.
 
-## Installing `repomap-kg`
+## Installing Common Lore Index
 
 For source-tree development, run the CLI without installing:
 
 ```sh
-PYTHONPATH=src/main/python python3 -m repomap_kg --help
-PYTHONPATH=src/main/python python3 -m repomap_kg identity --json
+PYTHONPATH=src/main/python python3 -m common_lore_index --help
+PYTHONPATH=src/main/python python3 -m common_lore_index identity --json
 ```
 
 For an editable Python install, create a virtual environment with the Python you
@@ -228,7 +228,7 @@ actually intend to use, then install the checkout:
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install -e .
-repomap-kg --help
+cloe --help
 ```
 
 The base install is the SQLite Local package and does not install a PostgreSQL
@@ -282,42 +282,37 @@ environment with a pyenv-created virtualenv.
 
 ## Configuration homes
 
-Before replacing an installed distribution, `repomap-kg identity --installation-check --json`
+Before replacing an installed distribution, `cloe identity --installation-check --json`
 reports metadata ownership conflicts without loading entrypoints or inspecting
 homes. Ordinary `identity --json` remains unchanged. See
 [installed upgrade compatibility](docs/ops/cloe-installed-upgrade-compatibility.md)
 for its limits and persisted native-service recovery.
 
-The [CLOE compatibility milestone](docs/ops/cloe-config-compatibility.md) accepts a nonempty `CLOE_HOME` ahead of `REPOMAP_HOME` and a separate CLOE configuration family. Explicit invocation homes win. Without a selector, a recognizable private `~/.cloe` wins, while a recognizable legacy `~/.repo-map` remains a safe fallback. Fresh defaults use `~/.cloe`; unrelated or unsafe homes are never silently initialized. `ops config-migration-plan` prepares filenames without applying changes. See the [accepted transition roadmap](docs/specs/cloe-roadmap-transition-v1.md) for the coordinated rebrand.
+An explicit home takes precedence over a nonempty `CLOE_HOME`. Without either, Common Lore Index selects `~/.cloe`. Existing legacy homes can be selected explicitly for migration. See [configuration and migration](docs/ops/cloe-config-compatibility.md) for the safety checks and commands.
 
-For a new container-runtime home, `local setup --config-format cloe` creates a
-CLOE overlay; existing homes are detected automatically and must match any
-explicit format. Fresh implicit defaults use CLOE files; explicit custom empty
-homes retain legacy bootstrap behavior. Use `--dry-run` first
-to inspect the selected format without writing files or credentials.
+For a new container-runtime home, `local setup` creates a CLOE overlay.
+Existing homes are detected automatically and must match any explicit format.
+Use `--dry-run` first to inspect the selected format without writing files
+or credentials.
 
 
 Use `--repo-map-home <dir>` with local and ops commands for an explicit home.
 Home selection creates no files and never moves or merges existing graph data.
 
-Implicit recognition requires a private owned home. For an older manually created
-legacy home with broader permissions, inspect it and use `chmod 700 ~/.repo-map`,
-or select it explicitly through `REPOMAP_HOME`, `CLOE_HOME` or `--repo-map-home`.
+Implicit recognition requires a private owned home. Inspect an older home before
+selecting it explicitly through `CLOE_HOME` or `--repo-map-home`. Update shell
+startup files and MCP clients that set the old environment variable.
 If fresh setup stopped after creating runtime directories but before creating its
 configuration, inspect the partial home, then resume with
 `local setup --repo-map-home ~/.cloe --config-format cloe`. The explicit format
 preserves CLOE filenames during recovery.
 
-The config home is a folder, not one giant config file. Common Lore Index loads TOML files
-matching:
-
-- `*.rp.toml` for project/shareable configuration.
-- `*.rpl.toml` for local/private machine configuration.
-
-`*.rp.toml` files load first in lexicographic order. `*.rpl.toml` files load
-second and overlay local/private values. Legacy setup generates `repomap.rpl.toml`.
-CLOE homes use `*.cloe.toml` followed by `*.local.cloe.toml`; fresh implicit setup
-generates `repomap.local.cloe.toml`. Each home uses one family.
+Common Lore Index loads `*.cloe.toml` project files first and
+`*.local.cloe.toml` machine overlays second. Files sort alphabetically
+within each layer. Setup creates `repomap.local.cloe.toml` in a fresh
+home. For a predecessor home with `*.rp.toml` or `*.rpl.toml` files, use
+the [configuration migration procedure](docs/ops/cloe-config-compatibility.md)
+before starting the runtime.
 
 Do not commit a real local config home, generated runtime secrets, backups,
 status artifacts, or private graph data.
@@ -328,32 +323,32 @@ Common Lore Index's intended local runtime is an isolated container cluster:
 
 - a Common Lore Index server/MCP container;
 - a Common Lore Index-owned Postgres container;
-- `REPOMAP_HOME` mounted for config and runtime state;
+- `CLOE_HOME` mounted for config and runtime state;
 - localhost-only, configurable, non-standard ports.
 
 Basic lifecycle for an explicitly selected legacy home:
 
 ```sh
-repomap-kg local setup --repo-map-home ~/.repo-map
-repomap-kg local up --repo-map-home ~/.repo-map
-repomap-kg local status --repo-map-home ~/.repo-map --json
-repomap-kg local down --repo-map-home ~/.repo-map
+cloe local setup --repo-map-home ~/.cloe --config-format cloe
+cloe local up --repo-map-home ~/.cloe
+cloe local status --repo-map-home ~/.cloe --json
+cloe local down --repo-map-home ~/.cloe
 ```
 
-`repomap-kg local up` starts the server container in long-running local runtime
+`cloe local up` starts the server container in long-running local runtime
 mode. That mode runs:
 
 ```sh
-repomap-kg server serve --repo-map-home /repo-map-home --host 0.0.0.0 --container-internal-bind
+cloe server serve --repo-map-home /repo-map-home --host 0.0.0.0 --container-internal-bind
 ```
 
 The generated Compose file maps the server port to localhost only, so the host
 can check `http://127.0.0.1:55880/healthz` and `http://127.0.0.1:55880/status`
 by default. The `0.0.0.0` bind is allowed only inside the generated container
 command so Docker can forward the localhost-bound host port. Direct host runs of
-`repomap-kg server serve` default to `127.0.0.1`.
+`cloe server serve` default to `127.0.0.1`.
 
-`repomap-kg mcp serve` is still the stdio MCP command for direct MCP clients.
+`cloe mcp serve` is still the stdio MCP command for direct MCP clients.
 Do not run stdio MCP as the detached server container command: stdin closes in
 that setting, so the process exits cleanly. The container runtime uses
 `server serve` for liveness/readiness and keeps stdio MCP compatibility intact
@@ -368,12 +363,13 @@ password and points to the local runtime env file instead of printing secrets.
 To check container liveness and the local server health endpoint:
 
 ```sh
-repomap-kg local status --repo-map-home ~/.repo-map --check-containers --json
+cloe local status --repo-map-home ~/.cloe --check-containers --json
 ```
 
 For local source builds of the server image, run from the Common Lore Index checkout or
-set `REPOMAP_SOURCE_ROOT=/path/to/repo-map` so generated Compose files build the
+set `CLOE_SOURCE_ROOT=/path/to/common-lore-index` so generated Compose files build the
 image from the source tree rather than from an installed package location.
+A nonempty retired source-root variable prevents runtime setup and planning until it is migrated.
 
 ## Host-Side Ops With Containerized Postgres
 
@@ -382,17 +378,17 @@ ops commands need database readback or refresh loading, they first try the
 normal `psql` path. If that cannot reach a configured internal container host
 such as `postgres`, Common Lore Index can use the running Common Lore Index-owned Postgres container
 through `docker exec` or the configured container runtime. The container must be
-owned by the same `REPOMAP_HOME` runtime metadata and labels; Common Lore Index does not
+owned by the same `CLOE_HOME` runtime metadata and labels; Common Lore Index does not
 silently use unrelated Postgres containers.
 
 This means these host-side commands work with the local runtime up and direct DB
 debug exposure off:
 
 ```sh
-export REPOMAP_HOME=/path/to/repo-map-home
-repomap-kg ops refresh-status --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
-repomap-kg ops graph-summary --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
-repomap-kg ops refresh-graph --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
+export CLOE_HOME=/path/to/repo-map-home
+cloe ops refresh-status --repo-map-home "$CLOE_HOME" --graph repo-map --json
+cloe ops graph-summary --repo-map-home "$CLOE_HOME" --graph repo-map --json
+cloe ops refresh-graph --repo-map-home "$CLOE_HOME" --graph repo-map --json
 ```
 
 `--psql-command` remains available as an explicit override for development and
@@ -409,13 +405,13 @@ Common Lore Index-owned runtime containers. They do not use a host-installed Pos
 server and do not require direct DB host-port exposure.
 
 ```sh
-repomap-kg local db dump --repo-map-home ~/.repo-map --database repomap
-repomap-kg local db dump-all --repo-map-home ~/.repo-map
-repomap-kg local db backups --repo-map-home ~/.repo-map
-repomap-kg local db backup-info <backup-id-or-path> --repo-map-home ~/.repo-map
-repomap-kg local db init --repo-map-home ~/.repo-map --database repomap --from-source
-repomap-kg local db init --repo-map-home ~/.repo-map --database repomap --from-dump <backup-dir>
-repomap-kg local db drop --repo-map-home ~/.repo-map --database repomap --backup-first --yes
+cloe local db dump --repo-map-home ~/.cloe --database repomap
+cloe local db dump-all --repo-map-home ~/.cloe
+cloe local db backups --repo-map-home ~/.cloe
+cloe local db backup-info <backup-id-or-path> --repo-map-home ~/.cloe
+cloe local db init --repo-map-home ~/.cloe --database repomap --from-source
+cloe local db init --repo-map-home ~/.cloe --database repomap --from-dump <backup-dir>
+cloe local db drop --repo-map-home ~/.cloe --database repomap --backup-first --yes
 ```
 
 `drop` is backup-first only: Common Lore Index must create and verify a dump, manifest,
@@ -441,7 +437,7 @@ notes. Use Common Lore Index graph evidence for generated source/config/readback
 
 ## Graph Configuration
 
-Graphs are configured with `[[graphs]]` entries under `REPOMAP_HOME`:
+Graphs are configured with `[[graphs]]` entries under `CLOE_HOME`:
 
 ```toml
 [[graphs]]
@@ -519,7 +515,7 @@ and [Static Nix Cross-Source Resolution](docs/specs/nix-cross-source-resolution.
 ## Folder-Backed Graph Tracking
 
 Common Lore Index's intended casual-user default is a database backed by a configured
-folder tree or repository. Once a graph is configured under `REPOMAP_HOME`,
+folder tree or repository. Once a graph is configured under `CLOE_HOME`,
 Common Lore Index local ops or an authorized agent should keep the graph database aligned
 with the current source state. The user should not need to manually redirect
 `discover` output into a JSONL file and then hand-load that file into storage
@@ -528,15 +524,15 @@ for routine operation.
 Recommended operating model:
 
 ```sh
-export REPOMAP_HOME=/path/to/repo-map-home
+export CLOE_HOME=/path/to/repo-map-home
 
-repomap-kg local status --repo-map-home "$REPOMAP_HOME" --check-containers --json
-repomap-kg ops config-check --repo-map-home "$REPOMAP_HOME" --json
-repomap-kg ops graphs --repo-map-home "$REPOMAP_HOME" --json
-repomap-kg ops refresh-preflight --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
-repomap-kg ops refresh-graph --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
-repomap-kg ops refresh-status --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
-repomap-kg ops graph-summary --repo-map-home "$REPOMAP_HOME" --graph repo-map --json
+cloe local status --repo-map-home "$CLOE_HOME" --check-containers --json
+cloe ops config-check --repo-map-home "$CLOE_HOME" --json
+cloe ops graphs --repo-map-home "$CLOE_HOME" --json
+cloe ops refresh-preflight --repo-map-home "$CLOE_HOME" --graph repo-map --json
+cloe ops refresh-graph --repo-map-home "$CLOE_HOME" --graph repo-map --json
+cloe ops refresh-status --repo-map-home "$CLOE_HOME" --graph repo-map --json
+cloe ops graph-summary --repo-map-home "$CLOE_HOME" --graph repo-map --json
 ```
 
 For private or large graphs, keep the preflight and drift-check gates from the
@@ -547,7 +543,7 @@ baselines have been reviewed for that maintenance run.
 If a configured graph database must be recreated or dropped to restore
 alignment with its source root, use Common Lore Index's backup-first database lifecycle
 commands. Backup dumps, manifests, checksums, and restore notes belong under
-`REPOMAP_HOME/backups`. Do not use unbacked wipe/reset/drop/clear/truncate
+`CLOE_HOME/backups`. Do not use unbacked wipe/reset/drop/clear/truncate
 operations, and do not operate on host-installed or unrelated Postgres.
 
 ## First Refresh Runbook
@@ -572,13 +568,13 @@ Recommended first-refresh order:
 Example commands:
 
 ```sh
-export REPOMAP_HOME=/path/to/repo-map-home
-repomap-kg local status --repo-map-home "$REPOMAP_HOME" --check-containers --json
-repomap-kg ops config-check --repo-map-home "$REPOMAP_HOME" --json
-repomap-kg ops graphs --repo-map-home "$REPOMAP_HOME" --json
+export CLOE_HOME=/path/to/repo-map-home
+cloe local status --repo-map-home "$CLOE_HOME" --check-containers --json
+cloe ops config-check --repo-map-home "$CLOE_HOME" --json
+cloe ops graphs --repo-map-home "$CLOE_HOME" --json
 curl -fsS http://127.0.0.1:55880/status
-repomap-kg ops refresh-graph --repo-map-home "$REPOMAP_HOME" --graph <graph-id> --json
-repomap-kg ops refresh-status --repo-map-home "$REPOMAP_HOME" --graph <graph-id> --json
+cloe ops refresh-graph --repo-map-home "$CLOE_HOME" --graph <graph-id> --json
+cloe ops refresh-status --repo-map-home "$CLOE_HOME" --graph <graph-id> --json
 ```
 
 When direct DB host-port exposure is disabled, host-side refreshes automatically
@@ -610,12 +606,12 @@ then decide whether to run an actual refresh. Avoid `refresh-enabled` while
 private graphs are enabled unless you have deliberately reviewed every graph.
 
 ```sh
-export REPOMAP_HOME=/path/to/repo-map-home
-repomap-kg ops refresh-preflight --repo-map-home "$REPOMAP_HOME" --graph <private-graph-id> --json
+export CLOE_HOME=/path/to/repo-map-home
+cloe ops refresh-preflight --repo-map-home "$CLOE_HOME" --graph <private-graph-id> --json
 
 # Review counts, configured exclude hit counts, and safety markers.
 # Only with explicit approval:
-# repomap-kg ops refresh-graph --repo-map-home "$REPOMAP_HOME" --graph <private-graph-id> --json
+# cloe ops refresh-graph --repo-map-home "$CLOE_HOME" --graph <private-graph-id> --json
 ```
 
 Refresh exactly one private graph per approval and inspect bounded
@@ -662,7 +658,7 @@ preflight candidate set for one graph, `ops drift-check` to compare current
 state against those explicit baselines before a maintenance refresh, and
 `ops baseline-prune` for retention. `drift-check` exits `0` on match and `2`
 on drift; treat drift as a stop-and-review gate. Baseline files live under
-`$REPOMAP_HOME/status/baselines/<graph>/<stored|preflight>/` and are private
+`$CLOE_HOME/status/baselines/<graph>/<stored|preflight>/` and are private
 local operational state, not public repository artifacts; never store raw
 observations, source snippets, dumps, server-memory JSONL, credentials, or
 unbounded path lists as baselines.
@@ -681,34 +677,34 @@ local config, DB dumps, backups, credentials, or secrets.
 Run the CLI from the source tree:
 
 ```sh
-PYTHONPATH=src/main/python python3 -m repomap_kg --version
-PYTHONPATH=src/main/python python3 -m repomap_kg identity --json
-PYTHONPATH=src/main/python python3 -m repomap_kg discover . --jsonl
-PYTHONPATH=src/main/python python3 -m repomap_kg discover . --profile repomap-profile.toml --jsonl
-PYTHONPATH=src/main/python python3 -m repomap_kg entrypoints raw-observations.jsonl
-PYTHONPATH=src/main/python python3 -m repomap_kg files raw-observations.jsonl --role source
-PYTHONPATH=src/main/python python3 -m repomap_kg host-mutators raw-observations.jsonl --category service-management --tool launchctl --json
-PYTHONPATH=src/main/python python3 -m repomap_kg host-mutators-summary raw-observations.jsonl --json
-PYTHONPATH=src/main/python python3 -m repomap_kg observations normalize raw-observations.jsonl --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage load-files raw-observations.jsonl --repository-name repo-map --root-path . --json
-PYTHONPATH=src/main/python python3 -m repomap_kg ops graph-files --graph repo-map --role source --json
-PYTHONPATH=src/main/python python3 -m repomap_kg ops graph-files --graph repo-map --role entrypoint --observation-state observed --json
-PYTHONPATH=src/main/python python3 -m repomap_kg ops graph-files --graph repo-map --path README.md --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage nodes --root-path . --kind file --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage nodes --legacy --root-path . --kind shell.command --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage neighborhood --root-path . --node tool:nix --direction in --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage neighborhood --legacy --root-path . --node node:bin/tool:shell.command:bin/tool#call:nix-build --direction out --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage file-neighborhood --root-path . --path bin/tool --direction out --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage file-neighborhood --legacy --root-path . --path bin/tool --direction out --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage edges --root-path . --kind executes --target-key tool:nix --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage edges --legacy --root-path . --kind shell.command --target-node tool:nix --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage host-mutators --root-path . --category filesystem-mutation --tool rm --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage host-mutators --legacy --root-path . --category filesystem-mutation --tool rm --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage host-mutators-summary --root-path . --category filesystem-mutation --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage host-mutators-summary --legacy --root-path . --category filesystem-mutation --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage summary --root-path . --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage summary --legacy --root-path . --json
-PYTHONPATH=src/main/python python3 -m repomap_kg storage explain-canonical-edge --root-path . --source-key file:bin/tool --kind executes --target-key tool:nix --json
+PYTHONPATH=src/main/python python3 -m common_lore_index --version
+PYTHONPATH=src/main/python python3 -m common_lore_index identity --json
+PYTHONPATH=src/main/python python3 -m common_lore_index discover . --jsonl
+PYTHONPATH=src/main/python python3 -m common_lore_index discover . --profile repomap-profile.toml --jsonl
+PYTHONPATH=src/main/python python3 -m common_lore_index entrypoints raw-observations.jsonl
+PYTHONPATH=src/main/python python3 -m common_lore_index files raw-observations.jsonl --role source
+PYTHONPATH=src/main/python python3 -m common_lore_index host-mutators raw-observations.jsonl --category service-management --tool launchctl --json
+PYTHONPATH=src/main/python python3 -m common_lore_index host-mutators-summary raw-observations.jsonl --json
+PYTHONPATH=src/main/python python3 -m common_lore_index observations normalize raw-observations.jsonl --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage load-files raw-observations.jsonl --repository-name repo-map --root-path . --json
+PYTHONPATH=src/main/python python3 -m common_lore_index ops graph-files --graph repo-map --role source --json
+PYTHONPATH=src/main/python python3 -m common_lore_index ops graph-files --graph repo-map --role entrypoint --observation-state observed --json
+PYTHONPATH=src/main/python python3 -m common_lore_index ops graph-files --graph repo-map --path README.md --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage nodes --root-path . --kind file --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage nodes --legacy --root-path . --kind shell.command --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage neighborhood --root-path . --node tool:nix --direction in --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage neighborhood --legacy --root-path . --node node:bin/tool:shell.command:bin/tool#call:nix-build --direction out --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage file-neighborhood --root-path . --path bin/tool --direction out --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage file-neighborhood --legacy --root-path . --path bin/tool --direction out --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage edges --root-path . --kind executes --target-key tool:nix --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage edges --legacy --root-path . --kind shell.command --target-node tool:nix --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage host-mutators --root-path . --category filesystem-mutation --tool rm --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage host-mutators --legacy --root-path . --category filesystem-mutation --tool rm --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage host-mutators-summary --root-path . --category filesystem-mutation --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage host-mutators-summary --legacy --root-path . --category filesystem-mutation --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage summary --root-path . --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage summary --legacy --root-path . --json
+PYTHONPATH=src/main/python python3 -m common_lore_index storage explain-canonical-edge --root-path . --source-key file:bin/tool --kind executes --target-key tool:nix --json
 ```
 
 `storage summary` is canonical-aware by default; use `--legacy` when the older

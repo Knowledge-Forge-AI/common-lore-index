@@ -10,7 +10,7 @@ import common_lore_index.runtime.local as runtime_local
 import common_lore_index.storage.readback_driver as storage_readback
 from common_lore_index.ops.config import OpsConfig, load_ops_config_home
 from common_lore_index.storage import StorageSchemaError
-from repomap_test_support.ops_refresh import VALID_REFRESH_CONFIG
+from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
 
 class _ReadbackExecutionCall(TypedDict):
     sql: str
@@ -38,7 +38,7 @@ def _internal_config(tmp_path: Path) -> OpsConfig:
     root = tmp_path / "repo"
     home.mkdir()
     root.mkdir()
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=root, private_root=root / "private")
         .replace('host = "127.0.0.1"', 'host = "postgres"'),
         encoding="utf-8",

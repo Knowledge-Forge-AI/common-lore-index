@@ -15,7 +15,7 @@ from common_lore_index.coordinator.refresh_adapter import RefreshCapability, cre
 from common_lore_index.coordinator.configured_refresh import ConfiguredRefreshResolver
 from common_lore_index.ops.config import load_ops_config
 from common_lore_index.runtime.postgres_route import effective_postgres_route
-from repomap_test_support.startup_recovery_scenarios import _assert_retry_waiting_and_advance, _make_refresh_fixture, _refresh_harness, _req_norm, _search_path
+from common_lore_index_test_support.startup_recovery_scenarios import _assert_retry_waiting_and_advance, _make_refresh_fixture, _refresh_harness, _req_norm, _search_path
 
 
 class ReapedResult:

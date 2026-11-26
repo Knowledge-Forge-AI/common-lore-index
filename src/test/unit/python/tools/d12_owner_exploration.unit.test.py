@@ -19,7 +19,7 @@ from typing import Any
 import pytest
 
 import d12_dependency_preflight as preflight
-from repomap_test_support import d12_core_image as d12
+from common_lore_index_test_support import d12_core_image as d12
 
 ROOT = Path(__file__).resolve().parents[5]
 IDENTITY: dict[str, Any] = {"source_sha256": "a" * 64, "recipe_sha256": "b" * 64, "dockerfile_sha256": "c" * 64,

@@ -10,23 +10,23 @@ from docker.models.containers import Container, ContainerCollection
 from docker.models.networks import Network, NetworkCollection
 import pytest
 
-from repomap_test_support.resource_run import TestResourceRun
+from common_lore_index_test_support.resource_run import TestResourceRun
 
-from repomap_test_support.resource_test_image_cleanup import (
+from common_lore_index_test_support.resource_test_image_cleanup import (
     MaterializationCleanupError,
 )
 
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_ledger import (
     CleanupResult,
     FinalPresence,
     ResourceKind,
     ResourceLedger,
     RunIdentity,
 )
-from repomap_test_support.resource_test_image_base import (
+from common_lore_index_test_support.resource_test_image_base import (
     TestImageError as ImageLifecycleError,
 )
-from repomap_test_support.resource_test_image_materialization import (
+from common_lore_index_test_support.resource_test_image_materialization import (
     MaterializationContainerOwner,
     recover_interrupted_runtime_materialization,
 )

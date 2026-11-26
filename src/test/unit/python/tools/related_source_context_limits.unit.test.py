@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from repomap_test_support.related_context_fixtures import (
+from common_lore_index_test_support.related_context_fixtures import (
     GRAPH, GUIDE, OTHER, START, CapturedCalls, related_home,
 )
 
@@ -24,8 +24,8 @@ expand = API["expand_selected"]
 @pytest.fixture
 def environment(tmp_path, monkeypatch):
     home, _, workspace = related_home(tmp_path)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.setenv("CLOE_HOME", str(home))
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     return workspace, CapturedCalls()
 
 

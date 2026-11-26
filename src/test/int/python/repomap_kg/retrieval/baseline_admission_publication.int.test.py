@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.w5_experiment_journal import record_baseline
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.w5_experiment_journal import record_baseline
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_FIXTURE_ROOT,
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
@@ -19,11 +19,11 @@ from repomap_test_support.retrieval_evaluation_fixture import (
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
     publish_and_load_sqlite_corpus,
 )
-from repomap_test_support.w5_generator_support import GeneratorFixtureReader
+from common_lore_index_test_support.w5_generator_support import GeneratorFixtureReader
 from retrieval_evaluation_admission_w5 import (
     AdmissionState,
     AdmissionVerificationError,
@@ -44,9 +44,9 @@ from retrieval_semantic_baseline_capture import (
 from retrieval_semantic_experiment_scope import BaselineCorrespondenceSidecar
 from retrieval_semantic_grading import grade_w5_task_slot
 from retrieval_evaluation_attempts import admit_attempt
-from repomap_test_support.w5_experiment_results import ResultV2Run
-from repomap_test_support.w5_admission_native_bytework import byte_work_accounting, byte_work_identity
-from repomap_test_support.w5_experiment_vector import (
+from common_lore_index_test_support.w5_experiment_results import ResultV2Run
+from common_lore_index_test_support.w5_admission_native_bytework import byte_work_accounting, byte_work_identity
+from common_lore_index_test_support.w5_experiment_vector import (
     baseline_file_metrics, baseline_file_metrics_with_correspondence,
 )
 

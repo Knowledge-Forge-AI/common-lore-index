@@ -22,7 +22,7 @@ from runner_pgvector_export import RetainedStream, inspect_export
 from runner_pgvector_prebuilt import ENV_OFFLINE_PLAN, digest, json_bytes, provider_facts, strict_object
 from runner_pgvector_qualification import bounded_native_run
 from test_sandbox_contract import PGVECTOR_OFFLINE_PLAN_ENV, PGVECTOR_QUALIFICATION_SDK_IMAGE
-from repomap_test_support.pgvector_prebuilt_test_fixtures import allocation, tar_bytes, synthetic_construction, sender_case, offline_probe_case
+from common_lore_index_test_support.pgvector_prebuilt_test_fixtures import allocation, tar_bytes, synthetic_construction, sender_case, offline_probe_case
 
 def test_contract_pins_and_manifest_close_exact_provider_class():
     facts = provider_facts()
@@ -252,9 +252,9 @@ def test_binary_sender_proves_peer_identity_or_reaps_its_exact_child(tmp_path, m
 
 def test_offline_boundary_preserves_real_probe_with_safe_public_input(monkeypatch):
     offline_probe_case(monkeypatch)
-from repomap_test_support.pgvector_prebuilt_budget_cases import killed_child_reservation, stale_pending_state, duplicate_state, persistence_failure
-from repomap_test_support.pgvector_prebuilt_launch_cases import declaration_case, launch_case, bundle_case
-from repomap_test_support.pgvector_prebuilt_stream_cases import export_command_case, parser_layout_case
+from common_lore_index_test_support.pgvector_prebuilt_budget_cases import killed_child_reservation, stale_pending_state, duplicate_state, persistence_failure
+from common_lore_index_test_support.pgvector_prebuilt_launch_cases import declaration_case, launch_case, bundle_case
+from common_lore_index_test_support.pgvector_prebuilt_stream_cases import export_command_case, parser_layout_case
 
 def test_killed_owned_child_cannot_reopen_a_durable_attempt(tmp_path):
     assert killed_child_reservation(tmp_path)['used']['materializations'] == 1
@@ -304,7 +304,7 @@ def test_modern_export_graph_and_moby_auxiliary_metadata_are_closed(tmp_path, mu
 @pytest.mark.parametrize('mutation', ['none', 'foreign-url', 'extra-file', 'config-name'])
 def test_legacy_export_graph_remains_compatible_and_closed(tmp_path, mutation):
     parser_layout_case(tmp_path, 'legacy', mutation)
-from repomap_test_support.pgvector_prebuilt_native_seam_cases import native_owner_case, report_seam_case, report_reader_case
+from common_lore_index_test_support.pgvector_prebuilt_native_seam_cases import native_owner_case, report_seam_case, report_reader_case
 
 def test_native_report_rewrite_stays_in_closed_cohort_and_exporter(tmp_path):
     report_seam_case(tmp_path)
@@ -321,16 +321,16 @@ def test_offline_report_stream_is_reserved_and_bounded(tmp_path, monkeypatch):
     report_reader_case(tmp_path, monkeypatch)
 
 def test_core_no_coverage_report_rewrite_persist_and_export(tmp_path):
-    from repomap_test_support.pgvector_prebuilt_native_seam_cases import core_report_seam_case
+    from common_lore_index_test_support.pgvector_prebuilt_native_seam_cases import core_report_seam_case
     core_report_seam_case(tmp_path)
 
 @pytest.mark.parametrize('role,mutation', [('ordinary', 'none'), ('ordinary', 'ambient'), *[(role, mutation) for role in ('core', 'native') for mutation in ('none', 'auth', 'argv', 'profile', 'forwarded', 'ambient')]])
 def test_offline_runner_cache_ownership_before_pytest(monkeypatch, role, mutation):
-    from repomap_test_support.pgvector_prebuilt_runner_cases import runtime_cache_case
+    from common_lore_index_test_support.pgvector_prebuilt_runner_cases import runtime_cache_case
     runtime_cache_case(monkeypatch, role, mutation)
 
 @pytest.mark.parametrize('case', ['none', 'caps', 'cleanup', 'counter', 'archive', 'pending', 'replay', 'decrease', 'parent', 'native-blocked', 'native', 'outer', 'forecast', 'authority', 'cli-error', 'rematerialize', 'ordinal1'])
 def test_cumulative_core_recovery_preserves_failure_and_single_attempt(tmp_path, monkeypatch, case):
-    from repomap_test_support.pgvector_prebuilt_recovery_cases import recovery_case
+    from common_lore_index_test_support.pgvector_prebuilt_recovery_cases import recovery_case
     recovery_case(tmp_path, monkeypatch, case)
 '''

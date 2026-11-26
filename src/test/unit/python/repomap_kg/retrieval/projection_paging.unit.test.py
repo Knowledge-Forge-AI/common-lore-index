@@ -9,7 +9,7 @@ import tracemalloc
 
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
 from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, query_captured_text
-from repomap_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
+from common_lore_index_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
 
 
 def test_dense_high_offset_does_not_retain_the_skipped_match_population(tmp_path: Path) -> None:

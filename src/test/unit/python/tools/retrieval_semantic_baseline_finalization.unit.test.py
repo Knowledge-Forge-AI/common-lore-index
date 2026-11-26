@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 
-from repomap_test_support.w5_experiment_results import (
+from common_lore_index_test_support.w5_experiment_results import (
     ResultV2Run,
     finalize_attempt_evidence,
     safe_failure_code,

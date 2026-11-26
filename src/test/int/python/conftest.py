@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     DEFAULT_TEST_POSTGRES_PORT,
     DEFAULT_TEST_POSTGRES_RUNTIME,
     postgres_container_session,

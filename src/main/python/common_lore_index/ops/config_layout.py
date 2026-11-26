@@ -35,8 +35,42 @@ def classify_config_filename(name: str) -> tuple[str, int] | None:
     return _classification(name)
 
 
-def discover_home_config_files(home: Path) -> tuple[list[Path], list[Path]]:
+def require_canonical_config_filename(path: Path) -> None:
+    classification = _classification(path.name)
+    if classification is not None and classification[0] == "legacy":
+        raise OpsConfigError((OpsConfigDiagnostic(
+            "error", "legacy-config-filenames", path.name,
+            "convert the existing configuration with ops config-migration-plan and config-migration-apply",
+        ),))
+
+
+def discover_home_config_files(
+    home: Path, *, migration: bool = False,
+) -> tuple[list[Path], list[Path]]:
     """Keep top-level discovery and ordering; refuse competing format families."""
+    if not home.exists():
+        raise OpsConfigError(
+            (
+                OpsConfigDiagnostic(
+                    "error",
+                    "config-home-missing",
+                    str(home),
+                    "CLOE_HOME does not exist; initialize it before loading configuration",
+                ),
+            )
+        )
+    if not home.is_dir():
+        raise OpsConfigError(
+            (
+                OpsConfigDiagnostic(
+                    "error",
+                    "config-home-not-directory",
+                    str(home),
+                    "CLOE_HOME must be a directory",
+                ),
+            )
+        )
+
     matched: list[tuple[int, Path]] = []
     ignored: list[Path] = []
     formats: Counter[str] = Counter()
@@ -56,6 +90,8 @@ def discover_home_config_files(home: Path) -> tuple[list[Path], list[Path]]:
             f"configuration home mixes legacy ({formats['legacy']}) and CLOE "
             f"({formats['cloe']}) files; select one active format",
         ),))
+    if "legacy" in formats and not migration:
+        require_canonical_config_filename(matched[0][1])
     return [path for _, path in sorted(matched, key=lambda item: (item[0], item[1].name))], ignored
 
 

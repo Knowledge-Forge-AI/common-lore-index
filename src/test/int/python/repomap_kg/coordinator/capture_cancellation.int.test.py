@@ -8,9 +8,9 @@ from common_lore_index.artifacts.source_sealer import seal_configured_sources
 from common_lore_index.coordinator import _portable_semantic_adapter as adapter
 from common_lore_index.graph import multi_source_pipeline as pipeline
 from common_lore_index.graph.multi_source_pipeline import MultiSourceCaptureError, capture_multi_source_candidate
-from repomap_test_support.capture_cancellation_fixtures import CAPTURE_CHUNK, capture_graph, observe_capture_io
-from repomap_test_support.portable_spool_case import spool_case
-from repomap_test_support.portable_worker_equivalence import reference_bytes
+from common_lore_index_test_support.capture_cancellation_fixtures import CAPTURE_CHUNK, capture_graph, observe_capture_io
+from common_lore_index_test_support.portable_spool_case import spool_case
+from common_lore_index_test_support.portable_worker_equivalence import reference_bytes
 
 
 def _large_case(tmp_path):

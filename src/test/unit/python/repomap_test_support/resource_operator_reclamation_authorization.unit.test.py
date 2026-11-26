@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_operator_reclamation import (
+from common_lore_index_test_support.resource_operator_reclamation import (
     CONFIRMATION_LITERAL,
     OperatorReclamationRequest,
     reclaim_run_population,
 )
-from repomap_test_support.resource_operator_reclamation_test_support import (
+from common_lore_index_test_support.resource_operator_reclamation_test_support import (
     add_pin,
     add_run,
     dead,

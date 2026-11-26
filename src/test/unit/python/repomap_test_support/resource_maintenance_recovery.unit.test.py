@@ -9,11 +9,11 @@ import sys
 
 import pytest
 
-from repomap_test_support import resource_maintenance_recovery as recovery
-from repomap_test_support.resource_index_records import LOCK_SCHEMA
-from repomap_test_support.resource_ledger_io import write_private_json_exclusive
-from repomap_test_support.resource_lifecycle_claim import ClaimError, ClaimRegistry, ProcessLiveness
-from repomap_test_support.resource_lifecycle_claim_operations import _record_id
+from common_lore_index_test_support import resource_maintenance_recovery as recovery
+from common_lore_index_test_support.resource_index_records import LOCK_SCHEMA
+from common_lore_index_test_support.resource_ledger_io import write_private_json_exclusive
+from common_lore_index_test_support.resource_lifecycle_claim import ClaimError, ClaimRegistry, ProcessLiveness
+from common_lore_index_test_support.resource_lifecycle_claim_operations import _record_id
 
 
 def _owner(tmp_path, *, pid=None, start="a" * 64, barrier=False):

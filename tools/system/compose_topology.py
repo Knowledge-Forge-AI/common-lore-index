@@ -81,7 +81,7 @@ enabled = false
 path = "./server-memory"
 mode = "read_only"
 """
-    config_file = repo_map_home / "repomap.rpl.toml"
+    config_file = repo_map_home / "repomap.local.cloe.toml"
     config_file.write_text(config_content, encoding="utf-8")
 
     # Initialize runtime structure

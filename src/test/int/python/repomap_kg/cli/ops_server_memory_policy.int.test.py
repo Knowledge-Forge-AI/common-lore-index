@@ -2,7 +2,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from repomap_test_support.cli_integration import (
+from common_lore_index_test_support.cli_integration import (
     CliIntegrationTestCase,
     OPS_CONFIG_TEMPLATE,
     OPS_POLICY_FIXTURES,
@@ -70,7 +70,7 @@ class CliOpsServerMemoryPolicyIntegrationTests(CliIntegrationTestCase):
             home.mkdir()
             memory_path = SERVER_MEMORY_FIXTURES / "basic" / "memory.jsonl"
             self.write_fixture(
-                home / "00-project.rp.toml",
+                home / "00-project.cloe.toml",
                 OPS_CONFIG_TEMPLATE.replace(
                     "enabled = false\npath = \"./server-memory\"",
                     f"enabled = true\npath = \"{memory_path}\"",
@@ -223,7 +223,7 @@ class CliOpsServerMemoryPolicyIntegrationTests(CliIntegrationTestCase):
                 encoding="utf-8",
             )
             self.write_fixture(
-                home / "00-project.rp.toml",
+                home / "00-project.cloe.toml",
                 f"""\
 schema_version = 1
 
@@ -360,7 +360,7 @@ mode = "read_only"
                 ).replace(
                     'enabled = false\npath = "./server-memory"', f'enabled = true\npath = "{memory}"'
                 ),
-                name="hidden.rp.toml",
+                name="hidden.cloe.toml",
             )
 
             hidden_exit, hidden_stdout, hidden_stderr = self.run_module_entrypoint(

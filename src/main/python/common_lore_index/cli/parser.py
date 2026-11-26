@@ -22,7 +22,7 @@ from common_lore_index.cli.storage_parser import add_storage_commands
 
 _graph_file_limit = _graph_file_limit
 _non_negative_offset = _non_negative_offset
-HOME_HELP = "configuration home (CLOE_HOME, REPOMAP_HOME, then recognized CLOE/legacy defaults)"
+HOME_HELP = "configuration home (CLOE_HOME or the default ~/.cloe)"
 
 
 def build_parser(*, prog: str = PREFERRED_CLI) -> argparse.ArgumentParser:

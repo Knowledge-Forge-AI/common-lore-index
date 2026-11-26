@@ -22,7 +22,7 @@ from common_lore_index.retrieval.query_contracts import (
     QueryScope,
     QUERY_CONTRACT_VERSION,
 )
-from repomap_test_support.context_fixture import BINDING_PRIV, build_sqlite_context_fixture
+from common_lore_index_test_support.context_fixture import BINDING_PRIV, build_sqlite_context_fixture
 import retrieval_evaluation_context_native as native
 from retrieval_evaluation_attempts import admit_attempt
 from retrieval_evaluation_context import context_candidate_source_files
@@ -178,7 +178,7 @@ def test_context_source_closure_includes_native_and_corpus_owners() -> None:
         "tools/retrieval_evaluation_context_prepare.py",
         "tools/retrieval_evaluation_context_manifest.py",
         "src/test/unit/python/tools/retrieval_evaluation_context_boundaries.unit.test.py",
-        "src/test/support/python/repomap_test_support/context_fixture.py",
+        "src/test/support/python/common_lore_index_test_support/context_fixture.py",
     } <= files.keys()
     assert not any(
         "/__pycache__/" in path or path.endswith((".pyc", ".pyo", ".DS_Store"))

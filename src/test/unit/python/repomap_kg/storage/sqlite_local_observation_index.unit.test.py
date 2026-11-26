@@ -2,7 +2,7 @@
 
 The named workload is exact-path observation search. Its SQL comes from the
 product (``observation_search_sql``), so the planner assertion plans exactly
-what ``repomap_search_observations`` runs. On the v2 schema SQLite's
+what ``cloe_search_observations`` runs. On the v2 schema SQLite's
 ``EXPLAIN QUERY PLAN`` searches ``idx_raw_observations_path_run`` with
 ``path=?`` and needs no temporary B-tree for ``ORDER BY run_id DESC,
 ordinal``; on the same data at v1 the index is absent and the order needs a
@@ -40,8 +40,8 @@ from common_lore_index.storage.sqlite_local.investigation_queries import observa
 from common_lore_index.storage.sqlite_local.migrations import SchemaState, classify
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
 from common_lore_index.storage.sqlite_local.upgrade import upgrade_graph_database
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
-from repomap_test_support.sqlite_local_read_corpus import read_corpus_bundle
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
+from common_lore_index_test_support.sqlite_local_read_corpus import read_corpus_bundle
 
 BINDING = local_binding()
 ROOT = BINDING.root_path

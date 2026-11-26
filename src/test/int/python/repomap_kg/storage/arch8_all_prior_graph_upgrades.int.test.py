@@ -29,8 +29,8 @@ from common_lore_index.storage import (
     run_psql,
 )
 from common_lore_index.storage.main import _migration_script
-from repomap_test_support.local_db_backup import setup_real_backup_home
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.local_db_backup import setup_real_backup_home
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

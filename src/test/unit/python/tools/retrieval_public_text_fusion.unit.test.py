@@ -17,8 +17,8 @@ from typing import Any
 import pytest
 
 from common_lore_index.retrieval.query_contracts import EvaluationLocator
-from repomap_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
+from common_lore_index_test_support.w5_semantic_support import (
     InMemoryStoreReadbackCell, make_w5_accepted_pub_mapping, make_w5_calibration_task,
 )
 from retrieval_evaluation_grading import ExecutionState
@@ -35,7 +35,7 @@ from retrieval_semantic_arm_validation import (
     AdmittedArmObservation, FileIdentityTuple, VectorCandidateInput, _extract_arm_raw_hits,
 )
 from retrieval_semantic_experiment_contracts import ExperimentRefusal
-from repomap_test_support.w5_public_text_postgres import v1_entries, v2_entries
+from common_lore_index_test_support.w5_public_text_postgres import v1_entries, v2_entries
 from retrieval_public_text_study_queries import StudyEntry
 from retrieval_public_text_study_schema import StudySchemaRefusal
 from retrieval_semantic_generator_inputs import prepare_public_generation_input

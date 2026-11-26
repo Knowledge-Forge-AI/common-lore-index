@@ -25,12 +25,12 @@ from common_lore_index.storage.semantic_candidates import (
 from common_lore_index.storage.semantic_candidate_import import build_embedding_import_sql, candidate_schema_sql
 from common_lore_index.storage.semantic_candidate_readback import query_semantic_candidates
 from common_lore_index.storage.staged_ingestion import run_staged_portable_refresh
-from repomap_test_support.portable_publication_fixtures import _authority, _binding
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
-from repomap_test_support.semantic_candidate_publication import candidate_bundle
+from common_lore_index_test_support.portable_publication_fixtures import _authority, _binding
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
+from common_lore_index_test_support.semantic_candidate_publication import candidate_bundle
 from retrieval_semantic_ann_sql import build_hnsw_query_sql
-from repomap_test_support.semantic_candidate_restore import (
+from common_lore_index_test_support.semantic_candidate_restore import (
     execute_candidate_dump_restore,
     optional_database_cleanup,
     optional_sql_fixture_cleanup,
@@ -69,7 +69,7 @@ def _read(postgres, query: CandidateQuery):
     # Enforce the SQL transaction and role boundary, not merely a Python promise.
     args = ("-c", f"role={READER}", "-c", "default_transaction_read_only=on")
     with pytest.MonkeyPatch.context() as env:
-        env.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psql")
+        env.setenv("CLOE_STORAGE_READBACK_DRIVER", "psql")
         env.setenv("PGOPTIONS", " ".join(args))
         return query_semantic_candidates(postgres.psql_args, query=query, psql_command=postgres.psql_command)
 
@@ -387,7 +387,7 @@ def test_pgvector_candidate_link_fence_applies_to_exact_and_ann_sql() -> None:
             ann_sql = build_hnsw_query_sql(query, source_scope=((BINDING, SNAPSHOT),), ann_scan_limit=3)
             args = ("-c", f"role={READER}", "-c", "default_transaction_read_only=on")
             with pytest.MonkeyPatch.context() as env:
-                env.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psql")
+                env.setenv("CLOE_STORAGE_READBACK_DRIVER", "psql")
                 env.setenv("PGOPTIONS", " ".join(args))
                 ann_payload = execute_json_readback(ann_sql, psql_args=postgres.psql_args, psql_command=postgres.psql_command, label="semantic candidate ANN", expected_shape="object")
             assert isinstance(ann_payload, dict)

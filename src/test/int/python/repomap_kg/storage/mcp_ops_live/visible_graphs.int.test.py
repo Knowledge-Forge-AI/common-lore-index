@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -15,7 +15,7 @@ from common_lore_index.storage import (
     default_rdbms_root,
 )
 
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     canonicalization_fixture,
 )
 
@@ -33,17 +33,17 @@ class StorageMcpVisibleGraphsIntegrationTests(unittest.TestCase):
         )
         from common_lore_index.server.mcp import (
             handle_jsonrpc_message,
-            repomap_graph_status,
-            repomap_list_graphs,
-            repomap_neighborhood,
-            repomap_openapi_summary,
-            repomap_project_summary,
-            repomap_python_summary,
-            repomap_refresh_status,
-            repomap_search_files,
-            repomap_search_nodes,
-            repomap_search_observations,
-            repomap_terraform_summary,
+            cloe_graph_status,
+            cloe_list_graphs,
+            cloe_neighborhood,
+            cloe_openapi_summary,
+            cloe_project_summary,
+            cloe_python_summary,
+            cloe_refresh_status,
+            cloe_search_files,
+            cloe_search_nodes,
+            cloe_search_observations,
+            cloe_terraform_summary,
         )
 
         with temporary_postgres() as postgres:
@@ -193,48 +193,48 @@ mode = "read_only"
                 with patch.dict(
                     "os.environ",
                     {
-                        "REPOMAP_OPS_CONFIG": str(ops_config_path),
-                        "REPOMAP_PSQL_COMMAND": postgres.psql_command,
+                        "CLOE_OPS_CONFIG": str(ops_config_path),
+                        "CLOE_PSQL_COMMAND": postgres.psql_command,
                     },
                     clear=False,
                 ):
-                    graphs = repomap_list_graphs()
-                    status = repomap_graph_status(graph_id="repo-map")
-                    nodes = repomap_search_nodes(
+                    graphs = cloe_list_graphs()
+                    status = cloe_graph_status(graph_id="repo-map")
+                    nodes = cloe_search_nodes(
                         graph_id="repo-map",
                         query="pkg.app",
                         limit=10,
                     )
-                    observations = repomap_search_observations(
+                    observations = cloe_search_observations(
                         graph_id="repo-map",
                         query="python.import",
                         limit=5,
                         include_raw=False,
                     )
-                    raw_observations = repomap_search_observations(
+                    raw_observations = cloe_search_observations(
                         graph_id="repo-map",
                         query="python.import",
                         limit=5,
                         include_raw=True,
                     )
-                    files = repomap_search_files(
+                    files = cloe_search_files(
                         graph_id="repo-map",
                         query="notes",
                         limit=5,
                     )
-                    neighborhood = repomap_neighborhood(
+                    neighborhood = cloe_neighborhood(
                         graph_id="repo-map",
                         node="python.module:pkg.app",
                         direction="out",
                     )
-                    project_summary = repomap_project_summary(graph_id="repo-map")
-                    private_project_summary = repomap_project_summary(
+                    project_summary = cloe_project_summary(graph_id="repo-map")
+                    private_project_summary = cloe_project_summary(
                         graph_id="private-visible"
                     )
-                    python_summary = repomap_python_summary(graph_id="repo-map")
-                    terraform_summary = repomap_terraform_summary(graph_id="repo-map")
-                    openapi_summary = repomap_openapi_summary(graph_id="repo-map")
-                    refresh_status = repomap_refresh_status()
+                    python_summary = cloe_python_summary(graph_id="repo-map")
+                    terraform_summary = cloe_terraform_summary(graph_id="repo-map")
+                    openapi_summary = cloe_openapi_summary(graph_id="repo-map")
+                    refresh_status = cloe_refresh_status()
                     jsonrpc_tools = handle_jsonrpc_message(
                         {"jsonrpc": "2.0", "id": 30, "method": "tools/list"}
                     )
@@ -244,7 +244,7 @@ mode = "read_only"
                             "id": 31,
                             "method": "tools/call",
                             "params": {
-                                "name": "repomap_search_nodes",
+                                "name": "cloe_search_nodes",
                                 "arguments": {
                                     "graph_id": "repo-map",
                                     "query": "pkg.app",
@@ -259,7 +259,7 @@ mode = "read_only"
                             "id": 32,
                             "method": "tools/call",
                             "params": {
-                                "name": "repomap_project_summary",
+                                "name": "cloe_project_summary",
                                 "arguments": {"graph_id": "codex-vc"},
                             },
                         }
@@ -360,7 +360,7 @@ mode = "read_only"
         jsonrpc_tool_names = [
             tool["name"] for tool in jsonrpc_tools["result"]["tools"]
         ]
-        self.assertIn("repomap_search_observations", jsonrpc_tool_names)
+        self.assertIn("cloe_search_observations", jsonrpc_tool_names)
         self.assertNotIn("repomap_refresh_graph", jsonrpc_tool_names)
         self.assertNotIn("repomap_storage_load_files", jsonrpc_tool_names)
         self.assertNotIn(

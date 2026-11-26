@@ -18,7 +18,7 @@ from common_lore_index.retrieval.advisory_freshness import (
 from common_lore_index.retrieval.context_assembly import build_compact_context
 from common_lore_index.retrieval.context_budget import serialize_compact_json
 from common_lore_index.retrieval.context_contracts import ContextRequest, FreshnessCheckConfig
-from repomap_test_support.context_fixture import BINDING_CORE, build_sqlite_context_fixture
+from common_lore_index_test_support.context_fixture import BINDING_CORE, build_sqlite_context_fixture
 
 
 def _current_packet_for_paths(

@@ -25,12 +25,12 @@ from common_lore_index.storage.psql import run_psql
 from common_lore_index.storage.semantic_candidate_import import candidate_schema_sql
 from common_lore_index.storage.semantic_seed import SimilarNodesQuery
 from common_lore_index.storage.semantic_seed_readback import query_seed_candidates, query_similar_nodes
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.semantic_candidate_fixtures import PROFILE
-from repomap_test_support.semantic_candidate_restore import (
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.semantic_candidate_fixtures import PROFILE
+from common_lore_index_test_support.semantic_candidate_restore import (
     optional_sql_fixture_cleanup,
 )
-from repomap_test_support.semantic_seed_publication import (
+from common_lore_index_test_support.semantic_seed_publication import (
     SEED_KEY,
     import_seed_embeddings,
     publish_portable_seed_graph,
@@ -56,7 +56,7 @@ def _rpc_call(req_id: int, **arguments: Any) -> dict[str, Any]:
         "jsonrpc": "2.0",
         "id": req_id,
         "method": "tools/call",
-        "params": {"name": "repomap_similar_nodes", "arguments": arguments},
+        "params": {"name": "cloe_similar_nodes", "arguments": arguments},
     }
 
 
@@ -161,7 +161,7 @@ def test_seed_public_entry_boundary() -> None:
             resp_by_id = {r["id"]: r for r in responses}
 
             assert resp_by_id[1]["result"]["serverInfo"]["name"] == "common-lore-index"
-            assert any(t["name"] == "repomap_similar_nodes" for t in resp_by_id[2]["result"]["tools"])
+            assert any(t["name"] == "cloe_similar_nodes" for t in resp_by_id[2]["result"]["tools"])
 
             def _sc(req_id: int) -> dict[str, Any]:
                 return resp_by_id[req_id]["result"]["structuredContent"]

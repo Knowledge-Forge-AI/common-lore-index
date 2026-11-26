@@ -4,7 +4,7 @@ from dataclasses import FrozenInstanceError, replace
 
 import pytest
 
-from repomap_test_support.scale28_adr2_campaign_results import (
+from common_lore_index_test_support.scale28_adr2_campaign_results import (
     ObservedPreparationCleanup,
     PreparationCaseExpectation,
     PreparationCaseFailure,

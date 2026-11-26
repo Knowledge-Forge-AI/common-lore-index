@@ -17,7 +17,7 @@ from common_lore_index.runtime.commands import (
 from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.runtime.plan import build_local_runtime_plan
 from common_lore_index.runtime.release import DebPackage, PlatformPackages, validate_package_manifest
-from repomap_test_support import d12_dynamic_linkage as linkage
+from common_lore_index_test_support import d12_dynamic_linkage as linkage
 
 
 REPO_ROOT = Path(__file__).resolve().parents[6]

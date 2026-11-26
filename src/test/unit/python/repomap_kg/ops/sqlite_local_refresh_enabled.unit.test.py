@@ -24,7 +24,7 @@ from common_lore_index.ops.local_refresh_enabled import (
     refresh_enabled_local_graphs,
 )
 from common_lore_index.storage.sqlite_local.schema import PUBLICATION_IN_PROGRESS, LocalStoreError
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
 
 
 def _config(tmp_path: Path) -> LocalSqliteConfig:

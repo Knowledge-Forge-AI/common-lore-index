@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.retrieval_supplement_fixtures import (
+from common_lore_index_test_support.retrieval_supplement_fixtures import (
     make_test_bindings, make_test_catalog_payload, make_test_identity,
 )
 from retrieval_supplement_catalog import SupplementCatalog, parse_catalog

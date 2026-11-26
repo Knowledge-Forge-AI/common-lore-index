@@ -20,7 +20,7 @@ from common_lore_index.artifacts._metered_io import (
 )
 from common_lore_index.artifacts._sealing_meter import SealingMeter
 from common_lore_index.artifacts.sealing_governance import SealingBudget, SealingBudgetExceeded
-from repomap_test_support.sealing_governance_fixtures import open_descriptor_count
+from common_lore_index_test_support.sealing_governance_fixtures import open_descriptor_count
 
 
 def _file(tmp_path: Path, data: bytes, name: str = "body.bin") -> Path:

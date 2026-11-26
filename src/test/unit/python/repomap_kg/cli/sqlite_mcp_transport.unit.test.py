@@ -11,13 +11,13 @@ from unittest import mock
 
 import pytest
 
-from repomap_test_support.sqlite_local_harness import LocalHarness, initialize, tool
-from repomap_test_support.sqlite_mcp_transport import run_mcp_session
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness, initialize, tool
+from common_lore_index_test_support.sqlite_mcp_transport import run_mcp_session
 
 
 def _patch_child_script(monkeypatch: pytest.MonkeyPatch, script: str) -> None:
     """Redirect popen_observed_process to launch a controlled Python child script."""
-    import repomap_test_support.sqlite_mcp_transport as transport_mod
+    import common_lore_index_test_support.sqlite_mcp_transport as transport_mod
     from runner_coverage_observer import popen_observed_process as real_popen
 
     def _custom_popen(command: list[str], **kwargs: Any) -> Any:
@@ -43,7 +43,7 @@ def test_run_mcp_session_streams_responses_ignores_notifications_and_unlinks_std
     responses = run_mcp_session(
         harness,
         tmp_path / "home",
-        [initialize(1), tool(2, "repomap_graph_status", {"graph_id": "g"})],
+        [initialize(1), tool(2, "cloe_graph_status", {"graph_id": "g"})],
     )
     assert set(responses.keys()) == {1, 2}
     assert responses[1]["result"] == {"ok": 1}
@@ -116,7 +116,7 @@ def test_run_mcp_session_protocol_and_exit_validation(
         run_mcp_session(
             harness,
             tmp_path / "home",
-            [initialize(1), tool(2, "repomap_graph_status", {"graph_id": "g"})],
+            [initialize(1), tool(2, "cloe_graph_status", {"graph_id": "g"})],
         )
     assert "/Users/private_user/secret_path" not in str(exc_info.value)
 

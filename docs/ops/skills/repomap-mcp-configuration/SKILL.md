@@ -35,17 +35,17 @@ the interpreter's console script explicitly. From a checkout virtual
 environment (not a wheel or installed-package qualification):
 
 ```sh
-<checkout>/.venv/bin/cloe mcp serve --repo-map-home <REPOMAP_HOME>
+<checkout>/.venv/bin/cloe mcp serve --repo-map-home <CLOE_HOME>
 ```
 
 Client-neutral stdio entry; map the fields onto the client's own format, and
-point `REPOMAP_MCP_CONFIG` at a file containing `{"projects": {}}`:
+point `CLOE_MCP_CONFIG` at a file containing `{"projects": {}}`:
 
 ```json
 {
   "command": "/abs/checkout/.venv/bin/cloe",
   "args": ["mcp", "serve", "--repo-map-home", "/abs/repo-map-home"],
-  "env": {"REPOMAP_MCP_CONFIG": "/abs/repo-map-home/empty-mcp-registry.json"}
+  "env": {"CLOE_MCP_CONFIG": "/abs/repo-map-home/empty-mcp-registry.json"}
 }
 ```
 
@@ -64,31 +64,31 @@ admin `REPOMAP_PG_PASSWORD` if it is exported. Prefer `--repo-map-home`.
 Twenty-three baseline database-reading tools and one optional PostgreSQL tool
 use host-only named read-store seams:
 
-- canonical seam: `repomap_canonical_nodes`, `repomap_canonical_edges`,
-  `repomap_explain_canonical_edge`, `repomap_canonical_neighborhood`, and the
-  legacy `repomap_status` counts (its payload is unchanged);
-- investigation seam: `repomap_graph_status`, `repomap_refresh_status`
-  (selected and omitted forms), `repomap_search_nodes`,
-  `repomap_search_files`, `repomap_search_observations`,
-  `repomap_project_summary`, `repomap_neighborhood`, and the five
-  language/framework summaries (`repomap_python_summary`,
-  `repomap_terraform_summary`, `repomap_openapi_summary`,
-  `repomap_js_framework_summary`, `repomap_nix_summary`);
-- optional investigation seam: `repomap_similar_nodes` and
-  `repomap_embedding_profiles`, disabled by default. Discovery reads eligible
+- canonical seam: `cloe_canonical_nodes`, `cloe_canonical_edges`,
+  `cloe_explain_canonical_edge`, `cloe_canonical_neighborhood`, and the
+  legacy `cloe_status` counts (its payload is unchanged);
+- investigation seam: `cloe_graph_status`, `cloe_refresh_status`
+  (selected and omitted forms), `cloe_search_nodes`,
+  `cloe_search_files`, `cloe_search_observations`,
+  `cloe_project_summary`, `cloe_neighborhood`, and the five
+  language/framework summaries (`cloe_python_summary`,
+  `cloe_terraform_summary`, `cloe_openapi_summary`,
+  `cloe_js_framework_summary`, `cloe_nix_summary`);
+- optional investigation seam: `cloe_similar_nodes` and
+  `cloe_embedding_profiles`, disabled by default. Discovery reads eligible
   immutable tuple metadata; seed queries require an explicit returned tuple.
   Both require a configured public graph with an accepted portable publication
   and separately observed pgvector 0.8.7 / enrichment schema availability.
   Selection never enables configuration or installs optional objects;
-- source seam: `repomap_ingested_sources`, `repomap_source_summary`,
-  `repomap_source_runs`, `repomap_source_feed_items`,
-  `repomap_explain_source_feed_item`, `repomap_source_references`.
+- source seam: `cloe_ingested_sources`, `cloe_source_summary`,
+  `cloe_source_runs`, `cloe_source_feed_items`,
+  `cloe_explain_source_feed_item`, `cloe_source_references`.
 
 Every configured tool first selects the graph from the parsed config
 (`graph_selection.GraphSelection`): unknown, disabled, readback-unsupported
 and hidden graphs refuse there with their existing text, before any backend is
 bound. Only then does the PostgreSQL binding (`postgres_read_binding`) read
-`REPOMAP_PSQL_COMMAND`, name the database and build the store. Selection does
+`CLOE_PSQL_COMMAND`, name the database and build the store. Selection does
 not require bound PostgreSQL connection authority: it opens no connection and
 holds no endpoint or credential, although the graph record it keeps may name
 the configured database. The configuration file
@@ -110,8 +110,8 @@ Outside the setup-owned read/status projection, a configuration that declares
 `PGPASSWORD` is used only when the declared variable is unset. A stale or placeholder value in the declared variable is
 therefore sent as the password and refused.
 
-`repomap_list_graphs` and `repomap_projects` read configuration only.
-`repomap_server_memory_summary` and `repomap_server_memory_search` read the
+`cloe_list_graphs` and `cloe_projects` read configuration only.
+`cloe_server_memory_summary` and `cloe_server_memory_search` read the
 configured server-memory files through the read-only memory bridge, not the
 database. This is a PostgreSQL-backed slice, not the container-free SQLite
 Local product, and graph resolution is still PostgreSQL-typed.
@@ -122,7 +122,7 @@ Missing-database and failure text depends on the operation and the driver:
   readback path. With the default Psycopg driver, SQLSTATE `3D000` (or a
   connect-phase catalog probe that finds the database absent) reports
   "…graph database is missing or not initialized…".
-- Canonical reads, `repomap_status`, project summary, the configured
+- Canonical reads, `cloe_status`, project summary, the configured
   neighborhood, the five language summaries and the six source tools read
   through the shared configured reader. With Psycopg any failure, including a
   missing database, reports the bounded generic
@@ -152,15 +152,15 @@ The optional similarity tool remains advertised on SQLite and returns explicit
 ### Graph registry (preferred)
 
 `mcp serve` accepts `--repo-map-home <dir>` and reads the same TOML
-configuration as local ops (`REPOMAP_HOME`, default `~/.repo-map`). Each
+configuration as local ops (`CLOE_HOME`, default `~/.cloe`). Each
 `[[graphs]]` entry with `enabled = true` and `mcp_visible = true` becomes
-visible to the graph-registry MCP tools (`repomap_list_graphs`,
-`repomap_graph_status`, search, neighborhood, summaries, refresh status).
+visible to the graph-registry MCP tools (`cloe_list_graphs`,
+`cloe_graph_status`, search, neighborhood, summaries, refresh status).
 Private graphs keep their roots redacted in tool output.
 
 ### Legacy JSON project registry
 
-The storage-family tools (`repomap_status`, `repomap_canonical_*`,
+The storage-family tools (`cloe_status`, `repomap_canonical_*`,
 source/feed tools) resolve named projects from a JSON registry file:
 
 ```json
@@ -182,20 +182,21 @@ source/feed tools) resolve named projects from a JSON registry file:
 Project entries may also include `pg_host`, `pg_port`, and `pg_user`. Keep
 secrets out of this file.
 
-Set `REPOMAP_MCP_CONFIG` in the MCP server environment to select the
-registry file explicitly. Always set it for a portable configuration: the
-compiled-in default path is a development-machine artifact and is not a
-contract.
+Set `CLOE_MCP_CONFIG` in the MCP server environment to select the
+registry file explicitly for a portable setup. Without this setting the server
+uses the optional registry at `~/.config/common-lore-index/mcp.json`. Migrate old client environment
+selectors before launching the server.
 
 ## MCP Server Environment
 
-- `REPOMAP_MCP_CONFIG`: path to the legacy JSON project registry.
-- `REPOMAP_PSQL_COMMAND`: psql executable override when `psql` is not on the
+- `CLOE_MCP_CONFIG`: path to the optional JSON project registry (default `~/.config/common-lore-index/mcp.json`).
+- `CLOE_PSQL_COMMAND`: psql executable override when `psql` is not on the
   server path. `psql_command` is intentionally absent from every MCP tool
   schema and must remain a server-side setting, never a model-controlled
   argument.
-- `REPOMAP_PG_HOST`, `REPOMAP_PG_PORT`, `REPOMAP_PG_USER`,
-  `REPOMAP_PG_DATABASE`: explicit development-mode connection defaults only.
+- `CLOE_PG_HOST`, `CLOE_PG_PORT`, `CLOE_PG_USER`,
+  `CLOE_PG_DATABASE`: explicit development-mode connection defaults only.
+  Migrate retired RepoMap connection selectors before launch. A nonempty retired selector refuses startup before configuration or graph access.
 
 ## Resolution Rules
 

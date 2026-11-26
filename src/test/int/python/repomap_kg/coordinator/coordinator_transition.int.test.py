@@ -25,7 +25,7 @@ from common_lore_index.coordinator.local_mode import (
     run_coordinator_refresh,
     serve_configured_coordinator,
 )
-from repomap_test_support.test_scratch import short_test_directory
+from common_lore_index_test_support.test_scratch import short_test_directory
 
 
 def test_authenticated_native_endpoint_blocks_container_start(monkeypatch):
@@ -169,7 +169,7 @@ def test_local_mode_serve_retry_psql_resolution_and_client_submission_errors(tmp
 
     tmp_path.chmod(0o700)
     setup_local_runtime(tmp_path)
-    cfg = tmp_path / "repomap.rpl.toml"
+    cfg = tmp_path / "repomap.local.cloe.toml"
     cfg.write_text(cfg.read_text(encoding="utf-8").replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'), encoding="utf-8")
 
     attempts = 0

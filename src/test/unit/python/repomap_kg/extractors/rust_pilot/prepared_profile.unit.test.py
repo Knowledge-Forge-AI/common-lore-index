@@ -14,7 +14,7 @@ from common_lore_index.extractors.rust_pilot.prepared_profile import (
     load_profile,
     prepare_profile,
 )
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import SyntheticWheel, synthetic_wheel
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import SyntheticWheel, synthetic_wheel
 
 PAIRS = {cpu: (synthetic_wheel("tree_sitter", {"tree_sitter/__init__.py": cpu.encode()}, cpu=cpu),
                synthetic_wheel("tree_sitter_rust", {"tree_sitter_rust/__init__.py": b"x"}, cpu=cpu))

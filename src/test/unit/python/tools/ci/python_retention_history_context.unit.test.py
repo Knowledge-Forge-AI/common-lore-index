@@ -10,7 +10,7 @@ import pytest
 from ci import python_retention_history as history
 from ci import python_retention_inventory as inventory
 from ci.python_retention_history_git import HistoryContext
-from repomap_test_support.retention_pipeline_fixture import retention_candidate, candidate_context
+from common_lore_index_test_support.retention_pipeline_fixture import retention_candidate, candidate_context
 
 
 def git(repo: Path, *arguments: str) -> None:

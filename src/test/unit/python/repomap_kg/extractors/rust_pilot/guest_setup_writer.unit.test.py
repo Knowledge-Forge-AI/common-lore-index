@@ -24,7 +24,7 @@ from common_lore_index.extractors.rust_pilot.archive_verifier import (
 )
 from common_lore_index.extractors.rust_pilot.bounded_exec import run_bounded
 from common_lore_index.extractors.rust_pilot.construction import encode_setup_stream
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import (
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import (
     NOTICES,
     build_wheel,
     guest_text,

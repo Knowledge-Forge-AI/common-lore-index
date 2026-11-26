@@ -12,7 +12,7 @@ from common_lore_index.coordinator._restart_fencing import (
     StaleDurableAuthorityError, build_store_fencing_proof, execute_durable_closure,
 )
 from common_lore_index.coordinator.startup_recovery import PublicationRouteChangedError
-from repomap_test_support.fencing_control_fakes import FencingControl
+from common_lore_index_test_support.fencing_control_fakes import FencingControl
 
 
 def claim() -> JobClaim:

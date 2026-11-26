@@ -16,7 +16,7 @@ from common_lore_index.ops.resource_reports._codec import (
 from common_lore_index.ops.resource_reports._delivery import DeliveryError, admit_destination, deliver
 from common_lore_index.ops.resource_reports._files import read_report_file
 from common_lore_index.ops.resource_view._context_projection import unfinished_compact_context
-from repomap_test_support.resource_report_cli_files import private_directory, report_leftovers
+from common_lore_index_test_support.resource_report_cli_files import private_directory, report_leftovers
 
 
 def _canonical(payload: dict[str, object]) -> bytes:

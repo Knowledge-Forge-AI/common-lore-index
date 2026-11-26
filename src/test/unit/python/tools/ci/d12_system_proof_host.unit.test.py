@@ -22,7 +22,7 @@ from ci.d12_system_grant import (
     verify_host_system_proof_for_dispatch,
     write_system_admission_proof,
 )
-from repomap_test_support import d12_core_image, d12_recipe
+from common_lore_index_test_support import d12_core_image, d12_recipe
 
 REPO_ROOT = Path(__file__).resolve().parents[6]
 
@@ -359,7 +359,7 @@ def test_host_event_and_git_requires_exact_draft_true_and_strict_env_event_facts
 
 def test_lower_layer_modules_do_not_import_upper_or_resource_owners() -> None:
     lower_paths = (
-        REPO_ROOT / "src/test/support/python/repomap_test_support/d12_recipe.py",
+        REPO_ROOT / "src/test/support/python/common_lore_index_test_support/d12_recipe.py",
         REPO_ROOT / "tools/ci/d12_system_grant.py",
         REPO_ROOT / "tools/ci/d12_system_proof_host.py",
     )
@@ -372,15 +372,15 @@ def test_lower_layer_modules_do_not_import_upper_or_resource_owners() -> None:
         "d12_hosted_qualification",
         "d12_hosted_reports",
         "d12_system_hold",
-        "repomap_test_support.d12_core_image",
-        "repomap_test_support.d12_image_probes",
+        "common_lore_index_test_support.d12_core_image",
+        "common_lore_index_test_support.d12_image_probes",
         "tools.d12_dependency_preflight",
         "d12_core_image",
         "d12_dependency_preflight",
         "d12_image_probes",
     }
     forbidden_prefixes = (
-        "repomap_test_support.resource_",
+        "common_lore_index_test_support.resource_",
         "tools.system.",
     )
     for path in lower_paths:

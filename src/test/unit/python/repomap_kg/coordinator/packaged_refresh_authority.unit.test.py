@@ -19,7 +19,7 @@ from common_lore_index.coordinator.refresh_adapter import (
 )
 from common_lore_index.runtime.database_role_contract import REFRESH_PUBLICATION_ROLE
 from common_lore_index.service_package.environment import apply_service_environment
-from repomap_test_support.executable_authority import approved_psql
+from common_lore_index_test_support.executable_authority import approved_psql
 
 
 @pytest.mark.parametrize("path_value", [None, "", ".", "relative", ":relative:"])
@@ -51,7 +51,7 @@ def test_packaged_native_authority_round_trip(tmp_path, monkeypatch):
     source = tmp_path / "source"
     source.mkdir()
     (source / "README.md").write_text("# Public fixture\n", encoding="utf-8")
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         'schema_version = 1\n[service]\nmode = "local"\n'
         'mcp_transport = "stdio"\nlog_level = "info"\n'
         '[postgres]\nhost = "postgres"\nport = 5432\n'

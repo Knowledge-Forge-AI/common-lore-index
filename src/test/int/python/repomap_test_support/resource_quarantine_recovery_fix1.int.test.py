@@ -7,27 +7,27 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_ledger import ResourceLedger, RunIdentity
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_ledger import ResourceLedger, RunIdentity
+from common_lore_index_test_support.resource_lifecycle_claim import (
     CLAIM_LEASE_SECONDS,
     ClaimPurpose,
     ClaimRegistry,
     ProcessLiveness,
     register_protection,
 )
-from repomap_test_support.resource_protection_authority import observe_protections
-from repomap_test_support.resource_quarantine_gc import (
+from common_lore_index_test_support.resource_protection_authority import observe_protections
+from common_lore_index_test_support.resource_quarantine_gc import (
     QuarantineError,
     quarantine_batch,
 )
-from repomap_test_support.resource_quarantine_records import (
+from common_lore_index_test_support.resource_quarantine_records import (
     recover_interrupted_renames,
     restore_quarantined,
     write_quarantine_record,
 )
-from repomap_test_support.resource_retention import RetentionClass
-from repomap_test_support.resource_scratch_history import (
+from common_lore_index_test_support.resource_retention import RetentionClass
+from common_lore_index_test_support.resource_scratch_history import (
     HistoricalGcCandidate,
     discover_historical_gc,
 )

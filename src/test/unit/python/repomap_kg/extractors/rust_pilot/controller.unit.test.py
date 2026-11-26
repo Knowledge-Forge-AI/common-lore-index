@@ -28,7 +28,7 @@ from common_lore_index.extractors.rust_pilot.controller import RustPilotControll
 from common_lore_index.extractors.rust_pilot.docker_boundary import DockerBoundary
 from common_lore_index.extractors.rust_pilot.prepared_profile import VerifiedProfile, profile_bytes
 from common_lore_index.graph.discovery_records import FileInfo
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import synthetic_wheel
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import synthetic_wheel
 
 IMAGE = "sha256:" + "a" * 64
 CID = "c" * 64

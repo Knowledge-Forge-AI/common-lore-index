@@ -4,13 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_deletion_gc import (
+from common_lore_index_test_support.resource_deletion_gc import (
     select_deletion_batch,
 )
-from repomap_test_support.resource_deletion_records import (
+from common_lore_index_test_support.resource_deletion_records import (
     DeletionRecordStore,
 )
-from repomap_test_support.resource_deletion_gc_test_support import (
+from common_lore_index_test_support.resource_deletion_gc_test_support import (
     delete as _delete,
     discovery as _discovery,
     owners as _owners,
@@ -19,7 +19,7 @@ from repomap_test_support.resource_deletion_gc_test_support import (
     remove_ordinary_files as _remove_ordinary_files,
     root as _root,
 )
-from repomap_test_support.resource_safe_tree_delete import SafeTreeDeleteResult
+from common_lore_index_test_support.resource_safe_tree_delete import SafeTreeDeleteResult
 
 def test_fix1_partial_committed_work_precedes_new_ordinary_work(
     tmp_path: Path,

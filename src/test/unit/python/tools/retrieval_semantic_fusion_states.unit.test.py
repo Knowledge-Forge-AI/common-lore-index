@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import (
     BIND_CORE,
     SNAP_CORE_G1,
     make_w5_calibration_task,

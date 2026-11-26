@@ -18,7 +18,7 @@ from common_lore_index.graph.multi_source_pipeline import (
 )
 from common_lore_index.ops.config_records import OpsGraphConfig
 from common_lore_index.storage.staged_rows import build_staged_rows
-from repomap_test_support.portable_publication_fixtures import make_test_binding
+from common_lore_index_test_support.portable_publication_fixtures import make_test_binding
 
 
 def _graph(tmp_path: Path, *, polyglot: bool = False) -> OpsGraphConfig:

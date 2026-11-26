@@ -27,7 +27,7 @@ from common_lore_index.retrieval.lexical_policy import (
     normalize_lexical_path_prefix,
 )
 from common_lore_index.retrieval.projection_policy import ExclusionReason, ResolvedBindingPolicy
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
 )

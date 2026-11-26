@@ -23,7 +23,7 @@ from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.runtime.plan import build_local_runtime_plan
 from common_lore_index.server.http import load_config_for_server
 from common_lore_index.server.ops import load_mcp_ops_config
-from repomap_test_support.local_db_backup import maybe_provenance_runner_result
+from common_lore_index_test_support.local_db_backup import maybe_provenance_runner_result
 
 
 def _env_values(text: str) -> dict[str, str]:
@@ -109,14 +109,14 @@ def test_http_render_receives_only_read_status_database_secret(tmp_path: Path) -
     compose = render_compose_yaml(build_local_runtime_plan(home))
     http = compose.split("\n  http:\n", 1)[1].split("\n  mcp:\n", 1)[0]
 
-    assert f"REPOMAP_PG_USER: {READ_STATUS_ROLE}" in http
+    assert f"CLOE_PG_USER: {READ_STATUS_ROLE}" in http
     assert "PGPASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}" in http
     assert "REPOMAP_PG_PASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}" in http
     assert "REPOMAP_READ_STATUS_PASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}" in http
     assert "env_file:" not in http
     assert "${POSTGRES_PASSWORD}" not in http
-    assert f'source: "{home / "repomap.rpl.toml"}"' in http
-    assert 'target: "/repo-map-home/repomap.rpl.toml"' in http
+    assert f'source: "{home / "repomap.local.cloe.toml"}"' in http
+    assert 'target: "/repo-map-home/repomap.local.cloe.toml"' in http
     assert "read_only: true" in http
 
 
@@ -130,7 +130,7 @@ def test_read_only_services_project_the_parsed_config_onto_read_role(
     config_path = next(
         path
         for path in home.rglob("*.toml")
-        if path.name.endswith((".rp.toml", ".rpl.toml"))
+        if path.name.endswith((".cloe.toml", ".local.cloe.toml"))
     )
     with patch.dict(
         "os.environ",
@@ -157,7 +157,7 @@ def test_explicit_empty_mcp_read_secret_does_not_restore_admin_config(
     config_path = next(
         path
         for path in home.rglob("*.toml")
-        if path.name.endswith((".rp.toml", ".rpl.toml"))
+        if path.name.endswith((".cloe.toml", ".local.cloe.toml"))
     )
 
     with patch.dict(

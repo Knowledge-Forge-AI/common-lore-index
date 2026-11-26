@@ -4,7 +4,7 @@ from itertools import islice, permutations
 
 import pytest
 
-from repomap_test_support.test_cov5b_decision_model import (
+from common_lore_index_test_support.test_cov5b_decision_model import (
     AuthorityEvent,
     DeadlineEnvelope,
     DecisionOption,

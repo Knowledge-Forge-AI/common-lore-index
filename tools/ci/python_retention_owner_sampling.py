@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import psutil
 import pytest
 import scale12_resource_sampling as resource_sampling
-from repomap_test_support.process_boundary import RecordingProcessBoundary
+from common_lore_index_test_support.process_boundary import RecordingProcessBoundary
 from scale12_resource_sampling import ResourceSamplingError, read_process_rss_bytes, read_process_tree_rss_bytes
 
 class _Process:

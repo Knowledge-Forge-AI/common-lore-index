@@ -25,12 +25,12 @@ from common_lore_index.retrieval.projection_build import build_captured_text_pro
 from common_lore_index.retrieval.publication_binding import CorrespondenceErrorCode, CorrespondenceRefusal
 from common_lore_index.storage.lexical_driver import LexicalStorageError, lexical_connection_scope
 from common_lore_index.storage.lexical_probe import probe_lexical_runtime
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_GRAPH_ID, binding_id_for_alias, materialize_mixed_v1_working_copy,
     write_mixed_v1_postgres_home, write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus, publish_and_load_sqlite_corpus,
 )
 

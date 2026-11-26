@@ -4,13 +4,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.schema_history import pre_arch5d_rdbms_root
+from common_lore_index_test_support.schema_history import pre_arch5d_rdbms_root
 
-from repomap_test_support.storage_publication import load_file_observations
+from common_lore_index_test_support.storage_publication import load_file_observations
 from common_lore_index.storage import (
     apply_migrations,
 )
@@ -18,7 +18,7 @@ from common_lore_index.storage.readback_driver import (
     READBACK_DRIVER_ENV,
 )
 
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     _PSYCOPG19_TIMING_FIXTURE_LABEL,
     _PSYCOPG19_TIMING_ITERATIONS,
     _PSYCOPG19_TIMING_RECORD_FIELDS,

@@ -53,11 +53,11 @@ from common_lore_index.storage.staged_ingestion import (
     run_staged_full_refresh,
     stage_id_for_authority,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class StorageShellDurableReadbackIntegrationTests(unittest.TestCase):

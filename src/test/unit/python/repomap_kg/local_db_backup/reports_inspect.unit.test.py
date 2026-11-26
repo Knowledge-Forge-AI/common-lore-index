@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from repomap_test_support.local_db_backup import LocalDbBackupUnitTestCase
+from common_lore_index_test_support.local_db_backup import LocalDbBackupUnitTestCase
 
 from common_lore_index.runtime.backup import (
     format_backup_inspect_table,
@@ -99,7 +99,7 @@ class LocalDbBackupReportsInspectUnitTests(LocalDbBackupUnitTestCase):
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             manifest["restore_supported"] = True
             manifest["restore_hint"] = (
-                "repomap-kg local db init --database repomap "
+                "cloe local db init --database repomap "
                 "--from-dump /Users/slair/private/runtime/dump.pgcustom"
             )
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -206,7 +206,7 @@ class LocalDbBackupReportsInspectUnitTests(LocalDbBackupUnitTestCase):
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             manifest["restore_supported"] = True
             manifest["restore_hint"] = (
-                "repomap-kg local db init --database repomap "
+                "cloe local db init --database repomap "
                 "--from-dump /Users/slair/private/runtime/dump.pgcustom"
             )
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")

@@ -35,7 +35,7 @@ from common_lore_index.storage.staging_event_transport import (
     StagingEventChannel,
     StagingEventTransportError,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.postgres_harness import temporary_postgres
 
 
 def test_publication_receipt_constraints_are_atomic_and_unique():

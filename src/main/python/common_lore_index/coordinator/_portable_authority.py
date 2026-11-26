@@ -106,11 +106,11 @@ def _is_approved_go_helper(
         candidate = Path(os.fsdecode(raw_exe)).resolve()
     except (TypeError, ValueError):
         return False
-    if candidate.name not in {"repomap-go-extract", "repomap-go-extract.exe"}:
+    if candidate.name not in {"cloe-go-extract", "cloe-go-extract.exe"}:
         return False
     if any(candidate == root or candidate.is_relative_to(root) for root in code_roots):
         return True
-    helper_env = os.environ.get("REPOMAP_GO_HELPER")
+    helper_env = os.environ.get("CLOE_GO_HELPER")
     if helper_env:
         try:
             return candidate == Path(helper_env).resolve()

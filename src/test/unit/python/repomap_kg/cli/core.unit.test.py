@@ -284,7 +284,7 @@ class CliCoreUnitTests(unittest.TestCase):
 def test_integration_cli_module_boundary_preserves_child_inputs_and_patch_seams(tmp_path: Path) -> None:
     import subprocess
     from unittest.mock import MagicMock
-    from repomap_test_support import cli_integration
+    from common_lore_index_test_support import cli_integration
     from runner_coverage_bootstrap import install_bootstrap_directory
 
     mock_proc = MagicMock()
@@ -369,7 +369,7 @@ def test_measured_launch_prepares_explicit_env_without_bypass(tmp_path: Path) ->
 
 
 def test_integration_cli_module_boundary_executes_real_module_version() -> None:
-    from repomap_test_support import cli_integration
+    from common_lore_index_test_support import cli_integration
 
     original_argv = sys.argv[:]
     code, stdout, stderr = cli_integration.run_module_entrypoint("--version")
@@ -378,7 +378,7 @@ def test_integration_cli_module_boundary_executes_real_module_version() -> None:
 
 
 def test_integration_cli_subprocess_retains_runner_child_coverage_bootstrap(tmp_path: Path) -> None:
-    from repomap_test_support import cli_integration
+    from common_lore_index_test_support import cli_integration
     from runner_coverage import ChildCoverageSession
 
     with ChildCoverageSession(scratch_dir=tmp_path / "coverage") as session:

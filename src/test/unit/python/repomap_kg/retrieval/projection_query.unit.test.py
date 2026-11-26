@@ -21,7 +21,7 @@ from common_lore_index.retrieval.projection_evidence import (
 from common_lore_index.retrieval.projection_policy import ExclusionReason
 from common_lore_index.retrieval.projection_query import CapturedTextQueryRequest, _find_chunked_matches, query_captured_text
 from common_lore_index.retrieval.query_contracts import CapabilityState
-from repomap_test_support.retrieval_evaluation_query_fixture import (
+from common_lore_index_test_support.retrieval_evaluation_query_fixture import (
     build_fixture_projection as _build_fixture_projection,
 )
 

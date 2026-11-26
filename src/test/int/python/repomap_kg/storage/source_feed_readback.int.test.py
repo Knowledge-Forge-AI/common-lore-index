@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -16,12 +16,12 @@ from common_lore_index.storage import (
     query_canonical_edge_records,
     query_canonical_node_records,
 )
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     discovery_fixture,
     fixed_source_clock,
     source_fixture,
 )
-from repomap_test_support.source_ingestion_integration import (
+from common_lore_index_test_support.source_ingestion_integration import (
     publish_acquisition_summary,
 )
 
@@ -293,12 +293,12 @@ class StorageSourceFeedReadbackIntegrationTests(unittest.TestCase):
             )
 
         from common_lore_index.server.mcp import (
-            repomap_explain_source_feed_item,
-            repomap_ingested_sources,
-            repomap_source_feed_items,
-            repomap_source_references,
-            repomap_source_runs,
-            repomap_source_summary,
+            cloe_explain_source_feed_item,
+            cloe_ingested_sources,
+            cloe_source_feed_items,
+            cloe_source_references,
+            cloe_source_runs,
+            cloe_source_summary,
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -327,14 +327,14 @@ class StorageSourceFeedReadbackIntegrationTests(unittest.TestCase):
                     "pg_port": str(postgres.port), "pg_user": postgres.user,
                     "pg_database": postgres.database, "psql_command": postgres.psql_command,
                 }
-                sources = repomap_ingested_sources(**mcp_args, source_type="feed.rss")
-                source_summary = repomap_source_summary(**mcp_args, source_id="example-rss-feed")
-                runs = repomap_source_runs(**mcp_args, source_id="example-rss-feed")
-                items = repomap_source_feed_items(**mcp_args, source_id="example-rss-feed")
-                references = repomap_source_references(
+                sources = cloe_ingested_sources(**mcp_args, source_type="feed.rss")
+                source_summary = cloe_source_summary(**mcp_args, source_id="example-rss-feed")
+                runs = cloe_source_runs(**mcp_args, source_id="example-rss-feed")
+                items = cloe_source_feed_items(**mcp_args, source_id="example-rss-feed")
+                references = cloe_source_references(
                     **mcp_args, source_id="example-rss-feed", target_kind="external.url",
                 )
-                explanation = repomap_explain_source_feed_item(
+                explanation = cloe_explain_source_feed_item(
                     **mcp_args, item_key=items[0]["item_key"], source_id="example-rss-feed",
                 )
 

@@ -10,14 +10,14 @@ import psycopg
 from psycopg import Cursor
 from psycopg.abc import Params, Query
 
-from repomap_test_support.test_cov5g_r1_characterization import PROTOCOL
-from repomap_test_support.test_cov5g_r1_measurement import (
+from common_lore_index_test_support.test_cov5g_r1_characterization import PROTOCOL
+from common_lore_index_test_support.test_cov5g_r1_measurement import (
     _backend_disappeared,
 )
-from repomap_test_support.test_cov5k_r2_observer_protocol import (
+from common_lore_index_test_support.test_cov5k_r2_observer_protocol import (
     ADR_0046_EXPECTATIONS,
 )
-import repomap_test_support.test_cov5g_r1_measurement as measurement
+import common_lore_index_test_support.test_cov5g_r1_measurement as measurement
 
 
 _CLEANUP_BUDGET_SECONDS = ADR_0046_EXPECTATIONS.cleanup_attempt_ms / 1_000

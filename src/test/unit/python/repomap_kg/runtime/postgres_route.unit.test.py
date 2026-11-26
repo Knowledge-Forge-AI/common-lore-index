@@ -54,7 +54,7 @@ def test_marker_alone_preserves_endpoint_and_generation_inputs(tmp_path, monkeyp
 @pytest.mark.parametrize("value", ['"unsupported"', 'true', '42', '[]', '{}'])
 def test_coordinator_mode_is_closed(tmp_path, value):
     setup_local_runtime(tmp_path)
-    path = tmp_path / "repomap.rpl.toml"
+    path = tmp_path / "repomap.local.cloe.toml"
     path.write_text(path.read_text().replace("[runtime]", f"[runtime]\ncoordinator_mode = {value}"))
     with pytest.raises(OpsConfigError, match="coordinator_mode"):
         load_ops_config_home(tmp_path)
@@ -63,7 +63,7 @@ def test_coordinator_mode_is_closed(tmp_path, value):
 def test_coordinator_mode_default_and_overlay(tmp_path):
     setup_local_runtime(tmp_path)
     assert load_ops_config_home(tmp_path).runtime.coordinator_mode == "container"
-    (tmp_path / "zz.rpl.toml").write_text('schema_version = 1\n[runtime]\ncoordinator_mode = "native"\n')
+    (tmp_path / "zz.local.cloe.toml").write_text('schema_version = 1\n[runtime]\ncoordinator_mode = "native"\n')
     config = load_ops_config_home(tmp_path)
     assert config.runtime.coordinator_mode == "native"
     assert config.runtime.to_jsonable()["coordinator_mode"] == "native"
@@ -72,7 +72,7 @@ def test_coordinator_mode_default_and_overlay(tmp_path):
 @pytest.mark.parametrize("bind", ["localhost", "::1", "0.0.0.0", "192.0.2.1"])
 def test_direct_exposure_requires_ipv4_literal(tmp_path, bind):
     setup_local_runtime(tmp_path)
-    path = tmp_path / "repomap.rpl.toml"
+    path = tmp_path / "repomap.local.cloe.toml"
     path.write_text(path.read_text().replace("direct_host_port_enabled = false", "direct_host_port_enabled = true").replace('bind_host = "127.0.0.1"', f'bind_host = "{bind}"'))
     with pytest.raises(OpsConfigError, match="127.0.0.1"):
         load_ops_config_home(tmp_path)
@@ -104,7 +104,7 @@ def test_native_mode_omits_only_coordinator_and_its_state(tmp_path):
     from common_lore_index.runtime.compose import render_compose_yaml
 
     setup_local_runtime(tmp_path)
-    config = tmp_path / "repomap.rpl.toml"
+    config = tmp_path / "repomap.local.cloe.toml"
     config.write_text(config.read_text().replace(
         "[runtime]", '[runtime]\ncoordinator_mode = "native"'
     ).replace("direct_host_port_enabled = false", "direct_host_port_enabled = true"))

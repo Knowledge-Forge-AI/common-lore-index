@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_cov5g_r1_characterization import (
+from common_lore_index_test_support.test_cov5g_r1_characterization import (
     Condition,
     FIX1_COMMIT,
     FROZEN_POLICY_DIGEST,
@@ -15,7 +15,7 @@ from repomap_test_support.test_cov5g_r1_characterization import (
     nearest_rank,
     verify_source_freeze,
 )
-from repomap_test_support.test_cov5f_characterization import (
+from common_lore_index_test_support.test_cov5f_characterization import (
     ACCEPTED_POLICY,
     FROZEN_ACCEPTED_POLICY_DIGEST,
     OPERATION_CLASS_CASES,

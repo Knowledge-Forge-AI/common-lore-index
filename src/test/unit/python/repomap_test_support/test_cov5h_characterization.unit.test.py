@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.test_cov5h_characterization import (
+from common_lore_index_test_support.test_cov5h_characterization import (
     BLOCKED_GROUPS,
     CANDIDATE_PATCH_DIGEST,
     FIX8_BASE,

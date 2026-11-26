@@ -81,7 +81,7 @@ def test_public_go_prelaunch_process_repeats_with_exact_order_and_cleanup(
     simulated_free_bytes = 15 * 1024**3
     worker = _disk_space_worker_wrapper(tmp_path_factory, simulated_free_bytes)
     assert tmp_path not in worker.parents
-    helper = Path(os.environ["REPOMAP_GO_HELPER"])
+    helper = Path(os.environ["CLOE_GO_HELPER"])
     assert helper.is_absolute() and helper.is_file()
     monkeypatch.setenv("TMPDIR", str(tmp_path))
     monkeypatch.setattr(campaign, "__file__", str(worker))

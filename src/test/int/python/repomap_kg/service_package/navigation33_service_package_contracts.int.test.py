@@ -59,14 +59,14 @@ from common_lore_index.service_package.systemd import (
     _recognized_foreground_argv as _systemd_recognized_argv,
     decode_systemd_exec_argv,
 )
-from repomap_test_support.executable_authority import controlled_service_authority
+from common_lore_index_test_support.executable_authority import controlled_service_authority
 
 
 def _build_spec_in_root(root: Path, name: str = "home"):
     home = root / name
     home.mkdir(mode=0o700, exist_ok=True)
     setup_local_runtime(home)
-    cfg = home / "repomap.rpl.toml"
+    cfg = home / "repomap.local.cloe.toml"
     cfg.write_text(cfg.read_text().replace("[runtime]", '[runtime]\ncoordinator_mode = "native"'))
     return build_service_package_spec(home)
 

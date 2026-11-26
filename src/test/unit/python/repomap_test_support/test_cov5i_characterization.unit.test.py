@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.scale28_fix9_failure_inventory import (
+from common_lore_index_test_support.scale28_fix9_failure_inventory import (
     FORMER_FAILURES,
     PrimaryCandidate,
 )
-from repomap_test_support.test_cov5i_characterization import (
+from common_lore_index_test_support.test_cov5i_characterization import (
     BLOCKED_GROUPS,
     CATEGORY_CONTRACTS,
     COMPLETED_GROUPS,

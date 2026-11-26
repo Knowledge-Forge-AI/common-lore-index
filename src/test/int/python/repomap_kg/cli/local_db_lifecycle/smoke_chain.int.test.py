@@ -5,10 +5,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_integration import (
+from common_lore_index_test_support.cli_integration import (
     CliIntegrationTestCase,
 )
-from repomap_test_support.local_db_backup import (
+from common_lore_index_test_support.local_db_backup import (
     maybe_provenance_runner_result,
     unit_maintenance_window_patch,
 )
@@ -24,13 +24,13 @@ class CliLocalDbLifecycleSmokeChainIntegrationTests(CliIntegrationTestCase):
             synthetic_db = "repomap_live_harden1"
             setup_exit, setup_stdout, setup_stderr = self.run_module_entrypoint(
                 "local",
-                "setup",
+                "setup", "--config-format", "cloe",
                 "--repo-map-home",
                 str(home),
                 "--json",
             )
             self.assertEqual(setup_exit, 0, setup_stderr)
-            config_path = home / "repomap.rpl.toml"
+            config_path = home / "repomap.local.cloe.toml"
             config_text = config_path.read_text(encoding="utf-8")
             graph_marker = 'repository_name = "repo-map"\n'
             self.assertEqual(config_text.count(graph_marker), 1)

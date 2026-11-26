@@ -27,17 +27,17 @@ from common_lore_index.storage.sqlite_local.context_expansion_queries import (
 )
 from common_lore_index.storage.sqlite_local.navigation_queries import navigation_candidates
 from common_lore_index.storage.sqlite_local.node_location_queries import node_locations
-from repomap_test_support.context_assertions import (
+from common_lore_index_test_support.context_assertions import (
     assert_valid_context_packet,
     build_postgres_context_fixture,
 )
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE,
     CTX_GRAPH_ID,
     SNAP_CORE,
     build_sqlite_context_fixture,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
 CANONICAL_KEY = "py:pkg.billing.InvoiceService"

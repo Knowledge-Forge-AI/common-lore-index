@@ -6,12 +6,12 @@ from common_lore_index.storage import (
     CanonicalStorageSummaryRecord,
     identity_metadata_hash,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
     def test_status_uses_default_project_from_config(self):
-        from common_lore_index.server.mcp import repomap_status
+        from common_lore_index.server.mcp import cloe_status
 
         config_path = self.write_mcp_config(
             {
@@ -28,7 +28,7 @@ class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
             }
         )
 
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             with patch(
                 "common_lore_index.server.mcp.query_canonical_storage_summary",
                 return_value=CanonicalStorageSummaryRecord(
@@ -43,7 +43,7 @@ class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
                     canonical_evidence=11,
                 ),
             ) as query:
-                payload = repomap_status()
+                payload = cloe_status()
 
         self.assertEqual(payload["project"], "repo-map")
         self.assertEqual(payload["repository_name"], "repo-map")
@@ -54,7 +54,7 @@ class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
         self.assertEqual(query.call_args.kwargs["root_path"], "/workspace/repo-map")
 
     def test_canonical_nodes_resolves_named_project_config(self):
-        from common_lore_index.server.mcp import repomap_canonical_nodes
+        from common_lore_index.server.mcp import cloe_canonical_nodes
 
         config_path = self.write_mcp_config(
             {
@@ -77,12 +77,12 @@ class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
             first_seen_run_id=1,
             last_seen_run_id=2,
         )
-        with patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(config_path)}):
+        with patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(config_path)}):
             with patch(
                 "common_lore_index.server.mcp.query_canonical_node_records",
                 return_value=(record,),
             ) as query:
-                payload = repomap_canonical_nodes(
+                payload = cloe_canonical_nodes(
                     project="repo-map",
                     kind="python.module",
                 )
@@ -96,7 +96,7 @@ class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
         self.assertEqual(query.call_args.kwargs["root_path"], "/workspace/repo-map")
 
     def test_live_ops2_legacy_project_resolution_prefers_legacy_config(self):
-        from common_lore_index.server.mcp import repomap_canonical_nodes
+        from common_lore_index.server.mcp import cloe_canonical_nodes
 
         mcp_config_path = self.write_mcp_config(
             {
@@ -126,7 +126,7 @@ class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
                 "common_lore_index.server.mcp.query_canonical_node_records",
                 return_value=(record,),
             ) as query:
-                payload = repomap_canonical_nodes(
+                payload = cloe_canonical_nodes(
                     project="repo-map",
                     kind="python.module",
                 )
@@ -141,9 +141,9 @@ class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
 
     def test_live_ops2_legacy_project_tools_resolve_graph_registry_graphs(self):
         from common_lore_index.server.mcp import (
-            repomap_canonical_edges,
-            repomap_canonical_nodes,
-            repomap_status,
+            cloe_canonical_edges,
+            cloe_canonical_nodes,
+            cloe_status,
         )
 
         mcp_config_path = self.write_empty_mcp_config()
@@ -198,12 +198,12 @@ class McpServerLegacyRoutingUnitTests(McpServerTestSupport):
                     return_value=(edge,),
                 ) as edge_query,
             ):
-                status = repomap_status(project="repo-map")
-                nodes = repomap_canonical_nodes(
+                status = cloe_status(project="repo-map")
+                nodes = cloe_canonical_nodes(
                     project="repo-map",
                     kind="python.module",
                 )
-                edges = repomap_canonical_edges(
+                edges = cloe_canonical_edges(
                     project="repo-map",
                     kind="imports",
                 )

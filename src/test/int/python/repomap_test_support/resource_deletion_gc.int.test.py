@@ -7,25 +7,25 @@ from pathlib import Path
 
 import pytest
 
-from repomap_test_support.resource_deletion_gc import (
+from common_lore_index_test_support.resource_deletion_gc import (
     DeletionAuthorityMode,
     delete_quarantine_batch,
     discover_quarantine_deletions,
 )
-from repomap_test_support.resource_deletion_records import (
+from common_lore_index_test_support.resource_deletion_records import (
     DeletionRecordStore,
     DeletionRecoveryState,
 )
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_lifecycle_claim import (
     ClaimError,
     ClaimPurpose,
     ClaimRegistry,
     ProcessLiveness,
     register_protection,
 )
-from repomap_test_support.resource_protection_authority import observe_protections
-from repomap_test_support.resource_safe_tree_delete import delete_quarantine_tree
+from common_lore_index_test_support.resource_protection_authority import observe_protections
+from common_lore_index_test_support.resource_safe_tree_delete import delete_quarantine_tree
 
 
 from src.test.int.python.repomap_test_support.resource_deletion_gc_fixtures import (

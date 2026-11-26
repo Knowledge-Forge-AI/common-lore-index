@@ -7,9 +7,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support import test_cov5k_r2_fix2_preparation as preparation
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_groupa_contract import (
+from common_lore_index_test_support import test_cov5k_r2_fix2_preparation as preparation
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_groupa_contract import (
     GroupAContract,
     GroupAContractViolation,
     verify_group_a_contract,
@@ -322,10 +322,10 @@ def test_a10_healthy_refusal_is_derived_without_literal_contract_flag() -> None:
 def test_no_old_origin_name_or_scenario_retry_selector_remains() -> None:
     root = Path("src/test")
     owners = (
-        root / "support/python/repomap_test_support/test_cov5k_r2_fix2_catalog.py",
-        root / "support/python/repomap_test_support/test_cov5k_r2_fix2_evidence.py",
-        root / "support/python/repomap_test_support/test_cov5k_r2_fix2_preparation.py",
-        root / "support/python/repomap_test_support/test_cov5k_r2_groupa_contract.py",
+        root / "support/python/common_lore_index_test_support/test_cov5k_r2_fix2_catalog.py",
+        root / "support/python/common_lore_index_test_support/test_cov5k_r2_fix2_evidence.py",
+        root / "support/python/common_lore_index_test_support/test_cov5k_r2_fix2_preparation.py",
+        root / "support/python/common_lore_index_test_support/test_cov5k_r2_groupa_contract.py",
         root / "unit/python/repomap_test_support/test_cov5k_r2_groupa_fix1_contract.unit.test.py",
     )
     old_name = "raw_evidence" + "_origin"

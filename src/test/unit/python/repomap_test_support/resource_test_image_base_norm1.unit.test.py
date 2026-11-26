@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from repomap_test_support.resource_test_image_base import (
+from common_lore_index_test_support.resource_test_image_base import (
     TestImageError as ImageLifecycleError,
     normalize_architecture_pair,
     parse_immutable_image_authority,

@@ -138,9 +138,9 @@ class PortableAuthorityAuditUnitTests(unittest.TestCase):
     def test_subprocess_popen_allows_approved_go_helper_and_denies_others(self):
         code_root = self.tmp / "code"
         code_root.mkdir()
-        helper = code_root / "repomap-go-extract"
+        helper = code_root / "cloe-go-extract"
         helper.touch(mode=0o755)
-        outside_helper = self.tmp / "repomap-go-extract"
+        outside_helper = self.tmp / "cloe-go-extract"
         outside_helper.touch(mode=0o755)
 
         pa._validate_audit_event(
@@ -169,9 +169,9 @@ class PortableAuthorityAuditUnitTests(unittest.TestCase):
     def test_posix_spawn_allows_approved_go_helper_and_denies_others(self):
         code_root = self.tmp / "code"
         code_root.mkdir()
-        helper = code_root / "repomap-go-extract"
+        helper = code_root / "cloe-go-extract"
         helper.touch(mode=0o755)
-        outside_helper = self.tmp / "repomap-go-extract"
+        outside_helper = self.tmp / "cloe-go-extract"
         outside_helper.touch(mode=0o755)
 
         pa._validate_audit_event(
@@ -204,10 +204,10 @@ class PortableAuthorityAuditUnitTests(unittest.TestCase):
             )
 
     def test_posix_spawn_allows_go_helper_from_repomap_go_helper_env(self):
-        outside_helper = self.tmp / "repomap-go-extract"
+        outside_helper = self.tmp / "cloe-go-extract"
         outside_helper.touch(mode=0o755)
 
-        with patch.dict(os.environ, {"REPOMAP_GO_HELPER": str(outside_helper)}):
+        with patch.dict(os.environ, {"CLOE_GO_HELPER": str(outside_helper)}):
             pa._validate_audit_event(
                 "os.posix_spawn",
                 (str(outside_helper), [str(outside_helper)], {}),
@@ -353,7 +353,7 @@ class PortableAuthorityAuditUnitTests(unittest.TestCase):
         )
         clean_paths = [p for p in sys.path if "coverage" not in Path(p).name]
         env = prepare_child_coverage_environment(family="unmeasured", extra_env={"PYTHONPATH": os.pathsep.join(clean_paths)})
-        env.pop("REPOMAP_GO_HELPER", None)
+        env.pop("CLOE_GO_HELPER", None)
         result = subprocess.run(
             [sys.executable, "-c", script], capture_output=True, text=True, env=env,
         )
@@ -379,7 +379,7 @@ class PortableAuthorityAuditUnitTests(unittest.TestCase):
         custom_helper.chmod(0o755)
 
         resolved = resolve_go_helper_command(
-            environment={"REPOMAP_GO_HELPER": str(custom_helper.resolve())},
+            environment={"CLOE_GO_HELPER": str(custom_helper.resolve())},
             package_root=pkg_root,
         )
         self.assertEqual(resolved, (str(custom_helper.resolve()),))

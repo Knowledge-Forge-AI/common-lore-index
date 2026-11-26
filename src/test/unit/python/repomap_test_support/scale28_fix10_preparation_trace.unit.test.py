@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import pytest
 
-from repomap_test_support.scale28_fix10_preparation_trace import (
+from common_lore_index_test_support.scale28_fix10_preparation_trace import (
     CLOSED_EVENTS,
     POSTGRES_RESOURCE_CODES,
     PUBLIC_AGGREGATE_FIELDS,

@@ -5,12 +5,12 @@ from unittest.mock import Mock
 
 import pytest
 
-import repomap_test_support.postgres_harness as postgres_harness
-from repomap_test_support.postgres_harness import (
+import common_lore_index_test_support.postgres_harness as postgres_harness
+from common_lore_index_test_support.postgres_harness import (
     active_or_new_postgres_session,
 )
-from repomap_test_support.postgres_container import PostgresContainerSession
-from repomap_test_support.unit_purity import (
+from common_lore_index_test_support.postgres_container import PostgresContainerSession
+from common_lore_index_test_support.unit_purity import (
     ENV_UNIT_PURITY_GUARD,
     UnitPurityState,
 )

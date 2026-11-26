@@ -10,7 +10,7 @@ from scale28_preparation_resources import (
     PreparationResourceSpecification,
     prepare_resources,
 )
-from repomap_test_support.process_boundary import RecordingProcessBoundary
+from common_lore_index_test_support.process_boundary import RecordingProcessBoundary
 
 
 class _Connection:

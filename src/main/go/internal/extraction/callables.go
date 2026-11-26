@@ -3,7 +3,7 @@ package extraction
 import (
 	"go/ast"
 
-	"github.com/lair001/repo-map-go-helper/internal/protocol"
+	"github.com/Knowledge-Forge-AI/common-lore-index/src/main/go/internal/protocol"
 )
 
 type receiverDetails struct {

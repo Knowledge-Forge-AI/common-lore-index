@@ -16,25 +16,25 @@ from common_lore_index.runtime.local import setup_local_runtime
 from common_lore_index.server import mcp
 from common_lore_index.server.mcp_core import RepoMapMcpError
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     NO_FALLBACK_GUARDS, patched_guards, setup_owned_config,
 )
-from repomap_test_support.node_location_fixtures import (
+from common_lore_index_test_support.node_location_fixtures import (
     DOC, GRAPH, SYMBOL, locator_home, publish_locator_generation,
 )
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, publication_for
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, publication_for
 
 
 @pytest.fixture
 def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home, database = locator_home(tmp_path, reference_count=5)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.setenv("CLOE_HOME", str(home))
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     return database
 
 
 def call(key: str = DOC, **options: Any) -> dict[str, Any]:
-    return mcp.handle_tool_call("repomap_node_locations", {
+    return mcp.handle_tool_call("cloe_node_locations", {
         "graph_id": GRAPH, "canonical_key": key, **options,
     })["structuredContent"]
 
@@ -222,13 +222,13 @@ def test_invalid_role_is_bounded_error_before_io(store: Path, role: Any) -> None
 
 
 def test_filtered_views_preserve_search_visibility_identity_and_redaction(store: Path) -> None:
-    before = mcp.repomap_search_nodes(graph_id=GRAPH, query="root", limit=2)
+    before = mcp.cloe_search_nodes(graph_id=GRAPH, query="root", limit=2)
     for role in ("all", "direct", "reference", "unknown"):
         call(evidence_role=role)
         assert call(evidence_role=role, graph_id="sibling")["reason"] == "node_not_found"
         with pytest.raises(RepoMapMcpError, match="not MCP-visible"):
             call(evidence_role=role, graph_id="hidden")
-    assert mcp.repomap_search_nodes(graph_id=GRAPH, query="root", limit=2) == before
+    assert mcp.cloe_search_nodes(graph_id=GRAPH, query="root", limit=2) == before
     edit(store, "UPDATE canonical_evidence SET path = '/Users/example/private.md'")
     result = call(SYMBOL, evidence_role="direct", limit=1)
     assert result["status"] == "incomplete" and result["locations"][0]["path"] is None
@@ -243,9 +243,9 @@ def test_direct_view_postgres_routes_via_read_status_and_refuses_missing_credent
 ) -> None:
     unauth = tmp_path / "unauth-home"
     unauth.mkdir()
-    (unauth / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
-    monkeypatch.setenv("REPOMAP_HOME", str(unauth))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    (unauth / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
+    monkeypatch.setenv("CLOE_HOME", str(unauth))
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     with (
         patched_guards(NO_FALLBACK_GUARDS),
         patch("common_lore_index.storage.postgres_node_locations.execute_json_readback", side_effect=AssertionError("io")),
@@ -256,9 +256,9 @@ def test_direct_view_postgres_routes_via_read_status_and_refuses_missing_credent
 
     home = tmp_path / "postgres-home"
     setup_local_runtime(home)
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     secret = read_role_secrets(home / "runtime" / ".env").read_status
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    monkeypatch.setenv("CLOE_HOME", str(home))
     calls: list[tuple[str, dict[str, Any]]] = []
 
     def fake_exec(sql: str, **kwargs: Any) -> dict[str, Any]:

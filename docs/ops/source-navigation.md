@@ -14,10 +14,10 @@ For an already selected canonical node on a configured, enabled, MCP-visible
 SQLite Local graph, call:
 
 ```text
-repomap_node_locations(graph_id="example", canonical_key="python.function:sample.service:serve", evidence_role="direct", detail="compact", limit=2)
+cloe_node_locations(graph_id="example", canonical_key="python.function:sample.service:serve", evidence_role="direct", detail="compact", limit=2)
 ```
 
-If the node is unknown, use `repomap_search_nodes` first and pass its exact key.
+If the node is unknown, use `cloe_search_nodes` first and pass its exact key.
 Node/navigation matching searches canonical key, kind and display name, not
 source bodies. For an assignment, comment, string, error message or syntax
 construct, use bounded native literal-text search in the caller-selected
@@ -30,7 +30,7 @@ observation search includes retained payload text, not arbitrary workspace text.
 
 Search eligibility, key order, metadata and pagination are unchanged. The locator
 is an opt-in MCP tool, also callable as
-`common_lore_index.server.mcp.repomap_node_locations`; it performs no acquisition,
+`common_lore_index.server.mcp.cloe_node_locations`; it performs no acquisition,
 source-tree reads or refresh. PostgreSQL reports `backend_unsupported` for this
 helper; existing PostgreSQL read tools retain their contracts.
 
@@ -174,7 +174,7 @@ and a historical primary window still has `location_scope="historical_run"`.
 Neither becomes current direct evidence in compact form.
 
 For expansion, repeat **the same** `graph_id`, `canonical_key`, `evidence_role`
-and `limit` on `repomap_node_locations`, setting `detail="full"`. Expansion
+and `limit` on `cloe_node_locations`, setting `detail="full"`. Expansion
 is a new read and may observe a newer publication. There is no snapshot pin or
 evidence dereference endpoint. Inspect needed full evidence when that helps;
 otherwise perform bounded native search. Do not repeat a failed lookup in a loop.
@@ -302,7 +302,7 @@ expanded = expand_selected(view, (chosen_neighbor,), tool_call=existing_call)
 print(export(expanded))
 ```
 
-Direct callers may opt into `repomap_neighborhood` limits on SQLite Local with
+Direct callers may opt into `cloe_neighborhood` limits on SQLite Local with
 `node_limit=...` and/or `edge_limit=...`, each a positive integer from 1 through
 100. Booleans, nulls and non-integers refuse. Both omitted preserve the existing
 response exactly; one omitted leaves that dimension unbounded. PostgreSQL
@@ -325,7 +325,7 @@ gate. These source-blind reads do not establish a shared snapshot with later
 locator reads or complete dependency, impact, call or coverage analysis. See
 [ADR 0083](../adr/2026/10/0083-bounded-configured-neighborhood.md).
 
-Inspection performs one `repomap_neighborhood(graph_id=..., node=..., depth=1,
+Inspection performs one `cloe_neighborhood(graph_id=..., node=..., depth=1,
 direction=...)` read. The node/edge display limits default to 8/16 and can only be
 reduced; they do not change backend bounds. The adapter still omits the optional
 node/edge arguments, so its response has no completeness or publication field.
@@ -342,7 +342,7 @@ response. If the chosen direction still exceeds the bound, use native navigation
 or review; the helper does not retry or broaden it.
 
 Expansion admits a tuple of at most two distinct explicitly selected, uniquely
-identified displayed neighbor keys. Each receives one `repomap_node_locations`
+identified displayed neighbor keys. Each receives one `cloe_node_locations`
 call with `evidence_role="direct", detail="compact", limit=2`. No selection costs
 no further reads. Invalid selections are rejected before any locator call, and an
 already expanded view refuses further expansion. This is caller-held state, not

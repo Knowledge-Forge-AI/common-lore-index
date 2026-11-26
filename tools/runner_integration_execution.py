@@ -190,7 +190,7 @@ def execute_staging_decision_b(
                 plugin.abrupt_context = abrupt
             previous_go = os.environ.get("GOCOVERDIR")
             if leg == "A" and enabled:
-                from repomap_test_support.test_scratch import establish_run
+                from common_lore_index_test_support.test_scratch import establish_run
                 a_go = establish_run().go_tmp / ("abrupt-" + invocation)
                 a_go.mkdir(mode=0o700)
                 os.environ["GOCOVERDIR"] = str(a_go)

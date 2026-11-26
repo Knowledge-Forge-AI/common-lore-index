@@ -11,7 +11,7 @@ from common_lore_index.ops.ingestion.github_api import (
     build_github_api_plan,
     load_github_api_source_config,
 )
-from repomap_test_support.run25_acquisition_fixtures import (
+from common_lore_index_test_support.run25_acquisition_fixtures import (
     Run25DeterministicGitHubTransport,
     assert_owned_artifacts_preserved,
     make_run25_github_source_toml,

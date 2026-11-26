@@ -55,7 +55,7 @@ qualification:
   refuses before locking (see Commands).
 
 The wheel carries no Go helper. Go extraction from a wheel install needs
-`REPOMAP_GO_HELPER`.
+`CLOE_GO_HELPER`.
 
 ### Installed-wheel qualification
 
@@ -98,7 +98,7 @@ switches a home:
 - a `postgresql` overlay on a SQLite home;
 - a later file without `[storage]` that carries `[postgres]` or `[runtime]`
   (PostgreSQL-only settings) in a SQLite home. This includes a SQLite file
-  added so that it sorts ahead of an existing PostgreSQL `repomap.rpl.toml`.
+  added so that it sorts ahead of an existing PostgreSQL `repomap.local.cloe.toml`.
 
 ```toml
 # ~/.repo-map-local/repomap.rp.toml
@@ -145,17 +145,17 @@ These are the exact argument shapes exercised by the containerized loop owner
 # (`graph-database-schema-behind`) and never upgraded here (see Schema upgrade).
 # The database is built in a temporary sibling file and hard-linked into place
 # only when complete; an existing file is never replaced.
-repomap-kg ops sqlite-init --repo-map-home ~/.repo-map-local --graph example --json
+cloe ops sqlite-init --repo-map-home ~/.repo-map-local --graph example --json
 
 # Full refresh: capture sources with the portable worker, validate in the
 # parent, and publish one new accepted generation.
-repomap-kg ops refresh-graph --repo-map-home ~/.repo-map-local --graph example --json
+cloe ops refresh-graph --repo-map-home ~/.repo-map-local --graph example --json
 
 # A second full refresh publishes generation 2 (previous_run_id 1).
-repomap-kg ops refresh-graph --repo-map-home ~/.repo-map-local --graph example --json
+cloe ops refresh-graph --repo-map-home ~/.repo-map-local --graph example --json
 
 # Read-only stdio MCP over the accepted generations.
-repomap-kg mcp serve --repo-map-home ~/.repo-map-local
+cloe mcp serve --repo-map-home ~/.repo-map-local
 ```
 
 The ordinary operator workflow
@@ -165,22 +165,22 @@ The ordinary operator workflow
 # Validate the merged home: backend authority, graph registry, source bindings,
 # privacy and visibility, and the SQLite-only refusals. Reads no graph root and
 # opens no database.
-repomap-kg ops config-check --repo-map-home ~/.repo-map-local --json
+cloe ops config-check --repo-map-home ~/.repo-map-local --json
 
 # Same, plus a read-only readiness probe of every configured graph's database.
-repomap-kg ops config-check --repo-map-home ~/.repo-map-local --check-db --json
+cloe ops config-check --repo-map-home ~/.repo-map-local --check-db --json
 
 # Configured graph inventory in configuration order; --check-db adds per-graph
 # readiness from the same probe.
-repomap-kg ops graphs --repo-map-home ~/.repo-map-local [--check-db] --json
+cloe ops graphs --repo-map-home ~/.repo-map-local [--check-db] --json
 
 # Inspect one enabled graph's configured sources and excludes; no database,
 # worker or publication.
-repomap-kg ops refresh-preflight --repo-map-home ~/.repo-map-local --graph example --json
+cloe ops refresh-preflight --repo-map-home ~/.repo-map-local --graph example --json
 
 # Refresh every enabled graph, in configuration order, each as a separate direct
 # refresh-graph (own lock, reconciliation and publication).
-repomap-kg ops refresh-enabled --repo-map-home ~/.repo-map-local --json
+cloe ops refresh-enabled --repo-map-home ~/.repo-map-local --json
 ```
 
 `config-check` keeps the PostgreSQL envelope (`valid`, `service`, `graphs`,
@@ -295,11 +295,11 @@ before anything is touched.
 ```sh
 # Write a verified backup of one initialized graph (enabled or not) into a new
 # or empty directory. The directory is also the Local export format.
-repomap-kg ops sqlite-backup --repo-map-home ~/.repo-map-local --graph example \
+cloe ops sqlite-backup --repo-map-home ~/.repo-map-local --graph example \
   --output ~/repomap-backups/example-2026-09-29 --json
 
 # Restore a verified backup into an ABSENT graph database.
-repomap-kg ops sqlite-restore --repo-map-home ~/.repo-map-local --graph example \
+cloe ops sqlite-restore --repo-map-home ~/.repo-map-local --graph example \
   --backup ~/repomap-backups/example-2026-09-29 --json
 ```
 
@@ -454,7 +454,7 @@ a missing or extra object, `user_version` disagreeing with the ledger) is
 
 ```sh
 # Explicitly upgrade one older-schema graph, writing a verified backup first.
-repomap-kg ops sqlite-upgrade --repo-map-home ~/.repo-map-local --graph example \
+cloe ops sqlite-upgrade --repo-map-home ~/.repo-map-local --graph example \
   --backup-output ~/repomap-backups/example-pre-v2 --json
 ```
 
@@ -523,10 +523,10 @@ Owned by the containerized cleanup owner
 
 ```sh
 # Inventory one graph's stale Local state. Changes nothing (dry run).
-repomap-kg ops sqlite-cleanup --repo-map-home ~/.repo-map-local --graph example --json
+cloe ops sqlite-cleanup --repo-map-home ~/.repo-map-local --graph example --json
 
 # Remove only what is provably safe, then sync state/ and the home.
-repomap-kg ops sqlite-cleanup --repo-map-home ~/.repo-map-local --graph example --yes --json
+cloe ops sqlite-cleanup --repo-map-home ~/.repo-map-local --graph example --yes --json
 ```
 
 `sqlite-cleanup` is SQLite-only, source-blind and driver-free; a PostgreSQL
@@ -634,20 +634,20 @@ file name or token appears in the payload.
 ## MCP matrix
 
 Supported for SQLite Local graphs (all 23 database-reading tools):
-`repomap_canonical_nodes`, `repomap_canonical_edges`,
-`repomap_explain_canonical_edge`, `repomap_canonical_neighborhood`,
-`repomap_status`, `repomap_graph_status`, `repomap_refresh_status` (one graph
-or all visible), `repomap_project_summary`, `repomap_search_nodes`,
-`repomap_search_files`, `repomap_search_observations`, `repomap_neighborhood`,
-the `repomap_python_summary`, `repomap_terraform_summary`,
-`repomap_openapi_summary`, `repomap_js_framework_summary` and
-`repomap_nix_summary` tools, and the six source/feed tools
-`repomap_ingested_sources`, `repomap_source_summary`, `repomap_source_runs`,
-`repomap_source_feed_items`, `repomap_explain_source_feed_item` and
-`repomap_source_references`. `repomap_list_graphs`, `repomap_projects` and the
+`cloe_canonical_nodes`, `cloe_canonical_edges`,
+`cloe_explain_canonical_edge`, `cloe_canonical_neighborhood`,
+`cloe_status`, `cloe_graph_status`, `cloe_refresh_status` (one graph
+or all visible), `cloe_project_summary`, `cloe_search_nodes`,
+`cloe_search_files`, `cloe_search_observations`, `cloe_neighborhood`,
+the `cloe_python_summary`, `cloe_terraform_summary`,
+`cloe_openapi_summary`, `cloe_js_framework_summary` and
+`cloe_nix_summary` tools, and the six source/feed tools
+`cloe_ingested_sources`, `cloe_source_summary`, `cloe_source_runs`,
+`cloe_source_feed_items`, `cloe_explain_source_feed_item` and
+`cloe_source_references`. `cloe_list_graphs`, `cloe_projects` and the
 two server-memory tools also work; they do not read a graph database.
 
-Legacy `repomap_status` reads a SQLite graph only when `project` names a
+Legacy `cloe_status` reads a SQLite graph only when `project` names a
 graph-registry graph that is not also a legacy JSON-registry project. A legacy
 project, the legacy `default_project` and explicit `root_path`/`pg_*`
 arguments keep their PostgreSQL behavior, and a graph id combined with explicit
@@ -784,7 +784,7 @@ and changes nothing. The reasons are:
 A busy database clears once the other writer finishes. For the other reasons:
 
 1. Stop every Common Lore Index process that uses the home.
-2. Confirm the accepted state read-only with `repomap_graph_status` over MCP.
+2. Confirm the accepted state read-only with `cloe_graph_status` over MCP.
    If the database itself is refused, follow the quarantine procedure above.
 3. Find the unsettled attempts: the refusal names a reason, not a directory.
    Every `attempts/*/portable-result.json` under

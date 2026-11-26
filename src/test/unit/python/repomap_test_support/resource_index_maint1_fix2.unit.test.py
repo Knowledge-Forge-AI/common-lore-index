@@ -9,13 +9,13 @@ from threading import Barrier
 
 import pytest
 
-from repomap_test_support.resource_hygiene_policy import HygieneProfile
-from repomap_test_support.resource_index import (
+from common_lore_index_test_support.resource_hygiene_policy import HygieneProfile
+from common_lore_index_test_support.resource_index import (
     AdvisoryIndex,
     HostAdmissionRefused,
 )
-from repomap_test_support.resource_ledger_io import write_private_json_exclusive
-from repomap_test_support.resource_retention import TerminalOutcome
+from common_lore_index_test_support.resource_ledger_io import write_private_json_exclusive
+from common_lore_index_test_support.resource_retention import TerminalOutcome
 
 
 CAP = 512
@@ -283,7 +283,7 @@ def test_c8_headroom_lifecycle_field_matches_real_admission(
     index = _empty_index(tmp_path)
     _write_state(index, terminal_runs=terminal_runs, active_runs=active_runs)
     bound = index.reconcile()
-    from repomap_test_support.resource_index_recovery import profile_headroom
+    from common_lore_index_test_support.resource_index_recovery import profile_headroom
 
     projected = profile_headroom(
         bound,

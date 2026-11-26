@@ -6,13 +6,13 @@ from common_lore_index.storage import (
     CanonicalEdgeRecord, CanonicalNodeRecord,
     CanonicalStorageSummaryRecord, StorageSchemaError, identity_metadata_hash,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class McpServerLegacyRoutingLiveUnitTests(McpServerTestSupport):
     def test_live_ops7_configured_tools_refuse_host_only_for_container_internal_host(self):
         from common_lore_index.server.mcp import (
-            repomap_canonical_edges, repomap_canonical_nodes, repomap_status,
+            cloe_canonical_edges, cloe_canonical_nodes, cloe_status,
         )
         from common_lore_index.ops.reports import OpsPsqlExecution
 
@@ -46,11 +46,11 @@ class McpServerLegacyRoutingLiveUnitTests(McpServerTestSupport):
                 # configured tools read host-only and refuse instead of
                 # reaching a container runtime, even when one is available.
                 with self.assertRaisesRegex(StorageSchemaError, "could not translate host name"):
-                    repomap_status(project="repo-map")
+                    cloe_status(project="repo-map")
                 with self.assertRaisesRegex(StorageSchemaError, "could not translate host name"):
-                    repomap_canonical_nodes(project="repo-map", kind="python.module")
+                    cloe_canonical_nodes(project="repo-map", kind="python.module")
                 with self.assertRaisesRegex(StorageSchemaError, "could not translate host name"):
-                    repomap_canonical_edges(project="repo-map", kind="imports")
+                    cloe_canonical_edges(project="repo-map", kind="imports")
                 self.assertEqual(container_execution.call_count, 0)
 
         expected_host_args = ["-h", "postgres", "-p", "5432", "-U", "repo_map", "-d", "repomap_repo_map"]
@@ -58,7 +58,7 @@ class McpServerLegacyRoutingLiveUnitTests(McpServerTestSupport):
             self.assertEqual(psql_calls[label], [(expected_host_args, "psql", "/tmp/fixture")], label)
 
     def test_live_ops7_private_graph_host_only_refusal_keeps_root_redacted(self):
-        from common_lore_index.server.mcp import repomap_status
+        from common_lore_index.server.mcp import cloe_status
         from common_lore_index.ops.reports import OpsPsqlExecution
 
         mcp_config_path = self.write_empty_mcp_config()
@@ -88,7 +88,7 @@ class McpServerLegacyRoutingLiveUnitTests(McpServerTestSupport):
                 # no container fallback, and a bounded refusal without topology.
                 self.assertRaises(StorageSchemaError) as raised,
             ):
-                repomap_status(project="private-visible")
+                cloe_status(project="private-visible")
 
         self.assertEqual(container_execution.call_count, 0)
         self.assertEqual(roots_seen, [private_root])
@@ -99,9 +99,9 @@ class McpServerLegacyRoutingLiveUnitTests(McpServerTestSupport):
 
     def test_live_harden3_graph_registry_and_legacy_mcp_routing_smoke(self):
         from common_lore_index.server.mcp import (
-            RepoMapMcpError, repomap_canonical_edges, repomap_canonical_nodes,
-            repomap_graph_status, repomap_list_graphs, repomap_project_summary,
-            repomap_projects, repomap_search_nodes, repomap_status,
+            RepoMapMcpError, cloe_canonical_edges, cloe_canonical_nodes,
+            cloe_graph_status, cloe_list_graphs, cloe_project_summary,
+            cloe_projects, cloe_search_nodes, cloe_status,
         )
         from common_lore_index.ops.refresh import OpsRefreshGraphStatus
 
@@ -184,17 +184,17 @@ class McpServerLegacyRoutingLiveUnitTests(McpServerTestSupport):
                 patch("common_lore_index.server.mcp.query_canonical_node_records", return_value=(node,)) as legacy_node_query,
                 patch("common_lore_index.server.mcp.query_canonical_edge_records", return_value=(edge,)) as legacy_edge_query,
             ):
-                graphs_payload = repomap_list_graphs()
-                projects_payload = repomap_projects()
-                graph_status = repomap_graph_status(graph_id="repo-map")
-                private_graph_status = repomap_graph_status(graph_id="private-visible")
-                project_summary = repomap_project_summary(graph_id="repo-map")
-                private_project_summary = repomap_project_summary(graph_id="private-visible")
-                search_nodes = repomap_search_nodes(graph_id="repo-map", query="common_lore_index.cli", kind="python.module")
-                legacy_status = repomap_status(project="repo-map")
-                private_legacy_status = repomap_status(project="private-visible")
-                legacy_nodes = repomap_canonical_nodes(project="repo-map", kind="python.module")
-                legacy_edges = repomap_canonical_edges(project="repo-map", kind="imports")
+                graphs_payload = cloe_list_graphs()
+                projects_payload = cloe_projects()
+                graph_status = cloe_graph_status(graph_id="repo-map")
+                private_graph_status = cloe_graph_status(graph_id="private-visible")
+                project_summary = cloe_project_summary(graph_id="repo-map")
+                private_project_summary = cloe_project_summary(graph_id="private-visible")
+                search_nodes = cloe_search_nodes(graph_id="repo-map", query="common_lore_index.cli", kind="python.module")
+                legacy_status = cloe_status(project="repo-map")
+                private_legacy_status = cloe_status(project="private-visible")
+                legacy_nodes = cloe_canonical_nodes(project="repo-map", kind="python.module")
+                legacy_edges = cloe_canonical_edges(project="repo-map", kind="imports")
 
             assert isinstance(legacy_nodes, dict)
             assert isinstance(legacy_edges, dict)
@@ -247,7 +247,7 @@ class McpServerLegacyRoutingLiveUnitTests(McpServerTestSupport):
         })
         with self.patch_mcp_and_ops_config(legacy_config_path, ops_config_path):
             with patch("common_lore_index.server.mcp.query_canonical_node_records", return_value=(node,)) as precedence_query:
-                precedence_nodes = repomap_canonical_nodes(project="repo-map", kind="python.module")
+                precedence_nodes = cloe_canonical_nodes(project="repo-map", kind="python.module")
 
         assert isinstance(precedence_nodes, dict)
         self.assertEqual(precedence_nodes["items"][0]["canonical_key"], "python.module:common_lore_index.cli")
@@ -257,14 +257,14 @@ class McpServerLegacyRoutingLiveUnitTests(McpServerTestSupport):
         with self.patch_mcp_and_ops_config(mcp_config_path, ops_config_path):
             with patch("common_lore_index.server.ops.query_refresh_status") as hidden_status_query:
                 with self.assertRaisesRegex(RepoMapMcpError, "not enabled"):
-                    repomap_graph_status(graph_id="disabled")
+                    cloe_graph_status(graph_id="disabled")
                 with self.assertRaisesRegex(RepoMapMcpError, "not MCP-visible"):
-                    repomap_graph_status(graph_id="hidden")
+                    cloe_graph_status(graph_id="hidden")
             with patch("common_lore_index.server.mcp.query_canonical_node_records") as query:
                 with self.assertRaisesRegex(RepoMapMcpError, "not enabled"):
-                    repomap_canonical_nodes(project="disabled")
+                    cloe_canonical_nodes(project="disabled")
                 with self.assertRaisesRegex(RepoMapMcpError, "not MCP-visible"):
-                    repomap_canonical_nodes(project="hidden")
+                    cloe_canonical_nodes(project="hidden")
 
         hidden_status_query.assert_not_called()
         query.assert_not_called()

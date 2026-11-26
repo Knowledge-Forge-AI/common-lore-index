@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from repomap_test_support.scale28_fix9_failure_inventory import (
+from common_lore_index_test_support.scale28_fix9_failure_inventory import (
     FORMER_FAILURES,
     PrimaryCandidate,
 )

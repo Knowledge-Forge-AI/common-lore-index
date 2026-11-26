@@ -10,7 +10,7 @@ import platform
 import subprocess
 from typing import Any
 
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
 from retrieval_evaluation_attempts import AttemptJournal, admit_attempt
 from retrieval_evaluation_heldout import HeldOutAdmissionPrerequisite, validate_held_out_admission
 from retrieval_evaluation_native import probe_git_version, resolve_git_executable
@@ -60,10 +60,10 @@ def candidate_source_files(repo_root: Path) -> dict[str, bytes]:
         "tools/retrieval_semantic_representation.py",
         "src/main/resources/rdbms/2026/10/31-001-cloe-lexical-create-derived-schema.sql",
         "tools/retrieval_evaluation_harness.py",
-        "src/test/support/python/repomap_test_support/retrieval_evaluation_canaries.py",
-        "src/test/support/python/repomap_test_support/retrieval_evaluation_fixture.py",
-        "src/test/support/python/repomap_test_support/retrieval_evaluation_publication.py",
-        "src/test/support/python/repomap_test_support/retrieval_evaluation_publication_readback.py",
+        "src/test/support/python/common_lore_index_test_support/retrieval_evaluation_canaries.py",
+        "src/test/support/python/common_lore_index_test_support/retrieval_evaluation_fixture.py",
+        "src/test/support/python/common_lore_index_test_support/retrieval_evaluation_publication.py",
+        "src/test/support/python/common_lore_index_test_support/retrieval_evaluation_publication_readback.py",
     )
     for rel in required:
         if not (repo_root / rel).exists():

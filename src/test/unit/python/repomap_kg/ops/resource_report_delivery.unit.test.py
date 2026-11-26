@@ -17,7 +17,7 @@ from common_lore_index.ops.resource_reports._admission import (
 from common_lore_index.ops.resource_reports._codec import MAX_FILE_BYTES_V2, ResourceReportError
 from common_lore_index.ops.resource_reports._delivery import DeliveryError, admit_destination, deliver
 from common_lore_index.ops.resource_reports._files import read_report_file
-from repomap_test_support.resource_report_cli_files import private_directory, report_leftovers
+from common_lore_index_test_support.resource_report_cli_files import private_directory, report_leftovers
 
 DATA = b'{"report":1}\n'
 
@@ -280,7 +280,7 @@ def _config(tmp_path: Path, **extra: Any) -> SimpleNamespace:
         )
 
     return SimpleNamespace(
-        config_home=str(tmp_path / "home"), config_path=str(tmp_path / "home" / "repomap.rp.toml"),
+        config_home=str(tmp_path / "home"), config_path=str(tmp_path / "home" / "repomap.cloe.toml"),
         graphs=(graph("a", tmp_path / "src-a"), graph("b", tmp_path / "src-b", tmp_path / "src-b2")),
         **extra,
     )

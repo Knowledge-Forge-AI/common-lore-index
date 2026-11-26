@@ -10,13 +10,13 @@ import psutil
 import pytest
 
 import test_hygiene_maintenance as maintenance_tool
-from repomap_test_support.resource_gc_ledger import GcLedger
-from repomap_test_support.resource_index import AdvisoryIndex
-from repomap_test_support.resource_index_maintenance import (
+from common_lore_index_test_support.resource_gc_ledger import GcLedger
+from common_lore_index_test_support.resource_index import AdvisoryIndex
+from common_lore_index_test_support.resource_index_maintenance import (
     IndexMaintenanceError,
     recover_stale_admission_lock,
 )
-from repomap_test_support.resource_lifecycle_claim import (
+from common_lore_index_test_support.resource_lifecycle_claim import (
     CLAIM_LEASE_SECONDS,
     ClaimError,
     ClaimPurpose,

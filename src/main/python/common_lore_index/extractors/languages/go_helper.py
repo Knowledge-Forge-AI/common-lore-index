@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Mapping
 
 
-HELPER_ENV = "REPOMAP_GO_HELPER"
-HELPER_NAME = "repomap-go-extract.exe" if os.name == "nt" else "repomap-go-extract"
+HELPER_ENV = "CLOE_GO_HELPER"
+HELPER_NAME = "cloe-go-extract.exe" if os.name == "nt" else "cloe-go-extract"
 
 
 class GoHelperUnavailableError(RuntimeError):

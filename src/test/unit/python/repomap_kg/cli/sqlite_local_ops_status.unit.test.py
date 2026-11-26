@@ -24,9 +24,9 @@ from common_lore_index.ops import local_readiness
 from common_lore_index.ops.config_local import LocalSqliteConfig, load_graph_registry_config_home, local_graph_binding
 from common_lore_index.ops.local_refresh import initialize_local_graph
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.host_read_store_config import fail_if_reached, setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.host_read_store_config import fail_if_reached, setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import (
     generation_bundle,
     graph_toml,
     publication_for,
@@ -171,7 +171,7 @@ def test_sqlite_home_config_errors_are_reported_directly(
 ) -> None:
     home = tmp_path / "home"
     home.mkdir()
-    (home / "repomap.rp.toml").write_text(
+    (home / "repomap.cloe.toml").write_text(
         sqlite_home_toml('[postgres]\nhost = "h"\n' + graph_toml("one", tmp_path)), encoding="utf-8"
     )
     code, _, stderr = run_repo_map_in_process("ops", command, "--repo-map-home", str(home))
@@ -182,7 +182,7 @@ def test_sqlite_home_config_errors_are_reported_directly(
 def test_postgres_home_keeps_the_postgres_projection(tmp_path: Path) -> None:
     home = tmp_path / "pg"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
     with patch.object(_ops_sqlite_dispatch, "probe_local_graphs", fail_if_reached):
         payload = _json("ops", "config-check", "--repo-map-home", str(home))
     assert PG_KEYS <= set(payload) and "storage" not in payload, sorted(payload)

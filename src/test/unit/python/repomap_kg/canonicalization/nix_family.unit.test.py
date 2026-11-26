@@ -6,7 +6,7 @@ from common_lore_index.graph.keys import (
     nix_output_key,
 )
 
-from repomap_test_support.canonicalization import (
+from common_lore_index_test_support.canonicalization import (
     canonicalize_fixture_payload,
     expected_graph_fixture,
     raw_fixture_records,

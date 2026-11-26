@@ -15,7 +15,7 @@ from common_lore_index.extractors.rust_pilot.helper_protocol import (
     encode_request,
     invocation_nonce,
 )
-from repomap_test_support.rust_pilot_fake_tree_sitter.wheels import frame, frames, item_frame
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.wheels import frame, frames, item_frame
 
 DATA = b"mod m { #[a] fn f() {} }\nstruct S;\n"
 NONCE = invocation_nonce(b"\x01" * 32, 3, hashlib.sha256(DATA).hexdigest())

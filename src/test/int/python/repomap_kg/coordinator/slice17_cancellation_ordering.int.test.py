@@ -7,7 +7,7 @@ import time
 import pytest
 
 from common_lore_index.coordinator.protocol import WorkerLaunchSpec, run_worker_spec
-from repomap_test_support.portable_worker_conformance import run_portable_worker_conformance
+from common_lore_index_test_support.portable_worker_conformance import run_portable_worker_conformance
 
 
 def _diagnostic(result):

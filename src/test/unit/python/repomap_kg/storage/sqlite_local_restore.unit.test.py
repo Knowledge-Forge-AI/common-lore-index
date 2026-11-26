@@ -40,7 +40,7 @@ from common_lore_index.storage.sqlite_local.schema import (
     LocalStoreError,
     accepted_identity,
 )
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, local_binding, publication_for
 
 BINDING = local_binding()
 CREATED_AT = "2026-09-29T00:00:00Z"

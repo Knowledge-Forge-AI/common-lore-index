@@ -32,8 +32,8 @@ def test_production_does_not_import_test_support() -> None:
             imported_test_modules.update(
                 (module, target)
                 for target in targets
-                if target == "repomap_test_support"
-                or target.startswith("repomap_test_support.")
+                if target == "common_lore_index_test_support"
+                or target.startswith("common_lore_index_test_support.")
             )
 
     assert imported_test_modules == set()
@@ -48,7 +48,7 @@ def test_production_does_not_reference_test_support() -> None:
         if isinstance(node, ast.Constant)
         and isinstance(node.value, str)
         and (
-            "repomap_test_support" in node.value
+            "common_lore_index_test_support" in node.value
             or "src/test/support" in node.value
         )
     }

@@ -17,7 +17,7 @@ import zipfile
 
 import pytest
 
-from repomap_test_support.retrieval_supplement_analysis_fixtures import (
+from common_lore_index_test_support.retrieval_supplement_analysis_fixtures import (
     SYNTHETIC_ANALYZER, synthetic_bytes, synthetic_provenance, synthetic_tasks,
 )
 import retrieval_supplement_analysis_custody as custody

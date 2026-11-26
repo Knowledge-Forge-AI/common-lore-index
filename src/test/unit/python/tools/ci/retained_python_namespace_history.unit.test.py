@@ -13,10 +13,10 @@ from ci.retained_python_namespace_history import (
     LEDGER_PATH, SCHEMA, load_history, parse_records, source_map_digest,
 )
 from ci.retained_python_ratchet_lineage import audit_candidate_lineage
-from repomap_test_support.namespace_projection_fixture import (
+from common_lore_index_test_support.namespace_projection_fixture import (
     OLD_MODULE_PATH as MODULE_PATH, namespace_case, write_case,
 )
-from repomap_test_support.retained_ratchet_fixture import (
+from common_lore_index_test_support.retained_ratchet_fixture import (
     BASELINE_PATH, SCOPE_PATH, commit_all, git, write_json,
 )
 from ci.retained_python_namespace_evidence import document_digest

@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from common_lore_index.cli import main
 from common_lore_index.storage import StorageSchemaError
-from repomap_test_support.cli_storage_summaries import (
+from common_lore_index_test_support.cli_storage_summaries import (
     nix_summary_fixture,
 )
 

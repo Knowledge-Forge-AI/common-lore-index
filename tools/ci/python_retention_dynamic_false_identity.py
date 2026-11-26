@@ -12,10 +12,10 @@ from ci.python_retention_operations import dynamic_operations
 from ci.python_retention_dynamic_false_templates import HELPERS, INITIALIZATION
 
 
-TARGET_MODULE = "repomap_test_support.test_cov5k_r2_fix2_runtime"
-TARGET_PATH = "src/test/support/python/repomap_test_support/test_cov5k_r2_fix2_runtime.py"
-PACKAGE_MODULE = "repomap_test_support"
-PACKAGE_INIT_PATH = "src/test/support/python/repomap_test_support/__init__.py"
+TARGET_MODULE = "common_lore_index_test_support.test_cov5k_r2_fix2_runtime"
+TARGET_PATH = "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix2_runtime.py"
+PACKAGE_MODULE = "common_lore_index_test_support"
+PACKAGE_INIT_PATH = "src/test/support/python/common_lore_index_test_support/__init__.py"
 TARGET_SYMBOL = "execute_runtime_driver_read"
 OWNER_SYMBOL = "test_fix4_rejects_same_module_alternate_owner_with_right_shape"
 GENERATED_SYMBOL = "same_module_alternate"
@@ -132,7 +132,7 @@ def _validate_imports(tree: ast.AST) -> tuple[str, str]:
     bindings = _import_bindings(tree)
     if any(name in bindings for name in ("dict", "compile", "exec", "TypeError")):
         raise ValueError("false-identity builtin binding is missing or rebound")
-    if bindings.get("runtime") != "repomap_test_support.test_cov5k_r2_fix2_runtime":
+    if bindings.get("runtime") != "common_lore_index_test_support.test_cov5k_r2_fix2_runtime":
         raise ValueError("runtime import is missing, aliased or rebound")
     if bindings.get(TARGET_SYMBOL) != f"{TARGET_MODULE}.{TARGET_SYMBOL}":
         raise ValueError("runtime helper import is missing, aliased or rebound")
@@ -142,7 +142,7 @@ def _validate_imports(tree: ast.AST) -> tuple[str, str]:
         "_psycopg_entry": "<definition>",
         "_execute_with_caller_terminal_owner": "<definition>",
         "public_expected_authority":
-            "repomap_test_support.test_cov5k_r2_fix4_psycopg.public_expected_authority",
+            "common_lore_index_test_support.test_cov5k_r2_fix4_psycopg.public_expected_authority",
     }
     if any(bindings.get(name) != origin for name, origin in required.items()):
         raise ValueError("false-identity refusal binding is missing, aliased or rebound")
@@ -152,7 +152,7 @@ def _validate_imports(tree: ast.AST) -> tuple[str, str]:
         for node in ast.walk(tree)
         if isinstance(node, ast.ImportFrom)
         and node.level == 0
-        and node.module == "repomap_test_support"
+        and node.module == "common_lore_index_test_support"
         for alias in node.names
         if alias.name == "test_cov5k_r2_fix2_runtime" and alias.asname == "runtime"
     ]

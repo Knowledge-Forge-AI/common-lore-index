@@ -32,23 +32,23 @@ from common_lore_index.storage.canonical import (
 from common_lore_index.storage.readback_driver import (
     _psycopg_connection_params_from_psql_args,
 )
-from repomap_test_support.performance_baseline import (
+from common_lore_index_test_support.performance_baseline import (
     QuerySummary,
     QueryWorkload,
     nearest_rank,
 )
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.resource_admission import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.resource_admission import (
     collect_host_signals,
     decide_host_admission,
 )
-from repomap_test_support.resource_hygiene_policy import (
+from common_lore_index_test_support.resource_hygiene_policy import (
     GIB,
     HygieneConfig,
     HygieneProfile,
 )
-from repomap_test_support.resource_index import AdvisoryIndex
-from repomap_test_support.test_scratch import (
+from common_lore_index_test_support.resource_index import AdvisoryIndex
+from common_lore_index_test_support.test_scratch import (
     ENV_PROJECT,
     ENV_RUN_ROOT,
     ENV_SCRATCH_ROOT,
@@ -176,8 +176,8 @@ def _worker(
         {
             "TMPDIR": str(scratch_root / "tmp"),
             "PYTHONPYCACHEPREFIX": str(scratch_root / "pycache"),
-            "REPOMAP_STORAGE_PG_CONNECTOR": "psycopg",
-            "REPOMAP_STORAGE_READBACK_DRIVER": "psycopg",
+            "CLOE_STORAGE_PG_CONNECTOR": "psycopg",
+            "CLOE_STORAGE_READBACK_DRIVER": "psycopg",
         }
     )
     result = subprocess.run(

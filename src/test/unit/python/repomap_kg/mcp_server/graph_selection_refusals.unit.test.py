@@ -8,13 +8,13 @@ from unittest.mock import patch
 
 from common_lore_index.server.graph_selection import McpOpsError, select_graph
 from common_lore_index.server.mcp import RepoMapMcpError, handle_tool_call
-from repomap_test_support.host_read_store_config import (
+from common_lore_index_test_support.host_read_store_config import (
     INVALID_PSQL_COMMAND,
     PG_BINDING_TRIPWIRES,
     fail_if_reached,
     patched_guards,
 )
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 G = "repo-map"
 
@@ -27,8 +27,8 @@ class GraphSelectionRefusalsTests(McpServerTestSupport):
 
     def _armed(self, config: Any, investigation: Any, graph: Any) -> ExitStack:
         stack = ExitStack()
-        stack.enter_context(patch.dict("os.environ", {"REPOMAP_MCP_CONFIG": str(self.write_empty_mcp_config()),
-                                                      "REPOMAP_PSQL_COMMAND": INVALID_PSQL_COMMAND}, clear=True))
+        stack.enter_context(patch.dict("os.environ", {"CLOE_MCP_CONFIG": str(self.write_empty_mcp_config()),
+                                                      "CLOE_PSQL_COMMAND": INVALID_PSQL_COMMAND}, clear=True))
         stack.enter_context(patch("common_lore_index.server.ops.load_mcp_ops_config", lambda *_a: config))
         stack.enter_context(patch("common_lore_index.server.mcp_core.load_mcp_ops_config", lambda *_a: config))
         stack.enter_context(patch("common_lore_index.server.ops.investigation_stores", investigation))
@@ -39,7 +39,7 @@ class GraphSelectionRefusalsTests(McpServerTestSupport):
     def _parsed_config(self) -> Any:
         from common_lore_index.server.ops import load_mcp_ops_config
 
-        with patch.dict("os.environ", {"REPOMAP_OPS_CONFIG": str(self.write_visible_ops_config())}, clear=True):
+        with patch.dict("os.environ", {"CLOE_OPS_CONFIG": str(self.write_visible_ops_config())}, clear=True):
             return load_mcp_ops_config()
 
     def test_selection_refusals_keep_the_public_texts(self) -> None:
@@ -54,14 +54,14 @@ class GraphSelectionRefusalsTests(McpServerTestSupport):
     def test_selection_refusals_precede_backend_binding(self) -> None:
         config = self._parsed_config()
         cases: tuple[tuple[str, dict[str, Any], str], ...] = (
-            ("repomap_graph_status", {"graph_id": "missing"}, "unknown graph_id: missing"),
-            ("repomap_search_nodes", {"graph_id": "hidden", "query": "a"}, "graph 'hidden' is not MCP-visible"),
-            ("repomap_python_summary", {"graph_id": "disabled"}, "graph 'disabled' is not enabled"),
-            ("repomap_refresh_status", {"graph_id": "hidden"}, "graph 'hidden' is not MCP-visible"),
-            ("repomap_status", {"project": "missing"}, "unknown legacy MCP project or graph-registry graph_id: missing"),
-            ("repomap_canonical_nodes", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
-            ("repomap_source_runs", {"project": "disabled", "source_id": "feed"}, "graph 'disabled' is not enabled"),
-            ("repomap_ingested_sources", {"project": G, "pg_database": "x"},
+            ("cloe_graph_status", {"graph_id": "missing"}, "unknown graph_id: missing"),
+            ("cloe_search_nodes", {"graph_id": "hidden", "query": "a"}, "graph 'hidden' is not MCP-visible"),
+            ("cloe_python_summary", {"graph_id": "disabled"}, "graph 'disabled' is not enabled"),
+            ("cloe_refresh_status", {"graph_id": "hidden"}, "graph 'hidden' is not MCP-visible"),
+            ("cloe_status", {"project": "missing"}, "unknown legacy MCP project or graph-registry graph_id: missing"),
+            ("cloe_canonical_nodes", {"project": "hidden"}, "graph 'hidden' is not MCP-visible"),
+            ("cloe_source_runs", {"project": "disabled", "source_id": "feed"}, "graph 'disabled' is not enabled"),
+            ("cloe_ingested_sources", {"project": G, "pg_database": "x"},
              "graph-registry project routing cannot be combined with explicit connection overrides"),
         )
         with self._armed(config, fail_if_reached, fail_if_reached):

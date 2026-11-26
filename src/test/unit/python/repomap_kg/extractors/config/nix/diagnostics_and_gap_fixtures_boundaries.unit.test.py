@@ -1,6 +1,6 @@
 import unittest
 
-from repomap_test_support.nix_extractor import (
+from common_lore_index_test_support.nix_extractor import (
     NIX_EXTRACT7_TARGETED_FIXTURES,
     assert_no_concrete_or_deferred_outputs,
     dynamic_shape_observations,

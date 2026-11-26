@@ -29,7 +29,7 @@ def _operations(tmp_path, adapter, runner=None, health_probe=None):
     home.mkdir(mode=0o700)
     from common_lore_index.runtime.local import setup_local_runtime
     setup_local_runtime(home)
-    config = home / "repomap.rpl.toml"
+    config = home / "repomap.local.cloe.toml"
     config.write_text(config.read_text().replace('[runtime]', '[runtime]\ncoordinator_mode = "native"'))
     spec = build_service_package_spec(home)
     return CoordinatorServiceOperations(
@@ -379,7 +379,7 @@ def test_mutating_lifecycle_actions_serialize_across_complete_operations(
 def test_container_mode_refuses_manager_start_without_mutation(tmp_path, service_authority, action):
     runner = RecordingRunner()
     operations = _operations(tmp_path, SystemdUserAdapter(user_home=tmp_path / "user", uid=1000), runner)
-    config = operations.spec.repo_map_home / "repomap.rpl.toml"
+    config = operations.spec.repo_map_home / "repomap.local.cloe.toml"
     config.write_text(config.read_text().replace('coordinator_mode = "native"', 'coordinator_mode = "container"'))
     with pytest.raises(ServicePackageError, match="coordinator_service_requires_native_mode"):
         operations.run(action)

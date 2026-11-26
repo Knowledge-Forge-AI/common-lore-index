@@ -13,7 +13,7 @@ from common_lore_index.cli.main import main
 from common_lore_index.cli.parser import build_parser
 from common_lore_index.cli import ops_retained_attempt_commands as commands
 from common_lore_index.ops import retained_attempt_recovery as recovery
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_sqlite_home
 
 _KEYS = {
     "operation", "result", "reason", "retention_state", "artifact_proof",

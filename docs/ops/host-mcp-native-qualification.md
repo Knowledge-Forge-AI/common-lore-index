@@ -56,7 +56,7 @@ of the same runner, is never native acceptance.
      `[multi-source]`, root `graph:host-multi`, identity `repo1:host-multi`.
      `host-feed` is one offline RSS acquisition with a fake fetcher. It also
      declares a hidden graph. The setup-owned home comes from
-     `repomap-kg`'s local setup and uses the maintained read/status role
+     `cloe local setup` and uses the maintained read/status role
      projection;
    - deletes only the fixture source roots, leaving the configuration and the
      credential file;
@@ -76,7 +76,7 @@ of the same runner, is never native acceptance.
    | `LANG` | |
    | `TMPDIR` | |
    | `PYTHONDONTWRITEBYTECODE` | |
-   | `REPOMAP_STORAGE_READBACK_DRIVER` | `psycopg` |
+   | `CLOE_STORAGE_READBACK_DRIVER` | `psycopg` |
 
    The child gets no PostgreSQL, Docker, Python import-path, MCP/ops
    configuration, agent or provider variable. Its read/status secret is read
@@ -247,7 +247,7 @@ first.
 ## Limits
 
 - The Linux integration exercise differs from the native run in three ways.
-  It uses the runner-provisioned `repomap-kg` wrapper. Its outage is
+  It uses the runner-provisioned `cloe` wrapper. Its outage is
   `ALLOW_CONNECTIONS false` on the fixture databases, so the error comes at
   login, whereas the native outage stops the container and the error is a TCP
   refusal. And it uses harness-owned PostgreSQL. It proves fixture and

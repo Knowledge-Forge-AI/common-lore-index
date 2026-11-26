@@ -1,4 +1,4 @@
-from repomap_test_support.policy_helper_branches import write_api_fixture
+from common_lore_index_test_support.policy_helper_branches import write_api_fixture
 import json
 import tempfile
 import unittest

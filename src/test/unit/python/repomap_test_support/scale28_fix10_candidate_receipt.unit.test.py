@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import pytest
 
-from repomap_test_support.scale28_fix10_candidate_receipt import (
+from common_lore_index_test_support.scale28_fix10_candidate_receipt import (
     CandidateReceiptEvidence,
     OBSERVED_CORRECTED_FIX9_EVIDENCE,
     ReceiptDefect,

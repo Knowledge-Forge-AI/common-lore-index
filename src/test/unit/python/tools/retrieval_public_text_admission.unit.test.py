@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
+from common_lore_index_test_support.w5_semantic_support import (
     BIND_COMP, BIND_CORE, BIND_PRIVATE, BIND_REDACTED, make_w5_calibration_task, make_w5_policy, make_w5_verified_pin,
 )
 from retrieval_evaluation_admission_w5 import admit_w5_task

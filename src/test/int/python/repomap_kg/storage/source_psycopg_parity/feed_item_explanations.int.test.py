@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -24,7 +24,7 @@ from common_lore_index.storage.readback_driver import (
     READBACK_DRIVER_ENV,
 )
 
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     _restore_environment_variable,
     _select_pg_connector_for_postgres,
     discovery_fixture,
@@ -56,7 +56,7 @@ class StorageSourceFeedItemExplanationPsycopgParityIntegrationTests(unittest.Tes
                 body=feed_body,
             )
 
-        from common_lore_index.server.mcp import repomap_explain_source_feed_item
+        from common_lore_index.server.mcp import cloe_explain_source_feed_item
 
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -124,7 +124,7 @@ class StorageSourceFeedItemExplanationPsycopgParityIntegrationTests(unittest.Tes
                         source_id="missing-source",
                         psql_command=postgres.psql_command,
                     )
-                    psql_mcp_payload = repomap_explain_source_feed_item(
+                    psql_mcp_payload = cloe_explain_source_feed_item(
                         **mcp_args,
                         item_key=item_key,
                         source_id="example-rss-feed",
@@ -187,7 +187,7 @@ class StorageSourceFeedItemExplanationPsycopgParityIntegrationTests(unittest.Tes
                         source_id="missing-source",
                         psql_command=psycopg_only_psql_command,
                     )
-                    psycopg_mcp_payload = repomap_explain_source_feed_item(
+                    psycopg_mcp_payload = cloe_explain_source_feed_item(
                         **mcp_args,
                         item_key=item_key,
                         source_id="example-rss-feed",

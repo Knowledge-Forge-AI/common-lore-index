@@ -1,7 +1,7 @@
 from typing import Callable, TypedDict
 from unittest.mock import patch
 
-from repomap_test_support.mcp_server import McpServerTestSupport
+from common_lore_index_test_support.mcp_server import McpServerTestSupport
 
 
 class _Case(TypedDict):
@@ -24,7 +24,7 @@ class _RejectCase(TypedDict):
 
 class McpServerRegistryUnitTests(McpServerTestSupport):
     def test_mcp_harden4_projects_compatibility_modes_are_stable(self):
-        from common_lore_index.server.mcp import repomap_list_graphs, repomap_projects
+        from common_lore_index.server.mcp import cloe_list_graphs, cloe_projects
 
         legacy_config = {
             "default_project": "repo-map",
@@ -80,7 +80,7 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
             with self.subTest(mode=case["label"]):
                 mcp_config_path = self.write_mcp_config(case["mcp_config"])
                 if case["ops_config"] is None:
-                    env = {"REPOMAP_MCP_CONFIG": str(mcp_config_path)}
+                    env = {"CLOE_MCP_CONFIG": str(mcp_config_path)}
                     context = patch.dict("os.environ", env, clear=True)
                 else:
                     ops_config_path = self.write_ops_config(case["ops_config"])
@@ -90,9 +90,9 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
                     )
 
                 with context:
-                    projects_payload = repomap_projects()
+                    projects_payload = cloe_projects()
                     graphs_payload = (
-                        repomap_list_graphs()
+                        cloe_list_graphs()
                         if case["ops_config"] is not None
                         else None
                     )
@@ -128,7 +128,7 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
                 else:
                     self.assertIsNotNone(graphs_payload)
                     assert graphs_payload is not None
-                    self.assertIn("repomap_list_graphs", projects_payload["message"])
+                    self.assertIn("cloe_list_graphs", projects_payload["message"])
                     self.assertEqual(
                         [graph["graph_id"] for graph in projects_payload["graphs"]],
                         ["repo-map", "private-visible"],
@@ -149,42 +149,42 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
     ):
         from common_lore_index.server.mcp import (
             RepoMapMcpError,
-            repomap_graph_status,
-            repomap_list_graphs,
-            repomap_neighborhood,
-            repomap_project_summary,
-            repomap_search_files,
+            cloe_graph_status,
+            cloe_list_graphs,
+            cloe_neighborhood,
+            cloe_project_summary,
+            cloe_search_files,
         )
 
         config_path = self.write_visible_ops_config()
         cases: list[_RejectCase] = [
             {
                 "label": "project_summary_disabled",
-                "call": lambda: repomap_project_summary(graph_id="disabled"),
+                "call": lambda: cloe_project_summary(graph_id="disabled"),
                 "patch_target": "common_lore_index.server.ops.query_canonical_storage_summary",
                 "message": "not enabled",
             },
             {
                 "label": "project_summary_hidden",
-                "call": lambda: repomap_project_summary(graph_id="hidden"),
+                "call": lambda: cloe_project_summary(graph_id="hidden"),
                 "patch_target": "common_lore_index.server.ops.query_canonical_storage_summary",
                 "message": "not MCP-visible",
             },
             {
                 "label": "graph_status_disabled",
-                "call": lambda: repomap_graph_status(graph_id="disabled"),
+                "call": lambda: cloe_graph_status(graph_id="disabled"),
                 "patch_target": "common_lore_index.server.ops.query_refresh_status",
                 "message": "not enabled",
             },
             {
                 "label": "graph_status_hidden",
-                "call": lambda: repomap_graph_status(graph_id="hidden"),
+                "call": lambda: cloe_graph_status(graph_id="hidden"),
                 "patch_target": "common_lore_index.server.ops.query_refresh_status",
                 "message": "not MCP-visible",
             },
             {
                 "label": "neighborhood_disabled",
-                "call": lambda: repomap_neighborhood(
+                "call": lambda: cloe_neighborhood(
                     graph_id="disabled",
                     node="python.module:pkg.app",
                 ),
@@ -193,7 +193,7 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
             },
             {
                 "label": "neighborhood_hidden",
-                "call": lambda: repomap_neighborhood(
+                "call": lambda: cloe_neighborhood(
                     graph_id="hidden",
                     node="python.module:pkg.app",
                 ),
@@ -202,7 +202,7 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
             },
             {
                 "label": "search_files_disabled",
-                "call": lambda: repomap_search_files(
+                "call": lambda: cloe_search_files(
                     graph_id="disabled",
                     query="pkg",
                 ),
@@ -211,7 +211,7 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
             },
             {
                 "label": "search_files_hidden",
-                "call": lambda: repomap_search_files(
+                "call": lambda: cloe_search_files(
                     graph_id="hidden",
                     query="pkg",
                 ),
@@ -221,7 +221,7 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
         ]
 
         with self.patch_ops_config(config_path):
-            list_payload = repomap_list_graphs()
+            list_payload = cloe_list_graphs()
             self.assertEqual(
                 [graph["graph_id"] for graph in list_payload["graphs"]],
                 ["repo-map", "private-visible"],
@@ -239,14 +239,14 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
                     query.assert_not_called()
 
     def test_mcp_harden4_private_visible_graph_hints_are_redacted(self):
-        from common_lore_index.server.mcp import repomap_list_graphs, repomap_projects
+        from common_lore_index.server.mcp import cloe_list_graphs, cloe_projects
 
         mcp_config_path = self.write_empty_mcp_config()
         ops_config_path = self.write_visible_ops_config()
 
         with self.patch_mcp_and_ops_config(mcp_config_path, ops_config_path):
-            projects_payload = repomap_projects()
-            graphs_payload = repomap_list_graphs()
+            projects_payload = cloe_projects()
+            graphs_payload = cloe_list_graphs()
 
         projects_graphs = {
             graph["graph_id"]: graph for graph in projects_payload["graphs"]
@@ -269,20 +269,20 @@ class McpServerRegistryUnitTests(McpServerTestSupport):
         self.assert_no_synthetic_private_root(graphs_payload)
 
     def test_mcp_harden4_projects_registry_unavailable_diagnostic_is_safe(self):
-        from common_lore_index.server.mcp import repomap_projects
+        from common_lore_index.server.mcp import cloe_projects
 
         mcp_config_path = self.write_empty_mcp_config()
 
         with patch.dict(
             "os.environ",
-            {"REPOMAP_MCP_CONFIG": str(mcp_config_path)},
+            {"CLOE_MCP_CONFIG": str(mcp_config_path)},
             clear=True,
         ):
             with patch(
                 "common_lore_index.server.mcp.load_mcp_ops_config",
                 side_effect=ValueError("synthetic-private-root /Users/example"),
             ):
-                payload = repomap_projects()
+                payload = cloe_projects()
 
         self.assert_projects_payload_fields(payload)
         self.assertIsNone(payload["default_project"])

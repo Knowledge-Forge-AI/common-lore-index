@@ -7,9 +7,9 @@ from typing import cast
 
 import pytest
 
-import repomap_test_support.w5_experiment_vector as vector_support
-from repomap_test_support.w5_experiment_results import ResultV2Collector
-from repomap_test_support.w5_operation_orchestration import (
+import common_lore_index_test_support.w5_experiment_vector as vector_support
+from common_lore_index_test_support.w5_experiment_results import ResultV2Collector
+from common_lore_index_test_support.w5_operation_orchestration import (
     DIGEST, FakePostgres, OrchestrationFixture, candidate_arm_stub, exact_stub,
     grade_stub, hnsw_stub, make_fixture,
 )
@@ -17,7 +17,7 @@ from retrieval_evaluation_attempts import AttemptJournal, admit_attempt
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_semantic_baseline_result_frames import read_raw_journal_members
 from retrieval_semantic_baseline_result_objects import BaselineResultV2
-from repomap_test_support.w5_experiment_postgres import PostgresHandle
+from common_lore_index_test_support.w5_experiment_postgres import PostgresHandle
 from retrieval_semantic_experiment_contracts import (
     ExperimentCostLedger, ExperimentRefusal, digest_bytes, make_plan,
 )

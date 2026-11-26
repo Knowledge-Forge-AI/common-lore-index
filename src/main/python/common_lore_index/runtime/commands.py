@@ -64,7 +64,7 @@ def ensure_runtime_files_exist(plan: LocalRuntimePlan) -> None:
                     "error",
                     "runtime-files-missing",
                     str(path),
-                    "runtime file is missing; run repomap-kg local setup",
+                    "runtime file is missing; run cloe local setup",
                 )
                 for path in missing
             )

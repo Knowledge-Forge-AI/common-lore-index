@@ -16,11 +16,11 @@ from common_lore_index.storage.staging_merge import (
     build_source_index_merge_statements,
 )
 from common_lore_index.storage.staging_ownership import StageOwner
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
-from repomap_test_support.schema_history import pre_arch5d_rdbms_root
+from common_lore_index_test_support.schema_history import pre_arch5d_rdbms_root
 
 
 def _create_repository_run_stage(postgres, stage_id: str) -> tuple[str, str]:

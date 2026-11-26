@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+- Complete the canonical-only CLI, Python and MCP cutover under [ADR 0222](docs/adr/2026/11/0222-v010-canonical-only-cutover.md).
+  Use `cloe`, `common_lore_index`, the `CLOE_` selectors and `cloe_*` MCP tools.
+  Explicit predecessor homes remain available for the tested migration and recovery paths.
+
 ## [0.0.4] — First Common Lore Index source preview
 
 - Complete current repository, package, contributor and operator branding as

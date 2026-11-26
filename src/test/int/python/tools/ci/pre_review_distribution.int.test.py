@@ -95,12 +95,15 @@ def test_current_loader_declarations_close_real_graph_and_retain_history() -> No
     from ci.python_retention_dependencies import build_dependency_graph
     from ci.python_retention_dynamic import apply_dynamic_boundaries
     from ci.python_retention_dynamic_history import active_boundaries
+    from ci.python_retention_support_projection import verify_support_namespace
     root = Path(__file__).resolve().parents[6]
     document = json.loads((root / "tools/ci/python_retention_inventory.json").read_bytes())
     candidates = sorted(row["path"] for row in document["files"])
     graph = apply_dynamic_boundaries(root, candidates, build_dependency_graph(root, candidates))
-    records = [row for row in active_boundaries(document)
-               if row["id"].startswith("cloe.ci149repair1.")]
+    support = verify_support_namespace(root)
+    assert support is not None
+    active = active_boundaries(document, support=support)
+    records = [row for row in active if row["id"].startswith("cloe.ci149repair1.")]
     assert len(records) == 15
     for row in records:
         owner = row["owner"]
@@ -108,7 +111,13 @@ def test_current_loader_declarations_close_real_graph_and_retain_history() -> No
         assert not graph["dynamic_uncertainty"].get(owner)
         assert row["targets"][0]["path"] in graph["dependencies"][owner]
         assert row["id"] in graph["resolved_dynamic_dependencies"]
-    retired = {row["supersedes"] for row in records if row["supersedes"] is not None}
+    history = [row for row in document["dynamic_boundaries"]
+               if row["id"].startswith("cloe.ci149repair1.") and not row["id"].endswith(".cloe-support")]
+    retired = {row["supersedes"] for row in history if row["supersedes"] is not None}
     assert len(retired) == 6
-    assert retired <= {row["id"] for row in document["dynamic_boundaries"]}
-    assert not retired & {row["id"] for row in active_boundaries(document)}
+    projected = {row["supersedes"] for row in records if row["id"].endswith(".cloe-support")}
+    assert len(projected) == 15
+    assert projected == {row["supersedes"] for row in support.dynamic_by_id.values()
+                         if row["id"].startswith("cloe.ci149repair1.")}
+    assert retired | projected <= {row["id"] for row in document["dynamic_boundaries"]}
+    assert not (retired | projected) & {row["id"] for row in active}

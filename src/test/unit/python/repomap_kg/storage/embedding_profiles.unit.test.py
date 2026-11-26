@@ -9,7 +9,7 @@ from common_lore_index.storage.semantic_candidates import EmbeddingProfilesQuery
 from common_lore_index.storage.semantic_candidate_readback import query_embedding_profiles
 from common_lore_index.storage.semantic_candidate_sql import build_embedding_profiles_sql
 from common_lore_index.storage.errors import StorageSchemaError
-from repomap_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
+from common_lore_index_test_support.semantic_candidate_fixtures import BINDING, PROFILE, SNAPSHOT, candidate_query
 
 OWNER = "common_lore_index.storage.semantic_candidate_readback.execute_json_readback"
 PROBE = "common_lore_index.storage.semantic_candidate_readback.observe_candidate_capability"

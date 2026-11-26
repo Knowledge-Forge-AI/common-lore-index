@@ -7,7 +7,7 @@ import json
 import re
 from typing import Any
 
-from repomap_test_support.d12_complete_inventory import SCHEMA
+from common_lore_index_test_support.d12_complete_inventory import SCHEMA
 
 
 class DebianDeltaError(ValueError):

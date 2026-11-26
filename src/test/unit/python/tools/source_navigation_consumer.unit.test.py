@@ -14,11 +14,11 @@ import pytest
 
 from common_lore_index.server import mcp
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
-from repomap_test_support.node_location_fixtures import (
+from common_lore_index_test_support.node_location_fixtures import (
     BINDING, DOC, GRAPH, SYMBOL, locator_home, publish_locator_generation,
 )
-from repomap_test_support.host_read_store_config import NO_FALLBACK_GUARDS, patched_guards, setup_owned_config
-from repomap_test_support.sqlite_local_fixtures import generation_bundle, publication_for
+from common_lore_index_test_support.host_read_store_config import NO_FALLBACK_GUARDS, patched_guards, setup_owned_config
+from common_lore_index_test_support.sqlite_local_fixtures import generation_bundle, publication_for
 
 assert Path(consumer_module.__file__).resolve() == Path(__file__).resolve().parents[5] / "tools/source_navigation_consumer.py"
 navigate = vars(consumer_module)["navigate"]
@@ -27,8 +27,8 @@ navigate = vars(consumer_module)["navigate"]
 @pytest.fixture
 def environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path, dict[str, Any]]:
     home, database = locator_home(tmp_path, reference_count=5)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.setenv("CLOE_HOME", str(home))
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     workspace = tmp_path / "caller-workspace"
     (workspace / "docs").mkdir(parents=True)
     (workspace / "docs/guide.md").write_text("Fixture guide.\n", encoding="utf-8")
@@ -76,7 +76,7 @@ def test_unknown_node_searches_then_locates_exact_python_range(environment: tupl
     result = navigate(query="sample.service", **options)
     assert result["branch"] == "search_locator" and result["outcome"] == "verified"
     assert result["graph_calls"] == 2
-    assert [row["tool"] for row in actions(result, "tool_call")] == ["repomap_search_nodes", "repomap_node_locations"]
+    assert [row["tool"] for row in actions(result, "tool_call")] == ["cloe_search_nodes", "cloe_node_locations"]
     assert [(row["start_line"], row["end_line"]) for row in actions(result, "source_read")] == [(5, 15)]
 
 
@@ -130,8 +130,8 @@ def test_real_postgresql_unsupported_callable_falls_back(environment: tuple, tmp
     _, _, options = environment
     home = tmp_path / "unsupported-home"
     home.mkdir()
-    (home / "repomap.rpl.toml").write_text(setup_owned_config(), encoding="utf-8")
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
+    (home / "repomap.local.cloe.toml").write_text(setup_owned_config(), encoding="utf-8")
+    monkeypatch.setenv("CLOE_HOME", str(home))
     options["graph_id"] = "host-one"
     with patched_guards(NO_FALLBACK_GUARDS):
         result = navigate(canonical_key=DOC, **options)
@@ -156,7 +156,7 @@ def test_unknown_ambiguous_search_stops_before_locator(environment: tuple) -> No
     _, _, options = environment
     result = navigate(query="root", **options)
     assert result["outcome"] == "native_search" and result["graph_calls"] == 1
-    assert actions(result, "tool_call")[0]["tool"] == "repomap_search_nodes"
+    assert actions(result, "tool_call")[0]["tool"] == "cloe_search_nodes"
     assert actions(result, "source_read") == []
 
 
@@ -276,6 +276,6 @@ def test_indexed_subject_no_match_or_error_falls_back_once_without_spelling_rule
 
     result = navigate(graph_id="example", repository_identity="repo1:example", bindings={},
                       source_check=lambda _: False, query="__all__", tool_call=graph)
-    assert calls == [("repomap_search_nodes", {"graph_id": "example", "query": "__all__", "limit": 2})]
+    assert calls == [("cloe_search_nodes", {"graph_id": "example", "query": "__all__", "limit": 2})]
     assert result["graph_calls"] == 1 and result["outcome"] == "native_search"
     assert len(actions(result, "native_search")) == 1

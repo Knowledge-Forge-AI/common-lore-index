@@ -1,0 +1,50 @@
+{
+  "approval": {
+    "candidate_source_checkpoint": "4c5291e78a5ca2b9925ed0787515db2d013dc492",
+    "event_action": "synchronize",
+    "hosted_capacity": "AVAILABLE",
+    "operator_request": "AVAILABLE \u2014 authorize one CI174 campaign",
+    "phase": "CLOE-RC010-CHECKPOINT-A",
+    "pull_request": 29,
+    "schema": "cloe-ci174-approval-v1",
+    "scope": "One staging fast-forward for the existing draft PR and one CI174 attempt."
+  },
+  "ledger_before": {
+    "application_starts": 77,
+    "artifact_sha256s": {
+      "admission": "135efa3f7894d2ce03d0c2739ac0ccabd6809adc229d6400b6b72b316c551003",
+      "intent": "8445b5aeaff66a796a7e628804adfd9890284403cc0a2461ef489188bde2cf32",
+      "native": "5e062ed0a148b4f81ce8792ae4bea5093732db52edf9bb51cf46b76e751ce383",
+      "rust": "6391ae64c51ccb25bba5047b59bc0d97f586acecea7a13ecd2f5fa603c8ae11f",
+      "smoke": "6cd9c6634cf5f7b8fa1c32d5d39f0218f07f8df0858d62435ee2482943bca3af",
+      "system": "97fbb7d5265f2bb9bbe00d331f6a074bde3b3f7328d40ebc6b2e821bf8b760b3"
+    },
+    "attempt": 1,
+    "component_runtime_executions": 47,
+    "conclusion": "failure",
+    "head": "7fd2966abf2d49787c3b000257f588087e9d4859",
+    "preceding_campaign": 173,
+    "repair_census_sha256": "0276fb9c093b629aab64abef565949571ff344781fb812793640d988ee83ad65",
+    "run_id": 45771967915,
+    "rust_qualifier_entries": 51,
+    "schema": "cloe-ci174-ledger-before-v1",
+    "wheel_transfers": 96
+  },
+  "reservation": {
+    "application_start": 78,
+    "approval_sha256": "02257bdd476c33fe919834ef8fb785f7777d00887e954f68c84b79bea828b773",
+    "base": "a6e771434564e86f1ff4f1a59ddfbd7148915003",
+    "before": "7fd2966abf2d49787c3b000257f588087e9d4859",
+    "component_runtime_cumulative": 48,
+    "event_action": "synchronize",
+    "ledger_before_sha256": "9a41284d83539358659de4bf5b56f429ad40c551acd0656adb83943abb62778e",
+    "nonce": "6224f248eeea218e70a5e9801b1fa7fc",
+    "pull_request": 29,
+    "repository": "Knowledge-Forge-AI/common-lore-index",
+    "rust_entry": 52,
+    "schema": "cloe-ci174-reservation-v1",
+    "wheel_transfers_cumulative": 98,
+    "workflow_attempt": 1,
+    "workflow_ordinal": 174
+  }
+}

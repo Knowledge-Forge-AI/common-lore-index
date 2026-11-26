@@ -23,7 +23,7 @@ from common_lore_index.storage.readback_driver import (
     PG_CONNECTOR_ENV,
     READBACK_DRIVER_ENV,
 )
-from repomap_test_support.ops_refresh import VALID_REFRESH_CONFIG
+from common_lore_index_test_support.ops_refresh import VALID_REFRESH_CONFIG
 
 
 class OperationalError(Exception):
@@ -41,7 +41,7 @@ def _make_container_internal_config(root_dir: Path) -> Any:
     repo = root_dir / "repo"
     home.mkdir(parents=True, exist_ok=True)
     repo.mkdir(parents=True, exist_ok=True)
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         VALID_REFRESH_CONFIG.format(repo_root=repo, private_root=repo / "priv")
         .replace('host = "127.0.0.1"', 'host = "postgres"'),
         encoding="utf-8",

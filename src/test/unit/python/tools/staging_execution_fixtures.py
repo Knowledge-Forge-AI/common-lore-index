@@ -170,7 +170,7 @@ def _install_fakes(monkeypatch, *, collection_exit=0, failure_leg=None,
         monkeypatch.setattr(execution, "candidate_identity", lambda _root: next(values))
     if go_tmp is not None:
         monkeypatch.setattr(
-            "repomap_test_support.test_scratch.establish_run",
+            "common_lore_index_test_support.test_scratch.establish_run",
             lambda: SimpleNamespace(go_tmp=go_tmp),
         )
 

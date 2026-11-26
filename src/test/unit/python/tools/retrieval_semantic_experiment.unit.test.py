@@ -38,14 +38,14 @@ from retrieval_semantic_experiment_evaluator import (
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_evaluation_accounting import ByteLayerAccounting
 from retrieval_evaluation_schema import EvaluationTask, load_task_catalog
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
-from repomap_test_support.w5_experiment_support import (
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+from common_lore_index_test_support.w5_experiment_support import (
     combine_scoped_cells,
     merge_candidate_rows,
     record_baseline,
     selected_public_binding_ids,
 )
-from repomap_test_support.w5_experiment_vector import (
+from common_lore_index_test_support.w5_experiment_vector import (
     VECTOR_ARM_IDS,
     record_vector_query_starts,
 )

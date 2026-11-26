@@ -150,8 +150,8 @@ def test_committed_mixed_v1_baseline_artifacts_match_freeze_and_catalog() -> Non
     """Committed mixed-v1 baseline attempt declaration, report, and criteria proposal match freeze and catalog."""
     import json
 
-    from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-    from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
+    from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+    from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT
     import hashlib
     from retrieval_evaluation_schema import (
         AttemptDeclaration,

@@ -6,13 +6,13 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from repomap_test_support.source_ingestion_integration import (
+from common_lore_index_test_support.source_ingestion_integration import (
     archive_source_fixture,
     fixed_clock,
     source_fixture,
     source_ingestion_fixture_root,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 from common_lore_index.ops.ingestion.source import (
     SourcePolicyError,
     archive_observations_from_manifest,

@@ -262,9 +262,10 @@ mode = "read_only"
         self.assertEqual(entries, [])
         self.assertEqual(diagnostics[0].code, "server-memory-file-too-large")
         self.assertEqual(malformed, 0)
-        with self.assertRaisesRegex(ValueError, "REPOMAP_HOME"):
-            with patch.dict("os.environ", {}, clear=True):
-                server_memory_summary_payload()
+        with tempfile.TemporaryDirectory() as isolated_home:
+            with patch.dict("os.environ", {"HOME": isolated_home}, clear=True):
+                with self.assertRaisesRegex(ValueError, "CLOE_HOME does not exist"):
+                    server_memory_summary_payload()
 
 
 if __name__ == "__main__":

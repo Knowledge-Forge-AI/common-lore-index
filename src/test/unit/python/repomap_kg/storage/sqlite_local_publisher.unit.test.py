@@ -33,7 +33,7 @@ from common_lore_index.storage.sqlite_local.schema import (
     LocalStoreError,
     require_runtime_support,
 )
-from repomap_test_support.sqlite_local_fixtures import (
+from common_lore_index_test_support.sqlite_local_fixtures import (
     generation_bundle,
     local_binding,
     publication_for,

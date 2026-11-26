@@ -38,7 +38,6 @@ postgres = [
 [project.scripts]
 cloe = "common_lore_index.entrypoints:cloe_main"
 common-lore-index = "common_lore_index.entrypoints:long_main"
-repomap-kg = "common_lore_index.entrypoints:legacy_main"
 
 [tool.pytest.ini_options]
 testpaths = [
@@ -66,7 +65,7 @@ package-dir = { "" = "src/main/python" }
 
 [tool.setuptools.packages.find]
 where = ["src/main/python"]
-include = ["common_lore_index", "common_lore_index.*", "repomap_kg", "repomap_kg.ops", "repomap_kg.server"]
+include = ["common_lore_index", "common_lore_index.*"]
 
 # ADR 0089 D7: third-party license and source records ship inside the wheel.
 [tool.setuptools.package-data]

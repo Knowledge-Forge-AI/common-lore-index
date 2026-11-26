@@ -47,7 +47,7 @@ class SourceToolDependencies:
     source_reference_records_to_jsonable: Callable[..., Any] = default_source_reference_records_to_jsonable
 
 
-def repomap_ingested_sources(
+def cloe_ingested_sources(
     *,
     root_path: str | None = None,
     project: str | None = None,
@@ -82,7 +82,7 @@ def repomap_ingested_sources(
     return deps.ingested_source_records_to_jsonable(records)
 
 
-def repomap_source_summary(
+def cloe_source_summary(
     *,
     source_id: str,
     root_path: str | None = None,
@@ -110,7 +110,7 @@ def repomap_source_summary(
     )
 
 
-def repomap_source_runs(
+def cloe_source_runs(
     *,
     source_id: str,
     root_path: str | None = None,
@@ -141,7 +141,7 @@ def repomap_source_runs(
     return deps.source_run_records_to_jsonable(records)
 
 
-def repomap_source_feed_items(
+def cloe_source_feed_items(
     *,
     source_id: str,
     root_path: str | None = None,
@@ -175,7 +175,7 @@ def repomap_source_feed_items(
     return deps.source_feed_item_records_to_jsonable(records)
 
 
-def repomap_explain_source_feed_item(
+def cloe_explain_source_feed_item(
     *,
     item_key: str,
     root_path: str | None = None,
@@ -208,7 +208,7 @@ def repomap_explain_source_feed_item(
     return deps.source_read_store(connection).source_feed_item_explanation(query)
 
 
-def repomap_source_references(
+def cloe_source_references(
     *,
     source_id: str,
     root_path: str | None = None,

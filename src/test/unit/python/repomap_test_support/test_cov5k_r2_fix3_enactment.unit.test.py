@@ -3,24 +3,24 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-from repomap_test_support.test_cov5k_r2_fix2_catalog import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import (
     CatalogEntry,
     build_closed_catalog,
 )
-from repomap_test_support.test_cov5k_r2_fix2_evidence import verify_executor_evidence
-from repomap_test_support.test_cov5k_r2_groupa_contract import group_a_public_context
-from repomap_test_support.test_cov5k_r2_fix2_observer import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_evidence import verify_executor_evidence
+from common_lore_index_test_support.test_cov5k_r2_groupa_contract import group_a_public_context
+from common_lore_index_test_support.test_cov5k_r2_fix2_observer import (
     execute_observer_request,
     execute_observer_schedule,
 )
-from repomap_test_support.test_cov5k_r2_fix2_preparation import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_preparation import (
     execute_preparation_state_path,
 )
-from repomap_test_support.test_cov5k_r2_fix2_process_recorder import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_process_recorder import (
     execute_zero_process_boundary,
 )
-from repomap_test_support.test_cov5k_r2_fix2_registry import build_executor_registry
-from repomap_test_support.test_cov5k_r2_fix2_runtime import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_registry import build_executor_registry
+from common_lore_index_test_support.test_cov5k_r2_fix2_runtime import (
     execute_failure_causality,
     execute_process_containment_companion,
     execute_terminal_live_cohort,

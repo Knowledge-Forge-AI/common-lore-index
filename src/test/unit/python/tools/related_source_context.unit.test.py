@@ -14,8 +14,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from common_lore_index.server import mcp
-from repomap_test_support.navigation_search_fixtures import navigation_bundle
-from repomap_test_support.related_context_fixtures import (
+from common_lore_index_test_support.navigation_search_fixtures import navigation_bundle
+from common_lore_index_test_support.related_context_fixtures import (
     BINDING, EXPECTED_IMPORTS, EXPECTED_LINKS, GRAPH, GUIDE, IMPORTED, MODULE,
     OTHER, REPOSITORY, SOURCES, START, CapturedCalls, related_home,
 )
@@ -31,8 +31,8 @@ expand = API["expand_selected"]
 @pytest.fixture
 def environment(tmp_path, monkeypatch):
     home, _, workspace = related_home(tmp_path)
-    monkeypatch.setenv("REPOMAP_HOME", str(home))
-    monkeypatch.delenv("REPOMAP_OPS_CONFIG", raising=False)
+    monkeypatch.setenv("CLOE_HOME", str(home))
+    monkeypatch.delenv("CLOE_OPS_CONFIG", raising=False)
     return workspace, CapturedCalls()
 
 
@@ -77,7 +77,7 @@ def test_real_extractors_independent_oracle_and_routed_selected_source(environme
     assert all(row["direction"] == "out" for row in captured["edges"])
     assert captured["backend_completeness"] == "unknown"
     expanded = expand(captured, (GUIDE,), tool_call=calls)
-    assert [event["tool"] for event in calls.calls] == ["repomap_neighborhood", "repomap_node_locations"]
+    assert [event["tool"] for event in calls.calls] == ["cloe_neighborhood", "cloe_node_locations"]
     assert expanded["graph_calls"] == 2 and expanded["locations"][0]["lookup"] == "returned"
     lead = calls.calls[-1]["response"]["structuredContent"]
     # Separate accepted reader operation over an explicit binding mapping.
@@ -318,7 +318,7 @@ def test_private_path_placeholder_keys_never_spend_a_graph_call(key):
 def test_publication_labels_do_not_establish_shared_snapshot(environment, different):
     _, calls = environment
     captured = inspect(graph_id=GRAPH, canonical_key=START, tool_call=calls)
-    real = mcp.handle_tool_call("repomap_node_locations", dict(graph_id=GRAPH, canonical_key=GUIDE,
+    real = mcp.handle_tool_call("cloe_node_locations", dict(graph_id=GRAPH, canonical_key=GUIDE,
                                                               evidence_role="direct", detail="compact"))
     publication = copy.deepcopy(real["structuredContent"]["accepted_publication"])
     if different:

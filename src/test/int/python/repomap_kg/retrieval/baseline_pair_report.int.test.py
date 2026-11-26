@@ -8,15 +8,15 @@ from pathlib import Path
 import sys
 
 import pytest
-from repomap_test_support.w5_experiment_results import ResultV2Run
-from repomap_test_support.w5_pair_fixtures import make_pair_artifacts
+from common_lore_index_test_support.w5_experiment_results import ResultV2Run
+from common_lore_index_test_support.w5_pair_fixtures import make_pair_artifacts
 from retrieval_evaluation_attempts import admit_attempt
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_semantic_baseline_result_frames import decode_result_frames
 from retrieval_semantic_experiment_contracts import ExperimentCell, ExperimentPlan, canonical_json_bytes
 from retrieval_semantic_pair_artifacts import PairReportRefusal, digest_bytes
 from retrieval_semantic_pair_report import build_pair_report, read_report, write_report
-from repomap_test_support.w5_pair_fixtures import ARMS
+from common_lore_index_test_support.w5_pair_fixtures import ARMS
 
 
 _DIGEST = "sha256:" + "a" * 64

@@ -11,8 +11,8 @@ import pytest
 
 from common_lore_index.extractors.rust_pilot.guest import parse_helper
 from common_lore_index.extractors.rust_pilot.guest.parse_helper import InputRefused
-from repomap_test_support.rust_pilot_fake_tree_sitter.tree_sitter import Language, Parser, Tree
-from repomap_test_support.rust_pilot_fake_tree_sitter.tree_sitter_rust import language
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.tree_sitter import Language, Parser, Tree
+from common_lore_index_test_support.rust_pilot_fake_tree_sitter.tree_sitter_rust import language
 
 FIXTURES = Path(__file__).resolve().parents[5] / "fixtures" / "rust_pilot"
 NONCE = "a" * 64
@@ -100,7 +100,7 @@ def test_attribute_and_pending_scope_limits_are_observable() -> None:
 
 
 def test_explicit_error_and_missing_nodes_produce_only_bounded_diagnostics() -> None:
-    from repomap_test_support.rust_pilot_fake_tree_sitter.tree_sitter._grammar import Node
+    from common_lore_index_test_support.rust_pilot_fake_tree_sitter.tree_sitter._grammar import Node
 
     root = Node("source_file", 0, 2, children=[
         Node("ERROR", 0, 1, error=True),

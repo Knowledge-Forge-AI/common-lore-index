@@ -29,13 +29,13 @@ class LedgerPayload(TypedDict, total=False):
 
 import pytest
 
-from repomap_test_support.resource_ledger import (
+from common_lore_index_test_support.resource_ledger import (
     ResourceKind,
     ResourceLedger,
     ResourceLedgerError,
     RunIdentity,
 )
-from repomap_test_support.resource_projection import (
+from common_lore_index_test_support.resource_projection import (
     ResourceProjectionError,
     resource_count_projection,
 )

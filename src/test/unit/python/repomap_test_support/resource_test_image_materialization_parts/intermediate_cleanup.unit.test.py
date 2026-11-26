@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from repomap_test_support.resource_test_image_base import (
+from common_lore_index_test_support.resource_test_image_base import (
     TestImageError as ImageLifecycleError,
 )
-from repomap_test_support.resource_test_image_materialization import (
+from common_lore_index_test_support.resource_test_image_materialization import (
     RuntimeBuildIntermediateCleaner,
 )
-from repomap_test_support.resource_test_images import dispose_failed_proof_runtime_cache
+from common_lore_index_test_support.resource_test_images import dispose_failed_proof_runtime_cache
 from src.test.unit.python.repomap_test_support.resource_test_image_materialization_parts.fixtures import (
     BASE_ID,
     PROOF_FINGERPRINT,

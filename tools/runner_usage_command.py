@@ -10,7 +10,7 @@ from runner_coverage_capability import (
     CapabilityContainmentError, CapabilityRefusalError, CapabilityValidationError,
 )
 
-USAGE_COMMAND = ("-m", "repomap_test_support.usage_worker")
+USAGE_COMMAND = ("-m", "common_lore_index_test_support.usage_worker")
 MEASURED_CASES = frozenset({
     "nominal", "burn", "rss", "grandchild-waited", "grandchild-remaining",
 })

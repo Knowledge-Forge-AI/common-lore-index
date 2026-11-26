@@ -34,13 +34,13 @@ from common_lore_index.storage.staged_ingestion import (
     stage_id_for_authority,
 )
 from common_lore_index.storage.staged_publication import reconcile_commit_unknown
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.portable_publication_fixtures import (
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.portable_publication_fixtures import (
     _authority,
     _binding,
     _seven_family_bundle,
 )
-from repomap_test_support.sqlite_local_fixtures import local_binding, publication_for
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding, publication_for
 
 
 def _row(

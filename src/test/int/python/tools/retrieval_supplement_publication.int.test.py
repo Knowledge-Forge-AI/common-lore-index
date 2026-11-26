@@ -8,12 +8,12 @@ from typing import Any
 
 import pytest
 
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_supplement_fixtures import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_supplement_fixtures import (
     make_test_bindings, make_test_catalog_payload, make_test_corpus_payload,
     make_test_identity, make_test_policy,
 )
-from repomap_test_support.retrieval_supplement_publication_fixture import (
+from common_lore_index_test_support.retrieval_supplement_publication_fixture import (
     SupplementStoreFixture, publish_supplement_fixture, write_supplement_home,
 )
 from retrieval_evaluation_admission_w5 import execute_after_admission

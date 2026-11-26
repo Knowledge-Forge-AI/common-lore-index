@@ -79,8 +79,8 @@ def test_kit_closure_ships_runner_helpers_and_fixture_inputs(kit: tuple[Path, di
     closure = import_closure(REPO)
     for required in ("tools/host_mcp_native_qualify.py", "tools/smoke/host_mcp_native_run.py",
                      "tools/smoke/host_mcp_native_scenario.py",
-                     "src/test/support/python/repomap_test_support/cli_in_process.py",
-                     "src/test/support/python/repomap_test_support/postgres_container.py"):
+                     "src/test/support/python/common_lore_index_test_support/cli_in_process.py",
+                     "src/test/support/python/common_lore_index_test_support/postgres_container.py"):
         assert required in closure, required
     assert not any(path.startswith("src/main/") for path in closure)
     root = _extract(out / KIT_ZIP, tmp_path / "extract here")
@@ -104,7 +104,7 @@ def test_kit_parent_imports_resolve_inside_the_kit(kit: tuple[Path, dict], tmp_p
     root = _extract(kit[0] / KIT_ZIP, tmp_path)
     probe = ("import sys; sys.path[:0] = [sys.argv[1] + '/tools', sys.argv[1] + '/src/test/support/python', sys.argv[2]]\n"
              "import smoke.host_mcp_native, smoke.host_mcp_native_scenario\n"
-             "bad = [n for n, m in sys.modules.items() if n.startswith(('smoke', 'repomap_test_support', 'runner_'))"
+             "bad = [n for n, m in sys.modules.items() if n.startswith(('smoke', 'common_lore_index_test_support', 'runner_'))"
              " and getattr(m, '__file__', None) and not m.__file__.startswith(sys.argv[1])]\n"
              "print(bad)")
     completed = subprocess.run([sys.executable, "-I", "-B", "-c", probe, str(root), str(REPO / "src/main/python")], capture_output=True, text=True,

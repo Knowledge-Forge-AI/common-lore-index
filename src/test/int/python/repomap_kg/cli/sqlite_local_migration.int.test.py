@@ -37,8 +37,8 @@ from common_lore_index.cli.main import main
 from common_lore_index.storage.sqlite_local import upgrade as sqlite_upgrade
 from common_lore_index.storage.sqlite_local.backup_manifest import BackupManifest
 from common_lore_index.storage.sqlite_local.migrations import schema_objects_digest
-from repomap_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
-from repomap_test_support.sqlite_local_harness import (
+from common_lore_index_test_support.sqlite_local_fixtures import graph_toml, write_shell_source, write_sqlite_home
+from common_lore_index_test_support.sqlite_local_harness import (
     LocalHarness,
     await_ready,
     initialize,
@@ -144,10 +144,10 @@ def _v2_raw(generation: int, bundle: str) -> dict[str, Any]:
 def _mcp_reads(harness: LocalHarness, home: Path, paths: list[str], env: dict[str, str] | None = None) -> dict[str, Any]:
     requests = [
         initialize(),
-        tool(2, "repomap_graph_status", {"graph_id": GRAPH}),
-        tool(3, "repomap_canonical_nodes", {"project": GRAPH, "limit": 50}),
-        tool(4, "repomap_search_observations", {"graph_id": GRAPH, "query": ".", "limit": 100, "include_raw": True}),
-        *(tool(10 + index, "repomap_search_observations",
+        tool(2, "cloe_graph_status", {"graph_id": GRAPH}),
+        tool(3, "cloe_canonical_nodes", {"project": GRAPH, "limit": 50}),
+        tool(4, "cloe_search_observations", {"graph_id": GRAPH, "query": ".", "limit": 100, "include_raw": True}),
+        *(tool(10 + index, "cloe_search_observations",
                {"graph_id": GRAPH, "query": ".", "path": path, "limit": 100}) for index, path in enumerate(paths)),
     ]
     responses = harness.mcp(home, requests, extra_env=env)
@@ -190,7 +190,7 @@ def test_v1_backup_upgrade_restore_round_trip(tmp_path: Path) -> None:
     bundle = second["publication"]["publication_bundle_id"]
     assert second["accepted_generation"] == 2, second
     assert _raw(live) == _v1_raw(2, bundle), "the historical database must be exactly the checkpoint v1 schema"
-    unfiltered = harness.mcp(home, [initialize(), tool(2, "repomap_search_observations",
+    unfiltered = harness.mcp(home, [initialize(), tool(2, "cloe_search_observations",
                                                         {"graph_id": GRAPH, "query": ".", "limit": 100})], extra_env=v1)
     paths = sorted({row["path"] for row in structured(unfiltered, 2)["results"]})
     assert len(paths) >= 3, paths
@@ -200,7 +200,7 @@ def test_v1_backup_upgrade_restore_round_trip(tmp_path: Path) -> None:
     # 2: current code classifies it exact-behind and refuses ordinary reads, refresh and init.
     behind_sha = _sha(live)
     assert _readiness(harness, home) == ("schema-behind", 2)
-    responses = harness.mcp(home, [initialize(), tool(2, "repomap_search_observations", {"graph_id": GRAPH, "query": "."})])
+    responses = harness.mcp(home, [initialize(), tool(2, "cloe_search_observations", {"graph_id": GRAPH, "query": "."})])
     assert refusal(responses, 2).startswith("graph-database-schema-behind"), refusal(responses, 2)
     for args in (("ops", "refresh-graph", "--graph", GRAPH), ("ops", "sqlite-init", "--graph", GRAPH)):
         assert "graph-database-schema-behind" in _refused(harness, home, *args), args
@@ -244,7 +244,7 @@ def test_v1_backup_upgrade_restore_round_trip(tmp_path: Path) -> None:
     assert (restored["schema_version"], restored["schema_state"], restored["accepted_generation"]) == (1, "behind", 2)
     assert _raw(_database(second_home)) == _v1_raw(2, bundle)
     assert _readiness(harness, second_home) == ("schema-behind", 2)
-    responses = harness.mcp(second_home, [initialize(), tool(2, "repomap_canonical_nodes", {"project": GRAPH})])
+    responses = harness.mcp(second_home, [initialize(), tool(2, "cloe_canonical_nodes", {"project": GRAPH})])
     assert refusal(responses, 2).startswith("graph-database-schema-behind"), refusal(responses, 2)
     assert _files(backups / "pre-upgrade") == artifact, "restore changed the backup"
 

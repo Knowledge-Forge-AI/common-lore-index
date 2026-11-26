@@ -33,14 +33,16 @@ INCUMBENT_DISTRIBUTION = "repomap-kg"
 INCUMBENT_WHEEL_PREFIX = "repomap_kg-0.0.3-"
 RELEASED_CLOE_COMMIT = "39cb2b3452bfd32b05d38f842c0f891614cbf58d"
 RELEASED_CLOE_WHEEL_PREFIX = "common_lore_index-0.0.4-"
+# ADR 0221 binds the v0.0.5 preview inputs independently of its embedded version.
+# The earlier v0.0.4 artifact has the same wheel prefix and different source bytes.
+PREVIEW005_SOURCE_COMMIT = "739bbb644944d508b83a74f7bf6363687257c821"
+PREVIEW005_PACKAGE_INPUTS = ("a319e9056404dbe864f33588f671381515f447518562f012fd0a0a46dfccdae1", 874)
+PREVIEW005_GRAPH_PARSER_SHA256 = "0834a6c74b63f0e81b32300ebc4d50f6727a3b45420aa5a5f7f0685f6d8b9f1a"
+PREVIEW005_BASE_CONFIG = "repomap.cloe.toml"
 RELEASED_CLOE_INPUT_PATHS = (
     "README.md", "LICENSE", "NOTICE", "pyproject.toml", "src/main/python", "src/main/resources",
 )
-CONSOLE_SCRIPTS: tuple[str, ...] = ("cloe", "common-lore-index", "repomap-kg")
-LEGACY_FACADE: tuple[str, ...] = (
-    "__init__.py", "__main__.py", "ops/__init__.py", "ops/config_migration.py",
-    "server/__init__.py", "server/mcp.py",
-)
+CONSOLE_SCRIPTS: tuple[str, ...] = ("cloe", "common-lore-index")
 
 # Candidate input census roots (cutover rule extended by root NOTICE).
 CANDIDATE_INPUT_FILES: tuple[str, ...] = ("README.md", "LICENSE", "NOTICE", "pyproject.toml")
@@ -74,8 +76,10 @@ __all__ = [
     "ABSENT_FAMILIES", "CANDIDATE_DISTRIBUTION", "CANDIDATE_INPUT_FILES", "CANDIDATE_INPUT_TREES",
     "CANDIDATE_VERSION", "CANDIDATE_WHEEL_PREFIX", "CHILD_DEADLINE_SECONDS", "CODE_KIND",
     "CODE_PATH", "CODE_QUERY", "CONSOLE_SCRIPTS", "DOCS_PATH", "DOCS_QUERY", "GRAPH_ID",
-    "INCUMBENT_COMMIT", "INCUMBENT_DISTRIBUTION", "INCUMBENT_WHEEL_PREFIX", "LEGACY_FACADE",
+    "INCUMBENT_COMMIT", "INCUMBENT_DISTRIBUTION", "INCUMBENT_WHEEL_PREFIX",
     "MCP_REPLY_LIMIT", "MCP_STDERR_LIMIT", "MCP_STDOUT_LIMIT", "MESSAGE_PATH", "MESSAGE_SHA256", "PIP_VERSION",
+    "PREVIEW005_BASE_CONFIG", "PREVIEW005_GRAPH_PARSER_SHA256", "PREVIEW005_PACKAGE_INPUTS",
+    "PREVIEW005_SOURCE_COMMIT",
     "RELEASED_CLOE_COMMIT", "RELEASED_CLOE_INPUT_PATHS", "RELEASED_CLOE_WHEEL_PREFIX",
     "POSTGRES_BIN", "PSYCOPG_IMPL", "PSYCOPG_VERSION", "SANDBOX_IMAGE", "SANDBOX_PYTHON",
     "SETUPTOOLS_DEFAULT_LICENSE_PATTERNS", "SETUPTOOLS_VERSION", "TE_DISTRIBUTION",

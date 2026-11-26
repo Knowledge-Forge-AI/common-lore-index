@@ -6,7 +6,7 @@ import pytest
 
 from first_use_workload_recipe_shapes import RecipeStep
 from first_use_workload_records import decode_observation
-from repomap_test_support.first_use_workload_driver import (
+from common_lore_index_test_support.first_use_workload_driver import (
     CallOutcome, Clocks, Observed, ScenarioRun, StepPlan, run_step,
 )
 

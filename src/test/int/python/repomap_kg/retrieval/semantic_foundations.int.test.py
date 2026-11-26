@@ -18,9 +18,9 @@ from common_lore_index.ops.portable_refresh import execute_portable_refresh
 from common_lore_index.server.ops import investigation_stores
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
 from common_lore_index.storage.semantic_candidates import EmbeddingEntry
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.retrieval_evaluation_canaries import assert_canary_free
-from repomap_test_support.retrieval_evaluation_fixture import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.retrieval_evaluation_canaries import assert_canary_free
+from common_lore_index_test_support.retrieval_evaluation_fixture import (
     MIXED_V1_FIXTURE_ROOT,
     MIXED_V1_GRAPH_ID,
     binding_id_for_alias,
@@ -29,13 +29,13 @@ from repomap_test_support.retrieval_evaluation_fixture import (
     write_mixed_v1_postgres_home,
     write_mixed_v1_sqlite_home,
 )
-from repomap_test_support.retrieval_evaluation_publication import (
+from common_lore_index_test_support.retrieval_evaluation_publication import (
     publish_and_load_postgres_corpus,
     publish_and_load_sqlite_corpus,
     read_postgres_accepted_publication,
     read_sqlite_accepted_publication,
 )
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import (
     load_postgres_accepted_nodes_and_evidence,
     load_sqlite_accepted_nodes_and_evidence,
     make_postgres_readback_adapter,

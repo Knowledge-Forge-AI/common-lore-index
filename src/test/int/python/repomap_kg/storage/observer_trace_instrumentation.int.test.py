@@ -5,12 +5,12 @@ from common_lore_index.storage.backend_observer import (
     BackendOwnershipObserver,
     current_backend_identity,
 )
-from repomap_test_support.observer_trace import (
+from common_lore_index_test_support.observer_trace import (
     ObserverTraceKind,
     ObserverTraceRecorder,
     instrument_observer_runtime,
 )
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )

@@ -29,7 +29,7 @@ def test_inventory_classifies_direct_inherited_and_simulated_capabilities(tmp_pa
         "src/test/int/python/pkg/live.int.test.py",
         """\
 import docker
-from repomap_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.postgres_harness import temporary_postgres
 
 def test_live():
     client = docker.from_env()
@@ -45,7 +45,7 @@ def test_live():
         """\
 def test_cli_contract():
     runner(["podman", "network", "inspect", "owned"])
-    assert "REPOMAP_GO_HELPER" in env
+    assert "CLOE_GO_HELPER" in env
     assert "/proc/1/status"
     assert "ipcrm" in cleanup_command
 """,

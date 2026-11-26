@@ -21,17 +21,17 @@ from common_lore_index.storage import apply_migrations, default_rdbms_root
 from common_lore_index.storage.errors import StorageSchemaError
 from common_lore_index.storage.semantic_candidate_import import build_embedding_import_sql
 from common_lore_index.storage.semantic_candidates import CandidateQuery, EmbeddingEntry, EmbeddingProfile
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.semantic_candidate_restore import cleanup_optional_sql_fixture
-from repomap_test_support.w5_experiment_postgres import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.semantic_candidate_restore import cleanup_optional_sql_fixture
+from common_lore_index_test_support.w5_experiment_postgres import (
     HNSW_OWNER_ROLE, READ_ROLE, WRITE_ROLE, _query, exact_candidates, execute_sql, install_candidate_schema,
 )
-from repomap_test_support.w5_experiment_support import candidate_publication, prepare_postgres_generation
-from repomap_test_support.w5_public_text_postgres import (
+from common_lore_index_test_support.w5_experiment_support import candidate_publication, prepare_postgres_generation
+from common_lore_index_test_support.w5_public_text_postgres import (
     cleanup_study, create_batch_index, create_study_relations, exact_read, import_batch, observe_ann,
     read_relation_state, run_study_sql,
 )
-from repomap_test_support.w5_semantic_support import make_w5_calibration_task
+from common_lore_index_test_support.w5_semantic_support import make_w5_calibration_task
 from retrieval_public_text_fusion import study_arm_id, v1_vector_arm
 from retrieval_public_text_request import ARM_PTX, ARM_V1
 from retrieval_public_text_study_catalog import RelationIdentity, StudyCatalog, parse_relation_state

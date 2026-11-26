@@ -10,7 +10,7 @@ import pytest
 
 from common_lore_index.artifacts.store import ArtifactIntegrityError
 from common_lore_index.coordinator._portable_materialization import MaterializedWorkspace
-from repomap_test_support.materialization_fixtures import BINDING_ID, CHUNK_BYTES, copy_case, patch_copy_os
+from common_lore_index_test_support.materialization_fixtures import BINDING_ID, CHUNK_BYTES, copy_case, patch_copy_os
 
 
 class StopCopy(BaseException):

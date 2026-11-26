@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from common_lore_index.runtime.local import (
-    DEFAULT_POSTGRES_HOST_PORT, DEFAULT_SERVER_HOST_PORT, ENV_RUNTIME_SOURCE_ROOT,
+    DEFAULT_POSTGRES_HOST_PORT, DEFAULT_SERVER_HOST_PORT,
     LocalRuntimeError, LocalRuntimeIdentity, down_local_runtime, format_local_runtime_table,
     render_server_dockerfile, resolve_runtime_source_root, setup_local_runtime,
     up_local_runtime, query_local_runtime_status,
@@ -70,7 +70,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
             payload = result.to_jsonable()
             self.assertEqual(payload["command"], "setup")
             self.assertEqual(payload["result"], "success")
-            for f in ("repomap.rpl.toml", "runtime/.env", "runtime/compose.yaml", "runtime/repomap-server.Dockerfile"):
+            for f in ("repomap.local.cloe.toml", "runtime/.env", "runtime/compose.yaml", "runtime/repomap-server.Dockerfile"):
                 self.assertTrue((home / f).is_file())
             self.assertTrue((home / "logs").is_dir() and (home / "status").is_dir())
             env_text = (home / "runtime" / ".env").read_text(encoding="utf-8")
@@ -81,7 +81,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
             self.assertEqual(payload["runtime"]["server_host_port"], DEFAULT_SERVER_HOST_PORT)
             for f in ("direct_db_host_port_enabled", "postgres_host_port_published", "containers_started"):
                 self.assertFalse(payload["runtime"][f])
-            config_text = (home / "repomap.rpl.toml").read_text(encoding="utf-8")
+            config_text = (home / "repomap.local.cloe.toml").read_text(encoding="utf-8")
             for token in ("[runtime.postgres]", "direct_host_port_enabled = false"):
                 self.assertIn(token, config_text)
             compose_text = (home / "runtime" / "compose.yaml").read_text(encoding="utf-8")
@@ -118,7 +118,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
             (source_root / "pyproject.toml").write_text("[build-system]\n", encoding="utf-8")
             (source_root / "README.md").write_text("# fixture\n", encoding="utf-8")
             home = Path(tmpdir) / "repo-map-home"
-            with patch.dict("os.environ", {ENV_RUNTIME_SOURCE_ROOT: str(source_root)}):
+            with patch.dict("os.environ", {"CLOE_SOURCE_ROOT": str(source_root)}):
                 result = setup_local_runtime(home)
             compose_text = (home / "runtime" / "compose.yaml").read_text(encoding="utf-8")
             self.assertEqual(resolve_runtime_source_root(source_root), source_root.resolve())
@@ -153,7 +153,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
             runtime = home / "runtime"
             home.mkdir(mode=0o700)
             runtime.mkdir(mode=0o700)
-            config, env_file = home / "repomap.rpl.toml", runtime / ".env"
+            config, env_file = home / "repomap.local.cloe.toml", runtime / ".env"
             config.write_text("schema_version = 1\n# keep me\n", encoding="utf-8")
             env_file.write_text("POSTGRES_PASSWORD=keep-existing\n", encoding="utf-8")
             env_file.chmod(0o600)
@@ -281,7 +281,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
             home = Path(tmpdir) / "repo-map-home"
             setup_local_runtime(home)
             self.write_runtime_server_port(home, 55982)
-            config = home / "repomap.rpl.toml"
+            config = home / "repomap.local.cloe.toml"
             config.write_text(config.read_text(encoding="utf-8").replace("direct_host_port_enabled = false", "direct_host_port_enabled = true"), encoding="utf-8")
             with patch("common_lore_index.runtime.local.is_local_port_open", return_value=False):
                 result = up_local_runtime(home, dry_run=True)
@@ -368,7 +368,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_local_runtime(home)
-            (home / "repomap.rpl.toml").write_text("schema_version = 1\n# intentionally incomplete\n", encoding="utf-8")
+            (home / "repomap.local.cloe.toml").write_text("schema_version = 1\n# intentionally incomplete\n", encoding="utf-8")
             with self.assertRaises(LocalRuntimeError) as error:
                 up_local_runtime(home, dry_run=True)
         self.assertIn("missing-section", [item.code for item in error.exception.diagnostics])
@@ -377,7 +377,7 @@ class LocalRuntimeUnitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "repo-map-home"
             setup_local_runtime(home)
-            config = home / "repomap.rpl.toml"
+            config = home / "repomap.local.cloe.toml"
             config.write_text(config.read_text(encoding="utf-8").replace(f"postgres_host_port = {DEFAULT_POSTGRES_HOST_PORT}", "postgres_host_port = 55433"), encoding="utf-8")
             with patch("common_lore_index.runtime.local.is_local_port_open", return_value=True), patch("common_lore_index.runtime.local.inspect_container", return_value=LocalContainerStatus("server", "server")):
                 with self.assertRaises(LocalRuntimeError) as error:
@@ -396,5 +396,5 @@ class LocalRuntimeUnitTests(unittest.TestCase):
             self.assertNotIn(token, table)
 
     def write_runtime_server_port(self, home: Path, port: int) -> None:
-        config = home / "repomap.rpl.toml"
+        config = home / "repomap.local.cloe.toml"
         config.write_text(config.read_text(encoding="utf-8").replace(f"server_host_port = {DEFAULT_SERVER_HOST_PORT}", f"server_host_port = {port}"), encoding="utf-8")

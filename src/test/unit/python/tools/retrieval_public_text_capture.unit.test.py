@@ -11,7 +11,7 @@ import pytest
 
 from common_lore_index.artifacts._store_common import ArtifactIntegrityError, ArtifactStore
 from common_lore_index.retrieval.projection_build import build_captured_text_projection
-from repomap_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
+from common_lore_index_test_support.retrieval_evaluation_query_fixture import build_fixture_projection
 from retrieval_public_text_capture import (
     MEASUREMENT_UNKNOWNS, ExcerptReadLedger, ReadObservationStore, capture_projection, metadata_digests,
     preflight_projection_policy, read_verified_object,

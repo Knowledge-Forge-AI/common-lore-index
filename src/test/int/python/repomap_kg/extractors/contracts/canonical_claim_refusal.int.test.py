@@ -30,7 +30,7 @@ from common_lore_index.observations.raw import (
     read_observations_jsonl,
     write_observations_jsonl,
 )
-from repomap_test_support.extractor_contracts.receipt_fixtures import receipt
+from common_lore_index_test_support.extractor_contracts.receipt_fixtures import receipt
 
 FIXTURE = {
     "README.md": "# Fixture\n\nSee [the tool](tool.py).\n\n```rust\nfn main() {}\n```\n",

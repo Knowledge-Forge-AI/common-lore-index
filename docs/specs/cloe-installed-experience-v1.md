@@ -1,5 +1,12 @@
 # CLOE installed experience and evidence contract v1
 
+The initial recipe below describes the installed witnesses from the preview
+series. [ADR 0222](../adr/2026/11/0222-v010-canonical-only-cutover.md) supersedes
+the legacy candidate launch and facade requirements for v0.1.0. The
+[current recipe](../../tools/installed_experience_recipe.py) keeps canonical
+launch, origin, migration and recovery evidence and verifies legacy launch
+absence. Historical bundles retain their original recipe digest.
+
 Status: accepted design under [ADR 0181](../adr/2026/11/0181-exact-installed-experience-and-evidence.md).
 An implementation candidate and scoped diagnostic evidence exist. Corrective
 source proof and final review govern publication; exact-source hosted acceptance

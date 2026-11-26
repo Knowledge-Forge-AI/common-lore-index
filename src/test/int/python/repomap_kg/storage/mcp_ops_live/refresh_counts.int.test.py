@@ -3,8 +3,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.cli_in_process import run_repo_map_in_process
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.cli_in_process import run_repo_map_in_process
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -19,7 +19,7 @@ from common_lore_index.storage import (
     default_rdbms_root,
 )
 
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     canonicalization_fixture,
 )
 
@@ -34,7 +34,7 @@ class StorageMcpRefreshCountIntegrationTests(unittest.TestCase):
         expected_latest_raw = sum(
             1 for line in raw_jsonl.read_text(encoding="utf-8").splitlines() if line
         )
-        from common_lore_index.server.mcp import repomap_graph_status, repomap_refresh_status
+        from common_lore_index.server.mcp import cloe_graph_status, cloe_refresh_status
 
         with temporary_postgres() as postgres:
             apply_migrations(
@@ -141,13 +141,13 @@ mode = "read_only"
                 with patch.dict(
                     "os.environ",
                     {
-                        "REPOMAP_OPS_CONFIG": str(ops_config_path),
-                        "REPOMAP_PSQL_COMMAND": postgres.psql_command,
+                        "CLOE_OPS_CONFIG": str(ops_config_path),
+                        "CLOE_PSQL_COMMAND": postgres.psql_command,
                     },
                     clear=False,
                 ):
-                    graph_status = repomap_graph_status(graph_id="repo-map")
-                    refresh_status = repomap_refresh_status(graph_id="repo-map")
+                    graph_status = cloe_graph_status(graph_id="repo-map")
+                    refresh_status = cloe_refresh_status(graph_id="repo-map")
 
         first_payload = graph_summary_to_jsonable(config, first_summary)["graph"]
         second_payload = graph_summary_to_jsonable(config, second_summary)["graph"]

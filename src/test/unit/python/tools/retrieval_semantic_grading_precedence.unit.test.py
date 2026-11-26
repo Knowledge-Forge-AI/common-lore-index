@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import (
     make_w5_calibration_task, make_w5_verified_pin,
 )
 from retrieval_evaluation_grading import ExecutionState, GradingState

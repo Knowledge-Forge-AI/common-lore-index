@@ -3,7 +3,7 @@ import inspect
 import threading
 import pytest
 from common_lore_index.graph.multi_source_pipeline import capture_multi_source_candidate
-from repomap_test_support.capture_cancellation_fixtures import CAPTURE_CHUNK, capture_graph, observe_capture_io
+from common_lore_index_test_support.capture_cancellation_fixtures import CAPTURE_CHUNK, capture_graph, observe_capture_io
 
 
 def test_capture_stops_work_after_actual_mid_read_cancellation(tmp_path, monkeypatch):

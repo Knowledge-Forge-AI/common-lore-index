@@ -7,7 +7,7 @@ import pytest
 
 from common_lore_index.coordinator import _control_schema as schema
 from common_lore_index.coordinator._control_types import ControlSchemaError
-from repomap_test_support.fencing_control_fakes import FencingControl
+from common_lore_index_test_support.fencing_control_fakes import FencingControl
 from common_lore_index.coordinator._control_types import JobClaim
 
 

@@ -116,7 +116,7 @@ The system scenario executes 5 sequential phases under monotonic budget tracking
    - Verifies the coordinator coalesces/replays the request (`replayed: True`), returning the identical job ID, with single publication preserved.
 5. **MCP Public stdio Readback (`mcp_public_stdio_readback`)**:
    - Executes candidate MCP service in stdio mode (`docker compose --profile integration run --rm -i mcp`).
-   - Sends line-delimited JSON-RPC messages (`initialize`, `notifications/initialized`, `repomap_list_graphs`, `repomap_graph_status`, `repomap_search_nodes`).
+   - Sends line-delimited JSON-RPC messages (`initialize`, `notifications/initialized`, `cloe_list_graphs`, `cloe_graph_status`, `cloe_search_nodes`).
    - Parses each line as JSON-RPC response matched by request ID; rejects errors or malformed payloads.
    - Extracts structured facts into a stable canonical semantic projection and computes SHA-256 across container recreation to assert deterministic byte-level equality.
 

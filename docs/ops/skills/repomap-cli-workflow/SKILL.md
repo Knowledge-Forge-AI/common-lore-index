@@ -9,13 +9,13 @@ description: Use when operating Common Lore Index outside MCP to maintain folder
 
 Operate Common Lore Index as a local repository graph builder and readback surface. The
 default operating model is folder-backed: graphs configured under
-`REPOMAP_HOME` are backed by local folder trees or repositories, and Common Lore Index
+`CLOE_HOME` are backed by local folder trees or repositories, and Common Lore Index
 local ops keep each graph database aligned with its root. Extraction, refresh,
 ingestion, and database lifecycle operations happen through this CLI workflow;
 MCP is a separate read-only query surface.
 
-`REPOMAP_HOME` defaults to `~/.repo-map`. Ops commands also accept
-`--repo-map-home <dir>`.
+The default home is `~/.cloe`. Select another home with `CLOE_HOME` or
+the explicit `--repo-map-home <dir>` flag.
 
 ## Non-Goals
 
@@ -27,7 +27,7 @@ MCP is a separate read-only query surface.
 
 ## Folder-Backed Default
 
-1. Configure one or more `[[graphs]]` entries under `REPOMAP_HOME`, each with
+1. Configure one or more `[[graphs]]` entries under `CLOE_HOME`, each with
    a graph id, root path, repository name, optional graph-specific database,
    privacy level, and `exclude_paths`.
 2. Start or verify the local runtime (`cloe local up`,
@@ -38,14 +38,14 @@ MCP is a separate read-only query surface.
 ## Standard Maintenance Flow
 
 ```sh
-export REPOMAP_HOME=/path/to/repo-map-home
-cloe local status --repo-map-home "$REPOMAP_HOME" --check-containers --json
-cloe ops config-check --repo-map-home "$REPOMAP_HOME" --json
-cloe ops graphs --repo-map-home "$REPOMAP_HOME" --json
-cloe ops refresh-preflight --repo-map-home "$REPOMAP_HOME" --graph <graph-id> --json
-cloe ops refresh-graph --repo-map-home "$REPOMAP_HOME" --graph <graph-id> --json
-cloe ops refresh-status --repo-map-home "$REPOMAP_HOME" --graph <graph-id> --json
-cloe ops graph-summary --repo-map-home "$REPOMAP_HOME" --graph <graph-id> --json
+export CLOE_HOME=/path/to/repo-map-home
+cloe local status --repo-map-home "$CLOE_HOME" --check-containers --json
+cloe ops config-check --repo-map-home "$CLOE_HOME" --json
+cloe ops graphs --repo-map-home "$CLOE_HOME" --json
+cloe ops refresh-preflight --repo-map-home "$CLOE_HOME" --graph <graph-id> --json
+cloe ops refresh-graph --repo-map-home "$CLOE_HOME" --graph <graph-id> --json
+cloe ops refresh-status --repo-map-home "$CLOE_HOME" --graph <graph-id> --json
+cloe ops graph-summary --repo-map-home "$CLOE_HOME" --graph <graph-id> --json
 ```
 
 Refresh one selected graph at a time. Preflight walks the graph root, applies
@@ -120,8 +120,8 @@ Explicit literal/password-file credentials and custom user/password-environment
 configurations retain their configured authority. Remote/custom connections are
 not projected to local runtime secrets.
 
-Use `storage edges --repo-map-home "$REPOMAP_HOME" --graph <graph-id> --kind sources`
-and `storage explain-canonical-edge --repo-map-home "$REPOMAP_HOME" --graph <graph-id>`
+Use `storage edges --repo-map-home "$CLOE_HOME" --graph <graph-id> --kind sources`
+and `storage explain-canonical-edge --repo-map-home "$CLOE_HOME" --graph <graph-id>`
 with the edge identity arguments. Graph selection uses the stable configured
 repository identity, including refresh publications whose root is `graph:<graph-id>`.
 
@@ -129,14 +129,14 @@ repository identity, including refresh publications whose root is `graph:<graph-
 
 Use `ops baseline-save --graph <graph-id> --kind both --json` to record the
 last accepted stored summary and preflight candidate set under
-`$REPOMAP_HOME/status/baselines/<graph>/<stored|preflight>/`. Before a
+`$CLOE_HOME/status/baselines/<graph>/<stored|preflight>/`. Before a
 maintenance refresh, compare with:
 
 ```sh
-cloe ops drift-check --repo-map-home "$REPOMAP_HOME" --graph <graph-id> \
-  --baseline-file "$REPOMAP_HOME/status/baselines/<graph-id>/stored/latest.json" \
+cloe ops drift-check --repo-map-home "$CLOE_HOME" --graph <graph-id> \
+  --baseline-file "$CLOE_HOME/status/baselines/<graph-id>/stored/latest.json" \
   --include-preflight \
-  --preflight-baseline-file "$REPOMAP_HOME/status/baselines/<graph-id>/preflight/latest.json" \
+  --preflight-baseline-file "$CLOE_HOME/status/baselines/<graph-id>/preflight/latest.json" \
   --json
 ```
 
@@ -221,7 +221,7 @@ cloe local db drop --repo-map-home <home> --database <database> --backup-first -
 `drop` is backup-first only: Common Lore Index creates and verifies a dump, manifest,
 checksums, and restore note before dropping. There is no unbacked
 wipe/reset/clear/truncate operation. Dumps and manifests belong under
-`REPOMAP_HOME/backups`. Do not operate on host-installed or unrelated
+`CLOE_HOME/backups`. Do not operate on host-installed or unrelated
 Postgres.
 
 ### PostgreSQL backup provenance and refusal

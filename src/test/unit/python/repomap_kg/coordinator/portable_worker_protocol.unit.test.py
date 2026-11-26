@@ -61,7 +61,7 @@ def test_real_worker_negotiates_and_emits_receipt_and_bundle_without_publication
     (source / "main.py").write_text("VALUE = 1\n", encoding="utf-8")
     if with_go:
         (source / "helper.go").write_text("package main\nfunc Greet() string { return \"hello\" }\n", encoding="utf-8")
-        from repomap_test_support.portable_worker_scenarios import package_worker_code
+        from common_lore_index_test_support.portable_worker_scenarios import package_worker_code
         monkeypatch.setattr("common_lore_index.coordinator._portable_worker_launch.__file__", package_worker_code(tmp_path / "package"))
     graph = fixture_graph(source)
     incumbent = capture_multi_source_candidate(graph)

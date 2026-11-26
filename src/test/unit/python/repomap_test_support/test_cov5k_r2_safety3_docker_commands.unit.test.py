@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from repomap_test_support.postgres_container import TEST_POSTGRES_IMAGE
-from repomap_test_support.test_cov5k_r2_group_k_container import (
+from common_lore_index_test_support.postgres_container import TEST_POSTGRES_IMAGE
+from common_lore_index_test_support.test_cov5k_r2_group_k_container import (
     _group_k_container_create_command,
 )
 
@@ -72,8 +72,8 @@ def test_safety3_group_k_docker_detached_run_argument_shape_k09_k12() -> None:
 
 
 def test_safety3_group_k_command_builder_owner_regression() -> None:
-    import repomap_test_support.test_cov5k_r2_fix1_executors as fix1_executors
-    import repomap_test_support.test_cov5k_r2_group_k_container as group_k_container
+    import common_lore_index_test_support.test_cov5k_r2_fix1_executors as fix1_executors
+    import common_lore_index_test_support.test_cov5k_r2_group_k_container as group_k_container
 
     assert hasattr(group_k_container, "_group_k_container_create_command")
     assert not hasattr(fix1_executors, "_group_k_container_create_command")

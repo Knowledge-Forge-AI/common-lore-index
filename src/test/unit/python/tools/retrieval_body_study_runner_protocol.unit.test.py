@@ -14,7 +14,7 @@ from retrieval_body_study_host_runner_output import CONTROL_PREFIXES, RunnerOutp
 from retrieval_body_study_host_runner_process import (
     BodyRunnerLaunchFailure, RunnerProcess, RunnerProcessConfig, validate_config,
 )
-from repomap_test_support.retrieval_body_study_host_cases import body_plan
+from common_lore_index_test_support.retrieval_body_study_host_cases import body_plan
 
 def _config(root: Path, argv: tuple[str, ...] | None = None) -> RunnerProcessConfig:
     selector = body_plan()["selector"]

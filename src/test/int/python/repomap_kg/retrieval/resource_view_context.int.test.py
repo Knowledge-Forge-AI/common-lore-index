@@ -13,18 +13,18 @@ from common_lore_index.retrieval.context_contracts import ContextRequest
 from common_lore_index.retrieval.context_work import WorkLedger
 # The Local-safe projection owner; ``_projections`` re-exports it for compatibility.
 from common_lore_index.ops.resource_view._context_projection import project_compact_context
-from repomap_test_support.context_assertions import (
+from common_lore_index_test_support.context_assertions import (
     assert_valid_budget_error,
     assert_valid_context_packet,
     build_postgres_context_fixture,
 )
-from repomap_test_support.context_fixture import (
+from common_lore_index_test_support.context_fixture import (
     BINDING_CORE,
     BINDING_DOCS,
     CTX_GRAPH_ID,
     build_sqlite_context_fixture,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
 
 def _project(packet: dict[str, Any], *, ledger: WorkLedger | None = None) -> dict[str, Any]:

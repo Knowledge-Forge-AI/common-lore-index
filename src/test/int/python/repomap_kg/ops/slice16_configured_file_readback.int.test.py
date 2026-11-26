@@ -11,11 +11,11 @@ from common_lore_index.ops.graph_files import (
 )
 from common_lore_index.storage import apply_migrations, default_rdbms_root, run_psql
 from common_lore_index.storage.sql_core import sql_literal
-from repomap_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.postgres_harness import temporary_postgres
 
 
 def test_non_utf8_registry_refuses_before_configured_readback(tmp_path, capsys):
-    path = tmp_path / "repomap.rpl.toml"
+    path = tmp_path / "repomap.local.cloe.toml"
     path.write_bytes(b"schema_version = 1\n# synthetic\xff")
     result = main(["ops", "graph-files", "--config", str(path), "--graph", "fixture", "--json"])
     captured = capsys.readouterr()
@@ -31,7 +31,7 @@ def configured_files(tmp_path_factory):
         _seed(postgres)
         home = tmp_path_factory.mktemp("slice16-readback")
         _write_config(home, postgres=postgres)
-        yield load_ops_config(home / "repomap.rpl.toml"), postgres
+        yield load_ops_config(home / "repomap.local.cloe.toml"), postgres
 
 
 @pytest.mark.parametrize("metadata_kind", ["absent", "null", "empty-array", "empty-text", "text", "array"])
@@ -51,7 +51,7 @@ def test_public_path_metadata_and_legacy_filters_escape_literal_paths(tmp_path, 
         apply_migrations(default_rdbms_root(), postgres.psql_args, psql_command=postgres.psql_command)
         _seed(postgres)
         _write_config(tmp_path, postgres=postgres)
-        config = load_ops_config(tmp_path / "repomap.rpl.toml")
+        config = load_ops_config(tmp_path / "repomap.local.cloe.toml")
         for row_key, row_metadata in (
             (key, metadata),
             (file_key("docs/a XXé'/file.py"), {}),
@@ -179,7 +179,7 @@ WHERE canonical_nodes.repository_id = (
 
 
 def _write_config(home: Path, *, postgres) -> None:
-    (home / "repomap.rpl.toml").write_text(
+    (home / "repomap.local.cloe.toml").write_text(
         f'''schema_version = 1
 [service]
 mode = "local"

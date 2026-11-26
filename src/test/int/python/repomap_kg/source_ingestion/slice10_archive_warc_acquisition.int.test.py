@@ -28,11 +28,11 @@ from common_lore_index.ops.ingestion.source import (
     load_warc_source_config,
     warc_observations_from_manifest,
 )
-from repomap_test_support.source_ingestion_integration import (
+from common_lore_index_test_support.source_ingestion_integration import (
     copy_warc_fixture_root,
     fixed_clock,
 )
-from repomap_test_support.test_scratch import select_scratch_root
+from common_lore_index_test_support.test_scratch import select_scratch_root
 
 
 class Slice10ArchiveWarcAcquisitionIntegrationTests(unittest.TestCase):

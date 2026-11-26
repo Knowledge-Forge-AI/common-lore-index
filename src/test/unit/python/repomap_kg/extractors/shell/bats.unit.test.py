@@ -5,7 +5,7 @@ from pathlib import Path
 from common_lore_index.extractors.shell.bats import extract_bats_file_observations
 from common_lore_index.graph.discovery import classify_path
 
-from repomap_test_support.bats import (
+from common_lore_index_test_support.bats import (
     BATS_FIXTURE_ROOT as FIXTURE_ROOT,
     first_observation,
     observations_by_kind,

@@ -198,18 +198,18 @@ def test_direct_marker_file_length_exceeding_400(tmp_path: Path, reported: bool)
 
 def test_cross_cohort_cycles_fail_closed(tmp_path: Path) -> None:
     c_paths = _make_tree(tmp_path, {
-        "tools/a.py": "from repomap_test_support.support import y\nx = 1\n",
-        "src/test/support/python/repomap_test_support/support.py": "from a import x\ny = 2\n",
+        "tools/a.py": "from common_lore_index_test_support.support import y\nx = 1\n",
+        "src/test/support/python/common_lore_index_test_support/support.py": "from a import x\ny = 2\n",
     })
     cohorts = [
         {"id": "c_a", "root": "tools", "governing_profile": "clean_tooling",
          "members": ["tools/a.py"], "rationale": "a", "admission": "admitted"},
         {"id": "c_b", "root": "test_support", "governing_profile": "clean_test_support",
-         "members": ["src/test/support/python/repomap_test_support/support.py"], "rationale": "b", "admission": "admitted"},
+         "members": ["src/test/support/python/common_lore_index_test_support/support.py"], "rationale": "b", "admission": "admitted"},
     ]
     checks = {
         "tools": _make_check(["tools/a.py"]),
-        "test_support": _make_check(["src/test/support/python/repomap_test_support/support.py"]),
+        "test_support": _make_check(["src/test/support/python/common_lore_index_test_support/support.py"]),
     }
     res = evaluate_cohorts(cohorts, checks, tmp_path, c_paths, [])
     assert res["cohort_results"]["c_a"]["status"] == "failed"
@@ -306,7 +306,7 @@ def test_missing_member_in_analyzed_paths_blocks(tmp_path: Path) -> None:
 def test_unattributed_dependency_finding_conservatively_blocks_root(tmp_path: Path) -> None:
     c_paths = _make_tree(tmp_path, {
         "tools/a.py": "x = 1\n",
-        "src/test/support/python/repomap_test_support/orphaned.py": "y = 2\n",
+        "src/test/support/python/common_lore_index_test_support/orphaned.py": "y = 2\n",
     })
     cohorts = [{
         "id": "c_a", "root": "tools", "governing_profile": "clean_tooling",
@@ -315,7 +315,7 @@ def test_unattributed_dependency_finding_conservatively_blocks_root(tmp_path: Pa
     checks = {"tools": _make_check(
         ["tools/a.py"],
         mypy_findings=[{
-            "path": "src/test/support/python/repomap_test_support/orphaned.py",
+            "path": "src/test/support/python/common_lore_index_test_support/orphaned.py",
             "code": "assignment", "message": "unattributed debt",
         }],
     )}

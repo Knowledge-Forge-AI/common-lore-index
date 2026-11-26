@@ -3,10 +3,22 @@
 The distribution is `common-lore-index`, its canonical import namespace is
 `common_lore_index`, and installed resources live at `share/common-lore-index`.
 The preferred command is `cloe`; `common-lore-index` names the same implementation.
-The transitional `repomap-kg` command remains through v0.1.x and prints a bounded
-notice on stderr. Version and help use the explicitly selected command name;
-identity keeps six keys, with the current distribution/package/CLI values.
-MCP wire names and schemas remain unchanged.
+The v0.0.5 preview also shipped the transitional `repomap-kg` command.
+That compatibility applies to the published preview. The approved
+[v0.1.0 source cutover](../adr/2026/11/0222-v010-canonical-only-cutover.md)
+replaces the promise for later versions. During the cutover, the implicit
+default is `~/.cloe`; automatic selection no longer searches `~/.repo-map`.
+Select the predecessor home explicitly when preparing a conversion. An
+ordinary setup with no explicit selector can initialize a separate canonical
+home. Confirm the expected graph and recovery point before changing either
+home.
+
+Version and help identify the command selected by the executable.
+Identity keeps its six-key record. MCP tools use `cloe_*` wire names. Existing
+read-only result schemas and graph identities carry forward.
+
+Update callers of `repomap_kg.ops.config_migration` to import
+`common_lore_index.ops.config_migration`.
 
 ## Distribution metadata ownership
 
@@ -33,15 +45,12 @@ exception messages and environment values are omitted. A source checkout without
 metadata is unverified. Exit 0 confirms metadata consistency only: it does not
 qualify installed files, wrappers, resources, importability or runtime health.
 
-Old and new distributions sharing one environment remain unsupported. A fresh
-isolated environment, or removal of the old distribution before replacement,
-is the supported route. This diagnostic cannot prevent installer overwrites or
-uninstall side effects. The disposable offline installed matrix covers both install orders and removing
-either owner. Both metadata owners are diagnosed as conflicting; uninstalling
-either can remove the shared `repomap-kg` wrapper and all six shared legacy
-package files. The matrix verifies their presence before and absence after each
-removal. This observed behavior confirms
-that overlap is unsupported; it does not certify arbitrary installer versions.
+Install the canonical distribution in a fresh, isolated environment, or
+remove predecessor distribution metadata before replacement. The ownership
+check reports both distributions as conflicting. The offline wheel matrix
+exercises both installer orders and each uninstall and checks the surviving
+wrapper and import namespace. Use an exact archived release to restore its
+own launchers and package surface for rollback.
 
 ## Persisted native service definitions
 
@@ -111,7 +120,7 @@ What it covers: the candidate wheel is built offline once per test process and
 checked against an inventory derived from source. Installed wrappers and modules
 then run the Local workflow (configure, initialize, check, guarded refresh, a
 predeclared navigation question, context selection and packing, backup, restore
-and source-blind readback), canonical and finite legacy stdio MCP, and
+and source-blind readback), canonical stdio MCP, legacy-launch absence, and
 configuration migration apply, rollback and finalize over owned homes whose
 paths contain spaces. The incumbent `repomap-kg` command checks the legacy home
 where it supports it. Each owner writes one bounded bundle under

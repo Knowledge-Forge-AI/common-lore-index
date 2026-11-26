@@ -19,12 +19,12 @@ from typing import cast
 
 import pytest
 
-from repomap_test_support.postgres_harness import temporary_postgres
-from repomap_test_support.w5_experiment_support import DECLARED_PROFILE_IDENTITY, experiment_source_closure
-from repomap_test_support.w5_public_text_evidence import (
+from common_lore_index_test_support.postgres_harness import temporary_postgres
+from common_lore_index_test_support.w5_experiment_support import DECLARED_PROFILE_IDENTITY, experiment_source_closure
+from common_lore_index_test_support.w5_public_text_evidence import (
     TRANSITION_GATE_NAME, TRANSITION_NAME, read_private_file, write_private_file,
 )
-from repomap_test_support.w5_public_text_study import REPORT_NAME, StudyEnvironment, run_public_text_study
+from common_lore_index_test_support.w5_public_text_study import REPORT_NAME, StudyEnvironment, run_public_text_study
 from retrieval_public_text_export import decode_study_evidence
 from retrieval_public_text_native_gate import PREFIX, read_actual_gate
 from retrieval_public_text_preflight import check_transition_observation

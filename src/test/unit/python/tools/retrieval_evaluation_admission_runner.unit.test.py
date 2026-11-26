@@ -7,15 +7,15 @@ import pytest
 from common_lore_index.retrieval.query_contracts import (
     QueryMode, QueryScope, unavailable_envelope, refused_envelope,
 )
-from repomap_test_support.w5_semantic_support import BIND_CORE, make_w5_policy
-from repomap_test_support.w5_experiment_results import ResultV2Run
-from repomap_test_support.w5_semantic_support import (
+from common_lore_index_test_support.w5_semantic_support import BIND_CORE, make_w5_policy
+from common_lore_index_test_support.w5_experiment_results import ResultV2Run
+from common_lore_index_test_support.w5_semantic_support import (
     make_w5_calibration_task, make_w5_readback_adapter, make_w5_verified_pin,
 )
 from retrieval_evaluation_accounting import ByteLayerAccounting
 from retrieval_evaluation_grading import ExecutionState
 from retrieval_evaluation_admission_w5_capture import native_precheck_breakdown
-from repomap_test_support.w5_admission_native_bytework import byte_work_accounting
+from common_lore_index_test_support.w5_admission_native_bytework import byte_work_accounting
 import retrieval_evaluation_admission_w5_runner as admission_runner
 from retrieval_evaluation_admission_w5_runner import execute_w5_callback
 from retrieval_semantic_experiment_contracts import make_plan

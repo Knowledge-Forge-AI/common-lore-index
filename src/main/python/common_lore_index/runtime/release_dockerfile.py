@@ -118,7 +118,7 @@ RUN test "${{TARGETOS}}" = "linux" \\
     && case "${{TARGETARCH}}" in amd64|arm64) ;; *) exit 1 ;; esac \\
     && mkdir -p /out \\
     && CGO_ENABLED=0 GOTOOLCHAIN=local GOOS="${{TARGETOS}}" GOARCH="${{TARGETARCH}}" \\
-       go build -trimpath -o /out/repomap-go-extract ./cmd/repomap-go-extract
+       go build -trimpath -o /out/cloe-go-extract ./cmd/cloe-go-extract
 
 FROM {PYTHON_RELEASE_IMAGE} AS python-runtime
 ARG TARGETARCH
@@ -171,7 +171,7 @@ RUN rmdir /usr/local/include
 COPY --from=python-runtime /build/src/main/python/common_lore_index/third_party_licenses/GPL-3.0.txt /build/src/main/python/common_lore_index/third_party_licenses/psycopg-LICENSE.txt /build/src/main/python/common_lore_index/third_party_licenses/psycopg-c-numutils-PostgreSQL.txt /build/src/main/python/common_lore_index/third_party_licenses/psycopg-source.json /usr/share/doc/repomap-kg/psycopg/
 COPY --from=python-runtime /build/psycopg-c-linkage.json /usr/share/doc/repomap-kg/psycopg/linkage.json
 COPY --from=python-runtime /build/psycopg-c-source/ /usr/share/doc/repomap-kg/psycopg/source/
-COPY --from=go-helper /out/repomap-go-extract /tmp/repomap-go-extract
+COPY --from=go-helper /out/cloe-go-extract /tmp/cloe-go-extract
 COPY --from=go-helper /usr/local/go/LICENSE /usr/share/doc/repomap-kg/go/LICENSE
 COPY --from=go-helper /usr/local/go/PATENTS /usr/share/doc/repomap-kg/go/PATENTS
 RUN install -d -m 0700 /repo-map-home /repo-map-home/runtime /repo-map-home/coordinator \
@@ -179,9 +179,9 @@ RUN install -d -m 0700 /repo-map-home /repo-map-home/runtime /repo-map-home/coor
     && install -m 0444 /dev/null /etc/repomap-release-container \\
     && chmod 1777 /tmp
 RUN package_root="$(python -c 'import pathlib, common_lore_index; print(pathlib.Path(common_lore_index.__file__).parent)')" \\
-    && install -D -m 0755 /tmp/repomap-go-extract \\
-       "${{package_root}}/_bin/linux-${{TARGETARCH}}/repomap-go-extract" \\
-    && rm /tmp/repomap-go-extract
+    && install -D -m 0755 /tmp/cloe-go-extract \\
+       "${{package_root}}/_bin/linux-${{TARGETARCH}}/cloe-go-extract" \\
+    && rm /tmp/cloe-go-extract
 ENV REPOMAP_PACKAGED_PSQL={PACKAGED_PSQL} \\
     REPOMAP_PACKAGED_PG_DUMP={PACKAGED_PG_DUMP} \\
     REPOMAP_PACKAGED_PG_RESTORE={PACKAGED_PG_RESTORE}

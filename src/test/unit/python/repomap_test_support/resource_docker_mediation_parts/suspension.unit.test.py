@@ -6,15 +6,15 @@ import pytest
 from docker.api.build import BuildApiMixin
 from docker.api.image import ImageApiMixin
 
-from repomap_test_support.resource_docker_mediation import (
+from common_lore_index_test_support.resource_docker_mediation import (
     LOW_LEVEL_PULL_ROUTES,
     CanonicalDockerAuthority,
     DockerOperationRefused,
 )
-from repomap_test_support.resource_docker_mediation_isolation import (
+from common_lore_index_test_support.resource_docker_mediation_isolation import (
     ambient_authorities_suspended,
 )
-from repomap_test_support.resource_docker_operations import (
+from common_lore_index_test_support.resource_docker_operations import (
     DockerAuthorityClass,
     DockerOperationJournal,
     DockerOperationKind,
@@ -224,7 +224,7 @@ def test_obs1_recover4_suspension_refuses_an_authority_with_work_in_flight(
 
 def test_obs1_recover4_a_failed_install_leaves_no_registry_residue(tmp_path) -> None:
     """install()'s own error path reaches uninstall() on a partial instance."""
-    from repomap_test_support.resource_docker_mediation import installed_authorities
+    from common_lore_index_test_support.resource_docker_mediation import installed_authorities
 
     def explode(self) -> None:
         raise RuntimeError("boom")

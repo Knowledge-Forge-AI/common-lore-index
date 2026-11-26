@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from repomap_test_support.postgres_harness import (
+from common_lore_index_test_support.postgres_harness import (
     require_postgres_binaries,
     temporary_postgres,
 )
@@ -23,7 +23,7 @@ from common_lore_index.storage.readback_driver import (
     READBACK_DRIVER_ENV,
 )
 
-from repomap_test_support.storage_integration import (
+from common_lore_index_test_support.storage_integration import (
     _restore_environment_variable,
     _select_pg_connector_for_postgres,
     discovery_fixture,
@@ -55,7 +55,7 @@ class StorageIngestedSourceRecordsPsycopgParityIntegrationTests(unittest.TestCas
                 body=feed_body,
             )
 
-        from common_lore_index.server.mcp import repomap_ingested_sources
+        from common_lore_index.server.mcp import cloe_ingested_sources
 
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -119,7 +119,7 @@ class StorageIngestedSourceRecordsPsycopgParityIntegrationTests(unittest.TestCas
                         policy_status="blocked",
                         psql_command=postgres.psql_command,
                     )
-                    psql_mcp_payload = repomap_ingested_sources(
+                    psql_mcp_payload = cloe_ingested_sources(
                         **mcp_args,
                         source_type="feed.rss",
                         policy_status="allowed_with_limits",
@@ -189,7 +189,7 @@ class StorageIngestedSourceRecordsPsycopgParityIntegrationTests(unittest.TestCas
                         policy_status="blocked",
                         psql_command=psycopg_only_psql_command,
                     )
-                    psycopg_mcp_payload = repomap_ingested_sources(
+                    psycopg_mcp_payload = cloe_ingested_sources(
                         **mcp_args,
                         source_type="feed.rss",
                         policy_status="allowed_with_limits",

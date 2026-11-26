@@ -10,22 +10,22 @@ import sys
 
 import pytest
 
-from repomap_test_support import test_cov5k_r2_fix2_observer as observer
-from repomap_test_support import test_cov5k_r2_fix2_preparation as preparation
-from repomap_test_support import test_cov5k_r2_fix2_runtime as runtime
-from repomap_test_support.test_cov5k_r2_fix2_administrative import (
+from common_lore_index_test_support import test_cov5k_r2_fix2_observer as observer
+from common_lore_index_test_support import test_cov5k_r2_fix2_preparation as preparation
+from common_lore_index_test_support import test_cov5k_r2_fix2_runtime as runtime
+from common_lore_index_test_support.test_cov5k_r2_fix2_administrative import (
     execute_administrative_operation,
 )
-from repomap_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
-from repomap_test_support.test_cov5k_r2_fix2_encoding import canonical_digest
-from repomap_test_support.test_cov5k_r2_fix2_process_recorder import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_catalog import build_closed_catalog
+from common_lore_index_test_support.test_cov5k_r2_fix2_encoding import canonical_digest
+from common_lore_index_test_support.test_cov5k_r2_fix2_process_recorder import (
     record_process_boundary,
 )
-from repomap_test_support.test_cov5k_r2_fix2_receipt import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_receipt import (
     QualificationReceiptDraft,
     finalize_receipt,
 )
-from repomap_test_support.test_cov5k_r2_fix2_registry import (
+from common_lore_index_test_support.test_cov5k_r2_fix2_registry import (
     build_executor_registry,
     _callgraph_reachable,
 )
@@ -52,7 +52,7 @@ def test_delegated_causality_requires_both_source_edges(
     entry = next(item for item in build_closed_catalog()
                  if item.executor_symbol == "execute_failure_causality")
     root = Path(__file__).resolve().parents[5]
-    helper = "src/test/support/python/repomap_test_support/test_cov5k_r2_fix3_observer_programs.py"
+    helper = "src/test/support/python/common_lore_index_test_support/test_cov5k_r2_fix3_observer_programs.py"
     for relative in (entry.executor_source_path, entry.owner.source_path, helper):
         target = tmp_path / relative
         target.parent.mkdir(parents=True, exist_ok=True)

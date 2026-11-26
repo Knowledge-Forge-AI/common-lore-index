@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import repomap_test_support.resource_index_mode_migration as resource_index_mode_migration_owner
-import repomap_test_support.resource_index_recovery as resource_index_recovery_owner
+import common_lore_index_test_support.resource_index_mode_migration as resource_index_mode_migration_owner
+import common_lore_index_test_support.resource_index_recovery as resource_index_recovery_owner
 
 import os
 import stat
@@ -13,14 +13,14 @@ from types import SimpleNamespace
 import pytest
 
 import test_hygiene_maintenance as maintenance_tool
-from repomap_test_support.resource_index import (
+from common_lore_index_test_support.resource_index import (
     AdvisoryIndex,
     HostAdmissionRefused,
     lifecycle_record_capacity,
 )
-from repomap_test_support.resource_index_recovery import MaintenanceIndexBinding
-from repomap_test_support.resource_ledger_io import write_private_json_exclusive
-from repomap_test_support.resource_lifecycle_claim import ClaimRegistry
+from common_lore_index_test_support.resource_index_recovery import MaintenanceIndexBinding
+from common_lore_index_test_support.resource_ledger_io import write_private_json_exclusive
+from common_lore_index_test_support.resource_lifecycle_claim import ClaimRegistry
 
 
 def _mode():

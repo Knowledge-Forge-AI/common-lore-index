@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from repomap_test_support.executable_authority import controlled_service_authority
+from common_lore_index_test_support.executable_authority import controlled_service_authority
 
 
 @pytest.fixture

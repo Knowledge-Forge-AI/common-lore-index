@@ -32,21 +32,21 @@ from common_lore_index.storage import (
     public_embedded_read_result_to_jsonable, public_read_page, public_read_page_to_jsonable,
     query_canonical_neighborhood, query_canonical_node_records,
 )
-from repomap_test_support.host_mcp_investigation import build_plan, seven_tool_requests, verify_plan
-from repomap_test_support.host_mcp_publication import (
+from common_lore_index_test_support.host_mcp_investigation import build_plan, seven_tool_requests, verify_plan
+from common_lore_index_test_support.host_mcp_publication import (
     ABSENT_DATABASE, RESTORE_LOGIN_SQL, assert_least_privilege, await_no_read_role_backends, cli, jsonable,
     publish_fixture, snapshot, write_config,
 )
-from repomap_test_support.host_mcp_stdio import (
+from common_lore_index_test_support.host_mcp_stdio import (
     HostMcpHarness, forbidden_env_keys, initialize_request, tool_request, tools_list_request,
 )
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
 
-SEAM_TOOLS = ("repomap_canonical_nodes", "repomap_canonical_edges",
-              "repomap_explain_canonical_edge", "repomap_canonical_neighborhood")
-INVESTIGATION_TOOLS = ("repomap_graph_status", "repomap_refresh_status", "repomap_search_nodes",
-                       "repomap_search_files", "repomap_search_observations", "repomap_project_summary",
-                       "repomap_neighborhood")
+SEAM_TOOLS = ("cloe_canonical_nodes", "cloe_canonical_edges",
+              "cloe_explain_canonical_edge", "cloe_canonical_neighborhood")
+INVESTIGATION_TOOLS = ("cloe_graph_status", "cloe_refresh_status", "cloe_search_nodes",
+                       "cloe_search_files", "cloe_search_observations", "cloe_project_summary",
+                       "cloe_neighborhood")
 READ_TOOL_IDS = (4, 5, 6, 7, 8)  # search x3, project summary, neighborhood in seven_tool_requests(1, ...)
 CANARY_KEY = "REPOMAP_ENV_CANARY_PASSWORD_PROBE"
 
@@ -56,9 +56,9 @@ def test_host_native_stdio_mcp_reads_seam_tools_without_docker_or_sources(
 ) -> None:
     require_postgres_binaries()
     for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "REPOMAP_READ_STATUS_PASSWORD",
-                 "REPOMAP_STORAGE_PG_CONNECTOR"):
+                 "CLOE_STORAGE_PG_CONNECTOR"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("REPOMAP_STORAGE_READBACK_DRIVER", "psycopg")
+    monkeypatch.setenv("CLOE_STORAGE_READBACK_DRIVER", "psycopg")
     with temporary_postgres() as postgres:
         multi_name = f"host_multi_{uuid.uuid4().hex[:10]}"
         multi_db = postgres.create_database(multi_name)
@@ -86,21 +86,21 @@ def _run_proof(tmp_path: Path, postgres, multi_db) -> None:
     plan = build_plan(publication)
     requests.extend(tool_request(mid, name, args) for mid, (name, args) in plan.requests.items())
     refusals: dict[int, tuple[str, dict[str, object], str]] = {
-        900: ("repomap_canonical_nodes", {"project": "host-one", "limit": 201}, "limit must be between 1 and 200"),
-        901: ("repomap_canonical_edges", {"project": "host-one", "result_schema_version": 2},
+        900: ("cloe_canonical_nodes", {"project": "host-one", "limit": 201}, "limit must be between 1 and 200"),
+        901: ("cloe_canonical_edges", {"project": "host-one", "result_schema_version": 2},
               "result schema version must be 0 or 1"),
-        902: ("repomap_canonical_nodes", {"project": "no-such-graph"},
+        902: ("cloe_canonical_nodes", {"project": "no-such-graph"},
               "unknown legacy MCP project or graph-registry graph_id: no-such-graph"),
-        903: ("repomap_canonical_nodes", {"project": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
-        910: ("repomap_search_nodes", {"graph_id": "no-such-graph", "query": "sh"}, "unknown graph_id: no-such-graph"),
-        911: ("repomap_graph_status", {"graph_id": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
-        912: ("repomap_refresh_status", {"graph_id": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
-        913: ("repomap_search_files", {"graph_id": "host-one", "query": "   "}, "query is required"),
-        914: ("repomap_search_observations", {"graph_id": "host-one", "query": "sh", "limit": 0},
+        903: ("cloe_canonical_nodes", {"project": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
+        910: ("cloe_search_nodes", {"graph_id": "no-such-graph", "query": "sh"}, "unknown graph_id: no-such-graph"),
+        911: ("cloe_graph_status", {"graph_id": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
+        912: ("cloe_refresh_status", {"graph_id": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
+        913: ("cloe_search_files", {"graph_id": "host-one", "query": "   "}, "query is required"),
+        914: ("cloe_search_observations", {"graph_id": "host-one", "query": "sh", "limit": 0},
               "limit must be a positive integer"),
-        915: ("repomap_neighborhood", {"graph_id": "host-one", "node": plan.chain["key"], "depth": 2},
+        915: ("cloe_neighborhood", {"graph_id": "host-one", "node": plan.chain["key"], "depth": 2},
               "neighborhood depth is capped at 1 in MCP-OPS4"),
-        916: ("repomap_project_summary", {"graph_id": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
+        916: ("cloe_project_summary", {"graph_id": "host-hidden"}, "graph 'host-hidden' is not MCP-visible"),
     }
     requests.extend(tool_request(mid, name, args) for mid, (name, args, _) in refusals.items())
 
@@ -123,7 +123,7 @@ def _run_proof(tmp_path: Path, postgres, multi_db) -> None:
     postgres.psql_scalar(f'ALTER ROLE "{READ_STATUS_ROLE}" NOLOGIN;')
     try:
         denied = harness.run([initialize_request(1), tool_request(2, *_nodes_call("host-one")),
-                              tool_request(3, "repomap_list_graphs", {}),
+                              tool_request(3, "cloe_list_graphs", {}),
                               *_requests(seven_tool_requests(10, "host-one", plan.chain["key"]))])
     finally:
         postgres.psql_scalar(f'ALTER ROLE "{READ_STATUS_ROLE}" LOGIN;')
@@ -136,7 +136,7 @@ def _run_proof(tmp_path: Path, postgres, multi_db) -> None:
     assert restarted.returncode == 0 and restarted.structured(2) == expected[101]
     for mid, source in ((3, 313), (4, 320), (5, 305)):
         assert restarted.structured(mid) == session.structured(source), mid
-    canary = harness.run([initialize_request(1), tool_request(2, "repomap_list_graphs", {})],
+    canary = harness.run([initialize_request(1), tool_request(2, "cloe_list_graphs", {})],
                          extra_env={CANARY_KEY: "synthetic"})
     assert canary.returncode == 0 and CANARY_KEY in canary.observed_env_keys
     assert forbidden_env_keys(canary.observed_env_keys) == (CANARY_KEY,)
@@ -180,14 +180,14 @@ def _incumbent(graph_id: str, database, root: str, home: Path) -> dict[str, dict
     neighbor = {"node": edge["source_key"], "direction": "both", "node_limit": 1, "edge_limit": 1}
     return {
         "requests": {
-            1: ("repomap_canonical_nodes", {"limit": 1, "offset": 0}),
-            2: ("repomap_canonical_nodes", {"limit": 1, "offset": 1}),
-            3: ("repomap_canonical_nodes", {"limit": 200, "result_schema_version": 0}),
-            4: ("repomap_canonical_edges", {"limit": 200}),
-            5: ("repomap_canonical_edges", {"limit": 200, "result_schema_version": 0}),
-            6: ("repomap_explain_canonical_edge", explain),
-            7: ("repomap_explain_canonical_edge", {**explain, "result_schema_version": 0}),
-            8: ("repomap_canonical_neighborhood", neighbor),
+            1: ("cloe_canonical_nodes", {"limit": 1, "offset": 0}),
+            2: ("cloe_canonical_nodes", {"limit": 1, "offset": 1}),
+            3: ("cloe_canonical_nodes", {"limit": 200, "result_schema_version": 0}),
+            4: ("cloe_canonical_edges", {"limit": 200}),
+            5: ("cloe_canonical_edges", {"limit": 200, "result_schema_version": 0}),
+            6: ("cloe_explain_canonical_edge", explain),
+            7: ("cloe_explain_canonical_edge", {**explain, "result_schema_version": 0}),
+            8: ("cloe_canonical_neighborhood", neighbor),
         },
         "expected": {key: jsonable(value) for key, value in {
             1: node_pages[0], 2: node_pages[1], 3: canonical_node_records_to_jsonable(all_nodes[:200]),
@@ -201,7 +201,7 @@ def _requests(calls: dict[int, tuple[str, dict]]) -> list[dict]:
 
 
 def _nodes_call(graph_id: str) -> tuple[str, dict]:
-    return "repomap_canonical_nodes", {"project": graph_id, "limit": 1, "offset": 0}
+    return "cloe_canonical_nodes", {"project": graph_id, "limit": 1, "offset": 0}
 
 
 def _bounded_outcomes(session, start: int) -> dict[str, str]:
@@ -229,12 +229,12 @@ def _postgres_absent_sessions(tmp_path: Path, harness: HostMcpHarness, node: str
     outcomes = {}
     for label, direct, port, env in (
         ("closed-host-port", "true", closed_port, {}),
-        ("container-internal-psql", "false", 55439, {"REPOMAP_STORAGE_READBACK_DRIVER": "psql"}),
+        ("container-internal-psql", "false", 55439, {"CLOE_STORAGE_READBACK_DRIVER": "psql"}),
     ):
         home = tmp_path / f"absent-{label}"
         setup_local_runtime(home)
         write_config(home, port, "repomap_absent_one", "repomap_absent_multi", tmp_path / "missing-sources")
-        config = home / "repomap.rpl.toml"
+        config = home / "repomap.local.cloe.toml"
         config.write_text(config.read_text(encoding="utf-8").replace(
             "direct_host_port_enabled = true", f"direct_host_port_enabled = {direct}"), encoding="utf-8")
         started = time.monotonic()

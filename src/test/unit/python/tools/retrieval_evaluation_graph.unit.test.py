@@ -12,7 +12,7 @@ import pytest
 from common_lore_index.retrieval.query_contracts import (
     MatchSurface, OmissionRecord, QueryMode, QueryScope,
 )
-from repomap_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT, binding_id_for_alias
+from common_lore_index_test_support.retrieval_evaluation_fixture import MIXED_V1_FIXTURE_ROOT, binding_id_for_alias
 from common_lore_index.storage.navigation_search import NavigationSearchQuery
 from common_lore_index.storage.node_locations import NodeLocationsQuery
 from common_lore_index.server.investigation_read_store import ConfiguredNeighborhoodQuery

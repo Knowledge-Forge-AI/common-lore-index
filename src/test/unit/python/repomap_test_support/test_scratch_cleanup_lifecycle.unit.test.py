@@ -10,8 +10,8 @@ import sys
 
 import pytest
 
-from repomap_test_support.test_scratch import TestScratchLayout
-from repomap_test_support.test_scratch_cleanup import (
+from common_lore_index_test_support.test_scratch import TestScratchLayout
+from common_lore_index_test_support.test_scratch_cleanup import (
     ScratchOwnershipError,
     is_test_settled_and_passed,
     validate_scratch_path_ownership,
@@ -41,7 +41,7 @@ def test_evidence(tmp_path):
     if MODE == 'call_failed':
         raise RuntimeError('call error')
     if MODE == 'cleanup_failed':
-        import repomap_test_support.test_scratch_cleanup as cleanup
+        import common_lore_index_test_support.test_scratch_cleanup as cleanup
         def refuse(path):
             raise OSError('owned cleanup refusal')
         cleanup.shutil.rmtree = refuse

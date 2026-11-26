@@ -14,8 +14,8 @@ navigation (`cloe-intent-rank-v1`, `cloe-intent-tiebreak-v1`,
 1. **Preserved Retrieval and MCP Contracts**: The six `QueryMode` values and
    five `MatchSurface` values in `cloe-retrieval-query-v1` ([ADR 0127](../adr/2026/10/0127-cloe-retrieval-contracts-and-evaluation.md)),
    the read-only MCP tool catalog and schemas, `InvestigationReadStore`, and the
-   default `_EVIDENCE_ROLE_SQL` payload behavior for `repomap_navigation_search`
-   and `repomap_node_locations` remain unchanged.
+   default `_EVIDENCE_ROLE_SQL` payload behavior for `cloe_navigation_search`
+   and `cloe_node_locations` remain unchanged.
 2. **Metadata-Only Storage Access and Credential Isolation**: Context assembly
    reads accepted canonical metadata (`canonical_nodes`, `canonical_edges`,
    `canonical_node_evidence`, `canonical_evidence`, `runs`, and publication
@@ -40,7 +40,7 @@ navigation (`cloe-intent-rank-v1`, `cloe-intent-tiebreak-v1`,
 ### Create a Reusable Source Selection (`cloe ops context-select`)
 
 ```bash
-cloe ops context-select --config /path/to/repomap.rpl.toml \
+cloe ops context-select --config /path/to/repomap.local.cloe.toml \
   --graph <graph-id> \
   --binding <binding-id> \
   --path-prefix <binding-id>=src/pkg \
@@ -68,7 +68,7 @@ cloe ops context-select --config /path/to/repomap.rpl.toml \
 ### Assemble a Bounded Compact Context Packet (`cloe ops context-pack`)
 
 ```bash
-cloe ops context-pack --config /path/to/repomap.rpl.toml \
+cloe ops context-pack --config /path/to/repomap.local.cloe.toml \
   --graph <graph-id> \
   --mode ranked_discovery \
   --query "InvoiceService" \
@@ -127,7 +127,7 @@ or `--query`:
 #### Opt-In Advisory Source Freshness (`--freshness check`)
 
 ```bash
-cloe ops context-pack --config /path/to/repomap.rpl.toml \
+cloe ops context-pack --config /path/to/repomap.local.cloe.toml \
   --graph <graph-id> \
   --mode exact_identity \
   --canonical-key "py:pkg.billing.InvoiceService" \

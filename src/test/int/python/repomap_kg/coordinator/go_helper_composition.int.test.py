@@ -193,7 +193,7 @@ class GoHelperCompositionIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             missing_path = Path(tmpdir) / "nonexistent-helper"
             with mock.patch.dict(
-                os.environ, {"REPOMAP_GO_HELPER": str(missing_path)}
+                os.environ, {"CLOE_GO_HELPER": str(missing_path)}
             ):
                 with self.assertRaises(GoHelperUnavailableError) as cm:
                     resolve_go_helper_command()
@@ -313,7 +313,7 @@ class GoHelperCompositionIntegrationTests(unittest.TestCase):
         self.assertIn("observation path mismatch", str(cm_path.exception))
 
     def test_protocol_handles_hanging_helper_termination_and_trailing_messages(self) -> None:
-        from repomap_test_support.staging_abrupt_launch import observe_go_hang
+        from common_lore_index_test_support.staging_abrupt_launch import observe_go_hang
         root = GO_FIXTURE_ROOT / "syntax_basic"
         # Helper emits valid file_end and then hangs after input; protocol enforces cleanup_timeout
         hanging_cmd = (

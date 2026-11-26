@@ -36,15 +36,15 @@ def ops_payload(function: Any, *args: Any, **kwargs: Any) -> Any:
         raise RepoMapMcpError(str(error)) from error
 
 
-def repomap_list_graphs() -> dict[str, Any]:
+def cloe_list_graphs() -> dict[str, Any]:
     return ops_payload(list_graphs_payload)
 
 
-def repomap_graph_status(*, graph_id: str) -> dict[str, Any]:
+def cloe_graph_status(*, graph_id: str) -> dict[str, Any]:
     return ops_payload(graph_status_payload, graph_id)
 
 
-def repomap_search_nodes(
+def cloe_search_nodes(
     *,
     graph_id: str,
     query: str,
@@ -63,7 +63,7 @@ def repomap_search_nodes(
     )
 
 
-def repomap_search_observations(
+def cloe_search_observations(
     *,
     graph_id: str,
     query: str,
@@ -86,7 +86,7 @@ def repomap_search_observations(
     )
 
 
-def repomap_search_files(
+def cloe_search_files(
     *,
     graph_id: str,
     query: str,
@@ -105,7 +105,7 @@ def repomap_search_files(
     )
 
 
-def repomap_neighborhood(
+def cloe_neighborhood(
     *,
     graph_id: str,
     node: str,
@@ -125,39 +125,39 @@ def repomap_neighborhood(
     )
 
 
-def repomap_project_summary(*, graph_id: str) -> dict[str, Any]:
+def cloe_project_summary(*, graph_id: str) -> dict[str, Any]:
     return ops_payload(project_summary_payload, graph_id)
 
 
-def repomap_python_summary(*, graph_id: str) -> dict[str, Any]:
+def cloe_python_summary(*, graph_id: str) -> dict[str, Any]:
     return ops_payload(summary_payload, graph_id, summary_kind="python")
 
 
-def repomap_terraform_summary(*, graph_id: str) -> dict[str, Any]:
+def cloe_terraform_summary(*, graph_id: str) -> dict[str, Any]:
     return ops_payload(summary_payload, graph_id, summary_kind="terraform")
 
 
-def repomap_openapi_summary(*, graph_id: str) -> dict[str, Any]:
+def cloe_openapi_summary(*, graph_id: str) -> dict[str, Any]:
     return ops_payload(summary_payload, graph_id, summary_kind="openapi")
 
 
-def repomap_js_framework_summary(*, graph_id: str) -> dict[str, Any]:
+def cloe_js_framework_summary(*, graph_id: str) -> dict[str, Any]:
     return ops_payload(summary_payload, graph_id, summary_kind="js_framework")
 
 
-def repomap_nix_summary(*, graph_id: str) -> dict[str, Any]:
+def cloe_nix_summary(*, graph_id: str) -> dict[str, Any]:
     return ops_payload(summary_payload, graph_id, summary_kind="nix")
 
 
-def repomap_refresh_status(graph_id: str | None = None) -> dict[str, Any]:
+def cloe_refresh_status(graph_id: str | None = None) -> dict[str, Any]:
     return ops_payload(refresh_status_payload, graph_id=graph_id)
 
 
-def repomap_server_memory_summary() -> dict[str, Any]:
+def cloe_server_memory_summary() -> dict[str, Any]:
     return ops_payload(server_memory_summary_payload)
 
 
-def repomap_server_memory_search(
+def cloe_server_memory_search(
     *,
     query: str,
     kind: str | None = None,

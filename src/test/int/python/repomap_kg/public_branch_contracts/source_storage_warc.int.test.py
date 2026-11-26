@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
 
-from repomap_test_support.public_branch_contracts import (
+from common_lore_index_test_support.public_branch_contracts import (
     warc_record,
     write_warc_config,
 )

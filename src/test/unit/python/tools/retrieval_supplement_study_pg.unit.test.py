@@ -9,9 +9,9 @@ import subprocess
 
 import pytest
 
-from repomap_test_support import retrieval_supplement_study_pg as study_pg
-from repomap_test_support import retrieval_supplement_study_pg_lifecycle as lifecycle
-from repomap_test_support.postgres_container import PostgresContainerDatabase
+from common_lore_index_test_support import retrieval_supplement_study_pg as study_pg
+from common_lore_index_test_support import retrieval_supplement_study_pg_lifecycle as lifecycle
+from common_lore_index_test_support.postgres_container import PostgresContainerDatabase
 from retrieval_supplement_study_contracts import RUNTIME_CONFIG_SHA256, StudyRefusal
 
 

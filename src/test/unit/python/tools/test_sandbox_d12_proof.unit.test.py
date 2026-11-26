@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ci.d12_system_grant import D12SystemGrantError
-from repomap_test_support.d12_system_test_children import (
+from common_lore_index_test_support.d12_system_test_children import (
     hold_exclusive_flock,
     poisoned_coverage_base_env,
     transfer_proof_locally,

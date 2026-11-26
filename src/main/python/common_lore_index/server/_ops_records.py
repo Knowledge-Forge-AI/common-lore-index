@@ -28,6 +28,7 @@ from common_lore_index.runtime.database_role_contract import (
     READ_STATUS_PASSWORD_ENV,
     project_read_status_config,
 )
+from common_lore_index.ops.config_loading import OPS_CONFIG_ENV as ENV_OPS_CONFIG, require_canonical_mcp_selectors
 from common_lore_index.server.graph_selection import (
     McpOpsError as McpOpsError,
     checked_graph as checked_graph,
@@ -36,8 +37,7 @@ from common_lore_index.server.graph_selection import (
     visible_graphs as visible_graphs,
 )
 
-ENV_OPS_CONFIG = "REPOMAP_OPS_CONFIG"
-ENV_PSQL_COMMAND = "REPOMAP_PSQL_COMMAND"
+ENV_PSQL_COMMAND = "CLOE_PSQL_COMMAND"
 
 
 @dataclass(frozen=True)
@@ -67,6 +67,7 @@ def load_mcp_ops_config(
     config_path: str | os.PathLike[str] | None = None,
 ) -> OpsConfig | LocalSqliteConfig:
     """Load the MCP graph registry as whichever backend the home declares."""
+    require_canonical_mcp_selectors()
     path_value = config_path or os.environ.get(ENV_OPS_CONFIG)
     if path_value:
         config = load_graph_registry_config(Path(path_value).expanduser())

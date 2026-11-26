@@ -7,7 +7,7 @@ import pytest
 
 from common_lore_index.ops.ingestion.github_api import acquire_github_api_source, GitHubApiPolicyError
 from common_lore_index.storage.staged_rows import build_staged_rows
-from repomap_test_support.run25_acquisition_fixtures import (
+from common_lore_index_test_support.run25_acquisition_fixtures import (
     Run25DeterministicGitHubTransport, make_run25_github_source_toml, snapshot_directory_state,
 )
 

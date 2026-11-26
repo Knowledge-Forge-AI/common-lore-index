@@ -1,7 +1,7 @@
 # Scoped source-document navigation search
 
-`repomap_navigation_search` is an optional SQLite Local view. Existing
-`repomap_search_nodes`, file/observation search and locator defaults retain
+`cloe_navigation_search` is an optional SQLite Local view. Existing
+`cloe_search_nodes`, file/observation search and locator defaults retain
 their original contracts. Literal matching does not infer a task or backend.
 
 ## Callable and discovery
@@ -206,7 +206,7 @@ independent of group continuation. Stable offset pagination applies within one
 fixed publication. Separate calls are independent reads and may observe a
 newer accepted publication; no shared cross-call snapshot is promised.
 
-For one selected exact member, call `repomap_node_locations` with the same
+For one selected exact member, call `cloe_node_locations` with the same
 graph/key, `evidence_role="direct", detail="compact"`; increase its documented
 limit or request full detail when needed. To enumerate matching canonical
 subjects beyond a displayed member list, repeat the same navigation query and

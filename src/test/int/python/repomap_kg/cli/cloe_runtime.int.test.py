@@ -1,14 +1,15 @@
 """Real CLI CLOE runtime configuration production in the disposable sandbox."""
 from __future__ import annotations
 
+from itertools import takewhile
 import json
 import os
 from pathlib import Path
 
 import pytest
 
-from repomap_test_support.cli_integration import run_cli_module
-from repomap_test_support.sqlite_local_harness import LocalHarness
+from common_lore_index_test_support.cli_integration import run_cli_module
+from common_lore_index_test_support.sqlite_local_harness import LocalHarness
 
 
 def snapshot(home: Path) -> dict[str, bytes]:
@@ -24,16 +25,25 @@ def test_setup_refuses_undecodable_config_before_writing_runtime(tmp_path: Path,
     harness = LocalHarness(tmp_path / "guard")
     result = harness.run("local", "setup", "--repo-map-home", str(home), "--json")
     assert result.returncode == 1
-    assert "runtime-config-unavailable" in result.stderr
+    expected = "legacy-config-filenames" if name == "repomap.rpl.toml" else "runtime-config-unavailable"
+    assert expected in result.stderr
     assert "fixture-confidential-marker" not in result.stderr + result.stdout
     assert snapshot(home) == before
     assert not harness.forbidden_events() and not harness.shim_invocations()
 
 
-def test_cloe_setup_readback_status_and_plan_without_runtime_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("format_args", [(), ("--config-format", "cloe")], ids=("partial-default", "fresh-explicit"))
+def test_cloe_setup_readback_status_and_plan_without_runtime_execution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, format_args: tuple[str, ...],
+) -> None:
     home = tmp_path / "cloe home"
+    if not format_args:
+        home.mkdir(mode=0o700)
+        runtime = home / "runtime"
+        runtime.mkdir(mode=0o700)
+        (runtime / "compose.yaml").write_text("# partial setup mounted repomap.rpl.toml\n")
     harness = LocalHarness(tmp_path / "guard")
-    result = harness.run("local", "setup", "--repo-map-home", str(home), "--config-format", "cloe", "--json")
+    result = harness.run("local", "setup", "--repo-map-home", str(home), *format_args, "--json")
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
     assert payload["result"] == "success"
@@ -43,6 +53,21 @@ def test_cloe_setup_readback_status_and_plan_without_runtime_execution(tmp_path:
     assert overlay.is_file() and not (home / "repomap.rpl.toml").exists()
     assert overlay.stat().st_mode & 0o777 == 0o600
     compose = (home / "runtime/compose.yaml").read_text()
+    assert compose.count("CLOE_HOME: /repo-map-home") == 5
+    assert compose.count('--repo-map-home", "/repo-map-home"') == 6
+    assert "REPOMAP_HOME:" not in compose
+    for service in ("http", "mcp"):
+        block = compose.split(f"\n  {service}:\n", 1)[1].split("\n    environment:\n", 1)[1]
+        environment = set(takewhile(lambda line: line.startswith("      "), block.splitlines()))
+        assert "      CLOE_PG_USER: repomap_read_status" in environment
+        assert all(not line.startswith(("      REPOMAP_PG_HOST:", "      REPOMAP_PG_PORT:",
+                                        "      REPOMAP_PG_USER:", "      REPOMAP_PG_DATABASE:",
+                                        "      REPOMAP_PSQL_COMMAND:")) for line in environment)
+        assert {
+            "      REPOMAP_READ_STATUS_PASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}",
+            "      REPOMAP_PG_PASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}",
+            "      PGPASSWORD: ${REPOMAP_READ_STATUS_PASSWORD}",
+        } <= environment
     assert 'target: "/repo-map-home/repomap.local.cloe.toml"' in compose
     assert '/repo-map-home/repomap.rpl.toml' not in compose
     before = snapshot(home)
@@ -68,11 +93,23 @@ def test_cloe_setup_readback_status_and_plan_without_runtime_execution(tmp_path:
     assert "repomap.rpl.toml" not in (home / "runtime/repomap-server.Dockerfile").read_text()
 
 
+@pytest.mark.parametrize("subcommand", [("setup",), ("setup", "--dry-run"), ("status",)])
+def test_runtime_refuses_retired_source_selector_without_home_writes(tmp_path: Path, subcommand: tuple[str, ...]) -> None:
+    home = tmp_path / "absent"
+    harness = LocalHarness(tmp_path / "guard")
+    result = harness.run("local", *subcommand, "--repo-map-home", str(home), "--json",
+                         extra_env={"REPOMAP_SOURCE_ROOT": "private-source-sentinel"})
+    assert result.returncode == 1
+    assert not result.stdout and "legacy-runtime-source-selector" in result.stderr
+    assert "private-source-sentinel" not in result.stderr and str(home) not in result.stderr
+    assert not home.exists() and not harness.shim_invocations()
+
+
 def test_cloe_dry_run_replays_as_the_same_real_cli_format(tmp_path: Path) -> None:
     from common_lore_index.runtime.local import setup_local_runtime
 
     home = tmp_path / "absent"
-    preview = setup_local_runtime(home, dry_run=True, config_format="cloe")
+    preview = setup_local_runtime(home, dry_run=True)
     assert not home.exists()
     result = run_cli_module(*preview.planned_command, "--json")
     assert result.returncode == 0, result.stderr
@@ -83,7 +120,7 @@ def test_cloe_dry_run_replays_as_the_same_real_cli_format(tmp_path: Path) -> Non
 def test_cloe_home_environment_selects_the_only_setup_destination(tmp_path: Path) -> None:
     home, wrong = tmp_path / "selected", tmp_path / "unselected"
     harness = LocalHarness(tmp_path / "guard")
-    result = harness.run("local", "setup", "--config-format", "cloe", "--json",
+    result = harness.run("local", "setup", "--json",
                          extra_env={"CLOE_HOME": str(home), "REPOMAP_HOME": str(wrong)})
     assert result.returncode == 0, result.stderr
     assert (home / "repomap.local.cloe.toml").is_file() and not wrong.exists()
@@ -99,8 +136,10 @@ def test_cli_format_conflicts_leave_existing_home_unchanged(tmp_path: Path, name
     before = snapshot(home)
     harness = LocalHarness(tmp_path / "guard")
     result = harness.run("local", "setup", "--repo-map-home", str(home), "--config-format", requested, "--json")
-    assert result.returncode == 1, result.stderr
-    assert "runtime-config-format-conflict" in result.stderr
+    if requested == "legacy":
+        assert result.returncode == 2 and "invalid choice" in result.stderr
+    else:
+        assert result.returncode == 1 and "legacy-config-filenames" in result.stderr
     assert snapshot(home) == before and not (home / "runtime").exists()
     assert not harness.forbidden_events() and not harness.shim_invocations()
 

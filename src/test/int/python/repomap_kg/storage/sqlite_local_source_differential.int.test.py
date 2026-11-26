@@ -70,9 +70,9 @@ from common_lore_index.storage.sqlite_local import raw_payload, source_feed_quer
 from common_lore_index.storage.sqlite_local.connection import initialize_graph_database, read_transaction
 from common_lore_index.storage.sqlite_local.publisher import publish_generation
 from common_lore_index.storage.sqlite_local.source_queries import edge_links, source_observations
-from repomap_test_support.portable_publication_fixtures import authority, binding, publish_portable_bundle
-from repomap_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
-from repomap_test_support.sqlite_local_feed_corpus import (
+from common_lore_index_test_support.portable_publication_fixtures import authority, binding, publish_portable_bundle
+from common_lore_index_test_support.postgres_harness import require_postgres_binaries, temporary_postgres
+from common_lore_index_test_support.sqlite_local_feed_corpus import (
     RSS,
     SECRET_MARKERS,
     acquire_feed_runs,
@@ -80,7 +80,7 @@ from repomap_test_support.sqlite_local_feed_corpus import (
     feed_bundle,
     generation_observations,
 )
-from repomap_test_support.sqlite_local_fixtures import local_binding, publication_for
+from common_lore_index_test_support.sqlite_local_fixtures import local_binding, publication_for
 
 FEEDS, CRAFTED = "feed-parity", "feed-crafted"
 C_COLLATIONS = frozenset({"C", "POSIX", "C.UTF-8", "C.utf8"})
@@ -99,7 +99,7 @@ def test_feed_publications_match_postgresql_source_owners(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     require_postgres_binaries()
-    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "REPOMAP_STORAGE_PG_CONNECTOR"):
+    for name in ("PGPASSWORD", "REPOMAP_PG_PASSWORD", "CLOE_STORAGE_PG_CONNECTOR"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv(READBACK_DRIVER_ENV, "psycopg")
     with temporary_postgres() as postgres:
