@@ -32,7 +32,14 @@
         </div>
       </div>
       <figure class="portrait">
-        <img src="assets/cloe-research-studio.webp" width="1024" height="1536" alt="Cloe holds a tablet showing a network of connected points in her research studio." fetchpriority="high">
+        <img
+          src="assets/cloe-research-studio-1024.webp"
+          srcset="assets/cloe-research-studio-512.webp 512w, assets/cloe-research-studio-1024.webp 1024w"
+          sizes="(max-width: 48rem) calc(min(100vw - 2rem, 20rem) - 2px),
+            calc((min(72rem, 100vw - 3rem) - clamp(2rem, 6vw, 5.5rem)) * 0.82 / 2.2 - 2px)"
+          width="1024" height="1536"
+          alt="Cloe holds a tablet showing a network of connected points in her research studio."
+          fetchpriority="high">
         <figcaption><strong>Meet Cloe</strong><span>Common Lore Index’s mascot</span></figcaption>
       </figure>
     </section>
